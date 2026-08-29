@@ -7,6 +7,7 @@ signal shot_fired(hit: bool)
 @export var move_speed := 4.5
 @export var acceleration := 16.0
 @export var mouse_sensitivity := 0.0022
+@export var movement_reference_path: NodePath
 
 @onready var head: Node3D = $Head
 @onready var interaction_ray: RayCast3D = $Head/Camera3D/InteractionRay
@@ -14,10 +15,15 @@ signal shot_fired(hit: bool)
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 var _current_interactable: Interactable
+var _movement_reference: Node3D
+var _local_horizontal_velocity := Vector3.ZERO
 
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_movement_reference = get_node_or_null(movement_reference_path) as Node3D
+	if not _movement_reference:
+		_movement_reference = get_parent_node_3d()
 	weapon.fired.connect(func(hit: bool) -> void: shot_fired.emit(hit))
 
 
@@ -39,17 +45,33 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	var reference_basis := _movement_reference.global_basis.orthonormalized()
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 	else:
 		velocity.y = 0.0
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	var direction := (transform.basis * Vector3(input.x, 0.0, input.y)).normalized()
+	var view_basis_in_reference := reference_basis.inverse() * global_basis.orthonormalized()
+	var direction := (view_basis_in_reference * Vector3(input.x, 0.0, input.y)).normalized()
 	var target := direction * move_speed
-	velocity.x = move_toward(velocity.x, target.x, acceleration * delta)
-	velocity.z = move_toward(velocity.z, target.z, acceleration * delta)
+	_local_horizontal_velocity.x = move_toward(
+		_local_horizontal_velocity.x,
+		target.x,
+		acceleration * delta
+	)
+	_local_horizontal_velocity.z = move_toward(
+		_local_horizontal_velocity.z,
+		target.z,
+		acceleration * delta
+	)
+	var world_horizontal_velocity := reference_basis * _local_horizontal_velocity
+	velocity.x = world_horizontal_velocity.x
+	velocity.z = world_horizontal_velocity.z
 	move_and_slide()
+	var resulting_local_velocity := reference_basis.inverse() * velocity
+	_local_horizontal_velocity.x = resulting_local_velocity.x
+	_local_horizontal_velocity.z = resulting_local_velocity.z
 	_update_interaction()
 
 

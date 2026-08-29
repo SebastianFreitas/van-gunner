@@ -1,6 +1,6 @@
 extends Node3D
 
-@onready var player: FpsPlayer = $VanBody/Player
+@onready var player: FpsPlayer = $TravelPath/VanFollow/VanRig/Player
 @onready var prompt_label: Label = %InteractionPrompt
 @onready var phase_label: Label = %PhaseLabel
 @onready var wave_label: Label = %WaveLabel
@@ -11,7 +11,9 @@ extends Node3D
 @onready var route_panel: Control = %RouteChoice
 @onready var rest_toast: Label = %RestToast
 @onready var game_over_panel: Control = %GameOver
-@onready var crafting_table: CraftingTable = $VanBody/Interior/Props/CraftingTable
+@onready var crafting_table: CraftingTable = (
+	$TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable
+)
 
 
 func _ready() -> void:

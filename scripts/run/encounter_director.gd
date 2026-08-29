@@ -8,9 +8,13 @@ extends Node
 @export var rest_duration := 10.0
 @export var raider_scene: PackedScene
 
-@onready var enemy_container: Node3D = $"../../VanBody/EnemyContainer"
-@onready var rear_marker: Marker3D = $"../../VanBody/EnemyContainer/RearAttackMarker"
-@onready var rear_spawn: Marker3D = $"../../VanBody/EnemyContainer/RearSpawnMarker"
+@onready var enemy_container: Node3D = $"../../TravelPath/VanFollow/VanRig/EnemyContainer"
+@onready var rear_marker: Marker3D = (
+	$"../../TravelPath/VanFollow/VanRig/EnemyContainer/RearAttackMarker"
+)
+@onready var rear_spawn: Marker3D = (
+	$"../../TravelPath/VanFollow/VanRig/EnemyContainer/RearSpawnMarker"
+)
 
 var _sequence_id := 0
 var _running := false
