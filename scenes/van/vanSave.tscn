@@ -1,15 +1,15 @@
-[gd_scene format=3 uid="uid://c85qjtwum8q5s"]
+[gd_scene format=3 uid="uid://otov43u4udk3"]
 
-[ext_resource type="Script" uid="uid://dg5tjpdtbkrcu" path="res://scripts/run/van.gd" id="1"]
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2"]
-[ext_resource type="Script" uid="uid://b4pqo1f8okdjo" path="res://scripts/interactions/cab_door.gd" id="3"]
-[ext_resource type="Script" uid="uid://cfqvpq1estepu" path="res://scripts/interactions/crafting_table.gd" id="4"]
-[ext_resource type="Script" uid="uid://dyimo6f80c3j1" path="res://scripts/run/travel_controller.gd" id="5"]
-[ext_resource type="Script" uid="uid://bkcv3kg2gy61h" path="res://scripts/run/encounter_director.gd" id="6"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/window_raider.tscn" id="8"]
-[ext_resource type="Script" uid="uid://cd7a8olfe604k" path="res://scripts/run/room_zone.gd" id="9"]
-[ext_resource type="PackedScene" uid="uid://dmdjjeocfdi7a" path="res://scenes/corridor/corridor_segment.tscn" id="10"]
-[ext_resource type="PackedScene" uid="uid://dyn2nx35s88gm" path="res://scenes/corridor/corridor_t_junction.tscn" id="11"]
+[ext_resource type="Script" uid="uid://dg5tjpdtbkrcu" path="res://scripts/run/van.gd" id="1_ne73t"]
+[ext_resource type="Script" uid="uid://b4pqo1f8okdjo" path="res://scripts/interactions/cab_door.gd" id="2_v7u18"]
+[ext_resource type="Script" uid="uid://cfqvpq1estepu" path="res://scripts/interactions/crafting_table.gd" id="3_n2xdt"]
+[ext_resource type="Script" uid="uid://cd7a8olfe604k" path="res://scripts/run/room_zone.gd" id="4_qascu"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="5_6xlsn"]
+[ext_resource type="Script" uid="uid://dyimo6f80c3j1" path="res://scripts/run/travel_controller.gd" id="6_2oqfb"]
+[ext_resource type="PackedScene" uid="uid://dmdjjeocfdi7a" path="res://scenes/corridor/corridor_segment.tscn" id="7_4pirj"]
+[ext_resource type="PackedScene" uid="uid://dyn2nx35s88gm" path="res://scenes/corridor/corridor_t_junction.tscn" id="8_rn8s8"]
+[ext_resource type="Script" uid="uid://bkcv3kg2gy61h" path="res://scripts/run/encounter_director.gd" id="9_txvck"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/window_raider.tscn" id="10_4vkys"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -76,10 +76,10 @@ metallic = 0.7
 roughness = 0.45
 
 [sub_resource type="BoxMesh" id="DoorMesh"]
-size = Vector3(1.55, 2.6334717, 0.22)
+size = Vector3(1.55, 2.4, 0.22)
 
 [sub_resource type="BoxShape3D" id="DoorShape"]
-size = Vector3(1.55, 2.637622, 0.22)
+size = Vector3(1.55, 2.4, 0.22)
 
 [sub_resource type="BoxMesh" id="PartitionMesh"]
 size = Vector3(1.25, 2.65, 0.16)
@@ -90,7 +90,6 @@ size = Vector3(1.25, 2.65, 0.16)
 [sub_resource type="StandardMaterial3D" id="TableMaterial"]
 albedo_color = Color(0.18, 0.13, 0.085, 1)
 roughness = 0.85
-uv1_scale = Vector3(4.24, 4.24, 4.24)
 
 [sub_resource type="BoxMesh" id="TableMesh"]
 size = Vector3(1.65, 0.85, 1.15)
@@ -101,20 +100,8 @@ size = Vector3(1.65, 0.85, 1.15)
 [sub_resource type="BoxShape3D" id="RoomZoneShape"]
 size = Vector3(4.4, 2.6, 1)
 
-[sub_resource type="BoxMesh" id="BoxMesh_5i4qf"]
-size = Vector3(1.0635986, 1, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_rerjn"]
-size = Vector3(1.1066895, 3.0576782, 0.2064209)
-
-[sub_resource type="BoxMesh" id="BoxMesh_1xds0"]
-size = Vector3(4.5271606, 1.1010742, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_fn8fd"]
-size = Vector3(4.522949, 0.7055664, 0.12841797)
-
 [node name="Van" type="Node3D" unique_id=843789011]
-script = ExtResource("1")
+script = ExtResource("1_ne73t")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=556203022]
 environment = SubResource("IndustrialEnvironment")
@@ -157,7 +144,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 0.525, 0)
 shape = SubResource("SideRailShape")
 
 [node name="LeftUpperRail" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=300041863]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 2.8105245, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 2.875, 0)
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SideTopMesh")
 
@@ -175,7 +162,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 0.525, 0)
 shape = SubResource("SideRailShape")
 
 [node name="RightUpperRail" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=646741751]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 2.8105245, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 2.875, 0)
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SideTopMesh")
 
@@ -251,7 +238,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.525, 4.71)
 shape = SubResource("RearRailShape")
 
 [node name="Upper" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall" unique_id=1576193080]
-transform = Transform3D(1, 0, 0, 0, 0.52, 0, 0, 0, 1, 0, 2.8105245, 4.71)
+transform = Transform3D(1, 0, 0, 0, 0.52, 0, 0, 0, 1, 0, 2.875, 4.71)
 material_override = SubResource("WallMaterial")
 mesh = SubResource("RearRailMesh")
 
@@ -280,17 +267,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.325, -4.65)
 shape = SubResource("FrontPanelShape")
 
 [node name="CabDoor" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1014773238]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2033219, -4.6685543)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -4.54)
 collision_layer = 3
-script = ExtResource("3")
+script = ExtResource("2_v7u18")
 
 [node name="Mesh" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/CabDoor" unique_id=455309128]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.116735816, 0)
 material_override = SubResource("DoorMaterial")
 mesh = SubResource("DoorMesh")
 
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/CabDoor" unique_id=1432763136]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11881101, 0)
 shape = SubResource("DoorShape")
 
 [node name="RoomDivider" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=2084282824]
@@ -305,12 +290,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.78, 1.325, 1)
 shape = SubResource("PartitionShape")
 
 [node name="RightPanel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomDivider" unique_id=1992595059]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6762023, 1.325, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.78, 1.325, 1)
 material_override = SubResource("WallMaterial")
 mesh = SubResource("PartitionMesh")
 
 [node name="RightCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomDivider" unique_id=1910965099]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6762023, 1.325, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.78, 1.325, 1)
 shape = SubResource("PartitionShape")
 
 [node name="Props" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1487223170]
@@ -318,7 +303,7 @@ shape = SubResource("PartitionShape")
 [node name="CraftingTable" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1058055410]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.15, 0.425, -1.65)
 collision_layer = 3
-script = ExtResource("4")
+script = ExtResource("3_n2xdt")
 
 [node name="Mesh" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable" unique_id=173204413]
 material_override = SubResource("TableMaterial")
@@ -332,7 +317,7 @@ shape = SubResource("TableShape")
 [node name="CenterRoom" type="Area3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomZones" unique_id=159180015]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, -1.8)
 collision_layer = 0
-script = ExtResource("9")
+script = ExtResource("4_qascu")
 
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomZones/CenterRoom" unique_id=868014746]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 5.6, 0, 0, 0)
@@ -341,49 +326,12 @@ shape = SubResource("RoomZoneShape")
 [node name="BackRoom" type="Area3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomZones" unique_id=1677343013]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, 2.85)
 collision_layer = 0
-script = ExtResource("9")
+script = ExtResource("4_qascu")
 room_id = &"back"
 
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomZones/BackRoom" unique_id=1978818779]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 3.7, 0, 0, 0)
 shape = SubResource("RoomZoneShape")
-
-[node name="Node3D" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=974012931]
-
-[node name="Wood Panel" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D" unique_id=1931980597]
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D/Wood Panel" unique_id=1316161097]
-transform = Transform3D(1.0407776, 0, 0, 0, 3.0563722, 0, 0, 0, 0.1925863, 1.8461993, 1.5019896, 0.99910617)
-material_override = SubResource("TableMaterial")
-mesh = SubResource("BoxMesh_5i4qf")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D/Wood Panel" unique_id=2093882801]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8457098, 1.5361853, 1.000632)
-shape = SubResource("BoxShape3D_rerjn")
-
-[node name="Wood Panel2" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D" unique_id=451288474]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.91064733, 2.8460054, 0.99322635)
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D/Wood Panel2" unique_id=469999274]
-transform = Transform3D(1, 0, 0, 0, 0.37475312, 0, 0, 0, 0.17593229, -1.0201496, -0.0015554428, 0)
-material_override = SubResource("TableMaterial")
-mesh = SubResource("BoxMesh_1xds0")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D/Wood Panel2" unique_id=2123692075]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.0043945, 0.1472168, 0.0017089248)
-shape = SubResource("BoxShape3D_fn8fd")
-
-[node name="Wood Panel3" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D" unique_id=1947376701]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53061956, 2.8460054, -4.6781487)
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D/Wood Panel3" unique_id=382789366]
-transform = Transform3D(1, 0, 0, 0, 0.37475312, 0, 0, 0, 0.17593229, -0.5326923, -0.0015554428, 0)
-material_override = SubResource("TableMaterial")
-mesh = SubResource("BoxMesh_1xds0")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D/Wood Panel3" unique_id=937013675]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5275879, 0.1472168, 0.0017089844)
-shape = SubResource("BoxShape3D_fn8fd")
 
 [node name="EnemyContainer" type="Node3D" parent="TravelPath/VanFollow/VanRig" unique_id=431859998]
 
@@ -393,7 +341,7 @@ transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0,
 [node name="RearSpawnMarker" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer" unique_id=76291566]
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 1.62, 28)
 
-[node name="Player" parent="TravelPath/VanFollow/VanRig" unique_id=88569583 instance=ExtResource("2")]
+[node name="Player" parent="TravelPath/VanFollow/VanRig" unique_id=88569583 instance=ExtResource("5_6xlsn")]
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 0.05, -2.7)
 movement_reference_path = NodePath("..")
 
@@ -419,13 +367,13 @@ light_energy = 2.0
 [node name="Systems" type="Node" parent="." unique_id=928478009]
 
 [node name="TravelController" type="Node" parent="Systems" unique_id=1697552321]
-script = ExtResource("5")
-segment_scene = ExtResource("10")
-t_junction_scene = ExtResource("11")
+script = ExtResource("6_2oqfb")
+segment_scene = ExtResource("7_4pirj")
+t_junction_scene = ExtResource("8_rn8s8")
 
 [node name="EncounterDirector" type="Node" parent="Systems" unique_id=136983041]
-script = ExtResource("6")
-raider_scene = ExtResource("8")
+script = ExtResource("9_txvck")
+raider_scene = ExtResource("10_4vkys")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1431776245]
 
