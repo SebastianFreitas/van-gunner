@@ -61,6 +61,9 @@ size = Vector3(4.8, 1.05, 0.18)
 [sub_resource type="BoxShape3D" id="RearRailShape"]
 size = Vector3(4.8, 1.05, 0.18)
 
+[sub_resource type="BoxShape3D" id="RearUpperRailShape"]
+size = Vector3(4.8, 0.546, 0.18)
+
 [sub_resource type="BoxMesh" id="FrontPanelMesh"]
 size = Vector3(1.6, 2.65, 0.2)
 
@@ -167,7 +170,7 @@ mesh = SubResource("SideTopMesh")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 2.875, 0)
 shape = SubResource("SideTopShape")
 
-[node name="SidePillars" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1734239770]
+[node name="SidePillars" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1734239770]
 
 [node name="LeftRear" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=90263395]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.775, 4.42)
@@ -223,7 +226,7 @@ shape = SubResource("SidePillarShape")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.775, -2)
 shape = SubResource("SidePillarShape")
 
-[node name="RearWall" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1122502090]
+[node name="RearWall" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1122502090]
 
 [node name="Lower" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall" unique_id=51340248]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.525, 4.71)
@@ -240,8 +243,8 @@ material_override = SubResource("WallMaterial")
 mesh = SubResource("RearRailMesh")
 
 [node name="UpperCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall" unique_id=1788784776]
-transform = Transform3D(1, 0, 0, 0, 0.52, 0, 0, 0, 1, 0, 2.875, 4.71)
-shape = SubResource("RearRailShape")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.875, 4.71)
+shape = SubResource("RearUpperRailShape")
 
 [node name="FrontPartition" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=450567163]
 
