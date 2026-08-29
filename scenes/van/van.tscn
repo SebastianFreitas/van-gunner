@@ -1,0 +1,559 @@
+[gd_scene load_steps=32 format=3]
+
+[ext_resource type="Script" path="res://scripts/run/van.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2"]
+[ext_resource type="Script" path="res://scripts/interactions/cab_door.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/interactions/crafting_table.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/run/travel_controller.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/run/encounter_director.gd" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/window_raider.tscn" id="8"]
+[ext_resource type="Script" path="res://scripts/run/room_zone.gd" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/corridor/corridor_segment.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/corridor/corridor_t_junction.tscn" id="11"]
+
+[sub_resource type="StandardMaterial3D" id="WallMaterial"]
+albedo_color = Color(0.27, 0.29, 0.28, 1)
+metallic = 0.35
+roughness = 0.72
+
+[sub_resource type="StandardMaterial3D" id="FloorMaterial"]
+albedo_color = Color(0.105, 0.115, 0.11, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="TrimMaterial"]
+albedo_color = Color(0.62, 0.48, 0.23, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="DoorMaterial"]
+albedo_color = Color(0.20, 0.22, 0.21, 1)
+metallic = 0.7
+roughness = 0.45
+
+[sub_resource type="StandardMaterial3D" id="TableMaterial"]
+albedo_color = Color(0.18, 0.13, 0.085, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="FloorMesh"]
+size = Vector3(4.8, 0.25, 9.6)
+
+[sub_resource type="BoxShape3D" id="FloorShape"]
+size = Vector3(4.8, 0.25, 9.6)
+
+[sub_resource type="BoxMesh" id="SideRailMesh"]
+size = Vector3(0.18, 1.05, 9.3)
+
+[sub_resource type="BoxShape3D" id="SideRailShape"]
+size = Vector3(0.18, 1.05, 9.3)
+
+[sub_resource type="BoxMesh" id="SideTopMesh"]
+size = Vector3(0.18, 0.55, 9.3)
+
+[sub_resource type="BoxShape3D" id="SideTopShape"]
+size = Vector3(0.18, 0.55, 9.3)
+
+[sub_resource type="BoxMesh" id="SidePillarMesh"]
+size = Vector3(0.18, 1.5, 0.42)
+
+[sub_resource type="BoxShape3D" id="SidePillarShape"]
+size = Vector3(0.18, 1.5, 0.42)
+
+[sub_resource type="BoxMesh" id="RearRailMesh"]
+size = Vector3(4.8, 1.05, 0.18)
+
+[sub_resource type="BoxShape3D" id="RearRailShape"]
+size = Vector3(4.8, 1.05, 0.18)
+
+[sub_resource type="BoxMesh" id="FrontPanelMesh"]
+size = Vector3(1.6, 2.65, 0.2)
+
+[sub_resource type="BoxShape3D" id="FrontPanelShape"]
+size = Vector3(1.6, 2.65, 0.2)
+
+[sub_resource type="BoxMesh" id="DoorMesh"]
+size = Vector3(1.55, 2.4, 0.22)
+
+[sub_resource type="BoxShape3D" id="DoorShape"]
+size = Vector3(1.55, 2.4, 0.22)
+
+[sub_resource type="BoxMesh" id="PartitionMesh"]
+size = Vector3(1.25, 2.65, 0.16)
+
+[sub_resource type="BoxShape3D" id="PartitionShape"]
+size = Vector3(1.25, 2.65, 0.16)
+
+[sub_resource type="BoxMesh" id="CrateMesh"]
+size = Vector3(0.8, 1.15, 1.35)
+
+[sub_resource type="BoxShape3D" id="CrateShape"]
+size = Vector3(0.8, 1.15, 1.35)
+
+[sub_resource type="BoxMesh" id="TableMesh"]
+size = Vector3(1.65, 0.85, 1.15)
+
+[sub_resource type="BoxShape3D" id="TableShape"]
+size = Vector3(1.65, 0.85, 1.15)
+
+[sub_resource type="BoxShape3D" id="RoomZoneShape"]
+size = Vector3(4.4, 2.6, 1.0)
+
+[sub_resource type="Environment" id="IndustrialEnvironment"]
+background_mode = 1
+background_color = Color(0.018, 0.024, 0.025, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.24, 0.29, 0.29, 1)
+ambient_light_energy = 0.42
+fog_enabled = true
+fog_light_color = Color(0.12, 0.145, 0.14, 1)
+fog_light_energy = 0.32
+fog_density = 0.035
+
+[node name="Van" type="Node3D"]
+script = ExtResource("1")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("IndustrialEnvironment")
+
+[node name="ExteriorCorridor" type="Node3D" parent="."]
+
+[node name="VanBody" type="Node3D" parent="."]
+
+[node name="Interior" type="Node3D" parent="VanBody"]
+
+[node name="Shell" type="StaticBody3D" parent="VanBody/Interior"]
+
+[node name="Floor" type="MeshInstance3D" parent="VanBody/Interior/Shell"]
+position = Vector3(0, -0.125, 0)
+material_override = SubResource("FloorMaterial")
+mesh = SubResource("FloorMesh")
+
+[node name="FloorCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell"]
+position = Vector3(0, -0.125, 0)
+shape = SubResource("FloorShape")
+
+[node name="Roof" type="MeshInstance3D" parent="VanBody/Interior/Shell"]
+position = Vector3(0, 3.15, 0)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("FloorMesh")
+
+[node name="LeftLowerRail" type="MeshInstance3D" parent="VanBody/Interior/Shell"]
+position = Vector3(-2.31, 0.525, 0)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("SideRailMesh")
+
+[node name="LeftLowerCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell"]
+position = Vector3(-2.31, 0.525, 0)
+shape = SubResource("SideRailShape")
+
+[node name="LeftUpperRail" type="MeshInstance3D" parent="VanBody/Interior/Shell"]
+position = Vector3(-2.31, 2.875, 0)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("SideTopMesh")
+
+[node name="LeftUpperCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell"]
+position = Vector3(-2.31, 2.875, 0)
+shape = SubResource("SideTopShape")
+
+[node name="RightLowerRail" type="MeshInstance3D" parent="VanBody/Interior/Shell"]
+position = Vector3(2.31, 0.525, 0)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("SideRailMesh")
+
+[node name="RightLowerCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell"]
+position = Vector3(2.31, 0.525, 0)
+shape = SubResource("SideRailShape")
+
+[node name="RightUpperRail" type="MeshInstance3D" parent="VanBody/Interior/Shell"]
+position = Vector3(2.31, 2.875, 0)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("SideTopMesh")
+
+[node name="RightUpperCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell"]
+position = Vector3(2.31, 2.875, 0)
+shape = SubResource("SideTopShape")
+
+[node name="SidePillars" type="Node3D" parent="VanBody/Interior/Shell"]
+
+[node name="LeftRear" type="MeshInstance3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(-2.31, 1.775, 4.42)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("SidePillarMesh")
+
+[node name="LeftMiddle" type="MeshInstance3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(-2.31, 1.775, 1.25)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("SidePillarMesh")
+
+[node name="LeftFront" type="MeshInstance3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(-2.31, 1.775, -2.0)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("SidePillarMesh")
+
+[node name="RightRear" type="MeshInstance3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(2.31, 1.775, 4.42)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("SidePillarMesh")
+
+[node name="RightMiddle" type="MeshInstance3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(2.31, 1.775, 1.25)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("SidePillarMesh")
+
+[node name="RightFront" type="MeshInstance3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(2.31, 1.775, -2.0)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("SidePillarMesh")
+
+[node name="LeftRearCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(-2.31, 1.775, 4.42)
+shape = SubResource("SidePillarShape")
+
+[node name="LeftMiddleCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(-2.31, 1.775, 1.25)
+shape = SubResource("SidePillarShape")
+
+[node name="LeftFrontCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(-2.31, 1.775, -2.0)
+shape = SubResource("SidePillarShape")
+
+[node name="RightRearCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(2.31, 1.775, 4.42)
+shape = SubResource("SidePillarShape")
+
+[node name="RightMiddleCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(2.31, 1.775, 1.25)
+shape = SubResource("SidePillarShape")
+
+[node name="RightFrontCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell/SidePillars"]
+position = Vector3(2.31, 1.775, -2.0)
+shape = SubResource("SidePillarShape")
+
+[node name="RearWall" type="Node3D" parent="VanBody/Interior/Shell"]
+
+[node name="Lower" type="MeshInstance3D" parent="VanBody/Interior/Shell/RearWall"]
+position = Vector3(0, 0.525, 4.71)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("RearRailMesh")
+
+[node name="LowerCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell/RearWall"]
+position = Vector3(0, 0.525, 4.71)
+shape = SubResource("RearRailShape")
+
+[node name="Upper" type="MeshInstance3D" parent="VanBody/Interior/Shell/RearWall"]
+position = Vector3(0, 2.875, 4.71)
+scale = Vector3(1, 0.52, 1)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("RearRailMesh")
+
+[node name="UpperCollision" type="CollisionShape3D" parent="VanBody/Interior/Shell/RearWall"]
+position = Vector3(0, 2.875, 4.71)
+scale = Vector3(1, 0.52, 1)
+shape = SubResource("RearRailShape")
+
+[node name="FrontPartition" type="StaticBody3D" parent="VanBody/Interior"]
+
+[node name="LeftPanel" type="MeshInstance3D" parent="VanBody/Interior/FrontPartition"]
+position = Vector3(-1.6, 1.325, -4.65)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("FrontPanelMesh")
+
+[node name="LeftCollision" type="CollisionShape3D" parent="VanBody/Interior/FrontPartition"]
+position = Vector3(-1.6, 1.325, -4.65)
+shape = SubResource("FrontPanelShape")
+
+[node name="RightPanel" type="MeshInstance3D" parent="VanBody/Interior/FrontPartition"]
+position = Vector3(1.6, 1.325, -4.65)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("FrontPanelMesh")
+
+[node name="RightCollision" type="CollisionShape3D" parent="VanBody/Interior/FrontPartition"]
+position = Vector3(1.6, 1.325, -4.65)
+shape = SubResource("FrontPanelShape")
+
+[node name="CabDoor" type="StaticBody3D" parent="VanBody/Interior" node_paths=PackedStringArray()]
+position = Vector3(0, 1.2, -4.54)
+collision_layer = 3
+script = ExtResource("3")
+
+[node name="Mesh" type="MeshInstance3D" parent="VanBody/Interior/CabDoor"]
+material_override = SubResource("DoorMaterial")
+mesh = SubResource("DoorMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="VanBody/Interior/CabDoor"]
+shape = SubResource("DoorShape")
+
+[node name="RoomDivider" type="StaticBody3D" parent="VanBody/Interior"]
+
+[node name="LeftPanel" type="MeshInstance3D" parent="VanBody/Interior/RoomDivider"]
+position = Vector3(-1.78, 1.325, 1.0)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("PartitionMesh")
+
+[node name="LeftCollision" type="CollisionShape3D" parent="VanBody/Interior/RoomDivider"]
+position = Vector3(-1.78, 1.325, 1.0)
+shape = SubResource("PartitionShape")
+
+[node name="RightPanel" type="MeshInstance3D" parent="VanBody/Interior/RoomDivider"]
+position = Vector3(1.78, 1.325, 1.0)
+material_override = SubResource("WallMaterial")
+mesh = SubResource("PartitionMesh")
+
+[node name="RightCollision" type="CollisionShape3D" parent="VanBody/Interior/RoomDivider"]
+position = Vector3(1.78, 1.325, 1.0)
+shape = SubResource("PartitionShape")
+
+[node name="Props" type="Node3D" parent="VanBody/Interior"]
+
+[node name="CraftingTable" type="StaticBody3D" parent="VanBody/Interior/Props"]
+position = Vector3(1.15, 0.425, -1.65)
+collision_layer = 3
+script = ExtResource("4")
+
+[node name="Mesh" type="MeshInstance3D" parent="VanBody/Interior/Props/CraftingTable"]
+material_override = SubResource("TableMaterial")
+mesh = SubResource("TableMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="VanBody/Interior/Props/CraftingTable"]
+shape = SubResource("TableShape")
+
+[node name="WindowBlockers" type="StaticBody3D" parent="VanBody/Interior/Props"]
+
+[node name="LeftCrate" type="MeshInstance3D" parent="VanBody/Interior/Props/WindowBlockers"]
+position = Vector3(-1.76, 0.575, 2.65)
+material_override = SubResource("TrimMaterial")
+mesh = SubResource("CrateMesh")
+
+[node name="LeftCollision" type="CollisionShape3D" parent="VanBody/Interior/Props/WindowBlockers"]
+position = Vector3(-1.76, 0.575, 2.65)
+shape = SubResource("CrateShape")
+
+[node name="RightCrate" type="MeshInstance3D" parent="VanBody/Interior/Props/WindowBlockers"]
+position = Vector3(1.76, 0.575, 2.65)
+material_override = SubResource("TrimMaterial")
+mesh = SubResource("CrateMesh")
+
+[node name="RightCollision" type="CollisionShape3D" parent="VanBody/Interior/Props/WindowBlockers"]
+position = Vector3(1.76, 0.575, 2.65)
+shape = SubResource("CrateShape")
+
+[node name="RearCrate" type="MeshInstance3D" parent="VanBody/Interior/Props/WindowBlockers"]
+position = Vector3(0, 0.575, 4.0)
+rotation = Vector3(0, 1.5708, 0)
+material_override = SubResource("TrimMaterial")
+mesh = SubResource("CrateMesh")
+
+[node name="RearCollision" type="CollisionShape3D" parent="VanBody/Interior/Props/WindowBlockers"]
+position = Vector3(0, 0.575, 4.0)
+rotation = Vector3(0, 1.5708, 0)
+shape = SubResource("CrateShape")
+
+[node name="RoomZones" type="Node3D" parent="VanBody/Interior"]
+
+[node name="CenterRoom" type="Area3D" parent="VanBody/Interior/RoomZones"]
+position = Vector3(0, 1.3, -1.8)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("9")
+
+[node name="Collision" type="CollisionShape3D" parent="VanBody/Interior/RoomZones/CenterRoom"]
+scale = Vector3(1, 1, 5.6)
+shape = SubResource("RoomZoneShape")
+
+[node name="BackRoom" type="Area3D" parent="VanBody/Interior/RoomZones"]
+position = Vector3(0, 1.3, 2.85)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("9")
+room_id = &"back"
+
+[node name="Collision" type="CollisionShape3D" parent="VanBody/Interior/RoomZones/BackRoom"]
+scale = Vector3(1, 1, 3.7)
+shape = SubResource("RoomZoneShape")
+
+[node name="Systems" type="Node" parent="."]
+
+[node name="TravelController" type="Node" parent="Systems"]
+script = ExtResource("5")
+segment_scene = ExtResource("10")
+t_junction_scene = ExtResource("11")
+
+[node name="EncounterDirector" type="Node" parent="Systems"]
+script = ExtResource("6")
+raider_scene = ExtResource("8")
+
+[node name="EnemyContainer" type="Node3D" parent="VanBody"]
+
+[node name="RearAttackMarker" type="Marker3D" parent="VanBody/EnemyContainer"]
+position = Vector3(0, 1.62, 4.42)
+rotation = Vector3(0, 3.14159, 0)
+
+[node name="RearSpawnMarker" type="Marker3D" parent="VanBody/EnemyContainer"]
+position = Vector3(0, 1.62, 28)
+rotation = Vector3(0, 3.14159, 0)
+
+[node name="Player" parent="VanBody" instance=ExtResource("2")]
+position = Vector3(0, 0.05, -2.7)
+rotation = Vector3(0, 3.14159, 0)
+
+[node name="Lighting" type="Node3D" parent="VanBody"]
+
+[node name="ExteriorLight" type="DirectionalLight3D" parent="VanBody/Lighting"]
+rotation = Vector3(-0.82, -0.35, 0)
+light_color = Color(0.42, 0.50, 0.48, 1)
+light_energy = 0.38
+shadow_enabled = true
+
+[node name="CenterLight" type="OmniLight3D" parent="VanBody/Lighting"]
+position = Vector3(0, 2.55, -1.5)
+light_color = Color(1, 0.86, 0.64, 1)
+light_energy = 2.4
+omni_range = 5.5
+
+[node name="RearLight" type="OmniLight3D" parent="VanBody/Lighting"]
+position = Vector3(0, 2.55, 2.8)
+light_color = Color(0.66, 0.78, 0.82, 1)
+light_energy = 2.0
+omni_range = 5.0
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="TopLeft" type="VBoxContainer" parent="HUD"]
+offset_left = 28.0
+offset_top = 24.0
+offset_right = 350.0
+offset_bottom = 110.0
+
+[node name="HealthLabel" type="Label" parent="HUD/TopLeft"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 18
+text = "VAN 100 / 100"
+
+[node name="VanHealth" type="ProgressBar" parent="HUD/TopLeft"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 18)
+value = 100.0
+show_percentage = false
+
+[node name="PhaseLabel" type="Label" parent="HUD/TopLeft"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
+text = "IDLE"
+
+[node name="WaveLabel" type="Label" parent="HUD/TopLeft"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.62, 0.66, 0.64, 1)
+text = "WAVES CLEARED  0  ·  ROUTE EVERY 10"
+
+[node name="InteractionPrompt" type="Label" parent="HUD"]
+unique_name_in_owner = true
+offset_left = 390.0
+offset_top = 640.0
+offset_right = 890.0
+offset_bottom = 690.0
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="MessageLabel" type="Label" parent="HUD"]
+unique_name_in_owner = true
+visible = false
+offset_left = 300.0
+offset_top = 90.0
+offset_right = 980.0
+offset_bottom = 145.0
+theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="Crosshair" type="Label" parent="HUD"]
+unique_name_in_owner = true
+offset_left = 627.0
+offset_top = 345.0
+offset_right = 653.0
+offset_bottom = 375.0
+theme_override_font_sizes/font_size = 22
+text = "+"
+horizontal_alignment = 1
+
+[node name="Controls" type="Label" parent="HUD"]
+offset_left = 1010.0
+offset_top = 24.0
+offset_right = 1250.0
+offset_bottom = 80.0
+theme_override_colors/font_color = Color(0.65, 0.68, 0.67, 1)
+text = "LMB  SHOOT\nE  INTERACT"
+horizontal_alignment = 2
+
+[node name="RestToast" type="Label" parent="HUD"]
+unique_name_in_owner = true
+visible = false
+mouse_filter = 2
+offset_left = 300.0
+offset_top = 72.0
+offset_right = 980.0
+offset_bottom = 110.0
+theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 18
+text = "BREAK — MOVE AROUND AND PREP"
+horizontal_alignment = 1
+
+[node name="RouteChoice" type="PanelContainer" parent="HUD"]
+unique_name_in_owner = true
+visible = false
+offset_left = 410.0
+offset_top = 220.0
+offset_right = 870.0
+offset_bottom = 480.0
+
+[node name="Layout" type="VBoxContainer" parent="HUD/RouteChoice"]
+layout_mode = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="HUD/RouteChoice/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "THE ROAD SPLITS"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="HUD/RouteChoice/Layout"]
+layout_mode = 2
+text = "The driver waits for your call."
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="HUD/RouteChoice/Layout"]
+layout_mode = 2
+alignment = 1
+
+[node name="Left" type="Button" parent="HUD/RouteChoice/Layout/Buttons"]
+custom_minimum_size = Vector2(170, 65)
+layout_mode = 2
+text = "TURN LEFT"
+
+[node name="Right" type="Button" parent="HUD/RouteChoice/Layout/Buttons"]
+custom_minimum_size = Vector2(170, 65)
+layout_mode = 2
+text = "TURN RIGHT"
+
+[node name="GameOver" type="PanelContainer" parent="HUD"]
+unique_name_in_owner = true
+visible = false
+offset_left = 430.0
+offset_top = 250.0
+offset_right = 850.0
+offset_bottom = 450.0
+
+[node name="Layout" type="VBoxContainer" parent="HUD/GameOver"]
+layout_mode = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="HUD/GameOver/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "THE VAN IS LOST"
+horizontal_alignment = 1
+
+[node name="Menu" type="Button" parent="HUD/GameOver/Layout"]
+layout_mode = 2
+text = "RETURN TO MENU"
+
+[connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Left" to="." method="_on_left_route_pressed"]
+[connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Right" to="." method="_on_right_route_pressed"]
+[connection signal="pressed" from="HUD/GameOver/Layout/Menu" to="." method="_on_main_menu_pressed"]

@@ -1,0 +1,146 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Shader" path="res://scenes/corridor/industrial_surface.gdshader" id="1"]
+
+[sub_resource type="ShaderMaterial" id="FloorMaterial"]
+shader = ExtResource("1")
+shader_parameter/base_color = Vector3(0.075, 0.082, 0.078)
+shader_parameter/seam_color = Vector3(0.018, 0.022, 0.021)
+shader_parameter/rust_color = Vector3(0.24, 0.075, 0.025)
+shader_parameter/tile_count = Vector2(6, 12)
+shader_parameter/roughness_value = 0.92
+
+[sub_resource type="ShaderMaterial" id="WallMaterial"]
+shader = ExtResource("1")
+shader_parameter/base_color = Vector3(0.14, 0.16, 0.15)
+shader_parameter/seam_color = Vector3(0.025, 0.032, 0.03)
+shader_parameter/rust_color = Vector3(0.35, 0.105, 0.035)
+shader_parameter/tile_count = Vector2(14, 4)
+shader_parameter/roughness_value = 0.78
+
+[sub_resource type="StandardMaterial3D" id="RibMaterial"]
+albedo_color = Color(0.055, 0.064, 0.061, 1)
+metallic = 0.72
+roughness = 0.61
+
+[sub_resource type="StandardMaterial3D" id="PipeMaterial"]
+albedo_color = Color(0.20, 0.105, 0.052, 1)
+metallic = 0.78
+roughness = 0.48
+
+[sub_resource type="BoxMesh" id="FloorMesh"]
+material = SubResource("FloorMaterial")
+size = Vector3(18, 0.2, 20)
+
+[sub_resource type="BoxMesh" id="WallMesh"]
+material = SubResource("WallMaterial")
+size = Vector3(0.4, 10, 20)
+
+[sub_resource type="BoxMesh" id="VerticalRibMesh"]
+material = SubResource("RibMaterial")
+size = Vector3(0.65, 10.5, 0.48)
+
+[sub_resource type="BoxMesh" id="CrossBeamMesh"]
+material = SubResource("RibMaterial")
+size = Vector3(18, 0.5, 0.55)
+
+[sub_resource type="CylinderMesh" id="PipeMesh"]
+material = SubResource("PipeMaterial")
+top_radius = 0.16
+bottom_radius = 0.16
+height = 20.0
+
+[sub_resource type="BoxMesh" id="BrokenPlatformMesh"]
+material = SubResource("RibMaterial")
+size = Vector3(2.1, 0.28, 3.4)
+
+[sub_resource type="StandardMaterial3D" id="LampMaterial"]
+shading_mode = 0
+albedo_color = Color(0.78, 0.43, 0.16, 1)
+emission_enabled = true
+emission = Color(0.8, 0.28, 0.055, 1)
+emission_energy_multiplier = 2.2
+
+[sub_resource type="BoxMesh" id="LampMesh"]
+material = SubResource("LampMaterial")
+size = Vector3(0.12, 0.42, 1.3)
+
+[node name="CorridorSegment" type="Node3D"]
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.3, 0)
+mesh = SubResource("FloorMesh")
+
+[node name="LeftWall" type="MeshInstance3D" parent="."]
+position = Vector3(-9, 4.6, 0)
+mesh = SubResource("WallMesh")
+
+[node name="RightWall" type="MeshInstance3D" parent="."]
+position = Vector3(9, 4.6, 0)
+mesh = SubResource("WallMesh")
+
+[node name="Structure" type="Node3D" parent="."]
+
+[node name="RibL0" type="MeshInstance3D" parent="Structure"]
+position = Vector3(-8.7, 4.7, -7.5)
+mesh = SubResource("VerticalRibMesh")
+
+[node name="RibR0" type="MeshInstance3D" parent="Structure"]
+position = Vector3(8.7, 4.7, -7.5)
+mesh = SubResource("VerticalRibMesh")
+
+[node name="Beam0" type="MeshInstance3D" parent="Structure"]
+position = Vector3(0, 7.3, -7.5)
+mesh = SubResource("CrossBeamMesh")
+
+[node name="RibL1" type="MeshInstance3D" parent="Structure"]
+position = Vector3(-8.7, 4.7, 0)
+mesh = SubResource("VerticalRibMesh")
+
+[node name="RibR1" type="MeshInstance3D" parent="Structure"]
+position = Vector3(8.7, 4.7, 0)
+mesh = SubResource("VerticalRibMesh")
+
+[node name="Beam1" type="MeshInstance3D" parent="Structure"]
+position = Vector3(0, 7.3, 0)
+mesh = SubResource("CrossBeamMesh")
+
+[node name="RibL2" type="MeshInstance3D" parent="Structure"]
+position = Vector3(-8.7, 4.7, 7.5)
+mesh = SubResource("VerticalRibMesh")
+
+[node name="RibR2" type="MeshInstance3D" parent="Structure"]
+position = Vector3(8.7, 4.7, 7.5)
+mesh = SubResource("VerticalRibMesh")
+
+[node name="Beam2" type="MeshInstance3D" parent="Structure"]
+position = Vector3(0, 7.3, 7.5)
+mesh = SubResource("CrossBeamMesh")
+
+[node name="LeftPipe" type="MeshInstance3D" parent="Structure"]
+position = Vector3(-8.6, 3.2, 0)
+rotation = Vector3(1.5708, 0, 0)
+mesh = SubResource("PipeMesh")
+
+[node name="RightPipe" type="MeshInstance3D" parent="Structure"]
+position = Vector3(8.6, 5.3, 0)
+rotation = Vector3(1.5708, 0, 0)
+mesh = SubResource("PipeMesh")
+
+[node name="BrokenLeftPlatform" type="MeshInstance3D" parent="Structure"]
+position = Vector3(-7.0, 4.0, -3.7)
+rotation = Vector3(0.04, 0, 0.12)
+mesh = SubResource("BrokenPlatformMesh")
+
+[node name="BrokenRightPlatform" type="MeshInstance3D" parent="Structure"]
+position = Vector3(7.1, 5.8, 4.4)
+rotation = Vector3(-0.08, 0, -0.16)
+mesh = SubResource("BrokenPlatformMesh")
+
+[node name="LeftLamp" type="MeshInstance3D" parent="Structure"]
+position = Vector3(-8.4, 2.6, -5.4)
+mesh = SubResource("LampMesh")
+
+[node name="RightLamp" type="MeshInstance3D" parent="Structure"]
+position = Vector3(8.4, 3.4, 4.9)
+mesh = SubResource("LampMesh")
