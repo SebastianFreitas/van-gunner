@@ -13,7 +13,7 @@ shader_parameter/roughness_value = 0.92
 
 [sub_resource type="BoxMesh" id="FloorMesh"]
 material = SubResource("FloorMaterial")
-size = Vector3(18, 0.2, 29.249512)
+size = Vector3(18, 0.2, 29.347534)
 
 [sub_resource type="ShaderMaterial" id="WallMaterial"]
 render_priority = 0
@@ -26,7 +26,7 @@ shader_parameter/roughness_value = 0.78
 
 [sub_resource type="BoxMesh" id="WallMesh"]
 material = SubResource("WallMaterial")
-size = Vector3(0.4, 10, 11.375977)
+size = Vector3(0.4, 10, 11.184021)
 
 [sub_resource type="StandardMaterial3D" id="RibMaterial"]
 albedo_color = Color(0.055, 0.064, 0.061, 1)
@@ -51,26 +51,26 @@ size = Vector3(11, 0.2, 18)
 
 [sub_resource type="BoxMesh" id="BranchWallMesh"]
 material = SubResource("WallMaterial")
-size = Vector3(11, 10, 0.4)
+size = Vector3(11.172363, 10, 0.4)
 
 [node name="CorridorTJunction" type="Node3D" unique_id=1188119270]
 
 [node name="Stem" type="Node3D" parent="." unique_id=1097789082]
 
 [node name="Floor" type="MeshInstance3D" parent="Stem" unique_id=169807217]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 5.375244)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 5.4242554)
 mesh = SubResource("FloorMesh")
 
 [node name="LeftWall" type="MeshInstance3D" parent="Stem" unique_id=313043618]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 4.6, 10)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 4.6, 14.470272)
 mesh = SubResource("WallMesh")
 
 [node name="RightWall" type="MeshInstance3D" parent="Stem" unique_id=2027705544]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 4.6, 14.312012)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 4.6, 14.522358)
 mesh = SubResource("WallMesh")
 
 [node name="Beam0" type="MeshInstance3D" parent="Stem" unique_id=1474970213]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.3, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.956585, 9.639535)
 mesh = SubResource("CrossBeamMesh")
 
 [node name="Beam1" type="MeshInstance3D" parent="Stem" unique_id=1714580230]
@@ -78,7 +78,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.3, 14)
 mesh = SubResource("CrossBeamMesh")
 
 [node name="LeftLamp" type="MeshInstance3D" parent="Stem" unique_id=1571877376]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.4, 2.6, 6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.755289, 2.6, 11.685037)
 mesh = SubResource("LampMesh")
 
 [node name="RightLamp" type="MeshInstance3D" parent="Stem" unique_id=1375287749]
@@ -117,6 +117,46 @@ mesh = SubResource("BranchWallMesh")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 4.6, 9)
 mesh = SubResource("BranchWallMesh")
 
+[node name="LeftWall" type="MeshInstance3D" parent="BranchRight/SouthWall" unique_id=2046898226]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.50145, 9.881811, 5.4631786)
+mesh = SubResource("WallMesh")
+
+[node name="RightWall" type="MeshInstance3D" parent="BranchRight/SouthWall" unique_id=178507325]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5014505, 9.881811, 5.5152645)
+mesh = SubResource("WallMesh")
+
+[node name="NorthWall" type="MeshInstance3D" parent="BranchRight/SouthWall" unique_id=1299978718]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.00145, 9.881811, -18.007093)
+mesh = SubResource("BranchWallMesh")
+
+[node name="SouthWall" type="MeshInstance3D" parent="BranchRight/SouthWall" unique_id=1276545172]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.00145, 9.881811, -0.0070934296)
+mesh = SubResource("BranchWallMesh")
+
+[node name="NorthWall2" type="MeshInstance3D" parent="BranchRight/SouthWall" unique_id=1591881478]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0014505386, 9.881811, -18.007093)
+mesh = SubResource("BranchWallMesh")
+
+[node name="SouthWall2" type="MeshInstance3D" parent="BranchRight/SouthWall" unique_id=1494484713]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0014505386, 9.881811, -0.0070934296)
+mesh = SubResource("BranchWallMesh")
+
+[node name="NorthWall3" type="MeshInstance3D" parent="BranchRight/SouthWall" unique_id=1768588054]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.9304, 9.89883, -17.986713)
+mesh = SubResource("BranchWallMesh")
+
+[node name="NorthWall4" type="MeshInstance3D" parent="BranchRight/SouthWall" unique_id=2058410770]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.821189, 9.88578, -17.988594)
+mesh = SubResource("BranchWallMesh")
+
 [node name="Lamp" type="MeshInstance3D" parent="BranchRight" unique_id=2010092650]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 2.6, 7)
 mesh = SubResource("LampMesh")
+
+[node name="NorthWall2" type="MeshInstance3D" parent="." unique_id=1760360044]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.4289496, 4.6170187, -8.979619)
+mesh = SubResource("BranchWallMesh")
+
+[node name="NorthWall3" type="MeshInstance3D" parent="." unique_id=1518159737]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.680261, 4.603969, -8.981502)
+mesh = SubResource("BranchWallMesh")
