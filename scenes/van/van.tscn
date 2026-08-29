@@ -16,11 +16,15 @@ background_mode = 1
 background_color = Color(0.018, 0.024, 0.025, 1)
 ambient_light_source = 3
 ambient_light_color = Color(0.24, 0.29, 0.29, 1)
-ambient_light_energy = 0.42
+ambient_light_energy = 0.24
 fog_enabled = true
-fog_light_color = Color(0.12, 0.145, 0.14, 1)
-fog_light_energy = 0.32
-fog_density = 0.035
+fog_light_color = Color(0.008, 0.012, 0.011, 1)
+fog_light_energy = 1.0
+fog_density = 1.0
+fog_mode = 1
+fog_depth_begin = 10.0
+fog_depth_end = 28.0
+fog_depth_curve = 1.5
 
 [sub_resource type="StandardMaterial3D" id="FloorMaterial"]
 albedo_color = Color(0.105, 0.115, 0.11, 1)
