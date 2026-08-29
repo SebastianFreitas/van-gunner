@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://dmlvvoplu2min"]
+
+[node name="Van Node3D" type="Node3D" unique_id=1833473027]
+
+[node name="Shell CSGCombiner3D" type="CSGCombiner3D" parent="." unique_id=1956382039]
+
+[node name="OuterHull CSGBox3D" type="CSGBox3D" parent="Shell CSGCombiner3D" unique_id=1068700105]
+size = Vector3(2.2, 2.2, 3.2)
+
+[node name="InnerCavity CSGBox3D2" type="CSGBox3D" parent="Shell CSGCombiner3D" unique_id=747954199]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.040917993, 0)
+operation = 2
+size = Vector3(2.1, 2.181836, 3.1)
+
+[node name="WindowCut_L1 CSGBox3D" type="CSGBox3D" parent="Shell CSGCombiner3D" unique_id=881494780]
+transform = Transform3D(1.9604551, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3556503, -1.6301897)
+operation = 2
+size = Vector3(1, 1, 0.34753418)
+
+[node name="WindowCut_L2 CSGBox3D" type="CSGBox3D" parent="Shell CSGCombiner3D" unique_id=629164692]
+transform = Transform3D(3.0950053, 0, 0, 0, 0.46959484, 0, 0, 0, 1, 0, 0.4059284, 0.63391465)
+operation = 2
+size = Vector3(1, 1, 1.6137085)
