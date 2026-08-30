@@ -1,14 +1,13 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://mps2iq86kgu0"]
 
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/items/effects/gun_stat_modifier_effect.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="4"]
-[ext_resource type="Texture2D" path="res://scenes/items/chew_tobacco.svg" id="5"]
+[ext_resource type="Script" uid="uid://byi8ndmx1w2gf" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://bnow6ucp47dur" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" uid="uid://bbus1itn0ocl0" path="res://scripts/items/effects/gun_stat_modifier_effect.gd" id="3"]
+[ext_resource type="Script" uid="uid://3s6ddx8mgsif" path="res://scripts/combat/stat_modifier.gd" id="4"]
+[ext_resource type="Texture2D" uid="uid://dnjihpqg82os1" path="res://scenes/items/chew_tobacco.svg" id="5"]
 
 [sub_resource type="Resource" id="Resource_chew_modifier"]
 script = ExtResource("4")
-stat_name = &"damage_per_shot"
 value = 2.0
 id = &"chew_tobacco"
 

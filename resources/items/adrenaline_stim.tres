@@ -1,11 +1,11 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://c8bjdjs2q4nvc"]
 
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/items/item_usable_config.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/items/effects/timed_stat_modifier_effect.gd" id="4"]
-[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="5"]
-[ext_resource type="Texture2D" path="res://scenes/items/adrenaline_stim.svg" id="6"]
+[ext_resource type="Script" uid="uid://byi8ndmx1w2gf" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://bnow6ucp47dur" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" uid="uid://kqrsd607m2ib" path="res://scripts/items/item_usable_config.gd" id="3"]
+[ext_resource type="Script" uid="uid://db5oabkcyoir1" path="res://scripts/items/effects/timed_stat_modifier_effect.gd" id="4"]
+[ext_resource type="Script" uid="uid://3s6ddx8mgsif" path="res://scripts/combat/stat_modifier.gd" id="5"]
+[ext_resource type="Texture2D" uid="uid://sxjffxj12kby" path="res://scenes/items/adrenaline_stim.svg" id="6"]
 
 [sub_resource type="Resource" id="Resource_haste_fire"]
 script = ExtResource("5")
@@ -21,17 +21,15 @@ mode = 1
 value = 2.0
 id = &"adrenaline_haste_reload"
 
+[sub_resource type="Resource" id="Resource_adrenaline_effect"]
+script = ExtResource("4")
+modifiers = Array[ExtResource("5")]([SubResource("Resource_haste_fire"), SubResource("Resource_haste_reload")])
+
 [sub_resource type="Resource" id="Resource_adrenaline_usable"]
 script = ExtResource("3")
 is_consumed_on_use = false
-max_charges = 1
 recharge_mode = 1
 recharge_cooldown_sec = 45.0
-
-[sub_resource type="Resource" id="Resource_adrenaline_effect"]
-script = ExtResource("4")
-duration_sec = 60.0
-modifiers = Array[ExtResource("5")]([SubResource("Resource_haste_fire"), SubResource("Resource_haste_reload")])
 
 [resource]
 script = ExtResource("1")

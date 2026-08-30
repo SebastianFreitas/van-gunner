@@ -1,18 +1,17 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://fpdfja57npg7"]
 
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/items/item_usable_config.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/items/effects/throw_grenade_effect.gd" id="4"]
-[ext_resource type="Texture2D" path="res://scenes/items/grenade.svg" id="5"]
-
-[sub_resource type="Resource" id="Resource_grenade_usable"]
-script = ExtResource("3")
-is_consumed_on_use = true
-max_charges = 3
+[ext_resource type="Script" uid="uid://byi8ndmx1w2gf" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://bnow6ucp47dur" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" uid="uid://kqrsd607m2ib" path="res://scripts/items/item_usable_config.gd" id="3"]
+[ext_resource type="Script" uid="uid://gmyup6wevt1" path="res://scripts/items/effects/throw_grenade_effect.gd" id="4"]
+[ext_resource type="Texture2D" uid="uid://clpdqvia7viry" path="res://scenes/items/grenade.svg" id="5"]
 
 [sub_resource type="Resource" id="Resource_grenade_effect"]
 script = ExtResource("4")
+
+[sub_resource type="Resource" id="Resource_grenade_usable"]
+script = ExtResource("3")
+max_charges = 3
 
 [resource]
 script = ExtResource("1")

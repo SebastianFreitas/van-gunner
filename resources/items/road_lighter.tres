@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bicacgl1lulnn"]
 
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/items/effects/heal_effect.gd" id="3"]
-[ext_resource type="Texture2D" path="res://scenes/items/road_lighter.svg" id="4"]
+[ext_resource type="Script" uid="uid://byi8ndmx1w2gf" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://bnow6ucp47dur" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" uid="uid://cgcb0ubid3wue" path="res://scripts/items/effects/heal_effect.gd" id="3"]
+[ext_resource type="Texture2D" uid="uid://ci8f4fke1oy6a" path="res://scenes/items/road_lighter.svg" id="4"]
 
 [sub_resource type="Resource" id="Resource_lighter_heal"]
 script = ExtResource("3")
