@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://dmdjjeocfdi7a" path="res://scenes/corridor/corridor_segment.tscn" id="10"]
 [ext_resource type="PackedScene" uid="uid://dyn2nx35s88gm" path="res://scenes/corridor/corridor_t_junction.tscn" id="11"]
 [ext_resource type="PackedScene" path="res://scenes/ui/item_hud.tscn" id="12"]
+[ext_resource type="PackedScene" path="res://scenes/ui/bench_screen.tscn" id="13"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -322,6 +323,7 @@ shape = SubResource("PartitionShape")
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.8012533, 0.425, -2.083648)
 collision_layer = 3
 script = ExtResource("4")
+prompt = "Open Bench"
 
 [node name="Mesh" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable" unique_id=173204413]
 material_override = SubResource("TableMaterial")
@@ -603,6 +605,10 @@ horizontal_alignment = 1
 [node name="Menu" type="Button" parent="HUD/GameOver/Layout" unique_id=2054410725]
 layout_mode = 2
 text = "RETURN TO MENU"
+
+[node name="BenchScreen" parent="HUD" instance=ExtResource("13")]
+unique_name_in_owner = true
+visible = false
 
 [connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Left" to="." method="_on_left_route_pressed"]
 [connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Right" to="." method="_on_right_route_pressed"]

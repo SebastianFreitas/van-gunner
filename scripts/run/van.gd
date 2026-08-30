@@ -17,6 +17,7 @@ extends Node3D
 @onready var route_panel: Control = %RouteChoice
 @onready var rest_toast: Label = %RestToast
 @onready var game_over_panel: Control = %GameOver
+@onready var bench_screen: BenchScreen = %BenchScreen
 @onready var crafting_table: CraftingTable = (
 	$TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable
 )
@@ -27,7 +28,9 @@ func _ready() -> void:
 	player.shot_fired.connect(_on_shot_fired)
 	weapon.ammo_changed.connect(_on_ammo_changed)
 	weapon.reloading_changed.connect(_on_reloading_changed)
-	crafting_table.inspected.connect(_show_message)
+	crafting_table.opened.connect(_open_bench)
+	bench_screen.closed.connect(_on_bench_closed)
+	bench_screen.bind(player, usables, player.gun_stats, weapon)
 	GameSession.phase_changed.connect(_on_phase_changed)
 	GameSession.van_health_changed.connect(_on_health_changed)
 	GameSession.wave_changed.connect(_on_wave_changed)
@@ -83,21 +86,45 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 				else "BREAK — ROAD KEEPS MOVING"
 			)
 			rest_toast.show()
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		GameSession.RunPhase.TURNING:
 			rest_toast.text = "TURNING %s..." % String(GameSession.last_direction).to_upper()
 			rest_toast.show()
 			route_panel.hide()
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-		GameSession.RunPhase.ROUTE_CHOICE:
-			rest_toast.hide()
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		GameSession.RunPhase.GAME_OVER:
-			rest_toast.hide()
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		_:
 			rest_toast.hide()
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+	var bench_blocked := next_phase in [
+		GameSession.RunPhase.COMBAT,
+		GameSession.RunPhase.ROUTE_CHOICE,
+		GameSession.RunPhase.GAME_OVER,
+	]
+	if bench_screen.visible:
+		# close() re-applies the mouse mode through _on_bench_closed.
+		if bench_blocked:
+			bench_screen.close()
+		return
+	_apply_phase_mouse_mode(next_phase)
+
+
+func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
+	var free_cursor := phase in [
+		GameSession.RunPhase.ROUTE_CHOICE,
+		GameSession.RunPhase.GAME_OVER,
+	]
+	Input.mouse_mode = (
+		Input.MOUSE_MODE_VISIBLE if free_cursor else Input.MOUSE_MODE_CAPTURED
+	)
+
+
+func _open_bench() -> void:
+	if GameSession.phase == GameSession.RunPhase.GAME_OVER:
+		return
+	bench_screen.open()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _on_bench_closed() -> void:
+	_apply_phase_mouse_mode(GameSession.phase)
 
 
 func _on_room_changed(_room: StringName) -> void:
