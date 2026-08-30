@@ -231,18 +231,7 @@ func _on_stashed(land_index: int = 0) -> void:
 	_base_y = position.y
 	var angle := land_index * 2.3999632 + float(get_instance_id() % 97) * 0.04
 	_slide_velocity = Vector3(cos(angle), 0.0, sin(angle)) * 1.4
-	if item and item.is_usable():
-		get_tree().create_timer(0.35).timeout.connect(_auto_equip_usable)
-	else:
-		set_deferred("monitoring", true)
-
-
-func _auto_equip_usable() -> void:
-	if _used:
-		return
-	var player := get_tree().get_first_node_in_group(&"player") as Node3D
-	if player:
-		_use(player)
+	set_deferred("monitoring", true)
 
 
 func _consume() -> void:
