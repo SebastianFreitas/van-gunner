@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/run/window_raider.gd" id="1"]
 [ext_resource type="Texture2D" path="res://scenes/enemies/raider.svg" id="2"]
 [ext_resource type="Script" path="res://scripts/run/loot_drop_component.gd" id="3"]
-[ext_resource type="Resource" path="res://resources/items/pools/generic_pool.tres" id="4"]
+[ext_resource type="Resource" path="res://resources/items/pools/goon_pool.tres" id="4"]
 [ext_resource type="PackedScene" uid="uid://dm208j1vw1fbg" path="res://scenes/items/pickup.tscn" id="5"]
 [ext_resource type="Resource" uid="uid://dd8i64p2nly4r" path="res://resources/items/coin_item.tres" id="6"]
 [ext_resource type="Script" path="res://scripts/combat/status_effect_controller.gd" id="7"]

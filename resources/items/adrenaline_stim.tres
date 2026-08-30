@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/items/item_usable_config.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/items/effects/timed_stat_modifier_effect.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="5"]
+[ext_resource type="Texture2D" path="res://scenes/items/adrenaline_stim.svg" id="6"]
+
+[sub_resource type="Resource" id="Resource_haste_fire"]
+script = ExtResource("5")
+stat_name = &"fire_rate"
+mode = 1
+value = 1.75
+id = &"adrenaline_haste_fire"
+
+[sub_resource type="Resource" id="Resource_haste_reload"]
+script = ExtResource("5")
+stat_name = &"reload_speed"
+mode = 1
+value = 2.0
+id = &"adrenaline_haste_reload"
+
+[sub_resource type="Resource" id="Resource_adrenaline_usable"]
+script = ExtResource("3")
+is_consumed_on_use = false
+max_charges = 1
+recharge_mode = 1
+recharge_cooldown_sec = 45.0
+
+[sub_resource type="Resource" id="Resource_adrenaline_effect"]
+script = ExtResource("4")
+duration_sec = 60.0
+modifiers = Array[ExtResource("5")]([SubResource("Resource_haste_fire"), SubResource("Resource_haste_reload")])
+
+[resource]
+script = ExtResource("1")
+id = &"adrenaline_stim"
+display_name = "Adrenaline Stim"
+description = "Inject and go feral. Huge fire rate and reload speed for 60 seconds. 45s cooldown."
+icon = ExtResource("6")
+kind = 3
+usable = SubResource("Resource_adrenaline_usable")
+effects = Array[ExtResource("2")]([SubResource("Resource_adrenaline_effect")])

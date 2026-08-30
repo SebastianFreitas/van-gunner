@@ -5,7 +5,7 @@ extends Resource
 ##
 ## Pools are plain data (Resources), so new pools are authored entirely in
 ## the inspector/as .tres files — no code changes needed to add an item to
-## a pool, retune its weight, or spin up a brand-new pool (e.g. "rare_pool",
+## a pool, retune its weight, or spin up a brand-new pool (e.g. "goon_pool",
 ## "boss_pool") for other enemies to pull from later.
 
 @export var entries: Array[LootPoolEntry] = []

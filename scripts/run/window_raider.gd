@@ -18,6 +18,10 @@ var is_defeated := false
 @onready var status_effects: StatusEffectController = $StatusEffects
 
 
+func _ready() -> void:
+	add_to_group(&"enemy")
+
+
 func activate() -> void:
 	if _active:
 		return
@@ -80,6 +84,7 @@ func _die() -> void:
 		$HeadHitbox.collision_layer = 0
 	if loot_drop:
 		loot_drop.spawn_drops(global_position, get_parent())
+	GameSession.notify_enemy_defeated(self)
 	defeated.emit()
 	var tween := create_tween()
 	tween.set_parallel()

@@ -6,6 +6,7 @@ signal route_chosen(direction: StringName, step: int)
 signal wave_changed(wave: int)
 signal room_changed(room: StringName)
 signal coins_changed(total: int)
+signal enemy_defeated(enemy: Node)
 signal session_loaded
 
 enum RunPhase {
@@ -105,6 +106,11 @@ func add_coins(amount: int) -> void:
 		return
 	coins += amount
 	coins_changed.emit(coins)
+
+
+func notify_enemy_defeated(enemy: Node) -> void:
+	if enemy:
+		enemy_defeated.emit(enemy)
 
 
 func complete_wave() -> void:

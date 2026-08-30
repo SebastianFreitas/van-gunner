@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/items/effects/grant_coin_effect.gd" id="3"]
+[ext_resource type="Texture2D" path="res://scenes/items/lucky_chip.svg" id="4"]
+
+[sub_resource type="Resource" id="Resource_lucky_coin"]
+script = ExtResource("3")
+amount = 3
+
+[resource]
+script = ExtResource("1")
+id = &"lucky_chip"
+display_name = "Lucky Chip"
+description = "A scuffed casino chip. Grants a few coins on pickup."
+icon = ExtResource("4")
+effects = Array[ExtResource("2")]([SubResource("Resource_lucky_coin")])

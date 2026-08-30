@@ -13,6 +13,7 @@ signal shot_fired(hit: bool)
 @onready var interaction_ray: RayCast3D = $Head/Camera3D/InteractionRay
 @onready var weapon: GunController = $Head/Camera3D/Weapon
 @onready var gun_stats: GunStatsController = $GunStats
+@onready var usables: UsablesController = $Usables
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 var _current_interactable: Interactable
@@ -44,6 +45,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		_current_interactable.interact(self)
 	elif event.is_action_pressed("reload") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		weapon.try_reload()
+	elif event.is_action_pressed("use_slot_1"):
+		usables.try_use_slot(0)
+	elif event.is_action_pressed("use_slot_2"):
+		usables.try_use_slot(1)
+	elif event.is_action_pressed("use_slot_3"):
+		usables.try_use_slot(2)
+	elif event.is_action_pressed("use_slot_4"):
+		usables.try_use_slot(3)
 	elif event.is_action_pressed("shoot") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		weapon.try_fire()
 

@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://cd7a8olfe604k" path="res://scripts/run/room_zone.gd" id="9"]
 [ext_resource type="PackedScene" uid="uid://dmdjjeocfdi7a" path="res://scenes/corridor/corridor_segment.tscn" id="10"]
 [ext_resource type="PackedScene" uid="uid://dyn2nx35s88gm" path="res://scenes/corridor/corridor_t_junction.tscn" id="11"]
+[ext_resource type="PackedScene" path="res://scenes/ui/item_hud.tscn" id="12"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -526,8 +527,11 @@ offset_bottom = 80.0
 theme_override_colors/font_color = Color(0.65, 0.68, 0.67, 1)
 text = "LMB  SHOOT
 R  RELOAD
-E  INTERACT"
+E  INTERACT
+1-4  USE TOOL"
 horizontal_alignment = 2
+
+[node name="ItemHUD" parent="HUD" instance=ExtResource("12")]
 
 [node name="RestToast" type="Label" parent="HUD" unique_id=1339528701]
 unique_name_in_owner = true

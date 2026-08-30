@@ -2,6 +2,8 @@ extends Node3D
 
 @onready var player: FpsPlayer = $TravelPath/VanFollow/VanRig/Player
 @onready var weapon: GunController = $TravelPath/VanFollow/VanRig/Player/Head/Camera3D/Weapon
+@onready var usables: UsablesController = $TravelPath/VanFollow/VanRig/Player/Usables
+@onready var item_hud: Control = $HUD/ItemHUD
 @onready var prompt_label: Label = %InteractionPrompt
 @onready var phase_label: Label = %PhaseLabel
 @onready var wave_label: Label = %WaveLabel
@@ -34,6 +36,9 @@ func _ready() -> void:
 	_on_wave_changed(GameSession.wave_count)
 	_on_phase_changed(GameSession.phase)
 	_on_ammo_changed(weapon.get_current_ammo(), weapon.get_mag_size())
+	item_hud.bind(usables)
+	usables.item_acquired.connect(_on_item_acquired)
+	usables.usable_activated.connect(_on_usable_activated)
 
 
 func _on_prompt_changed(text: String) -> void:
@@ -114,6 +119,28 @@ func _show_message(text: String) -> void:
 	message_label.show()
 	await get_tree().create_timer(2.5).timeout
 	message_label.hide()
+
+
+func _on_item_acquired(item: ItemDefinition, charges: int, slot_index: int) -> void:
+	if not item:
+		return
+	if item.kind == ItemDefinition.ItemKind.BOON:
+		_show_message("BOON  %s" % item.display_name.to_upper())
+	elif item.is_usable() and slot_index >= 0:
+		_show_message("TOOL  %s  x%d  —  PRESS %d" % [
+			item.display_name.to_upper(),
+			charges,
+			slot_index + 1,
+		])
+
+
+func _on_usable_activated(item: ItemDefinition, success: bool) -> void:
+	if not item:
+		return
+	if success:
+		_show_message("USED  %s" % item.display_name.to_upper())
+	else:
+		_show_message("%s  NOT READY" % item.display_name.to_upper())
 
 
 func _on_left_route_pressed() -> void:

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/items/effects/gun_stat_modifier_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="4"]
+[ext_resource type="Texture2D" path="res://scenes/items/chew_tobacco.svg" id="5"]
+
+[sub_resource type="Resource" id="Resource_chew_modifier"]
+script = ExtResource("4")
+stat_name = &"damage_per_shot"
+value = 2.0
+id = &"chew_tobacco"
+
+[sub_resource type="Resource" id="Resource_chew_effect"]
+script = ExtResource("3")
+modifier = SubResource("Resource_chew_modifier")
+
+[resource]
+script = ExtResource("1")
+id = &"chew_tobacco"
+display_name = "Chew Tobacco"
+description = "Permanent grit. +2 damage per shot for the rest of the run."
+icon = ExtResource("5")
+kind = 1
+effects = Array[ExtResource("2")]([SubResource("Resource_chew_effect")])

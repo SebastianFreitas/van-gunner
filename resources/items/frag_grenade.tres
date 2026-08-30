@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/items/item_usable_config.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/items/effects/throw_grenade_effect.gd" id="4"]
+[ext_resource type="Texture2D" path="res://scenes/items/grenade.svg" id="5"]
+
+[sub_resource type="Resource" id="Resource_grenade_usable"]
+script = ExtResource("3")
+is_consumed_on_use = true
+max_charges = 3
+
+[sub_resource type="Resource" id="Resource_grenade_effect"]
+script = ExtResource("4")
+
+[resource]
+script = ExtResource("1")
+id = &"frag_grenade"
+display_name = "Frag Grenade"
+description = "A stack of road-grade frags. Shoot to stash, then press 1-4 to throw."
+icon = ExtResource("5")
+kind = 2
+usable = SubResource("Resource_grenade_usable")
+effects = Array[ExtResource("2")]([SubResource("Resource_grenade_effect")])

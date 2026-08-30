@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/items/effects/heal_effect.gd" id="3"]
+[ext_resource type="Texture2D" path="res://scenes/items/road_lighter.svg" id="4"]
+
+[sub_resource type="Resource" id="Resource_lighter_heal"]
+script = ExtResource("3")
+heal_percent = 0.1
+
+[resource]
+script = ExtResource("1")
+id = &"road_lighter"
+display_name = "Road Lighter"
+description = "Warm your hands and patch the van. Restores 10% hull on pickup."
+icon = ExtResource("4")
+effects = Array[ExtResource("2")]([SubResource("Resource_lighter_heal")])
