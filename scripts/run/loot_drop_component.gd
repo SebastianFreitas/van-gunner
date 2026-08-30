@@ -15,32 +15,34 @@ extends Node
 @export var loot_pool: LootPool
 ## Chance [0, 1] that an item drop is attempted at all when spawn_drops() runs.
 @export_range(0.0, 1.0, 0.01) var item_drop_chance := 1.0
-@export var item_pickup_scene: PackedScene
+@export var pickup_scene: PackedScene
 
 ## Independent roll for a coin drop; items and coins can both land on the
 ## same kill.
 @export_range(0.0, 1.0, 0.01) var coin_drop_chance := 0.0
-@export var coin_pickup_scene: PackedScene
+@export var coin_item: ItemDefinition
 @export var coin_amount_min := 1
 @export var coin_amount_max := 3
 
 ## Random horizontal offset so simultaneous drops don't perfectly overlap.
-@export var scatter_radius := 0.35
+@export var scatter_radius := 0.55
 
 
 func spawn_drops(world_position: Vector3, container: Node) -> void:
 	if not is_instance_valid(container):
 		return
-	if loot_pool and item_pickup_scene and randf() <= item_drop_chance:
-		var item := loot_pool.pick_item()
-		if item:
-			_spawn_item(item, world_position, container)
-	if coin_pickup_scene and randf() <= coin_drop_chance:
-		_spawn_coins(world_position, container)
+	var item_spawned := false
+	if loot_pool and pickup_scene and randf() <= item_drop_chance:
+		var rolled_item := loot_pool.pick_item()
+		if rolled_item:
+			_spawn_item(rolled_item, world_position, container)
+			item_spawned = true
+	if coin_item and pickup_scene and randf() <= coin_drop_chance:
+		_spawn_coins(world_position, container, item_spawned)
 
 
 func _spawn_item(item: ItemDefinition, world_position: Vector3, container: Node) -> void:
-	var pickup := item_pickup_scene.instantiate() as ItemPickup
+	var pickup := pickup_scene.instantiate() as Pickup
 	if not pickup:
 		return
 	pickup.item = item
@@ -48,13 +50,24 @@ func _spawn_item(item: ItemDefinition, world_position: Vector3, container: Node)
 	pickup.global_position = world_position + _scatter_offset()
 
 
-func _spawn_coins(world_position: Vector3, container: Node) -> void:
-	var pickup := coin_pickup_scene.instantiate() as CoinPickup
+func _spawn_coins(world_position: Vector3, container: Node, offset_from_item: bool) -> void:
+	var pickup := pickup_scene.instantiate() as Pickup
 	if not pickup:
 		return
-	pickup.amount = randi_range(coin_amount_min, coin_amount_max)
+	var instanced_coin := coin_item.duplicate() as ItemDefinition
+	var new_effects: Array[ItemEffect] = []
+	for effect in instanced_coin.effects:
+		if effect is GrantCoinEffect:
+			var duplicated_effect = effect.duplicate() as GrantCoinEffect
+			duplicated_effect.amount = randi_range(coin_amount_min, coin_amount_max)
+			new_effects.append(duplicated_effect)
+		else:
+			new_effects.append(effect)
+	instanced_coin.effects = new_effects
+	pickup.item = instanced_coin
 	container.add_child(pickup)
-	pickup.global_position = world_position + _scatter_offset()
+	var extra := Vector3(0.45, 0.0, 0.0) if offset_from_item else Vector3.ZERO
+	pickup.global_position = world_position + _scatter_offset() + extra
 
 
 func _scatter_offset() -> Vector3:

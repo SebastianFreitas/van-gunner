@@ -14,6 +14,8 @@ var is_defeated := false
 
 @onready var sprite: Sprite3D = $Sprite3D
 @onready var hitbox: Area3D = $Hitbox
+@onready var loot_drop: LootDropComponent = get_node_or_null("LootDrop")
+@onready var status_effects: StatusEffectController = $StatusEffects
 
 
 func activate() -> void:
@@ -32,14 +34,40 @@ func retreat() -> void:
 	tween.tween_callback(queue_free)
 
 
-func take_damage(amount: float) -> void:
-	if amount <= 0.0 or is_defeated:
+func take_damage(amount) -> void:
+	if is_defeated:
 		return
-	health = maxf(0.0, health - amount)
+	var info: DamageInfo
+	if amount is DamageInfo:
+		info = amount
+	else:
+		info = DamageInfo.create(float(amount), DamageType.Type.NORMAL)
+	if info.amount <= 0.0:
+		return
+	var damage_amount := info.get_final_amount()
+	if info.damage_type in [DamageType.Type.POISON, DamageType.Type.FIRE]:
+		damage_amount = info.amount
+	health = maxf(0.0, health - damage_amount)
 	if is_zero_approx(health):
 		_die()
 		return
-	sprite.modulate = Color(1.0, 0.32, 0.26, 1.0)
+	_flash_hit(info.damage_type)
+
+
+func _flash_hit(damage_type: DamageType.Type) -> void:
+	var flash_color := Color(1.0, 0.32, 0.26, 1.0)
+	match damage_type:
+		DamageType.Type.POISON:
+			flash_color = Color(0.45, 0.95, 0.35, 1.0)
+		DamageType.Type.FIRE:
+			flash_color = Color(1.0, 0.45, 0.12, 1.0)
+		DamageType.Type.COLD:
+			flash_color = Color(0.55, 0.82, 1.0, 1.0)
+		DamageType.Type.LIGHTNING:
+			flash_color = Color(0.85, 0.75, 1.0, 1.0)
+		DamageType.Type.EXPLOSIVE:
+			flash_color = Color(1.0, 0.55, 0.2, 1.0)
+	sprite.modulate = flash_color
 	var tween := create_tween()
 	tween.tween_property(sprite, "modulate", Color.WHITE, 0.12)
 
@@ -48,6 +76,10 @@ func _die() -> void:
 	is_defeated = true
 	_active = false
 	hitbox.collision_layer = 0
+	if has_node("HeadHitbox"):
+		$HeadHitbox.collision_layer = 0
+	if loot_drop:
+		loot_drop.spawn_drops(global_position, get_parent())
 	defeated.emit()
 	var tween := create_tween()
 	tween.set_parallel()
@@ -58,6 +90,8 @@ func _die() -> void:
 
 func _attack_loop() -> void:
 	while _active and is_inside_tree():
-		await get_tree().create_timer(attack_interval).timeout
+		var speed_multiplier := status_effects.get_attack_speed_multiplier() if status_effects else 1.0
+		var wait_time := attack_interval / maxf(speed_multiplier, 0.2)
+		await get_tree().create_timer(wait_time).timeout
 		if _active:
 			attack_landed.emit(attack_damage)

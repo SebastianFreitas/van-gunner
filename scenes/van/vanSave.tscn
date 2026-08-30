@@ -312,6 +312,9 @@ mesh = SubResource("TableMesh")
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable" unique_id=319181811]
 shape = SubResource("TableShape")
 
+[node name="LootAnchor" type="Marker3D" parent="TravelPath/VanFollow/VanRig/Interior/Props"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -1.8)
+
 [node name="RoomZones" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1307820521]
 
 [node name="CenterRoom" type="Area3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomZones" unique_id=159180015]

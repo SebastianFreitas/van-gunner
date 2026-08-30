@@ -18,13 +18,11 @@ ambient_light_source = 3
 ambient_light_color = Color(0.24, 0.29, 0.29, 1)
 ambient_light_energy = 0.24
 fog_enabled = true
-fog_light_color = Color(0.008, 0.012, 0.011, 1)
-fog_light_energy = 1.0
-fog_density = 1.0
 fog_mode = 1
-fog_depth_begin = 10.0
-fog_depth_end = 28.0
+fog_light_color = Color(0.008, 0.012, 0.011, 1)
+fog_density = 1.0
 fog_depth_curve = 1.5
+fog_depth_end = 28.0
 
 [sub_resource type="StandardMaterial3D" id="FloorMaterial"]
 albedo_color = Color(0.105, 0.115, 0.11, 1)
@@ -320,7 +318,7 @@ shape = SubResource("PartitionShape")
 [node name="Props" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1487223170]
 
 [node name="CraftingTable" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1058055410]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.15, 0.425, -1.65)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.8012533, 0.425, -2.083648)
 collision_layer = 3
 script = ExtResource("4")
 
@@ -330,6 +328,9 @@ mesh = SubResource("TableMesh")
 
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable" unique_id=319181811]
 shape = SubResource("TableShape")
+
+[node name="LootAnchor" type="Marker3D" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1267364196]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8885281, 0.43830076, -1.8)
 
 [node name="RoomZones" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1307820521]
 
@@ -464,6 +465,29 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.66, 0.64, 1)
 text = "WAVES CLEARED  0  ·  ROUTE EVERY 10"
 
+[node name="AmmoLabel" type="Label" parent="HUD/TopLeft"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.84, 0.55, 1)
+theme_override_font_sizes/font_size = 20
+text = "AMMO  12 / 12"
+
+[node name="AmmoBar" type="ProgressBar" parent="HUD/TopLeft"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 10)
+layout_mode = 2
+max_value = 12.0
+value = 12.0
+show_percentage = false
+
+[node name="ReloadLabel" type="Label" parent="HUD/TopLeft"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.55, 0.35, 1)
+theme_override_font_sizes/font_size = 16
+text = "RELOADING..."
+
 [node name="InteractionPrompt" type="Label" parent="HUD" unique_id=808459113]
 unique_name_in_owner = true
 offset_left = 390.0
@@ -501,6 +525,7 @@ offset_right = 1250.0
 offset_bottom = 80.0
 theme_override_colors/font_color = Color(0.65, 0.68, 0.67, 1)
 text = "LMB  SHOOT
+R  RELOAD
 E  INTERACT"
 horizontal_alignment = 2
 

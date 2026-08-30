@@ -1,11 +1,19 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/run/window_raider.gd" id="1"]
 [ext_resource type="Texture2D" path="res://scenes/enemies/raider.svg" id="2"]
+[ext_resource type="Script" path="res://scripts/run/loot_drop_component.gd" id="3"]
+[ext_resource type="Resource" path="res://resources/items/pools/generic_pool.tres" id="4"]
+[ext_resource type="PackedScene" uid="uid://dm208j1vw1fbg" path="res://scenes/items/pickup.tscn" id="5"]
+[ext_resource type="Resource" uid="uid://dd8i64p2nly4r" path="res://resources/items/coin_item.tres" id="6"]
+[ext_resource type="Script" path="res://scripts/combat/status_effect_controller.gd" id="7"]
 
 [sub_resource type="CapsuleShape3D" id="HitboxShape"]
 radius = 0.45
 height = 2.25
+
+[sub_resource type="SphereShape3D" id="HeadShape"]
+radius = 0.28
 
 [node name="WindowRaider" type="Node3D"]
 script = ExtResource("1")
@@ -23,3 +31,24 @@ collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Hitbox"]
 shape = SubResource("HitboxShape")
+
+[node name="HeadHitbox" type="Area3D" parent="." groups=["head_hitbox"]]
+position = Vector3(0, 1.35, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHitbox"]
+shape = SubResource("HeadShape")
+
+[node name="StatusEffects" type="Node" parent="."]
+script = ExtResource("7")
+
+[node name="LootDrop" type="Node" parent="."]
+script = ExtResource("3")
+loot_pool = ExtResource("4")
+item_drop_chance = 0.5
+pickup_scene = ExtResource("5")
+coin_drop_chance = 0.6
+coin_item = ExtResource("6")
+coin_amount_min = 1
+coin_amount_max = 3

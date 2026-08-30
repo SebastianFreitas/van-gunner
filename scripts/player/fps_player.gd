@@ -11,7 +11,8 @@ signal shot_fired(hit: bool)
 
 @onready var head: Node3D = $Head
 @onready var interaction_ray: RayCast3D = $Head/Camera3D/InteractionRay
-@onready var weapon: HitscanWeapon = $Head/Camera3D/Weapon
+@onready var weapon: GunController = $Head/Camera3D/Weapon
+@onready var gun_stats: GunStatsController = $GunStats
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 var _current_interactable: Interactable
@@ -21,6 +22,7 @@ var _local_horizontal_velocity := Vector3.ZERO
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	add_to_group(&"player")
 	_movement_reference = get_node_or_null(movement_reference_path) as Node3D
 	if not _movement_reference:
 		_movement_reference = get_parent_node_3d()
@@ -40,6 +42,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		)
 	elif event.is_action_pressed("interact") and _current_interactable:
 		_current_interactable.interact(self)
+	elif event.is_action_pressed("reload") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		weapon.try_reload()
 	elif event.is_action_pressed("shoot") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		weapon.try_fire()
 

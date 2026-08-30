@@ -1,7 +1,9 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/fps_player.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/player/hitscan_weapon.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/combat/gun_controller.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/combat/gun_stats_controller.gd" id="3"]
+[ext_resource type="Resource" path="res://resources/combat/default_gun_stats.tres" id="4"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape"]
 radius = 0.42
@@ -32,6 +34,10 @@ position = Vector3(0, 0.95, 0)
 mesh = SubResource("CapsuleMesh")
 cast_shadow = 1
 
+[node name="GunStats" type="Node" parent="." groups=["gun_stats"]]
+script = ExtResource("3")
+base_stats = ExtResource("4")
+
 [node name="Head" type="Node3D" parent="."]
 position = Vector3(0, 1.65, 0)
 
@@ -46,6 +52,7 @@ collision_mask = 2
 [node name="Weapon" type="Node3D" parent="Head/Camera3D"]
 position = Vector3(0.34, -0.31, -0.7)
 script = ExtResource("2")
+stats_controller_path = NodePath("../../../GunStats")
 
 [node name="GunMesh" type="MeshInstance3D" parent="Head/Camera3D/Weapon"]
 mesh = SubResource("GunMesh")

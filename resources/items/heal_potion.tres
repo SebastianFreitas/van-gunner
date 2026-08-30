@@ -1,13 +1,12 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://iytrysrbdwsm"]
 
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/items/effects/heal_effect.gd" id="3"]
-[ext_resource type="Texture2D" path="res://scenes/items/heal_potion.svg" id="4"]
+[ext_resource type="Script" uid="uid://byi8ndmx1w2gf" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://bnow6ucp47dur" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" uid="uid://cgcb0ubid3wue" path="res://scripts/items/effects/heal_effect.gd" id="3"]
+[ext_resource type="Texture2D" uid="uid://cbmgbtfeki0ex" path="res://scenes/items/heal_potion.svg" id="4"]
 
 [sub_resource type="Resource" id="Resource_heal_effect"]
 script = ExtResource("3")
-heal_percent = 0.2
 
 [resource]
 script = ExtResource("1")
@@ -15,5 +14,4 @@ id = &"heal_potion"
 display_name = "Field Stimpack"
 description = "A battered medkit salvaged from the wreck. Restores 20% of the van's hull integrity."
 icon = ExtResource("4")
-pickup_radius = 0.0
 effects = Array[ExtResource("2")]([SubResource("Resource_heal_effect")])

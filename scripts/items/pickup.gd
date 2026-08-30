@@ -1,35 +1,54 @@
 class_name Pickup
 extends Area3D
 
-## Base class for anything the player can collect: shoot it, walk into it,
-## or just leave it — it gets swept up automatically at the next rest stop.
-##
-## Collecting applies whatever the pickup grants immediately (subclasses
-## override `_on_collected()`), then hands the pickup off to LootCollector,
-## which teleports it onto the crafting bench so the player can see what
-## they just got. It briefly settles there (so simultaneous pickups still
-## get their little "make room" moment) and is then consumed — it doesn't
-## sit there forever, since its effect already fired the instant it was
-## collected.
+## Shoot a pickup to send it to the van's center table. Walk into it (on the
+## ground or on the table) to actually use it. Idle pickups bob, spin, and
+## gently push/slide away from each other — Binding of Isaac style.
 
-@export var pickup_radius := 1.1
+@export var item: ItemDefinition
+
+@export var pickup_radius := 0.18
 @export var bob_height := 0.12
 @export var bob_speed := 2.4
 @export var spin_speed := 1.4
-## Safety net: if somehow never shot, walked over, or swept at a rest stop,
-## collect it anyway after this many seconds. 0 disables the safety net.
+## Safety net: stash on the bench after this many seconds if still on the ground.
 @export var lifetime := 45.0
-## Seconds it stays visible on the bench after landing before being consumed.
-@export var display_duration := 1.1
 
-var _collected := false
-var _settled := false
+@export_group("Personal Space")
+@export var personal_space_radius := 0.42
+@export var separation_speed := 4.0
+## How hard overlapping pickups shove each other (adds slide velocity).
+@export var separation_impulse := 2.8
+## How quickly slide velocity bleeds off — lower = longer slides.
+@export var slide_friction := 2.2
+
+@export_group("Animation")
+@export var spin_duration := 2.4
+@export var face_duration := 1.6
+@export var face_turn_speed := 7.0
+
+enum _AnimState { SPIN, FACE }
+
+var _stashed := false
+var _used := false
+var _collector: Node3D
 var _bob_initialized := false
 var _base_y := 0.0
 var _time := 0.0
+var _anim_state: int = _AnimState.SPIN
+var _anim_timer := 0.0
+var _slide_velocity := Vector3.ZERO
+
+@onready var sprite: Sprite3D = get_node_or_null("Sprite3D") as Sprite3D
 
 
 func _ready() -> void:
+	if item:
+		if sprite:
+			sprite.texture = item.icon
+		if item.pickup_radius > 0.0:
+			pickup_radius = item.pickup_radius
+
 	add_to_group(&"pickup")
 	_apply_pickup_radius()
 	body_entered.connect(_on_body_entered)
@@ -38,16 +57,16 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _settled:
+	if _used:
 		return
 	if not _bob_initialized:
-		# Deferred until first frame so callers can place the pickup with
-		# global_position right after instancing it without the bob fighting them.
 		_base_y = position.y
 		_bob_initialized = true
 	_time += delta
 	position.y = _base_y + sin(_time * bob_speed) * bob_height
-	rotate_y(spin_speed * delta)
+	_apply_separation(delta)
+	_apply_sliding(delta)
+	_update_animation(delta)
 
 
 func _apply_pickup_radius() -> void:
@@ -59,45 +78,158 @@ func _apply_pickup_radius() -> void:
 	shape_node.shape = sphere
 
 
-## Lets the player's weapon "collect" a pickup by shooting it, reusing the
-## same take_damage() contract enemies use — no changes to the weapon needed.
-func take_damage(_amount: float) -> void:
-	_collect(get_tree().get_first_node_in_group(&"player"))
+func _apply_separation(delta: float) -> void:
+	if personal_space_radius <= 0.0:
+		return
+	var push := Vector3.ZERO
+	var here := global_position if not _stashed else _local_horizontal_position()
+	for other in _nearby_pickups():
+		if other == self or not (other is Pickup):
+			continue
+		var other_pickup: Pickup = other
+		var other_pos := (
+			other_pickup.global_position
+			if not _stashed
+			else other_pickup._local_horizontal_position()
+		)
+		var offset := here - other_pos
+		offset.y = 0.0
+		var min_distance := personal_space_radius + _personal_space_of(other_pickup)
+		var distance := offset.length()
+		if distance < 0.001:
+			var angle := float(get_instance_id() % 360) * (TAU / 360.0)
+			push += Vector3(cos(angle), 0.0, sin(angle)) * min_distance
+		elif distance < min_distance:
+			push += offset.normalized() * (min_distance - distance)
+	if push == Vector3.ZERO:
+		return
+	if _stashed:
+		_slide_velocity += push * separation_impulse
+		_slide_velocity.y = 0.0
+	else:
+		global_position += push * separation_speed * delta
 
 
-## Triggers collection without a specific player reference on hand (e.g. a
-## rest-stop sweep by LootCollector). Safe to call even if already collected.
+func _apply_sliding(delta: float) -> void:
+	if _slide_velocity.length_squared() < 0.00001:
+		_slide_velocity = Vector3.ZERO
+		return
+	position += _slide_velocity * delta
+	_slide_velocity = _slide_velocity.lerp(Vector3.ZERO, slide_friction * delta)
+
+
+func _nearby_pickups() -> Array:
+	var results: Array = []
+	if _stashed:
+		var parent_node := get_parent()
+		if not parent_node:
+			return results
+		for child in parent_node.get_children():
+			if child is Pickup and child != self and child._stashed and not child._used:
+				results.append(child)
+	else:
+		for other in get_tree().get_nodes_in_group(&"pickup"):
+			if other is Pickup and other != self and not other._stashed and not other._used:
+				results.append(other)
+	return results
+
+
+func _local_horizontal_position() -> Vector3:
+	return Vector3(position.x, 0.0, position.z)
+
+
+func _personal_space_of(other: Pickup) -> float:
+	return other.personal_space_radius if other else personal_space_radius
+
+
+func _update_animation(delta: float) -> void:
+	if not sprite:
+		return
+	_anim_timer += delta
+	match _anim_state:
+		_AnimState.SPIN:
+			rotate_y(spin_speed * delta)
+			if _anim_timer >= spin_duration:
+				_anim_state = _AnimState.FACE
+				_anim_timer = 0.0
+		_AnimState.FACE:
+			_turn_toward_player(delta)
+			if _anim_timer >= face_duration:
+				_anim_state = _AnimState.SPIN
+				_anim_timer = 0.0
+
+
+func _turn_toward_player(delta: float) -> void:
+	var player := get_tree().get_first_node_in_group(&"player") as Node3D
+	if not player:
+		return
+	var target_pos := player.global_position
+	var head := player.get_node_or_null("Head") as Node3D
+	if head:
+		target_pos = head.global_position
+	var forward := target_pos - global_position
+	forward.y = 0.0
+	if forward.length_squared() < 0.0001:
+		return
+	var parent3d := get_parent_node_3d()
+	if parent3d:
+		forward = parent3d.global_transform.basis.orthonormalized().inverse() * forward
+	var target_quat := Basis.looking_at(forward.normalized(), Vector3.UP).get_rotation_quaternion()
+	var turn_amount := clampf(face_turn_speed * delta, 0.0, 1.0)
+	quaternion = quaternion.slerp(target_quat, turn_amount)
+
+
+func take_damage(_amount = null) -> void:
+	if _used or _stashed:
+		return
+	_stash(get_tree().get_first_node_in_group(&"player"))
+
+
 func force_collect() -> void:
-	_collect(get_tree().get_first_node_in_group(&"player"))
+	if _used or _stashed:
+		return
+	_stash(get_tree().get_first_node_in_group(&"player"))
 
 
 func _on_body_entered(body: Node3D) -> void:
 	if not body.is_in_group(&"player"):
 		return
-	_collect(body)
+	_use(body)
 
 
-func _collect(player: Node3D) -> void:
-	if _collected:
+func _stash(player: Node3D) -> void:
+	if _stashed or _used:
 		return
-	_collected = true
+	_stashed = true
+	_collector = player
 	set_deferred("monitoring", false)
-	_on_collected(player)
 	LootCollector.collect(self)
 
 
-## Override in subclasses to apply whatever the pickup grants.
-func _on_collected(_player: Node3D) -> void:
-	pass
+func _use(player: Node3D) -> void:
+	if _used:
+		return
+	_used = true
+	if not _collector:
+		_collector = player
+	set_deferred("monitoring", false)
+	LootCollector.unregister(self)
+	_on_collected(_collector)
+	_consume()
 
 
-## Called by LootCollector once this pickup has landed on the bench.
-func _on_settled() -> void:
-	_settled = true
-	if display_duration > 0.0:
-		get_tree().create_timer(display_duration).timeout.connect(_consume)
-	else:
-		_consume()
+func _on_collected(player: Node3D) -> void:
+	if item:
+		item.apply_effects(player)
+
+
+## Called by LootCollector once this pickup has landed on the center table.
+func _on_stashed(land_index: int = 0) -> void:
+	_bob_initialized = false
+	_base_y = position.y
+	var angle := land_index * 2.3999632 + float(get_instance_id() % 97) * 0.04
+	_slide_velocity = Vector3(cos(angle), 0.0, sin(angle)) * 1.4
+	set_deferred("monitoring", true)
 
 
 func _consume() -> void:
@@ -113,5 +245,5 @@ func _consume() -> void:
 
 
 func _on_lifetime_expired() -> void:
-	if not _collected:
-		_collect(null)
+	if not _stashed and not _used:
+		_stash(null)

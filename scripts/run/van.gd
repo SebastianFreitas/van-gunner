@@ -1,6 +1,7 @@
 extends Node3D
 
 @onready var player: FpsPlayer = $TravelPath/VanFollow/VanRig/Player
+@onready var weapon: GunController = $TravelPath/VanFollow/VanRig/Player/Head/Camera3D/Weapon
 @onready var prompt_label: Label = %InteractionPrompt
 @onready var phase_label: Label = %PhaseLabel
 @onready var wave_label: Label = %WaveLabel
@@ -8,6 +9,9 @@ extends Node3D
 @onready var health_label: Label = %HealthLabel
 @onready var message_label: Label = %MessageLabel
 @onready var crosshair: Label = %Crosshair
+@onready var ammo_label: Label = %AmmoLabel
+@onready var ammo_bar: ProgressBar = %AmmoBar
+@onready var reload_label: Label = %ReloadLabel
 @onready var route_panel: Control = %RouteChoice
 @onready var rest_toast: Label = %RestToast
 @onready var game_over_panel: Control = %GameOver
@@ -19,6 +23,8 @@ extends Node3D
 func _ready() -> void:
 	player.interaction_prompt_changed.connect(_on_prompt_changed)
 	player.shot_fired.connect(_on_shot_fired)
+	weapon.ammo_changed.connect(_on_ammo_changed)
+	weapon.reloading_changed.connect(_on_reloading_changed)
 	crafting_table.inspected.connect(_show_message)
 	GameSession.phase_changed.connect(_on_phase_changed)
 	GameSession.van_health_changed.connect(_on_health_changed)
@@ -27,6 +33,7 @@ func _ready() -> void:
 	_on_health_changed(GameSession.van_health, GameSession.MAX_VAN_HEALTH)
 	_on_wave_changed(GameSession.wave_count)
 	_on_phase_changed(GameSession.phase)
+	_on_ammo_changed(weapon.get_current_ammo(), weapon.get_mag_size())
 
 
 func _on_prompt_changed(text: String) -> void:
@@ -37,6 +44,22 @@ func _on_shot_fired(hit: bool) -> void:
 	crosshair.modulate = Color("#e7c45b") if hit else Color("#d86a4d")
 	await get_tree().create_timer(0.09).timeout
 	crosshair.modulate = Color.WHITE
+
+
+func _on_ammo_changed(current: int, max_ammo: int) -> void:
+	ammo_label.text = "AMMO  %d / %d" % [current, max_ammo]
+	ammo_bar.max_value = max_ammo
+	ammo_bar.value = current
+	var low_ammo := current <= maxi(1, max_ammo / 4)
+	ammo_label.modulate = Color("#f0a84a") if low_ammo else Color("#e8d68c")
+
+
+func _on_reloading_changed(is_reloading: bool) -> void:
+	reload_label.visible = is_reloading
+	if is_reloading:
+		ammo_label.modulate = Color("#c8c8c8")
+	else:
+		_on_ammo_changed(weapon.get_current_ammo(), weapon.get_mag_size())
 
 
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
