@@ -54,7 +54,7 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 	van_health = clampf(float(data.get("van_health", MAX_VAN_HEALTH)), 0.0, MAX_VAN_HEALTH)
 	coins = maxi(0, int(data.get("coins", 0)))
 	var stored_phase := int(data.get("phase", RunPhase.IDLE))
-	phase = stored_phase if stored_phase in RunPhase.values() else RunPhase.IDLE
+	phase = (stored_phase as RunPhase) if stored_phase in RunPhase.values() else RunPhase.IDLE
 	if phase in [RunPhase.COMBAT, RunPhase.ROUTE_CHOICE, RunPhase.REST, RunPhase.TURNING]:
 		phase = RunPhase.TRAVELLING
 	van_health_changed.emit(van_health, MAX_VAN_HEALTH)

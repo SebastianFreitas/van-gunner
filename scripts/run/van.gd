@@ -55,7 +55,7 @@ func _on_ammo_changed(current: int, max_ammo: int) -> void:
 	ammo_label.text = "AMMO  %d / %d" % [current, max_ammo]
 	ammo_bar.max_value = max_ammo
 	ammo_bar.value = current
-	var low_ammo := current <= maxi(1, max_ammo / 4)
+	var low_ammo := current <= maxi(1, floori(max_ammo * 0.25))
 	ammo_label.modulate = Color("#f0a84a") if low_ammo else Color("#e8d68c")
 
 

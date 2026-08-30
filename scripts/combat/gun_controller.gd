@@ -52,29 +52,24 @@ func try_fire() -> void:
 	_current_ammo -= 1
 	_next_shot_time = now + roundi(1000.0 / stats.fire_rate)
 	_play_feedback()
-	ammo_changed.emit(_current_ammo, roundi(stats.mag_size))
+	ammo_changed.emit(_current_ammo, stats.mag_size)
 	if _current_ammo <= 0:
 		_start_reload()
 
 
 func _track_projectile_feedback(projectile: Projectile) -> void:
-	var reported := false
-	projectile.hit_target.connect(func(_target: Node) -> void:
-		if reported:
-			return
-		reported = true
-		fired.emit(true)
+	projectile.hit_target.connect(
+		func(_target: Node) -> void: fired.emit(true),
+		CONNECT_ONE_SHOT
 	)
 	projectile.tree_exited.connect(func() -> void:
-		if reported:
-			return
-		reported = true
-		fired.emit(false)
+		if not projectile.has_hit():
+			fired.emit(false)
 	)
 
 
 func try_reload() -> void:
-	if _is_reloading or _current_ammo >= roundi(_get_stats().mag_size):
+	if _is_reloading or _current_ammo >= _get_stats().mag_size:
 		return
 	_start_reload()
 
@@ -84,7 +79,7 @@ func get_current_ammo() -> int:
 
 
 func get_mag_size() -> int:
-	return roundi(_get_stats().mag_size)
+	return _get_stats().mag_size
 
 
 func is_reloading() -> bool:
@@ -125,16 +120,7 @@ func _spawn_projectile(origin: Vector3, direction: Vector3, stats: GunStats) -> 
 		spawn_parent = get_tree().root
 	spawn_parent.add_child(projectile)
 	projectile.global_position = origin
-	projectile.setup(
-		direction,
-		stats.bullet_speed,
-		stats.bullet_weight,
-		stats.bullet_size,
-		info,
-		shooter,
-		stats.aim_range,
-		stats.explosion_radius
-	)
+	projectile.setup(direction, stats, info, shooter)
 	return projectile
 
 
@@ -142,7 +128,7 @@ func _start_reload() -> void:
 	if _is_reloading:
 		return
 	var stats := _get_stats()
-	if _current_ammo >= roundi(stats.mag_size):
+	if _current_ammo >= stats.mag_size:
 		return
 	_is_reloading = true
 	reloading_changed.emit(true)
@@ -155,16 +141,14 @@ func _start_reload() -> void:
 
 
 func _refill_magazine() -> void:
-	var stats := _get_stats()
-	_current_ammo = roundi(stats.mag_size)
+	_current_ammo = _get_stats().mag_size
 	ammo_changed.emit(_current_ammo, _current_ammo)
 
 
 func _on_stats_changed() -> void:
 	var stats := _get_stats()
-	if _current_ammo > roundi(stats.mag_size):
-		_current_ammo = roundi(stats.mag_size)
-	ammo_changed.emit(_current_ammo, roundi(stats.mag_size))
+	_current_ammo = mini(_current_ammo, stats.mag_size)
+	ammo_changed.emit(_current_ammo, stats.mag_size)
 
 
 func _play_feedback() -> void:

@@ -74,7 +74,8 @@ func _landing_offset(index: int) -> Vector3:
 
 
 func _pop_in(pickup: Node3D) -> void:
-	pickup.scale = Vector3.ZERO
+	# Not Vector3.ZERO: a zero scale is a singular basis and Jolt rejects the transform.
+	pickup.scale = Vector3.ONE * 0.01
 	var tween := pickup.create_tween()
 	tween.tween_property(pickup, "scale", Vector3.ONE, POP_IN_DURATION).set_trans(
 		Tween.TRANS_BACK

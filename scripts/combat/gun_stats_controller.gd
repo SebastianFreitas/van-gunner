@@ -39,9 +39,12 @@ func _rebuild() -> void:
 	stats.bullet_weight = maxf(stats.bullet_weight, 0.0)
 	stats.bullet_size = maxf(stats.bullet_size, 0.01)
 	stats.reload_speed = maxf(stats.reload_speed, 0.1)
-	stats.mag_size = maxi(roundi(stats.mag_size), 1)
+	stats.mag_size = maxi(stats.mag_size, 1)
 	stats.aim_range = maxf(stats.aim_range, 1.0)
 	stats.explosion_radius = maxf(stats.explosion_radius, 0.1)
+	stats.max_bounces = maxi(stats.max_bounces, 0)
+	stats.bounce_speed_retention = clampf(stats.bounce_speed_retention, 0.05, 1.0)
+	stats.bounce_damage_retention = clampf(stats.bounce_damage_retention, 0.0, 1.0)
 	_effective_stats = stats
 	stats_changed.emit()
 
@@ -61,11 +64,17 @@ func _apply_modifier(stats: GunStats, modifier: StatModifier) -> void:
 		&"reload_speed":
 			stats.reload_speed = _modify_value(stats.reload_speed, modifier)
 		&"mag_size":
-			stats.mag_size = _modify_value(stats.mag_size, modifier)
+			stats.mag_size = roundi(_modify_value(float(stats.mag_size), modifier))
 		&"aim_range":
 			stats.aim_range = _modify_value(stats.aim_range, modifier)
 		&"explosion_radius":
 			stats.explosion_radius = _modify_value(stats.explosion_radius, modifier)
+		&"max_bounces":
+			stats.max_bounces = roundi(_modify_value(float(stats.max_bounces), modifier))
+		&"bounce_speed_retention":
+			stats.bounce_speed_retention = _modify_value(stats.bounce_speed_retention, modifier)
+		&"bounce_damage_retention":
+			stats.bounce_damage_retention = _modify_value(stats.bounce_damage_retention, modifier)
 
 
 func _modify_value(current: float, modifier: StatModifier) -> float:

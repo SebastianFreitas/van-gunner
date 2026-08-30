@@ -12,6 +12,14 @@ extends Resource
 @export var damage_type: DamageType.Type = DamageType.Type.NORMAL
 @export var explosion_radius := 1.8
 
+@export_group("Ricochet")
+## How many times a bullet may bounce off world geometry before it dies.
+@export var max_bounces := 0
+## Share of speed a bullet keeps after each bounce.
+@export_range(0.05, 1.0, 0.01) var bounce_speed_retention := 0.6
+## Share of damage a bullet keeps after each bounce.
+@export_range(0.0, 1.0, 0.01) var bounce_damage_retention := 0.8
+
 
 func duplicate_stats() -> GunStats:
 	var copy := GunStats.new()
@@ -25,4 +33,7 @@ func duplicate_stats() -> GunStats:
 	copy.aim_range = aim_range
 	copy.damage_type = damage_type
 	copy.explosion_radius = explosion_radius
+	copy.max_bounces = max_bounces
+	copy.bounce_speed_retention = bounce_speed_retention
+	copy.bounce_damage_retention = bounce_damage_retention
 	return copy

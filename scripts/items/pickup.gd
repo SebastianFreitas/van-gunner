@@ -174,9 +174,11 @@ func _turn_toward_player(delta: float) -> void:
 	var parent3d := get_parent_node_3d()
 	if parent3d:
 		forward = parent3d.global_transform.basis.orthonormalized().inverse() * forward
-	var target_quat := Basis.looking_at(forward.normalized(), Vector3.UP).get_rotation_quaternion()
+	# Yaw-only turning: reading `quaternion` would fail while the pop-in tween
+	# still has the pickup scaled down to a near-degenerate basis.
+	var target_yaw := atan2(-forward.x, -forward.z)
 	var turn_amount := clampf(face_turn_speed * delta, 0.0, 1.0)
-	quaternion = quaternion.slerp(target_quat, turn_amount)
+	rotation.y = lerp_angle(rotation.y, target_yaw, turn_amount)
 
 
 func take_damage(_amount = null) -> void:
@@ -246,11 +248,13 @@ func _auto_equip_usable() -> void:
 func _consume() -> void:
 	if not is_inside_tree():
 		return
+	set_deferred("monitorable", false)
 	var tween := create_tween()
 	tween.set_parallel()
-	tween.tween_property(self, "scale", Vector3.ZERO, 0.25).set_trans(Tween.TRANS_BACK).set_ease(
-		Tween.EASE_IN
-	)
+	# Never reaches exactly zero — a zero scale is a singular basis and Jolt rejects it.
+	tween.tween_property(self, "scale", Vector3.ONE * 0.01, 0.25).set_trans(
+		Tween.TRANS_BACK
+	).set_ease(Tween.EASE_IN)
 	tween.tween_property(self, "position:y", position.y + 0.25, 0.25)
 	tween.chain().tween_callback(queue_free)
 

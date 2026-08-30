@@ -10,14 +10,14 @@ var explosion_radius := 1.8
 
 
 static func create(
-	amount: float,
+	initial_amount: float,
 	type: DamageType.Type = DamageType.Type.NORMAL,
-	source: Node3D = null
+	from: Node3D = null
 ) -> DamageInfo:
 	var info := DamageInfo.new()
-	info.amount = amount
+	info.amount = initial_amount
 	info.damage_type = type
-	info.source = source
+	info.source = from
 	return info
 
 

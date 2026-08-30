@@ -14,3 +14,6 @@ mag_size = 12
 aim_range = 80.0
 damage_type = 0
 explosion_radius = 1.8
+max_bounces = 1
+bounce_speed_retention = 0.6
+bounce_damage_retention = 0.8

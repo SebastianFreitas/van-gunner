@@ -2,7 +2,7 @@ class_name DamageResolver
 extends RefCounted
 
 const ENEMY_MASK := 4
-const WORLD_MASK := 8
+const WORLD_MASK := 1
 
 
 static func find_damageable(node: Node) -> Node:

@@ -2,6 +2,13 @@ class_name Projectile
 extends Area3D
 
 signal hit_target(target: Node)
+signal ricocheted(position: Vector3, normal: Vector3)
+
+## Distance the bullet is pushed off a surface after a bounce so the next sweep
+## does not immediately re-hit the wall it just left.
+const SURFACE_OFFSET := 0.03
+## Below this a ricochet has lost so much energy it is not worth keeping alive.
+const MIN_BOUNCE_SPEED := 4.0
 
 var velocity := Vector3.ZERO
 var gravity_scale := 1.0
@@ -9,10 +16,15 @@ var damage_info: DamageInfo
 var owner_rid: RID
 var max_distance := 80.0
 var explosion_radius := 1.8
+var bounce_speed_retention := 0.6
+var bounce_damage_retention := 0.8
 
-var _spawn_position := Vector3.ZERO
+var _bounces_left := 0
+var _distance_travelled := 0.0
 var _has_hit := false
 var _collision_mask := 7
+var _radius := 0.045
+var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 
 @onready var _bullet_mesh: MeshInstance3D = $BulletMesh
 @onready var _trail: CPUParticles3D = $Trail
@@ -21,29 +33,30 @@ var _collision_mask := 7
 
 func setup(
 	direction: Vector3,
-	speed: float,
-	weight: float,
-	size: float,
+	stats: GunStats,
 	info: DamageInfo,
-	shooter: CollisionObject3D,
-	range_limit: float,
-	blast_radius: float
+	shooter: CollisionObject3D
 ) -> void:
-	velocity = direction.normalized() * speed
-	gravity_scale = weight
+	velocity = direction.normalized() * stats.bullet_speed
+	gravity_scale = stats.bullet_weight
 	damage_info = info
 	if shooter:
 		owner_rid = shooter.get_rid()
-	max_distance = range_limit
-	explosion_radius = blast_radius
-	_spawn_position = global_position
-	_apply_size(size)
-	var trail_line := get_node_or_null("TrailLine")
-	if trail_line and trail_line.has_method("add_point"):
-		trail_line.add_point(global_position)
+	max_distance = stats.aim_range
+	explosion_radius = stats.explosion_radius
+	_bounces_left = stats.max_bounces
+	bounce_speed_retention = stats.bounce_speed_retention
+	bounce_damage_retention = stats.bounce_damage_retention
+	_distance_travelled = 0.0
+	_apply_size(stats.bullet_size)
+	_update_trail()
 	if _trail:
 		_trail.emitting = true
 		_trail.direction = -direction.normalized()
+
+
+func has_hit() -> bool:
+	return _has_hit
 
 
 func _ready() -> void:
@@ -57,23 +70,29 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var from := global_position
-	velocity.y -= ProjectSettings.get_setting("physics/3d/default_gravity", 9.8) * gravity_scale * delta
-	var motion := velocity * delta
-	var to := from + motion
+	velocity.y -= _gravity * gravity_scale * delta
+	var to := from + velocity * delta
 
 	var hit := _sweep_for_hit(from, to)
-	if hit:
-		global_position = hit.position
+	if hit.is_empty():
+		_distance_travelled += from.distance_to(to)
+		global_position = to
 		_update_trail()
-		_resolve_hit(hit.collider)
+		_orient_to_velocity()
+		if _distance_travelled >= max_distance:
+			queue_free()
 		return
 
-	global_position = to
-	_update_trail()
-	_orient_to_velocity()
+	var contact := hit.position as Vector3
+	_distance_travelled += from.distance_to(contact)
+	var collider := hit.collider as Node
+	if _can_ricochet_off(collider):
+		_ricochet(contact, hit.normal as Vector3)
+		return
 
-	if global_position.distance_to(_spawn_position) >= max_distance:
-		queue_free()
+	global_position = contact
+	_update_trail()
+	_resolve_hit(collider)
 
 
 func _sweep_for_hit(from: Vector3, to: Vector3) -> Dictionary:
@@ -89,6 +108,29 @@ func _sweep_for_hit(from: Vector3, to: Vector3) -> Dictionary:
 	return result
 
 
+## Bullets only bounce off scenery. Anything that can take damage eats the shot.
+func _can_ricochet_off(collider: Node) -> bool:
+	if _bounces_left <= 0 or collider == null:
+		return false
+	return DamageResolver.find_damageable(collider) == null
+
+
+func _ricochet(point: Vector3, normal: Vector3) -> void:
+	_bounces_left -= 1
+	velocity = velocity.bounce(normal) * bounce_speed_retention
+	global_position = point + normal * (_radius + SURFACE_OFFSET)
+	if damage_info:
+		damage_info.amount *= bounce_damage_retention
+	_update_trail()
+	ricocheted.emit(global_position, normal)
+	if velocity.length() < MIN_BOUNCE_SPEED or _distance_travelled >= max_distance:
+		queue_free()
+		return
+	_orient_to_velocity()
+	if _trail:
+		_trail.direction = -velocity.normalized()
+
+
 func _update_trail() -> void:
 	if _trail_line and _trail_line.has_method("add_point"):
 		_trail_line.call("add_point", global_position)
@@ -97,10 +139,15 @@ func _update_trail() -> void:
 func _orient_to_velocity() -> void:
 	if velocity.length_squared() < 0.001:
 		return
-	look_at(global_position + velocity.normalized(), Vector3.UP)
+	var forward := velocity.normalized()
+	# A ricochet can send the bullet straight up or down, which would make
+	# look_at() fail against the default up vector.
+	var up := Vector3.UP if absf(forward.dot(Vector3.UP)) < 0.99 else Vector3.FORWARD
+	look_at(global_position + forward, up)
 
 
 func _apply_size(size: float) -> void:
+	_radius = size
 	var shape_node := get_node_or_null("CollisionShape3D") as CollisionShape3D
 	if shape_node:
 		var sphere := SphereShape3D.new()
@@ -113,10 +160,14 @@ func _apply_size(size: float) -> void:
 
 
 func _on_body_entered(body: Node3D) -> void:
+	if _can_ricochet_off(body):
+		return
 	_resolve_hit(body)
 
 
 func _on_area_entered(area: Area3D) -> void:
+	if _can_ricochet_off(area):
+		return
 	_resolve_hit(area)
 
 
@@ -126,8 +177,8 @@ func _resolve_hit(collider: Node) -> void:
 	if collider is CollisionObject3D and (collider as CollisionObject3D).get_rid() == owner_rid:
 		return
 	_has_hit = true
-	monitoring = false
-	monitorable = false
+	set_deferred("monitoring", false)
+	set_deferred("monitorable", false)
 	if _trail:
 		_trail.emitting = false
 	if damage_info:
