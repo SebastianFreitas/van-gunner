@@ -14,12 +14,14 @@ var is_defeated := false
 
 @onready var sprite: Sprite3D = $Sprite3D
 @onready var hitbox: Area3D = $Hitbox
+@onready var health_bar: EnemyHealthBar = $EnemyHealthBar
 @onready var loot_drop: LootDropComponent = get_node_or_null("LootDrop")
 @onready var status_effects: StatusEffectController = $StatusEffects
 
 
 func _ready() -> void:
 	add_to_group(&"enemy")
+	health = max_health
 
 
 func activate() -> void:
@@ -52,6 +54,11 @@ func take_damage(amount) -> void:
 	if info.damage_type in [DamageType.Type.POISON, DamageType.Type.FIRE]:
 		damage_amount = info.amount
 	health = maxf(0.0, health - damage_amount)
+	health_bar.update_ratio(health / max_health)
+	var popup_pos := info.hit_position
+	if popup_pos == Vector3.ZERO:
+		popup_pos = global_position + Vector3(0, 1.35, 0)
+	CombatFeedback.show_damage(popup_pos, damage_amount, info.is_headshot, info.damage_type)
 	if is_zero_approx(health):
 		_die()
 		return
@@ -79,6 +86,7 @@ func _flash_hit(damage_type: DamageType.Type) -> void:
 func _die() -> void:
 	is_defeated = true
 	_active = false
+	health_bar.visible = false
 	hitbox.collision_layer = 0
 	if has_node("HeadHitbox"):
 		$HeadHitbox.collision_layer = 0

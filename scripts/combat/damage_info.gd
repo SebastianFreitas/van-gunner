@@ -23,8 +23,11 @@ static func create(
 
 func get_final_amount() -> float:
 	var final_amount := amount
-	if damage_type == DamageType.Type.LIGHTNING and is_headshot:
-		final_amount *= 2.5
+	if is_headshot:
+		if damage_type == DamageType.Type.LIGHTNING:
+			final_amount *= 2.5
+		else:
+			final_amount *= 2.0
 	return final_amount
 
 

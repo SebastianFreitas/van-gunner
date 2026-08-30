@@ -149,7 +149,7 @@ func _explode() -> void:
 		var falloff := 1.0 - clampf(distance / _explosion_radius, 0.0, 1.0)
 		var blast := info.duplicate_info()
 		blast.amount = _explosion_damage * falloff
-		blast.hit_position = center
+		blast.hit_position = enemy.global_position + Vector3(0, 1.2, 0)
 		blast.explosion_radius = _explosion_radius
 		enemy.take_damage(blast)
 	_spawn_blast_fx(center)

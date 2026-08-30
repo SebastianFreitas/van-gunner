@@ -182,8 +182,8 @@ func _resolve_hit(collider: Node) -> void:
 	if _trail:
 		_trail.emitting = false
 	if damage_info:
-		damage_info.is_headshot = DamageResolver.is_headshot(collider)
 		damage_info.hit_position = global_position
+		damage_info.is_headshot = DamageResolver.is_headshot(collider, damage_info.hit_position)
 		damage_info.explosion_radius = explosion_radius
 		DamageResolver.apply_hit(damage_info, collider)
 		DamageResolver.apply_status_from_hit(damage_info, collider)

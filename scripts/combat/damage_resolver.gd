@@ -14,10 +14,18 @@ static func find_damageable(node: Node) -> Node:
 	return null
 
 
-static func is_headshot(collider: Node) -> bool:
+static func is_headshot(collider: Node, hit_position: Vector3 = Vector3.ZERO) -> bool:
 	if collider.is_in_group(&"head_hitbox"):
 		return true
-	return collider.has_meta(&"headshot") and collider.get_meta(&"headshot")
+	if collider.has_meta(&"headshot") and collider.get_meta(&"headshot"):
+		return true
+	if hit_position == Vector3.ZERO:
+		return false
+	var damageable := find_damageable(collider)
+	if damageable is Node3D:
+		var local_y := (damageable as Node3D).to_local(hit_position).y
+		return local_y >= 1.05
+	return false
 
 
 static func apply_hit(info: DamageInfo, target: Node) -> void:
@@ -52,7 +60,10 @@ static func apply_explosion(
 			continue
 		var splash := info.duplicate_info()
 		splash.amount *= 0.55
-		splash.hit_position = center
+		if damageable is Node3D:
+			splash.hit_position = (damageable as Node3D).global_position + Vector3(0, 1.2, 0)
+		else:
+			splash.hit_position = center
 		damageable.take_damage(splash)
 
 

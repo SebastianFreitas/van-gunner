@@ -58,9 +58,12 @@ func _tick_poison(delta: float) -> void:
 	if _poison_tick_timer >= poison_tick_interval:
 		_poison_tick_timer = 0.0
 		if _owner and _owner.has_method("take_damage"):
-			_owner.take_damage(
-				DamageInfo.create(_poison_dps * poison_tick_interval, DamageType.Type.POISON)
+			var info := DamageInfo.create(
+				_poison_dps * poison_tick_interval,
+				DamageType.Type.POISON
 			)
+			info.hit_position = _owner.global_position + Vector3(0, 1.2, 0)
+			_owner.take_damage(info)
 	if _poison_time_left <= 0.0:
 		_poison_dps = 0.0
 
@@ -75,9 +78,12 @@ func _tick_fire(delta: float) -> void:
 	if _fire_tick_timer >= fire_tick_interval:
 		_fire_tick_timer = 0.0
 		if _owner and _owner.has_method("take_damage"):
-			_owner.take_damage(
-				DamageInfo.create(_fire_dps * fire_tick_interval, DamageType.Type.FIRE)
+			var info := DamageInfo.create(
+				_fire_dps * fire_tick_interval,
+				DamageType.Type.FIRE
 			)
+			info.hit_position = _owner.global_position + Vector3(0, 1.2, 0)
+			_owner.take_damage(info)
 		_try_spread_fire()
 	if _fire_time_left <= 0.0:
 		_fire_dps = 0.0
