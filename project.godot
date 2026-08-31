@@ -21,6 +21,7 @@ SceneRouter="*res://scripts/core/scene_router.gd"
 SaveManager="*res://scripts/core/save_manager.gd"
 GameSession="*res://scripts/core/game_session.gd"
 LootCollector="*res://scripts/core/loot_collector.gd"
+ProjectilePool="*res://scripts/combat/projectile_pool.gd"
 CombatFeedback="*res://scripts/ui/combat_feedback.gd"
 DebugCommands="*res://scripts/debug/debug_commands.gd"
 

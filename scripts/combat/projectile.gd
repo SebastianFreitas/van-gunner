@@ -3,12 +3,14 @@ extends Area3D
 
 signal hit_target(target: Node)
 signal ricocheted(position: Vector3, normal: Vector3)
+signal despawned(was_hit: bool)
 
 ## Distance the bullet is pushed off a surface after a bounce so the next sweep
 ## does not immediately re-hit the wall it just left.
 const SURFACE_OFFSET := 0.03
 ## Below this a ricochet has lost so much energy it is not worth keeping alive.
 const MIN_BOUNCE_SPEED := 4.0
+const TRAIL_FADE_SECONDS := 0.45
 
 var velocity := Vector3.ZERO
 var gravity_scale := 1.0
@@ -23,13 +25,14 @@ var _bounces_left := 0
 var _bounce_count := 0
 var _distance_travelled := 0.0
 var _has_hit := false
+var _despawning := false
 var _collision_mask := 7
 var _radius := 0.045
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 
-@onready var _bullet_mesh: MeshInstance3D = $BulletMesh
-@onready var _trail: CPUParticles3D = $Trail
-@onready var _trail_line: MeshInstance3D = $TrailLine
+var _bullet_mesh: MeshInstance3D
+var _trail: CPUParticles3D
+var _trail_line: MeshInstance3D
 
 
 func setup(
@@ -38,9 +41,14 @@ func setup(
 	info: DamageInfo,
 	shooter: CollisionObject3D
 ) -> void:
+	_despawning = false
+	_has_hit = false
+	_bounce_count = 0
+	_distance_travelled = 0.0
 	velocity = direction.normalized() * stats.bullet_speed
 	gravity_scale = stats.bullet_weight
 	damage_info = info
+	owner_rid = RID()
 	if shooter:
 		owner_rid = shooter.get_rid()
 	max_distance = stats.aim_range
@@ -48,12 +56,37 @@ func setup(
 	_bounces_left = stats.max_bounces
 	bounce_speed_retention = stats.bounce_speed_retention
 	bounce_damage_retention = stats.bounce_damage_retention
-	_distance_travelled = 0.0
+	_collision_mask = collision_mask
+	_ensure_trail_visuals()
 	_apply_size(stats.bullet_size)
 	_update_trail()
 	if _trail:
 		_trail.emitting = true
 		_trail.direction = -direction.normalized()
+	if _bullet_mesh:
+		_bullet_mesh.show()
+	monitoring = true
+	monitorable = false
+	show()
+
+
+func reset_for_pool() -> void:
+	_despawning = false
+	_has_hit = false
+	_bounce_count = 0
+	_distance_travelled = 0.0
+	velocity = Vector3.ZERO
+	damage_info = null
+	owner_rid = RID()
+	monitoring = false
+	monitorable = false
+	if _trail:
+		_trail.emitting = false
+	if _trail_line and _trail_line.has_method("clear_points"):
+		_trail_line.call("clear_points")
+	if _bullet_mesh:
+		_bullet_mesh.hide()
+	hide()
 
 
 func has_hit() -> bool:
@@ -65,13 +98,14 @@ func get_bounces_left() -> int:
 
 
 func _ready() -> void:
+	_bullet_mesh = get_node_or_null("BulletMesh") as MeshInstance3D
 	_collision_mask = collision_mask
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
 
 
 func _physics_process(delta: float) -> void:
-	if _has_hit:
+	if _has_hit or _despawning:
 		return
 
 	var from := global_position
@@ -85,7 +119,7 @@ func _physics_process(delta: float) -> void:
 		_update_trail()
 		_orient_to_velocity()
 		if _distance_travelled >= max_distance:
-			queue_free()
+			_despawn()
 		return
 
 	var contact := hit.position as Vector3
@@ -133,7 +167,7 @@ func _ricochet(point: Vector3, normal: Vector3) -> void:
 	_update_trail()
 	ricocheted.emit(global_position, normal)
 	if velocity.length() < MIN_BOUNCE_SPEED or _distance_travelled >= max_distance:
-		queue_free()
+		_despawn()
 		return
 	_orient_to_velocity()
 	if _trail:
@@ -168,6 +202,44 @@ func _apply_size(size: float) -> void:
 		_bullet_mesh.scale = Vector3.ONE * maxf(size * 22.0, 1.0)
 
 
+func _ensure_trail_visuals() -> void:
+	if not _trail_line or not is_instance_valid(_trail_line):
+		_trail_line = get_node_or_null("TrailLine") as MeshInstance3D
+		if not _trail_line:
+			_trail_line = MeshInstance3D.new()
+			_trail_line.name = &"TrailLine"
+			_trail_line.set_script(preload("res://scripts/combat/bullet_trail.gd"))
+			add_child(_trail_line)
+		if _trail_line.has_method("clear_points"):
+			_trail_line.call("clear_points")
+
+	if not _trail or not is_instance_valid(_trail):
+		_trail = get_node_or_null("Trail") as CPUParticles3D
+		if not _trail:
+			_trail = ProjectilePool.duplicate_trail_template()
+			_trail.name = &"Trail"
+			add_child(_trail)
+
+
+func _detach_trail_visuals() -> void:
+	if _trail_line and is_instance_valid(_trail_line) and _trail_line.has_method("detach_and_fade"):
+		_trail_line.call("detach_and_fade", TRAIL_FADE_SECONDS)
+		_trail_line = null
+
+	if _trail and is_instance_valid(_trail):
+		_trail.emitting = false
+		var trail := _trail
+		_trail = null
+		var scene := get_tree().current_scene
+		if scene and trail.get_parent():
+			var world_xform := trail.global_transform
+			trail.get_parent().remove_child(trail)
+			scene.add_child(trail)
+			trail.global_transform = world_xform
+			var lifetime := trail.lifetime + 0.08
+			get_tree().create_timer(lifetime).timeout.connect(trail.queue_free)
+
+
 func _on_body_entered(body: Node3D) -> void:
 	if _can_ricochet_off(body):
 		return
@@ -181,7 +253,7 @@ func _on_area_entered(area: Area3D) -> void:
 
 
 func _resolve_hit(collider: Node) -> void:
-	if _has_hit:
+	if _has_hit or _despawning:
 		return
 	if collider is CollisionObject3D and (collider as CollisionObject3D).get_rid() == owner_rid:
 		return
@@ -196,8 +268,6 @@ func _resolve_hit(collider: Node) -> void:
 	_has_hit = true
 	set_deferred("monitoring", false)
 	set_deferred("monitorable", false)
-	if _trail:
-		_trail.emitting = false
 	if damage_info:
 		damage_info.explosion_radius = explosion_radius
 		DamageResolver.apply_hit(damage_info, collider)
@@ -235,6 +305,15 @@ func _resolve_hit(collider: Node) -> void:
 	if keep_alive:
 		_has_hit = false
 		set_deferred("monitoring", true)
-		set_deferred("monitorable", true)
+		set_deferred("monitorable", false)
 		return
-	queue_free()
+	_despawn()
+
+
+func _despawn() -> void:
+	if _despawning:
+		return
+	_despawning = true
+	_detach_trail_visuals()
+	despawned.emit(_has_hit)
+	ProjectilePool.release(self)

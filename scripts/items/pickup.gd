@@ -108,7 +108,7 @@ func _apply_shot_hit_radius() -> void:
 
 func _set_shot_hit_active(active: bool) -> void:
 	if _shot_hit_area:
-		_shot_hit_area.monitorable = active
+		_shot_hit_area.set_deferred("monitorable", active)
 
 
 func _apply_separation(delta: float) -> void:

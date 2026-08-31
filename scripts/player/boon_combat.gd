@@ -3,7 +3,6 @@ extends RefCounted
 
 ## Thin dispatcher for boon combat logic. All behavior lives in BoonBehaviorRegistry handlers.
 
-const _PROJECTILE_SCENE := preload("res://scenes/combat/projectile.tscn")
 const _HEAL_POTION := preload("res://resources/items/heal_potion.tres")
 const _PICKUP_SCENE := preload("res://scenes/items/pickup.tscn")
 const RICOCHET_COLD_COUNT := 2
@@ -175,11 +174,7 @@ static func spawn_projectile(
 ) -> Projectile:
 	var info := DamageInfo.create(stats.damage_per_shot, stats.damage_type, shooter)
 	var spawn_parent := tree.current_scene if tree.current_scene else tree.root
-	var projectile := _PROJECTILE_SCENE.instantiate() as Projectile
-	spawn_parent.add_child(projectile)
-	projectile.global_position = origin
-	projectile.setup(direction, stats, info, shooter)
-	return projectile
+	return ProjectilePool.acquire(spawn_parent, origin, direction, stats, info, shooter)
 
 
 static func spawn_radial_cold_projectiles(

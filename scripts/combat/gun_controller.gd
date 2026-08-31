@@ -71,9 +71,11 @@ func _track_projectile_feedback(projectile: Projectile) -> void:
 		func(_target: Node) -> void: fired.emit(true),
 		CONNECT_ONE_SHOT
 	)
-	projectile.tree_exited.connect(func() -> void:
-		if not projectile.has_hit():
-			fired.emit(false)
+	projectile.despawned.connect(
+		func(was_hit: bool) -> void:
+			if not was_hit:
+				fired.emit(false),
+		CONNECT_ONE_SHOT
 	)
 
 
