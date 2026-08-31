@@ -1,0 +1,93 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/debug_console.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="PanelStyle"]
+bg_color = Color(0.04, 0.06, 0.05, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 0.55, 0.42, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+
+[sub_resource type="StyleBoxFlat" id="InputStyle"]
+bg_color = Color(0.02, 0.03, 0.025, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.28, 0.42, 0.34, 1)
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+
+[node name="DebugConsole" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.35)
+
+[node name="Panel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -320.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("PanelStyle")
+
+[node name="Layout" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="Label" parent="Panel/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.82, 0.62, 1)
+theme_override_font_sizes/font_size = 14
+text = "DEBUG CONSOLE  ·  H opens  ·  Esc closes"
+
+[node name="Output" type="RichTextLabel" parent="Panel/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 240)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.78, 0.86, 0.8, 1)
+theme_override_font_sizes/normal_font_size = 14
+scroll_following = true
+selection_enabled = true
+bbcode_enabled = false
+fit_content = false
+
+[node name="InputLine" type="LineEdit" parent="Panel/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/normal = SubResource("InputStyle")
+theme_override_styles/focus = SubResource("InputStyle")
+theme_override_colors/font_color = Color(0.9, 0.95, 0.9, 1)
+theme_override_colors/caret_color = Color(0.55, 0.82, 0.62, 1)
+theme_override_font_sizes/font_size = 15
+placeholder_text = "enter command..."
+clear_on_submit = false
+
+[connection signal="text_submitted" from="Panel/Layout/InputLine" to="." method="_on_input_submitted"]

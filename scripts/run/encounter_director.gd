@@ -21,21 +21,43 @@ var _running := false
 
 
 func _ready() -> void:
+	add_to_group(&"encounter_director")
 	GameSession.phase_changed.connect(_on_phase_changed)
+	GameSession.chill_mode_changed.connect(_on_chill_mode_changed)
 	if GameSession.phase == GameSession.RunPhase.TRAVELLING and _encounters_enabled():
 		_schedule_encounter()
 
 
 func _encounters_enabled() -> bool:
-	return GameSession.route_step > 0
+	return GameSession.route_step > 0 and not GameSession.chill_mode
+
+
+func _on_chill_mode_changed(enabled: bool) -> void:
+	if enabled:
+		_cancel_encounters()
+	elif GameSession.phase == GameSession.RunPhase.TRAVELLING and not _running and _encounters_enabled():
+		_schedule_encounter()
+
+
+func _cancel_encounters() -> void:
+	_sequence_id += 1
+	_running = false
+
+
+func spawn_debug_raider() -> String:
+	var raider := raider_scene.instantiate() as WindowRaider
+	enemy_container.add_child(raider)
+	raider.global_transform = rear_marker.global_transform
+	raider.attack_landed.connect(GameSession.damage_van)
+	raider.activate()
+	return "Spawned raider at rear window."
 
 
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	if next_phase == GameSession.RunPhase.TRAVELLING and not _running and _encounters_enabled():
 		_schedule_encounter()
 	elif next_phase == GameSession.RunPhase.GAME_OVER:
-		_sequence_id += 1
-		_running = false
+		_cancel_encounters()
 
 
 func _schedule_encounter() -> void:

@@ -22,8 +22,15 @@ extends Node3D
 	$TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable
 )
 
+var _debug_console: Control
+
 
 func _ready() -> void:
+	if DebugConfig.ENABLED:
+		_debug_console = preload("res://scenes/ui/debug_console.tscn").instantiate()
+		$HUD.add_child(_debug_console)
+		_debug_console.opened.connect(_on_debug_console_opened)
+		_debug_console.closed.connect(_on_debug_console_closed)
 	player.interaction_prompt_changed.connect(_on_prompt_changed)
 	player.shot_fired.connect(_on_shot_fired)
 	weapon.ammo_changed.connect(_on_ammo_changed)
@@ -124,6 +131,20 @@ func _open_bench() -> void:
 
 
 func _on_bench_closed() -> void:
+	if _debug_console and _debug_console.visible:
+		return
+	_apply_phase_mouse_mode(GameSession.phase)
+
+
+func _on_debug_console_opened() -> void:
+	if bench_screen.visible:
+		bench_screen.close()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _on_debug_console_closed() -> void:
+	if bench_screen.visible:
+		return
 	_apply_phase_mouse_mode(GameSession.phase)
 
 

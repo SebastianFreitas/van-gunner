@@ -8,6 +8,7 @@ signal room_changed(room: StringName)
 signal coins_changed(total: int)
 signal enemy_defeated(enemy: Node)
 signal session_loaded
+signal chill_mode_changed(enabled: bool)
 
 enum RunPhase {
 	IDLE,
@@ -30,6 +31,7 @@ var current_room: StringName = &"center"
 var van_health := MAX_VAN_HEALTH
 var phase := RunPhase.IDLE
 var coins := 0
+var chill_mode := false
 
 
 func start_new(slot: int) -> void:
@@ -41,6 +43,7 @@ func start_new(slot: int) -> void:
 	current_room = &"center"
 	van_health = MAX_VAN_HEALTH
 	coins = 0
+	set_chill_mode(false)
 	set_phase(RunPhase.IDLE)
 	SaveManager.save_active_session()
 
@@ -53,6 +56,7 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 	last_direction = StringName(data.get("last_direction", "straight"))
 	van_health = clampf(float(data.get("van_health", MAX_VAN_HEALTH)), 0.0, MAX_VAN_HEALTH)
 	coins = maxi(0, int(data.get("coins", 0)))
+	set_chill_mode(false)
 	var stored_phase := int(data.get("phase", RunPhase.IDLE))
 	phase = (stored_phase as RunPhase) if stored_phase in RunPhase.values() else RunPhase.IDLE
 	if phase in [RunPhase.COMBAT, RunPhase.ROUTE_CHOICE, RunPhase.REST, RunPhase.TURNING]:
@@ -83,6 +87,13 @@ func set_phase(next_phase: RunPhase) -> void:
 		return
 	phase = next_phase
 	phase_changed.emit(phase)
+
+
+func set_chill_mode(enabled: bool) -> void:
+	if chill_mode == enabled:
+		return
+	chill_mode = enabled
+	chill_mode_changed.emit(enabled)
 
 
 func damage_van(amount: float) -> void:

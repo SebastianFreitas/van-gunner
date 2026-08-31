@@ -86,6 +86,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _should_scroll() -> bool:
+	if GameSession.chill_mode:
+		return false
 	return GameSession.phase in [
 		GameSession.RunPhase.TRAVELLING,
 		GameSession.RunPhase.COMBAT,

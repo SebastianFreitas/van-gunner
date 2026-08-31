@@ -7,6 +7,7 @@ var _transitioning := false
 
 
 func go_to_main_menu() -> void:
+	GameSession.set_chill_mode(false)
 	_change_scene(MAIN_MENU)
 
 
