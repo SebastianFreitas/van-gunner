@@ -48,6 +48,17 @@ func is_instant() -> bool:
 	return kind == ItemKind.MONEY or kind == ItemKind.CONSUMABLE
 
 
+func is_heal_consumable() -> bool:
+	if kind != ItemKind.CONSUMABLE or effects.is_empty():
+		return false
+	for effect in effects:
+		if not effect:
+			return false
+		if not (effect is HealEffect or effect is FullHealEffect):
+			return false
+	return true
+
+
 func apply_effects(player: Node3D) -> void:
 	for effect in effects:
 		if effect:
@@ -59,6 +70,8 @@ func collect(player: Node3D) -> void:
 		return
 	match kind:
 		ItemKind.MONEY, ItemKind.CONSUMABLE:
+			if kind == ItemKind.CONSUMABLE and is_heal_consumable() and GameSession.is_van_at_full_health():
+				return
 			apply_effects(player)
 		ItemKind.BOON:
 			var controller := player.get_node_or_null("Usables") as UsablesController

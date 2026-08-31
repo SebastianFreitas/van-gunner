@@ -73,14 +73,21 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
 theme_override_font_sizes/font_size = 26
-text = "CRAFTING BENCH"
+text = "BENCH"
 
-[node name="CloseHint" type="Label" parent="Margin/Layout/Header"]
+[node name="GoldLabel" type="Label" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 28
+text = "0 GOLD"
+horizontal_alignment = 2
+
+[node name="CloseHint" type="Label" parent="Margin/Layout"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.66, 0.64, 1)
-theme_override_font_sizes/font_size = 13
-text = "E / ESC  CLOSE   ·   HOVER AN ITEM FOR DETAILS"
-vertical_alignment = 1
+theme_override_font_sizes/font_size = 12
+text = "E / ESC to close  ·  hover items for details"
 
 [node name="Body" type="HBoxContainer" parent="Margin/Layout"]
 layout_mode = 2
@@ -88,7 +95,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 16
 
 [node name="LeftPanel" type="PanelContainer" parent="Margin/Layout/Body"]
-custom_minimum_size = Vector2(540, 0)
+custom_minimum_size = Vector2(480, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("PanelStyle")
 

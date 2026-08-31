@@ -1,7 +1,7 @@
 extends Node
 
-## Teleports shot/swept pickups onto the van's center table. Effects are
-## applied only when the player walks into the pickup — not on landing.
+## Teleports shot/swept pickups onto the van's center table. Gold is converted
+## immediately on landing. Other items apply their effect when walked into.
 
 const STAGGER_DELAY := 0.12
 const POP_IN_DURATION := 0.18

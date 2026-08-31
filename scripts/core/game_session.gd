@@ -143,6 +143,10 @@ func damage_van(amount: float) -> void:
 		set_phase(RunPhase.GAME_OVER)
 
 
+func is_van_at_full_health() -> bool:
+	return van_health >= van_max_health - 0.001
+
+
 func heal_van(amount: float) -> void:
 	if amount <= 0.0 or phase == RunPhase.GAME_OVER:
 		return

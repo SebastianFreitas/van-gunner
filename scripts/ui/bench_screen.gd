@@ -1,8 +1,7 @@
 class_name BenchScreen
 extends Control
 
-## Crafting bench overlay: character/van stats on the left, owned items on the
-## right. Hovering an item icon shows what it actually does.
+## Bench overlay: stats + gold spending on the left, boons and tools on the right.
 
 signal closed
 
@@ -16,6 +15,7 @@ const TOOLTIP_MARGIN := 12.0
 
 @onready var stats_primary: VBoxContainer = %StatsPrimary
 @onready var stats_secondary: VBoxContainer = %StatsSecondary
+@onready var gold_label: Label = %GoldLabel
 @onready var items_column: VBoxContainer = %ItemsColumn
 @onready var tooltip: PanelContainer = %Tooltip
 @onready var tooltip_title: Label = %TooltipTitle
@@ -96,88 +96,64 @@ func _process(_delta: float) -> void:
 		_position_tooltip()
 
 
-# --- stats -------------------------------------------------------------------
-
-
 func _refresh_stats() -> void:
 	if not visible:
 		return
+	gold_label.text = "%d GOLD" % GameSession.coins
 	_clear(stats_primary)
 	_clear(stats_secondary)
 	_stats_target = stats_primary
 
-	_add_section("GUNNER")
-	if _player:
-		_add_row("Move speed", "%s m/s" % ItemDescriber.format_number(_player.move_speed))
-		_add_row("Acceleration", ItemDescriber.format_number(_player.acceleration))
-	var boon_count := _usables.get_boons().size() if _usables else 0
-	var slot_count := _usables.get_slots().size() if _usables else 0
-	_add_row("Boons held", str(boon_count))
-	_add_row("Hotbar slots", "%d / %d" % [slot_count, UsablesController.MAX_SLOTS])
-
 	_add_section("VAN")
+	_add_health_bar()
 	_add_row(
 		"Hull",
 		"%d / %d" % [roundi(GameSession.van_health), roundi(GameSession.get_max_van_health())]
 	)
-	_add_health_bar()
-	_add_row("Coins", str(GameSession.coins))
-	_add_row("Waves cleared", str(GameSession.wave_count))
+	_add_row("Waves", str(GameSession.wave_count))
 	_add_row("Act", str(GameBalance.get_act(GameSession.route_step)))
-	_add_row("Forks taken", str(GameSession.route_step))
-	_add_row("Mob move speed", "%s m/s" % ItemDescriber.format_number(
-		GameBalance.get_mob_approach_speed(GameSession.route_step)
-	))
-	_add_row("Time to reach van", "%ss" % ItemDescriber.format_number(
-		GameBalance.get_engagement_seconds(GameSession.route_step)
-	))
-	_add_row("Last turn", String(GameSession.last_direction).capitalize())
-	_add_row("Room", String(GameSession.current_room).capitalize())
-	_add_row(
-		"Phase",
-		String(GameSession.RunPhase.keys()[GameSession.phase]).replace("_", " ").capitalize()
-	)
 
-	_add_van_upgrades()
+	_add_section("UPGRADES")
+	_add_row("Van speed", "%s m/s" % ItemDescriber.format_number(MetaProgression.get_van_speed()))
+	_add_row(
+		"Speed level",
+		"%d / %d" % [MetaProgression.van_speed_level, GameBalance.VAN_SPEED_MAX_LEVEL]
+	)
+	_add_upgrade_button()
 
 	_stats_target = stats_secondary
+	_add_section("GUNNER")
+	if _player:
+		_add_row("Move speed", "%s m/s" % ItemDescriber.format_number(_player.move_speed))
+	var boon_count := _usables.get_boons().size() if _usables else 0
+	var slot_count := _usables.get_slots().size() if _usables else 0
+	_add_row("Boons", str(boon_count))
+	_add_row("Tools", "%d / %d" % [slot_count, UsablesController.MAX_SLOTS])
+
 	var stats := _gun_stats.get_stats() if _gun_stats else null
 	if stats:
 		_add_section("GUN")
 		_add_row("Damage", ItemDescriber.format_number(stats.damage_per_shot))
-		_add_row("Fire rate", "%s shots/s" % ItemDescriber.format_number(stats.fire_rate))
-		_add_row(
-			"Damage per second",
-			ItemDescriber.format_number(stats.damage_per_shot * stats.fire_rate)
-		)
+		_add_row("Fire rate", "%s/s" % ItemDescriber.format_number(stats.fire_rate))
+		_add_row("DPS", ItemDescriber.format_number(stats.damage_per_shot * stats.fire_rate))
 		_add_row("Damage type", ItemDescriber.damage_type_name(stats.damage_type))
 		var ammo := _weapon.get_current_ammo() if _weapon else stats.mag_size
 		_add_row("Magazine", "%d / %d" % [ammo, stats.mag_size])
-		_add_row("Reload time", "%ss" % ItemDescriber.format_number(stats.reload_speed))
+		_add_row("Reload", "%ss" % ItemDescriber.format_number(stats.reload_speed))
 		_add_row("Range", "%sm" % ItemDescriber.format_number(stats.aim_range))
-		_add_row("Bullet speed", "%s m/s" % ItemDescriber.format_number(stats.bullet_speed))
-		_add_row("Bullet size", ItemDescriber.format_number(stats.bullet_size))
-		_add_row("Bullet weight", ItemDescriber.format_number(stats.bullet_weight))
-		_add_row("Blast radius", "%sm" % ItemDescriber.format_number(stats.explosion_radius))
-
-		_add_section("RICOCHET")
 		_add_row("Bounces", str(stats.max_bounces))
 		_add_row(
-			"Speed kept per bounce",
-			"%s%%" % ItemDescriber.format_number(stats.bounce_speed_retention * 100.0)
-		)
-		_add_row(
-			"Damage kept per bounce",
-			"%s%%" % ItemDescriber.format_number(stats.bounce_damage_retention * 100.0)
+			"Bounce retention",
+			"%s%% spd · %s%% dmg" % [
+				ItemDescriber.format_number(stats.bounce_speed_retention * 100.0),
+				ItemDescriber.format_number(stats.bounce_damage_retention * 100.0),
+			]
 		)
 
 
 func _add_section(title: String) -> void:
 	if _stats_target.get_child_count() > 0:
-		var spacer := Control.new()
-		spacer.custom_minimum_size = Vector2(0, 10)
-		spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_stats_target.add_child(spacer)
+		_add_spacer(10)
 	var label := Label.new()
 	label.text = title
 	label.add_theme_color_override(&"font_color", ACCENT)
@@ -206,29 +182,61 @@ func _add_row(label_text: String, value_text: String) -> void:
 	_stats_target.add_child(row)
 
 
-func _add_van_upgrades() -> void:
-	_add_section("VAN UPGRADES")
-	_add_row("Travel speed", "%s m/s" % ItemDescriber.format_number(MetaProgression.get_van_speed()))
-	var level := MetaProgression.van_speed_level
-	var max_level := GameBalance.VAN_SPEED_MAX_LEVEL
-	_add_row("Speed level", "%d / %d" % [level, max_level])
-	_add_row("Persists", "Between runs")
+func _add_spacer(height: float) -> void:
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, height)
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stats_target.add_child(spacer)
 
-	if MetaProgression.can_upgrade_van_speed():
-		var cost := MetaProgression.get_van_speed_upgrade_cost()
-		var next_speed := GameBalance.get_van_speed_for_level(level + 1)
-		var can_afford := GameSession.coins >= cost
-		var button := Button.new()
-		button.text = "Upgrade speed → %s m/s  (%d coins)" % [
-			ItemDescriber.format_number(next_speed),
-			cost,
-		]
-		button.disabled = not can_afford
-		button.add_theme_font_size_override(&"font_size", 13)
-		button.pressed.connect(_on_van_speed_upgrade_pressed)
-		_stats_target.add_child(button)
-	else:
-		_add_row("Status", "Max level reached")
+
+func _add_health_bar() -> void:
+	var bar := ProgressBar.new()
+	bar.custom_minimum_size = Vector2(0, 12)
+	bar.max_value = GameSession.get_max_van_health()
+	bar.value = GameSession.van_health
+	bar.show_percentage = false
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stats_target.add_child(bar)
+
+
+func _add_upgrade_button() -> void:
+	if not MetaProgression.can_upgrade_van_speed():
+		_add_row("Van speed", "Max")
+		return
+
+	var cost := MetaProgression.get_van_speed_upgrade_cost()
+	var next_speed := GameBalance.get_van_speed_for_level(MetaProgression.van_speed_level + 1)
+	var can_afford := GameSession.coins >= cost
+
+	var button := Button.new()
+	button.text = "Speed → %s m/s  ·  %d gold" % [
+		ItemDescriber.format_number(next_speed),
+		cost,
+	]
+	button.disabled = not can_afford
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_font_size_override(&"font_size", 14)
+	button.add_theme_color_override(&"font_color", ACCENT)
+	button.add_theme_color_override(&"font_disabled_color", DIM)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.14, 0.13, 1.0)
+	style.border_color = ACCENT if can_afford else DIM
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 12
+	style.content_margin_top = 10
+	style.content_margin_right = 12
+	style.content_margin_bottom = 10
+	button.add_theme_stylebox_override(&"normal", style)
+	var hover := style.duplicate() as StyleBoxFlat
+	hover.bg_color = Color(0.16, 0.18, 0.17, 1.0)
+	button.add_theme_stylebox_override(&"hover", hover)
+	var disabled := style.duplicate() as StyleBoxFlat
+	disabled.border_color = DIM
+	disabled.bg_color = Color(0.08, 0.09, 0.09, 1.0)
+	button.add_theme_stylebox_override(&"disabled", disabled)
+	button.pressed.connect(_on_van_speed_upgrade_pressed)
+	_stats_target.add_child(button)
 
 
 func _on_van_speed_upgrade_pressed() -> void:
@@ -243,19 +251,6 @@ func _on_meta_van_speed_changed(_level: int, _speed: float) -> void:
 	_refresh_stats()
 
 
-func _add_health_bar() -> void:
-	var bar := ProgressBar.new()
-	bar.custom_minimum_size = Vector2(0, 10)
-	bar.max_value = GameSession.get_max_van_health()
-	bar.value = GameSession.van_health
-	bar.show_percentage = false
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_stats_target.add_child(bar)
-
-
-# --- items -------------------------------------------------------------------
-
-
 func _refresh_items() -> void:
 	if not visible:
 		return
@@ -263,43 +258,28 @@ func _refresh_items() -> void:
 	_clear(items_column)
 
 	var total := 0
-	total += _add_item_section("BOONS", "Permanent run buffs", _boon_entries())
-	total += _add_item_section("TOOLS", "Hotbar, keys 1-4", _slot_entries())
-	total += _add_item_section("ON THE BENCH", "Walk into a drop to take it", _stash_entries())
+	total += _add_item_section("BOONS", _boon_entries())
+	total += _add_item_section("TOOLS", _slot_entries())
 	if total == 0:
 		var empty := Label.new()
-		empty.text = "Nothing collected yet. Shoot loot to send it to the bench."
+		empty.text = "Nothing yet."
 		empty.add_theme_color_override(&"font_color", MUTED)
 		empty.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		items_column.add_child(empty)
 
 
-func _add_item_section(title: String, subtitle: String, entries: Array[Dictionary]) -> int:
+func _add_item_section(title: String, entries: Array[Dictionary]) -> int:
 	if entries.is_empty():
 		return 0
 	if items_column.get_child_count() > 0:
-		var spacer := Control.new()
-		spacer.custom_minimum_size = Vector2(0, 12)
-		spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		items_column.add_child(spacer)
+		_add_spacer_to(items_column, 12)
 
-	var header := HBoxContainer.new()
-	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var title_label := Label.new()
 	title_label.text = "%s  (%d)" % [title, entries.size()]
 	title_label.add_theme_color_override(&"font_color", ACCENT)
 	title_label.add_theme_font_size_override(&"font_size", 13)
-	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var subtitle_label := Label.new()
-	subtitle_label.text = subtitle
-	subtitle_label.add_theme_color_override(&"font_color", DIM)
-	subtitle_label.add_theme_font_size_override(&"font_size", 11)
-	subtitle_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	header.add_child(title_label)
-	header.add_child(subtitle_label)
-	items_column.add_child(header)
-	items_column.add_child(HSeparator.new())
+	items_column.add_child(title_label)
 
 	var grid := GridContainer.new()
 	grid.columns = GRID_COLUMNS
@@ -309,6 +289,13 @@ func _add_item_section(title: String, subtitle: String, entries: Array[Dictionar
 	for entry in entries:
 		grid.add_child(_make_cell(entry))
 	return entries.size()
+
+
+func _add_spacer_to(container: Node, height: float) -> void:
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, height)
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(spacer)
 
 
 func _boon_entries() -> Array[Dictionary]:
@@ -330,40 +317,16 @@ func _slot_entries() -> Array[Dictionary]:
 		var state := slots[index]
 		if not state or not state.definition:
 			continue
-		var status := "Ready — press %d" % (index + 1)
+		var status := "Press %d" % (index + 1)
 		if state.charges <= 0:
-			status = "Out of charges"
+			status = "Empty"
 		elif state.cooldown_remaining > 0.0:
-			status = "Cooling down %ss" % ItemDescriber.format_number(state.cooldown_remaining)
+			status = "%ss cooldown" % ItemDescriber.format_number(state.cooldown_remaining)
 		entries.append({
 			"item": state.definition,
 			"badge": "%d·x%d" % [index + 1, state.charges],
 			"status": status,
 			"ready": state.is_ready(),
-		})
-	return entries
-
-
-func _stash_entries() -> Array[Dictionary]:
-	var counts: Dictionary = {}
-	var order: Array[ItemDefinition] = []
-	for node in get_tree().get_nodes_in_group(&"pickup"):
-		var pickup := node as Pickup
-		if not pickup or not pickup.item or not pickup._stashed or pickup._used:
-			continue
-		if counts.has(pickup.item.id):
-			counts[pickup.item.id] += 1
-		else:
-			counts[pickup.item.id] = 1
-			order.append(pickup.item)
-	var entries: Array[Dictionary] = []
-	for item in order:
-		var count: int = counts[item.id]
-		entries.append({
-			"item": item,
-			"badge": "x%d" % count if count > 1 else "",
-			"status": "Waiting on the bench",
-			"ready": true,
 		})
 	return entries
 
@@ -439,9 +402,6 @@ func _cell_style(is_ready: bool) -> StyleBoxFlat:
 	return style
 
 
-# --- tooltip -----------------------------------------------------------------
-
-
 func _on_cell_entered(entry: Dictionary) -> void:
 	var item: ItemDefinition = entry["item"]
 	_hovered_item = item
@@ -493,9 +453,6 @@ func _bulleted(lines: PackedStringArray) -> PackedStringArray:
 	for line in lines:
 		result.append("• " + line)
 	return result
-
-
-# --- signal plumbing ---------------------------------------------------------
 
 
 func _on_ammo_changed(_current: int, _max_ammo: int) -> void:
