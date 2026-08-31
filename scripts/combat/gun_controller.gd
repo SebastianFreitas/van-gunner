@@ -5,8 +5,6 @@ signal fired(hit: bool)
 signal ammo_changed(current: int, max_ammo: int)
 signal reloading_changed(is_reloading: bool)
 
-## Never converge onto a hit closer than this — stops near-plane muzzle swing.
-const MIN_CONVERGENCE_DISTANCE := 2.0
 ## Brief camera pitch punch on fire (radians). Recovers in feedback tween.
 const CAMERA_KICK := 0.012
 
@@ -47,23 +45,25 @@ func try_fire() -> void:
 		_start_reload()
 		return
 
+	# Hits come from screen center so point-blank targets aren't skipped.
+	# The cosmetic trail still leaves the gun muzzle via visual_origin.
+	var origin := camera.global_position
 	var muzzle := _get_muzzle_position()
 	var aim := _get_aim_point(stats.aim_range)
-	aim = _clamp_convergence(muzzle, aim, stats.aim_range)
-	aim = _resolve_muzzle_obstruction(muzzle, aim)
+	aim = _resolve_path_obstruction(origin, aim)
 
-	var direction := (aim - muzzle).normalized()
+	var direction := (aim - origin).normalized()
 	if direction.length_squared() < 0.0001:
 		direction = -camera.global_basis.z
 
 	var van_velocity := _get_van_velocity()
-	var projectile := _spawn_projectile(muzzle, direction, stats, van_velocity)
+	var projectile := _spawn_projectile(origin, direction, stats, van_velocity, muzzle)
 	var player := _get_player()
 	var traits := BoonTraits.find_on(player)
 	if traits:
 		BoonCombat.dispatch_bonus_projectiles(
 			get_tree(),
-			muzzle,
+			origin,
 			direction,
 			stats,
 			player as CollisionObject3D,
@@ -147,25 +147,13 @@ func _get_aim_point(max_range: float) -> Vector3:
 	var result := camera.get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
 		return end
-	var hit_pos: Vector3 = result.position
-	# Too close: converge on a point at min distance so the muzzle doesn't swing wildly.
-	if origin.distance_to(hit_pos) < MIN_CONVERGENCE_DISTANCE:
-		return origin + direction * MIN_CONVERGENCE_DISTANCE
-	return hit_pos
+	return result.position
 
 
-## Keep aim far enough from the muzzle that look_at correction stays stable.
-func _clamp_convergence(muzzle: Vector3, aim: Vector3, max_range: float) -> Vector3:
-	var cam_dir := -camera.global_basis.z
-	if muzzle.distance_to(aim) >= MIN_CONVERGENCE_DISTANCE:
-		return aim
-	return camera.global_position + cam_dir * maxf(MIN_CONVERGENCE_DISTANCE, max_range * 0.25)
-
-
-## If the muzzle→aim segment hits cover/window frame first, aim at that contact.
-func _resolve_muzzle_obstruction(muzzle: Vector3, aim: Vector3) -> Vector3:
+## If anything sits on the camera→aim path (window frame, close enemy), aim there.
+func _resolve_path_obstruction(origin: Vector3, aim: Vector3) -> Vector3:
 	var query := PhysicsRayQueryParameters3D.create(
-		muzzle,
+		origin,
 		aim,
 		DamageResolver.ENEMY_MASK | DamageResolver.WORLD_MASK
 	)
@@ -181,7 +169,8 @@ func _spawn_projectile(
 	origin: Vector3,
 	direction: Vector3,
 	stats: GunStats,
-	van_velocity: Vector3
+	van_velocity: Vector3,
+	visual_origin: Vector3
 ) -> Projectile:
 	var shooter := _get_player() as CollisionObject3D
 	return BoonCombat.spawn_projectile(
@@ -190,7 +179,7 @@ func _spawn_projectile(
 		direction,
 		stats,
 		shooter,
-		origin,
+		visual_origin,
 		van_velocity
 	)
 

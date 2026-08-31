@@ -141,7 +141,7 @@ func _physics_process(delta: float) -> void:
 	global_position = contact
 	_update_trail()
 	if _visual:
-		_visual.sync_to(global_position, velocity)
+		_visual.snap_to(global_position, velocity)
 	_resolve_hit(collider)
 
 
@@ -275,7 +275,7 @@ func _spawn_visual(origin: Vector3, info: DamageInfo, stats: GunStats) -> void:
 		return
 	_visual = BulletVisual.new()
 	parent.add_child(_visual)
-	_visual.setup(origin, velocity, gravity_scale, info, stats)
+	_visual.setup(origin, velocity, gravity_scale, info, stats, global_position)
 
 
 func _clear_visual() -> void:
@@ -286,7 +286,7 @@ func _clear_visual() -> void:
 
 func _fade_visual() -> void:
 	if _visual and is_instance_valid(_visual):
-		_visual.sync_to(global_position, velocity)
+		_visual.snap_to(global_position, velocity)
 		_visual.fade_out()
 	_visual = null
 

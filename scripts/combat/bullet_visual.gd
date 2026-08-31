@@ -1,14 +1,20 @@
 class_name BulletVisual
 extends Node3D
 
-## Cosmetic bullet mesh + trail locked to the logical Projectile.
+## Cosmetic bullet mesh + trail. Starts at the gun muzzle and blends onto the
+## logical projectile path so hits can come from the camera without the tracer
+## teleporting sideways off the barrel.
 
 const BULLET_VISUAL_SCALE := 0.28
 const TRAIL_FADE_SECONDS := 0.45
+## Softly blend from the muzzle-offset path onto the true path over this distance.
+const CONVERGENCE_METERS := 4.0
 
 var _velocity := Vector3.ZERO
 var _muzzle_origin := Vector3.ZERO
+var _logical_origin := Vector3.ZERO
 var _travelled := 0.0
+var _locked_to_logical := false
 var _bullet_mesh: MeshInstance3D
 var _trail_line: MeshInstance3D
 
@@ -18,10 +24,13 @@ func setup(
 	velocity: Vector3,
 	_gravity_scale: float,
 	info: DamageInfo,
-	stats: GunStats
+	stats: GunStats,
+	logical_origin := origin
 ) -> void:
 	_muzzle_origin = origin
+	_logical_origin = logical_origin
 	_travelled = 0.0
+	_locked_to_logical = _muzzle_origin.is_equal_approx(_logical_origin)
 	global_position = origin
 	_velocity = velocity
 	_ensure_nodes()
@@ -34,20 +43,25 @@ func setup(
 	show()
 
 
-func sync_to(position: Vector3, velocity: Vector3) -> void:
+func sync_to(logical_position: Vector3, velocity: Vector3) -> void:
 	_velocity = velocity
-	var step := global_position.distance_to(position)
-	_travelled += step
-	global_position = position
-	# Seed the trail at the muzzle once so it reads as leaving the gun.
-	if _trail_line and _trail_line.has_method("add_point"):
-		if _travelled <= step + 0.0001:
-			_trail_line.call("add_point", _muzzle_origin)
-		_trail_line.call("add_point", position)
+	_travelled = _logical_origin.distance_to(logical_position)
+	global_position = _blended_position(logical_position)
+	_update_trail(global_position)
+	_orient_to_velocity()
+
+
+## Hard-lock onto the logical bullet (impact / end of life).
+func snap_to(logical_position: Vector3, velocity: Vector3) -> void:
+	_locked_to_logical = true
+	_velocity = velocity
+	global_position = logical_position
+	_update_trail(logical_position)
 	_orient_to_velocity()
 
 
 func on_bounce(contact: Vector3, exit: Vector3, velocity: Vector3) -> void:
+	_locked_to_logical = true
 	_velocity = velocity
 	global_position = exit
 	if _trail_line and _trail_line.has_method("set_bounce_vertex"):
@@ -62,6 +76,27 @@ func fade_out() -> void:
 		_trail_line.call("detach_and_fade", TRAIL_FADE_SECONDS)
 		_trail_line = null
 	queue_free()
+
+
+func _blended_position(logical_position: Vector3) -> Vector3:
+	if _locked_to_logical:
+		return logical_position
+	var offset := _muzzle_origin - _logical_origin
+	if offset.length_squared() < 0.0001:
+		return logical_position
+	var parallel := logical_position + offset
+	var t := clampf(_travelled / CONVERGENCE_METERS, 0.0, 1.0)
+	t = t * t * (3.0 - 2.0 * t)
+	return parallel.lerp(logical_position, t)
+
+
+func _update_trail(world_position: Vector3) -> void:
+	if not _trail_line or not _trail_line.has_method("add_point"):
+		return
+	# Seed the trail at the muzzle once so it reads as leaving the gun.
+	if _travelled <= 0.001:
+		_trail_line.call("add_point", _muzzle_origin)
+	_trail_line.call("add_point", world_position)
 
 
 func _ensure_nodes() -> void:
