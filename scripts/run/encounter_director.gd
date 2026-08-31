@@ -86,17 +86,23 @@ func _run_encounter(id: int) -> void:
 			await _complete_wave(id)
 			return
 
-		var to_attack := rear_marker.global_position - raider.global_position
-		var remaining := to_attack.length()
+		var target := _raider_approach_target()
+		var to_target := target - raider.global_position
+		var remaining := to_target.length()
 		if remaining <= 0.05:
 			break
 
 		var delta := get_process_delta_time()
 		var step := minf(raider.approach_speed * delta, remaining)
-		raider.global_position += to_attack.normalized() * step
+		raider.global_position += to_target.normalized() * step
 		await get_tree().process_frame
 
-	raider.global_transform = rear_marker.global_transform
+	var doors := _rear_doors()
+	if doors == null or doors.is_passage_open():
+		raider.global_transform = rear_marker.global_transform
+	else:
+		raider.global_position = doors.get_outside_hold_position()
+		raider.global_basis = rear_marker.global_basis
 	raider.attack_landed.connect(GameSession.damage_van)
 	raider.activate()
 
@@ -113,6 +119,17 @@ func _run_encounter(id: int) -> void:
 		raider.retreat()
 	if id == _sequence_id and GameSession.phase != GameSession.RunPhase.GAME_OVER:
 		await _complete_wave(id)
+
+
+func _raider_approach_target() -> Vector3:
+	var doors := _rear_doors()
+	if doors and not doors.is_passage_open():
+		return doors.get_outside_hold_position()
+	return rear_marker.global_position
+
+
+func _rear_doors() -> Node:
+	return get_tree().get_first_node_in_group(&"rear_doors")
 
 
 func _complete_wave(id: int) -> void:

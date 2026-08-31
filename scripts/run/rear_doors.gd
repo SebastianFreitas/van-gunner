@@ -1,7 +1,10 @@
 extends Node3D
 
-## Truck-style rear double doors. Each leaf opens on its own; collision stays on
-## fixed half-blockers so swinging never pushes the player.
+## Truck-style rear double doors.
+## Visual leaves swing on hinges (no physics). Fixed half-blockers on world
+## layer 1 stop the player when a leaf is closed — they never rotate, so
+## open/close never pushes anyone. Scripted Node3D mobs ignore physics, so
+## callers should use is_passage_open() / get_outside_hold_position().
 
 signal opened
 signal closed
@@ -9,6 +12,9 @@ signal door_changed(side: StringName, is_open: bool)
 
 const SIDE_LEFT := &"left"
 const SIDE_RIGHT := &"right"
+
+## Local Z just outside the closed door plane (rear is +Z).
+const OUTSIDE_HOLD_LOCAL := Vector3(0.0, 1.62, 5.2)
 
 @export var open_angle_deg := 110.0
 @export var open_duration := 0.9
@@ -28,8 +34,18 @@ func is_open() -> bool:
 	return _left_open and _right_open
 
 
+## True only when both leaves are open — full rear passage into the van.
+func is_passage_open() -> bool:
+	return is_open()
+
+
 func is_door_open(side: StringName) -> bool:
 	return _left_open if side == SIDE_LEFT else _right_open
+
+
+## Standpoint outside closed doors for scripted mobs (world space).
+func get_outside_hold_position() -> Vector3:
+	return to_global(OUTSIDE_HOLD_LOCAL)
 
 
 func get_door_prompt(side: StringName) -> String:
