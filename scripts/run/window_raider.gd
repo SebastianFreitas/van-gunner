@@ -99,7 +99,6 @@ func _die() -> void:
 	hitbox.collision_layer = 0
 	if has_node("HeadHitbox"):
 		$HeadHitbox.collision_layer = 0
-	_try_fire_death_explosion()
 	BoonCombat.apply_on_enemy_death(self, _last_damage_type)
 	if loot_drop:
 		loot_drop.spawn_drops(global_position, get_parent())
@@ -110,16 +109,6 @@ func _die() -> void:
 	tween.tween_property(self, "position:y", position.y - 1.5, 0.3)
 	tween.tween_property(sprite, "modulate:a", 0.0, 0.3)
 	tween.chain().tween_callback(queue_free)
-
-
-func _try_fire_death_explosion() -> void:
-	var traits := BoonCombat.get_player_traits(get_tree())
-	if not traits or not traits.has_flag(BoonTraitKeys.FIRE_DEATH):
-		return
-	var space_state := get_world_3d().direct_space_state
-	var info := DamageInfo.create(12.0, DamageType.Type.FIRE)
-	info.explosion_radius = 2.2
-	DamageResolver.apply_explosion(global_position, info.explosion_radius, info, space_state, [], traits)
 
 
 func _attack_loop() -> void:

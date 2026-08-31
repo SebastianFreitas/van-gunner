@@ -5,8 +5,6 @@ signal fired(hit: bool)
 signal ammo_changed(current: int, max_ammo: int)
 signal reloading_changed(is_reloading: bool)
 
-const PROJECTILE_SCENE := preload("res://scenes/combat/projectile.tscn")
-
 @export var stats_controller_path: NodePath
 @export var muzzle_offset := Vector3(0.0, 0.0, -0.38)
 
@@ -48,7 +46,17 @@ func try_fire() -> void:
 		direction = -camera.global_basis.z
 
 	var projectile := _spawn_projectile(muzzle, direction, stats)
-	_spawn_bonus_projectiles(muzzle, direction, stats)
+	var player := camera.get_parent().get_parent()
+	var traits := BoonTraits.find_on(player)
+	if traits:
+		BoonCombat.dispatch_bonus_projectiles(
+			get_tree(),
+			muzzle,
+			direction,
+			stats,
+			player as CollisionObject3D,
+			traits
+		)
 	_track_projectile_feedback(projectile)
 	_current_ammo -= 1
 	_next_shot_time = now + roundi(1000.0 / stats.fire_rate)
@@ -112,32 +120,9 @@ func _get_aim_point(max_range: float) -> Vector3:
 	return result.position
 
 
-func _spawn_bonus_projectiles(origin: Vector3, direction: Vector3, stats: GunStats) -> void:
-	var player := camera.get_parent().get_parent()
-	var traits := BoonTraits.find_on(player)
-	if not traits:
-		return
-	var extra_cold := int(traits.get_add(BoonTraitKeys.COLD_PROJECTILE_COUNT))
-	for i in extra_cold:
-		var spread := deg_to_rad(6.0 * (i + 1))
-		var spread_dir := direction.rotated(Vector3.UP, spread if i % 2 == 0 else -spread)
-		var cold_stats := stats.duplicate_stats()
-		cold_stats.damage_type = DamageType.Type.COLD
-		cold_stats.damage_per_shot *= 0.65
-		_spawn_projectile(origin, spread_dir, cold_stats)
-
-
 func _spawn_projectile(origin: Vector3, direction: Vector3, stats: GunStats) -> Projectile:
-	var projectile := PROJECTILE_SCENE.instantiate() as Projectile
 	var shooter := camera.get_parent().get_parent() as CollisionObject3D
-	var info := DamageInfo.create(stats.damage_per_shot, stats.damage_type, shooter)
-	var spawn_parent := get_tree().current_scene
-	if spawn_parent == null:
-		spawn_parent = get_tree().root
-	spawn_parent.add_child(projectile)
-	projectile.global_position = origin
-	projectile.setup(direction, stats, info, shooter)
-	return projectile
+	return BoonCombat.spawn_projectile(get_tree(), origin, direction, stats, shooter)
 
 
 func _start_reload() -> void:

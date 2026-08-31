@@ -7,9 +7,13 @@ signal stats_changed
 
 var _modifiers: Array[StatModifier] = []
 var _effective_stats: GunStats
+var _traits: BoonTraits
 
 
 func _ready() -> void:
+	_traits = BoonTraits.find_on(get_parent())
+	if _traits:
+		_traits.traits_changed.connect(_rebuild)
 	_rebuild()
 
 
@@ -31,6 +35,8 @@ func get_stats() -> GunStats:
 
 func _rebuild() -> void:
 	var stats := base_stats.duplicate_stats() if base_stats else GunStats.new()
+	if _traits:
+		_apply_traits(stats, _traits)
 	for modifier in _modifiers:
 		_apply_modifier(stats, modifier)
 	stats.fire_rate = maxf(stats.fire_rate, 0.1)
@@ -47,6 +53,32 @@ func _rebuild() -> void:
 	stats.bounce_damage_retention = clampf(stats.bounce_damage_retention, 0.0, 1.0)
 	_effective_stats = stats
 	stats_changed.emit()
+
+
+func _apply_traits(stats: GunStats, traits: BoonTraits) -> void:
+	stats.fire_rate *= traits.get_mult(BoonTraitKeys.GUN_FIRE_RATE)
+	stats.damage_per_shot += traits.get_add(BoonTraitKeys.GUN_DAMAGE_PER_SHOT)
+	stats.damage_per_shot *= traits.get_mult(BoonTraitKeys.GUN_DAMAGE_PER_SHOT)
+	stats.bullet_speed += traits.get_add(BoonTraitKeys.GUN_BULLET_SPEED)
+	stats.bullet_speed *= traits.get_mult(BoonTraitKeys.GUN_BULLET_SPEED)
+	stats.bullet_weight += traits.get_add(BoonTraitKeys.GUN_BULLET_WEIGHT)
+	stats.bullet_weight *= traits.get_mult(BoonTraitKeys.GUN_BULLET_WEIGHT)
+	stats.bullet_size += traits.get_add(BoonTraitKeys.GUN_BULLET_SIZE)
+	stats.bullet_size *= traits.get_mult(BoonTraitKeys.GUN_BULLET_SIZE)
+	stats.reload_speed += traits.get_add(BoonTraitKeys.GUN_RELOAD_SPEED)
+	stats.reload_speed *= traits.get_mult(BoonTraitKeys.GUN_RELOAD_SPEED)
+	stats.mag_size += int(traits.get_add(BoonTraitKeys.GUN_MAG_SIZE))
+	stats.mag_size = roundi(float(stats.mag_size) * traits.get_mult(BoonTraitKeys.GUN_MAG_SIZE))
+	stats.aim_range += traits.get_add(BoonTraitKeys.GUN_AIM_RANGE)
+	stats.aim_range *= traits.get_mult(BoonTraitKeys.GUN_AIM_RANGE)
+	stats.explosion_radius += traits.get_add(BoonTraitKeys.GUN_EXPLOSION_RADIUS)
+	stats.explosion_radius *= traits.get_mult(BoonTraitKeys.GUN_EXPLOSION_RADIUS)
+	stats.max_bounces += int(traits.get_add(BoonTraitKeys.GUN_MAX_BOUNCES))
+	stats.max_bounces = roundi(float(stats.max_bounces) * traits.get_mult(BoonTraitKeys.GUN_MAX_BOUNCES))
+	stats.bounce_speed_retention += traits.get_add(BoonTraitKeys.GUN_BOUNCE_SPEED_RETENTION)
+	stats.bounce_speed_retention *= traits.get_mult(BoonTraitKeys.GUN_BOUNCE_SPEED_RETENTION)
+	stats.bounce_damage_retention += traits.get_add(BoonTraitKeys.GUN_BOUNCE_DAMAGE_RETENTION)
+	stats.bounce_damage_retention *= traits.get_mult(BoonTraitKeys.GUN_BOUNCE_DAMAGE_RETENTION)
 
 
 func _apply_modifier(stats: GunStats, modifier: StatModifier) -> void:

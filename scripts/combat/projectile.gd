@@ -60,6 +60,10 @@ func has_hit() -> bool:
 	return _has_hit
 
 
+func get_bounces_left() -> int:
+	return _bounces_left
+
+
 func _ready() -> void:
 	_collision_mask = collision_mask
 	body_entered.connect(_on_body_entered)
@@ -124,22 +128,8 @@ func _ricochet(point: Vector3, normal: Vector3) -> void:
 	if damage_info:
 		damage_info.amount *= bounce_damage_retention
 		var traits: BoonTraits = BoonCombat.get_player_traits(get_tree())
-		if traits and traits.has_flag(BoonTraitKeys.RICOCHET_STACK_POWER):
-			damage_info.amount *= 1.0 + float(_bounce_count) * 0.15
-		if traits and traits.has_flag(BoonTraitKeys.COLD_SHATTERING_RICOCHET):
-			BoonCombat.spawn_cold_projectiles_from_direction(
-				get_tree(),
-				global_position,
-				velocity.normalized(),
-				BoonCombat.RICOCHET_COLD_COUNT,
-				damage_info.amount * 0.55
-			)
-		if traits and traits.has_flag(BoonTraitKeys.POISON_FOLLOW):
-			var follow_target := BoonCombat.find_poison_follow_target(get_tree(), global_position, 10.0)
-			if follow_target:
-				var aim := follow_target.global_position + Vector3(0.0, 1.0, 0.0) - global_position
-				if aim.length_squared() > 0.001:
-					velocity = aim.normalized() * velocity.length()
+		if traits:
+			velocity = BoonCombat.dispatch_ricochet(self, traits, _bounce_count, velocity)
 	_update_trail()
 	ricocheted.emit(global_position, normal)
 	if velocity.length() < MIN_BOUNCE_SPEED or _distance_travelled >= max_distance:
@@ -222,7 +212,7 @@ func _resolve_hit(collider: Node) -> void:
 			var exclude: Array[RID] = []
 			if owner_rid.is_valid():
 				exclude.append(owner_rid)
-			if traits and traits.has_flag(BoonTraitKeys.DELAYED_FIRE) and damage_info.damage_type == DamageType.Type.FIRE:
+			if BoonCombat.should_delay_fire(traits, damage_info):
 				DamageResolver.schedule_delayed_explosion(
 					get_tree(),
 					global_position,
@@ -241,9 +231,7 @@ func _resolve_hit(collider: Node) -> void:
 					traits
 				)
 		hit_target.emit(collider)
-	var keep_alive := false
-	if traits and traits.has_flag(BoonTraitKeys.RICOCHET_EXPLOSIVE) and damage_info and damage_info.damage_type == DamageType.Type.FIRE and _bounces_left > 0:
-		keep_alive = true
+	var keep_alive := BoonCombat.should_keep_alive_after_hit(traits, damage_info, self)
 	if keep_alive:
 		_has_hit = false
 		set_deferred("monitoring", true)

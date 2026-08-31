@@ -23,7 +23,6 @@ var _poison_tick_timer := 0.0
 var _fire_tick_timer := 0.0
 var _poison_duration_bonus := 0.0
 var _poison_tick_speed_mult := 1.0
-var _freeze_duration_bonus := 0.0
 var _poisoned_chill_bonus := 0.0
 
 
@@ -32,12 +31,17 @@ func _ready() -> void:
 
 
 func configure_from_traits(traits: BoonTraits) -> void:
+	_poison_duration_bonus = 0.0
+	_poison_tick_speed_mult = 1.0
+	_poisoned_chill_bonus = 0.0
 	if not traits:
 		return
-	_poison_duration_bonus = traits.get_add(BoonTraitKeys.POISON_DURATION_BONUS)
-	_poison_tick_speed_mult = traits.get_mult(BoonTraitKeys.POISON_TICK_SPEED_MULT)
-	_freeze_duration_bonus = traits.get_add(BoonTraitKeys.FREEZE_DURATION_BONUS)
-	_poisoned_chill_bonus = traits.get_add(BoonTraitKeys.POISONED_CHILL_BONUS)
+	var ctx := BoonBehaviorContext.new()
+	ctx.traits = traits
+	BoonBehaviorRegistry.dispatch_configure_status(ctx)
+	_poison_duration_bonus = ctx.poison_duration_bonus
+	_poison_tick_speed_mult = ctx.poison_tick_speed_mult
+	_poisoned_chill_bonus = ctx.poisoned_chill_bonus
 
 
 func is_poisoned() -> bool:
@@ -112,10 +116,7 @@ func get_outgoing_damage_multiplier() -> float:
 	if not is_poisoned():
 		return 1.0
 	var traits := _find_attacker_traits()
-	if not traits:
-		return 1.0
-	var reduction := traits.get_add(BoonTraitKeys.POISONED_ENEMY_DAMAGE_REDUCTION)
-	return maxf(0.0, 1.0 - reduction)
+	return BoonCombat.get_poisoned_damage_multiplier(traits)
 
 
 func _process(delta: float) -> void:
@@ -141,6 +142,9 @@ func _tick_poison(delta: float) -> void:
 				DamageType.Type.POISON
 			)
 			info.hit_position = _owner.global_position + Vector3(0, 1.2, 0)
+			var traits := _find_attacker_traits()
+			if traits:
+				BoonCombat.modify_outgoing_damage(info, traits, _owner)
 			_owner.take_damage(info)
 	if _poison_time_left <= 0.0:
 		_poison_dps = 0.0

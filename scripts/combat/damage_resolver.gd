@@ -66,11 +66,11 @@ static func apply_explosion(
 		var bonus_phys := 0.0
 		if traits:
 			bonus_phys = BoonCombat.modify_outgoing_damage(splash, traits, damageable)
-		if traits and traits.has_flag(BoonTraitKeys.POISON_EXPLOSIONS) and splash.damage_type == DamageType.Type.FIRE:
-			var poison_info := splash.duplicate_info()
-			poison_info.damage_type = DamageType.Type.POISON
-			poison_info.amount *= 0.35
-			apply_status_from_hit(poison_info, damageable)
+			var splash_ctx := BoonBehaviorContext.new()
+			splash_ctx.traits = traits
+			splash_ctx.damage_info = splash
+			splash_ctx.target = damageable
+			BoonBehaviorRegistry.dispatch_explosion_splash(splash_ctx)
 		if damageable is Node3D:
 			splash.hit_position = (damageable as Node3D).global_position + Vector3(0, 1.2, 0)
 		else:
@@ -78,8 +78,12 @@ static func apply_explosion(
 		damageable.take_damage(splash)
 		if bonus_phys > 0.0:
 			BoonCombat.apply_bonus_physical_hit(bonus_phys, splash, damageable, traits)
-		if splash.damage_type == DamageType.Type.FIRE:
-			_apply_explosion_displacement(center, damageable, traits)
+		if splash.damage_type == DamageType.Type.FIRE and traits:
+			var displacement_ctx := BoonBehaviorContext.new()
+			displacement_ctx.traits = traits
+			displacement_ctx.target = damageable
+			displacement_ctx.explosion_center = center
+			BoonBehaviorRegistry.dispatch_explosion_displacement(displacement_ctx)
 
 
 static func schedule_delayed_explosion(
@@ -103,21 +107,6 @@ static func schedule_delayed_explosion(
 	)
 
 
-static func _apply_explosion_displacement(center: Vector3, damageable: Node, traits: BoonTraits) -> void:
-	if not damageable is Node3D:
-		return
-	var push_mult := traits.get_mult(BoonTraitKeys.FIRE_PUSH_MULT) if traits else 1.0
-	var pull := traits != null and traits.has_flag(BoonTraitKeys.FIRE_PULL)
-	var offset := (damageable as Node3D).global_position - center
-	offset.y = 0.0
-	if offset.length_squared() < 0.001:
-		return
-	var direction := offset.normalized()
-	if pull:
-		direction = -direction
-	(damageable as Node3D).global_position += direction * EXPLOSION_PUSH_FORCE * push_mult
-
-
 static func apply_status_from_hit(info: DamageInfo, target: Node) -> void:
 	var damageable := find_damageable(target)
 	if not damageable:
@@ -127,16 +116,16 @@ static func apply_status_from_hit(info: DamageInfo, target: Node) -> void:
 		return
 	var tree := damageable.get_tree() if damageable else null
 	var traits := BoonCombat.get_player_traits(tree)
+	if traits and info.damage_type == DamageType.Type.POISON:
+		var status_ctx := BoonBehaviorContext.new()
+		status_ctx.traits = traits
+		status_ctx.damage_info = info
+		status_ctx.target = target
+		status_ctx.status = controller
+		if BoonBehaviorRegistry.dispatch_status_apply(status_ctx):
+			return
 	match info.damage_type:
 		DamageType.Type.POISON:
-			if traits and traits.has_flag(BoonTraitKeys.INSTANT_POISON):
-				var instant := controller.get_poison_total_damage_for_dps(info.amount * 0.35) * 0.5
-				if instant > 0.0:
-					var poison_hit := info.duplicate_info()
-					poison_hit.amount = instant
-					poison_hit.damage_type = DamageType.Type.POISON
-					damageable.take_damage(poison_hit)
-				return
 			controller.apply_poison(info.amount * 0.35, info.source)
 		DamageType.Type.FIRE:
 			controller.apply_fire(info.amount * 0.25, info.source)
