@@ -100,7 +100,7 @@ func _cmd_help(_args: Array) -> String:
 		"Commands: %s\n"
 		+ "  chill          freeze van travel and stop new encounters\n"
 		+ "  unchill        resume normal run flow\n"
-		+ "  summon enemy   spawn a raider at the rear window\n"
+		+ "  summon enemy   spawn a raider that assaults an open breach slot\n"
 		+ "  give <item_id> add item to player (e.g. give frag_grenade)\n"
 		+ "  spawn <item_id> drop a pickup near the player\n"
 		+ "  coins <n>      add coins\n"

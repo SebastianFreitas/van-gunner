@@ -28,6 +28,14 @@ const SPAWN_DISTANCE := 47.2
 
 const ACT_MOB_APPROACH_SPEED := [9.44, 11.8, 15.73]
 
+# --- Breach / entry ----------------------------------------------------------
+## Rear doors are tough — about 12 hits at default raider damage (8).
+const REAR_DOOR_BREACH_HP := 96.0
+## Side windows open faster — about 4 hits at default raider damage.
+const WINDOW_BREACH_HP := 32.0
+## Interior move speed after a breach (van-local units/sec).
+const MOB_INTERIOR_SPEED := 4.5
+
 # --- Derived engagement windows (SPAWN_DISTANCE / mob speed) -------------------
 
 const ACT_ENGAGEMENT_SECONDS := [

@@ -2,17 +2,18 @@ class_name EncounterDirector
 extends Node
 
 @export var travel_before_encounter := 2.5
-@export var combat_duration := 6.0
+## Time the raider may spend assaulting after reaching their slot.
+@export var combat_duration := 18.0
 @export var waves_per_route := 10
 @export var rest_duration := 10.0
 @export var raider_scene: PackedScene
 
 @onready var enemy_container: Node3D = $"../../TravelPath/VanFollow/VanRig/EnemyContainer"
-@onready var rear_marker: Marker3D = (
-	$"../../TravelPath/VanFollow/VanRig/EnemyContainer/RearAttackMarker"
-)
 @onready var rear_spawn: Marker3D = (
 	$"../../TravelPath/VanFollow/VanRig/EnemyContainer/RearSpawnMarker"
+)
+@onready var breach_controller: BreachController = (
+	$"../../TravelPath/VanFollow/VanRig/EnemyContainer/BreachController"
 )
 
 var _sequence_id := 0
@@ -46,10 +47,13 @@ func _cancel_encounters() -> void:
 func spawn_debug_raider() -> String:
 	var raider := raider_scene.instantiate() as WindowRaider
 	enemy_container.add_child(raider)
-	raider.global_transform = rear_marker.global_transform
-	raider.attack_landed.connect(GameSession.damage_van)
-	raider.activate()
-	return "Spawned raider at rear window."
+	raider.global_transform = rear_spawn.global_transform
+	var breach := breach_controller.assign_breach_point(raider)
+	if breach == null:
+		raider.queue_free()
+		return "No breach points available."
+	raider.begin_assault(breach, GameBalance.get_mob_approach_speed(GameSession.route_step))
+	return "Spawned raider → %s." % String(breach.point_id)
 
 
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
@@ -75,36 +79,31 @@ func _run_encounter(id: int) -> void:
 	var raider := raider_scene.instantiate() as WindowRaider
 	enemy_container.add_child(raider)
 	raider.global_transform = rear_spawn.global_transform
-	raider.approach_speed = GameBalance.get_mob_approach_speed(GameSession.route_step)
+	var speed := GameBalance.get_mob_approach_speed(GameSession.route_step)
+	var breach := breach_controller.assign_breach_point(raider)
+	if breach:
+		raider.begin_assault(breach, speed)
+	else:
+		raider.approach_speed = speed
+		raider.activate()
 
-	while true:
-		if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
-			if is_instance_valid(raider):
-				raider.queue_free()
-			return
-		if not is_instance_valid(raider) or raider.is_defeated:
-			await _complete_wave(id)
-			return
-
-		var target := _raider_approach_target()
-		var to_target := target - raider.global_position
-		var remaining := to_target.length()
-		if remaining <= 0.05:
-			break
-
-		var delta := get_process_delta_time()
-		var step := minf(raider.approach_speed * delta, remaining)
-		raider.global_position += to_target.normalized() * step
+	# Approach is unpaid time — wave ends early if they die on the way.
+	while (
+		is_instance_valid(raider)
+		and not raider.is_defeated
+		and raider.assault_phase == WindowRaider.AssaultPhase.APPROACH
+		and GameSession.phase != GameSession.RunPhase.GAME_OVER
+		and id == _sequence_id
+	):
 		await get_tree().process_frame
 
-	var doors := _rear_doors()
-	if doors == null or doors.is_passage_open():
-		raider.global_transform = rear_marker.global_transform
-	else:
-		raider.global_position = doors.get_outside_hold_position()
-		raider.global_basis = rear_marker.global_basis
-	raider.attack_landed.connect(GameSession.damage_van)
-	raider.activate()
+	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
+		if is_instance_valid(raider):
+			raider.queue_free()
+		return
+	if not is_instance_valid(raider) or raider.is_defeated:
+		await _complete_wave(id)
+		return
 
 	var elapsed := 0.0
 	while (
@@ -112,24 +111,20 @@ func _run_encounter(id: int) -> void:
 		and is_instance_valid(raider)
 		and not raider.is_defeated
 		and GameSession.phase != GameSession.RunPhase.GAME_OVER
+		and id == _sequence_id
 	):
 		elapsed += get_process_delta_time()
 		await get_tree().process_frame
+
+	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
+		if is_instance_valid(raider):
+			raider.queue_free()
+		return
+
 	if is_instance_valid(raider) and not raider.is_defeated:
 		raider.retreat()
 	if id == _sequence_id and GameSession.phase != GameSession.RunPhase.GAME_OVER:
 		await _complete_wave(id)
-
-
-func _raider_approach_target() -> Vector3:
-	var doors := _rear_doors()
-	if doors and not doors.is_passage_open():
-		return doors.get_outside_hold_position()
-	return rear_marker.global_position
-
-
-func _rear_doors() -> Node:
-	return get_tree().get_first_node_in_group(&"rear_doors")
 
 
 func _complete_wave(id: int) -> void:
