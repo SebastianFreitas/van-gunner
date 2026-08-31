@@ -17,8 +17,8 @@ emission_energy_multiplier = 4.0
 
 [sub_resource type="SphereMesh" id="BulletMesh"]
 material = SubResource("BulletMaterial")
-radius = 0.06
-height = 0.12
+radius = 0.01
+height = 0.02
 
 [node name="Projectile" type="Area3D"]
 collision_layer = 0

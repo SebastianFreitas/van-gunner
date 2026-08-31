@@ -11,6 +11,7 @@ const SURFACE_OFFSET := 0.03
 ## Below this a ricochet has lost so much energy it is not worth keeping alive.
 const MIN_BOUNCE_SPEED := 4.0
 const TRAIL_FADE_SECONDS := 0.45
+const BULLET_VISUAL_SCALE := 0.22
 
 var velocity := Vector3.ZERO
 var gravity_scale := 1.0
@@ -57,6 +58,7 @@ func setup(
 	bounce_damage_retention = stats.bounce_damage_retention
 	_collision_mask = collision_mask
 	_ensure_trail_line()
+	_apply_trail_color(info)
 	_apply_size(stats.bullet_size)
 	_update_trail()
 	if _bullet_mesh:
@@ -185,9 +187,20 @@ func _apply_size(size: float) -> void:
 		sphere.radius = size
 		shape_node.shape = sphere
 	if _bullet_mesh and _bullet_mesh.mesh is SphereMesh:
-		(_bullet_mesh.mesh as SphereMesh).radius = size * 1.6
-		(_bullet_mesh.mesh as SphereMesh).height = size * 3.2
-		_bullet_mesh.scale = Vector3.ONE * maxf(size * 22.0, 1.0)
+		var visual_radius := size * BULLET_VISUAL_SCALE
+		(_bullet_mesh.mesh as SphereMesh).radius = visual_radius
+		(_bullet_mesh.mesh as SphereMesh).height = visual_radius * 2.0
+		_bullet_mesh.scale = Vector3.ONE
+
+
+func _apply_trail_color(info: DamageInfo) -> void:
+	if not _trail_line:
+		return
+	var dmg_type := DamageType.Type.NORMAL
+	if info:
+		dmg_type = info.damage_type
+	if _trail_line.has_method("set_trail_color"):
+		_trail_line.call("set_trail_color", BulletTrail.color_for_damage_type(dmg_type))
 
 
 func _ensure_trail_line() -> void:
