@@ -82,11 +82,6 @@ rim_tint = 0.4
 [sub_resource type="BoxShape3D" id="SideWindowGlassShape"]
 size = Vector3(0.22, 1.28, 2.28)
 
-[sub_resource type="StandardMaterial3D" id="DoorMaterial"]
-albedo_color = Color(0.2, 0.22, 0.21, 1)
-metallic = 0.7
-roughness = 0.45
-
 [sub_resource type="StandardMaterial3D" id="SideDoorTrimMaterial"]
 albedo_color = Color(0.08, 0.09, 0.09, 1)
 metallic = 0.65
@@ -98,7 +93,12 @@ metallic = 0.9
 roughness = 0.25
 
 [sub_resource type="BoxShape3D" id="SideDoorShape"]
-size = Vector3(0.18, 3.05, 2.38)
+size = Vector3(0.18, 3.05, 2.53)
+
+[sub_resource type="StandardMaterial3D" id="DoorMaterial"]
+albedo_color = Color(0.2, 0.22, 0.21, 1)
+metallic = 0.7
+roughness = 0.45
 
 [sub_resource type="BoxMesh" id="RearWindowGlassMesh"]
 size = Vector3(1.8, 1.36, 0.04)
@@ -125,10 +125,10 @@ size = Vector3(2.38, 0.35, 0.32)
 size = Vector3(0.25, 1.44, 0.32)
 
 [sub_resource type="BoxMesh" id="FrontPanelMesh"]
-size = Vector3(1.6, 2.65, 0.2)
+size = Vector3(1.6, 3.05, 0.2)
 
 [sub_resource type="BoxShape3D" id="FrontPanelShape"]
-size = Vector3(1.6, 2.65, 0.2)
+size = Vector3(1.6, 3.05, 0.2)
 
 [sub_resource type="BoxMesh" id="DoorMesh"]
 size = Vector3(1.55, 2.6334717, 0.22)
@@ -479,23 +479,23 @@ shape = SubResource("SideWindowGlassShape")
 [node name="SideDoors" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1902064671]
 
 [node name="Left" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors" unique_id=285426358]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, -3.41)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, -3.485)
 
 [node name="Panel" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=1992283155]
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Panel" unique_id=1566990378]
-size = Vector3(0.18, 3.05, 2.38)
+size = Vector3(0.18, 3.05, 2.53)
 material = SubResource("WallMaterial")
 
 [node name="OuterSkin" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Panel" unique_id=834392608]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08, 0, 0)
-size = Vector3(0.04, 3.01, 2.34)
+size = Vector3(0.04, 3.01, 2.49)
 material = SubResource("SideDoorTrimMaterial")
 
 [node name="Inset" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Panel" unique_id=2048385247]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, -0.15, 0)
 operation = 2
-size = Vector3(0.05, 2.55, 2.05)
+size = Vector3(0.05, 2.55, 2.2)
 
 [node name="WindowCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Panel" unique_id=1239395783]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0.12, 0.55, 0)
@@ -506,12 +506,12 @@ depth = 0.32
 [node name="BeltLine" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Panel" unique_id=2138034271]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, -0.05, 0)
 operation = 2
-size = Vector3(0.04, 0.05, 2.05)
+size = Vector3(0.04, 0.05, 2.2)
 
 [node name="LowerCrease" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Panel" unique_id=786967479]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, -0.85, 0)
 operation = 2
-size = Vector3(0.04, 0.04, 2.05)
+size = Vector3(0.04, 0.04, 2.2)
 
 [node name="WindowFrame" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=896779989]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0.02, 0.55, 0)
@@ -546,23 +546,23 @@ size = Vector3(0.06, 0.26, 0.06)
 material = SubResource("SideDoorHandleMaterial")
 
 [node name="Right" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors" unique_id=532555923]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, -3.41)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, -3.485)
 
 [node name="Panel" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=2057324694]
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Panel" unique_id=1248690556]
-size = Vector3(0.18, 3.05, 2.38)
+size = Vector3(0.18, 3.05, 2.53)
 material = SubResource("WallMaterial")
 
 [node name="OuterSkin" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Panel" unique_id=1469848193]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08, 0, 0)
-size = Vector3(0.04, 3.01, 2.34)
+size = Vector3(0.04, 3.01, 2.49)
 material = SubResource("SideDoorTrimMaterial")
 
 [node name="Inset" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Panel" unique_id=60930723]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.07, -0.15, 0)
 operation = 2
-size = Vector3(0.05, 2.55, 2.05)
+size = Vector3(0.05, 2.55, 2.2)
 
 [node name="WindowCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Panel" unique_id=425401244]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -0.12, 0.55, 0)
@@ -573,12 +573,12 @@ depth = 0.32
 [node name="BeltLine" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Panel" unique_id=1452546287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09, -0.05, 0)
 operation = 2
-size = Vector3(0.04, 0.05, 2.05)
+size = Vector3(0.04, 0.05, 2.2)
 
 [node name="LowerCrease" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Panel" unique_id=72958139]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09, -0.85, 0)
 operation = 2
-size = Vector3(0.04, 0.04, 2.05)
+size = Vector3(0.04, 0.04, 2.2)
 
 [node name="WindowFrame" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=812845470]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -0.02, 0.55, 0)
@@ -613,11 +613,11 @@ size = Vector3(0.06, 0.26, 0.06)
 material = SubResource("SideDoorHandleMaterial")
 
 [node name="LeftSideDoorCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=245777709]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, -3.41)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, -3.485)
 shape = SubResource("SideDoorShape")
 
 [node name="RightSideDoorCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=964440164]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, -3.41)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, -3.485)
 shape = SubResource("SideDoorShape")
 
 [node name="RearWall" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1122502090 groups=["rear_doors"]]
@@ -798,21 +798,21 @@ shape = SubResource("RearDoorBlockerRail")
 [node name="FrontPartition" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=450567163]
 
 [node name="LeftPanel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=772039291]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 1.325, -4.65)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 1.525, -4.65)
 material_override = SubResource("WallMaterial")
 mesh = SubResource("FrontPanelMesh")
 
 [node name="LeftCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=1411117773]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 1.325, -4.65)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 1.525, -4.65)
 shape = SubResource("FrontPanelShape")
 
 [node name="RightPanel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=1743236534]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.325, -4.65)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.525, -4.65)
 material_override = SubResource("WallMaterial")
 mesh = SubResource("FrontPanelMesh")
 
 [node name="RightCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=1748334617]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.325, -4.65)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.525, -4.65)
 shape = SubResource("FrontPanelShape")
 
 [node name="CabDoor" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1014773238]
@@ -852,7 +852,7 @@ shape = SubResource("PartitionShape")
 [node name="Props" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1487223170]
 
 [node name="CraftingTable" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1058055410]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.8012533, 0.425, -2.083648)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.8012533, 0.425, 0.066610575)
 collision_layer = 3
 script = ExtResource("4")
 prompt = "Open Bench"
