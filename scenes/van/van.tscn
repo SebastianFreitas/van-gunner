@@ -17,6 +17,8 @@
 [ext_resource type="Script" uid="uid://b70p1yv8tyk4e" path="res://scripts/run/breach_controller.gd" id="16"]
 [ext_resource type="Script" uid="uid://dua456vqj6g65" path="res://scripts/run/breach_point.gd" id="17"]
 [ext_resource type="Script" uid="uid://bxtywmfyg7o48" path="res://scripts/run/breakable_glass.gd" id="18"]
+[ext_resource type="Script" uid="uid://bq8side0doors01" path="res://scripts/run/side_doors.gd" id="19"]
+[ext_resource type="Script" uid="uid://cq8sidedrinteract" path="res://scripts/run/side_door_interact.gd" id="20"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -476,7 +478,8 @@ script = ExtResource("18")
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/BreakableGlass" unique_id=1588876407]
 shape = SubResource("SideWindowGlassShape")
 
-[node name="SideDoors" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1902064671]
+[node name="SideDoors" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1902064671 groups=["side_doors"]]
+script = ExtResource("19")
 
 [node name="Left" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors" unique_id=285426358]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, -3.485)
@@ -545,6 +548,20 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, 0, 0)
 size = Vector3(0.06, 0.26, 0.06)
 material = SubResource("SideDoorHandleMaterial")
 
+[node name="Blocker" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=245777709]
+
+[node name="Shape" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Blocker" unique_id=245777712]
+shape = SubResource("SideDoorShape")
+
+[node name="Interact" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=245777710]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("20")
+side = "left"
+
+[node name="Hit" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact" unique_id=245777711]
+shape = SubResource("SideDoorShape")
+
 [node name="Right" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors" unique_id=532555923]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, -3.485)
 
@@ -612,12 +629,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06, 0, 0)
 size = Vector3(0.06, 0.26, 0.06)
 material = SubResource("SideDoorHandleMaterial")
 
-[node name="LeftSideDoorCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=245777709]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, -3.485)
+[node name="Blocker" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=964440164]
+
+[node name="Shape" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Blocker" unique_id=964440167]
 shape = SubResource("SideDoorShape")
 
-[node name="RightSideDoorCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=964440164]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, -3.485)
+[node name="Interact" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=964440165]
+collision_layer = 2
+collision_mask = 0
+script = ExtResource("20")
+side = "right"
+
+[node name="Hit" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Interact" unique_id=964440166]
 shape = SubResource("SideDoorShape")
 
 [node name="RearWall" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1122502090 groups=["rear_doors"]]

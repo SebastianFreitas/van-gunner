@@ -35,6 +35,8 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 				matches = _filter_prefix(["enemy"], "")
 			"reardoor":
 				matches = _filter_prefix(["open", "close", "toggle"], "")
+			"sidedoor":
+				matches = _filter_prefix(["open", "close", "toggle"], "")
 			"list":
 				matches = _filter_prefix(["boons", "items", "commands"], "")
 			_:
@@ -46,6 +48,8 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 	elif parts[0] == "summon":
 		matches = _filter_prefix(["enemy"], partial)
 	elif parts[0] == "reardoor":
+		matches = _filter_prefix(["open", "close", "toggle"], partial)
+	elif parts[0] == "sidedoor":
 		matches = _filter_prefix(["open", "close", "toggle"], partial)
 	elif parts[0] == "list":
 		matches = _filter_prefix(["boons", "items", "commands"], partial)
@@ -88,6 +92,7 @@ func _register_commands() -> void:
 		"boonpool": _cmd_boonpool,
 		"list": _cmd_list,
 		"reardoor": _cmd_reardoor,
+		"sidedoor": _cmd_sidedoor,
 	}
 
 
@@ -110,6 +115,7 @@ func _cmd_help(_args: Array) -> String:
 		+ "  list items [q]  browse all item ids\n"
 		+ "  phase          print current run phase\n"
 		+ "  reardoor [open|close|toggle]  swing the van rear doors\n"
+		+ "  sidedoor [open|close|toggle]  slide the van side doors\n"
 		+ "  Tab            autocomplete command or item id"
 	) % ", ".join(names)
 
@@ -254,6 +260,26 @@ func _cmd_reardoor(args: Array) -> String:
 			return "Rear doors %s." % ("closing" if was_open else "opening")
 		_:
 			return "Usage: reardoor [open|close|toggle]"
+
+
+func _cmd_sidedoor(args: Array) -> String:
+	var doors := get_tree().get_first_node_in_group(&"side_doors")
+	if doors == null or not doors.has_method("toggle"):
+		return "Side doors not found."
+	var action: String = str(args[0]).to_lower() if not args.is_empty() else "toggle"
+	match action:
+		"open":
+			doors.open()
+			return "Side doors opening."
+		"close":
+			doors.close()
+			return "Side doors closing."
+		"toggle":
+			var was_open: bool = doors.is_open()
+			doors.toggle()
+			return "Side doors %s." % ("closing" if was_open else "opening")
+		_:
+			return "Usage: sidedoor [open|close|toggle]"
 
 
 func _load_item(item_id: String) -> ItemDefinition:
