@@ -27,6 +27,7 @@ var _bounce_count := 0
 var _distance_travelled := 0.0
 var _has_hit := false
 var _despawning := false
+var _pooled := false
 var _collision_mask := 7
 var _radius := 0.045
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
@@ -41,7 +42,9 @@ func setup(
 	info: DamageInfo,
 	shooter: CollisionObject3D
 ) -> void:
+	_pooled = false
 	_despawning = false
+	set_physics_process(true)
 	_has_hit = false
 	_bounce_count = 0
 	_distance_travelled = 0.0
@@ -66,8 +69,14 @@ func setup(
 	show()
 
 
+func is_pooled() -> bool:
+	return _pooled
+
+
 func reset_for_pool() -> void:
-	_despawning = false
+	_pooled = true
+	_despawning = true
+	set_physics_process(false)
 	_has_hit = false
 	_bounce_count = 0
 	_distance_travelled = 0.0

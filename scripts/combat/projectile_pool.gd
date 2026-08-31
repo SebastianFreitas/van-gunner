@@ -28,11 +28,14 @@ func acquire(
 	info: DamageInfo,
 	shooter: CollisionObject3D
 ) -> Projectile:
-	var projectile: Projectile
-	if _pool.is_empty():
+	var projectile: Projectile = null
+	while not _pool.is_empty():
+		var candidate: Projectile = _pool.pop_back()
+		if is_instance_valid(candidate):
+			projectile = candidate
+			break
+	if projectile == null:
 		projectile = _create_projectile()
-	else:
-		projectile = _pool.pop_back()
 
 	if spawn_parent and projectile.get_parent() != spawn_parent:
 		projectile.reparent(spawn_parent)
@@ -44,6 +47,8 @@ func acquire(
 
 func release(projectile: Projectile) -> void:
 	if not is_instance_valid(projectile):
+		return
+	if projectile.is_pooled():
 		return
 	projectile.reset_for_pool()
 	if projectile.get_parent() != _holder:
