@@ -21,12 +21,12 @@ shader = ExtResource("1")
 shader_parameter/base_color = Color(0.16, 0.18, 0.17, 1)
 shader_parameter/seam_color = Color(0.035, 0.045, 0.04, 1)
 shader_parameter/rust_color = Color(0.3, 0.105, 0.045, 1)
-shader_parameter/tile_count = Vector2(14, 4)
+shader_parameter/tile_count = Vector2(14, 2)
 shader_parameter/roughness_value = 0.78
 
 [sub_resource type="BoxMesh" id="WallMesh"]
 material = SubResource("WallMaterial")
-size = Vector3(0.4, 10, 20)
+size = Vector3(0.4, 20, 20)
 
 [sub_resource type="StandardMaterial3D" id="RibMaterial"]
 albedo_color = Color(0.055, 0.064, 0.061, 1)
@@ -35,7 +35,7 @@ roughness = 0.61
 
 [sub_resource type="BoxMesh" id="VerticalRibMesh"]
 material = SubResource("RibMaterial")
-size = Vector3(0.65, 10.5, 0.48)
+size = Vector3(0.65, 21, 0.48)
 
 [sub_resource type="BoxMesh" id="CrossBeamMesh"]
 material = SubResource("RibMaterial")
@@ -68,7 +68,7 @@ size = Vector3(0.12, 0.42, 1.3)
 size = Vector3(18, 0.2, 20)
 
 [sub_resource type="BoxShape3D" id="WallShape"]
-size = Vector3(0.4, 10, 20)
+size = Vector3(0.4, 20, 20)
 
 [node name="CorridorSegment" type="Node3D" unique_id=1621889854]
 
@@ -77,19 +77,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
 mesh = SubResource("FloorMesh")
 
 [node name="LeftWall" type="MeshInstance3D" parent="." unique_id=48106813]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 4.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 9.6, 0)
 mesh = SubResource("WallMesh")
 
 [node name="RightWall" type="MeshInstance3D" parent="." unique_id=406275232]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 4.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 9.6, 0)
 mesh = SubResource("WallMesh")
 
 [node name="LeftWall" type="MeshInstance3D" parent="RightWall" unique_id=857697098]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.997156, 9.993748, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.997156, 19.987496, 0)
 mesh = SubResource("WallMesh")
 
 [node name="RightWall" type="MeshInstance3D" parent="RightWall" unique_id=1454715081]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0028438568, 9.993748, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0028438568, 19.987496, 0)
 mesh = SubResource("WallMesh")
 
 [node name="Surfaces" type="StaticBody3D" parent="."]
@@ -99,79 +99,79 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
 shape = SubResource("FloorShape")
 
 [node name="LeftWallCollision" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 4.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 9.6, 0)
 shape = SubResource("WallShape")
 
 [node name="RightWallCollision" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 4.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 9.6, 0)
 shape = SubResource("WallShape")
 
 [node name="LeftWallUpperCollision" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.997156, 14.593748, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.997156, 29.587496, 0)
 shape = SubResource("WallShape")
 
 [node name="RightWallUpperCollision" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.002844, 14.593748, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.002844, 29.587496, 0)
 shape = SubResource("WallShape")
 
 [node name="Structure" type="Node3D" parent="." unique_id=985912550]
 
 [node name="RibL0" type="MeshInstance3D" parent="Structure" unique_id=679096228]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.7, 4.7, -7.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.7, 9.7, -7.5)
 mesh = SubResource("VerticalRibMesh")
 
 [node name="RibR0" type="MeshInstance3D" parent="Structure" unique_id=2058329822]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.7, 4.7, -7.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.7, 9.7, -7.5)
 mesh = SubResource("VerticalRibMesh")
 
 [node name="Beam0" type="MeshInstance3D" parent="Structure" unique_id=1623591224]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.3, -7.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 14.6, -7.5)
 mesh = SubResource("CrossBeamMesh")
 
 [node name="RibL1" type="MeshInstance3D" parent="Structure" unique_id=1729708930]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.7, 4.7, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.7, 9.7, 0)
 mesh = SubResource("VerticalRibMesh")
 
 [node name="RibR1" type="MeshInstance3D" parent="Structure" unique_id=768232746]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.7, 4.7, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.7, 9.7, 0)
 mesh = SubResource("VerticalRibMesh")
 
 [node name="Beam1" type="MeshInstance3D" parent="Structure" unique_id=449972026]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.3, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 14.6, 0)
 mesh = SubResource("CrossBeamMesh")
 
 [node name="RibL2" type="MeshInstance3D" parent="Structure" unique_id=54868718]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.7, 4.7, 7.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.7, 9.7, 7.5)
 mesh = SubResource("VerticalRibMesh")
 
 [node name="RibR2" type="MeshInstance3D" parent="Structure" unique_id=832437018]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.7, 4.7, 7.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.7, 9.7, 7.5)
 mesh = SubResource("VerticalRibMesh")
 
 [node name="Beam2" type="MeshInstance3D" parent="Structure" unique_id=2024292280]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.3, 7.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 14.6, 7.5)
 mesh = SubResource("CrossBeamMesh")
 
 [node name="LeftPipe" type="MeshInstance3D" parent="Structure" unique_id=1523019711]
-transform = Transform3D(1, 0, 0, 0, -3.6199901e-06, -1, 0, 1, -3.6199901e-06, -8.6, 3.2, 0)
+transform = Transform3D(1, 0, 0, 0, -3.6199901e-06, -1, 0, 1, -3.6199901e-06, -8.6, 6.4, 0)
 mesh = SubResource("PipeMesh")
 
 [node name="RightPipe" type="MeshInstance3D" parent="Structure" unique_id=342615720]
-transform = Transform3D(1, 0, 0, 0, -3.6199901e-06, -1, 0, 1, -3.6199901e-06, 8.6, 5.3, 0)
+transform = Transform3D(1, 0, 0, 0, -3.6199901e-06, -1, 0, 1, -3.6199901e-06, 8.6, 10.6, 0)
 mesh = SubResource("PipeMesh")
 
 [node name="BrokenLeftPlatform" type="MeshInstance3D" parent="Structure" unique_id=1676076327]
-transform = Transform3D(0.99280864, -0.119712204, 0, 0.11961645, 0.9920145, -0.039989334, 0.0047872113, 0.039701756, 0.9992001, -7, 4, -3.7)
+transform = Transform3D(0.99280864, -0.119712204, 0, 0.11961645, 0.9920145, -0.039989334, 0.0047872113, 0.039701756, 0.9992001, -7, 8, -3.7)
 mesh = SubResource("BrokenPlatformMesh")
 
 [node name="BrokenRightPlatform" type="MeshInstance3D" parent="Structure" unique_id=679590769]
-transform = Transform3D(0.98722726, 0.15931821, 0, -0.15880866, 0.9840698, 0.07991469, 0.012731865, -0.07889396, 0.99680173, 7.1, 5.8, 4.4)
+transform = Transform3D(0.98722726, 0.15931821, 0, -0.15880866, 0.9840698, 0.07991469, 0.012731865, -0.07889396, 0.99680173, 7.1, 11.6, 4.4)
 mesh = SubResource("BrokenPlatformMesh")
 
 [node name="LeftLamp" type="MeshInstance3D" parent="Structure" unique_id=615592649]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.4, 2.6, -5.4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.4, 5.2, -5.4)
 mesh = SubResource("LampMesh")
 
 [node name="RightLamp" type="MeshInstance3D" parent="Structure" unique_id=354234978]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4, 3.4, 4.9)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4, 6.8, 4.9)
 mesh = SubResource("LampMesh")

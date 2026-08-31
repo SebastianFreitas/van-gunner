@@ -24,7 +24,8 @@ fog_mode = 1
 fog_light_color = Color(0.008, 0.012, 0.011, 1)
 fog_density = 1.0
 fog_depth_curve = 1.5
-fog_depth_end = 28.0
+fog_depth_begin = 20.0
+fog_depth_end = 56.0
 
 [sub_resource type="StandardMaterial3D" id="FloorMaterial"]
 albedo_color = Color(0.105, 0.115, 0.11, 1)
