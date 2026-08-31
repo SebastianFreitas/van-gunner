@@ -46,3 +46,33 @@ func _set_side_street(side: StringName, enabled: bool) -> void:
 	wall_collision.disabled = enabled
 	wall_upper_collision.disabled = enabled
 	side_street.visible = enabled
+	_set_side_structure_visible(side, not enabled)
+
+
+func _set_side_structure_visible(side: StringName, visible: bool) -> void:
+	for variant in _variants:
+		for child in variant.get_children():
+			if _is_side_structure_node(child.name, side):
+				child.visible = visible
+
+
+func _is_side_structure_node(node_name: String, side: StringName) -> bool:
+	if side == &"left":
+		return (
+			node_name.begins_with("Left")
+			or node_name.begins_with("RibL")
+			or node_name.begins_with("MainPipeLeft")
+			or node_name.begins_with("ValveLeft")
+			or node_name.begins_with("BraceLeft")
+			or node_name.begins_with("BrokenLeft")
+			or node_name == "CatwalkRailL"
+		)
+	return (
+		node_name.begins_with("Right")
+		or node_name.begins_with("RibR")
+		or node_name.begins_with("MainPipeRight")
+		or node_name.begins_with("ValveRight")
+		or node_name.begins_with("BraceRight")
+		or node_name.begins_with("BrokenRight")
+		or node_name == "CatwalkRailR"
+	)

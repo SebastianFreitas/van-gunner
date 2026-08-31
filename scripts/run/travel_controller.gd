@@ -11,8 +11,10 @@ const QUARTER_CIRCLE_HANDLE := 0.55228475
 const SEGMENT_VARIANT_COUNT := 4
 const NEIGHBORHOOD_MIN_LENGTH := 2
 const NEIGHBORHOOD_MAX_LENGTH := 5
-const SIDE_STREET_CHANCE := 0.32
-const SIDE_STREET_BOTH_CHANCE := 0.18
+const SIDE_STREET_RUN_CHANCE := 0.26
+const SIDE_STREET_RUN_MIN := 2
+const SIDE_STREET_RUN_MAX := 4
+const SIDE_STREET_START_SEGMENT := 4
 
 @export var travel_speed := 8.0
 @export var segment_scene: PackedScene
@@ -43,6 +45,9 @@ var _segment_index := 0
 var _neighborhood_variant := 0
 var _neighborhood_remaining := 0
 var _last_neighborhood_variant := -1
+var _side_street_remaining := 0
+var _side_street_left := false
+var _side_street_right := false
 var _rng: RandomNumberGenerator
 
 @onready var corridor_root: Node3D = $"../../ExteriorCorridor"
@@ -140,7 +145,7 @@ func _spawn_world_segment(world_transform: Transform3D) -> void:
 		segment.apply_variant(_pick_segment_variant())
 	if segment.has_method(&"apply_side_streets"):
 		var side_streets := _pick_side_streets()
-		segment.call_deferred("apply_side_streets", side_streets.x, side_streets.y)
+		segment.apply_side_streets(side_streets.x != 0, side_streets.y != 0)
 	_world_pieces.append(segment)
 	_segment_index += 1
 
@@ -163,14 +168,30 @@ func _pick_segment_variant() -> int:
 
 
 func _pick_side_streets() -> Vector2i:
-	var roll := _rng.randf()
-	if roll < SIDE_STREET_BOTH_CHANCE:
-		return Vector2i(1, 1)
-	if roll < SIDE_STREET_BOTH_CHANCE + SIDE_STREET_CHANCE:
-		return Vector2i(1, 0)
-	if roll < SIDE_STREET_BOTH_CHANCE + SIDE_STREET_CHANCE * 2.0:
-		return Vector2i(0, 1)
-	return Vector2i(0, 0)
+	if _segment_index < SIDE_STREET_START_SEGMENT:
+		return Vector2i.ZERO
+
+	if _side_street_remaining <= 0:
+		_side_street_left = false
+		_side_street_right = false
+		if _rng.randf() < SIDE_STREET_RUN_CHANCE:
+			match _rng.randi_range(0, 2):
+				0:
+					_side_street_left = true
+				1:
+					_side_street_right = true
+				2:
+					_side_street_left = true
+					_side_street_right = true
+			_side_street_remaining = _rng.randi_range(
+				SIDE_STREET_RUN_MIN,
+				SIDE_STREET_RUN_MAX
+			)
+
+	if _side_street_remaining > 0:
+		_side_street_remaining -= 1
+
+	return Vector2i(int(_side_street_left), int(_side_street_right))
 
 
 func _sample_route_transform(progress: float) -> Transform3D:
