@@ -146,41 +146,41 @@ static func _lines_for_effect(effect: ItemEffect) -> PackedStringArray:
 	return lines
 
 
-static func _lines_for_trait_effect(trait: BoonTraitEffect) -> PackedStringArray:
+static func _lines_for_trait_effect(trait_effect: BoonTraitEffect) -> PackedStringArray:
 	var lines := PackedStringArray()
-	if trait.trait_key == &"":
+	if trait_effect.trait_key == &"":
 		return lines
-	if trait.set_flag:
-		var flag_text: String = BoonTraitKeys.flag_trait_labels().get(trait.trait_key, "")
+	if trait_effect.set_flag:
+		var flag_text: String = BoonTraitKeys.flag_trait_labels().get(trait_effect.trait_key, "")
 		if flag_text.is_empty():
-			flag_text = trait_label(trait.trait_key)
+			flag_text = trait_label(trait_effect.trait_key)
 		lines.append("%s — permanent" % flag_text)
 		return lines
-	var label := trait_label(trait.trait_key)
-	if not is_zero_approx(trait.add_value):
-		var prefix := "+" if trait.add_value >= 0.0 else ""
-		if String(trait.trait_key).begins_with("gun_"):
-			if trait.trait_key == BoonTraitKeys.GUN_MAX_BOUNCES or trait.trait_key == BoonTraitKeys.GUN_MAG_SIZE:
-				lines.append("%s +%s — permanent" % [label, format_number(trait.add_value)])
+	var label := trait_label(trait_effect.trait_key)
+	if not is_zero_approx(trait_effect.add_value):
+		var prefix := "+" if trait_effect.add_value >= 0.0 else ""
+		if String(trait_effect.trait_key).begins_with("gun_"):
+			if trait_effect.trait_key == BoonTraitKeys.GUN_MAX_BOUNCES or trait_effect.trait_key == BoonTraitKeys.GUN_MAG_SIZE:
+				lines.append("%s +%s — permanent" % [label, format_number(trait_effect.add_value)])
 			else:
-				lines.append("%s %s%s — permanent" % [label, prefix, format_number(trait.add_value)])
-		elif trait.trait_key.ends_with("_chance"):
-			lines.append("%s +%s%% — permanent" % [label, format_number(trait.add_value * 100.0)])
+				lines.append("%s %s%s — permanent" % [label, prefix, format_number(trait_effect.add_value)])
+		elif trait_effect.trait_key.ends_with("_chance"):
+			lines.append("%s +%s%% — permanent" % [label, format_number(trait_effect.add_value * 100.0)])
 		else:
-			lines.append("%s %s%s — permanent" % [label, prefix, format_number(trait.add_value)])
-	elif not is_equal_approx(trait.multiply_value, 1.0):
-		var percent := (trait.multiply_value - 1.0) * 100.0
+			lines.append("%s %s%s — permanent" % [label, prefix, format_number(trait_effect.add_value)])
+	elif not is_equal_approx(trait_effect.multiply_value, 1.0):
+		var percent := (trait_effect.multiply_value - 1.0) * 100.0
 		var sign_text := "+" if percent >= 0.0 else ""
-		if trait.trait_key == BoonTraitKeys.FIRE_AREA_MULT and trait.multiply_value < 1.0:
+		if trait_effect.trait_key == BoonTraitKeys.FIRE_AREA_MULT and trait_effect.multiply_value < 1.0:
 			lines.append("%s x%s (%s%% area) — permanent" % [
 				label,
-				format_number(trait.multiply_value),
-				format_number(trait.multiply_value * 100.0),
+				format_number(trait_effect.multiply_value),
+				format_number(trait_effect.multiply_value * 100.0),
 			])
 		else:
 			lines.append("%s x%s (%s%s%%) — permanent" % [
 				label,
-				format_number(trait.multiply_value),
+				format_number(trait_effect.multiply_value),
 				sign_text,
 				format_number(percent),
 			])
