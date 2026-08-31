@@ -107,6 +107,11 @@ debug_console={
 ]
 }
 
+[layer_names]
+
+3d_render/layer_1="World"
+3d_render/layer_2="VanInterior"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

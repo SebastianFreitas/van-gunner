@@ -19,6 +19,7 @@
 [ext_resource type="Script" uid="uid://bxtywmfyg7o48" path="res://scripts/run/breakable_glass.gd" id="18"]
 [ext_resource type="Script" uid="uid://bq8side0doors01" path="res://scripts/run/side_doors.gd" id="19"]
 [ext_resource type="Script" uid="uid://cq8sidedrinteract" path="res://scripts/run/side_door_interact.gd" id="20"]
+[ext_resource type="Script" path="res://scripts/run/van_lighting.gd" id="21"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -1033,23 +1034,58 @@ transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0,
 movement_reference_path = NodePath("..")
 
 [node name="Lighting" type="Node3D" parent="TravelPath/VanFollow/VanRig" unique_id=863892881]
+script = ExtResource("21")
 
 [node name="ExteriorLight" type="DirectionalLight3D" parent="TravelPath/VanFollow/VanRig/Lighting" unique_id=183605224]
 transform = Transform3D(0.9393727, 0.25070828, -0.23393217, 0, 0.68222123, 0.7311458, 0.3428978, -0.6868184, 0.64086, 0, 0, 0)
 light_color = Color(0.42, 0.5, 0.48, 1)
-light_energy = 0.38
+light_energy = 0.45
+light_cull_mask = 1
 shadow_enabled = true
 
 [node name="CenterLight" type="OmniLight3D" parent="TravelPath/VanFollow/VanRig/Lighting" unique_id=348980157]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55, -1.5)
 light_color = Color(1, 0.86, 0.64, 1)
 light_energy = 2.4
+light_cull_mask = 2
 omni_range = 5.5
 
 [node name="RearLight" type="OmniLight3D" parent="TravelPath/VanFollow/VanRig/Lighting" unique_id=1842699834]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55, 2.8)
 light_color = Color(0.66, 0.78, 0.82, 1)
 light_energy = 2.0
+light_cull_mask = 2
+omni_range = 5.0
+
+[node name="DoorSpill" type="OmniLight3D" parent="TravelPath/VanFollow/VanRig/Lighting" unique_id=1842699835]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0.4)
+light_color = Color(1, 0.88, 0.68, 1)
+light_energy = 6.5
+light_indirect_energy = 0.0
+light_volumetric_fog_energy = 0.35
+light_cull_mask = 1
+shadow_enabled = true
+shadow_bias = 0.04
+shadow_normal_bias = 1.2
+shadow_reverse_cull_face = true
+omni_range = 18.0
+omni_attenuation = 1.35
+
+[node name="RearCone" type="SpotLight3D" parent="TravelPath/VanFollow/VanRig/Lighting" unique_id=1842699836]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1.75, 4.15)
+light_color = Color(1, 0.9, 0.72, 1)
+light_energy = 5.5
+light_indirect_energy = 0.0
+light_volumetric_fog_energy = 0.4
+light_cull_mask = 1
+shadow_enabled = true
+shadow_bias = 0.03
+shadow_normal_bias = 1.0
+shadow_reverse_cull_face = true
+spot_range = 22.0
+spot_attenuation = 1.2
+spot_angle = 62.0
+spot_angle_attenuation = 0.85
 
 [node name="Systems" type="Node" parent="." unique_id=928478009]
 
