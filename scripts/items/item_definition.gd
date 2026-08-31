@@ -35,6 +35,8 @@ enum BoonPool {
 @export var usable: ItemUsableConfig
 ## Overrides the pickup's default auto-grab radius when > 0.
 @export var pickup_radius := 0.0
+## Overrides the pickup's shot-only hit radius when > 0.
+@export var shot_hit_radius := 0.0
 @export var effects: Array[ItemEffect] = []
 
 
