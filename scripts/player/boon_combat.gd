@@ -170,11 +170,12 @@ static func spawn_projectile(
 	origin: Vector3,
 	direction: Vector3,
 	stats: GunStats,
-	shooter: CollisionObject3D
+	shooter: CollisionObject3D,
+	visual_origin = null
 ) -> Projectile:
 	var info := DamageInfo.create(stats.damage_per_shot, stats.damage_type, shooter)
 	var spawn_parent := tree.current_scene if tree.current_scene else tree.root
-	return ProjectilePool.acquire(spawn_parent, origin, direction, stats, info, shooter)
+	return ProjectilePool.acquire(spawn_parent, origin, direction, stats, info, shooter, visual_origin)
 
 
 static func spawn_radial_cold_projectiles(

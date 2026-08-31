@@ -40,18 +40,19 @@ func try_fire() -> void:
 		return
 
 	var aim := _get_aim_point(stats.aim_range)
-	var muzzle := _get_muzzle_position()
-	var direction := (aim - muzzle).normalized()
+	var origin := camera.global_position
+	var direction := (aim - origin).normalized()
 	if direction.length_squared() < 0.0001:
 		direction = -camera.global_basis.z
+	var muzzle := _get_muzzle_position()
 
-	var projectile := _spawn_projectile(muzzle, direction, stats)
+	var projectile := _spawn_projectile(origin, direction, stats, muzzle)
 	var player := camera.get_parent().get_parent()
 	var traits := BoonTraits.find_on(player)
 	if traits:
 		BoonCombat.dispatch_bonus_projectiles(
 			get_tree(),
-			muzzle,
+			origin,
 			direction,
 			stats,
 			player as CollisionObject3D,
@@ -122,9 +123,9 @@ func _get_aim_point(max_range: float) -> Vector3:
 	return result.position
 
 
-func _spawn_projectile(origin: Vector3, direction: Vector3, stats: GunStats) -> Projectile:
+func _spawn_projectile(origin: Vector3, direction: Vector3, stats: GunStats, visual_origin: Vector3) -> Projectile:
 	var shooter := camera.get_parent().get_parent() as CollisionObject3D
-	return BoonCombat.spawn_projectile(get_tree(), origin, direction, stats, shooter)
+	return BoonCombat.spawn_projectile(get_tree(), origin, direction, stats, shooter, visual_origin)
 
 
 func _start_reload() -> void:

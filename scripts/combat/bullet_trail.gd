@@ -58,6 +58,18 @@ func add_point(world_position: Vector3) -> void:
 	_rebuild()
 
 
+## Replace the last overshoot point with the surface contact, then add the exit point.
+func set_bounce_vertex(contact: Vector3, exit: Vector3) -> void:
+	if _points.is_empty():
+		_points.append(contact)
+	else:
+		_points[_points.size() - 1] = contact
+	_points.append(exit)
+	if _points.size() > MAX_POINTS:
+		_points = _points.slice(_points.size() - MAX_POINTS)
+	_rebuild()
+
+
 ## Reparent into the live scene and fade out instead of vanishing with the bullet.
 func detach_and_fade(fade_seconds := FADE_SECONDS) -> void:
 	if _points.size() < 2:

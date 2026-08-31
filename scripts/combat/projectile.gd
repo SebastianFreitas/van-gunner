@@ -34,13 +34,17 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 
 
 var _bullet_mesh: MeshInstance3D
 var _trail_line: MeshInstance3D
+var _visual: BulletVisual
+var _visual_origin := Vector3.ZERO
+var _fire_direction := Vector3.FORWARD
 
 
 func setup(
 	direction: Vector3,
 	stats: GunStats,
 	info: DamageInfo,
-	shooter: CollisionObject3D
+	shooter: CollisionObject3D,
+	visual_origin = null
 ) -> void:
 	_pooled = false
 	_despawning = false
@@ -60,12 +64,21 @@ func setup(
 	bounce_speed_retention = stats.bounce_speed_retention
 	bounce_damage_retention = stats.bounce_damage_retention
 	_collision_mask = collision_mask
-	_ensure_trail_line()
-	_apply_trail_color(info)
-	_apply_size(stats.bullet_size)
-	_update_trail()
-	if _bullet_mesh:
-		_bullet_mesh.show()
+	_fire_direction = direction.normalized()
+	_clear_visual()
+	if visual_origin is Vector3:
+		_visual_origin = visual_origin as Vector3
+		_spawn_visual(_visual_origin, info, stats)
+		_hide_self_visuals()
+	else:
+		_ensure_trail_line()
+		_apply_trail_color(info)
+		_apply_size(stats.bullet_size)
+		_update_trail()
+		if _bullet_mesh:
+			_bullet_mesh.show()
+		if _trail_line:
+			_trail_line.show()
 	show()
 
 
@@ -83,6 +96,7 @@ func reset_for_pool() -> void:
 	velocity = Vector3.ZERO
 	damage_info = null
 	owner_rid = RID()
+	_clear_visual()
 	if _trail_line and _trail_line.has_method("clear_points"):
 		_trail_line.call("clear_points")
 	if _bullet_mesh:
@@ -118,6 +132,7 @@ func _physics_process(delta: float) -> void:
 		_distance_travelled += from.distance_to(to)
 		global_position = to
 		_update_trail()
+		_sync_visual()
 		_orient_to_velocity()
 		if _distance_travelled >= max_distance:
 			_despawn()
@@ -132,6 +147,8 @@ func _physics_process(delta: float) -> void:
 
 	global_position = contact
 	_update_trail()
+	if _visual:
+		_visual.sync_to(global_position, velocity)
 	_resolve_hit(collider)
 
 
@@ -158,15 +175,24 @@ func _can_ricochet_off(collider: Node) -> bool:
 func _ricochet(point: Vector3, normal: Vector3) -> void:
 	_bounces_left -= 1
 	_bounce_count += 1
-	velocity = velocity.bounce(normal) * bounce_speed_retention
-	global_position = point + normal * (_radius + SURFACE_OFFSET)
+	var safe_normal := normal.normalized()
+	if safe_normal.dot(velocity) > 0.0:
+		safe_normal = -safe_normal
+	velocity = velocity.bounce(safe_normal) * bounce_speed_retention
+	var exit := point + safe_normal * (_radius + SURFACE_OFFSET)
+	global_position = exit
 	if damage_info:
 		damage_info.amount *= bounce_damage_retention
 		var traits: BoonTraits = BoonCombat.get_player_traits(get_tree())
 		if traits:
 			velocity = BoonCombat.dispatch_ricochet(self, traits, _bounce_count, velocity)
-	_update_trail()
-	ricocheted.emit(global_position, normal)
+	if _visual:
+		_visual.on_bounce(point, exit, velocity)
+	elif _trail_line and _trail_line.has_method("set_bounce_vertex"):
+		_trail_line.call("set_bounce_vertex", point, exit)
+	else:
+		_update_trail()
+	ricocheted.emit(global_position, safe_normal)
 	if velocity.length() < MIN_BOUNCE_SPEED or _distance_travelled >= max_distance:
 		_despawn()
 		return
@@ -174,6 +200,8 @@ func _ricochet(point: Vector3, normal: Vector3) -> void:
 
 
 func _update_trail() -> void:
+	if _visual:
+		return
 	if _trail_line and _trail_line.has_method("add_point"):
 		_trail_line.call("add_point", global_position)
 
@@ -228,9 +256,49 @@ func _ensure_trail_line() -> void:
 
 
 func _detach_trail_line() -> void:
+	if _visual:
+		return
 	if _trail_line and is_instance_valid(_trail_line) and _trail_line.has_method("detach_and_fade"):
 		_trail_line.call("detach_and_fade", TRAIL_FADE_SECONDS)
 		_trail_line = null
+
+
+func _hide_self_visuals() -> void:
+	if _bullet_mesh:
+		_bullet_mesh.hide()
+	if _trail_line:
+		_trail_line.hide()
+
+
+func _sync_visual() -> void:
+	if not _visual:
+		return
+	if _visual.follows_logical():
+		_visual.sync_to(global_position, velocity)
+	else:
+		_visual.place_along_path(_visual_origin, _fire_direction, _distance_travelled, velocity)
+
+
+func _spawn_visual(origin: Vector3, info: DamageInfo, stats: GunStats) -> void:
+	var parent := get_parent()
+	if not parent:
+		return
+	_visual = BulletVisual.new()
+	parent.add_child(_visual)
+	_visual.setup(origin, velocity, gravity_scale, info, stats)
+
+
+func _clear_visual() -> void:
+	if _visual and is_instance_valid(_visual):
+		_visual.queue_free()
+	_visual = null
+
+
+func _fade_visual() -> void:
+	if _visual and is_instance_valid(_visual):
+		_visual.sync_to(global_position, velocity)
+		_visual.fade_out()
+	_visual = null
 
 
 func _resolve_hit(collider: Node) -> void:
@@ -291,6 +359,7 @@ func _despawn() -> void:
 	if _despawning:
 		return
 	_despawning = true
+	_fade_visual()
 	_detach_trail_line()
 	despawned.emit(_has_hit)
 	ProjectilePool.release(self)
