@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bpjji6mwad67w" path="res://scenes/corridor/corridor_segment.gd" id="1_script"]
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1_shader"]
+[ext_resource type="PackedScene" uid="uid://cside8street1br" path="res://scenes/corridor/side_street_branch.tscn" id="2_side_street"]
 
 [sub_resource type="ShaderMaterial" id="FloorMaterial"]
 render_priority = 0
@@ -444,3 +445,14 @@ mesh = SubResource("LampMesh")
 [node name="RightLamp" type="MeshInstance3D" parent="Structure/Variant3" unique_id=720149614]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4, 6.8, 4.9)
 mesh = SubResource("LampMesh")
+
+[node name="SideStreets" type="Node3D" parent="."]
+
+[node name="Left" parent="SideStreets" instance=ExtResource("2_side_street")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, 0)
+visible = false
+
+[node name="Right" parent="SideStreets" instance=ExtResource("2_side_street")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 0)
+visible = false
+mirror_x = true
