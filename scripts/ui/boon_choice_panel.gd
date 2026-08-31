@@ -7,9 +7,12 @@ signal choice_made(item: ItemDefinition)
 
 const ACCENT := Color(0.91, 0.78, 0.48, 1.0)
 const MUTED := Color(0.62, 0.66, 0.64, 1.0)
+## Matches REST break length — if the player doesn't pick, one is chosen at random.
+const CHOICE_TIMEOUT_SECONDS := 10.0
 
 var _player: Node3D
 var _choices: Array[ItemDefinition] = []
+var _present_id := 0
 
 
 func _ready() -> void:
@@ -51,7 +54,7 @@ func present(choices: Array[ItemDefinition]) -> void:
 	stack.add_child(title)
 
 	var hint := Label.new()
-	hint.text = "Pick one boon or tool for the rest of the run."
+	hint.text = "Pick one — or a random reward is taken when time's up."
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_color_override(&"font_color", MUTED)
 	stack.add_child(hint)
@@ -66,14 +69,25 @@ func present(choices: Array[ItemDefinition]) -> void:
 
 	show()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_present_id += 1
+	_arm_timeout(_present_id)
 
 
 func dismiss() -> void:
+	_present_id += 1
 	_choices.clear()
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
 	hide()
+
+
+func _arm_timeout(present_id: int) -> void:
+	await get_tree().create_timer(CHOICE_TIMEOUT_SECONDS).timeout
+	if present_id != _present_id or not visible or _choices.is_empty():
+		return
+	var item := _choices[randi() % _choices.size()]
+	_on_choice_pressed(item)
 
 
 func _make_choice_button(item: ItemDefinition) -> Button:

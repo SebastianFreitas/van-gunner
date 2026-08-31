@@ -106,9 +106,11 @@ func _physics_process(delta: float) -> void:
 	if not _should_scroll():
 		_van_velocity = Vector3.ZERO
 		return
+
+	# Never park at the fork — if the player hasn't chosen, pick randomly in time to turn.
+	_maybe_auto_choose_route(delta)
+
 	var movement := travel_speed * delta
-	if _turn_state == TurnState.APPROACHING and _turn_direction == &"":
-		movement = minf(movement, maxf(0.0, _approach_stop_progress - van_follow.progress))
 	if movement <= 0.0:
 		_van_velocity = Vector3.ZERO
 		return
@@ -126,15 +128,28 @@ func _physics_process(delta: float) -> void:
 
 
 func _should_scroll() -> bool:
-	if GameSession.chill_mode:
-		return false
+	# Chill pauses encounters only. IDLE scrolls too so a new game isn't parked
+	# while waiting for the cab-door knock to begin the run.
 	return GameSession.phase in [
+		GameSession.RunPhase.IDLE,
 		GameSession.RunPhase.TRAVELLING,
 		GameSession.RunPhase.COMBAT,
 		GameSession.RunPhase.REST,
 		GameSession.RunPhase.TURNING,
 		GameSession.RunPhase.ROUTE_CHOICE,
 	]
+
+
+func _maybe_auto_choose_route(delta: float) -> void:
+	if _turn_state != TurnState.APPROACHING or _turn_direction != &"":
+		return
+	if GameSession.phase != GameSession.RunPhase.ROUTE_CHOICE:
+		return
+	var remaining := _approach_stop_progress - van_follow.progress
+	if remaining > travel_speed * delta:
+		return
+	var direction: StringName = &"left" if _rng.randi() % 2 == 0 else &"right"
+	GameSession.choose_route(direction)
 
 
 func _spawn_segments_ahead() -> void:

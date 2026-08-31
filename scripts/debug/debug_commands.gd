@@ -122,7 +122,7 @@ func _cmd_help(_args: Array) -> String:
 
 func _cmd_chill(_args: Array) -> String:
 	GameSession.set_chill_mode(true)
-	return "Chill mode ON — van frozen, encounters paused."
+	return "Chill mode ON — encounters paused, van keeps moving."
 
 
 func _cmd_unchill(_args: Array) -> String:
