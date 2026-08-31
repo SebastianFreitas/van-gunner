@@ -9,6 +9,7 @@ extends Node3D
 signal opened
 signal closed
 signal door_changed(side: StringName, is_open: bool)
+signal glass_shattered(side: StringName)
 
 const SIDE_LEFT := &"left"
 const SIDE_RIGHT := &"right"
@@ -21,17 +22,37 @@ const OUTSIDE_HOLD_LOCAL := Vector3(0.0, 1.62, 5.2)
 
 @onready var _left_hinge: Node3D = $LeftHinge
 @onready var _right_hinge: Node3D = $RightHinge
-@onready var _left_blocker: CollisionShape3D = $Blocker/LeftCollision
-@onready var _right_blocker: CollisionShape3D = $Blocker/RightCollision
+@onready var _left_glass: Node = $LeftHinge/BreakableGlass
+@onready var _right_glass: Node = $RightHinge/BreakableGlass
 
+var _left_blocker_shapes: Array[CollisionShape3D] = []
+var _right_blocker_shapes: Array[CollisionShape3D] = []
 var _left_open := false
 var _right_open := false
 var _left_tween: Tween
 var _right_tween: Tween
 
 
+func _ready() -> void:
+	_left_blocker_shapes = _collect_blocker_shapes("Left")
+	_right_blocker_shapes = _collect_blocker_shapes("Right")
+	if _left_glass and _left_glass.has_signal("shattered"):
+		_left_glass.shattered.connect(func() -> void: glass_shattered.emit(SIDE_LEFT))
+	if _right_glass and _right_glass.has_signal("shattered"):
+		_right_glass.shattered.connect(func() -> void: glass_shattered.emit(SIDE_RIGHT))
+
+
 func is_open() -> bool:
 	return _left_open and _right_open
+
+
+func is_glass_intact(side: StringName) -> bool:
+	var glass := _left_glass if side == SIDE_LEFT else _right_glass
+	if glass == null:
+		return false
+	if glass.has_method("is_intact"):
+		return glass.is_intact()
+	return false
 
 
 ## True only when both leaves are open — full rear passage into the van.
@@ -111,8 +132,20 @@ func _set_door_open(side: StringName, value: bool) -> void:
 
 
 func _set_blocker_enabled(side: StringName, enabled: bool) -> void:
-	var blocker := _left_blocker if side == SIDE_LEFT else _right_blocker
-	blocker.disabled = not enabled
+	var shapes := _left_blocker_shapes if side == SIDE_LEFT else _right_blocker_shapes
+	for shape in shapes:
+		shape.disabled = not enabled
+
+
+func _collect_blocker_shapes(side_prefix: String) -> Array[CollisionShape3D]:
+	var shapes: Array[CollisionShape3D] = []
+	var blocker := get_node_or_null("Blocker")
+	if blocker == null:
+		return shapes
+	for child in blocker.get_children():
+		if child is CollisionShape3D and String(child.name).begins_with(side_prefix):
+			shapes.append(child)
+	return shapes
 
 
 func _animate_door(side: StringName, opening: bool) -> void:

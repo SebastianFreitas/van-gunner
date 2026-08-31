@@ -33,6 +33,8 @@ const ACT_MOB_APPROACH_SPEED := [9.44, 11.8, 15.73]
 const REAR_DOOR_BREACH_HP := 96.0
 ## Side windows open faster — about 4 hits at default raider damage.
 const WINDOW_BREACH_HP := 32.0
+## Rear door glass panes — one default shot is enough to shatter.
+const REAR_WINDOW_GLASS_HP := 1.0
 ## Interior move speed after a breach (van-local units/sec).
 const MOB_INTERIOR_SPEED := 4.5
 
