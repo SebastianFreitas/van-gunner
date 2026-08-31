@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="item_definition"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="item_effect"]
+[ext_resource type="Texture2D" path="res://scenes/items/boons/max_hp_heal.svg" id="icon"]
+[ext_resource type="Script" path="res://scripts/items/effects/max_health_effect.gd" id="max_health"]
+[ext_resource type="Script" path="res://scripts/items/effects/full_heal_effect.gd" id="full_heal"]
+
+[sub_resource type="Resource" id="eff_max_hp_heal_1"]
+script = ExtResource("max_health")
+bonus_health = 40
+
+[sub_resource type="Resource" id="eff_max_hp_heal_2"]
+script = ExtResource("full_heal")
+
+[resource]
+script = ExtResource("item_definition")
+id = &"max_hp_heal"
+display_name = "Second Wind"
+description = "Gain 40 Max Health and heal fully"
+icon = ExtResource("icon")
+kind = 1
+boon_pool = 0
+effects = Array[ExtResource("item_effect")]([SubResource("eff_max_hp_heal_1"), SubResource("eff_max_hp_heal_2")])

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="item_definition"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="item_effect"]
+[ext_resource type="Texture2D" path="res://scenes/items/boons/fire_death.svg" id="icon"]
+[ext_resource type="Script" path="res://scripts/items/effects/boon_trait_effect.gd" id="boon_trait"]
+
+[sub_resource type="Resource" id="eff_fire_death_1"]
+script = ExtResource("boon_trait")
+trait_key = &"fire_death"
+set_flag = true
+
+[resource]
+script = ExtResource("item_definition")
+id = &"fire_death"
+display_name = "Funeral Pyre"
+description = "Enemies explode on death into a fire explosion"
+icon = ExtResource("icon")
+kind = 1
+boon_pool = 1
+effects = Array[ExtResource("item_effect")]([SubResource("eff_fire_death_1")])

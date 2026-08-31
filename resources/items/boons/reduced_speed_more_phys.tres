@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="item_definition"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="item_effect"]
+[ext_resource type="Texture2D" path="res://scenes/items/boons/reduced_speed_more_phys.svg" id="icon"]
+[ext_resource type="Script" path="res://scripts/items/effects/gun_stat_modifier_effect.gd" id="gun_stat_modifier"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="stat_modifier"]
+[ext_resource type="Script" path="res://scripts/items/effects/boon_trait_effect.gd" id="boon_trait"]
+
+[sub_resource type="Resource" id="mod_reduced_speed_more_phys_2"]
+script = ExtResource("stat_modifier")
+stat_name = &"bullet_speed"
+mode = 1
+value = 0.5
+id = &"reduced_speed_more_phys_speed"
+
+[sub_resource type="Resource" id="eff_reduced_speed_more_phys_1"]
+script = ExtResource("gun_stat_modifier")
+modifier = SubResource("mod_reduced_speed_more_phys_2")
+
+[sub_resource type="Resource" id="eff_reduced_speed_more_phys_3"]
+script = ExtResource("boon_trait")
+trait_key = &"phys_damage_bonus"
+add_value = 50.0
+
+[resource]
+script = ExtResource("item_definition")
+id = &"reduced_speed_more_phys"
+display_name = "Slugs"
+description = "50% reduced bullet speed — gain +50 physical damage"
+icon = ExtResource("icon")
+kind = 1
+boon_pool = 4
+effects = Array[ExtResource("item_effect")]([SubResource("eff_reduced_speed_more_phys_1"), SubResource("eff_reduced_speed_more_phys_3")])

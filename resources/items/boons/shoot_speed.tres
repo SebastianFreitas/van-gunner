@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="item_definition"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="item_effect"]
+[ext_resource type="Texture2D" path="res://scenes/items/boons/shoot_speed.svg" id="icon"]
+[ext_resource type="Script" path="res://scripts/items/effects/gun_stat_modifier_effect.gd" id="gun_stat_modifier"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="stat_modifier"]
+
+[sub_resource type="Resource" id="mod_shoot_speed_2"]
+script = ExtResource("stat_modifier")
+stat_name = &"fire_rate"
+mode = 1
+value = 2.0
+id = &"shoot_speed"
+
+[sub_resource type="Resource" id="eff_shoot_speed_1"]
+script = ExtResource("gun_stat_modifier")
+modifier = SubResource("mod_shoot_speed_2")
+
+[resource]
+script = ExtResource("item_definition")
+id = &"shoot_speed"
+display_name = "Hair Trigger"
+description = "Gain 100% shot speed"
+icon = ExtResource("icon")
+kind = 1
+boon_pool = 0
+effects = Array[ExtResource("item_effect")]([SubResource("eff_shoot_speed_1")])

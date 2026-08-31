@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="item_definition"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="item_effect"]
+[ext_resource type="Texture2D" path="res://scenes/items/boons/vampiric_poison.svg" id="icon"]
+[ext_resource type="Script" path="res://scripts/items/effects/boon_trait_effect.gd" id="boon_trait"]
+
+[sub_resource type="Resource" id="eff_vampiric_poison_1"]
+script = ExtResource("boon_trait")
+trait_key = &"vampiric_poison_chance"
+add_value = 0.05
+
+[resource]
+script = ExtResource("item_definition")
+id = &"vampiric_poison"
+display_name = "Leeching Toxin"
+description = "Enemies who die from poison have +5% chance to drop healing packs"
+icon = ExtResource("icon")
+kind = 1
+boon_pool = 2
+effects = Array[ExtResource("item_effect")]([SubResource("eff_vampiric_poison_1")])

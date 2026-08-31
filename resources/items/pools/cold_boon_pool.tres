@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="LootPool" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/loot_pool.gd" id="loot_pool"]
+[ext_resource type="Script" path="res://scripts/items/loot_pool_entry.gd" id="loot_pool_entry"]
+[ext_resource type="Resource" path="res://resources/items/boons/chance_freeze_1.tres" id="item_0"]
+[ext_resource type="Resource" path="res://resources/items/boons/chance_freeze_2.tres" id="item_1"]
+[ext_resource type="Resource" path="res://resources/items/boons/longer_freeze.tres" id="item_2"]
+[ext_resource type="Resource" path="res://resources/items/boons/phys_to_cold_crit.tres" id="item_3"]
+[ext_resource type="Resource" path="res://resources/items/boons/frozen_damage.tres" id="item_4"]
+[ext_resource type="Resource" path="res://resources/items/boons/more_frozen_loot.tres" id="item_5"]
+[ext_resource type="Resource" path="res://resources/items/boons/added_cold_projectile.tres" id="item_6"]
+[ext_resource type="Resource" path="res://resources/items/boons/cold_shattering_ricochet.tres" id="item_7"]
+[ext_resource type="Resource" path="res://resources/items/boons/cold_shatter.tres" id="item_8"]
+[ext_resource type="Resource" path="res://resources/items/boons/poisoned_chill.tres" id="item_9"]
+
+[sub_resource type="Resource" id="entry_0"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_0")
+weight = 10
+
+[sub_resource type="Resource" id="entry_1"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_1")
+weight = 2
+
+[sub_resource type="Resource" id="entry_2"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_2")
+weight = 2
+
+[sub_resource type="Resource" id="entry_3"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_3")
+weight = 5
+
+[sub_resource type="Resource" id="entry_4"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_4")
+weight = 2
+
+[sub_resource type="Resource" id="entry_5"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_5")
+weight = 2
+
+[sub_resource type="Resource" id="entry_6"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_6")
+weight = 3
+
+[sub_resource type="Resource" id="entry_7"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_7")
+weight = 1
+
+[sub_resource type="Resource" id="entry_8"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_8")
+weight = 1
+
+[sub_resource type="Resource" id="entry_9"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_9")
+weight = 2
+
+[resource]
+script = ExtResource("loot_pool")
+entries = Array[ExtResource("loot_pool_entry")]([SubResource("entry_0"), SubResource("entry_1"), SubResource("entry_2"), SubResource("entry_3"), SubResource("entry_4"), SubResource("entry_5"), SubResource("entry_6"), SubResource("entry_7"), SubResource("entry_8"), SubResource("entry_9")])

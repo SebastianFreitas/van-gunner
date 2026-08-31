@@ -3,7 +3,6 @@ extends Node
 ## Parses and runs debug console commands. Add new commands in _register_commands().
 
 const _PICKUP_SCENE := preload("res://scenes/items/pickup.tscn")
-const _ITEM_DIR := "res://resources/items/"
 
 var _commands: Dictionary = {}
 
@@ -39,6 +38,7 @@ func _register_commands() -> void:
 		"coins": _cmd_coins,
 		"heal": _cmd_heal,
 		"phase": _cmd_phase,
+		"boonpool": _cmd_boonpool,
 	}
 
 
@@ -56,6 +56,7 @@ func _cmd_help(_args: Array) -> String:
 		+ "  spawn <item_id> drop a pickup near the player\n"
 		+ "  coins <n>      add coins\n"
 		+ "  heal [amount]  heal the van\n"
+		+ "  boonpool <pool> roll a boon from general/fire/poison/cold/physical\n"
 		+ "  phase          print current run phase"
 	) % ", ".join(names)
 
@@ -119,9 +120,37 @@ func _cmd_coins(args: Array) -> String:
 
 
 func _cmd_heal(args: Array) -> String:
-	var amount: float = float(args[0]) if not args.is_empty() else GameSession.MAX_VAN_HEALTH
+	var amount: float = float(args[0]) if not args.is_empty() else GameSession.get_max_van_health()
 	GameSession.heal_van(amount)
 	return "Van healed by %.0f." % amount
+
+
+func _cmd_boonpool(args: Array) -> String:
+	if args.is_empty():
+		return "Usage: boonpool <general|fire|poison|cold|physical>"
+	var pool_name: String = str(args[0]).to_lower()
+	var pool := ItemDefinition.BoonPool.GENERAL
+	match pool_name:
+		"general":
+			pool = ItemDefinition.BoonPool.GENERAL
+		"fire":
+			pool = ItemDefinition.BoonPool.FIRE
+		"poison":
+			pool = ItemDefinition.BoonPool.POISON
+		"cold":
+			pool = ItemDefinition.BoonPool.COLD
+		"physical":
+			pool = ItemDefinition.BoonPool.PHYSICAL
+		_:
+			return "Unknown pool: %s" % pool_name
+	var item := ItemPoolRegistry.pick_from_boon_pool(pool)
+	if not item:
+		return "Pool is empty."
+	var player := _find_player()
+	if not player:
+		return "Player not found."
+	item.collect(player)
+	return "Rolled %s from %s pool." % [item.display_name, pool_name]
 
 
 func _cmd_phase(_args: Array) -> String:
@@ -133,10 +162,7 @@ func _cmd_phase(_args: Array) -> String:
 
 
 func _load_item(item_id: String) -> ItemDefinition:
-	var path := _ITEM_DIR + item_id + ".tres"
-	if not ResourceLoader.exists(path):
-		return null
-	return load(path) as ItemDefinition
+	return ItemRegistry.load_by_id(item_id)
 
 
 func _find_player() -> Node3D:

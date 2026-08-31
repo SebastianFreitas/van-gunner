@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="item_definition"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="item_effect"]
+[ext_resource type="Texture2D" path="res://scenes/items/boons/poisoned_chill.svg" id="icon"]
+[ext_resource type="Script" path="res://scripts/items/effects/boon_trait_effect.gd" id="boon_trait"]
+
+[sub_resource type="Resource" id="eff_poisoned_chill_1"]
+script = ExtResource("boon_trait")
+trait_key = &"poisoned_chill_bonus"
+add_value = 0.35
+
+[resource]
+script = ExtResource("item_definition")
+id = &"poisoned_chill"
+display_name = "Toxic Chill"
+description = "Poisoned enemies are more affected by chill"
+icon = ExtResource("icon")
+kind = 1
+boon_pool = 3
+effects = Array[ExtResource("item_effect")]([SubResource("eff_poisoned_chill_1")])

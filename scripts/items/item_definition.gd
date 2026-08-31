@@ -1,26 +1,37 @@
 class_name ItemDefinition
 extends Resource
 
-## Data-only description of a single item/boon/tool/ability.
+## Data-only description of a single item.
 ##
-## `kind` decides what happens when the player walks over a pickup:
-## - INSTANT: heal, coins, etc. — effects run immediately.
+## Every pickup is an item with one of four kinds:
+## - MONEY: currency — effects run immediately.
+## - CONSUMABLE: heals and other one-shot pickups — effects run immediately.
 ## - BOON: permanent run buff — effects run once and show in the boons HUD.
-## - TOOL / ABILITY: go to the hotbar and activate with `use_usable`.
+## - TOOL: hotbar item activated with keys 1–4.
 
 enum ItemKind {
-	INSTANT,
-	BOON,
-	TOOL,
-	ABILITY,
+	MONEY = 0,
+	BOON = 1,
+	TOOL = 2,
+	CONSUMABLE = 3,
+}
+
+enum BoonPool {
+	GENERAL,
+	FIRE,
+	POISON,
+	COLD,
+	PHYSICAL,
 }
 
 @export var id: StringName = &""
 @export var display_name := "Unknown Item"
 @export_multiline var description := ""
 @export var icon: Texture2D
-@export var kind: ItemKind = ItemKind.INSTANT
-## Charge, cooldown, and recharge rules for TOOL and ABILITY items.
+@export var kind: ItemKind = ItemKind.MONEY
+## Which boon reward pool this belongs to (only used when kind = BOON).
+@export var boon_pool: BoonPool = BoonPool.GENERAL
+## Charge, cooldown, and recharge rules for TOOL items.
 @export var usable: ItemUsableConfig
 ## Overrides the pickup's default auto-grab radius when > 0.
 @export var pickup_radius := 0.0
@@ -28,7 +39,11 @@ enum ItemKind {
 
 
 func is_usable() -> bool:
-	return kind == ItemKind.TOOL or kind == ItemKind.ABILITY
+	return kind == ItemKind.TOOL
+
+
+func is_instant() -> bool:
+	return kind == ItemKind.MONEY or kind == ItemKind.CONSUMABLE
 
 
 func apply_effects(player: Node3D) -> void:
@@ -41,7 +56,7 @@ func collect(player: Node3D) -> void:
 	if not player:
 		return
 	match kind:
-		ItemKind.INSTANT:
+		ItemKind.MONEY, ItemKind.CONSUMABLE:
 			apply_effects(player)
 		ItemKind.BOON:
 			var controller := player.get_node_or_null("Usables") as UsablesController
@@ -50,7 +65,7 @@ func collect(player: Node3D) -> void:
 			apply_effects(player)
 			if controller:
 				controller.register_boon(self)
-		ItemKind.TOOL, ItemKind.ABILITY:
+		ItemKind.TOOL:
 			var controller := player.get_node_or_null("Usables") as UsablesController
 			if controller:
 				controller.add_usable(self)

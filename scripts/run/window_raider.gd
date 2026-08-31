@@ -11,6 +11,7 @@ signal defeated
 var _active := false
 var health := max_health
 var is_defeated := false
+var _last_damage_type: DamageType.Type = DamageType.Type.NORMAL
 
 @onready var sprite: Sprite3D = $Sprite3D
 @onready var hitbox: Area3D = $Hitbox
@@ -22,6 +23,11 @@ var is_defeated := false
 func _ready() -> void:
 	add_to_group(&"enemy")
 	health = max_health
+	call_deferred("_configure_status_from_traits")
+
+
+func _configure_status_from_traits() -> void:
+	BoonCombat.configure_enemy_status_effects(self, get_tree())
 
 
 func activate() -> void:
@@ -50,9 +56,12 @@ func take_damage(amount) -> void:
 		info = DamageInfo.create(float(amount), DamageType.Type.NORMAL)
 	if info.amount <= 0.0:
 		return
+	_last_damage_type = info.damage_type
 	var damage_amount := info.get_final_amount()
 	if info.damage_type in [DamageType.Type.POISON, DamageType.Type.FIRE]:
 		damage_amount = info.amount
+	if status_effects:
+		damage_amount *= status_effects.get_outgoing_damage_multiplier()
 	health = maxf(0.0, health - damage_amount)
 	health_bar.update_ratio(health / max_health)
 	var popup_pos := info.hit_position
@@ -90,6 +99,8 @@ func _die() -> void:
 	hitbox.collision_layer = 0
 	if has_node("HeadHitbox"):
 		$HeadHitbox.collision_layer = 0
+	_try_fire_death_explosion()
+	BoonCombat.apply_on_enemy_death(self, _last_damage_type)
 	if loot_drop:
 		loot_drop.spawn_drops(global_position, get_parent())
 	GameSession.notify_enemy_defeated(self)
@@ -101,10 +112,23 @@ func _die() -> void:
 	tween.chain().tween_callback(queue_free)
 
 
+func _try_fire_death_explosion() -> void:
+	var traits := BoonCombat.get_player_traits(get_tree())
+	if not traits or not traits.has_flag(BoonTraitKeys.FIRE_DEATH):
+		return
+	var space_state := get_world_3d().direct_space_state
+	var info := DamageInfo.create(12.0, DamageType.Type.FIRE)
+	info.explosion_radius = 2.2
+	DamageResolver.apply_explosion(global_position, info.explosion_radius, info, space_state, [], traits)
+
+
 func _attack_loop() -> void:
 	while _active and is_inside_tree():
 		var speed_multiplier := status_effects.get_attack_speed_multiplier() if status_effects else 1.0
 		var wait_time := attack_interval / maxf(speed_multiplier, 0.2)
 		await get_tree().create_timer(wait_time).timeout
 		if _active:
-			attack_landed.emit(attack_damage)
+			var outgoing := attack_damage
+			if status_effects:
+				outgoing *= status_effects.get_outgoing_damage_multiplier()
+			attack_landed.emit(outgoing)

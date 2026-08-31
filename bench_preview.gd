@@ -9,9 +9,9 @@ func _ready() -> void:
 
 	var player: Node3D = van.get_node("TravelPath/VanFollow/VanRig/Player")
 	for path in [
-		"res://resources/items/chew_tobacco.tres",
-		"res://resources/items/ricochet_rounds.tres",
-		"res://resources/items/rubber_casings.tres",
+		"res://resources/items/boons/chew_tobacco.tres",
+		"res://resources/items/boons/ricochet_rounds.tres",
+		"res://resources/items/boons/rubber_casings.tres",
 		"res://resources/items/frag_grenade.tres",
 		"res://resources/items/adrenaline_stim.tres",
 	]:

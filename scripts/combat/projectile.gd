@@ -20,6 +20,7 @@ var bounce_speed_retention := 0.6
 var bounce_damage_retention := 0.8
 
 var _bounces_left := 0
+var _bounce_count := 0
 var _distance_travelled := 0.0
 var _has_hit := false
 var _collision_mask := 7
@@ -117,10 +118,28 @@ func _can_ricochet_off(collider: Node) -> bool:
 
 func _ricochet(point: Vector3, normal: Vector3) -> void:
 	_bounces_left -= 1
+	_bounce_count += 1
 	velocity = velocity.bounce(normal) * bounce_speed_retention
 	global_position = point + normal * (_radius + SURFACE_OFFSET)
 	if damage_info:
 		damage_info.amount *= bounce_damage_retention
+		var traits: BoonTraits = BoonCombat.get_player_traits(get_tree())
+		if traits and traits.has_flag(BoonTraitKeys.RICOCHET_STACK_POWER):
+			damage_info.amount *= 1.0 + float(_bounce_count) * 0.15
+		if traits and traits.has_flag(BoonTraitKeys.COLD_SHATTERING_RICOCHET):
+			BoonCombat.spawn_cold_projectiles_from_direction(
+				get_tree(),
+				global_position,
+				velocity.normalized(),
+				BoonCombat.RICOCHET_COLD_COUNT,
+				damage_info.amount * 0.55
+			)
+		if traits and traits.has_flag(BoonTraitKeys.POISON_FOLLOW):
+			var follow_target := BoonCombat.find_poison_follow_target(get_tree(), global_position, 10.0)
+			if follow_target:
+				var aim := follow_target.global_position + Vector3(0.0, 1.0, 0.0) - global_position
+				if aim.length_squared() > 0.001:
+					velocity = aim.normalized() * velocity.length()
 	_update_trail()
 	ricocheted.emit(global_position, normal)
 	if velocity.length() < MIN_BOUNCE_SPEED or _distance_travelled >= max_distance:
@@ -176,28 +195,58 @@ func _resolve_hit(collider: Node) -> void:
 		return
 	if collider is CollisionObject3D and (collider as CollisionObject3D).get_rid() == owner_rid:
 		return
+	var traits: BoonTraits = BoonCombat.get_player_traits(get_tree())
+	var bonus_phys := 0.0
+	if damage_info:
+		damage_info.hit_position = global_position
+		damage_info.is_headshot = DamageResolver.is_headshot(collider, damage_info.hit_position)
+		if traits:
+			bonus_phys = BoonCombat.modify_outgoing_damage(damage_info, traits, collider)
+			explosion_radius = BoonCombat.modify_explosion_radius(explosion_radius, damage_info, traits)
 	_has_hit = true
 	set_deferred("monitoring", false)
 	set_deferred("monitorable", false)
 	if _trail:
 		_trail.emitting = false
 	if damage_info:
-		damage_info.hit_position = global_position
-		damage_info.is_headshot = DamageResolver.is_headshot(collider, damage_info.hit_position)
 		damage_info.explosion_radius = explosion_radius
 		DamageResolver.apply_hit(damage_info, collider)
+		if bonus_phys > 0.0:
+			BoonCombat.apply_bonus_physical_hit(bonus_phys, damage_info, collider, traits)
 		DamageResolver.apply_status_from_hit(damage_info, collider)
-		if damage_info.damage_type == DamageType.Type.EXPLOSIVE:
+		if traits:
+			BoonCombat.apply_post_hit(damage_info, collider, traits)
+		var should_explode := damage_info.damage_type in [DamageType.Type.EXPLOSIVE, DamageType.Type.FIRE]
+		if should_explode:
 			var space_state := get_world_3d().direct_space_state
 			var exclude: Array[RID] = []
 			if owner_rid.is_valid():
 				exclude.append(owner_rid)
-			DamageResolver.apply_explosion(
-				global_position,
-				explosion_radius,
-				damage_info,
-				space_state,
-				exclude
-			)
+			if traits and traits.has_flag(BoonTraitKeys.DELAYED_FIRE) and damage_info.damage_type == DamageType.Type.FIRE:
+				DamageResolver.schedule_delayed_explosion(
+					get_tree(),
+					global_position,
+					explosion_radius,
+					damage_info,
+					exclude,
+					traits
+				)
+			else:
+				DamageResolver.apply_explosion(
+					global_position,
+					explosion_radius,
+					damage_info,
+					space_state,
+					exclude,
+					traits
+				)
 		hit_target.emit(collider)
+	var keep_alive := false
+	if traits and traits.has_flag(BoonTraitKeys.RICOCHET_EXPLOSIVE) and damage_info and damage_info.damage_type == DamageType.Type.FIRE and _bounces_left > 0:
+		keep_alive = true
+	if keep_alive:
+		_has_hit = false
+		set_deferred("monitoring", true)
+		set_deferred("monitorable", true)
+		return
 	queue_free()

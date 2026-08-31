@@ -146,7 +146,11 @@ func _run_intro(id: int) -> void:
 	if id != _sequence_id or GameSession.phase != GameSession.RunPhase.TRAVELLING:
 		return
 	GameSession.set_phase(GameSession.RunPhase.REST)
-	await get_tree().create_timer(intro_rest_seconds).timeout
+	var timer := get_tree().create_timer(intro_rest_seconds)
+	var rewards := get_tree().get_first_node_in_group(&"boon_reward_controller") as BoonRewardController
+	if rewards:
+		await rewards.wait_for_rest_resolution()
+	await timer.timeout
 	if id == _sequence_id and GameSession.phase == GameSession.RunPhase.REST:
 		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
 

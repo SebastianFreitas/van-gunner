@@ -1,6 +1,6 @@
 extends Control
 
-## Hotbar for tools/abilities and a row of collected boon icons.
+## Hotbar for tools and a row of collected boon icons.
 
 const SLOT_SCENE := preload("res://scenes/ui/usable_slot.tscn")
 

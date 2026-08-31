@@ -28,6 +28,14 @@ extends Node
 @export var scatter_radius := 0.55
 
 
+func spawn_bonus_drop(world_position: Vector3, container: Node) -> void:
+	if not loot_pool or not pickup_scene or not is_instance_valid(container):
+		return
+	var rolled_item := loot_pool.pick_item()
+	if rolled_item:
+		_spawn_item(rolled_item, world_position, container)
+
+
 func spawn_drops(world_position: Vector3, container: Node) -> void:
 	if not is_instance_valid(container):
 		return

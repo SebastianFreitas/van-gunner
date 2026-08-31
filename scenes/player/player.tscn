@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://scripts/combat/gun_stats_controller.gd" id="3"]
 [ext_resource type="Resource" path="res://resources/combat/default_gun_stats.tres" id="4"]
 [ext_resource type="Script" path="res://scripts/player/usables_controller.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/player/boon_traits.gd" id="6"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape"]
 radius = 0.42
@@ -41,6 +42,9 @@ base_stats = ExtResource("4")
 
 [node name="Usables" type="Node" parent="."]
 script = ExtResource("5")
+
+[node name="BoonTraits" type="Node" parent="."]
+script = ExtResource("6")
 
 [node name="Head" type="Node3D" parent="."]
 position = Vector3(0, 1.65, 0)

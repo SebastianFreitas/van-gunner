@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="item_definition"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="item_effect"]
+[ext_resource type="Texture2D" path="res://scenes/items/boons/double_fire.svg" id="icon"]
+[ext_resource type="Script" path="res://scripts/items/effects/boon_trait_effect.gd" id="boon_trait"]
+
+[sub_resource type="Resource" id="eff_double_fire_1"]
+script = ExtResource("boon_trait")
+trait_key = &"fire_area_mult"
+multiply_value = 0.1
+
+[sub_resource type="Resource" id="eff_double_fire_2"]
+script = ExtResource("boon_trait")
+trait_key = &"fire_damage_mult"
+multiply_value = 2.0
+
+[resource]
+script = ExtResource("item_definition")
+id = &"double_fire"
+display_name = "Focused Inferno"
+description = "Fire explodes in 90% smaller area — fire damage doubled"
+icon = ExtResource("icon")
+kind = 1
+boon_pool = 1
+effects = Array[ExtResource("item_effect")]([SubResource("eff_double_fire_1"), SubResource("eff_double_fire_2")])

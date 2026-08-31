@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="item_definition"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="item_effect"]
+[ext_resource type="Texture2D" path="res://scenes/items/boons/fire_to_phys_50.svg" id="icon"]
+[ext_resource type="Script" path="res://scripts/items/effects/boon_trait_effect.gd" id="boon_trait"]
+
+[sub_resource type="Resource" id="eff_fire_to_phys_50_1"]
+script = ExtResource("boon_trait")
+trait_key = &"fire_to_phys_ratio"
+add_value = 0.5
+
+[resource]
+script = ExtResource("item_definition")
+id = &"fire_to_phys_50"
+display_name = "Smoldering Brass"
+description = "Convert 50% of fire damage into physical damage"
+icon = ExtResource("icon")
+kind = 1
+boon_pool = 4
+effects = Array[ExtResource("item_effect")]([SubResource("eff_fire_to_phys_50_1")])

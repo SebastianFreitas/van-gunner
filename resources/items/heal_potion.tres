@@ -14,4 +14,5 @@ id = &"heal_potion"
 display_name = "Field Stimpack"
 description = "A battered medkit salvaged from the wreck. Restores 20% of the van's hull integrity."
 icon = ExtResource("4")
+kind = 3
 effects = Array[ExtResource("2")]([SubResource("Resource_heal_effect")])

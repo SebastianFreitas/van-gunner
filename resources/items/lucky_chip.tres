@@ -15,4 +15,5 @@ id = &"lucky_chip"
 display_name = "Lucky Chip"
 description = "A scuffed casino chip. Grants a few coins on pickup."
 icon = ExtResource("4")
+kind = 0
 effects = Array[ExtResource("2")]([SubResource("Resource_lucky_coin")])

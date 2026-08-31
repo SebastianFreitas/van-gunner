@@ -117,7 +117,7 @@ func _refresh_stats() -> void:
 	_add_section("VAN")
 	_add_row(
 		"Hull",
-		"%d / %d" % [roundi(GameSession.van_health), roundi(GameSession.MAX_VAN_HEALTH)]
+		"%d / %d" % [roundi(GameSession.van_health), roundi(GameSession.get_max_van_health())]
 	)
 	_add_health_bar()
 	_add_row("Coins", str(GameSession.coins))
@@ -199,7 +199,7 @@ func _add_row(label_text: String, value_text: String) -> void:
 func _add_health_bar() -> void:
 	var bar := ProgressBar.new()
 	bar.custom_minimum_size = Vector2(0, 10)
-	bar.max_value = GameSession.MAX_VAN_HEALTH
+	bar.max_value = GameSession.get_max_van_health()
 	bar.value = GameSession.van_health
 	bar.show_percentage = false
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -217,7 +217,7 @@ func _refresh_items() -> void:
 
 	var total := 0
 	total += _add_item_section("BOONS", "Permanent run buffs", _boon_entries())
-	total += _add_item_section("TOOLS & ABILITIES", "Hotbar, keys 1-4", _slot_entries())
+	total += _add_item_section("TOOLS", "Hotbar, keys 1-4", _slot_entries())
 	total += _add_item_section("ON THE BENCH", "Walk into a drop to take it", _stash_entries())
 	if total == 0:
 		var empty := Label.new()

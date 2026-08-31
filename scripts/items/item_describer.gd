@@ -20,16 +20,21 @@ const STAT_LABELS := {
 }
 
 
+const TRAIT_LABELS := {
+	BoonTraitKeys.PHYS_DAMAGE_BONUS: "Physical damage",
+}
+
+
 static func kind_name(kind: ItemDefinition.ItemKind) -> String:
 	match kind:
-		ItemDefinition.ItemKind.INSTANT:
-			return "INSTANT"
+		ItemDefinition.ItemKind.MONEY:
+			return "MONEY"
+		ItemDefinition.ItemKind.CONSUMABLE:
+			return "CONSUMABLE"
 		ItemDefinition.ItemKind.BOON:
 			return "BOON"
 		ItemDefinition.ItemKind.TOOL:
 			return "TOOL"
-		ItemDefinition.ItemKind.ABILITY:
-			return "ABILITY"
 	return "ITEM"
 
 
@@ -114,7 +119,7 @@ static func _lines_for_effect(effect: ItemEffect) -> PackedStringArray:
 	elif effect is HealEffect:
 		var heal := effect as HealEffect
 		lines.append("Repairs %s van hull (%s%%)" % [
-			format_number(GameSession.MAX_VAN_HEALTH * heal.heal_percent),
+			format_number(GameSession.get_max_van_health() * heal.heal_percent),
 			format_number(heal.heal_percent * 100.0),
 		])
 	elif effect is GrantCoinEffect:
@@ -126,6 +131,28 @@ static func _lines_for_effect(effect: ItemEffect) -> PackedStringArray:
 			format_number(grenade.explosion_radius),
 		])
 		lines.append("%ss fuse" % format_number(grenade.fuse_time))
+	elif effect is MaxHealthEffect:
+		var max_hp := effect as MaxHealthEffect
+		lines.append("+%s max van hull" % format_number(max_hp.bonus_health))
+	elif effect is FullHealEffect:
+		lines.append("Heal to full hull")
+	elif effect is BoonTraitEffect:
+		var trait := effect as BoonTraitEffect
+		if trait.trait_key == &"":
+			pass
+		elif trait.set_flag:
+			pass
+		elif not is_zero_approx(trait.add_value):
+			var label := TRAIT_LABELS.get(trait.trait_key, String(trait.trait_key))
+			var prefix := "+" if trait.add_value >= 0.0 else ""
+			lines.append("%s %s%s — permanent" % [label, prefix, format_number(trait.add_value)])
+		elif not is_equal_approx(trait.multiply_value, 1.0):
+			var label := TRAIT_LABELS.get(trait.trait_key, String(trait.trait_key))
+			lines.append("%s x%s — permanent" % [label, format_number(trait.multiply_value)])
+	elif effect is CompositeEffect:
+		for child in (effect as CompositeEffect).child_effects:
+			if child:
+				lines.append_array(_lines_for_effect(child))
 	else:
 		lines.append(effect.get_script().get_global_name().capitalize())
 	return lines

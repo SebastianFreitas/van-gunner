@@ -48,6 +48,7 @@ func try_fire() -> void:
 		direction = -camera.global_basis.z
 
 	var projectile := _spawn_projectile(muzzle, direction, stats)
+	_spawn_bonus_projectiles(muzzle, direction, stats)
 	_track_projectile_feedback(projectile)
 	_current_ammo -= 1
 	_next_shot_time = now + roundi(1000.0 / stats.fire_rate)
@@ -109,6 +110,21 @@ func _get_aim_point(max_range: float) -> Vector3:
 	if result.is_empty():
 		return end
 	return result.position
+
+
+func _spawn_bonus_projectiles(origin: Vector3, direction: Vector3, stats: GunStats) -> void:
+	var player := camera.get_parent().get_parent()
+	var traits := BoonTraits.find_on(player)
+	if not traits:
+		return
+	var extra_cold := int(traits.get_add(BoonTraitKeys.COLD_PROJECTILE_COUNT))
+	for i in extra_cold:
+		var spread := deg_to_rad(6.0 * (i + 1))
+		var spread_dir := direction.rotated(Vector3.UP, spread if i % 2 == 0 else -spread)
+		var cold_stats := stats.duplicate_stats()
+		cold_stats.damage_type = DamageType.Type.COLD
+		cold_stats.damage_per_shot *= 0.65
+		_spawn_projectile(origin, spread_dir, cold_stats)
 
 
 func _spawn_projectile(origin: Vector3, direction: Vector3, stats: GunStats) -> Projectile:

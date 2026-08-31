@@ -124,6 +124,14 @@ func _complete_wave(id: int) -> void:
 
 	GameSession.set_phase(GameSession.RunPhase.REST)
 	SaveManager.save_active_session()
-	await get_tree().create_timer(rest_duration).timeout
+	await _wait_for_rest_break(rest_duration)
 	if id == _sequence_id and GameSession.phase == GameSession.RunPhase.REST:
 		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
+
+
+func _wait_for_rest_break(min_seconds: float) -> void:
+	var timer := get_tree().create_timer(min_seconds)
+	var rewards := get_tree().get_first_node_in_group(&"boon_reward_controller") as BoonRewardController
+	if rewards:
+		await rewards.wait_for_rest_resolution()
+	await timer.timeout
