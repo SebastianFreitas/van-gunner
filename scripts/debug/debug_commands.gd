@@ -13,6 +13,49 @@ func _ready() -> void:
 	_register_commands()
 
 
+func get_completion_context(text: String, caret_col: int) -> Dictionary:
+	var safe_caret := clampi(caret_col, 0, text.length())
+	var before := text.substr(0, safe_caret)
+	var token_start := before.rfind(" ") + 1
+	if token_start < 0:
+		token_start = 0
+	var partial := before.substr(token_start)
+	var parts := before.strip_edges(false).split(" ", false)
+	var matches: Array[String] = []
+
+	if parts.is_empty() or (parts.size() == 1 and not before.ends_with(" ")):
+		matches = _filter_prefix(_command_names(), partial)
+	elif parts.size() == 1 and before.ends_with(" "):
+		match parts[0]:
+			"give", "spawn":
+				matches = _filter_prefix(ItemRegistry.list_ids(), "")
+			"boonpool":
+				matches = _filter_prefix(_boon_pool_names(), "")
+			"summon":
+				matches = _filter_prefix(["enemy"], "")
+			"list":
+				matches = _filter_prefix(["boons", "items", "commands"], "")
+			_:
+				matches = []
+	elif parts[0] == "give" or parts[0] == "spawn":
+		matches = _filter_prefix(ItemRegistry.list_ids(), partial)
+	elif parts[0] == "boonpool":
+		matches = _filter_prefix(_boon_pool_names(), partial)
+	elif parts[0] == "summon":
+		matches = _filter_prefix(["enemy"], partial)
+	elif parts[0] == "list":
+		matches = _filter_prefix(["boons", "items", "commands"], partial)
+	else:
+		matches = []
+
+	return {
+		"token_start": token_start,
+		"partial": partial,
+		"matches": matches,
+		"add_space": _should_add_space_after(parts, before.ends_with(" ")),
+	}
+
+
 func run(line: String) -> String:
 	if not DebugConfig.ENABLED:
 		return "Debug tools are disabled."
@@ -39,6 +82,7 @@ func _register_commands() -> void:
 		"heal": _cmd_heal,
 		"phase": _cmd_phase,
 		"boonpool": _cmd_boonpool,
+		"list": _cmd_list,
 	}
 
 
@@ -57,7 +101,10 @@ func _cmd_help(_args: Array) -> String:
 		+ "  coins <n>      add coins\n"
 		+ "  heal [amount]  heal the van\n"
 		+ "  boonpool <pool> roll a boon from general/fire/poison/cold/physical\n"
-		+ "  phase          print current run phase"
+		+ "  list boons [q]  browse boon ids (optional filter)\n"
+		+ "  list items [q]  browse all item ids\n"
+		+ "  phase          print current run phase\n"
+		+ "  Tab            autocomplete command or item id"
 	) % ", ".join(names)
 
 
@@ -153,6 +200,28 @@ func _cmd_boonpool(args: Array) -> String:
 	return "Rolled %s from %s pool." % [item.display_name, pool_name]
 
 
+func _cmd_list(args: Array) -> String:
+	if args.is_empty():
+		return "Usage: list boons|items|commands [filter]"
+	var kind: String = str(args[0]).to_lower()
+	var filter_text := " ".join(args.slice(1))
+	match kind:
+		"commands":
+			var lines: PackedStringArray = PackedStringArray()
+			lines.append(_cmd_help([]))
+			return "\n".join(lines)
+		"boons":
+			return _format_item_list(
+				ItemRegistry.list_entries(ItemDefinition.ItemKind.BOON, filter_text),
+				"boons",
+				filter_text
+			)
+		"items":
+			return _format_item_list(ItemRegistry.list_entries(-1, filter_text), "items", filter_text)
+		_:
+			return "Unknown list target: %s  (try boons, items, commands)" % kind
+
+
 func _cmd_phase(_args: Array) -> String:
 	var phase_name: String = GameSession.RunPhase.keys()[GameSession.phase]
 	return (
@@ -171,3 +240,50 @@ func _find_player() -> Node3D:
 
 func _find_encounter_director() -> EncounterDirector:
 	return get_tree().get_first_node_in_group(&"encounter_director") as EncounterDirector
+
+
+func _command_names() -> Array[String]:
+	var names: Array[String] = []
+	for key in _commands.keys():
+		names.append(String(key))
+	names.sort()
+	return names
+
+
+func _boon_pool_names() -> Array[String]:
+	return ["general", "fire", "poison", "cold", "physical"]
+
+
+func _filter_prefix(options: Array, partial: String) -> Array[String]:
+	var needle := partial.to_lower()
+	var matches: Array[String] = []
+	for option in options:
+		var value := String(option)
+		if needle.is_empty() or value.to_lower().begins_with(needle):
+			matches.append(value)
+	return matches
+
+
+func _should_add_space_after(parts: Array, _ends_with_space: bool) -> bool:
+	if parts.is_empty():
+		return true
+	if parts.size() == 1:
+		return true
+	if parts[0] == "list" and parts.size() == 2:
+		return true
+	return false
+
+
+func _format_item_list(entries: Array[Dictionary], label: String, filter_text: String) -> String:
+	if entries.is_empty():
+		if filter_text.is_empty():
+			return "No %s found." % label
+		return "No %s match '%s'." % [label, filter_text]
+	var lines: PackedStringArray = PackedStringArray()
+	var header := "%d %s" % [entries.size(), label]
+	if not filter_text.is_empty():
+		header += " matching '%s'" % filter_text
+	lines.append(header + ":")
+	for entry in entries:
+		lines.append("  %s  —  %s" % [entry.id, entry.name])
+	return "\n".join(lines)
