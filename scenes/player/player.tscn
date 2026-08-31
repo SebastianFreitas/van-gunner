@@ -34,7 +34,7 @@ shape = SubResource("CapsuleShape")
 [node name="BodyMesh" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0.95, 0)
 mesh = SubResource("CapsuleMesh")
-cast_shadow = 1
+cast_shadow = 0
 
 [node name="GunStats" type="Node" parent="." groups=["gun_stats"]]
 script = ExtResource("3")
