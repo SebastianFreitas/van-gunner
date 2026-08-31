@@ -1,15 +1,15 @@
 extends Area3D
 
-## Pane on a rear door leaf. Any solid hit shatters it; metal frame stays.
-## Uses the enemy hit layer (same as pickups/raiders) so projectiles apply
-## damage instead of ricocheting off world geometry.
+## Breakable window pane (rear doors or side openings). Any solid hit
+## shatters it; surrounding metal stays. Uses the enemy hit layer (same as
+## pickups/raiders) so projectiles apply damage instead of ricocheting.
 
 signal shattered
 
 @export var glass_mesh_path: NodePath = ^"../WindowGlass"
 
 var _broken := false
-var _glass_mesh: MeshInstance3D
+var _glass_visual: Node3D
 var _collision: CollisionShape3D
 
 
@@ -19,9 +19,9 @@ func _ready() -> void:
 	collision_mask = 0
 	monitoring = false
 	monitorable = true
-	_glass_mesh = get_parent().get_node_or_null("WindowGlass") as MeshInstance3D
-	if _glass_mesh == null:
-		_glass_mesh = get_node_or_null(glass_mesh_path) as MeshInstance3D
+	_glass_visual = get_parent().get_node_or_null("WindowGlass") as Node3D
+	if _glass_visual == null:
+		_glass_visual = get_node_or_null(glass_mesh_path) as Node3D
 	_collision = get_node_or_null("Collision") as CollisionShape3D
 
 
@@ -39,8 +39,8 @@ func _shatter() -> void:
 	_broken = true
 	if _collision:
 		_collision.set_deferred("disabled", true)
-	if _glass_mesh:
-		_glass_mesh.hide()
+	if _glass_visual:
+		_glass_visual.hide()
 	_spawn_shatter_fx()
 	shattered.emit()
 
