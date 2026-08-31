@@ -69,7 +69,7 @@ size = Vector3(2.38, 3.1, 0.16)
 size = Vector3(2.38, 3.1, 0.16)
 
 [sub_resource type="BoxShape3D" id="RearDoorBlockerShape"]
-size = Vector3(4.76, 3.1, 0.18)
+size = Vector3(2.38, 3.1, 0.18)
 
 [sub_resource type="BoxMesh" id="FrontPanelMesh"]
 size = Vector3(1.6, 2.65, 0.2)
@@ -262,6 +262,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 0, 0)
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("15")
+side = "left"
 
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact" unique_id=1668741398]
 shape = SubResource("RearDoorLeafShape")
@@ -279,14 +280,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.19, 0, 0)
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("15")
+side = "right"
 
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact" unique_id=1788784780]
 shape = SubResource("RearDoorLeafShape")
 
 [node name="Blocker" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall" unique_id=1788784777]
 
-[node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker" unique_id=1788784778]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 4.71)
+[node name="LeftCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker" unique_id=1788784778]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.19, 1.55, 4.71)
+shape = SubResource("RearDoorBlockerShape")
+
+[node name="RightCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker" unique_id=1788784781]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 1.55, 4.71)
 shape = SubResource("RearDoorBlockerShape")
 
 [node name="FrontPartition" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=450567163]

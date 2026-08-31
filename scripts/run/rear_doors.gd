@@ -1,78 +1,118 @@
 extends Node3D
 
-## Truck-style rear double doors. Visual hinges swing; collision stays on a fixed
-## blocker so opening never pushes the player.
+## Truck-style rear double doors. Each leaf opens on its own; collision stays on
+## fixed half-blockers so swinging never pushes the player.
 
 signal opened
 signal closed
+signal door_changed(side: StringName, is_open: bool)
+
+const SIDE_LEFT := &"left"
+const SIDE_RIGHT := &"right"
 
 @export var open_angle_deg := 110.0
 @export var open_duration := 0.9
 
 @onready var _left_hinge: Node3D = $LeftHinge
 @onready var _right_hinge: Node3D = $RightHinge
-@onready var _blocker: CollisionShape3D = $Blocker/Collision
+@onready var _left_blocker: CollisionShape3D = $Blocker/LeftCollision
+@onready var _right_blocker: CollisionShape3D = $Blocker/RightCollision
 
-var _is_open := false
-var _tween: Tween
+var _left_open := false
+var _right_open := false
+var _left_tween: Tween
+var _right_tween: Tween
 
 
 func is_open() -> bool:
-	return _is_open
+	return _left_open and _right_open
 
 
-func get_interaction_prompt() -> String:
-	if _is_open:
-		return "E  CLOSE REAR DOORS"
-	return "E  OPEN REAR DOORS"
+func is_door_open(side: StringName) -> bool:
+	return _left_open if side == SIDE_LEFT else _right_open
 
 
-func interact(_actor: Node3D) -> void:
-	toggle()
+func get_door_prompt(side: StringName) -> String:
+	if is_door_open(side):
+		return "E  CLOSE DOOR"
+	return "E  OPEN DOOR"
+
+
+func toggle_door(side: StringName) -> void:
+	if is_door_open(side):
+		close_door(side)
+	else:
+		open_door(side)
+
+
+func open_door(side: StringName) -> void:
+	if is_door_open(side):
+		return
+	_set_door_open(side, true)
+	_set_blocker_enabled(side, false)
+	_animate_door(side, true)
+	door_changed.emit(side, true)
+	if is_open():
+		opened.emit()
+
+
+func close_door(side: StringName) -> void:
+	if not is_door_open(side):
+		return
+	_set_door_open(side, false)
+	_animate_door(side, false)
+	var tween := _left_tween if side == SIDE_LEFT else _right_tween
+	await tween.finished
+	if not is_door_open(side):
+		_set_blocker_enabled(side, true)
+		door_changed.emit(side, false)
+		if not _left_open and not _right_open:
+			closed.emit()
 
 
 func open() -> void:
-	if _is_open:
-		return
-	_is_open = true
-	# Drop the wall immediately so the swing never scrapes the player.
-	_set_blocker_enabled(false)
-	_animate_doors(true)
-	opened.emit()
+	open_door(SIDE_LEFT)
+	open_door(SIDE_RIGHT)
 
 
 func close() -> void:
-	if not _is_open:
-		return
-	_is_open = false
-	_animate_doors(false)
-	# Restore the wall only after panels are shut.
-	await _tween.finished
-	if not _is_open:
-		_set_blocker_enabled(true)
-		closed.emit()
+	close_door(SIDE_LEFT)
+	close_door(SIDE_RIGHT)
 
 
 func toggle() -> void:
-	if _is_open:
+	if is_open():
 		close()
 	else:
 		open()
 
 
-func _set_blocker_enabled(enabled: bool) -> void:
-	_blocker.disabled = not enabled
+func _set_door_open(side: StringName, value: bool) -> void:
+	if side == SIDE_LEFT:
+		_left_open = value
+	else:
+		_right_open = value
 
 
-func _animate_doors(opening: bool) -> void:
-	if _tween:
-		_tween.kill()
-	_tween = create_tween()
-	_tween.set_parallel(true)
-	_tween.set_ease(Tween.EASE_IN_OUT)
-	_tween.set_trans(Tween.TRANS_CUBIC)
+func _set_blocker_enabled(side: StringName, enabled: bool) -> void:
+	var blocker := _left_blocker if side == SIDE_LEFT else _right_blocker
+	blocker.disabled = not enabled
+
+
+func _animate_door(side: StringName, opening: bool) -> void:
+	var hinge := _left_hinge if side == SIDE_LEFT else _right_hinge
 	var angle := deg_to_rad(open_angle_deg)
-	var left_y := -angle if opening else 0.0
-	var right_y := angle if opening else 0.0
-	_tween.tween_property(_left_hinge, "rotation:y", left_y, open_duration)
-	_tween.tween_property(_right_hinge, "rotation:y", right_y, open_duration)
+	var target_y := 0.0
+	if opening:
+		target_y = -angle if side == SIDE_LEFT else angle
+	var tween := _left_tween if side == SIDE_LEFT else _right_tween
+	if tween:
+		tween.kill()
+	tween = create_tween()
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(hinge, "rotation:y", target_y, open_duration)
+	if side == SIDE_LEFT:
+		_left_tween = tween
+	else:
+		_right_tween = tween
