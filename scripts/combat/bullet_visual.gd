@@ -1,15 +1,14 @@
 class_name BulletVisual
 extends Node3D
 
-## Cosmetic bullet mesh + trail. Driven by the logical Projectile so it cannot
-## overshoot into geometry between physics frames.
+## Cosmetic bullet mesh + trail locked to the logical Projectile.
 
-const BULLET_VISUAL_SCALE := 0.22
+const BULLET_VISUAL_SCALE := 0.28
 const TRAIL_FADE_SECONDS := 0.45
 
 var _velocity := Vector3.ZERO
-var _follow_logical := false
-
+var _muzzle_origin := Vector3.ZERO
+var _travelled := 0.0
 var _bullet_mesh: MeshInstance3D
 var _trail_line: MeshInstance3D
 
@@ -17,45 +16,39 @@ var _trail_line: MeshInstance3D
 func setup(
 	origin: Vector3,
 	velocity: Vector3,
-	gravity_scale: float,
+	_gravity_scale: float,
 	info: DamageInfo,
 	stats: GunStats
 ) -> void:
+	_muzzle_origin = origin
+	_travelled = 0.0
 	global_position = origin
 	_velocity = velocity
-	_follow_logical = false
 	_ensure_nodes()
 	_apply_size(stats.bullet_size)
 	_apply_trail_color(info)
 	if _trail_line and _trail_line.has_method("clear_points"):
 		_trail_line.call("clear_points")
-	_update_trail()
 	if _bullet_mesh:
 		_bullet_mesh.show()
 	show()
 
 
-func follows_logical() -> bool:
-	return _follow_logical
-
-
-func place_along_path(origin: Vector3, direction: Vector3, distance: float, velocity: Vector3) -> void:
-	_velocity = velocity
-	global_position = origin + direction * distance
-	_update_trail()
-	_orient_to_velocity()
-
-
 func sync_to(position: Vector3, velocity: Vector3) -> void:
 	_velocity = velocity
+	var step := global_position.distance_to(position)
+	_travelled += step
 	global_position = position
-	_update_trail()
+	# Seed the trail at the muzzle once so it reads as leaving the gun.
+	if _trail_line and _trail_line.has_method("add_point"):
+		if _travelled <= step + 0.0001:
+			_trail_line.call("add_point", _muzzle_origin)
+		_trail_line.call("add_point", position)
 	_orient_to_velocity()
 
 
 func on_bounce(contact: Vector3, exit: Vector3, velocity: Vector3) -> void:
 	_velocity = velocity
-	_follow_logical = true
 	global_position = exit
 	if _trail_line and _trail_line.has_method("set_bounce_vertex"):
 		_trail_line.call("set_bounce_vertex", contact, exit)
@@ -111,11 +104,6 @@ func _apply_trail_color(info: DamageInfo) -> void:
 		dmg_type = info.damage_type
 	if _trail_line.has_method("set_trail_color"):
 		_trail_line.call("set_trail_color", BulletTrail.color_for_damage_type(dmg_type))
-
-
-func _update_trail() -> void:
-	if _trail_line and _trail_line.has_method("add_point"):
-		_trail_line.call("add_point", global_position)
 
 
 func _orient_to_velocity() -> void:

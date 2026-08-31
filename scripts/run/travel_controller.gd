@@ -49,6 +49,7 @@ var _side_street_remaining := 0
 var _side_street_left := false
 var _side_street_right := false
 var _rng: RandomNumberGenerator
+var _van_velocity := Vector3.ZERO
 
 @onready var corridor_root: Node3D = $"../../ExteriorCorridor"
 @onready var travel_path: Path3D = $"../../TravelPath"
@@ -58,6 +59,7 @@ var _rng: RandomNumberGenerator
 
 func _ready() -> void:
 	process_physics_priority = -100
+	add_to_group(&"travel_controller")
 	_rng = RandomNumberGenerator.new()
 	_rng.seed = GameSession.run_seed
 	_apply_meta_travel_speed()
@@ -96,17 +98,28 @@ func _configure_initial_route() -> void:
 	_spawn_route_segments_until(segment_ahead_distance)
 
 
+func get_van_velocity() -> Vector3:
+	return _van_velocity
+
+
 func _physics_process(delta: float) -> void:
 	if not _should_scroll():
+		_van_velocity = Vector3.ZERO
 		return
 	var movement := travel_speed * delta
 	if _turn_state == TurnState.APPROACHING and _turn_direction == &"":
 		movement = minf(movement, maxf(0.0, _approach_stop_progress - van_follow.progress))
 	if movement <= 0.0:
+		_van_velocity = Vector3.ZERO
 		return
 
+	var previous_position := van_follow.global_position
 	distance += movement
 	van_follow.progress += movement
+	if delta > 0.0:
+		_van_velocity = (van_follow.global_position - previous_position) / delta
+	else:
+		_van_velocity = Vector3.ZERO
 	_spawn_segments_ahead()
 	_update_turn()
 	_prune_world()

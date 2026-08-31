@@ -195,5 +195,7 @@ class ColdProjectileStatBehavior extends BoonBehavior:
 				ctx.fire_origin,
 				spread_dir,
 				cold_stats,
-				ctx.projectile_shooter
+				ctx.projectile_shooter,
+				ctx.fire_origin,
+				ctx.inherited_velocity
 			)

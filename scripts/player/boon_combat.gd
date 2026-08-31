@@ -143,7 +143,8 @@ static func dispatch_bonus_projectiles(
 	direction: Vector3,
 	stats: GunStats,
 	shooter: CollisionObject3D,
-	traits: BoonTraits
+	traits: BoonTraits,
+	inherited_velocity: Vector3 = Vector3.ZERO
 ) -> void:
 	if not traits or not tree:
 		return
@@ -154,6 +155,7 @@ static func dispatch_bonus_projectiles(
 	ctx.fire_direction = direction
 	ctx.gun_stats = stats
 	ctx.projectile_shooter = shooter
+	ctx.inherited_velocity = inherited_velocity
 	BoonBehaviorRegistry.dispatch_bonus_projectiles(ctx)
 
 
@@ -171,11 +173,21 @@ static func spawn_projectile(
 	direction: Vector3,
 	stats: GunStats,
 	shooter: CollisionObject3D,
-	visual_origin = null
+	visual_origin = null,
+	inherited_velocity: Vector3 = Vector3.ZERO
 ) -> Projectile:
 	var info := DamageInfo.create(stats.damage_per_shot, stats.damage_type, shooter)
 	var spawn_parent := tree.current_scene if tree.current_scene else tree.root
-	return ProjectilePool.acquire(spawn_parent, origin, direction, stats, info, shooter, visual_origin)
+	return ProjectilePool.acquire(
+		spawn_parent,
+		origin,
+		direction,
+		stats,
+		info,
+		shooter,
+		visual_origin,
+		inherited_velocity
+	)
 
 
 static func spawn_radial_cold_projectiles(

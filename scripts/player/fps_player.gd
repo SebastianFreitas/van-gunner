@@ -53,8 +53,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		usables.try_use_slot(2)
 	elif event.is_action_pressed("use_slot_4"):
 		usables.try_use_slot(3)
-	elif event.is_action_pressed("shoot") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		weapon.try_fire()
 
 
 func _physics_process(delta: float) -> void:
@@ -85,6 +83,8 @@ func _physics_process(delta: float) -> void:
 	var resulting_local_velocity := reference_basis.inverse() * velocity
 	_local_horizontal_velocity.x = resulting_local_velocity.x
 	_local_horizontal_velocity.z = resulting_local_velocity.z
+	if Input.is_action_pressed("shoot") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		weapon.try_fire()
 	_update_interaction()
 
 

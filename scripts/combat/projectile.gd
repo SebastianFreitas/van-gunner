@@ -36,7 +36,6 @@ var _bullet_mesh: MeshInstance3D
 var _trail_line: MeshInstance3D
 var _visual: BulletVisual
 var _visual_origin := Vector3.ZERO
-var _fire_direction := Vector3.FORWARD
 
 
 func setup(
@@ -44,7 +43,8 @@ func setup(
 	stats: GunStats,
 	info: DamageInfo,
 	shooter: CollisionObject3D,
-	visual_origin = null
+	visual_origin = null,
+	inherited_velocity: Vector3 = Vector3.ZERO
 ) -> void:
 	_pooled = false
 	_despawning = false
@@ -52,7 +52,7 @@ func setup(
 	_has_hit = false
 	_bounce_count = 0
 	_distance_travelled = 0.0
-	velocity = direction.normalized() * stats.bullet_speed
+	velocity = direction.normalized() * stats.bullet_speed + inherited_velocity
 	gravity_scale = stats.bullet_weight
 	damage_info = info
 	owner_rid = RID()
@@ -64,21 +64,14 @@ func setup(
 	bounce_speed_retention = stats.bounce_speed_retention
 	bounce_damage_retention = stats.bounce_damage_retention
 	_collision_mask = collision_mask
-	_fire_direction = direction.normalized()
 	_clear_visual()
+	# Prefer a detached cosmetic visual so the trail can fade after despawn.
+	var cosmetic_origin := global_position
 	if visual_origin is Vector3:
-		_visual_origin = visual_origin as Vector3
-		_spawn_visual(_visual_origin, info, stats)
-		_hide_self_visuals()
-	else:
-		_ensure_trail_line()
-		_apply_trail_color(info)
-		_apply_size(stats.bullet_size)
-		_update_trail()
-		if _bullet_mesh:
-			_bullet_mesh.show()
-		if _trail_line:
-			_trail_line.show()
+		cosmetic_origin = visual_origin as Vector3
+	_visual_origin = cosmetic_origin
+	_spawn_visual(_visual_origin, info, stats)
+	_hide_self_visuals()
 	show()
 
 
@@ -273,10 +266,7 @@ func _hide_self_visuals() -> void:
 func _sync_visual() -> void:
 	if not _visual:
 		return
-	if _visual.follows_logical():
-		_visual.sync_to(global_position, velocity)
-	else:
-		_visual.place_along_path(_visual_origin, _fire_direction, _distance_travelled, velocity)
+	_visual.sync_to(global_position, velocity)
 
 
 func _spawn_visual(origin: Vector3, info: DamageInfo, stats: GunStats) -> void:

@@ -5,16 +5,24 @@ signal fired(hit: bool)
 signal ammo_changed(current: int, max_ammo: int)
 signal reloading_changed(is_reloading: bool)
 
+## Never converge onto a hit closer than this — stops near-plane muzzle swing.
+const MIN_CONVERGENCE_DISTANCE := 2.0
+## Brief camera pitch punch on fire (radians). Recovers in feedback tween.
+const CAMERA_KICK := 0.012
+
 @export var stats_controller_path: NodePath
 @export var muzzle_offset := Vector3(0.0, 0.0, -0.38)
 
 @onready var camera: Camera3D = get_parent()
 @onready var muzzle_flash: OmniLight3D = $MuzzleFlash
 
+@onready var _weapon_rest_position: Vector3 = position
+
 var _stats_controller: GunStatsController
 var _current_ammo := 0
 var _next_shot_time := 0
 var _is_reloading := false
+var _feedback_tween: Tween
 
 
 func _ready() -> void:
@@ -39,24 +47,28 @@ func try_fire() -> void:
 		_start_reload()
 		return
 
+	var muzzle := _get_muzzle_position()
 	var aim := _get_aim_point(stats.aim_range)
-	var origin := camera.global_position
-	var direction := (aim - origin).normalized()
+	aim = _clamp_convergence(muzzle, aim, stats.aim_range)
+	aim = _resolve_muzzle_obstruction(muzzle, aim)
+
+	var direction := (aim - muzzle).normalized()
 	if direction.length_squared() < 0.0001:
 		direction = -camera.global_basis.z
-	var muzzle := _get_muzzle_position()
 
-	var projectile := _spawn_projectile(origin, direction, stats, muzzle)
-	var player := camera.get_parent().get_parent()
+	var van_velocity := _get_van_velocity()
+	var projectile := _spawn_projectile(muzzle, direction, stats, van_velocity)
+	var player := _get_player()
 	var traits := BoonTraits.find_on(player)
 	if traits:
 		BoonCombat.dispatch_bonus_projectiles(
 			get_tree(),
-			origin,
+			muzzle,
 			direction,
 			stats,
 			player as CollisionObject3D,
-			traits
+			traits,
+			van_velocity
 		)
 	_track_projectile_feedback(projectile)
 	_current_ammo -= 1
@@ -104,28 +116,90 @@ func _get_stats() -> GunStats:
 	return GunStats.new()
 
 
+func _get_player() -> Node:
+	return camera.get_parent().get_parent()
+
+
 func _get_muzzle_position() -> Vector3:
 	return global_transform * muzzle_offset
 
 
+func _get_exclude_rids() -> Array[RID]:
+	var exclude: Array[RID] = []
+	var player := _get_player()
+	if player is CollisionObject3D:
+		exclude.append((player as CollisionObject3D).get_rid())
+	return exclude
+
+
+## Camera-center raycast — where the crosshair is actually looking.
 func _get_aim_point(max_range: float) -> Vector3:
 	var origin := camera.global_position
 	var direction := -camera.global_basis.z
 	var end := origin + direction * max_range
-	var query := PhysicsRayQueryParameters3D.create(origin, end, DamageResolver.ENEMY_MASK | DamageResolver.WORLD_MASK)
+	var query := PhysicsRayQueryParameters3D.create(
+		origin,
+		end,
+		DamageResolver.ENEMY_MASK | DamageResolver.WORLD_MASK
+	)
 	query.collide_with_areas = true
-	var player := camera.get_parent().get_parent()
-	if player is CollisionObject3D:
-		query.exclude = [(player as CollisionObject3D).get_rid()]
+	query.exclude = _get_exclude_rids()
 	var result := camera.get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
 		return end
+	var hit_pos: Vector3 = result.position
+	# Too close: converge on a point at min distance so the muzzle doesn't swing wildly.
+	if origin.distance_to(hit_pos) < MIN_CONVERGENCE_DISTANCE:
+		return origin + direction * MIN_CONVERGENCE_DISTANCE
+	return hit_pos
+
+
+## Keep aim far enough from the muzzle that look_at correction stays stable.
+func _clamp_convergence(muzzle: Vector3, aim: Vector3, max_range: float) -> Vector3:
+	var cam_dir := -camera.global_basis.z
+	if muzzle.distance_to(aim) >= MIN_CONVERGENCE_DISTANCE:
+		return aim
+	return camera.global_position + cam_dir * maxf(MIN_CONVERGENCE_DISTANCE, max_range * 0.25)
+
+
+## If the muzzle→aim segment hits cover/window frame first, aim at that contact.
+func _resolve_muzzle_obstruction(muzzle: Vector3, aim: Vector3) -> Vector3:
+	var query := PhysicsRayQueryParameters3D.create(
+		muzzle,
+		aim,
+		DamageResolver.ENEMY_MASK | DamageResolver.WORLD_MASK
+	)
+	query.collide_with_areas = true
+	query.exclude = _get_exclude_rids()
+	var result := camera.get_world_3d().direct_space_state.intersect_ray(query)
+	if result.is_empty():
+		return aim
 	return result.position
 
 
-func _spawn_projectile(origin: Vector3, direction: Vector3, stats: GunStats, visual_origin: Vector3) -> Projectile:
-	var shooter := camera.get_parent().get_parent() as CollisionObject3D
-	return BoonCombat.spawn_projectile(get_tree(), origin, direction, stats, shooter, visual_origin)
+func _spawn_projectile(
+	origin: Vector3,
+	direction: Vector3,
+	stats: GunStats,
+	van_velocity: Vector3
+) -> Projectile:
+	var shooter := _get_player() as CollisionObject3D
+	return BoonCombat.spawn_projectile(
+		get_tree(),
+		origin,
+		direction,
+		stats,
+		shooter,
+		origin,
+		van_velocity
+	)
+
+
+func _get_van_velocity() -> Vector3:
+	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+	if travel:
+		return travel.get_van_velocity()
+	return Vector3.ZERO
 
 
 func _start_reload() -> void:
@@ -157,13 +231,18 @@ func _on_stats_changed() -> void:
 
 func _play_feedback() -> void:
 	muzzle_flash.show()
-	var rest_position := position
+	muzzle_flash.light_energy = 2.5
+	if _feedback_tween and _feedback_tween.is_valid():
+		_feedback_tween.kill()
+	position = _weapon_rest_position
 	position.z += 0.08
-	var tween := create_tween()
-	tween.set_parallel()
-	tween.tween_property(self, "position", rest_position, 0.09)
-	tween.tween_property(muzzle_flash, "light_energy", 0.0, 0.06)
-	tween.chain().tween_callback(_reset_flash)
+	camera.rotation.x = -CAMERA_KICK
+	_feedback_tween = create_tween()
+	_feedback_tween.set_parallel()
+	_feedback_tween.tween_property(self, "position", _weapon_rest_position, 0.09)
+	_feedback_tween.tween_property(muzzle_flash, "light_energy", 0.0, 0.06)
+	_feedback_tween.tween_property(camera, "rotation:x", 0.0, 0.11)
+	_feedback_tween.chain().tween_callback(_reset_flash)
 
 
 func _reset_flash() -> void:
