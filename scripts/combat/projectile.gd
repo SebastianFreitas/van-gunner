@@ -44,7 +44,8 @@ func setup(
 	info: DamageInfo,
 	shooter: CollisionObject3D,
 	visual_origin = null,
-	inherited_velocity: Vector3 = Vector3.ZERO
+	inherited_velocity: Vector3 = Vector3.ZERO,
+	aim_point = null
 ) -> void:
 	_pooled = false
 	_despawning = false
@@ -52,7 +53,10 @@ func setup(
 	_has_hit = false
 	_bounce_count = 0
 	_distance_travelled = 0.0
-	velocity = direction.normalized() * stats.bullet_speed + inherited_velocity
+	var aim_dir := direction.normalized()
+	# Van-parented shots ride the van transform — only bake extra inherited motion
+	# (e.g. player strafe) here, never continuous van travel velocity.
+	velocity = aim_dir * stats.bullet_speed + inherited_velocity
 	gravity_scale = stats.bullet_weight
 	damage_info = info
 	owner_rid = RID()
@@ -70,7 +74,7 @@ func setup(
 	if visual_origin is Vector3:
 		cosmetic_origin = visual_origin as Vector3
 	_visual_origin = cosmetic_origin
-	_spawn_visual(_visual_origin, info, stats)
+	_spawn_visual(_visual_origin, info, stats, aim_point, inherited_velocity, aim_dir)
 	_hide_self_visuals()
 	show()
 
@@ -269,13 +273,29 @@ func _sync_visual() -> void:
 	_visual.sync_to(global_position, velocity)
 
 
-func _spawn_visual(origin: Vector3, info: DamageInfo, stats: GunStats) -> void:
+func _spawn_visual(
+	origin: Vector3,
+	info: DamageInfo,
+	stats: GunStats,
+	aim_point = null,
+	inherited_velocity: Vector3 = Vector3.ZERO,
+	aim_dir: Vector3 = Vector3.FORWARD
+) -> void:
 	var parent := get_parent()
 	if not parent:
 		return
+	# Tracer flies muzzle → aim on its own frozen velocity (no mid-flight course correction).
+	var visual_velocity := velocity
+	if aim_point is Vector3:
+		var to_aim := (aim_point as Vector3) - origin
+		if to_aim.length_squared() > 0.0001:
+			visual_velocity = to_aim.normalized() * stats.bullet_speed + inherited_velocity
+		elif aim_dir.length_squared() > 0.0001:
+			visual_velocity = aim_dir.normalized() * stats.bullet_speed + inherited_velocity
 	_visual = BulletVisual.new()
 	parent.add_child(_visual)
-	_visual.setup(origin, velocity, gravity_scale, info, stats, global_position)
+	var motion_frame := parent as Node3D
+	_visual.setup(origin, visual_velocity, gravity_scale, info, stats, global_position, motion_frame)
 
 
 func _clear_visual() -> void:

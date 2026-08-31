@@ -56,8 +56,8 @@ func try_fire() -> void:
 	if direction.length_squared() < 0.0001:
 		direction = -camera.global_basis.z
 
-	var van_velocity := _get_van_velocity()
-	var projectile := _spawn_projectile(origin, direction, stats, van_velocity, muzzle)
+	# Van parenting carries travel motion; don't bake van velocity into the shot.
+	var projectile := _spawn_projectile(origin, direction, stats, Vector3.ZERO, muzzle, aim)
 	var player := _get_player()
 	var traits := BoonTraits.find_on(player)
 	if traits:
@@ -68,7 +68,7 @@ func try_fire() -> void:
 			stats,
 			player as CollisionObject3D,
 			traits,
-			van_velocity
+			Vector3.ZERO
 		)
 	_track_projectile_feedback(projectile)
 	_current_ammo -= 1
@@ -169,8 +169,9 @@ func _spawn_projectile(
 	origin: Vector3,
 	direction: Vector3,
 	stats: GunStats,
-	van_velocity: Vector3,
-	visual_origin: Vector3
+	inherited_velocity: Vector3,
+	visual_origin: Vector3,
+	aim_point: Vector3
 ) -> Projectile:
 	var shooter := _get_player() as CollisionObject3D
 	return BoonCombat.spawn_projectile(
@@ -180,15 +181,9 @@ func _spawn_projectile(
 		stats,
 		shooter,
 		visual_origin,
-		van_velocity
+		inherited_velocity,
+		aim_point
 	)
-
-
-func _get_van_velocity() -> Vector3:
-	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
-	if travel:
-		return travel.get_van_velocity()
-	return Vector3.ZERO
 
 
 func _start_reload() -> void:

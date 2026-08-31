@@ -174,10 +174,16 @@ static func spawn_projectile(
 	stats: GunStats,
 	shooter: CollisionObject3D,
 	visual_origin = null,
-	inherited_velocity: Vector3 = Vector3.ZERO
+	inherited_velocity: Vector3 = Vector3.ZERO,
+	aim_point = null
 ) -> Projectile:
 	var info := DamageInfo.create(stats.damage_per_shot, stats.damage_type, shooter)
-	var spawn_parent := tree.current_scene if tree.current_scene else tree.root
+	var spawn_parent := _resolve_projectile_parent(tree, shooter)
+	# Parenting under the van already carries travel motion — don't also bake van velocity
+	# or shots/trails drift backward relative to the cabin.
+	var extra_velocity := inherited_velocity
+	if spawn_parent != null and spawn_parent != tree.current_scene:
+		extra_velocity = Vector3.ZERO
 	return ProjectilePool.acquire(
 		spawn_parent,
 		origin,
@@ -186,8 +192,22 @@ static func spawn_projectile(
 		info,
 		shooter,
 		visual_origin,
-		inherited_velocity
+		extra_velocity,
+		aim_point
 	)
+
+
+## Prefer VanRig so bullets/trails share the van's moving frame.
+static func _resolve_projectile_parent(tree: SceneTree, shooter: CollisionObject3D) -> Node:
+	var travel := tree.get_first_node_in_group(&"travel_controller") as TravelController
+	if travel and travel.van_rig:
+		return travel.van_rig
+	var node: Node = shooter
+	while node:
+		if node.name == &"VanRig" or str(node.name) == "VanRig":
+			return node
+		node = node.get_parent()
+	return tree.current_scene if tree.current_scene else tree.root
 
 
 static func spawn_radial_cold_projectiles(

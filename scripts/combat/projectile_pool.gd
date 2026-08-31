@@ -28,7 +28,8 @@ func acquire(
 	info: DamageInfo,
 	shooter: CollisionObject3D,
 	visual_origin = null,
-	inherited_velocity: Vector3 = Vector3.ZERO
+	inherited_velocity: Vector3 = Vector3.ZERO,
+	aim_point = null
 ) -> Projectile:
 	var projectile: Projectile = null
 	while not _pool.is_empty():
@@ -43,7 +44,7 @@ func acquire(
 		projectile.reparent(spawn_parent)
 
 	projectile.global_position = origin
-	projectile.setup(direction, stats, info, shooter, visual_origin, inherited_velocity)
+	projectile.setup(direction, stats, info, shooter, visual_origin, inherited_velocity, aim_point)
 	return projectile
 
 
