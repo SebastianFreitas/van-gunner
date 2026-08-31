@@ -16,7 +16,7 @@ const NEIGHBORHOOD_MAX_LENGTH := 5
 @export var segment_scene: PackedScene
 @export var t_junction_scene: PackedScene
 @export var segment_length := 20.0
-@export var segment_ahead_distance := 25.0
+@export var segment_ahead_distance := 80.0
 @export var world_cull_distance := 140.0
 @export var route_length := 10000.0
 @export var intro_peace_seconds := 4.0
@@ -273,7 +273,7 @@ func _build_turn_route() -> void:
 	_approach_stop_progress = INF
 	_turn_end_progress = curve.get_closest_offset(turn_end)
 	_next_segment_progress = _turn_end_progress + segment_length
-	_spawn_route_segments_until(_turn_end_progress + 100.0)
+	_spawn_route_segments_until(_turn_end_progress + segment_ahead_distance)
 
 
 func _finish_turn() -> void:
