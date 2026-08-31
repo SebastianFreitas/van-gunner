@@ -8,6 +8,9 @@ enum TurnState {
 }
 
 const QUARTER_CIRCLE_HANDLE := 0.55228475
+const SEGMENT_VARIANT_COUNT := 4
+const NEIGHBORHOOD_MIN_LENGTH := 2
+const NEIGHBORHOOD_MAX_LENGTH := 5
 
 @export var travel_speed := 8.0
 @export var segment_scene: PackedScene
@@ -34,6 +37,11 @@ var _approach_stop_progress := INF
 var _turn_end_progress := INF
 var _next_segment_progress := 0.0
 var _segment_spawning_paused := false
+var _segment_index := 0
+var _neighborhood_variant := 0
+var _neighborhood_remaining := 0
+var _last_neighborhood_variant := -1
+var _rng: RandomNumberGenerator
 
 @onready var corridor_root: Node3D = $"../../ExteriorCorridor"
 @onready var travel_path: Path3D = $"../../TravelPath"
@@ -43,6 +51,8 @@ var _segment_spawning_paused := false
 
 func _ready() -> void:
 	process_physics_priority = -100
+	_rng = RandomNumberGenerator.new()
+	_rng.seed = GameSession.run_seed
 	_apply_meta_travel_speed()
 	_configure_initial_route()
 	GameSession.phase_changed.connect(_on_phase_changed)
@@ -124,7 +134,27 @@ func _spawn_world_segment(world_transform: Transform3D) -> void:
 	var segment := segment_scene.instantiate() as Node3D
 	corridor_root.add_child(segment)
 	segment.global_transform = world_transform
+	if segment.has_method(&"apply_variant"):
+		segment.apply_variant(_pick_segment_variant())
 	_world_pieces.append(segment)
+	_segment_index += 1
+
+
+func _pick_segment_variant() -> int:
+	if _neighborhood_remaining <= 0:
+		_neighborhood_variant = _rng.randi() % SEGMENT_VARIANT_COUNT
+		if (
+			_last_neighborhood_variant >= 0
+			and _neighborhood_variant == _last_neighborhood_variant
+		):
+			_neighborhood_variant = (_neighborhood_variant + 1) % SEGMENT_VARIANT_COUNT
+		_neighborhood_remaining = _rng.randi_range(
+			NEIGHBORHOOD_MIN_LENGTH,
+			NEIGHBORHOOD_MAX_LENGTH
+		)
+		_last_neighborhood_variant = _neighborhood_variant
+	_neighborhood_remaining -= 1
+	return _neighborhood_variant
 
 
 func _sample_route_transform(progress: float) -> Transform3D:
