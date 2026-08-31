@@ -1,19 +1,9 @@
-[gd_resource type="Resource" script_class="GunStats" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="GunStats" format=3 uid="uid://mneegpjp2dlr"]
 
-[ext_resource type="Script" path="res://scripts/combat/gun_stats.gd" id="1"]
+[ext_resource type="Script" uid="uid://bch06me6kkum0" path="res://scripts/combat/gun_stats.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
-fire_rate = 4.0
-damage_per_shot = 1.0
-bullet_speed = 70.0
+bullet_speed = 100.0
 bullet_weight = 0.35
-bullet_size = 0.045
-reload_speed = 1.2
-mag_size = 12
-aim_range = 80.0
-damage_type = 0
-explosion_radius = 1.8
 max_bounces = 1
-bounce_speed_retention = 0.6
-bounce_damage_retention = 0.8
