@@ -9,21 +9,12 @@ const MAX_POOL_SIZE := 1024
 
 var _pool: Array[Projectile] = []
 var _holder: Node3D
-var _trail_template: CPUParticles3D
 
 
 func _ready() -> void:
 	_holder = Node3D.new()
 	_holder.name = "PooledProjectiles"
 	add_child(_holder)
-
-	var template := _PROJECTILE_SCENE.instantiate() as Projectile
-	_trail_template = template.get_node_or_null("Trail") as CPUParticles3D
-	if _trail_template:
-		_trail_template.reparent(self)
-		_trail_template.name = "TrailTemplate"
-		_trail_template.emitting = false
-	template.free()
 
 	for _i in INITIAL_POOL_SIZE:
 		_pool.append(_create_projectile())
@@ -61,12 +52,6 @@ func release(projectile: Projectile) -> void:
 		_pool.append(projectile)
 	else:
 		projectile.queue_free()
-
-
-func duplicate_trail_template() -> CPUParticles3D:
-	if not _trail_template:
-		return CPUParticles3D.new()
-	return _trail_template.duplicate() as CPUParticles3D
 
 
 func _create_projectile() -> Projectile:
