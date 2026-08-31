@@ -64,14 +64,28 @@ size = Vector3(0.18, 1.5, 0.42)
 [sub_resource type="BoxShape3D" id="SidePillarShape"]
 size = Vector3(0.18, 1.5, 0.42)
 
-[sub_resource type="BoxMesh" id="RearDoorMesh"]
-size = Vector3(2.38, 3.1, 0.16)
-
 [sub_resource type="BoxShape3D" id="RearDoorLeafShape"]
 size = Vector3(2.38, 3.1, 0.16)
 
 [sub_resource type="BoxShape3D" id="RearDoorBlockerShape"]
 size = Vector3(2.38, 3.1, 0.32)
+
+[sub_resource type="StandardMaterial3D" id="RearWindowGlassMaterial"]
+transparency = 1
+albedo_color = Color(0.22, 0.32, 0.36, 0.42)
+metallic = 0.35
+roughness = 0.08
+rim_enabled = true
+rim = 0.35
+rim_tint = 0.4
+
+[sub_resource type="StandardMaterial3D" id="RearWindowFrameMaterial"]
+albedo_color = Color(0.04, 0.045, 0.05, 1)
+metallic = 0.55
+roughness = 0.55
+
+[sub_resource type="BoxMesh" id="RearWindowGlassMesh"]
+size = Vector3(1.8, 1.36, 0.04)
 
 [sub_resource type="BoxMesh" id="FrontPanelMesh"]
 size = Vector3(1.6, 2.65, 0.2)
@@ -254,10 +268,40 @@ script = ExtResource("14")
 [node name="LeftHinge" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall" unique_id=51340248]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.39, 1.55, 4.71)
 
-[node name="Panel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge" unique_id=1668741396]
+[node name="Panel" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge" unique_id=1668741396]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 0, 0)
-material_override = SubResource("DoorMaterial")
-mesh = SubResource("RearDoorMesh")
+use_collision = false
+
+[node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Panel"]
+material = SubResource("DoorMaterial")
+size = Vector3(2.38, 3.1, 0.16)
+
+[node name="WindowCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Panel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.48, 0.14)
+operation = 2
+polygon = PackedVector2Array(-0.79, -0.775, -0.92, -0.7, -0.99, -0.575, -0.99, 0.575, -0.92, 0.7, -0.79, 0.775, 0.79, 0.775, 0.92, 0.7, 0.99, 0.575, 0.99, -0.575, 0.92, -0.7, 0.79, -0.775)
+depth = 0.28
+
+[node name="WindowFrame" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 0.48, 0.02)
+use_collision = false
+
+[node name="Outer" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/WindowFrame"]
+material = SubResource("RearWindowFrameMaterial")
+polygon = PackedVector2Array(-0.86, -0.845, -1.0, -0.76, -1.07, -0.62, -1.07, 0.62, -1.0, 0.76, -0.86, 0.845, 0.86, 0.845, 1.0, 0.76, 1.07, 0.62, 1.07, -0.62, 1.0, -0.76, 0.86, -0.845)
+depth = 0.05
+
+[node name="InnerCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/WindowFrame"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
+operation = 2
+polygon = PackedVector2Array(-0.72, -0.705, -0.85, -0.64, -0.92, -0.52, -0.92, 0.52, -0.85, 0.64, -0.72, 0.705, 0.72, 0.705, 0.85, 0.64, 0.92, 0.52, 0.92, -0.52, 0.85, -0.64, 0.72, -0.705)
+depth = 0.08
+
+[node name="WindowGlass" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 0.48, 0)
+material_override = SubResource("RearWindowGlassMaterial")
+cast_shadow = 0
+mesh = SubResource("RearWindowGlassMesh")
 
 [node name="Interact" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge" unique_id=1668741397]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 0, 0)
@@ -272,10 +316,40 @@ shape = SubResource("RearDoorLeafShape")
 [node name="RightHinge" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall" unique_id=1576193080]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.39, 1.55, 4.71)
 
-[node name="Panel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge" unique_id=1788784776]
+[node name="Panel" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge" unique_id=1788784776]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.19, 0, 0)
-material_override = SubResource("DoorMaterial")
-mesh = SubResource("RearDoorMesh")
+use_collision = false
+
+[node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Panel"]
+material = SubResource("DoorMaterial")
+size = Vector3(2.38, 3.1, 0.16)
+
+[node name="WindowCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Panel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.48, 0.14)
+operation = 2
+polygon = PackedVector2Array(-0.79, -0.775, -0.92, -0.7, -0.99, -0.575, -0.99, 0.575, -0.92, 0.7, -0.79, 0.775, 0.79, 0.775, 0.92, 0.7, 0.99, 0.575, 0.99, -0.575, 0.92, -0.7, 0.79, -0.775)
+depth = 0.28
+
+[node name="WindowFrame" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.19, 0.48, 0.02)
+use_collision = false
+
+[node name="Outer" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/WindowFrame"]
+material = SubResource("RearWindowFrameMaterial")
+polygon = PackedVector2Array(-0.86, -0.845, -1.0, -0.76, -1.07, -0.62, -1.07, 0.62, -1.0, 0.76, -0.86, 0.845, 0.86, 0.845, 1.0, 0.76, 1.07, 0.62, 1.07, -0.62, 1.0, -0.76, 0.86, -0.845)
+depth = 0.05
+
+[node name="InnerCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/WindowFrame"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
+operation = 2
+polygon = PackedVector2Array(-0.72, -0.705, -0.85, -0.64, -0.92, -0.52, -0.92, 0.52, -0.85, 0.64, -0.72, 0.705, 0.72, 0.705, 0.85, 0.64, 0.92, 0.52, 0.92, -0.52, 0.85, -0.64, 0.72, -0.705)
+depth = 0.08
+
+[node name="WindowGlass" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.19, 0.48, 0)
+material_override = SubResource("RearWindowGlassMaterial")
+cast_shadow = 0
+mesh = SubResource("RearWindowGlassMesh")
 
 [node name="Interact" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge" unique_id=1788784779]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.19, 0, 0)
