@@ -55,6 +55,7 @@ func bind(
 	GameSession.van_health_changed.connect(_on_van_health_changed)
 	GameSession.coins_changed.connect(_on_coins_changed)
 	GameSession.wave_changed.connect(_on_wave_changed)
+	MetaProgression.van_speed_changed.connect(_on_meta_van_speed_changed)
 
 
 func open() -> void:
@@ -122,13 +123,22 @@ func _refresh_stats() -> void:
 	_add_health_bar()
 	_add_row("Coins", str(GameSession.coins))
 	_add_row("Waves cleared", str(GameSession.wave_count))
+	_add_row("Act", str(GameBalance.get_act(GameSession.route_step)))
 	_add_row("Forks taken", str(GameSession.route_step))
+	_add_row("Mob move speed", "%s m/s" % ItemDescriber.format_number(
+		GameBalance.get_mob_approach_speed(GameSession.route_step)
+	))
+	_add_row("Time to reach van", "%ss" % ItemDescriber.format_number(
+		GameBalance.get_engagement_seconds(GameSession.route_step)
+	))
 	_add_row("Last turn", String(GameSession.last_direction).capitalize())
 	_add_row("Room", String(GameSession.current_room).capitalize())
 	_add_row(
 		"Phase",
 		String(GameSession.RunPhase.keys()[GameSession.phase]).replace("_", " ").capitalize()
 	)
+
+	_add_van_upgrades()
 
 	_stats_target = stats_secondary
 	var stats := _gun_stats.get_stats() if _gun_stats else null
@@ -194,6 +204,43 @@ func _add_row(label_text: String, value_text: String) -> void:
 	row.add_child(name_label)
 	row.add_child(value_label)
 	_stats_target.add_child(row)
+
+
+func _add_van_upgrades() -> void:
+	_add_section("VAN UPGRADES")
+	_add_row("Travel speed", "%s m/s" % ItemDescriber.format_number(MetaProgression.get_van_speed()))
+	var level := MetaProgression.van_speed_level
+	var max_level := GameBalance.VAN_SPEED_MAX_LEVEL
+	_add_row("Speed level", "%d / %d" % [level, max_level])
+	_add_row("Persists", "Between runs")
+
+	if MetaProgression.can_upgrade_van_speed():
+		var cost := MetaProgression.get_van_speed_upgrade_cost()
+		var next_speed := GameBalance.get_van_speed_for_level(level + 1)
+		var can_afford := GameSession.coins >= cost
+		var button := Button.new()
+		button.text = "Upgrade speed → %s m/s  (%d coins)" % [
+			ItemDescriber.format_number(next_speed),
+			cost,
+		]
+		button.disabled = not can_afford
+		button.add_theme_font_size_override(&"font_size", 13)
+		button.pressed.connect(_on_van_speed_upgrade_pressed)
+		_stats_target.add_child(button)
+	else:
+		_add_row("Status", "Max level reached")
+
+
+func _on_van_speed_upgrade_pressed() -> void:
+	var result := MetaProgression.try_upgrade_van_speed(GameSession.coins)
+	if not result.get("ok", false):
+		return
+	GameSession.spend_coins(int(result.get("cost", 0)))
+	_refresh_stats()
+
+
+func _on_meta_van_speed_changed(_level: int, _speed: float) -> void:
+	_refresh_stats()
 
 
 func _add_health_bar() -> void:

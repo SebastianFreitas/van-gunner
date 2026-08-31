@@ -157,6 +157,14 @@ func add_coins(amount: int) -> void:
 	coins_changed.emit(coins)
 
 
+func spend_coins(amount: int) -> bool:
+	if amount <= 0 or coins < amount:
+		return false
+	coins -= amount
+	coins_changed.emit(coins)
+	return true
+
+
 func notify_enemy_defeated(enemy: Node) -> void:
 	if enemy:
 		enemy_defeated.emit(enemy)

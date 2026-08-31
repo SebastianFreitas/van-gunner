@@ -8,6 +8,9 @@ signal defeated
 @export var attack_interval := 1.25
 @export var max_health := 3.0
 
+## Units/sec while closing on the van.  Set by EncounterDirector per act.
+var approach_speed := 0.0
+
 var _active := false
 var health := max_health
 var is_defeated := false

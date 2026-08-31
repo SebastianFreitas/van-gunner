@@ -43,11 +43,21 @@ var _segment_spawning_paused := false
 
 func _ready() -> void:
 	process_physics_priority = -100
+	_apply_meta_travel_speed()
 	_configure_initial_route()
 	GameSession.phase_changed.connect(_on_phase_changed)
 	GameSession.route_chosen.connect(_on_route_chosen)
+	MetaProgression.van_speed_changed.connect(_on_van_speed_changed)
 	if GameSession.phase == GameSession.RunPhase.TRAVELLING:
 		_maybe_start_intro()
+
+
+func _apply_meta_travel_speed() -> void:
+	travel_speed = MetaProgression.get_van_speed()
+
+
+func _on_van_speed_changed(_level: int, speed: float) -> void:
+	travel_speed = speed
 
 
 func _configure_initial_route() -> void:

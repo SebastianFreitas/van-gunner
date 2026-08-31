@@ -399,7 +399,7 @@ shape = SubResource("BoxShape3D_fn8fd")
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 1.62, 4.42)
 
 [node name="RearSpawnMarker" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer" unique_id=76291566]
-transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 1.62, 28)
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 1.62, 51.62)
 
 [node name="Player" parent="TravelPath/VanFollow/VanRig" unique_id=88569583 instance=ExtResource("2")]
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 0.05, -2.7)

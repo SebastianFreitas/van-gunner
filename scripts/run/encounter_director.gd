@@ -2,7 +2,6 @@ class_name EncounterDirector
 extends Node
 
 @export var travel_before_encounter := 2.5
-@export var approach_duration := 3.0
 @export var combat_duration := 6.0
 @export var waves_per_route := 10
 @export var rest_duration := 10.0
@@ -76,9 +75,9 @@ func _run_encounter(id: int) -> void:
 	var raider := raider_scene.instantiate() as WindowRaider
 	enemy_container.add_child(raider)
 	raider.global_transform = rear_spawn.global_transform
+	raider.approach_speed = GameBalance.get_mob_approach_speed(GameSession.route_step)
 
-	var elapsed := 0.0
-	while elapsed < approach_duration:
+	while true:
 		if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
 			if is_instance_valid(raider):
 				raider.queue_free()
@@ -86,19 +85,22 @@ func _run_encounter(id: int) -> void:
 		if not is_instance_valid(raider) or raider.is_defeated:
 			await _complete_wave(id)
 			return
-		elapsed += get_process_delta_time()
-		var progress := clampf(elapsed / approach_duration, 0.0, 1.0)
-		raider.global_position = rear_spawn.global_position.lerp(
-			rear_marker.global_position,
-			smoothstep(0.0, 1.0, progress)
-		)
+
+		var to_attack := rear_marker.global_position - raider.global_position
+		var remaining := to_attack.length()
+		if remaining <= 0.05:
+			break
+
+		var delta := get_process_delta_time()
+		var step := minf(raider.approach_speed * delta, remaining)
+		raider.global_position += to_attack.normalized() * step
 		await get_tree().process_frame
 
 	raider.global_transform = rear_marker.global_transform
 	raider.attack_landed.connect(GameSession.damage_van)
 	raider.activate()
 
-	elapsed = 0.0
+	var elapsed := 0.0
 	while (
 		elapsed < combat_duration
 		and is_instance_valid(raider)
