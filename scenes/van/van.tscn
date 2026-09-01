@@ -25,6 +25,7 @@
 [ext_resource type="Script" uid="uid://cdlgss0alwyyp" path="res://scripts/run/side_window_interact.gd" id="24"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_ceiling.tscn" id="25"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_bulkhead.tscn" id="26"]
+[ext_resource type="Script" path="res://scripts/run/van_player_containment.gd" id="27"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -185,6 +186,9 @@ loop = false
 [node name="VanRig" type="Node3D" parent="TravelPath/VanFollow" unique_id=498735198]
 
 [node name="Interior" type="Node3D" parent="TravelPath/VanFollow/VanRig" unique_id=23039912]
+
+[node name="PlayerContainment" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior"]
+script = ExtResource("27")
 
 [node name="Shell" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1503775347]
 

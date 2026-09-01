@@ -25,6 +25,7 @@ material = SubResource("GunMaterial")
 size = Vector3(0.18, 0.18, 0.65)
 
 [node name="Player" type="CharacterBody3D" groups=["player"]]
+collision_mask = 17
 script = ExtResource("1")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
