@@ -23,6 +23,7 @@
 [ext_resource type="Script" path="res://scripts/run/van_lighting.gd" id="21"]
 [ext_resource type="PackedScene" path="res://scenes/van/iron_cross.tscn" id="22"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_ceiling.tscn" id="25"]
+[ext_resource type="PackedScene" path="res://scenes/van/van_bulkhead.tscn" id="26"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -152,12 +153,6 @@ size = Vector3(1.55, 2.6334717, 0.22)
 [sub_resource type="BoxShape3D" id="DoorShape"]
 size = Vector3(1.55, 2.637622, 0.22)
 
-[sub_resource type="BoxMesh" id="PartitionMesh"]
-size = Vector3(1.25, 2.65, 0.16)
-
-[sub_resource type="BoxShape3D" id="PartitionShape"]
-size = Vector3(1.25, 2.65, 0.16)
-
 [sub_resource type="StandardMaterial3D" id="TableMaterial"]
 albedo_color = Color(0.18, 0.13, 0.085, 1)
 roughness = 0.85
@@ -171,18 +166,6 @@ size = Vector3(1.65, 0.85, 1.15)
 
 [sub_resource type="BoxShape3D" id="RoomZoneShape"]
 size = Vector3(4.4, 2.6, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_5i4qf"]
-size = Vector3(1.0635986, 1, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_rerjn"]
-size = Vector3(1.1066895, 3.0576782, 0.2064209)
-
-[sub_resource type="BoxMesh" id="BoxMesh_1xds0"]
-size = Vector3(4.5271606, 1.1010742, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_fn8fd"]
-size = Vector3(4.522949, 0.7055664, 0.12841797)
 
 [node name="Van" type="Node3D" unique_id=843789011]
 script = ExtResource("1")
@@ -1058,25 +1041,7 @@ mesh = SubResource("DoorMesh")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11881101, 0)
 shape = SubResource("DoorShape")
 
-[node name="RoomDivider" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=2084282824]
-
-[node name="LeftPanel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomDivider" unique_id=1600961237]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.78, 1.325, 1)
-material_override = SubResource("WallMaterial")
-mesh = SubResource("PartitionMesh")
-
-[node name="LeftCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomDivider" unique_id=1032677916]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.78, 1.325, 1)
-shape = SubResource("PartitionShape")
-
-[node name="RightPanel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomDivider" unique_id=1992595059]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6762023, 1.325, 1)
-material_override = SubResource("WallMaterial")
-mesh = SubResource("PartitionMesh")
-
-[node name="RightCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomDivider" unique_id=1910965099]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6762023, 1.325, 1)
-shape = SubResource("PartitionShape")
+[node name="Bulkhead" parent="TravelPath/VanFollow/VanRig/Interior" instance=ExtResource("26")]
 
 [node name="Props" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1487223170]
 
@@ -1116,19 +1081,6 @@ room_id = &"back"
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/RoomZones/BackRoom" unique_id=1978818779]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 3.7, 0, 0, 0)
 shape = SubResource("RoomZoneShape")
-
-[node name="Node3D" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=974012931]
-
-[node name="Wood Panel" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D" unique_id=1931980597]
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D/Wood Panel" unique_id=1316161097]
-transform = Transform3D(1.0407776, 0, 0, 0, 3.0563722, 0, 0, 0, 0.1925863, 1.8461993, 1.5019896, 0.99910617)
-material_override = SubResource("TableMaterial")
-mesh = SubResource("BoxMesh_5i4qf")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Node3D/Wood Panel" unique_id=2093882801]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8457098, 1.5361853, 1.000632)
-shape = SubResource("BoxShape3D_rerjn")
 
 [node name="EnemyContainer" type="Node3D" parent="TravelPath/VanFollow/VanRig" unique_id=431859998]
 
