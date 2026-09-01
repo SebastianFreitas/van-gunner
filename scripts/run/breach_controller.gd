@@ -18,6 +18,24 @@ func get_bench_basis() -> Basis:
 	return bench_marker.global_basis
 
 
+## Average EnemyContainer-local Z of rear-door Outside markers.
+## Spawn line sits at this + GameBalance.SPAWN_DISTANCE.
+func get_rear_outside_reference_z() -> float:
+	var parent_3d := get_parent() as Node3D
+	if parent_3d == null:
+		return 5.2
+	var sum := 0.0
+	var count := 0
+	for point in _all_points():
+		if point.kind != BreachPoint.Kind.REAR_DOOR or point.outside_marker == null:
+			continue
+		sum += parent_3d.to_local(point.outside_marker.global_position).z
+		count += 1
+	if count == 0:
+		return 5.2
+	return sum / float(count)
+
+
 ## Prefer open/breached rear doors, then free rear to smash, then windows.
 func assign_breach_point(raider: Node) -> BreachPoint:
 	var points := _all_points()

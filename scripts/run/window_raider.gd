@@ -11,7 +11,9 @@ enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH }
 @export var attack_interval := 1.25
 @export var max_health := 3.0
 
-## Units/sec while closing on the van. Set by EncounterDirector per act.
+## Derived world chase speed for this act. Closing = mob_world_speed - live van speed.
+var mob_world_speed := 0.0
+## Last computed van-local closing rate (debug / legacy reads).
 var approach_speed := 0.0
 
 var _active := false
@@ -26,7 +28,9 @@ var _attack_loop_running := false
 var _attach_marker: Node3D
 ## Chase this marker in parent-local space; refreshed every physics tick.
 var _move_marker: Node3D
+## Fixed speed for non-approach moves (interior). Approach uses live van-relative closing.
 var _move_speed := 0.0
+var _move_use_van_relative := false
 var _move_arrived := true
 
 @onready var sprite: Sprite3D = $Sprite3D
@@ -57,11 +61,12 @@ func _configure_status_from_traits() -> void:
 	BoonCombat.configure_enemy_status_effects(self, get_tree())
 
 
-func begin_assault(breach: BreachPoint, speed: float) -> void:
+func begin_assault(breach: BreachPoint, world_speed: float) -> void:
 	if _active or is_defeated or breach == null:
 		return
 	assigned_breach = breach
-	approach_speed = speed
+	mob_world_speed = world_speed
+	approach_speed = world_speed - _current_van_speed()
 	_active = true
 	_run_assault()
 
@@ -166,7 +171,7 @@ func _run_assault() -> void:
 	if not assigned_breach.is_passable():
 		assigned_breach.claim(self)
 
-	await _move_to_marker(assigned_breach.outside_marker, approach_speed)
+	await _move_to_marker(assigned_breach.outside_marker, 0.0, true)
 	if not _active or is_defeated:
 		return
 	_attach_marker = assigned_breach.outside_marker
@@ -181,7 +186,7 @@ func _run_assault() -> void:
 	_attach_marker = null
 	assault_phase = AssaultPhase.ENTERING
 	var interior_speed := GameBalance.MOB_INTERIOR_SPEED
-	await _move_to_marker(assigned_breach.entry_marker, interior_speed)
+	await _move_to_marker(assigned_breach.entry_marker, interior_speed, false)
 	if not _active or is_defeated:
 		return
 
@@ -191,7 +196,7 @@ func _run_assault() -> void:
 		if controller
 		else assigned_breach.entry_marker
 	)
-	await _move_to_marker(bench_marker, interior_speed)
+	await _move_to_marker(bench_marker, interior_speed, false)
 	if not _active or is_defeated:
 		return
 	_attach_marker = bench_marker
@@ -214,7 +219,7 @@ func _breach_until_open() -> void:
 					_attach_marker = null
 					if not assigned_breach.is_passable():
 						assigned_breach.claim(self)
-					await _move_to_marker(assigned_breach.outside_marker, approach_speed)
+					await _move_to_marker(assigned_breach.outside_marker, 0.0, true)
 					if not _active or is_defeated:
 						return
 					_attach_marker = assigned_breach.outside_marker
@@ -250,14 +255,23 @@ func _attack_loop() -> void:
 	_attack_loop_running = false
 
 
-func _move_to_marker(marker: Node3D, speed: float) -> void:
+func _move_to_marker(marker: Node3D, speed: float, van_relative: bool = false) -> void:
 	_attach_marker = null
 	_move_marker = marker
 	_move_speed = speed
+	_move_use_van_relative = van_relative
 	_move_arrived = false
 	while _active and is_inside_tree() and not is_defeated and not _move_arrived:
 		await get_tree().physics_frame
 	_move_marker = null
+	_move_use_van_relative = false
+
+
+func _current_van_speed() -> float:
+	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+	if travel:
+		return travel.travel_speed
+	return MetaProgression.get_van_speed()
 
 
 func _physics_chase_marker(delta: float) -> void:
@@ -270,13 +284,27 @@ func _physics_chase_marker(delta: float) -> void:
 	var target_local := parent_3d.to_local(_move_marker.global_position)
 	var to_target := target_local - position
 	var remaining := to_target.length()
+	var speed := _move_speed
+	if _move_use_van_relative:
+		# World chase vs live van speed. Boost → lower/negative closing → gain distance.
+		speed = mob_world_speed - _current_van_speed()
+		approach_speed = speed
 	if remaining <= 0.05:
+		if speed < 0.0:
+			# Van still pulling away — don't latch onto the marker yet.
+			return
 		position = target_local
 		global_transform.basis = _move_marker.global_transform.basis
 		_move_arrived = true
 		return
-	var step := minf(maxf(_move_speed, 0.1) * delta, remaining)
-	position += to_target.normalized() * step
+	if is_zero_approx(remaining):
+		return
+	var direction := to_target / remaining
+	if speed > 0.0:
+		position += direction * minf(speed * delta, remaining)
+	elif speed < 0.0:
+		# Fall behind along the approach axis (ready for van-boost distance gains).
+		position -= direction * (-speed) * delta
 
 
 func _snap_to_marker(marker: Node3D) -> void:
@@ -290,6 +318,7 @@ func _snap_to_marker(marker: Node3D) -> void:
 func _clear_motion() -> void:
 	_attach_marker = null
 	_move_marker = null
+	_move_use_van_relative = false
 	_move_arrived = true
 
 

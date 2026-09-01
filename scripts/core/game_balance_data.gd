@@ -2,26 +2,33 @@ class_name GameBalanceData
 extends Resource
 
 ## Inspector-editable balance sheet for encounter pacing and act scaling.
-## Primary knob: act_mob_approach_speed — engagement windows fall out of spawn_distance.
+##
+## Baseline identity (rear-door path):
+##   mob_world_speed = expected_van_speed + spawn_distance / engagement_seconds
+## Runtime closing (van-local):
+##   closing = mob_world_speed - live_van_speed
+## So a van boost slows / reverses approach; expected upgrades are baked into mob speed.
 
 @export_group("Van")
 @export var base_van_speed := 8.0
 
 @export_group("Player baseline")
-## Reference values mirrored from default_gun_stats.tres (not applied at runtime).
+## Applied at runtime by GunStatsController as the gun's starting damage / fire rate.
 @export var base_damage_per_shot := 1.0
 @export var base_fire_rate := 4.0
 
 @export_group("Spawn geometry")
-## Fixed spawn distance — mobs always appear this far behind the van.
+## Nominal distance from rear-door Outside markers to the spawn line.
+## EncounterDirector places raiders here at runtime (scene marker is only a visual/debug aid).
 @export var spawn_distance := 47.2
 ## Corridor floor is 18 wide with walls at ±9; keep spawns inside with margin.
 @export var spawn_half_width := 7.5
 ## Extra depth jitter on top of the random depth band below.
-@export var spawn_z_jitter := 3.0
-## Random depth band behind RearSpawnMarker (+Z = farther from van).
-@export var spawn_z_depth_min := 0.0
-@export var spawn_z_depth_max := 18.0
+@export var spawn_z_jitter := 1.0
+## Random depth band around spawn_distance (+Z = farther behind the van).
+## Keep this small so engagement_seconds stays meaningful.
+@export var spawn_z_depth_min := -3.0
+@export var spawn_z_depth_max := 3.0
 ## Stagger each enemy in a wave so the pack doesn't arrive as one blob.
 @export var spawn_delay_min := 0.5
 @export var spawn_delay_max := 2.0
@@ -40,9 +47,15 @@ extends Resource
 @export var inter_wave_delay := 1.25
 
 @export_group("Enemy approach")
-## How fast mobs run toward the van per act. Higher act = faster mobs.
-## Sized so engagement windows land near 5s / 4s / 3s at spawn_distance.
-@export var act_mob_approach_speed: PackedFloat32Array = PackedFloat32Array([9.44, 11.8, 15.73])
+## Designer intent: unpaid seconds for a rear-door approach at spawn_distance,
+## when the van is running at the expected upgraded speed for that act.
+## Mob world speed is derived from this — edit these to get 5 / 10 / 100 / 1s windows.
+@export var act_engagement_seconds: PackedFloat32Array = PackedFloat32Array([10.0, 8.0, 6.0])
+## How much of the van upgrade curve we assume when sizing each act's mob speed.
+## Default Act 1 = 1/3, Act 2 = 2/3, Act 3 = full.
+@export var act_expected_upgrade_fraction: PackedFloat32Array = PackedFloat32Array([
+	0.333333, 0.666667, 1.0
+])
 
 @export_group("Breach / entry")
 ## Rear doors are tough — about 12 hits at default raider damage (8).
@@ -55,6 +68,7 @@ extends Resource
 @export var mob_interior_speed := 4.5
 
 @export_group("Van speed upgrades")
+## End-of-curve van speed targets (meta shop). Last entry is the fully-upgraded speed.
 @export var act_target_van_speed: PackedFloat32Array = PackedFloat32Array([8.0, 9.0, 10.0])
 @export var van_speed_max_level := 4
 @export var van_speed_upgrade_base_cost := 50
@@ -64,15 +78,52 @@ func get_base_dps() -> float:
 	return base_damage_per_shot * base_fire_rate
 
 
+func get_max_van_speed() -> float:
+	if act_target_van_speed.is_empty():
+		return base_van_speed
+	return act_target_van_speed[act_target_van_speed.size() - 1]
+
+
 func get_engagement_seconds_for_act(act_index: int) -> float:
-	var speed := act_mob_approach_speed[act_index]
-	if speed <= 0.0:
-		return 0.0
-	return spawn_distance / speed
+	if act_engagement_seconds.is_empty():
+		return 0.01
+	var i := clampi(act_index, 0, act_engagement_seconds.size() - 1)
+	return maxf(act_engagement_seconds[i], 0.01)
+
+
+func get_expected_upgrade_fraction_for_act(act_index: int) -> float:
+	if act_expected_upgrade_fraction.is_empty():
+		return clampf(float(act_index + 1) / 3.0, 0.0, 1.0)
+	var i := clampi(act_index, 0, act_expected_upgrade_fraction.size() - 1)
+	return clampf(act_expected_upgrade_fraction[i], 0.0, 1.0)
+
+
+## Van speed assumed when deriving mob world speed for this act.
+func get_expected_van_speed_for_act(act_index: int) -> float:
+	var fraction := get_expected_upgrade_fraction_for_act(act_index)
+	return lerpf(base_van_speed, get_max_van_speed(), fraction)
+
+
+## Closing rate (m/s) needed to cover spawn_distance in engagement_seconds.
+func get_baseline_closing_speed_for_act(act_index: int) -> float:
+	return spawn_distance / get_engagement_seconds_for_act(act_index)
+
+
+## Derived mob world speed for this act.
+## mob_world = expected_van + spawn_distance / engagement_seconds
+func get_mob_world_speed_for_act(act_index: int) -> float:
+	return (
+		get_expected_van_speed_for_act(act_index)
+		+ get_baseline_closing_speed_for_act(act_index)
+	)
+
+
+## Live van-local closing speed. Negative = van is pulling away (boost / overspeed).
+func get_closing_speed(act_index: int, current_van_speed: float) -> float:
+	return get_mob_world_speed_for_act(act_index) - current_van_speed
 
 
 func get_van_speed_per_level() -> float:
-	if van_speed_max_level <= 0 or act_target_van_speed.is_empty():
+	if van_speed_max_level <= 0:
 		return 0.0
-	var target := act_target_van_speed[act_target_van_speed.size() - 1]
-	return (target - base_van_speed) / float(van_speed_max_level)
+	return (get_max_van_speed() - base_van_speed) / float(van_speed_max_level)

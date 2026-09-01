@@ -35,6 +35,9 @@ func get_stats() -> GunStats:
 
 func _rebuild() -> void:
 	var stats := base_stats.duplicate_stats() if base_stats else GunStats.new()
+	# Balance sheet owns baseline DPS knobs — boons/modifiers stack on top.
+	stats.fire_rate = GameBalance.BASE_FIRE_RATE
+	stats.damage_per_shot = GameBalance.BASE_DAMAGE_PER_SHOT
 	if _traits:
 		_apply_traits(stats, _traits)
 	for modifier in _modifiers:

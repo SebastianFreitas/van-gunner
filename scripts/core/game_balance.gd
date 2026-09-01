@@ -2,7 +2,9 @@ extends Node
 
 ## Runtime facade over the Inspector-editable GameBalanceData resource.
 ## Edit: res://resources/balance/game_balance.tres
-## Tweak act_mob_approach_speed — engagement windows fall out of spawn_distance.
+## Primary knob: act_engagement_seconds.
+## Mob world speed = expected_van (base + upgrade fraction) + spawn_distance / seconds.
+## Live closing = mob_world_speed - current_van_speed.
 
 ## Preload-as-type avoids autoload parse order issues with global class_name.
 const _GameBalanceData := preload("res://scripts/core/game_balance_data.gd")
@@ -84,9 +86,29 @@ var INTER_WAVE_DELAY: float:
 	get:
 		return data.inter_wave_delay
 
+var ACT_ENGAGEMENT_SECONDS: PackedFloat32Array:
+	get:
+		return data.act_engagement_seconds
+
+var ACT_EXPECTED_UPGRADE_FRACTION: PackedFloat32Array:
+	get:
+		return data.act_expected_upgrade_fraction
+
+## Derived mob world speeds per act (expected_van + distance / seconds).
+var ACT_MOB_WORLD_SPEED: PackedFloat32Array:
+	get:
+		var speeds := PackedFloat32Array()
+		for i in mini(3, data.act_engagement_seconds.size()):
+			speeds.append(data.get_mob_world_speed_for_act(i))
+		return speeds
+
+## Baseline closing rates at expected van speed (distance / seconds).
 var ACT_MOB_APPROACH_SPEED: PackedFloat32Array:
 	get:
-		return data.act_mob_approach_speed
+		var speeds := PackedFloat32Array()
+		for i in mini(3, data.act_engagement_seconds.size()):
+			speeds.append(data.get_baseline_closing_speed_for_act(i))
+		return speeds
 
 var REAR_DOOR_BREACH_HP: float:
 	get:
@@ -103,14 +125,6 @@ var REAR_WINDOW_GLASS_HP: float:
 var MOB_INTERIOR_SPEED: float:
 	get:
 		return data.mob_interior_speed
-
-var ACT_ENGAGEMENT_SECONDS: Array:
-	get:
-		return [
-			data.get_engagement_seconds_for_act(0),
-			data.get_engagement_seconds_for_act(1),
-			data.get_engagement_seconds_for_act(2),
-		]
 
 var ACT_TARGET_VAN_SPEED: PackedFloat32Array:
 	get:
@@ -140,14 +154,29 @@ func get_act(route_step: int) -> int:
 	return 3
 
 
-func get_mob_approach_speed(route_step: int) -> float:
-	var act := get_act(route_step)
-	return data.act_mob_approach_speed[act - 1]
-
-
 func get_engagement_seconds(route_step: int) -> float:
-	var act := get_act(route_step)
-	return data.get_engagement_seconds_for_act(act - 1)
+	return data.get_engagement_seconds_for_act(get_act(route_step) - 1)
+
+
+func get_expected_van_speed_for_act(act_index: int) -> float:
+	return data.get_expected_van_speed_for_act(act_index)
+
+
+func get_mob_world_speed(route_step: int) -> float:
+	return data.get_mob_world_speed_for_act(get_act(route_step) - 1)
+
+
+func get_mob_world_speed_for_act(act_index: int) -> float:
+	return data.get_mob_world_speed_for_act(act_index)
+
+
+## Baseline closing at the expected van speed (not live). Prefer get_closing_speed at runtime.
+func get_mob_approach_speed(route_step: int) -> float:
+	return data.get_baseline_closing_speed_for_act(get_act(route_step) - 1)
+
+
+func get_closing_speed(route_step: int, current_van_speed: float) -> float:
+	return data.get_closing_speed(get_act(route_step) - 1, current_van_speed)
 
 
 func get_van_speed_for_level(level: int) -> float:
@@ -197,7 +226,8 @@ func _normal_wave_count(wave_index: int, base_count: int, growth: int) -> int:
 	return base_count + (wave_index - 1) * growth
 
 
-## Local offset from RearSpawnMarker: spread across corridor width and depth.
+## Local offset from the nominal spawn line: corridor X spread + depth jitter.
+## +Z is farther behind the van (EnemyContainer space).
 func spawn_offset_for_slot(slot: int, count: int) -> Vector3:
 	var half := data.spawn_half_width
 	var x := 0.0

@@ -23,8 +23,17 @@ func _ready() -> void:
 	add_to_group(&"encounter_director")
 	GameSession.phase_changed.connect(_on_phase_changed)
 	GameSession.chill_mode_changed.connect(_on_chill_mode_changed)
+	call_deferred("_sync_spawn_marker_to_balance")
 	if GameSession.phase == GameSession.RunPhase.TRAVELLING and _encounters_enabled():
 		_schedule_encounter()
+
+
+## Keep RearSpawnMarker on the balance spawn line for debug / scene intuition.
+func _sync_spawn_marker_to_balance() -> void:
+	if rear_spawn == null or breach_controller == null:
+		return
+	var ref_z := breach_controller.get_rear_outside_reference_z()
+	rear_spawn.position.z = ref_z + GameBalance.SPAWN_DISTANCE
 
 
 func _encounters_enabled() -> bool:
@@ -153,15 +162,26 @@ func _spawn_raider(slot: int, count: int) -> WindowRaider:
 		return null
 	var raider := raider_scene.instantiate() as WindowRaider
 	enemy_container.add_child(raider)
-	var xf := rear_spawn.global_transform
-	xf.origin += rear_spawn.global_basis * GameBalance.spawn_offset_for_slot(slot, count)
-	raider.global_transform = xf
-	var speed := GameBalance.get_mob_approach_speed(GameSession.route_step)
+	# Place on the balance spawn line in EnemyContainer space (+Z = behind van).
+	# Mob world speed is derived so that at the expected upgraded van speed,
+	# rear-door paths take act_engagement_seconds. Live closing tracks travel_speed.
+	var ref_z := breach_controller.get_rear_outside_reference_z()
+	var jitter := GameBalance.spawn_offset_for_slot(slot, count)
+	var local_pos := Vector3(
+		jitter.x,
+		rear_spawn.position.y,
+		ref_z + GameBalance.SPAWN_DISTANCE + jitter.z
+	)
+	raider.transform = Transform3D(rear_spawn.transform.basis, local_pos)
+	var world_speed := GameBalance.get_mob_world_speed(GameSession.route_step)
 	var breach := breach_controller.assign_breach_point(raider)
 	if breach:
-		raider.begin_assault(breach, speed)
+		raider.begin_assault(breach, world_speed)
 	else:
-		raider.approach_speed = speed
+		raider.mob_world_speed = world_speed
+		raider.approach_speed = GameBalance.get_closing_speed(
+			GameSession.route_step, MetaProgression.get_van_speed()
+		)
 		raider.activate()
 	return raider
 
