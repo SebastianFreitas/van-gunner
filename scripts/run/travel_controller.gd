@@ -586,44 +586,42 @@ func _build_park_route() -> void:
 	if dock == null:
 		return
 
-	# Same geometry as a T-junction turn, just driven backward:
-	#   van  --straight-->  turn_start  --quarter-circle-->  turn_end  --straight-->  dock
-	# Path is stored dock→van so PathFollow's forward tangent keeps the nose road-facing
-	# while progress counts down (rear into the bay).
+	# Same C as _build_turn_route, mirrored onto +Z (bay is behind after overshoot),
+	# then stored dock→van and driven with progress counting down so the nose stays
+	# road-facing. Handles are the T-turn controls transferred (not flipped) so the
+	# arc stays a C — flipping them was what made the serpent S.
 	var van_transform := van_rig.global_transform
 	var van_inv := van_transform.affine_inverse()
 	var side := 1.0 if _shop_bay_side == &"right" else -1.0
-	var radius := turn_radius
-	var handle := radius * QUARTER_CIRCLE_HANDLE
+	var handle := turn_radius * QUARTER_CIRCLE_HANDLE
 
 	var mouth_z := _flatten_local(van_inv, _shop_corridor_at_mouth(_shop_mouth_world())).z
-	mouth_z = maxf(mouth_z, radius + SHOP_PARK_REVERSE_STRAIGHT)
+	mouth_z = maxf(mouth_z, turn_radius + SHOP_PARK_REVERSE_STRAIGHT)
+	var dock_lat := maxf(absf(_flatten_local(van_inv, dock.global_position).x), turn_radius + 2.0)
 
-	var dock_lat := absf(_flatten_local(van_inv, dock.global_position).x)
-	dock_lat = maxf(dock_lat, radius + 2.0)
+	var straight_length := mouth_z - turn_radius
+	var turn_start := Vector3(0.0, 0.0, straight_length)
+	var turn_end := Vector3(side * turn_radius, 0.0, straight_length + turn_radius)
+	var dock_pos := Vector3(side * dock_lat, 0.0, mouth_z)
+	var bay_out := dock_lat - turn_radius
 
-	# Orthogonal L in van-local space (van at origin, facing -Z, bay on ±X).
-	var p_dock := Vector3(side * dock_lat, 0.0, mouth_z)
-	var p_turn_end := Vector3(side * radius, 0.0, mouth_z)
-	var p_turn_start := Vector3(0.0, 0.0, mouth_z - radius)
-	var p_van := Vector3.ZERO
-	var bay_straight := dock_lat - radius
-	var road_straight := mouth_z - radius
-
+	# Forward T into the bay would be: van → turn_start → turn_end → dock with
+	#   turn_start.out = (0,0,handle), turn_end.in = (-side*handle, 0, 0)
+	# Reversed path keeps those same control points on the shared segments.
 	var curve := Curve3D.new()
 	curve.bake_interval = 0.25
-	curve.add_point(p_dock, Vector3.ZERO, Vector3(-side * bay_straight * 0.25, 0.0, 0.0))
+	curve.add_point(dock_pos, Vector3.ZERO, Vector3(-side * bay_out * 0.25, 0.0, 0.0))
 	curve.add_point(
-		p_turn_end,
-		Vector3(side * handle, 0.0, 0.0),
-		Vector3(0.0, 0.0, -handle)
+		turn_end,
+		Vector3(side * bay_out * 0.25, 0.0, 0.0),
+		Vector3(-side * handle, 0.0, 0.0)
 	)
 	curve.add_point(
-		p_turn_start,
+		turn_start,
 		Vector3(0.0, 0.0, handle),
-		Vector3(0.0, 0.0, -road_straight * 0.25)
+		Vector3.ZERO
 	)
-	curve.add_point(p_van, Vector3(0.0, 0.0, road_straight * 0.25), Vector3.ZERO)
+	curve.add_point(Vector3.ZERO)
 
 	travel_path.curve = curve
 	travel_path.global_transform = van_transform
@@ -645,7 +643,6 @@ func _finish_park() -> void:
 	_turn_end_progress = INF
 	van_follow.progress = 0.0
 	_refresh_travel_speed()
-	# Arrive on the park curve — no dock teleport (that was the 180° snap).
 	GameSession.set_phase(GameSession.RunPhase.SHOP)
 
 
