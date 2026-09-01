@@ -1,17 +1,16 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bgdfod2h24rpa"]
 
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/items/item_usable_config.gd" id="3"]
-[ext_resource type="Script" path="res://scripts/items/effects/repair_window_bars_effect.gd" id="4"]
-[ext_resource type="Texture2D" path="res://scenes/items/window_bar_kit.svg" id="5"]
+[ext_resource type="Script" uid="uid://byi8ndmx1w2gf" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://bnow6ucp47dur" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" uid="uid://kqrsd607m2ib" path="res://scripts/items/item_usable_config.gd" id="3"]
+[ext_resource type="Script" uid="uid://cap7mdqcyht85" path="res://scripts/items/effects/repair_window_bars_effect.gd" id="4"]
+[ext_resource type="Texture2D" uid="uid://bboha0bqqy35j" path="res://scenes/items/window_bar_kit.svg" id="5"]
 
 [sub_resource type="Resource" id="Resource_repair_effect"]
 script = ExtResource("4")
 
 [sub_resource type="Resource" id="Resource_repair_usable"]
 script = ExtResource("3")
-max_charges = 1
 
 [resource]
 script = ExtResource("1")

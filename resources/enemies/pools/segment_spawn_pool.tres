@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="EnemySpawnPool" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="EnemySpawnPool" format=3 uid="uid://dtc18yfi7eths"]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_spawn_pool.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_spawn_pool_entry.gd" id="2"]
+[ext_resource type="Script" uid="uid://dc8nk25yupg4x" path="res://scripts/enemies/enemy_spawn_pool.gd" id="1"]
+[ext_resource type="Script" uid="uid://daq46jkqceay0" path="res://scripts/enemies/enemy_spawn_pool_entry.gd" id="2"]
 [ext_resource type="Resource" path="res://resources/enemies/door_raider.tres" id="3"]
 [ext_resource type="Resource" path="res://resources/enemies/agile_raider.tres" id="4"]
 

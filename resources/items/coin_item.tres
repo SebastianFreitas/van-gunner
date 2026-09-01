@@ -14,5 +14,4 @@ id = &"coin"
 display_name = "Coins"
 description = "Shiny currency."
 icon = ExtResource("2_icon")
-kind = 0
 effects = Array[ExtResource("1_llag1")]([SubResource("Resource_coin_effect")])
