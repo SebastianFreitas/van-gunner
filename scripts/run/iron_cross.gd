@@ -4,6 +4,8 @@ extends Node3D
 ## Welded iron + on a window pane. Local XY is the glass face; +Z is outward.
 ## Bars span the full opening so the ends meet the frame.
 
+const BrokenIronCrossScene := preload("res://scenes/van/broken_iron_cross.tscn")
+
 @export var span_width := 2.2
 @export var span_height := 1.23
 @export var bar_width := 0.09
@@ -15,6 +17,7 @@ extends Node3D
 @export var rebuild_on_ready := true
 
 var _built := false
+var _broken := false
 
 
 func _ready() -> void:
@@ -22,9 +25,29 @@ func _ready() -> void:
 		rebuild()
 
 
-## Hide bars after an enemy window breach (no shatter VFX yet).
+## Swap intact bars for a randomized blown-out stub set after a window breach.
 func break_bars() -> void:
+	if _broken:
+		return
+	_broken = true
 	visible = false
+
+	var parent := get_parent()
+	if parent == null:
+		return
+
+	var broken := BrokenIronCrossScene.instantiate() as BrokenIronCross
+	broken.name = "BrokenIronCross"
+	broken.span_width = span_width
+	broken.span_height = span_height
+	broken.bar_width = bar_width
+	broken.bar_depth = bar_depth
+	broken.rivet_size = rivet_size
+	broken.end_pad_size = end_pad_size
+	broken.break_seed = 0
+	broken.rebuild_on_ready = true
+	broken.transform = transform
+	parent.add_child(broken)
 
 
 func rebuild() -> void:
