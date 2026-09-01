@@ -37,8 +37,8 @@ func get_rear_outside_reference_z() -> float:
 
 
 ## Door mobs: rear doors, then side cargo doors.
-## Agile mobs: rear doors, then side windows (rear→front), then side-door windows.
-## Never cross pools (door mobs never get windows; agile never get side-door leaves).
+## Agile mobs: windows only — rear door panes, side windows, then side-door windows.
+## Never cross pools (door mobs never get windows; agile never open door leaves).
 func assign_breach_point(raider: Node) -> BreachPoint:
 	var points := _all_points()
 	if points.is_empty():
@@ -82,11 +82,7 @@ func _is_door_kind(kind: BreachPoint.Kind) -> bool:
 
 
 func _is_agile_kind(kind: BreachPoint.Kind) -> bool:
-	return (
-		kind == BreachPoint.Kind.REAR_DOOR
-		or kind == BreachPoint.Kind.WINDOW
-		or kind == BreachPoint.Kind.SIDE_DOOR_WINDOW
-	)
+	return kind == BreachPoint.Kind.WINDOW or kind == BreachPoint.Kind.SIDE_DOOR_WINDOW
 
 
 func _pick_door(pool: Array[BreachPoint]) -> BreachPoint:
@@ -123,31 +119,18 @@ func _pick_door(pool: Array[BreachPoint]) -> BreachPoint:
 
 
 func _pick_agile(pool: Array[BreachPoint]) -> BreachPoint:
-	var passable_rear: Array[BreachPoint] = []
-	var free_rear: Array[BreachPoint] = []
 	var passable_windows: Array[BreachPoint] = []
 	var free_windows: Array[BreachPoint] = []
 
 	for point in pool:
-		var is_rear := point.kind == BreachPoint.Kind.REAR_DOOR
 		if point.is_passable():
-			if is_rear:
-				passable_rear.append(point)
-			else:
-				passable_windows.append(point)
+			passable_windows.append(point)
 			continue
 		if not point.has_vacancy():
 			continue
-		if is_rear:
-			free_rear.append(point)
-		else:
-			free_windows.append(point)
+		free_windows.append(point)
 
-	var pick := _pick_random(passable_rear)
-	if pick == null:
-		pick = _pick_random(free_rear)
-	if pick == null:
-		pick = _pick_best_priority(passable_windows)
+	var pick := _pick_best_priority(passable_windows)
 	if pick == null:
 		pick = _pick_best_priority(free_windows)
 	if pick == null:

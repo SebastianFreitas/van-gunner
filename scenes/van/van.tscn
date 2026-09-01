@@ -1061,6 +1061,34 @@ transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.
 [node name="Entry" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRight" unique_id=778899219]
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.05, 1.62, 3.9)
 
+[node name="RearLeftWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController"]
+script = ExtResource("17")
+point_id = &"rear_left_window"
+kind = 2
+priority = 0
+door_side = &"left"
+bars_path = NodePath("../../../Interior/Shell/RearWall/LeftHinge/IronCross")
+
+[node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearLeftWindow"]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.2, 1.78, 5.2)
+
+[node name="Entry" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearLeftWindow"]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.2, 1.78, 3.9)
+
+[node name="RearRightWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController"]
+script = ExtResource("17")
+point_id = &"rear_right_window"
+kind = 2
+priority = 0
+door_side = &"right"
+bars_path = NodePath("../../../Interior/Shell/RearWall/RightHinge/IronCross")
+
+[node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRightWindow"]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.2, 1.78, 5.2)
+
+[node name="Entry" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRightWindow"]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.2, 1.78, 3.9)
+
 [node name="LeftRearWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController" unique_id=1968978248]
 script = ExtResource("17")
 point_id = &"left_rear_window"

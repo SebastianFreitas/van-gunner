@@ -65,6 +65,12 @@ func is_passable() -> bool:
 				var doors := _side_doors()
 				if doors and doors.is_door_passable(door_side):
 					return true
+		Kind.WINDOW:
+			# Rear door panes: leaf already open → climb through, skip bars.
+			if door_side != &"":
+				var doors := _rear_doors()
+				if doors and doors.is_door_open(door_side):
+					return true
 		Kind.SIDE_DOOR_WINDOW:
 			# Whole cargo opening clear — no need to smash bars.
 			if door_side != &"":
