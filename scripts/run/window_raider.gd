@@ -10,6 +10,8 @@ enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH }
 @export var attack_damage := 8.0
 @export var attack_interval := 1.25
 @export var max_health := 3.0
+## Agile raiders can climb window bars; door mobs only smash doors.
+@export var is_agile := false
 
 ## Derived world chase speed for this act. Closing = mob_world_speed - live van speed.
 var mob_world_speed := 0.0
@@ -42,6 +44,8 @@ var _move_arrived := true
 
 func _ready() -> void:
 	add_to_group(&"enemy")
+	if is_agile:
+		add_to_group(&"agile")
 	health = max_health
 	# After TravelController (-100) so we see the van's updated PathFollow transform.
 	process_physics_priority = -50

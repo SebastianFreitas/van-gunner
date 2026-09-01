@@ -138,6 +138,10 @@ var MOB_INTERIOR_SPEED: float:
 	get:
 		return data.mob_interior_speed
 
+var AGILE_SPAWN_CHANCE: float:
+	get:
+		return data.agile_spawn_chance
+
 var ACT_TARGET_VAN_SPEED: PackedFloat32Array:
 	get:
 		return data.act_target_van_speed

@@ -22,6 +22,11 @@ func _ready() -> void:
 		rebuild()
 
 
+## Hide bars after an enemy window breach (no shatter VFX yet).
+func break_bars() -> void:
+	visible = false
+
+
 func rebuild() -> void:
 	for child in get_children():
 		child.queue_free()

@@ -161,6 +161,7 @@ func _spawn_raider(slot: int, count: int) -> WindowRaider:
 	if raider_scene == null:
 		return null
 	var raider := raider_scene.instantiate() as WindowRaider
+	raider.is_agile = randf() < GameBalance.AGILE_SPAWN_CHANCE
 	enemy_container.add_child(raider)
 	# Place on the balance spawn line in EnemyContainer space (+Z = behind van).
 	# Mob world speed is derived so that at the expected upgraded van speed,
