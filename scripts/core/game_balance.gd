@@ -10,7 +10,19 @@ extends Node
 const _GameBalanceData := preload("res://scripts/core/game_balance_data.gd")
 const DATA_PATH := "res://resources/balance/game_balance.tres"
 
+## Loaded in _ready so Inspector saves on the .tres always win over stale caches.
 var data: _GameBalanceData = preload(DATA_PATH)
+
+
+func _ready() -> void:
+	# CACHE_MODE_REPLACE so a saved .tres wins over a stale preload cache.
+	var loaded := ResourceLoader.load(
+		DATA_PATH, "", ResourceLoader.CACHE_MODE_REPLACE
+	) as _GameBalanceData
+	if loaded:
+		data = loaded
+	else:
+		push_error("GameBalance: failed to load %s" % DATA_PATH)
 
 # --- Forwarded tunables (keep call-site names stable) -------------------------
 
