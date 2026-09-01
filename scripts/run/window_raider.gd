@@ -234,7 +234,16 @@ func _breach_until_open() -> void:
 					assault_phase = AssaultPhase.BREACHING
 					continue
 		var wait_time := _next_attack_wait()
-		await get_tree().create_timer(wait_time).timeout
+		# Poll so an opened window/door lets them hop in without waiting a full smash.
+		var elapsed := 0.0
+		while elapsed < wait_time:
+			var step := minf(0.1, wait_time - elapsed)
+			await get_tree().create_timer(step).timeout
+			elapsed += step
+			if not _active or is_defeated or assigned_breach == null:
+				return
+			if assigned_breach.is_passable():
+				return
 		if not _active or is_defeated or assigned_breach == null:
 			return
 		if assigned_breach.is_passable():

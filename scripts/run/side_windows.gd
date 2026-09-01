@@ -1,6 +1,6 @@
 extends Node3D
 
-## Side cargo windows — bottom-hinged sashes that tip vertically outward.
+## Side cargo windows — top-hinged sashes that tip vertically outward.
 ## Tiny interior latch (grip/mount) retracts first, then the sash swings open.
 ## Iron bars ride with the sash, so an open window clears the breach slot.
 
@@ -131,8 +131,8 @@ func _into_sash_axis(window_id: StringName) -> Vector3:
 
 func _open_rotation_z(window_id: StringName) -> float:
 	var angle := deg_to_rad(open_angle_deg)
-	# Bottom hinge: tip top of sash outward (±X).
-	return angle if _is_left(window_id) else -angle
+	# Top hinge: tip bottom of sash outward (±X).
+	return -angle if _is_left(window_id) else angle
 
 
 func _animate_window(window_id: StringName, opening: bool) -> void:
