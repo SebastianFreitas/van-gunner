@@ -9,6 +9,7 @@ signal opened
 signal closed
 signal door_changed(side: StringName, is_open: bool)
 signal passage_changed(side: StringName, is_passable: bool)
+signal glass_shattered(side: StringName)
 
 const SIDE_LEFT := &"left"
 const SIDE_RIGHT := &"right"
@@ -28,6 +29,8 @@ const SIDE_RIGHT := &"right"
 
 @onready var _left: Node3D = $Left
 @onready var _right: Node3D = $Right
+@onready var _left_glass: Node = $Left/BreakableGlass
+@onready var _right_glass: Node = $Right/BreakableGlass
 @onready var _left_grip: Node3D = $Left/Handle/Grip
 @onready var _left_mount: Node3D = $Left/Handle/Mount
 @onready var _right_grip: Node3D = $Right/Handle/Grip
@@ -55,6 +58,10 @@ func _ready() -> void:
 	_left_mount_closed = _left_mount.position
 	_right_grip_closed = _right_grip.position
 	_right_mount_closed = _right_mount.position
+	if _left_glass and _left_glass.has_signal("shattered"):
+		_left_glass.shattered.connect(func() -> void: glass_shattered.emit(SIDE_LEFT))
+	if _right_glass and _right_glass.has_signal("shattered"):
+		_right_glass.shattered.connect(func() -> void: glass_shattered.emit(SIDE_RIGHT))
 
 
 func is_open() -> bool:
@@ -71,6 +78,15 @@ func is_door_open(side: StringName) -> bool:
 
 func is_door_passable(side: StringName) -> bool:
 	return _left_passable if side == SIDE_LEFT else _right_passable
+
+
+func is_glass_intact(side: StringName) -> bool:
+	var glass := _left_glass if side == SIDE_LEFT else _right_glass
+	if glass == null:
+		return false
+	if glass.has_method("is_intact"):
+		return glass.is_intact()
+	return false
 
 
 ## Standpoint just outside a closed leaf for scripted mobs (world space).
