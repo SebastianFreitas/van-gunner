@@ -6,7 +6,6 @@
 [ext_resource type="Script" uid="uid://cfqvpq1estepu" path="res://scripts/interactions/crafting_table.gd" id="4"]
 [ext_resource type="Script" uid="uid://dyimo6f80c3j1" path="res://scripts/run/travel_controller.gd" id="5"]
 [ext_resource type="Script" uid="uid://bkcv3kg2gy61h" path="res://scripts/run/encounter_director.gd" id="6"]
-[ext_resource type="PackedScene" uid="uid://ucxaqrj88o5t" path="res://scenes/enemies/window_raider.tscn" id="8"]
 [ext_resource type="Script" uid="uid://cd7a8olfe604k" path="res://scripts/run/room_zone.gd" id="9"]
 [ext_resource type="PackedScene" uid="uid://dmdjjeocfdi7a" path="res://scenes/corridor/corridor_segment.tscn" id="10"]
 [ext_resource type="PackedScene" uid="uid://dyn2nx35s88gm" path="res://scenes/corridor/corridor_t_junction.tscn" id="11"]
@@ -1262,7 +1261,6 @@ t_junction_scene = ExtResource("11")
 
 [node name="EncounterDirector" type="Node" parent="Systems" unique_id=136983041]
 script = ExtResource("6")
-raider_scene = ExtResource("8")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1431776245]
 

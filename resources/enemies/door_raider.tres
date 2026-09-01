@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://ucxaqrj88o5t" path="res://scenes/enemies/window_raider.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"door_raider"
+display_name = "Door Raider"
+scene = ExtResource("2")
+is_agile = false

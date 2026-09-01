@@ -138,9 +138,9 @@ var MOB_INTERIOR_SPEED: float:
 	get:
 		return data.mob_interior_speed
 
-var AGILE_SPAWN_CHANCE: float:
+var SEGMENT_SPAWN_POOL: EnemySpawnPool:
 	get:
-		return data.agile_spawn_chance
+		return data.segment_spawn_pool
 
 var ACT_TARGET_VAN_SPEED: PackedFloat32Array:
 	get:
@@ -160,6 +160,12 @@ var VAN_SPEED_UPGRADE_BASE_COST: int:
 
 
 # --- Helpers -----------------------------------------------------------------
+
+
+func pick_spawn_enemy() -> EnemyDefinition:
+	if data.segment_spawn_pool:
+		return data.segment_spawn_pool.pick_enemy()
+	return null
 
 
 func get_act(route_step: int) -> int:

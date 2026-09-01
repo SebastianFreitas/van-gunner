@@ -1,9 +1,11 @@
 [gd_resource type="Resource" script_class="GameBalanceData" format=3 uid="uid://d1ou0jv6l5ks"]
 
 [ext_resource type="Script" uid="uid://cjbowwnosqakv" path="res://scripts/core/game_balance_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/enemies/pools/segment_spawn_pool.tres" id="2"]
 
 [resource]
 script = ExtResource("1")
+segment_spawn_pool = ExtResource("2")
 base_damage_per_shot = 1.5
 base_fire_rate = 1.75
 act_wave_base_count = PackedInt32Array(2, 2, 2)

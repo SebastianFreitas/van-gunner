@@ -57,6 +57,11 @@ extends Resource
 	0.333333, 0.666667, 1.0
 ])
 
+@export_group("Enemy spawns")
+## Weighted pool rolled for each enemy in a wave. Edit entries/weights in the
+## pool resource, or swap in a different pool per act later.
+@export var segment_spawn_pool: EnemySpawnPool
+
 @export_group("Breach / entry")
 ## Rear doors are tough — about 12 hits at default raider damage (8).
 @export var rear_door_breach_hp := 96.0
@@ -66,9 +71,6 @@ extends Resource
 @export var rear_window_glass_hp := 1.0
 ## Interior move speed after a breach (van-local units/sec).
 @export var mob_interior_speed := 4.5
-## Chance a spawned raider is agile (window climber) instead of door-only.
-## Testing windows at 50/50; dial back later to make them rarer.
-@export_range(0.0, 1.0) var agile_spawn_chance := 0.5
 
 @export_group("Van speed upgrades")
 ## End-of-curve van speed targets (meta shop). Last entry is the fully-upgraded speed.

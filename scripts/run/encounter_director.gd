@@ -5,7 +5,6 @@ extends Node
 ## Soft cap: after this, surviving raiders of the current wave retreat.
 @export var combat_duration := 18.0
 @export var rest_duration := 10.0
-@export var raider_scene: PackedScene
 
 @onready var enemy_container: Node3D = $"../../TravelPath/VanFollow/VanRig/EnemyContainer"
 @onready var rear_spawn: Marker3D = (
@@ -158,10 +157,13 @@ func _run_wave(id: int, count: int) -> void:
 
 
 func _spawn_raider(slot: int, count: int) -> WindowRaider:
-	if raider_scene == null:
+	var enemy_def := GameBalance.pick_spawn_enemy()
+	if enemy_def == null or enemy_def.scene == null:
 		return null
-	var raider := raider_scene.instantiate() as WindowRaider
-	raider.is_agile = randf() < GameBalance.AGILE_SPAWN_CHANCE
+	var raider := enemy_def.scene.instantiate() as WindowRaider
+	if raider == null:
+		return null
+	raider.is_agile = enemy_def.is_agile
 	enemy_container.add_child(raider)
 	# Place on the balance spawn line in EnemyContainer space (+Z = behind van).
 	# Mob world speed is derived so that at the expected upgraded van speed,
