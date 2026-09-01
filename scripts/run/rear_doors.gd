@@ -23,7 +23,8 @@ const OUTSIDE_HOLD_LOCAL := Vector3(0.0, 1.62, 5.2)
 @export var grip_retract_duration := 0.1
 @export var mount_retract_duration := 0.14
 @export var grip_retract_distance := 0.06
-@export var mount_retract_distance := 0.028
+## Shallow pull — rear mount faces the camera, so deep Z travel vanishes into the panel.
+@export var mount_retract_distance := 0.01
 
 @onready var _left_hinge: Node3D = $LeftHinge
 @onready var _right_hinge: Node3D = $RightHinge
@@ -190,7 +191,7 @@ func _collect_blocker_shapes(side_prefix: String) -> Array[CollisionShape3D]:
 
 func _into_door_axis() -> Vector3:
 	# Interior handle pulls into the panel thickness (toward the exterior / +Z).
-	return Vector3.FORWARD
+	return Vector3.BACK
 
 
 func _animate_door(side: StringName, opening: bool) -> void:
