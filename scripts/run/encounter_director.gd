@@ -2,9 +2,8 @@ class_name EncounterDirector
 extends Node
 
 @export var travel_before_encounter := 2.5
-## Time the raider may spend assaulting after reaching their slot.
+## Soft cap: after this, surviving raiders of the current wave retreat.
 @export var combat_duration := 18.0
-@export var waves_per_route := 10
 @export var rest_duration := 10.0
 @export var raider_scene: PackedScene
 
@@ -45,15 +44,12 @@ func _cancel_encounters() -> void:
 
 
 func spawn_debug_raider() -> String:
-	var raider := raider_scene.instantiate() as WindowRaider
-	enemy_container.add_child(raider)
-	raider.global_transform = rear_spawn.global_transform
-	var breach := breach_controller.assign_breach_point(raider)
-	if breach == null:
-		raider.queue_free()
-		return "No breach points available."
-	raider.begin_assault(breach, GameBalance.get_mob_approach_speed(GameSession.route_step))
-	return "Spawned raider → %s." % String(breach.point_id)
+	var raider := _spawn_raider(0, 1)
+	if raider == null:
+		return "Failed to spawn raider."
+	return "Spawned raider → %s." % (
+		String(raider.assigned_breach.point_id) if raider.assigned_breach else "free"
+	)
 
 
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
@@ -72,44 +68,66 @@ func _schedule_encounter() -> void:
 		_running = false
 		return
 	GameSession.set_phase(GameSession.RunPhase.COMBAT)
-	await _run_encounter(id)
+	await _run_segment(id)
 
 
-func _run_encounter(id: int) -> void:
-	var raider := raider_scene.instantiate() as WindowRaider
-	enemy_container.add_child(raider)
-	raider.global_transform = rear_spawn.global_transform
-	var speed := GameBalance.get_mob_approach_speed(GameSession.route_step)
-	var breach := breach_controller.assign_breach_point(raider)
-	if breach:
-		raider.begin_assault(breach, speed)
-	else:
-		raider.approach_speed = speed
-		raider.activate()
+func _run_segment(id: int) -> void:
+	var plan := GameBalance.build_segment_wave_plan()
+	for wave_i in plan.size():
+		if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
+			_running = false
+			return
+		var count: int = plan[wave_i]
+		await _run_wave(id, count)
+		if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
+			_running = false
+			return
+		GameSession.complete_wave()
+		var more_waves := wave_i < plan.size() - 1
+		if more_waves:
+			await get_tree().create_timer(GameBalance.INTER_WAVE_DELAY).timeout
 
-	# Approach is unpaid time — wave ends early if they die on the way.
+	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
+		_running = false
+		return
+
+	_running = false
+	GameSession.set_phase(GameSession.RunPhase.REST)
+	SaveManager.save_active_session()
+	await _wait_for_rest_break(rest_duration)
+	if id == _sequence_id and GameSession.phase == GameSession.RunPhase.REST:
+		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
+
+
+func _run_wave(id: int, count: int) -> void:
+	var raiders: Array[WindowRaider] = []
+	for slot in count:
+		var raider := _spawn_raider(slot, count)
+		if raider:
+			raiders.append(raider)
+
+	if raiders.is_empty():
+		return
+
+	# Approach is unpaid — wave can end early if the pack dies on the way.
 	while (
-		is_instance_valid(raider)
-		and not raider.is_defeated
-		and raider.assault_phase == WindowRaider.AssaultPhase.APPROACH
+		_any_approaching(raiders)
 		and GameSession.phase != GameSession.RunPhase.GAME_OVER
 		and id == _sequence_id
 	):
 		await get_tree().process_frame
 
 	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
-		if is_instance_valid(raider):
-			raider.queue_free()
+		_despawn_raiders(raiders)
 		return
-	if not is_instance_valid(raider) or raider.is_defeated:
-		await _complete_wave(id)
+	if not _any_alive(raiders):
 		return
 
 	var elapsed := 0.0
+	var timeout := combat_duration + maxf(0.0, float(count - 1) * 4.0)
 	while (
-		elapsed < combat_duration
-		and is_instance_valid(raider)
-		and not raider.is_defeated
+		elapsed < timeout
+		and _any_alive(raiders)
 		and GameSession.phase != GameSession.RunPhase.GAME_OVER
 		and id == _sequence_id
 	):
@@ -117,30 +135,54 @@ func _run_encounter(id: int) -> void:
 		await get_tree().process_frame
 
 	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
+		_despawn_raiders(raiders)
+		return
+
+	for raider in raiders:
+		if is_instance_valid(raider) and not raider.is_defeated:
+			raider.retreat()
+
+
+func _spawn_raider(slot: int, count: int) -> WindowRaider:
+	if raider_scene == null:
+		return null
+	var raider := raider_scene.instantiate() as WindowRaider
+	enemy_container.add_child(raider)
+	var xf := rear_spawn.global_transform
+	xf.origin += rear_spawn.global_basis * GameBalance.spawn_offset_for_slot(slot, count)
+	raider.global_transform = xf
+	var speed := GameBalance.get_mob_approach_speed(GameSession.route_step)
+	var breach := breach_controller.assign_breach_point(raider)
+	if breach:
+		raider.begin_assault(breach, speed)
+	else:
+		raider.approach_speed = speed
+		raider.activate()
+	return raider
+
+
+func _any_alive(raiders: Array[WindowRaider]) -> bool:
+	for raider in raiders:
+		if is_instance_valid(raider) and not raider.is_defeated:
+			return true
+	return false
+
+
+func _any_approaching(raiders: Array[WindowRaider]) -> bool:
+	for raider in raiders:
+		if (
+			is_instance_valid(raider)
+			and not raider.is_defeated
+			and raider.assault_phase == WindowRaider.AssaultPhase.APPROACH
+		):
+			return true
+	return false
+
+
+func _despawn_raiders(raiders: Array[WindowRaider]) -> void:
+	for raider in raiders:
 		if is_instance_valid(raider):
 			raider.queue_free()
-		return
-
-	if is_instance_valid(raider) and not raider.is_defeated:
-		raider.retreat()
-	if id == _sequence_id and GameSession.phase != GameSession.RunPhase.GAME_OVER:
-		await _complete_wave(id)
-
-
-func _complete_wave(id: int) -> void:
-	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
-		return
-	GameSession.complete_wave()
-	_running = false
-	if GameSession.wave_count % waves_per_route != 0:
-		GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
-		return
-
-	GameSession.set_phase(GameSession.RunPhase.REST)
-	SaveManager.save_active_session()
-	await _wait_for_rest_break(rest_duration)
-	if id == _sequence_id and GameSession.phase == GameSession.RunPhase.REST:
-		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
 
 
 func _wait_for_rest_break(min_seconds: float) -> void:

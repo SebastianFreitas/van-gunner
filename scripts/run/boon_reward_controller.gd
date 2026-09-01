@@ -36,7 +36,8 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		if _panel:
 			_panel.dismiss()
 		return
-	if _offered or GameSession.wave_count <= 0 or GameSession.wave_count % 10 != 0:
+	# REST only starts at end-of-segment; offer whenever we actually rest.
+	if _offered or GameSession.wave_count <= 0:
 		return
 	_offered = true
 	_offer_boons()
