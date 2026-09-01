@@ -25,6 +25,8 @@ var assault_phase: AssaultPhase = AssaultPhase.IDLE
 var assigned_breach: BreachPoint
 var _last_damage_type: DamageType.Type = DamageType.Type.NORMAL
 var _attack_loop_running := false
+## Rest color after hit flash (agile window dudes are green-tinted).
+var _base_modulate := Color.WHITE
 
 ## Lock to this marker each physics tick while standing (van keeps moving).
 var _attach_marker: Node3D
@@ -46,6 +48,8 @@ func _ready() -> void:
 	add_to_group(&"enemy")
 	if is_agile:
 		add_to_group(&"agile")
+		_base_modulate = Color(0.35, 0.95, 0.45)
+		sprite.modulate = _base_modulate
 	health = max_health
 	# After TravelController (-100) so we see the van's updated PathFollow transform.
 	process_physics_priority = -50
@@ -143,7 +147,7 @@ func _flash_hit(damage_type: DamageType.Type) -> void:
 			flash_color = Color(1.0, 0.55, 0.2, 1.0)
 	sprite.modulate = flash_color
 	var tween := create_tween()
-	tween.tween_property(sprite, "modulate", Color.WHITE, 0.12)
+	tween.tween_property(sprite, "modulate", _base_modulate, 0.12)
 
 
 func _die() -> void:

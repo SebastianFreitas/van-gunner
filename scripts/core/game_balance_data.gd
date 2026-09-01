@@ -67,7 +67,8 @@ extends Resource
 ## Interior move speed after a breach (van-local units/sec).
 @export var mob_interior_speed := 4.5
 ## Chance a spawned raider is agile (window climber) instead of door-only.
-@export_range(0.0, 1.0) var agile_spawn_chance := 0.2
+## Testing windows at 50/50; dial back later to make them rarer.
+@export_range(0.0, 1.0) var agile_spawn_chance := 0.5
 
 @export_group("Van speed upgrades")
 ## End-of-curve van speed targets (meta shop). Last entry is the fully-upgraded speed.
