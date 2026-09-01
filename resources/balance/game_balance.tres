@@ -4,7 +4,18 @@
 
 [resource]
 script = ExtResource("1")
+base_van_speed = 8.0
+base_damage_per_shot = 1.0
 base_fire_rate = 1.0
+spawn_distance = 47.2
+spawn_half_width = 7.5
+spawn_z_jitter = 1.0
+spawn_z_depth_min = -3.0
+spawn_z_depth_max = 3.0
+spawn_delay_min = 0.5
+spawn_delay_max = 2.0
+segment_wave_min = 4
+segment_wave_max = 9
 act_wave_base_count = PackedInt32Array(2, 2, 2)
 act_wave_growth_per_step = PackedInt32Array(1, 1, 1)
 act_last_wave_extra = PackedInt32Array(2, 2, 3)
@@ -12,7 +23,10 @@ act_breather_chance = PackedFloat32Array(0.15, 0.3, 0.35)
 inter_wave_delay = 10.0
 act_engagement_seconds = PackedFloat32Array(10, 8, 6)
 act_expected_upgrade_fraction = PackedFloat32Array(0.333333, 0.666667, 1)
-spawn_z_depth_min = -3.0
-spawn_z_depth_max = 3.0
-spawn_z_jitter = 1.0
+rear_door_breach_hp = 96.0
+window_breach_hp = 32.0
+rear_window_glass_hp = 1.0
+mob_interior_speed = 4.5
 act_target_van_speed = PackedFloat32Array(8, 9, 10)
+van_speed_max_level = 4
+van_speed_upgrade_base_cost = 50

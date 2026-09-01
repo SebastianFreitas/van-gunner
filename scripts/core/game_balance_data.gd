@@ -15,7 +15,7 @@ extends Resource
 @export_group("Player baseline")
 ## Applied at runtime by GunStatsController as the gun's starting damage / fire rate.
 @export var base_damage_per_shot := 1.0
-@export var base_fire_rate := 4.0
+@export var base_fire_rate := 1.0
 
 @export_group("Spawn geometry")
 ## Nominal distance from rear-door Outside markers to the spawn line.
@@ -44,7 +44,7 @@ extends Resource
 ## Middle waves: chance to drop back to base count (at most once, never last).
 @export var act_breather_chance: PackedFloat32Array = PackedFloat32Array([0.15, 0.3, 0.35])
 ## Pause between cleared waves while still in COMBAT.
-@export var inter_wave_delay := 1.25
+@export var inter_wave_delay := 10.0
 
 @export_group("Enemy approach")
 ## Designer intent: unpaid seconds for a rear-door approach at spawn_distance,
@@ -62,7 +62,7 @@ extends Resource
 @export var rear_door_breach_hp := 96.0
 ## Side windows open faster — about 4 hits at default raider damage.
 @export var window_breach_hp := 32.0
-## Door / window glass panes — one default shot is enough to shatter.
+## Door / window glass panes — applied by breakable_glass at runtime.
 @export var rear_window_glass_hp := 1.0
 ## Interior move speed after a breach (van-local units/sec).
 @export var mob_interior_speed := 4.5

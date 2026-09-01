@@ -1,13 +1,15 @@
 extends Area3D
 
-## Breakable window pane (rear doors or side openings). Any solid hit
-## shatters it; surrounding metal stays. Uses the enemy hit layer (same as
-## pickups/raiders) so projectiles apply damage instead of ricocheting.
+## Breakable window pane (rear doors or side openings). Surrounding metal stays.
+## Uses the enemy hit layer (same as pickups/raiders) so projectiles apply damage
+## instead of ricocheting. HP comes from GameBalance.REAR_WINDOW_GLASS_HP.
 
 signal shattered
 
 @export var glass_mesh_path: NodePath = ^"../WindowGlass"
 
+var max_health := 1.0
+var health := 0.0
 var _broken := false
 var _glass_visual: Node3D
 var _collision: CollisionShape3D
@@ -19,24 +21,43 @@ func _ready() -> void:
 	collision_mask = 0
 	monitoring = false
 	monitorable = true
+	max_health = maxf(GameBalance.REAR_WINDOW_GLASS_HP, 0.0)
+	health = max_health
 	_glass_visual = get_parent().get_node_or_null("WindowGlass") as Node3D
 	if _glass_visual == null:
 		_glass_visual = get_node_or_null(glass_mesh_path) as Node3D
 	_collision = get_node_or_null("Collision") as CollisionShape3D
+	# Zero HP = already shattered (designer opt-out).
+	if is_zero_approx(max_health):
+		_shatter()
 
 
 func is_intact() -> bool:
 	return not _broken
 
 
-func take_damage(_amount = null) -> void:
+func take_damage(amount = null) -> void:
 	if _broken:
 		return
-	_shatter()
+	var dmg := _damage_amount(amount)
+	if dmg <= 0.0:
+		return
+	health = maxf(0.0, health - dmg)
+	if is_zero_approx(health):
+		_shatter()
+
+
+func _damage_amount(amount) -> float:
+	if amount == null:
+		return 1.0
+	if amount is DamageInfo:
+		return (amount as DamageInfo).get_final_amount()
+	return float(amount)
 
 
 func _shatter() -> void:
 	_broken = true
+	health = 0.0
 	if _collision:
 		_collision.set_deferred("disabled", true)
 	if _glass_visual:

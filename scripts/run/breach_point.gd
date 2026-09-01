@@ -10,6 +10,7 @@ enum Kind { REAR_DOOR, WINDOW }
 
 @export var point_id: StringName = &""
 @export var kind: Kind = Kind.WINDOW
+## Overwritten in _ready from GameBalance (rear door / window HP).
 @export var max_health := 40.0
 @export var max_occupants := 1
 ## Lower = preferred. Rear doors should stay ahead of windows.

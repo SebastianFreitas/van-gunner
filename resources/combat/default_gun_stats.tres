@@ -4,6 +4,9 @@
 
 [resource]
 script = ExtResource("1")
+## Baseline DPS knobs are owned by game_balance.tres — GunStatsController overwrites these.
+fire_rate = 1.0
+damage_per_shot = 1.0
 bullet_speed = 100.0
 bullet_weight = 0.35
 max_bounces = 1

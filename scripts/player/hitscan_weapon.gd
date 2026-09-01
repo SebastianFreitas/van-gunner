@@ -5,7 +5,7 @@ signal fired(hit: bool)
 
 @export var damage := 1.0
 @export var range := 80.0
-@export var shots_per_second := 4.0
+@export var shots_per_second := 1.0
 
 @onready var camera: Camera3D = get_parent()
 @onready var muzzle_flash: OmniLight3D = $MuzzleFlash
@@ -13,11 +13,17 @@ signal fired(hit: bool)
 var _next_shot_time := 0
 
 
+func _ready() -> void:
+	# Keep legacy hitscan path on the same balance sheet as GunController.
+	damage = GameBalance.BASE_DAMAGE_PER_SHOT
+	shots_per_second = GameBalance.BASE_FIRE_RATE
+
+
 func try_fire() -> void:
 	var now := Time.get_ticks_msec()
 	if now < _next_shot_time:
 		return
-	_next_shot_time = now + roundi(1000.0 / shots_per_second)
+	_next_shot_time = now + roundi(1000.0 / maxf(shots_per_second, 0.1))
 
 	var origin := camera.global_position
 	var end := origin - camera.global_basis.z * range

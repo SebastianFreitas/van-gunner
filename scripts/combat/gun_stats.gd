@@ -1,7 +1,8 @@
 class_name GunStats
 extends Resource
 
-@export var fire_rate := 4.0
+## Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance.
+@export var fire_rate := 1.0
 @export var damage_per_shot := 1.0
 @export var bullet_speed := 140.0
 @export var bullet_weight := 1.0

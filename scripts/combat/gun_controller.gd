@@ -113,7 +113,10 @@ func is_reloading() -> bool:
 func _get_stats() -> GunStats:
 	if _stats_controller:
 		return _stats_controller.get_stats()
-	return GunStats.new()
+	var stats := GunStats.new()
+	stats.fire_rate = GameBalance.BASE_FIRE_RATE
+	stats.damage_per_shot = GameBalance.BASE_DAMAGE_PER_SHOT
+	return stats
 
 
 func _get_player() -> Node:

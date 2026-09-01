@@ -16,6 +16,7 @@ const SIDE_STREET_RUN_MIN := 2
 const SIDE_STREET_RUN_MAX := 4
 const SIDE_STREET_START_SEGMENT := 4
 
+## Overwritten in _ready from MetaProgression → GameBalance van speed curve.
 @export var travel_speed := 8.0
 @export var segment_scene: PackedScene
 @export var t_junction_scene: PackedScene
