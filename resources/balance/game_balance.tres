@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="GameBalanceData" format=3 uid="uid://d1ou0jv6l5ks"]
+
+[ext_resource type="Script" uid="uid://cjbowwnosqakv" path="res://scripts/core/game_balance_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+act_wave_base_count = PackedInt32Array(2, 2, 2)
+act_wave_growth_per_step = PackedInt32Array(1, 1, 1)
+act_last_wave_extra = PackedInt32Array(2, 2, 3)
+act_breather_chance = PackedFloat32Array(0.15, 0.3, 0.35)
+inter_wave_delay = 10.0
+act_mob_approach_speed = PackedFloat32Array(9.44, 11.8, 15.73)
+act_target_van_speed = PackedFloat32Array(8, 9, 10)
