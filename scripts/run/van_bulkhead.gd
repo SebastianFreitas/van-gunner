@@ -6,9 +6,9 @@ extends StaticBody3D
 
 enum OpeningSide { LEFT, RIGHT }
 
-@export var opening_side: OpeningSide = OpeningSide.RIGHT
+@export var opening_side: OpeningSide = OpeningSide.LEFT
 @export var van_half_width := 2.36
-@export var opening_width := 1.15
+@export var opening_width := 1.55
 @export var panel_thickness := 0.12
 @export var frame_depth := 0.16
 @export var frame_thickness := 0.08
