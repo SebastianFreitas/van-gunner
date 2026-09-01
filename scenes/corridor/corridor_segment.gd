@@ -31,6 +31,13 @@ func apply_side_streets(left: bool, right: bool) -> void:
 	_set_side_street(&"right", right)
 
 
+## Open a wall gap for a shop bay without showing the cosmetic side street.
+func open_shop_bay(side: StringName) -> void:
+	_set_side_street(side, true)
+	var side_street := _side_street_left if side == &"left" else _side_street_right
+	side_street.visible = false
+
+
 func _set_side_street(side: StringName, enabled: bool) -> void:
 	var is_left := side == &"left"
 	var wall := _left_wall if is_left else _right_wall

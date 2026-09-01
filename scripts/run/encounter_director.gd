@@ -36,7 +36,12 @@ func _sync_spawn_marker_to_balance() -> void:
 
 
 func _encounters_enabled() -> bool:
-	return GameSession.route_step > 0 and not GameSession.chill_mode
+	if GameSession.route_step <= 0 or GameSession.chill_mode:
+		return false
+	var travel := get_tree().get_first_node_in_group(&"travel_controller")
+	if travel and travel.has_method(&"is_shop_visit_active") and travel.is_shop_visit_active():
+		return false
+	return true
 
 
 func _on_chill_mode_changed(enabled: bool) -> void:
@@ -67,8 +72,17 @@ func spawn_debug_raider() -> String:
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	if next_phase == GameSession.RunPhase.TRAVELLING and not _running and _encounters_enabled():
 		_schedule_encounter()
-	elif next_phase == GameSession.RunPhase.GAME_OVER:
-		_cancel_encounters()
+	elif next_phase in [
+		GameSession.RunPhase.GAME_OVER,
+		GameSession.RunPhase.PARKING,
+		GameSession.RunPhase.SHOP,
+	]:
+		_cancel_encounters_keep_phase()
+
+
+func _cancel_encounters_keep_phase() -> void:
+	_sequence_id += 1
+	_running = false
 
 
 func _schedule_encounter() -> void:

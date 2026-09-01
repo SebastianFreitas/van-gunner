@@ -106,6 +106,8 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		String(GameSession.current_room).to_upper(),
 	]
 	route_panel.visible = next_phase == GameSession.RunPhase.ROUTE_CHOICE
+	if next_phase == GameSession.RunPhase.ROUTE_CHOICE:
+		_refresh_route_choice_labels()
 	game_over_panel.visible = next_phase == GameSession.RunPhase.GAME_OVER
 	if next_phase == GameSession.RunPhase.GAME_OVER or next_phase == GameSession.RunPhase.ROUTE_CHOICE:
 		close_driver_talk()
@@ -124,6 +126,12 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 			rest_toast.text = "TURNING %s..." % String(GameSession.last_direction).to_upper()
 			rest_toast.show()
 			route_panel.hide()
+		GameSession.RunPhase.PARKING:
+			rest_toast.text = "PULLING INTO THE SHOP..."
+			rest_toast.show()
+		GameSession.RunPhase.SHOP:
+			rest_toast.text = "SHOP — TALK TO THE DRIVER TO CONTINUE"
+			rest_toast.show()
 		_:
 			rest_toast.hide()
 
@@ -131,6 +139,7 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		GameSession.RunPhase.COMBAT,
 		GameSession.RunPhase.ROUTE_CHOICE,
 		GameSession.RunPhase.GAME_OVER,
+		GameSession.RunPhase.PARKING,
 	]
 	if _boon_choice and _boon_choice.visible:
 		bench_blocked = true
@@ -142,6 +151,24 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 			bench_screen.close()
 		return
 	_apply_phase_mouse_mode(next_phase)
+
+
+func _refresh_route_choice_labels() -> void:
+	var left_btn: Button = %RouteChoice.get_node("Layout/Buttons/Left")
+	var right_btn: Button = %RouteChoice.get_node("Layout/Buttons/Right")
+	var travel := get_tree().get_first_node_in_group(&"travel_controller")
+	var shop_side: StringName = &""
+	if travel and travel.has_method(&"get_shop_fork_side"):
+		shop_side = travel.get_shop_fork_side()
+	left_btn.text = "SHOP ←" if shop_side == &"left" else "TURN LEFT"
+	right_btn.text = "SHOP →" if shop_side == &"right" else "TURN RIGHT"
+	var hint: Label = %RouteChoice.get_node("Layout/Hint")
+	if shop_side == &"left":
+		hint.text = "Shop is on the left — or take the other road."
+	elif shop_side == &"right":
+		hint.text = "Shop is on the right — or take the other road."
+	else:
+		hint.text = "Pick a turn — or the road picks for you."
 
 
 func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
@@ -253,6 +280,10 @@ func open_driver_talk() -> void:
 	if GameSession.phase == GameSession.RunPhase.GAME_OVER:
 		return
 	if GameSession.phase == GameSession.RunPhase.ROUTE_CHOICE:
+		return
+	if GameSession.phase == GameSession.RunPhase.SHOP:
+		return
+	if GameSession.phase == GameSession.RunPhase.PARKING:
 		return
 	if _boon_choice and _boon_choice.visible:
 		return

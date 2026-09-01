@@ -19,6 +19,8 @@ enum RunPhase {
 	TURNING,
 	GAME_OVER,
 	REST,
+	PARKING,
+	SHOP,
 }
 
 const BASE_MAX_VAN_HEALTH := 100.0
@@ -82,7 +84,14 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 	set_chill_mode(false)
 	var stored_phase := int(data.get("phase", RunPhase.IDLE))
 	phase = (stored_phase as RunPhase) if stored_phase in RunPhase.values() else RunPhase.IDLE
-	if phase in [RunPhase.COMBAT, RunPhase.ROUTE_CHOICE, RunPhase.REST, RunPhase.TURNING]:
+	if phase in [
+		RunPhase.COMBAT,
+		RunPhase.ROUTE_CHOICE,
+		RunPhase.REST,
+		RunPhase.TURNING,
+		RunPhase.PARKING,
+		RunPhase.SHOP,
+	]:
 		phase = RunPhase.TRAVELLING
 	van_health_changed.emit(van_health, van_max_health)
 	wave_changed.emit(wave_count)
