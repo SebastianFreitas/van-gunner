@@ -20,6 +20,12 @@ const ALL_WINDOWS: Array[StringName] = [
 	WIN_RIGHT_FRONT,
 ]
 
+## Front sashes sit next to the sliding side doors and swing into the door path.
+const DOOR_ADJACENT_WINDOWS: Array[StringName] = [
+	WIN_LEFT_FRONT,
+	WIN_RIGHT_FRONT,
+]
+
 @export var open_angle_deg := 85.0
 @export var open_duration := 0.75
 @export var grip_retract_duration := 0.08
@@ -48,6 +54,8 @@ func is_window_open(window_id: StringName) -> bool:
 
 
 func get_window_prompt(window_id: StringName) -> String:
+	if is_blocked_by_door(window_id):
+		return "CLOSE DOOR FIRST"
 	if is_window_open(window_id):
 		return "E  CLOSE WINDOW"
 	return "E  OPEN WINDOW"
@@ -62,6 +70,8 @@ func toggle_window(window_id: StringName) -> void:
 
 func open_window(window_id: StringName) -> void:
 	if not _hinges.has(window_id) or is_window_open(window_id):
+		return
+	if is_blocked_by_door(window_id):
 		return
 	var was_any_open := _any_open()
 	_open[window_id] = true
@@ -122,6 +132,20 @@ func _any_open() -> bool:
 
 func _is_left(window_id: StringName) -> bool:
 	return window_id == WIN_LEFT_REAR or window_id == WIN_LEFT_FRONT
+
+
+func is_door_adjacent_window(window_id: StringName) -> bool:
+	return window_id in DOOR_ADJACENT_WINDOWS
+
+
+func is_blocked_by_door(window_id: StringName) -> bool:
+	if not is_door_adjacent_window(window_id):
+		return false
+	var doors := get_tree().get_first_node_in_group(&"side_doors")
+	if doors == null:
+		return false
+	var side := &"left" if _is_left(window_id) else &"right"
+	return doors.is_door_open(side)
 
 
 func _into_sash_axis(window_id: StringName) -> Vector3:

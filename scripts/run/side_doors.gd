@@ -120,6 +120,8 @@ func get_outside_hold_position(side: StringName = SIDE_LEFT) -> Vector3:
 func get_door_prompt(side: StringName) -> String:
 	if is_door_broken(side):
 		return "BROKEN"
+	if is_blocked_by_adjacent_window(side):
+		return "CLOSE WINDOW FIRST"
 	if is_door_open(side):
 		return "E  CLOSE DOOR"
 	return "E  OPEN DOOR"
@@ -136,6 +138,8 @@ func toggle_door(side: StringName) -> void:
 
 func open_door(side: StringName) -> void:
 	if is_door_open(side):
+		return
+	if is_blocked_by_adjacent_window(side):
 		return
 	var was_any_open := _left_open or _right_open
 	_set_door_open(side, true)
@@ -174,6 +178,17 @@ func toggle() -> void:
 		close()
 	else:
 		open()
+
+
+func _adjacent_window_id(side: StringName) -> StringName:
+	return &"left_front" if side == SIDE_LEFT else &"right_front"
+
+
+func is_blocked_by_adjacent_window(side: StringName) -> bool:
+	var windows := get_tree().get_first_node_in_group(&"side_windows")
+	if windows == null:
+		return false
+	return windows.is_window_open(_adjacent_window_id(side))
 
 
 func _set_door_open(side: StringName, value: bool) -> void:
