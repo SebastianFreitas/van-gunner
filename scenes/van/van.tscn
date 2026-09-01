@@ -16,12 +16,12 @@
 [ext_resource type="Script" uid="uid://b70p1yv8tyk4e" path="res://scripts/run/breach_controller.gd" id="16"]
 [ext_resource type="Script" uid="uid://dua456vqj6g65" path="res://scripts/run/breach_point.gd" id="17"]
 [ext_resource type="Script" uid="uid://bxtywmfyg7o48" path="res://scripts/run/breakable_glass.gd" id="18"]
-[ext_resource type="Script" uid="uid://bq8side0doors01" path="res://scripts/run/side_doors.gd" id="19"]
-[ext_resource type="Script" uid="uid://cq8sidedrinteract" path="res://scripts/run/side_door_interact.gd" id="20"]
-[ext_resource type="Script" uid="uid://bq8side0window01" path="res://scripts/run/side_windows.gd" id="23"]
-[ext_resource type="Script" uid="uid://cq8sidewininteract" path="res://scripts/run/side_window_interact.gd" id="24"]
-[ext_resource type="Script" path="res://scripts/run/van_lighting.gd" id="21"]
+[ext_resource type="Script" uid="uid://cbqg4pktn6pjg" path="res://scripts/run/side_doors.gd" id="19"]
+[ext_resource type="Script" uid="uid://c5x8hfd443hxf" path="res://scripts/run/side_door_interact.gd" id="20"]
+[ext_resource type="Script" uid="uid://4ve311r5ttni" path="res://scripts/run/van_lighting.gd" id="21"]
 [ext_resource type="PackedScene" path="res://scenes/van/iron_cross.tscn" id="22"]
+[ext_resource type="Script" uid="uid://d1jco51c55kj1" path="res://scripts/run/side_windows.gd" id="23"]
+[ext_resource type="Script" uid="uid://cdlgss0alwyyp" path="res://scripts/run/side_window_interact.gd" id="24"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_ceiling.tscn" id="25"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_bulkhead.tscn" id="26"]
 
@@ -49,14 +49,19 @@ size = Vector3(4.8, 0.25, 9.6)
 [sub_resource type="BoxShape3D" id="FloorShape"]
 size = Vector3(4.8, 0.25, 9.6)
 
+[sub_resource type="StandardMaterial3D" id="CeilingMaterial"]
+albedo_color = Color(0.32, 0.3, 0.27, 1)
+roughness = 0.88
+
+[sub_resource type="StandardMaterial3D" id="TableMaterial"]
+albedo_color = Color(0.18, 0.13, 0.085, 1)
+roughness = 0.85
+uv1_scale = Vector3(4.24, 4.24, 4.24)
+
 [sub_resource type="StandardMaterial3D" id="WallMaterial"]
 albedo_color = Color(0.27, 0.29, 0.28, 1)
 metallic = 0.35
 roughness = 0.72
-
-[sub_resource type="StandardMaterial3D" id="CeilingMaterial"]
-albedo_color = Color(0.32, 0.30, 0.27, 1)
-roughness = 0.88
 
 [sub_resource type="BoxMesh" id="SideRailMesh"]
 size = Vector3(0.18, 1.05, 6.9)
@@ -93,12 +98,6 @@ rim_tint = 0.4
 [sub_resource type="BoxShape3D" id="SideWindowGlassShape"]
 size = Vector3(0.22, 1.28, 2.28)
 
-[sub_resource type="BoxShape3D" id="SideWindowInteractShape"]
-size = Vector3(0.2, 1.36, 2.4)
-
-[sub_resource type="BoxShape3D" id="SideDoorGlassShape"]
-size = Vector3(0.22, 0.94, 1.9)
-
 [sub_resource type="StandardMaterial3D" id="SideDoorTrimMaterial"]
 albedo_color = Color(0.08, 0.09, 0.09, 1)
 metallic = 0.65
@@ -108,6 +107,12 @@ roughness = 0.4
 albedo_color = Color(0.55, 0.58, 0.56, 1)
 metallic = 0.9
 roughness = 0.25
+
+[sub_resource type="BoxShape3D" id="SideWindowInteractShape"]
+size = Vector3(0.2, 1.36, 2.4)
+
+[sub_resource type="BoxShape3D" id="SideDoorGlassShape"]
+size = Vector3(0.22, 0.94, 1.9)
 
 [sub_resource type="BoxShape3D" id="SideDoorShape"]
 size = Vector3(0.18, 3.05, 2.53)
@@ -152,11 +157,6 @@ size = Vector3(1.55, 2.6334717, 0.22)
 
 [sub_resource type="BoxShape3D" id="DoorShape"]
 size = Vector3(1.55, 2.637622, 0.22)
-
-[sub_resource type="StandardMaterial3D" id="TableMaterial"]
-albedo_color = Color(0.18, 0.13, 0.085, 1)
-roughness = 0.85
-uv1_scale = Vector3(4.24, 4.24, 4.24)
 
 [sub_resource type="BoxMesh" id="TableMesh"]
 size = Vector3(1.65, 0.85, 1.15)
@@ -333,7 +333,7 @@ polygon = PackedVector2Array(-0.861, -0.617, -1.017, -0.56, -1.1, -0.455, -1.1, 
 depth = 0.04
 material = SubResource("RearWindowGlassMaterial")
 
-[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge" instance=ExtResource("22")]
+[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge" unique_id=1976625114 instance=ExtResource("22")]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0.035, -0.74, 0)
 span_width = 2.18
 span_height = 1.22
@@ -365,7 +365,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.74, 0)
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("24")
-window_id = "left_rear"
 
 [node name="Hit" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact" unique_id=979292060]
 shape = SubResource("SideWindowInteractShape")
@@ -408,7 +407,7 @@ polygon = PackedVector2Array(-0.861, -0.617, -1.017, -0.56, -1.1, -0.455, -1.1, 
 depth = 0.04
 material = SubResource("RearWindowGlassMaterial")
 
-[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge" instance=ExtResource("22")]
+[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge" unique_id=1879699383 instance=ExtResource("22")]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0.035, -0.74, 0)
 span_width = 2.18
 span_height = 1.22
@@ -483,7 +482,7 @@ polygon = PackedVector2Array(-0.861, -0.617, -1.017, -0.56, -1.1, -0.455, -1.1, 
 depth = 0.04
 material = SubResource("RearWindowGlassMaterial")
 
-[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge" instance=ExtResource("22")]
+[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge" unique_id=1191591659 instance=ExtResource("22")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -0.035, -0.74, 0)
 span_width = 2.18
 span_height = 1.22
@@ -558,7 +557,7 @@ polygon = PackedVector2Array(-0.861, -0.617, -1.017, -0.56, -1.1, -0.455, -1.1, 
 depth = 0.04
 material = SubResource("RearWindowGlassMaterial")
 
-[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge" instance=ExtResource("22")]
+[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge" unique_id=915243653 instance=ExtResource("22")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -0.035, -0.74, 0)
 span_width = 2.18
 span_height = 1.22
@@ -653,14 +652,14 @@ polygon = PackedVector2Array(-0.76, -0.48, -0.88, -0.43, -0.96, -0.33, -0.96, 0.
 depth = 0.04
 material = SubResource("RearWindowGlassMaterial")
 
-[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" instance=ExtResource("22")]
+[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=1696643151 instance=ExtResource("22")]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0.035, 0.25, 0)
 span_width = 1.9
 span_height = 0.94
 bar_width = 0.075
 plate_size = 0.22
-end_pad_size = 0.13
 rivet_size = 0.038
+end_pad_size = 0.13
 
 [node name="BreakableGlass" type="Area3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=1847293015]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, 0.25, 0)
@@ -693,7 +692,6 @@ shape = SubResource("SideDoorShape")
 collision_layer = 2
 collision_mask = 0
 script = ExtResource("20")
-side = "left"
 
 [node name="Hit" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact" unique_id=245777711]
 shape = SubResource("SideDoorShape")
@@ -753,14 +751,14 @@ polygon = PackedVector2Array(-0.76, -0.48, -0.88, -0.43, -0.96, -0.33, -0.96, 0.
 depth = 0.04
 material = SubResource("RearWindowGlassMaterial")
 
-[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" instance=ExtResource("22")]
+[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=1666081022 instance=ExtResource("22")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -0.035, 0.25, 0)
 span_width = 1.9
 span_height = 0.94
 bar_width = 0.075
 plate_size = 0.22
-end_pad_size = 0.13
 rivet_size = 0.038
+end_pad_size = 0.13
 
 [node name="BreakableGlass" type="Area3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=1847293017]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06, 0.25, 0)
@@ -837,7 +835,7 @@ material_override = SubResource("RearWindowGlassMaterial")
 cast_shadow = 0
 mesh = SubResource("RearWindowGlassMesh")
 
-[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge" instance=ExtResource("22")]
+[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge" unique_id=2045646296 instance=ExtResource("22")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.315, 0.225, 0.04)
 span_width = 1.78
 span_height = 1.34
@@ -922,7 +920,7 @@ material_override = SubResource("RearWindowGlassMaterial")
 cast_shadow = 0
 mesh = SubResource("RearWindowGlassMesh")
 
-[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge" instance=ExtResource("22")]
+[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge" unique_id=628526038 instance=ExtResource("22")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.315, 0.225, 0.04)
 span_width = 1.78
 span_height = 1.34
@@ -1041,12 +1039,12 @@ mesh = SubResource("DoorMesh")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11881101, 0)
 shape = SubResource("DoorShape")
 
-[node name="Bulkhead" parent="TravelPath/VanFollow/VanRig/Interior" instance=ExtResource("26")]
+[node name="Bulkhead" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1359735791 instance=ExtResource("26")]
 
 [node name="Props" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1487223170]
 
 [node name="CraftingTable" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1058055410]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.8012533, 0.425, 0.066610575)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.629281, 0.425, 0.066610575)
 collision_layer = 3
 script = ExtResource("4")
 prompt = "Open Bench"
@@ -1122,39 +1120,35 @@ transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.
 [node name="Entry" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRight" unique_id=778899219]
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.05, 1.62, 3.9)
 
-[node name="RearLeftWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController"]
+[node name="RearLeftWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController" unique_id=1727829101]
 script = ExtResource("17")
 point_id = &"rear_left_window"
-kind = 2
 priority = 0
 door_side = &"left"
 bars_path = NodePath("../../../Interior/Shell/RearWall/LeftHinge/IronCross")
 
-[node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearLeftWindow"]
+[node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearLeftWindow" unique_id=1711565123]
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.2, 1.78, 5.2)
 
-[node name="Entry" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearLeftWindow"]
+[node name="Entry" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearLeftWindow" unique_id=203672416]
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.2, 1.78, 3.9)
 
-[node name="RearRightWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController"]
+[node name="RearRightWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController" unique_id=1781831001]
 script = ExtResource("17")
 point_id = &"rear_right_window"
-kind = 2
 priority = 0
 door_side = &"right"
 bars_path = NodePath("../../../Interior/Shell/RearWall/RightHinge/IronCross")
 
-[node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRightWindow"]
+[node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRightWindow" unique_id=553436644]
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.2, 1.78, 5.2)
 
-[node name="Entry" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRightWindow"]
+[node name="Entry" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRightWindow" unique_id=1242389339]
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.2, 1.78, 3.9)
 
 [node name="LeftRearWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController" unique_id=1968978248]
 script = ExtResource("17")
 point_id = &"left_rear_window"
-kind = 2
-priority = 1
 bars_path = NodePath("../../../Interior/Shell/SideWindows/LeftRear/Hinge/IronCross")
 
 [node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/LeftRearWindow" unique_id=604762267]
@@ -1166,7 +1160,6 @@ transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.7, 1.62, 2.835)
 [node name="LeftFrontWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController" unique_id=838287696]
 script = ExtResource("17")
 point_id = &"left_front_window"
-kind = 2
 priority = 2
 bars_path = NodePath("../../../Interior/Shell/SideWindows/LeftFront/Hinge/IronCross")
 
@@ -1179,8 +1172,6 @@ transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.7, 1.62, -0.375)
 [node name="RightRearWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController" unique_id=380574849]
 script = ExtResource("17")
 point_id = &"right_rear_window"
-kind = 2
-priority = 1
 bars_path = NodePath("../../../Interior/Shell/SideWindows/RightRear/Hinge/IronCross")
 
 [node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RightRearWindow" unique_id=1925564715]
@@ -1192,7 +1183,6 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.7, 1.62, 2.835)
 [node name="RightFrontWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController" unique_id=1554753858]
 script = ExtResource("17")
 point_id = &"right_front_window"
-kind = 2
 priority = 2
 bars_path = NodePath("../../../Interior/Shell/SideWindows/RightFront/Hinge/IronCross")
 
@@ -1206,7 +1196,6 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.7, 1.62, -0.375)
 script = ExtResource("17")
 point_id = &"side_door_left"
 kind = 1
-priority = 1
 door_side = &"left"
 
 [node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/SideDoorLeft" unique_id=2100462802]
@@ -1219,7 +1208,6 @@ transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.7, 1.62, -3.485)
 script = ExtResource("17")
 point_id = &"side_door_right"
 kind = 1
-priority = 1
 door_side = &"right"
 
 [node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/SideDoorRight" unique_id=2100462805]
@@ -1282,7 +1270,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55, 2.8)
 light_color = Color(0.66, 0.78, 0.82, 1)
 light_energy = 2.0
 light_cull_mask = 2
-omni_range = 5.0
 
 [node name="DoorSpill" type="OmniLight3D" parent="TravelPath/VanFollow/VanRig/Lighting" unique_id=1842699835]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.85, 0.4)
@@ -1306,8 +1293,6 @@ light_indirect_energy = 0.0
 light_volumetric_fog_energy = 0.4
 light_cull_mask = 1
 shadow_enabled = true
-shadow_bias = 0.03
-shadow_normal_bias = 1.0
 shadow_reverse_cull_face = true
 spot_range = 22.0
 spot_attenuation = 1.2
