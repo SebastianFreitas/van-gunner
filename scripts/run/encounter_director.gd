@@ -49,6 +49,10 @@ func _on_chill_mode_changed(enabled: bool) -> void:
 func _cancel_encounters() -> void:
 	_sequence_id += 1
 	_running = false
+	# Chill aborts the async segment; without this, phase stays COMBAT/REST and
+	# unchill never re-enters the TRAVELLING encounter loop.
+	if GameSession.phase in [GameSession.RunPhase.COMBAT, GameSession.RunPhase.REST]:
+		GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
 
 
 func spawn_debug_raider() -> String:
