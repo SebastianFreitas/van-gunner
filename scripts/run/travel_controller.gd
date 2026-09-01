@@ -17,6 +17,7 @@ const SIDE_STREET_RUN_MAX := 4
 const SIDE_STREET_START_SEGMENT := 4
 
 ## Overwritten in _ready from MetaProgression → GameBalance van speed curve.
+## Live value includes temporary driver boosts (raiders read this every frame).
 @export var travel_speed := 8.0
 @export var segment_scene: PackedScene
 @export var t_junction_scene: PackedScene
@@ -29,6 +30,9 @@ const SIDE_STREET_START_SEGMENT := 4
 @export var junction_distance := 55.0
 @export var junction_incoming_length := 20.0
 @export var turn_radius := 10.0
+@export var boost_multiplier := 1.75
+@export var boost_duration := 5.0
+@export var boost_cooldown := 14.0
 
 var distance := 0.0
 
@@ -51,6 +55,9 @@ var _side_street_left := false
 var _side_street_right := false
 var _rng: RandomNumberGenerator
 var _van_velocity := Vector3.ZERO
+var _base_travel_speed := 8.0
+var _boost_remaining := 0.0
+var _boost_cooldown_remaining := 0.0
 
 @onready var corridor_root: Node3D = $"../../ExteriorCorridor"
 @onready var travel_path: Path3D = $"../../TravelPath"
@@ -73,11 +80,45 @@ func _ready() -> void:
 
 
 func _apply_meta_travel_speed() -> void:
-	travel_speed = MetaProgression.get_van_speed()
+	_base_travel_speed = MetaProgression.get_van_speed()
+	_refresh_travel_speed()
 
 
 func _on_van_speed_changed(_level: int, speed: float) -> void:
-	travel_speed = speed
+	_base_travel_speed = speed
+	_refresh_travel_speed()
+
+
+func _refresh_travel_speed() -> void:
+	var mult := boost_multiplier if _boost_remaining > 0.0 else 1.0
+	travel_speed = _base_travel_speed * mult
+
+
+func can_boost() -> bool:
+	return (
+		_boost_remaining <= 0.0
+		and _boost_cooldown_remaining <= 0.0
+		and GameSession.phase != GameSession.RunPhase.IDLE
+		and GameSession.phase != GameSession.RunPhase.GAME_OVER
+	)
+
+
+func is_boosting() -> bool:
+	return _boost_remaining > 0.0
+
+
+func get_boost_cooldown_remaining() -> float:
+	return maxf(_boost_cooldown_remaining, 0.0)
+
+
+## Temporary overspeed so raiders close slower (or fall behind). Returns false if on cooldown.
+func try_boost() -> bool:
+	if not can_boost():
+		return false
+	_boost_remaining = boost_duration
+	_boost_cooldown_remaining = boost_cooldown
+	_refresh_travel_speed()
+	return true
 
 
 func _configure_initial_route() -> void:
@@ -104,6 +145,7 @@ func get_van_velocity() -> Vector3:
 
 
 func _physics_process(delta: float) -> void:
+	_tick_boost(delta)
 	if not _should_scroll():
 		_van_velocity = Vector3.ZERO
 		return
@@ -126,6 +168,15 @@ func _physics_process(delta: float) -> void:
 	_spawn_segments_ahead()
 	_update_turn()
 	_prune_world()
+
+
+func _tick_boost(delta: float) -> void:
+	if _boost_remaining > 0.0:
+		_boost_remaining = maxf(0.0, _boost_remaining - delta)
+		if _boost_remaining <= 0.0:
+			_refresh_travel_speed()
+	if _boost_cooldown_remaining > 0.0:
+		_boost_cooldown_remaining = maxf(0.0, _boost_cooldown_remaining - delta)
 
 
 func _should_scroll() -> bool:

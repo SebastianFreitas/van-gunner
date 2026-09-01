@@ -15,6 +15,10 @@ extends Node3D
 @onready var ammo_bar: ProgressBar = %AmmoBar
 @onready var reload_label: Label = %ReloadLabel
 @onready var route_panel: Control = %RouteChoice
+@onready var driver_talk_panel: Control = %DriverTalk
+@onready var driver_talk_hint: Label = %DriverTalkHint
+@onready var start_run_button: Button = %StartRun
+@onready var accelerate_button: Button = %Accelerate
 @onready var rest_toast: Label = %RestToast
 @onready var game_over_panel: Control = %GameOver
 @onready var bench_screen: BenchScreen = %BenchScreen
@@ -25,6 +29,7 @@ extends Node3D
 var _debug_console: Control
 var _boon_choice: BoonChoicePanel
 var _boon_rewards: BoonRewardController
+var _driver_talk_open := false
 
 
 func _ready() -> void:
@@ -57,6 +62,16 @@ func _ready() -> void:
 	_boon_rewards = BoonRewardController.new()
 	add_child(_boon_rewards)
 	_boon_rewards.bind(player, _boon_choice)
+	driver_talk_panel.hide()
+	_refresh_driver_talk_options()
+	set_process(false)
+
+
+func _process(_delta: float) -> void:
+	if not _driver_talk_open:
+		set_process(false)
+		return
+	_refresh_driver_talk_options()
 
 
 func _on_prompt_changed(text: String) -> void:
@@ -92,6 +107,10 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	]
 	route_panel.visible = next_phase == GameSession.RunPhase.ROUTE_CHOICE
 	game_over_panel.visible = next_phase == GameSession.RunPhase.GAME_OVER
+	if next_phase == GameSession.RunPhase.GAME_OVER or next_phase == GameSession.RunPhase.ROUTE_CHOICE:
+		close_driver_talk()
+	else:
+		_refresh_driver_talk_options()
 
 	match next_phase:
 		GameSession.RunPhase.REST:
@@ -115,6 +134,8 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	]
 	if _boon_choice and _boon_choice.visible:
 		bench_blocked = true
+	if _driver_talk_open:
+		bench_blocked = true
 	if bench_screen.visible:
 		# close() re-applies the mouse mode through _on_bench_closed.
 		if bench_blocked:
@@ -124,10 +145,13 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 
 
 func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
-	var free_cursor := phase in [
-		GameSession.RunPhase.ROUTE_CHOICE,
-		GameSession.RunPhase.GAME_OVER,
-	]
+	var free_cursor := (
+		_driver_talk_open
+		or phase in [
+			GameSession.RunPhase.ROUTE_CHOICE,
+			GameSession.RunPhase.GAME_OVER,
+		]
+	)
 	Input.mouse_mode = (
 		Input.MOUSE_MODE_VISIBLE if free_cursor else Input.MOUSE_MODE_CAPTURED
 	)
@@ -136,6 +160,8 @@ func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
 func _open_bench() -> void:
 	if GameSession.phase == GameSession.RunPhase.GAME_OVER:
 		return
+	if _driver_talk_open:
+		close_driver_talk()
 	bench_screen.open()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
@@ -145,17 +171,23 @@ func _on_bench_closed() -> void:
 		return
 	if _boon_choice and _boon_choice.visible:
 		return
+	if _driver_talk_open:
+		return
 	_apply_phase_mouse_mode(GameSession.phase)
 
 
 func _on_debug_console_opened() -> void:
 	if bench_screen.visible:
 		bench_screen.close()
+	if _driver_talk_open:
+		close_driver_talk()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func _on_debug_console_closed() -> void:
 	if bench_screen.visible:
+		return
+	if _driver_talk_open:
 		return
 	_apply_phase_mouse_mode(GameSession.phase)
 
@@ -215,6 +247,82 @@ func _on_left_route_pressed() -> void:
 
 func _on_right_route_pressed() -> void:
 	GameSession.choose_route(&"right")
+
+
+func open_driver_talk() -> void:
+	if GameSession.phase == GameSession.RunPhase.GAME_OVER:
+		return
+	if GameSession.phase == GameSession.RunPhase.ROUTE_CHOICE:
+		return
+	if _boon_choice and _boon_choice.visible:
+		return
+	if bench_screen.visible:
+		bench_screen.close()
+	_driver_talk_open = true
+	_refresh_driver_talk_options()
+	driver_talk_panel.show()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	set_process(true)
+
+
+func close_driver_talk() -> void:
+	if not _driver_talk_open and not driver_talk_panel.visible:
+		return
+	_driver_talk_open = false
+	driver_talk_panel.hide()
+	set_process(false)
+	_apply_phase_mouse_mode(GameSession.phase)
+
+
+func _refresh_driver_talk_options() -> void:
+	var idle := GameSession.phase == GameSession.RunPhase.IDLE
+	start_run_button.visible = idle
+	accelerate_button.visible = not idle
+	if idle:
+		driver_talk_hint.text = "Ready when you are."
+		start_run_button.disabled = false
+		return
+
+	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+	if travel == null:
+		driver_talk_hint.text = "Ask the driver for more speed."
+		accelerate_button.disabled = true
+		accelerate_button.text = "ACCELERATE"
+		return
+
+	if travel.is_boosting():
+		driver_talk_hint.text = "Hold on — flooring it."
+		accelerate_button.disabled = true
+		accelerate_button.text = "FLOORING IT"
+	elif not travel.can_boost():
+		var wait := ceili(travel.get_boost_cooldown_remaining())
+		driver_talk_hint.text = "Engine's hot — give it a moment."
+		accelerate_button.disabled = true
+		accelerate_button.text = "WAIT %ds" % wait
+	else:
+		driver_talk_hint.text = "Ask the driver for more speed."
+		accelerate_button.disabled = false
+		accelerate_button.text = "ACCELERATE"
+
+
+func _on_start_run_pressed() -> void:
+	GameSession.begin_run()
+	_refresh_driver_talk_options()
+	close_driver_talk()
+	_show_message("RUN STARTED — ROAD AHEAD")
+
+
+func _on_accelerate_pressed() -> void:
+	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+	if travel == null or not travel.try_boost():
+		_refresh_driver_talk_options()
+		return
+	close_driver_talk()
+	_show_message("DRIVER FLOORS IT")
+
+
+func _on_driver_talk_close_pressed() -> void:
+	close_driver_talk()
 
 
 func _on_main_menu_pressed() -> void:

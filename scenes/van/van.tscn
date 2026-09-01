@@ -1458,6 +1458,57 @@ custom_minimum_size = Vector2(170, 65)
 layout_mode = 2
 text = "TURN RIGHT"
 
+[node name="DriverTalk" type="PanelContainer" parent="HUD"]
+unique_name_in_owner = true
+visible = false
+offset_left = 410.0
+offset_top = 200.0
+offset_right = 870.0
+offset_bottom = 500.0
+
+[node name="Layout" type="VBoxContainer" parent="HUD/DriverTalk"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="HUD/DriverTalk/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "THE DRIVER"
+horizontal_alignment = 1
+
+[node name="DriverTalkHint" type="Label" parent="HUD/DriverTalk/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ready when you are."
+horizontal_alignment = 1
+
+[node name="Buttons" type="VBoxContainer" parent="HUD/DriverTalk/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="StartRun" type="Button" parent="HUD/DriverTalk/Layout/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 58)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "START THE RUN"
+
+[node name="Accelerate" type="Button" parent="HUD/DriverTalk/Layout/Buttons"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(260, 58)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "ACCELERATE"
+
+[node name="Close" type="Button" parent="HUD/DriverTalk/Layout/Buttons"]
+custom_minimum_size = Vector2(260, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "NEVER MIND"
+
 [node name="GameOver" type="PanelContainer" parent="HUD" unique_id=500014647]
 unique_name_in_owner = true
 visible = false
@@ -1485,4 +1536,7 @@ unique_name_in_owner = true
 
 [connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Left" to="." method="_on_left_route_pressed"]
 [connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Right" to="." method="_on_right_route_pressed"]
+[connection signal="pressed" from="HUD/DriverTalk/Layout/Buttons/StartRun" to="." method="_on_start_run_pressed"]
+[connection signal="pressed" from="HUD/DriverTalk/Layout/Buttons/Accelerate" to="." method="_on_accelerate_pressed"]
+[connection signal="pressed" from="HUD/DriverTalk/Layout/Buttons/Close" to="." method="_on_driver_talk_close_pressed"]
 [connection signal="pressed" from="HUD/GameOver/Layout/Menu" to="." method="_on_main_menu_pressed"]
