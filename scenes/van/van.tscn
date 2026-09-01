@@ -865,6 +865,18 @@ script = ExtResource("18")
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/BreakableGlass" unique_id=1054376975]
 shape = SubResource("RearWindowGlassShape")
 
+[node name="Handle" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge" unique_id=1847293100]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.28, -0.82, -0.08)
+
+[node name="Mount" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Handle" unique_id=1847293101]
+size = Vector3(0.14, 0.36, 0.05)
+material = SubResource("SideDoorTrimMaterial")
+
+[node name="Grip" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Handle" unique_id=1847293102]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.06)
+size = Vector3(0.06, 0.26, 0.06)
+material = SubResource("SideDoorHandleMaterial")
+
 [node name="Interact" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge" unique_id=1668741397]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 0, 0)
 collision_layer = 2
@@ -937,6 +949,18 @@ script = ExtResource("18")
 
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/BreakableGlass" unique_id=2126946836]
 shape = SubResource("RearWindowGlassShape")
+
+[node name="Handle" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge" unique_id=1847293200]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.28, -0.82, -0.08)
+
+[node name="Mount" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Handle" unique_id=1847293201]
+size = Vector3(0.14, 0.36, 0.05)
+material = SubResource("SideDoorTrimMaterial")
+
+[node name="Grip" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Handle" unique_id=1847293202]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.06)
+size = Vector3(0.06, 0.26, 0.06)
+material = SubResource("SideDoorHandleMaterial")
 
 [node name="Interact" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge" unique_id=1788784779]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.19, 0, 0)

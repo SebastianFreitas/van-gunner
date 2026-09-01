@@ -1,7 +1,8 @@
 extends Node3D
 
 ## Truck-style rear double doors.
-## Visual leaves swing on hinges (no physics). Fixed half-blockers on world
+## Grip (button) retracts first, then Mount (black latch) pulls into the door
+## while keeping its head visible. Visual leaves swing on hinges (no physics). Fixed half-blockers on world
 ## layer 1 stop the player when a leaf is closed — they never rotate, so
 ## open/close never pushes anyone. Scripted Node3D mobs ignore physics, so
 ## callers should use is_passage_open() / get_outside_hold_position().
@@ -19,14 +20,26 @@ const OUTSIDE_HOLD_LOCAL := Vector3(0.0, 1.62, 5.2)
 
 @export var open_angle_deg := 110.0
 @export var open_duration := 0.9
+@export var grip_retract_duration := 0.1
+@export var mount_retract_duration := 0.14
+@export var grip_retract_distance := 0.06
+@export var mount_retract_distance := 0.028
 
 @onready var _left_hinge: Node3D = $LeftHinge
 @onready var _right_hinge: Node3D = $RightHinge
 @onready var _left_glass: Node = $LeftHinge/BreakableGlass
 @onready var _right_glass: Node = $RightHinge/BreakableGlass
+@onready var _left_grip: Node3D = $LeftHinge/Handle/Grip
+@onready var _left_mount: Node3D = $LeftHinge/Handle/Mount
+@onready var _right_grip: Node3D = $RightHinge/Handle/Grip
+@onready var _right_mount: Node3D = $RightHinge/Handle/Mount
 
 var _left_blocker_shapes: Array[CollisionShape3D] = []
 var _right_blocker_shapes: Array[CollisionShape3D] = []
+var _left_grip_closed: Vector3
+var _left_mount_closed: Vector3
+var _right_grip_closed: Vector3
+var _right_mount_closed: Vector3
 var _left_open := false
 var _right_open := false
 var _left_broken := false
@@ -36,6 +49,10 @@ var _right_tween: Tween
 
 
 func _ready() -> void:
+	_left_grip_closed = _left_grip.position
+	_left_mount_closed = _left_mount.position
+	_right_grip_closed = _right_grip.position
+	_right_mount_closed = _right_mount.position
 	_left_blocker_shapes = _collect_blocker_shapes("Left")
 	_right_blocker_shapes = _collect_blocker_shapes("Right")
 	if _left_glass and _left_glass.has_signal("shattered"):
@@ -171,20 +188,42 @@ func _collect_blocker_shapes(side_prefix: String) -> Array[CollisionShape3D]:
 	return shapes
 
 
+func _into_door_axis() -> Vector3:
+	# Interior handle pulls into the panel thickness (toward the exterior / +Z).
+	return Vector3.FORWARD
+
+
 func _animate_door(side: StringName, opening: bool) -> void:
 	var hinge := _left_hinge if side == SIDE_LEFT else _right_hinge
+	var grip := _left_grip if side == SIDE_LEFT else _right_grip
+	var mount := _left_mount if side == SIDE_LEFT else _right_mount
+	var grip_closed := _left_grip_closed if side == SIDE_LEFT else _right_grip_closed
+	var mount_closed := _left_mount_closed if side == SIDE_LEFT else _right_mount_closed
+	var into_door := _into_door_axis()
+	var grip_retracted := grip_closed + into_door * grip_retract_distance
+	var mount_retracted := mount_closed + into_door * mount_retract_distance
 	var angle := deg_to_rad(open_angle_deg)
 	var target_y := 0.0
 	if opening:
 		target_y = -angle if side == SIDE_LEFT else angle
-	var tween := _left_tween if side == SIDE_LEFT else _right_tween
-	if tween:
-		tween.kill()
-	tween = create_tween()
+
+	var existing := _left_tween if side == SIDE_LEFT else _right_tween
+	if existing:
+		existing.kill()
+
+	var tween := create_tween()
 	tween.set_ease(Tween.EASE_IN_OUT)
 	tween.set_trans(Tween.TRANS_CUBIC)
-	tween.tween_property(hinge, "rotation:y", target_y, open_duration)
 	if side == SIDE_LEFT:
 		_left_tween = tween
 	else:
 		_right_tween = tween
+
+	if opening:
+		tween.tween_property(grip, "position", grip_retracted, grip_retract_duration)
+		tween.tween_property(mount, "position", mount_retracted, mount_retract_duration)
+		tween.tween_property(hinge, "rotation:y", target_y, open_duration)
+	else:
+		tween.tween_property(hinge, "rotation:y", target_y, open_duration)
+		tween.tween_property(mount, "position", mount_closed, mount_retract_duration)
+		tween.tween_property(grip, "position", grip_closed, grip_retract_duration)
