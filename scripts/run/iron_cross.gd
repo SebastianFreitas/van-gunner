@@ -50,6 +50,18 @@ func break_bars() -> void:
 	parent.add_child(broken)
 
 
+## Restore intact bars after a repair. Removes any BrokenIronCross sibling.
+func repair_bars() -> void:
+	if _broken:
+		var parent := get_parent()
+		if parent:
+			for child in parent.get_children():
+				if child is BrokenIronCross:
+					child.queue_free()
+		_broken = false
+	visible = true
+
+
 func rebuild() -> void:
 	for child in get_children():
 		child.queue_free()

@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/items/loot_pool_entry.gd" id="loot_pool_entry"]
 [ext_resource type="Resource" path="res://resources/items/frag_grenade.tres" id="frag_grenade"]
 [ext_resource type="Resource" path="res://resources/items/adrenaline_stim.tres" id="adrenaline_stim"]
+[ext_resource type="Resource" path="res://resources/items/window_bar_kit.tres" id="window_bar_kit"]
 
 [sub_resource type="Resource" id="entry_frag"]
 script = ExtResource("loot_pool_entry")
@@ -15,6 +16,11 @@ script = ExtResource("loot_pool_entry")
 item = ExtResource("adrenaline_stim")
 weight = 1.2
 
+[sub_resource type="Resource" id="entry_window_bar_kit"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("window_bar_kit")
+weight = 1.0
+
 [resource]
 script = ExtResource("loot_pool")
-entries = Array[ExtResource("loot_pool_entry")]([SubResource("entry_frag"), SubResource("entry_adrenaline")])
+entries = Array[ExtResource("loot_pool_entry")]([SubResource("entry_frag"), SubResource("entry_adrenaline"), SubResource("entry_window_bar_kit")])

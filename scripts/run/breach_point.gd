@@ -123,6 +123,31 @@ func take_damage(amount: float) -> void:
 		_mark_breached()
 
 
+## Instantly restore window-bar HP. If breached, swap BrokenIronCross back to intact bars.
+## Does not restore shattered glass or close door leaves.
+func repair_bars() -> void:
+	if kind != Kind.WINDOW and kind != Kind.SIDE_DOOR_WINDOW:
+		return
+	var was_breached := is_breached
+	health = max_health
+	is_breached = false
+	health_changed.emit(health, max_health)
+	if was_breached:
+		_repair_bars_visual()
+
+
+func _repair_bars_visual() -> void:
+	if bars_path.is_empty():
+		return
+	var bars := get_node_or_null(bars_path)
+	if bars == null:
+		return
+	if bars.has_method("repair_bars"):
+		bars.repair_bars()
+	elif bars is Node3D:
+		(bars as Node3D).visible = true
+
+
 func _mark_breached() -> void:
 	if is_breached:
 		return

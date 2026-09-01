@@ -135,6 +135,8 @@ static func _lines_for_effect(effect: ItemEffect) -> PackedStringArray:
 		lines.append("+%s max van hull" % format_number(max_hp.bonus_health))
 	elif effect is FullHealEffect:
 		lines.append("Heal to full hull")
+	elif effect is RepairWindowBarsEffect:
+		lines.append("Fully repairs all window bars")
 	elif effect is BoonTraitEffect:
 		lines.append_array(_lines_for_trait_effect(effect as BoonTraitEffect))
 	elif effect is CompositeEffect:

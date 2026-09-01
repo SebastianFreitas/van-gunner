@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/items/item_usable_config.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/items/effects/repair_window_bars_effect.gd" id="4"]
+[ext_resource type="Texture2D" path="res://scenes/items/window_bar_kit.svg" id="5"]
+
+[sub_resource type="Resource" id="Resource_repair_effect"]
+script = ExtResource("4")
+
+[sub_resource type="Resource" id="Resource_repair_usable"]
+script = ExtResource("3")
+max_charges = 1
+
+[resource]
+script = ExtResource("1")
+id = &"window_bar_kit"
+display_name = "Window Bar Kit"
+description = "Roadside welding kit. Instantly restores every window bar to full strength — even blown-out ones."
+icon = ExtResource("5")
+kind = 2
+usable = SubResource("Resource_repair_usable")
+effects = Array[ExtResource("2")]([SubResource("Resource_repair_effect")])
