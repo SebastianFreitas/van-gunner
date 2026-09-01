@@ -72,7 +72,7 @@ func _schedule_encounter() -> void:
 
 
 func _run_segment(id: int) -> void:
-	var plan := GameBalance.build_segment_wave_plan()
+	var plan := GameBalance.build_segment_wave_plan(GameSession.route_step)
 	for wave_i in plan.size():
 		if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
 			_running = false
@@ -102,6 +102,11 @@ func _run_segment(id: int) -> void:
 func _run_wave(id: int, count: int) -> void:
 	var raiders: Array[WindowRaider] = []
 	for slot in count:
+		if slot > 0:
+			var delay := randf_range(GameBalance.SPAWN_DELAY_MIN, GameBalance.SPAWN_DELAY_MAX)
+			await get_tree().create_timer(delay).timeout
+			if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
+				return
 		var raider := _spawn_raider(slot, count)
 		if raider:
 			raiders.append(raider)

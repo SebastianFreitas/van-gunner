@@ -20,21 +20,25 @@ const BASE_DPS := BASE_DAMAGE_PER_SHOT * BASE_FIRE_RATE  # 4.0
 const SPAWN_DISTANCE := 47.2
 ## Corridor floor is 18 wide with walls at ±9; keep spawns inside with margin.
 const SPAWN_HALF_WIDTH := 7.5
-## Small depth jitter so a pack doesn't stack on one Z.
-const SPAWN_Z_JITTER := 1.5
+## Extra depth jitter on top of the random depth band below.
+const SPAWN_Z_JITTER := 3.0
+## Random depth band behind RearSpawnMarker (+Z = farther from van).
+const SPAWN_Z_DEPTH_MIN := 0.0
+const SPAWN_Z_DEPTH_MAX := 18.0
+## Stagger each enemy in a wave so the pack doesn't arrive as one blob.
+const SPAWN_DELAY_MIN := 0.5
+const SPAWN_DELAY_MAX := 2.0
 
 # --- Wave composition (per route segment) ------------------------------------
 ## Segment length: 1d6+3 → 4..9 waves before REST / route choice.
 const SEGMENT_WAVE_MIN := 4
 const SEGMENT_WAVE_MAX := 9
-## First wave size; also used for breather waves.
-const WAVE_BASE_COUNT := 1
-## Each non-breather wave adds this many enemies over the previous step index.
-const WAVE_GROWTH_PER_STEP := 1
-## Final wave of a segment jumps past normal growth by this many extras.
-const LAST_WAVE_EXTRA := 3
-## Middle waves: chance to drop back to WAVE_BASE_COUNT (at most once, never last).
-const BREATHER_CHANCE := 0.5
+## Per-act wave sizing — Act 1 ramps gently; later acts spike harder on the finale.
+const ACT_WAVE_BASE_COUNT: Array[int] = [2, 2, 2]
+const ACT_WAVE_GROWTH_PER_STEP: Array[int] = [1, 1, 1]
+const ACT_LAST_WAVE_EXTRA: Array[int] = [2, 2, 3]
+## Middle waves: chance to drop back to base count (at most once, never last).
+const ACT_BREATHER_CHANCE: Array[float] = [0.15, 0.3, 0.35]
 ## Pause between cleared waves while still in COMBAT.
 const INTER_WAVE_DELAY := 1.25
 
@@ -110,7 +114,14 @@ func get_van_speed_upgrade_cost(level: int) -> int:
 ## Roll segment length (1d6+3) and per-wave enemy counts.
 ## Index 0 = first wave. Growth is linear; one optional middle breather;
 ## the final wave always spikes above the normal curve.
-func build_segment_wave_plan() -> Array[int]:
+func build_segment_wave_plan(route_step: int = 1) -> Array[int]:
+	var act: int = get_act(route_step)
+	var act_i: int = act - 1
+	var base_count: int = ACT_WAVE_BASE_COUNT[act_i]
+	var growth: int = ACT_WAVE_GROWTH_PER_STEP[act_i]
+	var last_extra: int = ACT_LAST_WAVE_EXTRA[act_i]
+	var breather_chance: float = ACT_BREATHER_CHANCE[act_i]
+
 	var total := randi_range(SEGMENT_WAVE_MIN, SEGMENT_WAVE_MAX)
 	var plan: Array[int] = []
 	var had_breather := false
@@ -118,34 +129,35 @@ func build_segment_wave_plan() -> Array[int]:
 		var is_first := wave_index == 1
 		var is_last := wave_index == total
 		if is_first:
-			plan.append(WAVE_BASE_COUNT)
+			plan.append(base_count)
 			continue
 		if is_last:
-			plan.append(_normal_wave_count(wave_index) + LAST_WAVE_EXTRA)
+			plan.append(_normal_wave_count(wave_index, base_count, growth) + last_extra)
 			continue
-		if not had_breather and randf() < BREATHER_CHANCE:
-			plan.append(WAVE_BASE_COUNT)
+		if not had_breather and randf() < breather_chance:
+			plan.append(base_count)
 			had_breather = true
 		else:
-			plan.append(_normal_wave_count(wave_index))
+			plan.append(_normal_wave_count(wave_index, base_count, growth))
 	return plan
 
 
-func _normal_wave_count(wave_index: int) -> int:
-	return WAVE_BASE_COUNT + (wave_index - 1) * WAVE_GROWTH_PER_STEP
+func _normal_wave_count(wave_index: int, base_count: int, growth: int) -> int:
+	return base_count + (wave_index - 1) * growth
 
 
-## Local offset from RearSpawnMarker: packs fill corridor width, slight Z jitter.
+## Local offset from RearSpawnMarker: spread across corridor width and depth.
 func spawn_offset_for_slot(slot: int, count: int) -> Vector3:
 	var half := SPAWN_HALF_WIDTH
 	var x := 0.0
 	if count <= 1:
-		x = randf_range(-half * 0.35, half * 0.35)
+		x = randf_range(-half, half)
 	else:
 		var t := float(slot) / float(count - 1)
 		var base_x := lerpf(-half, half, t)
 		var slot_w := (2.0 * half) / float(count)
-		x = base_x + randf_range(-slot_w * 0.3, slot_w * 0.3)
+		x = base_x + randf_range(-slot_w * 0.65, slot_w * 0.65)
 		x = clampf(x, -half, half)
-	var z := randf_range(-SPAWN_Z_JITTER, SPAWN_Z_JITTER)
+	var z := randf_range(SPAWN_Z_DEPTH_MIN, SPAWN_Z_DEPTH_MAX)
+	z += randf_range(-SPAWN_Z_JITTER, SPAWN_Z_JITTER)
 	return Vector3(x, 0.0, z)
