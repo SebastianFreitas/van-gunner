@@ -19,8 +19,8 @@ const SIDE_STREET_RUN_MAX := 4
 const SIDE_STREET_START_SEGMENT := 4
 const SHOP_SPAWN_MIN_SEGMENTS_AHEAD := 1
 const SHOP_SPAWN_MAX_SEGMENTS_AHEAD := 2
-## Drive this far past the bay mouth before cutting the reverse-park path.
-const SHOP_PARK_OVERSHOOT := 10.0
+## Straight reverse after the quarter-circle. Total pass-distance is turn_radius + this.
+const SHOP_PARK_REVERSE_STRAIGHT := 8.0
 const SHOP_CORRIDOR_LATERAL := 9.0
 
 ## Overwritten in _ready from MetaProgression → GameBalance van speed curve.
@@ -553,8 +553,8 @@ func _maybe_begin_shop_park() -> void:
 		GameSession.RunPhase.REST,
 	]:
 		return
-	# Pass the bay first, then cut a reverse-park path (nose stays road-facing).
-	if van_follow.progress < _shop_align_progress + SHOP_PARK_OVERSHOOT:
+	# Need room for a T-junction quarter-circle plus a short reverse straight.
+	if van_follow.progress < _shop_align_progress + turn_radius + SHOP_PARK_REVERSE_STRAIGHT:
 		return
 	_build_park_route()
 
@@ -586,59 +586,44 @@ func _build_park_route() -> void:
 	if dock == null:
 		return
 
-	# Van is already past the bay, facing corridor-forward. Build the leave path in
-	# reverse (dock → mouth → corridor → van) and travel backward along it so
-	# PathFollow keeps the nose road-facing while the rear swings in — same
-	# quarter-circle handles as a T-junction.
+	# Same geometry as a T-junction turn, just driven backward:
+	#   van  --straight-->  turn_start  --quarter-circle-->  turn_end  --straight-->  dock
+	# Path is stored dock→van so PathFollow's forward tangent keeps the nose road-facing
+	# while progress counts down (rear into the bay).
 	var van_transform := van_rig.global_transform
 	var van_inv := van_transform.affine_inverse()
-	var mouth_world := _shop_mouth_world()
-	var corridor_world := _shop_corridor_at_mouth(mouth_world)
+	var side := 1.0 if _shop_bay_side == &"right" else -1.0
+	var radius := turn_radius
+	var handle := radius * QUARTER_CIRCLE_HANDLE
 
-	var p_dock := _flatten_local(van_inv, dock.global_position)
-	var p_mouth := _flatten_local(van_inv, mouth_world)
-	var p_corridor := _flatten_local(van_inv, corridor_world)
+	var mouth_z := _flatten_local(van_inv, _shop_corridor_at_mouth(_shop_mouth_world())).z
+	mouth_z = maxf(mouth_z, radius + SHOP_PARK_REVERSE_STRAIGHT)
+
+	var dock_lat := absf(_flatten_local(van_inv, dock.global_position).x)
+	dock_lat = maxf(dock_lat, radius + 2.0)
+
+	# Orthogonal L in van-local space (van at origin, facing -Z, bay on ±X).
+	var p_dock := Vector3(side * dock_lat, 0.0, mouth_z)
+	var p_turn_end := Vector3(side * radius, 0.0, mouth_z)
+	var p_turn_start := Vector3(0.0, 0.0, mouth_z - radius)
 	var p_van := Vector3.ZERO
-
-	var nose_dir := p_mouth - p_dock
-	nose_dir.y = 0.0
-	if nose_dir.length_squared() < 0.01:
-		var side := 1.0 if _shop_bay_side == &"right" else -1.0
-		nose_dir = Vector3(-side, 0.0, 0.0)
-	else:
-		nose_dir = nose_dir.normalized()
-
-	var to_corridor := p_corridor - p_mouth
-	to_corridor.y = 0.0
-	var corridor_dir := (
-		to_corridor.normalized()
-		if to_corridor.length_squared() > 0.01
-		else Vector3(-nose_dir.x, 0.0, 0.0).normalized()
-	)
-
-	var along_road := p_van - p_corridor
-	along_road.y = 0.0
-	var road_dir := (
-		along_road.normalized() if along_road.length_squared() > 0.01 else Vector3(0.0, 0.0, -1.0)
-	)
-
-	var radius := maxf(p_mouth.distance_to(p_corridor), 6.0)
-	var handle := maxf(radius * QUARTER_CIRCLE_HANDLE, 2.5)
+	var bay_straight := dock_lat - radius
+	var road_straight := mouth_z - radius
 
 	var curve := Curve3D.new()
-	curve.bake_interval = 0.2
-	curve.add_point(p_dock, Vector3.ZERO, nose_dir * handle)
+	curve.bake_interval = 0.25
+	curve.add_point(p_dock, Vector3.ZERO, Vector3(-side * bay_straight * 0.25, 0.0, 0.0))
 	curve.add_point(
-		p_mouth,
-		-nose_dir * (handle * 0.5),
-		corridor_dir * (handle * 0.35)
+		p_turn_end,
+		Vector3(side * handle, 0.0, 0.0),
+		Vector3(0.0, 0.0, -handle)
 	)
 	curve.add_point(
-		p_corridor,
-		-corridor_dir * (handle * 0.35),
-		road_dir * handle
+		p_turn_start,
+		Vector3(0.0, 0.0, handle),
+		Vector3(0.0, 0.0, -road_straight * 0.25)
 	)
-	curve.add_point(p_van, -road_dir * (handle * 0.25), Vector3.ZERO)
+	curve.add_point(p_van, Vector3(0.0, 0.0, road_straight * 0.25), Vector3.ZERO)
 
 	travel_path.curve = curve
 	travel_path.global_transform = van_transform
