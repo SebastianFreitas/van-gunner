@@ -160,11 +160,15 @@ func _mark_breached() -> void:
 				var doors := _rear_doors()
 				if doors:
 					doors.open_door(door_side)
+					if doors.has_method("mark_door_broken"):
+						doors.mark_door_broken(door_side)
 		Kind.SIDE_DOOR:
 			if door_side != &"":
 				var doors := _side_doors()
 				if doors:
 					doors.open_door(door_side)
+					if doors.has_method("mark_door_broken"):
+						doors.mark_door_broken(door_side)
 		Kind.WINDOW, Kind.SIDE_DOOR_WINDOW:
 			_break_bars()
 		_:

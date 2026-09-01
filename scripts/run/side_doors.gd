@@ -45,6 +45,8 @@ var _right_mount_closed: Vector3
 
 var _left_open := false
 var _right_open := false
+var _left_broken := false
+var _right_broken := false
 var _left_passable := false
 var _right_passable := false
 var _left_tween: Tween
@@ -80,6 +82,23 @@ func is_door_passable(side: StringName) -> bool:
 	return _left_passable if side == SIDE_LEFT else _right_passable
 
 
+func is_door_broken(side: StringName) -> bool:
+	return _left_broken if side == SIDE_LEFT else _right_broken
+
+
+func mark_door_broken(side: StringName) -> void:
+	if is_door_broken(side):
+		return
+	if side == SIDE_LEFT:
+		_left_broken = true
+	else:
+		_right_broken = true
+	if not is_door_open(side):
+		open_door(side)
+	else:
+		_set_passable(side, true)
+
+
 func is_glass_intact(side: StringName) -> bool:
 	var glass := _left_glass if side == SIDE_LEFT else _right_glass
 	if glass == null:
@@ -99,12 +118,16 @@ func get_outside_hold_position(side: StringName = SIDE_LEFT) -> Vector3:
 
 
 func get_door_prompt(side: StringName) -> String:
+	if is_door_broken(side):
+		return "BROKEN"
 	if is_door_open(side):
 		return "E  CLOSE DOOR"
 	return "E  OPEN DOOR"
 
 
 func toggle_door(side: StringName) -> void:
+	if is_door_broken(side):
+		return
 	if is_door_open(side):
 		close_door(side)
 	else:
@@ -123,7 +146,7 @@ func open_door(side: StringName) -> void:
 
 
 func close_door(side: StringName) -> void:
-	if not is_door_open(side):
+	if is_door_broken(side) or not is_door_open(side):
 		return
 	_set_door_open(side, false)
 	_set_passable(side, false)

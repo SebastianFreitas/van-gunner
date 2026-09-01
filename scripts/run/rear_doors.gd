@@ -29,6 +29,8 @@ var _left_blocker_shapes: Array[CollisionShape3D] = []
 var _right_blocker_shapes: Array[CollisionShape3D] = []
 var _left_open := false
 var _right_open := false
+var _left_broken := false
+var _right_broken := false
 var _left_tween: Tween
 var _right_tween: Tween
 
@@ -64,18 +66,39 @@ func is_door_open(side: StringName) -> bool:
 	return _left_open if side == SIDE_LEFT else _right_open
 
 
+func is_door_broken(side: StringName) -> bool:
+	return _left_broken if side == SIDE_LEFT else _right_broken
+
+
+func mark_door_broken(side: StringName) -> void:
+	if is_door_broken(side):
+		return
+	if side == SIDE_LEFT:
+		_left_broken = true
+	else:
+		_right_broken = true
+	if not is_door_open(side):
+		open_door(side)
+	else:
+		_set_blocker_enabled(side, false)
+
+
 ## Standpoint outside closed doors for scripted mobs (world space).
 func get_outside_hold_position() -> Vector3:
 	return to_global(OUTSIDE_HOLD_LOCAL)
 
 
 func get_door_prompt(side: StringName) -> String:
+	if is_door_broken(side):
+		return "BROKEN"
 	if is_door_open(side):
 		return "E  CLOSE DOOR"
 	return "E  OPEN DOOR"
 
 
 func toggle_door(side: StringName) -> void:
+	if is_door_broken(side):
+		return
 	if is_door_open(side):
 		close_door(side)
 	else:
@@ -94,7 +117,7 @@ func open_door(side: StringName) -> void:
 
 
 func close_door(side: StringName) -> void:
-	if not is_door_open(side):
+	if is_door_broken(side) or not is_door_open(side):
 		return
 	_set_door_open(side, false)
 	_animate_door(side, false)
