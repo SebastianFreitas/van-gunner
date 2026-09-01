@@ -71,6 +71,12 @@ func is_passable() -> bool:
 				var doors := _rear_doors()
 				if doors and doors.is_door_open(door_side):
 					return true
+			else:
+				# Side windows: open sash swings bars out of the opening.
+				var windows := _side_windows()
+				var wid := _side_window_id()
+				if windows and wid != &"" and windows.is_window_open(wid):
+					return true
 		Kind.SIDE_DOOR_WINDOW:
 			# Whole cargo opening clear — no need to smash bars.
 			if door_side != &"":
@@ -230,3 +236,15 @@ func _rear_doors() -> Node:
 
 func _side_doors() -> Node:
 	return get_tree().get_first_node_in_group(&"side_doors")
+
+
+func _side_windows() -> Node:
+	return get_tree().get_first_node_in_group(&"side_windows")
+
+
+## Maps breach point_id (e.g. left_rear_window) → side_windows id (left_rear).
+func _side_window_id() -> StringName:
+	var raw := String(point_id)
+	if raw.begins_with("side_door") or not raw.ends_with("_window"):
+		return &""
+	return StringName(raw.trim_suffix("_window"))
