@@ -845,26 +845,22 @@ func _add_floor_seal_strips(mat: Material) -> void:
 	var lean := lean_angle_at(seal_y)
 	var seal_depth := maxf(wall_x - FLOOR_HALF_WIDTH + 0.03, 0.04)
 	var seal_center_x := (wall_x + FLOOR_HALF_WIDTH) * 0.5
-	var idx := 0
-	for span in _solid_z_ranges_below_windows():
-		var z0: float = span[0]
-		var z1: float = span[1]
-		var length: float = z1 - z0
-		if length < 0.35:
-			continue
-		var z_mid := (z0 + z1) * 0.5
-		for wall_sign in [-1.0, 1.0]:
-			var seal := MeshInstance3D.new()
-			seal.name = "FloorSeal_%s_%d" % ["L" if wall_sign < 0.0 else "R", idx]
-			var box := BoxMesh.new()
-			box.size = Vector3(seal_depth, 0.05, length)
-			seal.mesh = box
-			seal.material_override = mat
-			seal.position = Vector3(wall_sign * seal_center_x, seal_y, z_mid)
-			seal.rotation.z = wall_sign * lean
-			seal.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-			add_child(seal)
-		idx += 1
+	var half := span_z * 0.5
+	var z0 := -half + 0.05
+	var z1 := half - 0.05
+	var length := z1 - z0
+	var z_mid := (z0 + z1) * 0.5
+	for wall_sign in [-1.0, 1.0]:
+		var seal := MeshInstance3D.new()
+		seal.name = "FloorSeal_%s" % ("L" if wall_sign < 0.0 else "R")
+		var box := BoxMesh.new()
+		box.size = Vector3(seal_depth, 0.05, length)
+		seal.mesh = box
+		seal.material_override = mat
+		seal.position = Vector3(wall_sign * seal_center_x, seal_y, z_mid)
+		seal.rotation.z = wall_sign * lean
+		seal.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		add_child(seal)
 
 
 func _add_cargo_rails(mat: Material) -> void:
