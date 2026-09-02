@@ -103,7 +103,6 @@ func _build_vault_mesh() -> ArrayMesh:
 
 
 func _build_wiring() -> void:
-	var wire_mat := _metal_mat(Color(0.06, 0.055, 0.05, 1.0), 0.15, 0.72)
 	var cable_mat := _rubber_mat(Color(0.04, 0.038, 0.035, 1.0), 0.0, 0.96, 0.0)
 
 	# Main power run along the left side, clipped to ceiling.
@@ -123,15 +122,6 @@ func _build_wiring() -> void:
 		0.009,
 		cable_mat,
 		Vector3(82.0, 12.0, 0.0)
-	)
-	# Thin grounding strap.
-	_add_cylinder_run(
-		"GroundStrap",
-		Vector3(-1.85, edge_height - 0.12, -2.5),
-		1.6,
-		0.006,
-		wire_mat,
-		Vector3(88.0, -25.0, 0.0)
 	)
 	# Cable clips (small boxes along the power run).
 	var clip_mat := _metal_mat(Color(0.18, 0.17, 0.16, 1.0), 0.55, 0.48)
