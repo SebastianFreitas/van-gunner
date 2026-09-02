@@ -184,7 +184,7 @@ func _build_rear_entry_ramp() -> void:
 		col.shape = shape
 		col.position = Vector3(0.0, center_y, center_z)
 		col.rotation.x = angle
-		shell.add_child(col)
+		shell.add_child.call_deferred(col)
 
 
 func _build_entrance_mats() -> void:
