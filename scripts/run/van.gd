@@ -369,6 +369,10 @@ func seal_van_after_shop() -> void:
 func _set_shop_rear_exit(allowed: bool) -> void:
 	if player_containment:
 		player_containment.set_rear_exit_allowed(allowed)
+	if allowed:
+		var rear_doors: Node = get_tree().get_first_node_in_group(&"rear_doors")
+		if rear_doors and rear_doors.has_method(&"open"):
+			rear_doors.open()
 
 
 func _on_main_menu_pressed() -> void:

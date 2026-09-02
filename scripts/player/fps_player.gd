@@ -7,6 +7,8 @@ signal shot_fired(hit: bool)
 @export var move_speed := 4.5
 @export var acceleration := 16.0
 @export var mouse_sensitivity := 0.0022
+@export var step_height := 0.35
+@export var step_check_distance := 0.45
 @export var movement_reference_path: NodePath
 
 @onready var head: Node3D = $Head
@@ -23,6 +25,7 @@ var _local_horizontal_velocity := Vector3.ZERO
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	floor_snap_length = 0.2
 	add_to_group(&"player")
 	_movement_reference = get_node_or_null(movement_reference_path) as Node3D
 	if not _movement_reference:
@@ -64,8 +67,11 @@ func _physics_process(delta: float) -> void:
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var view_basis_in_reference := reference_basis.inverse() * global_basis.orthonormalized()
-	var direction := (view_basis_in_reference * Vector3(input.x, 0.0, input.y)).normalized()
-	var target := direction * move_speed
+	var local_direction := view_basis_in_reference * Vector3(input.x, 0.0, input.y)
+	var wish_direction := Vector3.ZERO
+	if local_direction.length_squared() > 0.001:
+		wish_direction = (reference_basis * local_direction.normalized())
+	var target := local_direction.normalized() * move_speed if local_direction.length_squared() > 0.001 else Vector3.ZERO
 	_local_horizontal_velocity.x = move_toward(
 		_local_horizontal_velocity.x,
 		target.x,
@@ -79,13 +85,73 @@ func _physics_process(delta: float) -> void:
 	var world_horizontal_velocity := reference_basis * _local_horizontal_velocity
 	velocity.x = world_horizontal_velocity.x
 	velocity.z = world_horizontal_velocity.z
+	if is_on_floor() and wish_direction.length_squared() > 0.01:
+		_try_step_up(wish_direction)
 	move_and_slide()
+	if is_on_floor() and wish_direction.length_squared() > 0.01:
+		if _try_step_up(wish_direction):
+			move_and_slide()
 	var resulting_local_velocity := reference_basis.inverse() * velocity
 	_local_horizontal_velocity.x = resulting_local_velocity.x
 	_local_horizontal_velocity.z = resulting_local_velocity.z
 	if Input.is_action_pressed("shoot") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		weapon.try_fire()
 	_update_interaction()
+
+
+func _try_step_up(wish_direction: Vector3) -> bool:
+	if not is_on_floor():
+		return false
+
+	var direction := Vector3(wish_direction.x, 0.0, wish_direction.z)
+	if direction.length_squared() < 0.01:
+		return false
+	direction = direction.normalized()
+
+	var space := get_world_3d().direct_space_state
+	var exclude := [get_rid()]
+
+	var foot := global_position + Vector3.UP * 0.05
+	var query := PhysicsRayQueryParameters3D.create(
+		foot,
+		foot + direction * step_check_distance
+	)
+	query.exclude = exclude
+	query.collision_mask = collision_mask
+	var low_hit := space.intersect_ray(query)
+	if low_hit.is_empty():
+		return false
+	if low_hit.normal.y > 0.55:
+		return false
+
+	var head := global_position + Vector3.UP * (step_height + 0.05)
+	query = PhysicsRayQueryParameters3D.create(
+		head,
+		head + direction * step_check_distance
+	)
+	query.exclude = exclude
+	query.collision_mask = collision_mask
+	if not space.intersect_ray(query).is_empty():
+		return false
+
+	var probe := head + direction * step_check_distance
+	query = PhysicsRayQueryParameters3D.create(
+		probe,
+		probe + Vector3.DOWN * (step_height + 0.1)
+	)
+	query.exclude = exclude
+	query.collision_mask = collision_mask
+	var floor_hit := space.intersect_ray(query)
+	if floor_hit.is_empty():
+		return false
+
+	var rise: float = floor_hit.position.y - global_position.y
+	if rise <= 0.01 or rise > step_height:
+		return false
+
+	global_position.y += rise
+	velocity.y = 0.0
+	return true
 
 
 func _update_interaction() -> void:

@@ -40,6 +40,7 @@ func _build() -> void:
 	add_child(deck)
 
 	_build_threshold_strips()
+	_build_rear_entry_ramp()
 	_build_entrance_mats()
 	_build_scatter_props()
 
@@ -141,6 +142,49 @@ func _build_threshold_strips() -> void:
 		Vector3(0.0, 0.012, -4.52),
 		metal
 	)
+
+
+func _build_rear_entry_ramp() -> void:
+	# Cargo vans sit higher than road/shop floor (y=0 vs y=-0.2). A shallow rear
+	# ramp lets the player walk back in without step-climb edge cases.
+	const RAMP_WIDTH := 2.2
+	const RAMP_RUN := 0.65
+	const RAMP_RISE := 0.2
+	const OUTSIDE_FLOOR_Y := -0.2
+
+	var angle := atan(RAMP_RISE / RAMP_RUN)
+	var rear_z := span_z * 0.5
+	var inner_z := rear_z - 0.25
+	var outer_z := inner_z + RAMP_RUN
+	var center_z := (inner_z + outer_z) * 0.5
+	var center_y := OUTSIDE_FLOOR_Y + RAMP_RISE * 0.5
+
+	var metal := _metal_mat(Color(0.1, 0.105, 0.1, 1.0), 0.7, 0.5)
+
+	var box := BoxMesh.new()
+	box.size = Vector3(RAMP_WIDTH, 0.06, RAMP_RUN)
+	var mesh := MeshInstance3D.new()
+	mesh.name = &"RearEntryRamp"
+	mesh.mesh = box
+	mesh.material_override = metal
+	mesh.position = Vector3(0.0, center_y, center_z)
+	mesh.rotation.x = angle
+	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	add_child(mesh)
+
+	var shell := get_parent()
+	if shell is StaticBody3D:
+		var existing := shell.get_node_or_null("RearEntryRamp")
+		if existing:
+			existing.queue_free()
+		var col := CollisionShape3D.new()
+		col.name = &"RearEntryRamp"
+		var shape := BoxShape3D.new()
+		shape.size = Vector3(RAMP_WIDTH, 0.08, RAMP_RUN)
+		col.shape = shape
+		col.position = Vector3(0.0, center_y, center_z)
+		col.rotation.x = angle
+		shell.add_child(col)
 
 
 func _build_entrance_mats() -> void:
