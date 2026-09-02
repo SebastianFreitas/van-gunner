@@ -8,7 +8,7 @@ shader = ExtResource("1")
 shader_parameter/base_color = Color(0.16, 0.18, 0.17, 1)
 shader_parameter/seam_color = Color(0.035, 0.045, 0.04, 1)
 shader_parameter/rust_color = Color(0.3, 0.105, 0.045, 1)
-shader_parameter/tile_count = Vector2(6, 8)
+shader_parameter/tile_count = Vector2(8, 10)
 shader_parameter/roughness_value = 0.92
 
 [sub_resource type="ShaderMaterial" id="WallMaterial"]
@@ -63,15 +63,15 @@ roughness = 0.85
 
 [sub_resource type="BoxMesh" id="BayFloorMesh"]
 material = SubResource("FloorMaterial")
-size = Vector3(12, 0.2, 6.6)
+size = Vector3(18, 0.2, 8.6)
 
 [sub_resource type="BoxMesh" id="BaySideWallMesh"]
 material = SubResource("WallMaterial")
-size = Vector3(12, 8, 0.4)
+size = Vector3(18, 8, 0.4)
 
 [sub_resource type="BoxMesh" id="BackWallMesh"]
 material = SubResource("WallMaterial")
-size = Vector3(0.4, 8, 6.6)
+size = Vector3(0.4, 8, 8.6)
 
 [sub_resource type="BoxMesh" id="MouthFrameMesh"]
 material = SubResource("WallMaterial")
@@ -79,19 +79,19 @@ size = Vector3(1.2, 8, 2.4)
 
 [sub_resource type="BoxMesh" id="LintelMesh"]
 material = SubResource("RibMaterial")
-size = Vector3(1.2, 1.2, 6.6)
+size = Vector3(1.2, 1.2, 8.6)
 
 [sub_resource type="BoxMesh" id="CeilingMesh"]
 material = SubResource("RibMaterial")
-size = Vector3(12, 0.35, 6.6)
+size = Vector3(18, 0.35, 8.6)
 
 [sub_resource type="BoxMesh" id="CounterMesh"]
 material = SubResource("CounterMaterial")
-size = Vector3(1.2, 1.1, 5.8)
+size = Vector3(1.2, 1.1, 7.8)
 
 [sub_resource type="BoxMesh" id="HatchPanelMesh"]
 material = SubResource("HatchPanelMaterial")
-size = Vector3(0.12, 5.5, 5.6)
+size = Vector3(0.12, 5.5, 7.6)
 
 [sub_resource type="BoxMesh" id="HatchBarMesh"]
 material = SubResource("HatchMaterial")
@@ -127,49 +127,49 @@ radius = 0.22
 height = 0.44
 
 [sub_resource type="BoxShape3D" id="BayFloorShape"]
-size = Vector3(12, 0.2, 6.6)
+size = Vector3(18, 0.2, 8.6)
 
 [sub_resource type="BoxShape3D" id="BaySideWallShape"]
-size = Vector3(12, 8, 0.4)
+size = Vector3(18, 8, 0.4)
 
 [sub_resource type="BoxShape3D" id="BackWallShape"]
-size = Vector3(0.4, 8, 6.6)
+size = Vector3(0.4, 8, 8.6)
 
 [sub_resource type="BoxShape3D" id="MouthFrameShape"]
 size = Vector3(1.2, 8, 2.4)
 
 [sub_resource type="BoxShape3D" id="LintelShape"]
-size = Vector3(1.2, 1.2, 6.6)
+size = Vector3(1.2, 1.2, 8.6)
 
 [sub_resource type="BoxShape3D" id="CounterShape"]
-size = Vector3(1.2, 1.1, 5.8)
+size = Vector3(1.2, 1.1, 7.8)
 
 [node name="ShopBay" type="Node3D"]
 
 [node name="Surfaces" type="StaticBody3D" parent="."]
 
 [node name="BayFloor" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, -0.3, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, -0.3, 0)
 shape = SubResource("BayFloorShape")
 
 [node name="SideWallNegZ" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 3.7, -3.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 3.7, -4.3)
 shape = SubResource("BaySideWallShape")
 
 [node name="SideWallPosZ" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 3.7, 3.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 3.7, 4.3)
 shape = SubResource("BaySideWallShape")
 
 [node name="BackWall" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 3.7, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 3.7, 0)
 shape = SubResource("BackWallShape")
 
 [node name="MouthFrameNegZ" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 3.7, -4.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 3.7, -5.5)
 shape = SubResource("MouthFrameShape")
 
 [node name="MouthFramePosZ" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 3.7, 4.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 3.7, 5.5)
 shape = SubResource("MouthFrameShape")
 
 [node name="Lintel" type="CollisionShape3D" parent="Surfaces"]
@@ -177,37 +177,37 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 5.4, 0)
 shape = SubResource("LintelShape")
 
 [node name="Counter" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.2, 0.45, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.7, 0.45, 0)
 shape = SubResource("CounterShape")
 
 [node name="Bay" type="Node3D" parent="."]
 
 [node name="Floor" type="MeshInstance3D" parent="Bay"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, -0.3, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, -0.3, 0)
 mesh = SubResource("BayFloorMesh")
 
 [node name="SideWallNegZ" type="MeshInstance3D" parent="Bay"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 3.7, -3.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 3.7, -4.3)
 mesh = SubResource("BaySideWallMesh")
 
 [node name="SideWallPosZ" type="MeshInstance3D" parent="Bay"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 3.7, 3.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 3.7, 4.3)
 mesh = SubResource("BaySideWallMesh")
 
 [node name="BackWall" type="MeshInstance3D" parent="Bay"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 3.7, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 3.7, 0)
 mesh = SubResource("BackWallMesh")
 
 [node name="Ceiling" type="MeshInstance3D" parent="Bay"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 7.8, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 7.8, 0)
 mesh = SubResource("CeilingMesh")
 
 [node name="MouthFrameNegZ" type="MeshInstance3D" parent="Bay"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 3.7, -4.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 3.7, -5.5)
 mesh = SubResource("MouthFrameMesh")
 
 [node name="MouthFramePosZ" type="MeshInstance3D" parent="Bay"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 3.7, 4.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 3.7, 5.5)
 mesh = SubResource("MouthFrameMesh")
 
 [node name="Lintel" type="MeshInstance3D" parent="Bay"]
@@ -215,37 +215,37 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 5.4, 0)
 mesh = SubResource("LintelMesh")
 
 [node name="BayLamp" type="MeshInstance3D" parent="Bay"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 7.2, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 7.2, 0)
 mesh = SubResource("LampMesh")
 
 [node name="Shop" type="Node3D" parent="."]
 
 [node name="Counter" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.2, 0.45, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.7, 0.45, 0)
 mesh = SubResource("CounterMesh")
 
 [node name="Item0" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.0, 1.22, -2.0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 1.22, -2.5)
 mesh = SubResource("ItemSphereMesh")
 
 [node name="Item1" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.15, 1.18, -0.9)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.65, 1.18, -0.9)
 mesh = SubResource("ItemBoxMesh")
 
 [node name="Item2" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.05, 1.2, 0.15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.55, 1.2, 0.15)
 mesh = SubResource("ItemCanMesh")
 
 [node name="Item3" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.2, 1.22, 1.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.7, 1.22, 1.1)
 mesh = SubResource("ItemSphereMesh")
 
 [node name="Item4" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.1, 1.18, 2.0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.6, 1.18, 2.5)
 mesh = SubResource("ItemBoxMesh")
 
 [node name="Keeper" type="Node3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.4, 0, -1.6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.9, 0, -1.6)
 
 [node name="Body" type="MeshInstance3D" parent="Shop/Keeper"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
@@ -256,13 +256,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.95, 0)
 mesh = SubResource("KeeperHeadMesh")
 
 [node name="Hatch" type="Node3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 3.2, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.2, 3.2, 0)
 
 [node name="Panel" type="MeshInstance3D" parent="Shop/Hatch"]
 mesh = SubResource("HatchPanelMesh")
 
 [node name="Bar0" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1, -0.08, 0, -2.0)
+transform = Transform3D(0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1, -0.08, 0, -2.5)
 mesh = SubResource("HatchBarMesh")
 
 [node name="Bar1" type="MeshInstance3D" parent="Shop/Hatch"]
@@ -278,11 +278,11 @@ transform = Transform3D(0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1, 
 mesh = SubResource("HatchBarMesh")
 
 [node name="Bar4" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1, -0.08, 0, 2.0)
+transform = Transform3D(0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1, -0.08, 0, 2.5)
 mesh = SubResource("HatchBarMesh")
 
 [node name="Bar5" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0, 1, -0.1, 0, -2.0)
+transform = Transform3D(0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0, 1, -0.1, 0, -2.5)
 mesh = SubResource("HatchBarMesh")
 
 [node name="Bar6" type="MeshInstance3D" parent="Shop/Hatch"]
@@ -298,11 +298,11 @@ transform = Transform3D(0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0, 1, 
 mesh = SubResource("HatchBarMesh")
 
 [node name="Bar9" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0, 1, -0.1, 0, 2.0)
+transform = Transform3D(0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0, 1, -0.1, 0, 2.5)
 mesh = SubResource("HatchBarMesh")
 
 [node name="DockPoint" type="Marker3D" parent="."]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 4.8, 0, 0)
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 7.5, 0, 0)
 
 [node name="ExitPoint" type="Marker3D" parent="."]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 1.5, 0, 0)
