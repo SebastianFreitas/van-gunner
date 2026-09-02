@@ -2,10 +2,11 @@ extends Node3D
 
 ## Truck-style rear double doors.
 ## Grip (button) retracts first, then Mount (black latch) pulls into the door
-## while keeping its head visible. Visual leaves swing on hinges (no physics). Fixed half-blockers on world
+## while keeping its head visible. Visual leaves swing on hinges. Fixed half-blockers on world
 ## layer 1 stop the player when a leaf is closed — they never rotate, so
-## open/close never pushes anyone. Scripted Node3D mobs ignore physics, so
-## callers should use is_passage_open() / get_outside_hold_position().
+## close never pushes anyone. Hinge-attached leaf colliders (same layer) take
+## over while open so the swung panel blocks the player. Scripted Node3D mobs
+## ignore physics, so callers should use is_passage_open() / get_outside_hold_position().
 
 signal opened
 signal closed
@@ -48,6 +49,8 @@ var WINDOW_HOLE: PackedVector2Array = PackedVector2Array([
 
 var _left_blocker_shapes: Array[CollisionShape3D] = []
 var _right_blocker_shapes: Array[CollisionShape3D] = []
+var _left_leaf_body: StaticBody3D
+var _right_leaf_body: StaticBody3D
 var _left_grip_closed: Vector3
 var _left_mount_closed: Vector3
 var _right_grip_closed: Vector3
@@ -68,6 +71,10 @@ func _ready() -> void:
 	_right_mount_closed = _right_mount.position
 	_left_blocker_shapes = _collect_blocker_shapes("Left")
 	_right_blocker_shapes = _collect_blocker_shapes("Right")
+	_left_leaf_body = _create_leaf_collision_body(_left_hinge)
+	_right_leaf_body = _create_leaf_collision_body(_right_hinge)
+	_set_leaf_collision_enabled(SIDE_LEFT, _left_open)
+	_set_leaf_collision_enabled(SIDE_RIGHT, _right_open)
 	if _left_glass and _left_glass.has_signal("shattered"):
 		_left_glass.shattered.connect(func() -> void: glass_shattered.emit(SIDE_LEFT))
 	if _right_glass and _right_glass.has_signal("shattered"):
@@ -196,6 +203,7 @@ func mark_door_broken(side: StringName) -> void:
 		open_door(side)
 	else:
 		_set_blocker_enabled(side, false)
+		_set_leaf_collision_enabled(side, true)
 
 
 ## Standpoint outside closed doors for scripted mobs (world space).
@@ -225,6 +233,7 @@ func open_door(side: StringName) -> void:
 		return
 	_set_door_open(side, true)
 	_set_blocker_enabled(side, false)
+	_set_leaf_collision_enabled(side, true)
 	_animate_door(side, true)
 	door_changed.emit(side, true)
 	if is_open():
@@ -240,6 +249,7 @@ func close_door(side: StringName) -> void:
 	await tween.finished
 	if not is_door_open(side):
 		_set_blocker_enabled(side, true)
+		_set_leaf_collision_enabled(side, false)
 		door_changed.emit(side, false)
 		if not _left_open and not _right_open:
 			closed.emit()
@@ -273,6 +283,28 @@ func _set_blocker_enabled(side: StringName, enabled: bool) -> void:
 	var shapes := _left_blocker_shapes if side == SIDE_LEFT else _right_blocker_shapes
 	for shape in shapes:
 		shape.disabled = not enabled
+
+
+func _set_leaf_collision_enabled(side: StringName, enabled: bool) -> void:
+	var body := _left_leaf_body if side == SIDE_LEFT else _right_leaf_body
+	if body:
+		body.collision_layer = 1 if enabled else 0
+
+
+func _create_leaf_collision_body(hinge: Node3D) -> StaticBody3D:
+	var interact := hinge.get_node_or_null("Interact") as StaticBody3D
+	if interact == null:
+		return null
+	var body := StaticBody3D.new()
+	body.name = "LeafCollision"
+	body.collision_layer = 0
+	body.collision_mask = 0
+	body.transform = interact.transform
+	hinge.add_child(body)
+	for child in interact.get_children():
+		if child is CollisionShape3D:
+			body.add_child((child as CollisionShape3D).duplicate())
+	return body
 
 
 func _collect_blocker_shapes(side_prefix: String) -> Array[CollisionShape3D]:
