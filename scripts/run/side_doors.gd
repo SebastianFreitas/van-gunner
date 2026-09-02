@@ -27,6 +27,34 @@ const SIDE_RIGHT := &"right"
 ## Grip pull into the door (flush / pocketed).
 @export var grip_retract_distance := 0.06
 
+## Door leaf extents (slightly inset from the wall opening).
+const DOOR_HALF_Z := 1.265
+const DOOR_THICKNESS := 0.14
+const OUTER_SKIN := 0.035
+const FRAME_THICKNESS := 0.05
+## Window center on the leaf (matches CSG WindowCut / rear-style pane).
+const DOOR_WIN_CENTER_Y := 1.775
+
+## Exact CSG outlines from van.tscn (Vector2 = local Z, local Y from window center).
+var DOOR_CUT_POLY: PackedVector2Array = PackedVector2Array([
+	Vector2(-0.85, -0.55), Vector2(-0.97, -0.49), Vector2(-1.05, -0.38),
+	Vector2(-1.05, 0.38), Vector2(-0.97, 0.49), Vector2(-0.85, 0.55),
+	Vector2(0.85, 0.55), Vector2(0.97, 0.49), Vector2(1.05, 0.38),
+	Vector2(1.05, -0.38), Vector2(0.97, -0.49), Vector2(0.85, -0.55),
+])
+var DOOR_FRAME_OUTER_POLY: PackedVector2Array = PackedVector2Array([
+	Vector2(-0.9, -0.6), Vector2(-1.03, -0.535), Vector2(-1.12, -0.42),
+	Vector2(-1.12, 0.42), Vector2(-1.03, 0.535), Vector2(-0.9, 0.6),
+	Vector2(0.9, 0.6), Vector2(1.03, 0.535), Vector2(1.12, 0.42),
+	Vector2(1.12, -0.42), Vector2(1.03, -0.535), Vector2(0.9, -0.6),
+])
+var DOOR_GLASS_POLY: PackedVector2Array = PackedVector2Array([
+	Vector2(-0.76, -0.48), Vector2(-0.88, -0.43), Vector2(-0.96, -0.33),
+	Vector2(-0.96, 0.33), Vector2(-0.88, 0.43), Vector2(-0.76, 0.48),
+	Vector2(0.76, 0.48), Vector2(0.88, 0.43), Vector2(0.96, 0.33),
+	Vector2(0.96, -0.33), Vector2(0.88, -0.43), Vector2(0.76, -0.48),
+])
+
 @onready var _left: Node3D = $Left
 @onready var _right: Node3D = $Right
 @onready var _left_glass: Node = $Left/BreakableGlass
@@ -54,6 +82,7 @@ var _right_tween: Tween
 
 
 func _ready() -> void:
+	_fit_to_side_walls()
 	_left_closed_pos = _left.position
 	_right_closed_pos = _right.position
 	_left_grip_closed = _left_grip.position
@@ -64,6 +93,138 @@ func _ready() -> void:
 		_left_glass.shattered.connect(func() -> void: glass_shattered.emit(SIDE_LEFT))
 	if _right_glass and _right_glass.has_signal("shattered"):
 		_right_glass.shattered.connect(func() -> void: glass_shattered.emit(SIDE_RIGHT))
+
+
+func _fit_to_side_walls() -> void:
+	var walls := get_parent().get_node_or_null("SideWalls") as VanSideWall
+	if walls == null:
+		return
+	_fit_door_leaf(_left, -1.0, walls)
+	_fit_door_leaf(_right, 1.0, walls)
+
+
+func _fit_door_leaf(leaf: Node3D, sign: float, walls: VanSideWall) -> void:
+	var y_min := walls.door_y_min
+	var y_max := walls.door_y_max
+	var mid_y := (y_min + y_max) * 0.5
+	var x_ref := walls.wall_x_at(mid_y)
+	var z_ref := walls.door_center_z
+	var z0 := z_ref - DOOR_HALF_Z
+	var z1 := z_ref + DOOR_HALF_Z
+
+	leaf.rotation = Vector3.ZERO
+	leaf.position = Vector3(sign * x_ref, mid_y, z_ref)
+
+	var body_mat := _steal_material(leaf, "Panel/Body")
+	var trim_mat := _steal_material(leaf, "Panel/OuterSkin")
+	var frame_mat := _steal_material(leaf, "WindowFrame/Outer")
+	var glass_mat := _steal_material(leaf, "WindowGlass")
+
+	_hide_node(leaf, "Panel")
+	_hide_node(leaf, "WindowFrame")
+	_free_node(leaf, "WindowGlass")
+	_free_node(leaf, "CurvedBody")
+	_free_node(leaf, "CurvedOuter")
+	_free_node(leaf, "CurvedFrame")
+	_free_node(leaf, "CurvedGlass")
+
+	# Door leaf = wall-material panel with rounded WindowCut (same idea as rear doors).
+	var body := MeshInstance3D.new()
+	body.name = "CurvedBody"
+	body.mesh = walls.build_curved_shell_mesh(
+		sign, y_min, y_max, z0, z1, x_ref, mid_y, z_ref, DOOR_THICKNESS,
+		0.0, 28, 16,
+		INF, -INF, INF, -INF,
+		PackedVector2Array(),
+		DOOR_CUT_POLY,
+		DOOR_WIN_CENTER_Y
+	)
+	body.material_override = body_mat
+	body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	leaf.add_child(body)
+
+	var outer := MeshInstance3D.new()
+	outer.name = "CurvedOuter"
+	outer.mesh = walls.build_curved_shell_mesh(
+		sign, y_min + 0.02, y_max - 0.02, z0 + 0.02, z1 - 0.02,
+		x_ref, mid_y, z_ref, OUTER_SKIN,
+		sign * DOOR_THICKNESS, 24, 14,
+		INF, -INF, INF, -INF,
+		PackedVector2Array(),
+		DOOR_CUT_POLY,
+		DOOR_WIN_CENTER_Y
+	)
+	outer.material_override = trim_mat
+	outer.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	leaf.add_child(outer)
+
+	var frame := MeshInstance3D.new()
+	frame.name = "CurvedFrame"
+	frame.mesh = walls.build_curved_frame_ring_mesh(
+		sign, DOOR_FRAME_OUTER_POLY, DOOR_GLASS_POLY,
+		x_ref, mid_y, z_ref, DOOR_WIN_CENTER_Y, FRAME_THICKNESS, sign * 0.02, 10
+	)
+	frame.material_override = frame_mat
+	frame.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	leaf.add_child(frame)
+
+	var glass := MeshInstance3D.new()
+	glass.name = "WindowGlass"
+	glass.mesh = walls.build_curved_pane_from_poly(
+		sign, DOOR_GLASS_POLY, x_ref, mid_y, z_ref, DOOR_WIN_CENTER_Y, sign * 0.055, 8
+	)
+	glass.material_override = glass_mat
+	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	leaf.add_child(glass)
+
+	var breakable := leaf.get_node_or_null("BreakableGlass")
+	if breakable and breakable.has_method("bind_glass_visual"):
+		breakable.bind_glass_visual(glass)
+
+	_place_on_curve(leaf.get_node_or_null("Handle") as Node3D, walls, sign, x_ref, mid_y, 1.375, 0.85, 0.12)
+	_place_on_curve(leaf.get_node_or_null("IronCross") as Node3D, walls, sign, x_ref, mid_y, DOOR_WIN_CENTER_Y, 0.0, 0.03)
+	_place_on_curve(breakable as Node3D, walls, sign, x_ref, mid_y, DOOR_WIN_CENTER_Y, 0.0, 0.055)
+
+
+func _place_on_curve(
+	node: Node3D,
+	walls: VanSideWall,
+	sign: float,
+	x_ref: float,
+	y_ref: float,
+	world_y: float,
+	local_z: float,
+	into_cabin: float
+) -> void:
+	if node == null:
+		return
+	# Keep any facing rotation; only rewrite translation onto the curve.
+	var basis := node.transform.basis
+	var local_x := walls.local_x_on_wall(sign, world_y, x_ref) - sign * into_cabin
+	node.transform = Transform3D(basis, Vector3(local_x, world_y - y_ref, local_z))
+
+
+func _hide_node(parent: Node, path: String) -> void:
+	var node := parent.get_node_or_null(path) as Node3D
+	if node:
+		node.visible = false
+
+
+func _free_node(parent: Node, path: String) -> void:
+	var node := parent.get_node_or_null(path)
+	if node:
+		node.free()
+
+
+func _steal_material(parent: Node, path: String) -> Material:
+	var node := parent.get_node_or_null(path)
+	if node == null:
+		return null
+	if node is GeometryInstance3D and (node as GeometryInstance3D).material_override:
+		return (node as GeometryInstance3D).material_override
+	if node.get("material") != null:
+		return node.get("material") as Material
+	return null
 
 
 func is_open() -> bool:

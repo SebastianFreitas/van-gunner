@@ -23,13 +23,24 @@ func _ready() -> void:
 	monitorable = true
 	max_health = maxf(GameBalance.REAR_WINDOW_GLASS_HP, 0.0)
 	health = max_health
-	_glass_visual = get_parent().get_node_or_null("WindowGlass") as Node3D
-	if _glass_visual == null:
-		_glass_visual = get_node_or_null(glass_mesh_path) as Node3D
+	_resolve_glass_visual()
 	_collision = get_node_or_null("Collision") as CollisionShape3D
 	# Zero HP = already shattered (designer opt-out).
 	if is_zero_approx(max_health):
 		_shatter()
+
+
+## Side windows/doors rebuild the pane at runtime — rebind after that swap.
+func bind_glass_visual(visual: Node3D) -> void:
+	_glass_visual = visual
+
+
+func _resolve_glass_visual() -> void:
+	_glass_visual = get_parent().get_node_or_null("WindowGlass") as Node3D
+	if _glass_visual == null:
+		_glass_visual = get_node_or_null(glass_mesh_path) as Node3D
+	if _glass_visual == null:
+		_glass_visual = get_parent().get_node_or_null("CurvedGlass") as Node3D
 
 
 func is_intact() -> bool:
@@ -48,10 +59,10 @@ func take_damage(amount = null) -> void:
 
 
 func _damage_amount(amount) -> float:
-	if amount == null:
-		return 1.0
 	if amount is DamageInfo:
 		return (amount as DamageInfo).get_final_amount()
+	if amount == null:
+		return 1.0
 	return float(amount)
 
 
@@ -60,6 +71,8 @@ func _shatter() -> void:
 	health = 0.0
 	if _collision:
 		_collision.set_deferred("disabled", true)
+	if not is_instance_valid(_glass_visual):
+		_resolve_glass_visual()
 	if _glass_visual:
 		_glass_visual.hide()
 	_spawn_shatter_fx()

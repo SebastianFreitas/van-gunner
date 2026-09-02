@@ -11,16 +11,25 @@ extends Node3D
 ## Extra outward bulge at mid-height (meters). Makes the body read as curved, not a flat lean.
 @export var bow_out := 0.18
 @export var thickness := 0.10
-@export var y_segments := 32
-@export var z_segments := 64
+@export var y_segments := 56
+@export var z_segments := 112
 @export var wall_material: Material
 @export var rebuild_on_ready := true
 
-## Window openings (match SideWindows layout).
-@export var window_half_height := 0.84
-@export var window_half_length := 1.46
+## Window cut AABB (CSG WindowCut) — used for rails / broad checks.
+@export var window_half_height := 0.707
+@export var window_half_length := 1.222
 @export var window_center_y := 1.775
 @export var window_centers_z: PackedFloat32Array = PackedFloat32Array([2.835, -0.375])
+
+## Exact CSG WindowCut outline (z_off, y_off from window center). Wall metal
+## forms the surround; the dark frame outer sits over this lip like rear doors.
+var WINDOW_CUT_POLY: PackedVector2Array = PackedVector2Array([
+	Vector2(-0.983, -0.707), Vector2(-1.142, -0.636), Vector2(-1.222, -0.519),
+	Vector2(-1.222, 0.519), Vector2(-1.142, 0.636), Vector2(-0.983, 0.707),
+	Vector2(0.983, 0.707), Vector2(1.142, 0.636), Vector2(1.222, 0.519),
+	Vector2(1.222, -0.519), Vector2(1.142, -0.636), Vector2(0.983, -0.707),
+])
 
 ## Side-door openings (match SideDoors layout).
 @export var door_half_length := 1.30
@@ -53,6 +62,456 @@ func lean_angle_at(y: float) -> float:
 	var x0 := _profile_x(y - eps)
 	var x1 := _profile_x(y + eps)
 	return atan2(x0 - x1, eps * 2.0)
+
+
+## Local X so a child of a node at (±x_ref, y_ref, z_ref) sits on the interior face.
+func local_x_on_wall(sign: float, world_y: float, x_ref: float) -> float:
+	return sign * (_profile_x(world_y) - x_ref)
+
+
+## Point-in-polygon for window outlines. Poly is Vector2(z_off, y_off) from the
+## window/door-window center — same coords as the original CSGPolygon2D shapes.
+func point_in_poly(p: Vector2, poly: PackedVector2Array) -> bool:
+	var n := poly.size()
+	if n < 3:
+		return false
+	var inside := false
+	var j := n - 1
+	for i in range(n):
+		var pi: Vector2 = poly[i]
+		var pj: Vector2 = poly[j]
+		if ((pi.y > p.y) != (pj.y > p.y)) and (
+			p.x < (pj.x - pi.x) * (p.y - pi.y) / (pj.y - pi.y + 0.0000001) + pi.x
+		):
+			inside = not inside
+		j = i
+	return inside
+
+
+## Curved YZ shell following the cargo profile.
+## Optional rectangular hole, or packed polys (Vector2(z_off, y_off) from z_ref /
+## poly_center_y) for rounded outer silhouette + rounded glass cut.
+## Vertex space: local_x = sign*(profile(y)-x_ref) + x_shift, local_y = y-y_ref, local_z = z-z_ref.
+func build_curved_shell_mesh(
+	sign: float,
+	y_min: float,
+	y_max: float,
+	z_min: float,
+	z_max: float,
+	x_ref: float,
+	y_ref: float,
+	z_ref: float,
+	thickness: float,
+	x_shift: float = 0.0,
+	y_segments: int = 16,
+	z_segments: int = 12,
+	hole_y_min: float = INF,
+	hole_y_max: float = -INF,
+	hole_z_min: float = INF,
+	hole_z_max: float = -INF,
+	outer_poly: PackedVector2Array = PackedVector2Array(),
+	hole_poly: PackedVector2Array = PackedVector2Array(),
+	poly_center_y: float = INF
+) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var has_rect_hole := hole_y_min < hole_y_max and hole_z_min < hole_z_max
+	var has_outer_poly := outer_poly.size() >= 3
+	var has_hole_poly := hole_poly.size() >= 3
+	var poly_cy := poly_center_y if poly_center_y < INF else (y_min + y_max) * 0.5
+	var half_span := span_z * 0.5
+
+	var inner: Array = []
+	var outer: Array = []
+	var uvs: Array = []
+	var solid: Array = []
+
+	for iy in range(y_segments + 1):
+		var row_i: Array = []
+		var row_o: Array = []
+		var row_uv: Array = []
+		var row_s: Array = []
+		var ty := float(iy) / float(y_segments)
+		var y := lerpf(y_min, y_max, ty)
+		var x_face := sign * _profile_x(y) + x_shift
+		var x_inner := x_face - sign * x_ref
+		var x_outer := x_inner + sign * thickness
+		for iz in range(z_segments + 1):
+			var tz := float(iz) / float(z_segments)
+			var z := lerpf(z_min, z_max, tz)
+			row_i.append(Vector3(x_inner, y - y_ref, z - z_ref))
+			row_o.append(Vector3(x_outer, y - y_ref, z - z_ref))
+			row_uv.append(Vector2((z + half_span) / span_z, y / wall_height))
+			row_s.append(_shell_point_solid(
+				y, z, z_ref, poly_cy,
+				has_outer_poly, outer_poly, has_hole_poly, hole_poly,
+				has_rect_hole, hole_y_min, hole_y_max, hole_z_min, hole_z_max
+			))
+		inner.append(row_i)
+		outer.append(row_o)
+		uvs.append(row_uv)
+		solid.append(row_s)
+
+	for iy in range(y_segments):
+		for iz in range(z_segments):
+			var y_mid := lerpf(y_min, y_max, (float(iy) + 0.5) / float(y_segments))
+			var z_mid := lerpf(z_min, z_max, (float(iz) + 0.5) / float(z_segments))
+			if not _shell_point_solid(
+				y_mid, z_mid, z_ref, poly_cy,
+				has_outer_poly, outer_poly, has_hole_poly, hole_poly,
+				has_rect_hole, hole_y_min, hole_y_max, hole_z_min, hole_z_max
+			):
+				continue
+			_add_shell_cell(st, sign, inner, outer, uvs, iy, iz)
+
+	if has_rect_hole or has_outer_poly or has_hole_poly:
+		_add_shell_hole_returns(st, sign, inner, outer, uvs, solid)
+
+	# Rectangular outer edge returns only when the silhouette is the AABB itself.
+	if not has_outer_poly:
+		_add_shell_border_returns(st, sign, inner, outer, uvs, y_segments, z_segments)
+
+	st.generate_normals()
+	st.generate_tangents()
+	return st.commit()
+
+
+## Thin curved pane (glass) — single sheet, no thickness returns.
+func build_curved_pane_mesh(
+	sign: float,
+	y_min: float,
+	y_max: float,
+	z_min: float,
+	z_max: float,
+	x_ref: float,
+	y_ref: float,
+	z_ref: float,
+	x_shift: float = 0.0,
+	y_segments: int = 12,
+	z_segments: int = 10
+) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var half_span := span_z * 0.5
+	var verts: Array = []
+	var uvs: Array = []
+
+	for iy in range(y_segments + 1):
+		var row_v: Array = []
+		var row_uv: Array = []
+		var y := lerpf(y_min, y_max, float(iy) / float(y_segments))
+		var x_local := sign * (_profile_x(y) - x_ref) + x_shift
+		for iz in range(z_segments + 1):
+			var z := lerpf(z_min, z_max, float(iz) / float(z_segments))
+			row_v.append(Vector3(x_local, y - y_ref, z - z_ref))
+			row_uv.append(Vector2((z + half_span) / span_z, y / wall_height))
+		verts.append(row_v)
+		uvs.append(row_uv)
+
+	for iy in range(y_segments):
+		for iz in range(z_segments):
+			var v00: Vector3 = verts[iy][iz]
+			var v10: Vector3 = verts[iy][iz + 1]
+			var v01: Vector3 = verts[iy + 1][iz]
+			var v11: Vector3 = verts[iy + 1][iz + 1]
+			var uv00: Vector2 = uvs[iy][iz]
+			var uv10: Vector2 = uvs[iy][iz + 1]
+			var uv01: Vector2 = uvs[iy + 1][iz]
+			var uv11: Vector2 = uvs[iy + 1][iz + 1]
+			# Double-sided so glass reads from cabin and exterior.
+			_add_tri(st, v00, uv00, v01, uv01, v10, uv10)
+			_add_tri(st, v10, uv10, v01, uv01, v11, uv11)
+			_add_tri(st, v00, uv00, v10, uv10, v01, uv01)
+			_add_tri(st, v10, uv10, v11, uv11, v01, uv01)
+
+	st.generate_normals()
+	st.generate_tangents()
+	return st.commit()
+
+
+## Curved glass pane clipped to a rounded CSG-style polygon (Vector2(z_off, y_off)).
+func build_curved_pane_from_poly(
+	sign: float,
+	poly: PackedVector2Array,
+	x_ref: float,
+	y_ref: float,
+	z_ref: float,
+	poly_center_y: float,
+	x_shift: float = 0.0,
+	edge_subdiv: int = 4
+) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var half_span := span_z * 0.5
+	var ring: Array[Vector3] = []
+	var ring_uv: Array[Vector2] = []
+	var n := poly.size()
+	if n < 3:
+		return st.commit()
+
+	for i in range(n):
+		var a: Vector2 = poly[i]
+		var b: Vector2 = poly[(i + 1) % n]
+		for s in range(edge_subdiv):
+			var t := float(s) / float(edge_subdiv)
+			var p := a.lerp(b, t)
+			var y := poly_center_y + p.y
+			var z := z_ref + p.x
+			var x_local := sign * (_profile_x(y) - x_ref) + x_shift
+			ring.append(Vector3(x_local, y - y_ref, z - z_ref))
+			ring_uv.append(Vector2((z + half_span) / span_z, y / wall_height))
+
+	# Centroid in poly space → curved surface (convex rounded rect).
+	var c2 := Vector2.ZERO
+	for i in range(n):
+		c2 += poly[i]
+	c2 /= float(n)
+	var cy := poly_center_y + c2.y
+	var cz := z_ref + c2.x
+	var c := Vector3(sign * (_profile_x(cy) - x_ref) + x_shift, cy - y_ref, cz - z_ref)
+	var cuv := Vector2((cz + half_span) / span_z, cy / wall_height)
+
+	var m := ring.size()
+	for i in range(m):
+		var v0: Vector3 = ring[i]
+		var v1: Vector3 = ring[(i + 1) % m]
+		var uv0: Vector2 = ring_uv[i]
+		var uv1: Vector2 = ring_uv[(i + 1) % m]
+		_add_tri(st, c, cuv, v0, uv0, v1, uv1)
+		_add_tri(st, c, cuv, v1, uv1, v0, uv0)
+
+	st.generate_normals()
+	st.generate_tangents()
+	return st.commit()
+
+
+## Thin CSG-style frame ring: loft outer→inner polys onto the wall curve.
+## Matches the extruded WindowFrame (Outer − InnerCut) silhouette.
+## Each spoke keeps a flat cross-section (same face X for outer+inner) so the
+## border reads like rear CSG — slim, sharp — not a bowed "inflated tire".
+func build_curved_frame_ring_mesh(
+	sign: float,
+	outer_poly: PackedVector2Array,
+	inner_poly: PackedVector2Array,
+	x_ref: float,
+	y_ref: float,
+	z_ref: float,
+	poly_center_y: float,
+	thickness: float,
+	x_shift: float = 0.0,
+	edge_subdiv: int = 8
+) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	if outer_poly.size() < 3 or inner_poly.size() < 3:
+		return st.commit()
+
+	var outer_2 := _densify_poly(outer_poly, edge_subdiv)
+	var inner_2 := _densify_poly(inner_poly, edge_subdiv)
+	# Same vertex count required for index pairing.
+	var count := mini(outer_2.size(), inner_2.size())
+	if count < 3:
+		return st.commit()
+
+	var half_span := span_z * 0.5
+	var oi: Array[Vector3] = []
+	var oo: Array[Vector3] = []
+	var ii: Array[Vector3] = []
+	var io: Array[Vector3] = []
+	var ouv: Array[Vector2] = []
+	var iuv: Array[Vector2] = []
+
+	for k in range(count):
+		var op: Vector2 = outer_2[k]
+		var ip: Vector2 = inner_2[k]
+		var oy := poly_center_y + op.y
+		var oz := z_ref + op.x
+		var iy := poly_center_y + ip.y
+		var iz := z_ref + ip.x
+		# Flat CSG face across the border width — bend only along the perimeter.
+		var mid_y := (oy + iy) * 0.5
+		var face_x := sign * (_profile_x(mid_y) - x_ref) + x_shift
+		oi.append(Vector3(face_x, oy - y_ref, oz - z_ref))
+		ii.append(Vector3(face_x, iy - y_ref, iz - z_ref))
+		oo.append(Vector3(face_x + sign * thickness, oy - y_ref, oz - z_ref))
+		io.append(Vector3(face_x + sign * thickness, iy - y_ref, iz - z_ref))
+		ouv.append(Vector2((oz + half_span) / span_z, oy / wall_height))
+		iuv.append(Vector2((iz + half_span) / span_z, iy / wall_height))
+
+	for k in range(count):
+		var n := (k + 1) % count
+		# Cabin face — smooth along the curve, hard edge vs returns.
+		st.set_smooth_group(0)
+		if sign > 0.0:
+			_add_tri(st, oi[k], ouv[k], ii[k], iuv[k], oi[n], ouv[n])
+			_add_tri(st, oi[n], ouv[n], ii[k], iuv[k], ii[n], iuv[n])
+		else:
+			_add_tri(st, oi[k], ouv[k], oi[n], ouv[n], ii[k], iuv[k])
+			_add_tri(st, oi[n], ouv[n], ii[n], iuv[n], ii[k], iuv[k])
+		# Exterior face.
+		st.set_smooth_group(1)
+		if sign > 0.0:
+			_add_tri(st, oo[k], ouv[k], oo[n], ouv[n], io[k], iuv[k])
+			_add_tri(st, oo[n], ouv[n], io[n], iuv[n], io[k], iuv[k])
+		else:
+			_add_tri(st, oo[k], ouv[k], io[k], iuv[k], oo[n], ouv[n])
+			_add_tri(st, oo[n], ouv[n], io[k], iuv[k], io[n], iuv[n])
+		# Outer / inner returns — flat so corners stay CSG-sharp.
+		st.set_smooth_group(-1)
+		_add_return_quad(st, sign, oi[k], oo[k], oi[n], oo[n], ouv[k], ouv[n], sign < 0.0)
+		_add_return_quad(st, sign, ii[k], io[k], ii[n], io[n], iuv[k], iuv[n], sign > 0.0)
+
+	st.index()
+	st.generate_normals()
+	st.generate_tangents()
+	return st.commit()
+
+
+func _densify_poly(poly: PackedVector2Array, edge_subdiv: int) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var n := poly.size()
+	var steps := maxi(edge_subdiv, 1)
+	for i in range(n):
+		var a: Vector2 = poly[i]
+		var b: Vector2 = poly[(i + 1) % n]
+		for s in range(steps):
+			out.append(a.lerp(b, float(s) / float(steps)))
+	return out
+
+
+func _shell_point_solid(
+	y: float,
+	z: float,
+	z_ref: float,
+	poly_cy: float,
+	has_outer_poly: bool,
+	outer_poly: PackedVector2Array,
+	has_hole_poly: bool,
+	hole_poly: PackedVector2Array,
+	has_rect_hole: bool,
+	hole_y_min: float,
+	hole_y_max: float,
+	hole_z_min: float,
+	hole_z_max: float
+) -> bool:
+	var p := Vector2(z - z_ref, y - poly_cy)
+	if has_outer_poly and not point_in_poly(p, outer_poly):
+		return false
+	if has_hole_poly and point_in_poly(p, hole_poly):
+		return false
+	if has_rect_hole and not has_hole_poly:
+		if y > hole_y_min and y < hole_y_max and z > hole_z_min and z < hole_z_max:
+			return false
+	return true
+
+
+func _add_shell_cell(
+	st: SurfaceTool,
+	sign: float,
+	inner: Array,
+	outer: Array,
+	uvs: Array,
+	iy: int,
+	iz: int
+) -> void:
+	var i00: Vector3 = inner[iy][iz]
+	var i10: Vector3 = inner[iy][iz + 1]
+	var i01: Vector3 = inner[iy + 1][iz]
+	var i11: Vector3 = inner[iy + 1][iz + 1]
+	var o00: Vector3 = outer[iy][iz]
+	var o10: Vector3 = outer[iy][iz + 1]
+	var o01: Vector3 = outer[iy + 1][iz]
+	var o11: Vector3 = outer[iy + 1][iz + 1]
+	var uv00: Vector2 = uvs[iy][iz]
+	var uv10: Vector2 = uvs[iy][iz + 1]
+	var uv01: Vector2 = uvs[iy + 1][iz]
+	var uv11: Vector2 = uvs[iy + 1][iz + 1]
+	if sign > 0.0:
+		_add_tri(st, i00, uv00, i01, uv01, i10, uv10)
+		_add_tri(st, i10, uv10, i01, uv01, i11, uv11)
+		_add_tri(st, o00, uv00, o10, uv10, o01, uv01)
+		_add_tri(st, o10, uv10, o11, uv11, o01, uv01)
+	else:
+		_add_tri(st, i00, uv00, i10, uv10, i01, uv01)
+		_add_tri(st, i10, uv10, i11, uv11, i01, uv01)
+		_add_tri(st, o00, uv00, o01, uv01, o10, uv10)
+		_add_tri(st, o10, uv10, o01, uv01, o11, uv11)
+
+
+func _add_shell_hole_returns(
+	st: SurfaceTool,
+	sign: float,
+	inner: Array,
+	outer: Array,
+	uvs: Array,
+	solid: Array
+) -> void:
+	var y_n: int = solid.size() - 1
+	var z_n: int = solid[0].size() - 1
+	for iy in range(y_n):
+		for iz in range(z_n):
+			var s00: bool = solid[iy][iz]
+			var s10: bool = solid[iy][iz + 1]
+			var s01: bool = solid[iy + 1][iz]
+			if s00 != s10:
+				_add_return_quad(
+					st, sign,
+					inner[iy][iz + 1], outer[iy][iz + 1],
+					inner[iy + 1][iz + 1], outer[iy + 1][iz + 1],
+					uvs[iy][iz + 1], uvs[iy + 1][iz + 1],
+					s00
+				)
+			if s00 != s01:
+				_add_return_quad(
+					st, sign,
+					inner[iy + 1][iz], outer[iy + 1][iz],
+					inner[iy + 1][iz + 1], outer[iy + 1][iz + 1],
+					uvs[iy + 1][iz], uvs[iy + 1][iz + 1],
+					s00
+				)
+
+
+func _add_shell_border_returns(
+	st: SurfaceTool,
+	sign: float,
+	inner: Array,
+	outer: Array,
+	uvs: Array,
+	y_segments: int,
+	z_segments: int
+) -> void:
+	# Bottom and top edges.
+	for iz in range(z_segments):
+		_add_return_quad(
+			st, sign,
+			inner[0][iz], outer[0][iz],
+			inner[0][iz + 1], outer[0][iz + 1],
+			uvs[0][iz], uvs[0][iz + 1],
+			sign > 0.0
+		)
+		_add_return_quad(
+			st, sign,
+			inner[y_segments][iz], outer[y_segments][iz],
+			inner[y_segments][iz + 1], outer[y_segments][iz + 1],
+			uvs[y_segments][iz], uvs[y_segments][iz + 1],
+			sign < 0.0
+		)
+	# Z-min and Z-max edges.
+	for iy in range(y_segments):
+		_add_return_quad(
+			st, sign,
+			inner[iy][0], outer[iy][0],
+			inner[iy + 1][0], outer[iy + 1][0],
+			uvs[iy][0], uvs[iy + 1][0],
+			sign < 0.0
+		)
+		_add_return_quad(
+			st, sign,
+			inner[iy][z_segments], outer[iy][z_segments],
+			inner[iy + 1][z_segments], outer[iy + 1][z_segments],
+			uvs[iy][z_segments], uvs[iy + 1][z_segments],
+			sign > 0.0
+		)
 
 
 func _build() -> void:
@@ -101,13 +560,34 @@ func _build_side_mesh(sign: float) -> ArrayMesh:
 		uvs.append(row_uv)
 		solid.append(row_solid)
 
+	# Outer skin (thin shell so openings have depth).
+	var outer: Array = []
+	for iy in range(y_segments + 1):
+		var row: Array = []
+		var y := float(iy) / float(y_segments) * wall_height
+		var x_inner := sign * _profile_x(y)
+		var x_outer := x_inner + sign * thickness
+		for iz in range(z_segments + 1):
+			var z := lerpf(-half_z, half_z, float(iz) / float(z_segments))
+			row.append(Vector3(x_outer, y, z))
+		outer.append(row)
+
+	# Pull fringe verts onto the rounded WindowCut so the liner opening matches
+	# the rear door CSG silhouette instead of a stair-stepped rect.
+	_project_window_cut_fringe(sign, verts, outer, solid)
+
 	# Interior face (normals toward cabin).
 	for iy in range(y_segments):
 		for iz in range(z_segments):
-			# Keep a cell if its center is solid — cleaner punched openings.
-			var y_mid := (float(iy) + 0.5) / float(y_segments) * wall_height
-			var z_mid := lerpf(-half_z, half_z, (float(iz) + 0.5) / float(z_segments))
-			if _is_open(y_mid, z_mid):
+			var y0 := float(iy) / float(y_segments) * wall_height
+			var y1 := float(iy + 1) / float(y_segments) * wall_height
+			var z0 := lerpf(-half_z, half_z, float(iz) / float(z_segments))
+			var z1 := lerpf(-half_z, half_z, float(iz + 1) / float(z_segments))
+			# Door bay: punch by cell center. Windows: only punch cells fully inside
+			# the rounded cut so wall metal stays under the frame lip (rear-door look).
+			if _is_door_bay_open((y0 + y1) * 0.5, (z0 + z1) * 0.5):
+				continue
+			if _cell_fully_in_window_cut(y0, y1, z0, z1):
 				continue
 			var v00: Vector3 = verts[iy][iz]
 			var v10: Vector3 = verts[iy][iz + 1]
@@ -125,23 +605,15 @@ func _build_side_mesh(sign: float) -> ArrayMesh:
 				_add_tri(st, v00, uv00, v10, uv10, v01, uv01)
 				_add_tri(st, v10, uv10, v11, uv11, v01, uv01)
 
-	# Outer skin (thin shell so openings have depth).
-	var outer: Array = []
-	for iy in range(y_segments + 1):
-		var row: Array = []
-		var y := float(iy) / float(y_segments) * wall_height
-		var x_inner := sign * _profile_x(y)
-		var x_outer := x_inner + sign * thickness
-		for iz in range(z_segments + 1):
-			var z := lerpf(-half_z, half_z, float(iz) / float(z_segments))
-			row.append(Vector3(x_outer, y, z))
-		outer.append(row)
-
 	for iy in range(y_segments):
 		for iz in range(z_segments):
-			var y_mid := (float(iy) + 0.5) / float(y_segments) * wall_height
-			var z_mid := lerpf(-half_z, half_z, (float(iz) + 0.5) / float(z_segments))
-			if _is_open(y_mid, z_mid):
+			var y0 := float(iy) / float(y_segments) * wall_height
+			var y1 := float(iy + 1) / float(y_segments) * wall_height
+			var z0 := lerpf(-half_z, half_z, float(iz) / float(z_segments))
+			var z1 := lerpf(-half_z, half_z, float(iz + 1) / float(z_segments))
+			if _is_door_bay_open((y0 + y1) * 0.5, (z0 + z1) * 0.5):
+				continue
+			if _cell_fully_in_window_cut(y0, y1, z0, z1):
 				continue
 			var v00: Vector3 = outer[iy][iz]
 			var v10: Vector3 = outer[iy][iz + 1]
@@ -288,15 +760,85 @@ func _profile_x(y: float) -> float:
 
 
 func _is_open(y: float, z: float) -> bool:
-	# Side door bay (full height).
-	if y >= door_y_min and y <= door_y_max and absf(z - door_center_z) <= door_half_length:
-		return true
-	# Window bays.
-	if absf(y - window_center_y) <= window_half_height:
-		for cz in window_centers_z:
-			if absf(z - cz) <= window_half_length:
+	return _is_door_bay_open(y, z) or _in_window_cut(y, z)
+
+
+func _is_door_bay_open(y: float, z: float) -> bool:
+	return y >= door_y_min and y <= door_y_max and absf(z - door_center_z) <= door_half_length
+
+
+func _in_window_cut(y: float, z: float) -> bool:
+	for cz in window_centers_z:
+		if point_in_poly(Vector2(z - cz, y - window_center_y), WINDOW_CUT_POLY):
+			return true
+	return false
+
+
+## Only punch a wall cell when every corner is inside the rounded cut — keeps
+## liner metal under the frame lip the way the rear door panel surrounds its pane.
+func _cell_fully_in_window_cut(y0: float, y1: float, z0: float, z1: float) -> bool:
+	return (
+		_in_window_cut(y0, z0)
+		and _in_window_cut(y0, z1)
+		and _in_window_cut(y1, z0)
+		and _in_window_cut(y1, z1)
+	)
+
+
+func _project_window_cut_fringe(sign: float, verts: Array, outer: Array, solid: Array) -> void:
+	for iy in range(y_segments + 1):
+		for iz in range(z_segments + 1):
+			if solid[iy][iz]:
+				continue
+			if not _has_solid_neighbor(solid, iy, iz):
+				continue
+			var y: float = verts[iy][iz].y
+			var z: float = verts[iy][iz].z
+			# nearest returns Vector2(world_y, world_z)
+			var p := _nearest_on_window_cut(y, z)
+			var wy := p.x
+			var wz := p.y
+			var x := sign * _profile_x(wy)
+			verts[iy][iz] = Vector3(x, wy, wz)
+			outer[iy][iz] = Vector3(x + sign * thickness, wy, wz)
+			solid[iy][iz] = true
+
+
+func _has_solid_neighbor(solid: Array, iy: int, iz: int) -> bool:
+	for dy in range(-1, 2):
+		for dz in range(-1, 2):
+			if dy == 0 and dz == 0:
+				continue
+			var ny := iy + dy
+			var nz := iz + dz
+			if ny < 0 or nz < 0 or ny > y_segments or nz > z_segments:
+				continue
+			if solid[ny][nz]:
 				return true
 	return false
+
+
+func _nearest_on_window_cut(y: float, z: float) -> Vector2:
+	## Returns Vector2(world_y, world_z) on the nearest WindowCut edge.
+	var best := Vector2(y, z)
+	var best_d := INF
+	for cz in window_centers_z:
+		var local := Vector2(z - cz, y - window_center_y)
+		var n := WINDOW_CUT_POLY.size()
+		for i in range(n):
+			var a: Vector2 = WINDOW_CUT_POLY[i]
+			var b: Vector2 = WINDOW_CUT_POLY[(i + 1) % n]
+			var ab := b - a
+			var t := 0.0
+			var denom := ab.dot(ab)
+			if denom > 0.0000001:
+				t = clampf((local - a).dot(ab) / denom, 0.0, 1.0)
+			var q := a.lerp(b, t)
+			var d := local.distance_squared_to(q)
+			if d < best_d:
+				best_d = d
+				best = Vector2(window_center_y + q.y, cz + q.x)
+	return best
 
 
 func _add_tri(

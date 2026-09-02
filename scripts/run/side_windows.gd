@@ -1,8 +1,8 @@
 extends Node3D
 
 ## Side cargo windows — top-hinged sashes that tip vertically outward.
-## Tiny interior latch (grip/mount) retracts first, then the sash swings open.
-## Iron bars ride with the sash, so an open window clears the breach slot.
+## Built like rear doors: wall-material bezel with a rounded cut, then dark
+## frame + glass. All three pieces follow the bowed side-wall profile.
 
 signal opened
 signal closed
@@ -33,6 +33,24 @@ const DOOR_ADJACENT_WINDOWS: Array[StringName] = [
 @export var grip_retract_distance := 0.035
 @export var mount_retract_distance := 0.018
 
+## Matches original CSG sash (half extents).
+const SASH_HALF_H := 0.74
+const FRAME_THICKNESS := 0.05
+
+## Exact CSG outlines from van.tscn (Vector2 = local Z, local Y from window center).
+var FRAME_OUTER_POLY: PackedVector2Array = PackedVector2Array([
+	Vector2(-1.029, -0.74), Vector2(-1.196, -0.666), Vector2(-1.28, -0.543),
+	Vector2(-1.28, 0.543), Vector2(-1.196, 0.666), Vector2(-1.029, 0.74),
+	Vector2(1.029, 0.74), Vector2(1.196, 0.666), Vector2(1.28, 0.543),
+	Vector2(1.28, -0.543), Vector2(1.196, -0.666), Vector2(1.029, -0.74),
+])
+var GLASS_POLY: PackedVector2Array = PackedVector2Array([
+	Vector2(-0.861, -0.617), Vector2(-1.017, -0.56), Vector2(-1.1, -0.455),
+	Vector2(-1.1, 0.455), Vector2(-1.017, 0.56), Vector2(-0.861, 0.617),
+	Vector2(0.861, 0.617), Vector2(1.017, 0.56), Vector2(1.1, 0.455),
+	Vector2(1.1, -0.455), Vector2(1.017, -0.56), Vector2(0.861, -0.617),
+])
+
 var _hinges: Dictionary = {}
 var _grips: Dictionary = {}
 var _mounts: Dictionary = {}
@@ -43,10 +61,121 @@ var _tweens: Dictionary = {}
 
 
 func _ready() -> void:
+	_fit_to_side_walls()
 	_bind_window(WIN_LEFT_REAR, "LeftRear")
 	_bind_window(WIN_LEFT_FRONT, "LeftFront")
 	_bind_window(WIN_RIGHT_REAR, "RightRear")
 	_bind_window(WIN_RIGHT_FRONT, "RightFront")
+
+
+func _fit_to_side_walls() -> void:
+	var walls := get_parent().get_node_or_null("SideWalls") as VanSideWall
+	if walls == null:
+		return
+	_fit_window_root($LeftRear, -1.0, walls.window_centers_z[0], walls)
+	_fit_window_root($LeftFront, -1.0, walls.window_centers_z[1], walls)
+	_fit_window_root($RightRear, 1.0, walls.window_centers_z[0], walls)
+	_fit_window_root($RightFront, 1.0, walls.window_centers_z[1], walls)
+
+
+func _fit_window_root(root: Node3D, sign: float, z_center: float, walls: VanSideWall) -> void:
+	if root == null:
+		return
+
+	var mid_y := walls.window_center_y
+	var y_hinge := mid_y + SASH_HALF_H
+	var x_ref := walls.wall_x_at(y_hinge)
+	root.rotation = Vector3.ZERO
+	root.position = Vector3(sign * x_ref, y_hinge, z_center)
+
+	var hinge := root.get_node_or_null("Hinge") as Node3D
+	if hinge == null:
+		return
+	hinge.position = Vector3.ZERO
+	hinge.rotation = Vector3.ZERO
+
+	var frame_mat := _steal_material(hinge, "WindowFrame/Outer")
+	var glass_mat := _steal_material(hinge, "WindowGlass")
+
+	_hide_node(root, "WallPanel")
+	_hide_node(hinge, "WindowFrame")
+	_free_node(hinge, "WindowGlass")
+	_free_node(root, "CurvedBezel")
+	_free_node(hinge, "CurvedFrame")
+
+	# No separate bezel — VanSideWall punches the rounded WindowCut so the liner
+	# itself is the surround (same as the rear door leaf around its pane).
+
+	var frame := MeshInstance3D.new()
+	frame.name = "CurvedFrame"
+	frame.mesh = walls.build_curved_frame_ring_mesh(
+		sign, FRAME_OUTER_POLY, GLASS_POLY,
+		x_ref, y_hinge, z_center, mid_y, FRAME_THICKNESS, 0.0, 10
+	)
+	frame.material_override = frame_mat
+	frame.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	hinge.add_child(frame)
+
+	var glass := MeshInstance3D.new()
+	glass.name = "WindowGlass"
+	glass.mesh = walls.build_curved_pane_from_poly(
+		sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, sign * 0.03, 8
+	)
+	glass.material_override = glass_mat
+	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	hinge.add_child(glass)
+
+	var breakable := hinge.get_node_or_null("BreakableGlass")
+	if breakable and breakable.has_method("bind_glass_visual"):
+		breakable.bind_glass_visual(glass)
+
+	_place_on_curve(hinge.get_node_or_null("IronCross") as Node3D, walls, sign, x_ref, y_hinge, mid_y, 0.0, 0.02)
+	_place_on_curve(breakable as Node3D, walls, sign, x_ref, y_hinge, mid_y, 0.0, 0.04)
+	_place_on_curve(hinge.get_node_or_null("Interact") as Node3D, walls, sign, x_ref, y_hinge, mid_y, 0.0, 0.0)
+
+	var handle := hinge.get_node_or_null("Handle") as Node3D
+	if handle:
+		_place_on_curve(handle, walls, sign, x_ref, y_hinge, mid_y - 0.52, -0.95, 0.08)
+
+
+func _place_on_curve(
+	node: Node3D,
+	walls: VanSideWall,
+	sign: float,
+	x_ref: float,
+	y_ref: float,
+	world_y: float,
+	local_z: float,
+	into_cabin: float
+) -> void:
+	if node == null:
+		return
+	var basis := node.transform.basis
+	var local_x := walls.local_x_on_wall(sign, world_y, x_ref) - sign * into_cabin
+	node.transform = Transform3D(basis, Vector3(local_x, world_y - y_ref, local_z))
+
+
+func _hide_node(parent: Node, path: String) -> void:
+	var node := parent.get_node_or_null(path) as Node3D
+	if node:
+		node.visible = false
+
+
+func _free_node(parent: Node, path: String) -> void:
+	var node := parent.get_node_or_null(path)
+	if node:
+		node.free()
+
+
+func _steal_material(parent: Node, path: String) -> Material:
+	var node := parent.get_node_or_null(path)
+	if node == null:
+		return null
+	if node is GeometryInstance3D and (node as GeometryInstance3D).material_override:
+		return (node as GeometryInstance3D).material_override
+	if node.get("material") != null:
+		return node.get("material") as Material
+	return null
 
 
 func is_window_open(window_id: StringName) -> bool:
