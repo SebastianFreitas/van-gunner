@@ -6,7 +6,6 @@ uniform vec3 seam_color : source_color = vec3(0.14, 0.13, 0.115);
 uniform vec3 foam_color : source_color = vec3(0.38, 0.36, 0.32);
 uniform vec3 stain_color : source_color = vec3(0.22, 0.18, 0.12);
 uniform vec3 water_color : source_color = vec3(0.28, 0.26, 0.22);
-uniform vec3 tape_color : source_color = vec3(0.48, 0.42, 0.28);
 uniform vec2 ceiling_size_m = vec2(4.08, 9.4);
 uniform float bay_spacing_m : hint_range(0.6, 2.5) = 1.35;
 uniform float quilt_scale_m : hint_range(0.06, 0.4) = 0.14;
@@ -76,13 +75,6 @@ void fragment() {
 	float blotch = fbm(pos * 0.42 + vec2(6.2, 1.7));
 	float stain = smoothstep(0.62, 0.9, blotch) * (0.35 + 0.65 * side_rail);
 
-	// Occasional duct-tape repair patches baked into the liner.
-	vec2 tape_cell = floor(uv_m / vec2(1.1, 1.55));
-	vec2 tape_local = fract(uv_m / vec2(1.1, 1.55)) - vec2(0.5);
-	float tape_pick = step(0.88, hash21(tape_cell + 21.0));
-	float tape = tape_pick * (1.0 - smoothstep(0.12, 0.28, abs(tape_local.x)))
-		* (1.0 - smoothstep(0.08, 0.22, abs(tape_local.y)));
-
 	// Tiny fastener dots along bay seams.
 	vec2 rivet_cell = floor(vec2(uv_m.x / 0.35, uv_m.y / bay_spacing_m));
 	vec2 rivet_local = fract(vec2(uv_m.x / 0.35, uv_m.y / bay_spacing_m)) - vec2(0.5);
@@ -95,7 +87,6 @@ void fragment() {
 	color = mix(color, seam_color, quilt_seam * 0.55 + bay_seam * 0.75 + center_tape);
 	color = mix(color, stain_color, stain * 0.55 + side_rail * 0.18);
 	color = mix(color, water_color, water * 0.7);
-	color = mix(color, tape_color, tape * 0.85);
 	color = mix(color, vec3(0.16, 0.15, 0.13), rivet * 0.9);
 	color *= 0.94 + 0.12 * noise21(uv_m * 26.0);
 
@@ -107,7 +98,6 @@ void fragment() {
 			+ bay_seam * 0.06
 			+ stain * 0.08
 			+ water * 0.1
-			- tape * 0.12
 			- rivet * 0.2,
 		0.25,
 		1.0

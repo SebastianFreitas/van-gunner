@@ -1,7 +1,7 @@
 class_name VanCeiling
 extends Node3D
 
-## Barrel-vault interior ceiling with exposed wooden vigas, headliner, and cargo dressing.
+## Barrel-vault interior ceiling with headliner and cargo dressing.
 
 @export var span_x := 4.72
 @export var span_z := 9.4
@@ -9,11 +9,8 @@ extends Node3D
 @export var peak_rise := 0.38
 @export var x_segments := 20
 @export var z_segments := 40
-@export var viga_spacing := 1.35
-@export var viga_radius := 0.105
-@export var viga_length := 4.76
+@export var bay_spacing := 1.35
 @export var ceiling_material: Material
-@export var viga_material: Material
 @export var rebuild_on_ready := true
 
 var _built := false
@@ -37,7 +34,6 @@ func _build() -> void:
 	_built = true
 
 	var ceiling_mat := ceiling_material if ceiling_material else _default_ceiling_material()
-	var viga_mat := viga_material if viga_material else _default_viga_material()
 
 	var vault := MeshInstance3D.new()
 	vault.name = "Vault"
@@ -46,15 +42,11 @@ func _build() -> void:
 	vault.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(vault)
 
-	_build_vigas(viga_mat)
-	_build_cross_braces()
 	_build_wiring()
 	_build_vent_duct()
 	_build_ceiling_lights()
 	_build_tie_down_rings()
-	_build_duct_tape_patches()
 	_build_junction_box()
-	_build_hanging_scraps()
 
 
 func _build_vault_mesh() -> ArrayMesh:
@@ -108,93 +100,6 @@ func _build_vault_mesh() -> ArrayMesh:
 	st.generate_normals()
 	st.generate_tangents()
 	return st.commit()
-
-
-func _build_vigas(material: Material) -> void:
-	var half_z := span_z * 0.5
-	var margin := viga_spacing * 0.45
-	var z := -half_z + margin
-	var index := 0
-
-	while z <= half_z - margin * 0.5:
-		_add_viga(index, z, material)
-		z += viga_spacing
-		index += 1
-
-
-func _add_viga(index: int, z_pos: float, material: Material) -> void:
-	# Slight per-beam variation so the run doesn't look stamped.
-	var radius_jitter := 1.0 + float((index % 3) - 1) * 0.04
-	var tip_scale := 0.9 + float(index % 2) * 0.04
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = viga_radius * tip_scale * radius_jitter
-	cyl.bottom_radius = viga_radius * radius_jitter
-	cyl.height = viga_length
-	cyl.radial_segments = 12
-
-	var t := absf(z_pos) / (span_z * 0.5)
-	var arch_y := edge_height + peak_rise * (1.0 - t * t * 0.35)
-	var center_y := arch_y - viga_radius * 0.35
-
-	var mi := MeshInstance3D.new()
-	mi.name = "Viga_%d" % index
-	mi.mesh = cyl
-	mi.rotation_degrees = Vector3(0.0, 0.0, 90.0)
-	mi.position = Vector3(0.0, center_y, z_pos)
-	mi.material_override = material
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	add_child(mi)
-
-	var band_mat := _metal_mat(Color(0.16, 0.15, 0.13, 1.0), 0.7, 0.48)
-	var half_len := viga_length * 0.5
-	var sides: Array[float] = [-1.0, 1.0]
-	for side in sides:
-		var band_x: float = side * (half_len - 0.18)
-		var band := CylinderMesh.new()
-		band.top_radius = viga_radius * radius_jitter + 0.012
-		band.bottom_radius = viga_radius * radius_jitter + 0.012
-		band.height = 0.035
-		band.radial_segments = 10
-		var side_label := "L" if side < 0.0 else "R"
-		var band_mi := MeshInstance3D.new()
-		band_mi.name = "VigaBand_%d_%s" % [index, side_label]
-		band_mi.mesh = band
-		band_mi.rotation_degrees = Vector3(0.0, 0.0, 90.0)
-		band_mi.position = Vector3(band_x, center_y, z_pos)
-		band_mi.material_override = band_mat
-		band_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-		add_child(band_mi)
-
-		# Short wall corbel under each beam end.
-		_add_box(
-			"VigaCorbel_%d_%s" % [index, side_label],
-			Vector3(0.12, 0.08, 0.14),
-			Vector3(side * (half_len - 0.05), center_y - viga_radius * 0.55, z_pos),
-			material
-		)
-
-
-func _build_cross_braces() -> void:
-	var metal := _metal_mat(Color(0.14, 0.145, 0.14, 1.0), 0.65, 0.55)
-	var half_z := span_z * 0.5
-	var margin := viga_spacing * 0.45
-	var z_positions: Array[float] = []
-	var z := -half_z + margin
-	while z <= half_z - margin * 0.5:
-		z_positions.append(z)
-		z += viga_spacing
-
-	for i in range(z_positions.size() - 1):
-		var z_mid := (z_positions[i] + z_positions[i + 1]) * 0.5
-		var t := absf(z_mid) / (span_z * 0.5)
-		var arch_y := edge_height + peak_rise * (1.0 - t * t * 0.35) - viga_radius * 0.55
-		# Flat metal strap bridging adjacent vigas.
-		_add_box(
-			"CrossBrace_%d" % i,
-			Vector3(viga_length * 0.88, 0.025, 0.06),
-			Vector3(0.0, arch_y, z_mid),
-			metal
-		)
 
 
 func _build_wiring() -> void:
@@ -295,7 +200,7 @@ func _build_ceiling_lights() -> void:
 	for i in range(light_positions.size()):
 		var lp: Vector3 = light_positions[i]
 		var lt := absf(lp.z) / (span_z * 0.5)
-		var ly := edge_height + peak_rise * (1.0 - lt * lt * 0.35) - viga_radius * 0.85
+		var ly := edge_height + peak_rise * (1.0 - lt * lt * 0.35) - 0.09
 
 		# Dome fixture housing.
 		var housing := MeshInstance3D.new()
@@ -325,7 +230,7 @@ func _build_ceiling_lights() -> void:
 		lens.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(lens)
 
-		# Pendant cord from nearest viga.
+		# Short pendant cord.
 		var cord_mat := _rubber_mat(Color(0.03, 0.028, 0.025, 1.0), 0.0, 0.98, 0.0)
 		_add_cylinder_run(
 			"LightCord_%d" % i,
@@ -390,33 +295,6 @@ func _vault_surface_y(z_pos: float, x_pos: float = 0.0) -> float:
 	return edge_height + peak_rise * (1.0 - t_x * t_x) * (1.0 - t_z * t_z * 0.15)
 
 
-func _build_duct_tape_patches() -> void:
-	var tape_mat := StandardMaterial3D.new()
-	tape_mat.albedo_color = Color(0.52, 0.46, 0.3, 1.0)
-	tape_mat.roughness = 0.55
-	tape_mat.metallic = 0.05
-	tape_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-
-	var patches := [
-		{"size": Vector2(0.32, 0.18), "x": -0.8, "z": 2.1, "rot": 14.0},
-		{"size": Vector2(0.22, 0.14), "x": 1.1, "z": -1.4, "rot": -22.0},
-		{"size": Vector2(0.45, 0.12), "x": 0.3, "z": -3.0, "rot": 5.0},
-	]
-
-	for i in range(patches.size()):
-		var p: Dictionary = patches[i]
-		var px: float = p["x"]
-		var pz: float = p["z"]
-		var py := _vault_surface_y(pz, px) - 0.02
-		_add_ceiling_patch(
-			"TapePatch_%d" % i,
-			p["size"],
-			Vector3(px, py, pz),
-			p["rot"],
-			tape_mat
-		)
-
-
 func _build_junction_box() -> void:
 	var box_mat := _metal_mat(Color(0.14, 0.13, 0.12, 1.0), 0.25, 0.68)
 	var jy := edge_height - 0.15
@@ -431,79 +309,6 @@ func _build_junction_box() -> void:
 		conduit_mat,
 		Vector3(90.0, 0.0, 0.0)
 	)
-
-
-func _build_hanging_scraps() -> void:
-	# Soft scraps / tags you'd actually see clipped to a cargo ceiling.
-	var rag_mat := StandardMaterial3D.new()
-	rag_mat.albedo_color = Color(0.26, 0.2, 0.15, 1.0)
-	rag_mat.roughness = 0.98
-	rag_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-
-	var tag_mat := StandardMaterial3D.new()
-	tag_mat.albedo_color = Color(0.72, 0.62, 0.28, 1.0)
-	tag_mat.roughness = 0.85
-
-	var chain_mat := _metal_mat(Color(0.18, 0.17, 0.15, 1.0), 0.75, 0.42)
-
-	var hang_z := 1.15
-	var hang_x := 1.05
-	var hang_y := _vault_surface_y(hang_z, hang_x) - 0.35
-
-	_add_cylinder_run(
-		"HangChain",
-		Vector3(hang_x, hang_y + 0.12, hang_z),
-		0.28,
-		0.005,
-		chain_mat,
-		Vector3(0.0, 0.0, 8.0)
-	)
-
-	# Vertical hanging rag (plane facing camera / along van).
-	var rag := MeshInstance3D.new()
-	rag.name = "HangRag"
-	var rag_mesh := PlaneMesh.new()
-	rag_mesh.size = Vector2(0.22, 0.3)
-	rag_mesh.orientation = PlaneMesh.FACE_Z
-	rag.mesh = rag_mesh
-	rag.material_override = rag_mat
-	rag.position = Vector3(hang_x + 0.02, hang_y - 0.05, hang_z)
-	rag.rotation_degrees = Vector3(8.0, 18.0, 6.0)
-	rag.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(rag)
-
-	_add_ceiling_patch(
-		"InspectTag",
-		Vector2(0.08, 0.12),
-		Vector3(-1.2, _vault_surface_y(-2.1, -1.2) - 0.18, -2.1),
-		-12.0,
-		tag_mat
-	)
-
-
-func _add_ceiling_patch(
-	node_name: String,
-	size: Vector2,
-	pos: Vector3,
-	yaw_deg: float,
-	material: Material
-) -> void:
-	var mesh := PlaneMesh.new()
-	mesh.size = size
-	mesh.orientation = PlaneMesh.FACE_Y
-
-	if material is BaseMaterial3D:
-		(material as BaseMaterial3D).render_priority = 1
-
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = mesh
-	mi.material_override = material
-	mi.position = pos
-	mi.rotation_degrees = Vector3(0.0, yaw_deg, 0.0)
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mi.sorting_offset = -0.01
-	add_child(mi)
 
 
 func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material) -> void:
@@ -550,25 +355,10 @@ func _default_ceiling_material() -> ShaderMaterial:
 	mat.set_shader_parameter("foam_color", Color(0.38, 0.36, 0.32, 1.0))
 	mat.set_shader_parameter("stain_color", Color(0.22, 0.18, 0.12, 1.0))
 	mat.set_shader_parameter("water_color", Color(0.28, 0.26, 0.22, 1.0))
-	mat.set_shader_parameter("tape_color", Color(0.48, 0.42, 0.28, 1.0))
 	mat.set_shader_parameter("ceiling_size_m", Vector2(span_x, span_z))
-	mat.set_shader_parameter("bay_spacing_m", viga_spacing)
+	mat.set_shader_parameter("bay_spacing_m", bay_spacing)
 	mat.set_shader_parameter("quilt_scale_m", 0.14)
 	mat.set_shader_parameter("roughness_value", 0.92)
-	mat.set_shader_parameter("metallic_value", 0.0)
-	return mat
-
-
-func _default_viga_material() -> ShaderMaterial:
-	var shader := load("res://scenes/van/van_viga.gdshader") as Shader
-	var mat := ShaderMaterial.new()
-	mat.shader = shader
-	mat.set_shader_parameter("base_color", Color(0.18, 0.13, 0.085, 1.0))
-	mat.set_shader_parameter("grain_dark", Color(0.11, 0.08, 0.055, 1.0))
-	mat.set_shader_parameter("grain_light", Color(0.28, 0.2, 0.13, 1.0))
-	mat.set_shader_parameter("wear_color", Color(0.32, 0.24, 0.16, 1.0))
-	mat.set_shader_parameter("beam_length_m", viga_length)
-	mat.set_shader_parameter("roughness_value", 0.82)
 	mat.set_shader_parameter("metallic_value", 0.0)
 	return mat
 
