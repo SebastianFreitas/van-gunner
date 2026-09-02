@@ -41,6 +41,7 @@ const SHOP_CORRIDOR_LATERAL := 9.0
 @export var boost_multiplier := 1.75
 @export var boost_duration := 5.0
 @export var boost_cooldown := 14.0
+@export var debug_speed_multiplier := 5.0
 @export var park_speed_scale := 0.55
 
 var distance := 0.0
@@ -67,6 +68,7 @@ var _van_velocity := Vector3.ZERO
 var _base_travel_speed := 8.0
 var _boost_remaining := 0.0
 var _boost_cooldown_remaining := 0.0
+var _debug_speed_mode := false
 
 ## Which fork button is the shop this choice (left/right). Empty when none.
 var _shop_fork_side: StringName = &""
@@ -110,10 +112,35 @@ func _on_van_speed_changed(_level: int, speed: float) -> void:
 
 
 func _refresh_travel_speed() -> void:
-	var mult := boost_multiplier if _boost_remaining > 0.0 else 1.0
+	var mult := 1.0
+	if _debug_speed_mode:
+		mult = debug_speed_multiplier
+	elif _boost_remaining > 0.0:
+		mult = boost_multiplier
 	if _turn_state in [TurnState.PARKING, TurnState.LEAVING_SHOP]:
 		mult *= park_speed_scale
 	travel_speed = _base_travel_speed * mult
+
+
+func set_debug_speed_mode(enabled: bool) -> void:
+	if _debug_speed_mode == enabled:
+		return
+	_debug_speed_mode = enabled
+	_refresh_travel_speed()
+
+
+func is_debug_speed_mode() -> bool:
+	return _debug_speed_mode
+
+
+func get_debug_time_scale() -> float:
+	return debug_speed_multiplier if _debug_speed_mode else 1.0
+
+
+func scale_debug_wait(seconds: float) -> float:
+	if not _debug_speed_mode:
+		return seconds
+	return maxf(0.1, seconds / debug_speed_multiplier)
 
 
 func can_boost() -> bool:
@@ -410,11 +437,15 @@ func _maybe_start_intro() -> void:
 
 
 func _run_intro(id: int) -> void:
-	await get_tree().create_timer(intro_peace_seconds).timeout
+	if is_debug_speed_mode():
+		if id == _sequence_id and GameSession.phase == GameSession.RunPhase.TRAVELLING:
+			GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
+		return
+	await get_tree().create_timer(scale_debug_wait(intro_peace_seconds)).timeout
 	if id != _sequence_id or GameSession.phase != GameSession.RunPhase.TRAVELLING:
 		return
 	GameSession.set_phase(GameSession.RunPhase.REST)
-	var timer := get_tree().create_timer(intro_rest_seconds)
+	var timer := get_tree().create_timer(scale_debug_wait(intro_rest_seconds))
 	var rewards := get_tree().get_first_node_in_group(&"boon_reward_controller") as BoonRewardController
 	if rewards:
 		await rewards.wait_for_rest_resolution()

@@ -89,7 +89,7 @@ func _schedule_encounter() -> void:
 	_running = true
 	_sequence_id += 1
 	var id := _sequence_id
-	await get_tree().create_timer(travel_before_encounter).timeout
+	await get_tree().create_timer(_scale_wait(travel_before_encounter)).timeout
 	if id != _sequence_id or GameSession.phase != GameSession.RunPhase.TRAVELLING:
 		_running = false
 		return
@@ -111,7 +111,7 @@ func _run_segment(id: int) -> void:
 		GameSession.complete_wave()
 		var more_waves := wave_i < plan.size() - 1
 		if more_waves:
-			await get_tree().create_timer(GameBalance.INTER_WAVE_DELAY).timeout
+			await get_tree().create_timer(_scale_wait(GameBalance.INTER_WAVE_DELAY)).timeout
 
 	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
 		_running = false
@@ -130,7 +130,7 @@ func _run_wave(id: int, count: int) -> void:
 	for slot in count:
 		if slot > 0:
 			var delay := randf_range(GameBalance.SPAWN_DELAY_MIN, GameBalance.SPAWN_DELAY_MAX)
-			await get_tree().create_timer(delay).timeout
+			await get_tree().create_timer(_scale_wait(delay)).timeout
 			if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
 				return
 		var raider := _spawn_raider(slot, count)
@@ -155,14 +155,15 @@ func _run_wave(id: int, count: int) -> void:
 		return
 
 	var elapsed := 0.0
-	var timeout := combat_duration + maxf(0.0, float(count - 1) * 4.0)
+	var timeout := _scale_wait(combat_duration + maxf(0.0, float(count - 1) * 4.0))
+	var time_scale := _get_debug_time_scale()
 	while (
 		elapsed < timeout
 		and _any_alive(raiders)
 		and GameSession.phase != GameSession.RunPhase.GAME_OVER
 		and id == _sequence_id
 	):
-		elapsed += get_process_delta_time()
+		elapsed += get_process_delta_time() * time_scale
 		await get_tree().process_frame
 
 	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
@@ -232,8 +233,26 @@ func _despawn_raiders(raiders: Array[WindowRaider]) -> void:
 
 
 func _wait_for_rest_break(min_seconds: float) -> void:
-	var timer := get_tree().create_timer(min_seconds)
+	var timer := get_tree().create_timer(_scale_wait(min_seconds))
 	var rewards := get_tree().get_first_node_in_group(&"boon_reward_controller") as BoonRewardController
 	if rewards:
 		await rewards.wait_for_rest_resolution()
 	await timer.timeout
+
+
+func _find_travel_controller() -> TravelController:
+	return get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+
+
+func _scale_wait(seconds: float) -> float:
+	var travel := _find_travel_controller()
+	if travel:
+		return travel.scale_debug_wait(seconds)
+	return seconds
+
+
+func _get_debug_time_scale() -> float:
+	var travel := _find_travel_controller()
+	if travel:
+		return travel.get_debug_time_scale()
+	return 1.0

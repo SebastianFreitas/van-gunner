@@ -25,6 +25,8 @@ func is_awaiting_choice() -> bool:
 
 
 func wait_for_rest_resolution() -> void:
+	if _is_debug_speed_mode():
+		return
 	while _awaiting_choice:
 		await get_tree().process_frame
 
@@ -38,6 +40,8 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		return
 	# REST only starts at end-of-segment; offer whenever we actually rest.
 	if _offered or GameSession.wave_count <= 0:
+		return
+	if _is_debug_speed_mode():
 		return
 	_offered = true
 	_offer_boons()
@@ -68,3 +72,8 @@ func _owned_boon_ids() -> Array:
 		if boon:
 			ids.append(boon.id)
 	return ids
+
+
+func _is_debug_speed_mode() -> bool:
+	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+	return travel != null and travel.is_debug_speed_mode()

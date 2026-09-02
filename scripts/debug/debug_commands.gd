@@ -83,6 +83,8 @@ func _register_commands() -> void:
 		"help": _cmd_help,
 		"chill": _cmd_chill,
 		"unchill": _cmd_unchill,
+		"speed": _cmd_speed,
+		"unspeed": _cmd_unspeed,
 		"summon": _cmd_summon,
 		"give": _cmd_give,
 		"spawn": _cmd_spawn,
@@ -105,6 +107,8 @@ func _cmd_help(_args: Array) -> String:
 		"Commands: %s\n"
 		+ "  chill          freeze van travel and stop new encounters\n"
 		+ "  unchill        resume normal run flow\n"
+		+ "  speed          debug turbo — fast travel, skips intro, compresses timers\n"
+		+ "  unspeed        turn off debug turbo\n"
 		+ "  summon enemy   spawn a raider that assaults an open breach slot\n"
 		+ "  give <item_id> add item to player (e.g. give frag_grenade)\n"
 		+ "  spawn <item_id> drop a pickup near the player\n"
@@ -128,6 +132,32 @@ func _cmd_chill(_args: Array) -> String:
 func _cmd_unchill(_args: Array) -> String:
 	GameSession.set_chill_mode(false)
 	return "Chill mode OFF — run resumes."
+
+
+func _cmd_speed(_args: Array) -> String:
+	var travel := _find_travel_controller()
+	if not travel:
+		return "TravelController not found — are you in the van scene?"
+	travel.set_debug_speed_mode(true)
+	var started := false
+	if GameSession.phase == GameSession.RunPhase.IDLE:
+		GameSession.begin_run()
+		started = true
+	var msg := (
+		"Speed mode ON — %.1fx travel, timers compressed, intro skipped."
+		% travel.debug_speed_multiplier
+	)
+	if started:
+		msg += " Run auto-started."
+	return msg
+
+
+func _cmd_unspeed(_args: Array) -> String:
+	var travel := _find_travel_controller()
+	if not travel:
+		return "TravelController not found — are you in the van scene?"
+	travel.set_debug_speed_mode(false)
+	return "Speed mode OFF — back to normal travel speed (%.1f u/s)." % travel.travel_speed
 
 
 func _cmd_summon(args: Array) -> String:
@@ -292,6 +322,10 @@ func _find_player() -> Node3D:
 
 func _find_encounter_director() -> EncounterDirector:
 	return get_tree().get_first_node_in_group(&"encounter_director") as EncounterDirector
+
+
+func _find_travel_controller() -> TravelController:
+	return get_tree().get_first_node_in_group(&"travel_controller") as TravelController
 
 
 func _command_names() -> Array[String]:
