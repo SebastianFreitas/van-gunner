@@ -77,22 +77,35 @@ func _ready() -> void:
 func _fit_to_hull() -> void:
 	var walls := get_parent().get_node_or_null("SideWalls") as VanSideWall
 	var ceiling := get_parent().get_node_or_null("Ceiling") as VanCeiling
-	_fit_leaf(_left_hinge, -1.0, walls, ceiling)
-	_fit_leaf(_right_hinge, 1.0, walls, ceiling)
+	# One canonical left leaf — mirror for the right so bow/normals match.
+	var mesh := _build_left_leaf_mesh(walls, ceiling)
+	var mat := _door_body_material(walls, ceiling)
+	_apply_leaf(_left_hinge, mesh, mat, false)
+	_apply_leaf(_right_hinge, mesh, mat, true)
 
 
-func _fit_leaf(hinge: Node3D, wall_sign: float, walls: VanSideWall, ceiling: VanCeiling) -> void:
-	if hinge == null:
-		return
-	# Hinge stays put so window frame / glass / handle locals keep working.
-	var hinge_x := absf(hinge.position.x)
-	var hinge_y := hinge.position.y
+func _build_left_leaf_mesh(walls: VanSideWall, ceiling: VanCeiling) -> ArrayMesh:
+	var hinge_x := absf(_left_hinge.position.x) if _left_hinge else 2.39
+	var hinge_y := _left_hinge.position.y if _left_hinge else 1.55
+	var wall_sign := -1.0
 	var x_inner := wall_sign * CENTER_GAP
 	var origin := Vector3(wall_sign * hinge_x, hinge_y, 0.0)
-	# World-space window center from the original CSG layout.
+	# World-space window center from the original CSG layout (left leaf).
 	var hole_center := Vector2(wall_sign * 1.075, 1.775)
+	return VanHullMesh.build_vaulted_xy_slab(
+		walls, ceiling,
+		x_inner, wall_sign, Y_MIN, DOOR_THICKNESS, origin,
+		0.03, 0.025, 16, 32,
+		WINDOW_HOLE, hole_center,
+		3.05, 0.38, 2.42,
+		true
+	)
 
-	var mat := _steal_door_material(hinge)
+
+func _apply_leaf(hinge: Node3D, mesh: ArrayMesh, mat: Material, mirror_x: bool) -> void:
+	if hinge == null or mesh == null:
+		return
+	# Hinge / window frame / glass / handle locals stay put — body only.
 	var panel := hinge.get_node_or_null("Panel") as Node3D
 	if panel:
 		panel.visible = false
@@ -103,25 +116,47 @@ func _fit_leaf(hinge: Node3D, wall_sign: float, walls: VanSideWall, ceiling: Van
 
 	var body := MeshInstance3D.new()
 	body.name = "CurvedBody"
-	body.mesh = VanHullMesh.build_vaulted_xy_slab(
-		walls, ceiling,
-		x_inner, wall_sign, Y_MIN, DOOR_THICKNESS, origin,
-		0.03, 0.025, 16, 32,
-		WINDOW_HOLE, hole_center,
-		3.05, 0.38, 2.42,
-		true
-	)
+	body.mesh = mesh
 	body.material_override = mat
+	if mirror_x:
+		# Flips geometry + normals together (avoids the right-leaf winding bug).
+		body.scale = Vector3(-1.0, 1.0, 1.0)
 	body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	hinge.add_child(body)
 	hinge.move_child(body, 0)
 
 
-func _steal_door_material(hinge: Node3D) -> Material:
-	var body := hinge.get_node_or_null("Panel/Body")
-	if body and body.get("material") != null:
-		return body.get("material") as Material
-	return null
+func _door_body_material(walls: VanSideWall, ceiling: VanCeiling) -> Material:
+	# Same cargo-liner shader the side doors / walls use.
+	var source: Material = null
+	if walls != null and walls.wall_material != null:
+		source = walls.wall_material
+	else:
+		var side_doors := get_parent().get_node_or_null("SideDoors")
+		if side_doors:
+			var side_body := side_doors.get_node_or_null("Left/Panel/Body")
+			if side_body and side_body.get("material") != null:
+				source = side_body.get("material") as Material
+	if source == null and _left_hinge:
+		var body := _left_hinge.get_node_or_null("Panel/Body")
+		if body and body.get("material") != null:
+			source = body.get("material") as Material
+
+	var hinge_x := absf(_left_hinge.position.x) if _left_hinge else 2.39
+	var door_width := hinge_x - CENTER_GAP
+	var y_peak := VanHullMesh.vault_y(ceiling, 0.0, 3.05, 0.38)
+	var door_height := y_peak - Y_MIN
+
+	if source is ShaderMaterial:
+		var mat := (source as ShaderMaterial).duplicate()
+		mat.set_shader_parameter("wall_size_m", Vector2(door_width, door_height))
+		mat.set_shader_parameter("panel_spacing_m", 0.85)
+		mat.set_shader_parameter("rib_spacing_m", 0.28)
+		mat.set_shader_parameter("kick_height_m", 0.32)
+		mat.set_shader_parameter("belt_y_m", 1.42)
+		mat.set_shader_parameter("waist_y_m", 2.05)
+		return mat
+	return source
 
 
 func is_open() -> bool:
