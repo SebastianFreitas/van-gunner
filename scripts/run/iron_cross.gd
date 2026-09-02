@@ -3,7 +3,7 @@ extends Node3D
 
 ## Welded iron + on a window pane. Local XY is the glass face; +Z is outward.
 ## Bars span the full opening so the ends meet the frame.
-## Optional side-wall curve: vertical bar + top/bottom pads follow VanSideWall.
+## Optional side-wall curve: bars, center plate, and top/bottom pads follow VanSideWall.
 
 const BrokenIronCrossScene := preload("res://scenes/van/broken_iron_cross.tscn")
 
@@ -97,31 +97,21 @@ func _build() -> void:
 	# Slight outward bias so bars sit on the exterior glass face.
 	var z := bar_depth * 0.5
 
-	_add_box(
-		"HorizontalBar",
-		Vector3(span_width, bar_width, bar_depth),
-		Vector3(0.0, 0.0, z),
-		iron
-	)
+	_add_horizontal_bar(z, iron)
 	_add_vertical_bar(z, iron)
 
 	# Center weld plate — thicker, sits proud of the bars.
 	var plate_z := z + (plate_depth - bar_depth) * 0.5 + 0.008
-	_add_box(
-		"CenterPlate",
-		Vector3(plate_size, plate_size, plate_depth),
-		Vector3(0.0, 0.0, plate_z),
-		iron
-	)
+	_add_center_plate(plate_z, iron)
 
 	# Four rivets on the plate corners.
 	var rivet_spread := plate_size * 0.28
 	var rivet_z := plate_z + plate_depth * 0.5 + rivet_size * 0.35
 	for offset in [
-		Vector3(rivet_spread, rivet_spread, rivet_z),
-		Vector3(-rivet_spread, rivet_spread, rivet_z),
-		Vector3(rivet_spread, -rivet_spread, rivet_z),
-		Vector3(-rivet_spread, -rivet_spread, rivet_z),
+		Vector3(rivet_spread, rivet_spread, rivet_z + _curve_z(rivet_spread)),
+		Vector3(-rivet_spread, rivet_spread, rivet_z + _curve_z(rivet_spread)),
+		Vector3(rivet_spread, -rivet_spread, rivet_z + _curve_z(-rivet_spread)),
+		Vector3(-rivet_spread, -rivet_spread, rivet_z + _curve_z(-rivet_spread)),
 	]:
 		_add_box("Rivet", Vector3(rivet_size, rivet_size, rivet_size * 0.7), offset, rivet_mat)
 
@@ -167,16 +157,10 @@ func _add_vertical_bar(z: float, iron: Material) -> void:
 		)
 		return
 
-	# Same flat rectangular section as a BoxMesh — only the depth centerline
-	# follows the wall bow. No tangent twist (that read as a round pipe).
 	var half_h := span_height * 0.5
 	var half_w := bar_width * 0.5
 	var half_d := bar_depth * 0.5
 	var segs := maxi(curve_segments, 2)
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	st.set_smooth_group(-1)
-
 	var rings: Array = []
 	for i in range(segs + 1):
 		var y := lerpf(-half_h, half_h, float(i) / float(segs))
@@ -187,25 +171,133 @@ func _add_vertical_bar(z: float, iron: Material) -> void:
 			Vector3(half_w, y, cz + half_d),
 			Vector3(-half_w, y, cz + half_d),
 		])
+	_commit_lofted_bar("VerticalBar", rings, iron)
+
+
+func _add_horizontal_bar(z: float, iron: Material) -> void:
+	if _curve_walls == null:
+		_add_box(
+			"HorizontalBar",
+			Vector3(span_width, bar_width, bar_depth),
+			Vector3(0.0, 0.0, z),
+			iron
+		)
+		return
+
+	# Cross-section spans local Y; each corner follows the wall bow at its height.
+	var half_w := span_width * 0.5
+	var half_y := bar_width * 0.5
+	var half_d := bar_depth * 0.5
+	var segs := maxi(curve_segments, 2)
+	var rings: Array = []
+	for i in range(segs + 1):
+		var x := lerpf(-half_w, half_w, float(i) / float(segs))
+		rings.append([
+			Vector3(x, -half_y, z + _curve_z(-half_y) - half_d),
+			Vector3(x, half_y, z + _curve_z(half_y) - half_d),
+			Vector3(x, half_y, z + _curve_z(half_y) + half_d),
+			Vector3(x, -half_y, z + _curve_z(-half_y) + half_d),
+		])
+	_commit_lofted_bar("HorizontalBar", rings, iron)
+
+
+func _add_center_plate(plate_z: float, iron: Material) -> void:
+	if _curve_walls == null:
+		_add_box(
+			"CenterPlate",
+			Vector3(plate_size, plate_size, plate_depth),
+			Vector3(0.0, 0.0, plate_z),
+			iron
+		)
+		return
+
+	var half := plate_size * 0.5
+	var half_d := plate_depth * 0.5
+	var segs := maxi(curve_segments / 2, 2)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
+
+	var front: Array = []
+	var back: Array = []
+	for iy in range(segs + 1):
+		var py := lerpf(-half, half, float(iy) / float(segs))
+		var cz := plate_z + _curve_z(py)
+		var row_f: Array = []
+		var row_b: Array = []
+		for ix in range(segs + 1):
+			var px := lerpf(-half, half, float(ix) / float(segs))
+			row_f.append(Vector3(px, py, cz + half_d))
+			row_b.append(Vector3(px, py, cz - half_d))
+		front.append(row_f)
+		back.append(row_b)
+
+	for iy in range(segs):
+		for ix in range(segs):
+			var f00: Vector3 = front[iy][ix]
+			var f10: Vector3 = front[iy][ix + 1]
+			var f11: Vector3 = front[iy + 1][ix + 1]
+			var f01: Vector3 = front[iy + 1][ix]
+			_add_quad(st, f00, f10, f11, f01)
+			var b00: Vector3 = back[iy][ix]
+			var b10: Vector3 = back[iy][ix + 1]
+			var b11: Vector3 = back[iy + 1][ix + 1]
+			var b01: Vector3 = back[iy + 1][ix]
+			_add_quad(st, b00, b01, b11, b10)
+
+	for ix in range(segs):
+		_add_quad(st, front[0][ix], front[0][ix + 1], back[0][ix + 1], back[0][ix])
+		_add_quad(
+			st,
+			front[segs][ix],
+			back[segs][ix],
+			back[segs][ix + 1],
+			front[segs][ix + 1]
+		)
+	for iy in range(segs):
+		_add_quad(st, front[iy][0], back[iy][0], back[iy + 1][0], front[iy + 1][0])
+		_add_quad(
+			st,
+			front[iy][segs],
+			front[iy + 1][segs],
+			back[iy + 1][segs],
+			back[iy][segs]
+		)
+
+	st.generate_normals()
+	st.generate_tangents()
+	var mi := MeshInstance3D.new()
+	mi.name = "CenterPlate"
+	mi.mesh = st.commit()
+	mi.material_override = iron
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	add_child(mi)
+
+
+func _commit_lofted_bar(node_name: String, rings: Array, iron: Material) -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
+	var segs := rings.size() - 1
 
 	for i in range(segs):
 		var a: Array = rings[i]
 		var b: Array = rings[i + 1]
-		# Cabin face (-Z), exterior (+Z), then left/right sides.
+		# Cabin face (-Z), exterior (+Z), then the two side faces.
 		_add_quad(st, a[0], b[0], b[1], a[1])
 		_add_quad(st, a[3], a[2], b[2], b[3])
 		_add_quad(st, a[0], a[3], b[3], b[0])
 		_add_quad(st, a[1], b[1], b[2], a[2])
 
-	var bottom: Array = rings[0]
-	var top: Array = rings[segs]
-	_add_quad(st, bottom[0], bottom[1], bottom[2], bottom[3])
-	_add_quad(st, top[0], top[3], top[2], top[1])
+	var start: Array = rings[0]
+	var end: Array = rings[segs]
+	_add_quad(st, start[0], start[1], start[2], start[3])
+	_add_quad(st, end[0], end[3], end[2], end[1])
 
 	st.generate_normals()
 	st.generate_tangents()
 	var mi := MeshInstance3D.new()
-	mi.name = "VerticalBar"
+	mi.name = node_name
 	mi.mesh = st.commit()
 	mi.material_override = iron
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
@@ -220,11 +312,17 @@ func _curve_z(local_y: float) -> float:
 
 
 func _add_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
+	st.set_uv(Vector2(0.0, 0.0))
 	st.add_vertex(a)
+	st.set_uv(Vector2(1.0, 0.0))
 	st.add_vertex(b)
+	st.set_uv(Vector2(1.0, 1.0))
 	st.add_vertex(c)
+	st.set_uv(Vector2(0.0, 0.0))
 	st.add_vertex(a)
+	st.set_uv(Vector2(1.0, 1.0))
 	st.add_vertex(c)
+	st.set_uv(Vector2(0.0, 1.0))
 	st.add_vertex(d)
 
 
