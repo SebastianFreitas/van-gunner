@@ -213,7 +213,7 @@ func _add_center_plate(plate_z: float, iron: Material) -> void:
 
 	var half := plate_size * 0.5
 	var half_d := plate_depth * 0.5
-	var segs := maxi(curve_segments / 2, 2)
+	var segs := maxi(curve_segments >> 1, 2)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_smooth_group(-1)

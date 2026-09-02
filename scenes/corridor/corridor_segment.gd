@@ -56,11 +56,11 @@ func _set_side_street(side: StringName, enabled: bool) -> void:
 	_set_side_structure_visible(side, not enabled)
 
 
-func _set_side_structure_visible(side: StringName, is_visible: bool) -> void:
+func _set_side_structure_visible(side: StringName, structure_visible: bool) -> void:
 	for variant in _variants:
 		for child in variant.get_children():
 			if _is_side_structure_node(child.name, side):
-				child.visible = is_visible
+				child.visible = structure_visible
 
 
 func _is_side_structure_node(node_name: String, side: StringName) -> bool:
