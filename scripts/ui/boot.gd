@@ -5,5 +5,6 @@ extends Control
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	SceneRouter.preload_van()
 	await get_tree().create_timer(minimum_display_time).timeout
 	SceneRouter.go_to_main_menu()
