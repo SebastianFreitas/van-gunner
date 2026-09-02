@@ -676,6 +676,8 @@ func _add_door_jambs(wall_sign: float, mat: Material) -> void:
 		wall_sign, _door_jamb_outer_poly(), inner,
 		x_ref, mid_y, door_center_z, mid_y, thickness, 0.0, 8
 	)
+	# Mesh is built around local origin — parent must sit on the wall (same as SideDoors leaves).
+	mi.position = Vector3(wall_sign * x_ref, mid_y, door_center_z)
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
