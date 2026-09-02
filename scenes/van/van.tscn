@@ -219,6 +219,7 @@ floor_material = SubResource("FloorMaterial")
 
 [node name="SideWalls" parent="TravelPath/VanFollow/VanRig/Interior/Shell" instance=ExtResource("30")]
 wall_material = SubResource("WallMaterial")
+door_jamb_material = SubResource("SideDoorTrimMaterial")
 
 [node name="FloorCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=901514165]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.125, 0)

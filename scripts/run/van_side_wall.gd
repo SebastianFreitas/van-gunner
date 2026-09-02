@@ -528,6 +528,7 @@ func _build() -> void:
 	_add_side(&"RightWall", 1.0, mat)
 	_add_door_jambs(-1.0, jamb_mat)
 	_add_door_jambs(1.0, jamb_mat)
+	_add_door_slide_tracks(jamb_mat)
 	_add_cargo_rails(mat)
 
 
@@ -808,6 +809,30 @@ func _add_return_quad(
 	else:
 		_add_tri(st, i_a, uv_a, i_b, uv_b, o_a, uv_a)
 		_add_tri(st, i_b, uv_b, o_b, uv_b, o_a, uv_a)
+
+
+func _add_door_slide_tracks(mat: Material) -> void:
+	# Horizontal rail above each sliding side door (cargo-van track).
+	var track_y := door_y_max - 0.04
+	var z0 := door_center_z - door_half_length + 0.08
+	var z1 := door_center_z + door_half_length - 0.08
+	var length := z1 - z0
+	if length < 0.4:
+		return
+	var x := _profile_x(track_y)
+	var lean := lean_angle_at(track_y)
+	var z_mid := (z0 + z1) * 0.5
+	for wall_sign in [-1.0, 1.0]:
+		var track := MeshInstance3D.new()
+		track.name = "DoorSlideTrack_%s" % ("L" if wall_sign < 0.0 else "R")
+		var box := BoxMesh.new()
+		box.size = Vector3(0.06, 0.085, length)
+		track.mesh = box
+		track.material_override = mat
+		track.position = Vector3(wall_sign * (x - wall_sign * 0.035), track_y, z_mid)
+		track.rotation.z = wall_sign * lean
+		track.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		add_child(track)
 
 
 func _add_cargo_rails(mat: Material) -> void:
