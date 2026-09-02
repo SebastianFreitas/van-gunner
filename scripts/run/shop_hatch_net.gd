@@ -2,8 +2,8 @@ extends Node3D
 
 ## Cargo-net screen on the shop hatch — thin diamond mesh, not solid bars.
 
-@export var net_height := 5.5
-@export var net_width := 7.6
+@export var net_height := 6.8
+@export var net_width := 8.2
 @export var mesh_spacing := 0.38
 @export var wire_size := 0.022
 @export var wire_depth := 0.032

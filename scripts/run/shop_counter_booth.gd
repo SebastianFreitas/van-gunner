@@ -2,19 +2,19 @@ extends Node3D
 
 ## Fortified metal shop counter — deck, teller wall with transaction slot, grilled viewing window.
 
-@export var booth_width := 7.6
-@export var deck_depth := 0.95
+@export var booth_width := 8.2
+@export var deck_depth := 1.15
 @export var deck_thickness := 0.14
 @export var deck_top_y := 1.0
-@export var wall_height := 3.35
+@export var wall_height := 7.15
 @export var wall_thickness := 0.16
 @export var pillar_size := 0.2
-@export var transaction_width := 5.4
-@export var transaction_height := 0.58
-@export var transaction_center_y := 1.42
-@export var viewing_width := 4.8
-@export var viewing_height := 0.22
-@export var viewing_center_y := 2.55
+@export var transaction_width := 6.8
+@export var transaction_height := 0.68
+@export var transaction_center_y := 2.85
+@export var viewing_width := 6.4
+@export var viewing_height := 0.4
+@export var viewing_center_y := 5.65
 @export var grill_spacing := 0.34
 @export var grill_bar_size := 0.03
 @export var lip_depth := 0.28
