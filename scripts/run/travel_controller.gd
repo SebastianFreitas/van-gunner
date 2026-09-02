@@ -171,6 +171,9 @@ func leave_shop() -> void:
 		_clear_shop_state()
 		GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
 		return
+	var van := get_node("../..")
+	if van and van.has_method(&"seal_van_after_shop"):
+		van.seal_van_after_shop()
 	_build_leave_shop_route()
 
 

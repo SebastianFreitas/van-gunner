@@ -3,6 +3,10 @@ extends Node3D
 @onready var player: FpsPlayer = $TravelPath/VanFollow/VanRig/Player
 @onready var weapon: GunController = $TravelPath/VanFollow/VanRig/Player/Head/Camera3D/Weapon
 @onready var usables: UsablesController = $TravelPath/VanFollow/VanRig/Player/Usables
+@onready var player_containment: VanPlayerContainment = (
+	$TravelPath/VanFollow/VanRig/Interior/PlayerContainment
+)
+@onready var rear_doors: Node = $TravelPath/VanFollow/VanRig/Interior/Shell/RearWall
 @onready var item_hud: Control = $HUD/ItemHUD
 @onready var prompt_label: Label = %InteractionPrompt
 @onready var phase_label: Label = %PhaseLabel
@@ -30,6 +34,8 @@ var _debug_console: Control
 var _boon_choice: BoonChoicePanel
 var _boon_rewards: BoonRewardController
 var _driver_talk_open := false
+const SHOP_RECALL_LOCAL := Vector3(0.0, 0.05, -2.7)
+const SHOP_REAR_EXIT_Z := 4.2
 
 
 func _ready() -> void:
@@ -130,9 +136,12 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 			rest_toast.text = "PULLING INTO THE SHOP..."
 			rest_toast.show()
 		GameSession.RunPhase.SHOP:
-			rest_toast.text = "SHOP — TALK TO THE DRIVER TO CONTINUE"
+			_set_shop_rear_exit(true)
+			rest_toast.text = "SHOP — STEP OUT BACK, THEN TELL THE DRIVER TO CONTINUE"
 			rest_toast.show()
 		_:
+			if player_containment and player_containment.is_rear_exit_allowed():
+				_set_shop_rear_exit(false)
 			rest_toast.hide()
 
 	var bench_blocked := next_phase in [
@@ -354,6 +363,26 @@ func _on_accelerate_pressed() -> void:
 
 func _on_driver_talk_close_pressed() -> void:
 	close_driver_talk()
+
+
+func seal_van_after_shop() -> void:
+	_recall_player_if_outside_rear()
+	_set_shop_rear_exit(false)
+
+
+func _set_shop_rear_exit(allowed: bool) -> void:
+	if player_containment:
+		player_containment.set_rear_exit_allowed(allowed)
+
+
+func _recall_player_if_outside_rear() -> void:
+	if player == null:
+		return
+	if player.position.z <= SHOP_REAR_EXIT_Z:
+		return
+	player.recall_to_local(SHOP_RECALL_LOCAL)
+	if rear_doors and rear_doors.has_method(&"close"):
+		rear_doors.close()
 
 
 func _on_main_menu_pressed() -> void:

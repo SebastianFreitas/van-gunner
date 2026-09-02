@@ -11,6 +11,8 @@ const LAYER := 16  # physics layer 5
 @export var wall_height := 3.1
 @export var wall_thickness := 0.12
 
+var _rear_exit_allowed := false
+
 
 func _ready() -> void:
 	collision_layer = LAYER
@@ -51,3 +53,16 @@ func _add_panel(panel_name: StringName, pos: Vector3, size: Vector3) -> void:
 	col.shape = shape
 	col.position = pos
 	add_child(col)
+
+
+func is_rear_exit_allowed() -> bool:
+	return _rear_exit_allowed
+
+
+func set_rear_exit_allowed(allowed: bool) -> void:
+	if _rear_exit_allowed == allowed:
+		return
+	_rear_exit_allowed = allowed
+	var rear := get_node_or_null("Rear") as CollisionShape3D
+	if rear:
+		rear.disabled = allowed
