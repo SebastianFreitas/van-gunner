@@ -556,13 +556,13 @@ func _build_flyers(
 		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 
 		var depth := face_x - 0.055 - float(placed.size() - 1) * 0.004 - rng.randf_range(0.0, 0.012)
-		var mi := _add_box(
+		var mi := _add_flyer_plane(
 			"Flyer_%d" % (placed.size() - 1),
-			Vector3(0.012, h, w),
+			Vector2(w, h),
 			Vector3(depth, y, z),
-			mat
+			mat,
+			rot
 		)
-		mi.rotation_degrees = Vector3(0.0, 0.0, rot)
 
 
 func _pick_flyer_y(rng: RandomNumberGenerator, view_bottom: float, tx_bottom: float) -> float:
@@ -676,8 +676,8 @@ func _make_flyer_texture(title: String, seed_i: int, rng: RandomNumberGenerator)
 
 	# Crude block-letter headline (intentionally half-legible).
 	var headline_scale := local_rng.randi_range(2, 3)
-	var headline_x := local_rng.randi_range(10, 28)
 	var headline_y := local_rng.randi_range(58, 88)
+	var headline_x := _centered_text_x(title, w, headline_scale, local_rng)
 	_draw_block_text(img, title, Vector2i(headline_x, headline_y), ink, headline_scale)
 
 	# One or two varied sub-lines — never the same pair on every flyer.
@@ -687,7 +687,7 @@ func _make_flyer_texture(title: String, seed_i: int, rng: RandomNumberGenerator)
 	for sub_i in sub_count:
 		var sub_text: String = sub_pool[sub_i]
 		var sub_scale := local_rng.randi_range(1, 2)
-		var sub_x := local_rng.randi_range(18, 46)
+		var sub_x := _centered_text_x(sub_text, w, sub_scale, local_rng)
 		var sub_y := headline_y + headline_scale * 28 + sub_i * local_rng.randi_range(28, 38)
 		var sub_ink := ink.darkened(local_rng.randf_range(-0.12, 0.18))
 		_draw_block_text(img, sub_text, Vector2i(sub_x, sub_y), sub_ink, sub_scale)
@@ -702,6 +702,56 @@ func _make_flyer_texture(title: String, seed_i: int, rng: RandomNumberGenerator)
 			img.set_pixel(x, y, c)
 
 	return ImageTexture.create_from_image(img)
+
+
+func _text_pixel_width(text: String, scale: int) -> int:
+	var glyph_w := 5 * scale
+	var gap := 2 * scale
+	var width := 0
+	for ch in text.to_upper():
+		var pattern := _glyph_pattern(ch)
+		if pattern.is_empty():
+			width += gap
+		else:
+			width += glyph_w + gap
+	return maxi(width - gap, 0)
+
+
+func _centered_text_x(text: String, img_w: int, scale: int, rng: RandomNumberGenerator) -> int:
+	var text_w := _text_pixel_width(text, scale)
+	var margin := 12
+	var max_x := img_w - margin - text_w
+	if max_x <= margin:
+		return margin
+	return rng.randi_range(margin, max_x)
+
+
+func _add_flyer_plane(
+	node_name: String,
+	size: Vector2,
+	pos: Vector3,
+	material: Material,
+	tilt_deg: float
+) -> MeshInstance3D:
+	var mesh := PlaneMesh.new()
+	mesh.size = size
+	mesh.orientation = PlaneMesh.FACE_X
+
+	if material is BaseMaterial3D:
+		(material as BaseMaterial3D).render_priority = 1
+	elif material is ShaderMaterial:
+		(material as ShaderMaterial).render_priority = 1
+
+	var mi := MeshInstance3D.new()
+	mi.name = node_name
+	mi.mesh = mesh
+	mi.material_override = material
+	mi.position = pos
+	mi.rotation_degrees = Vector3(0.0, 180.0, tilt_deg)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.sorting_offset = 0.02
+	add_child(mi)
+	return mi
 
 
 func _draw_block_text(img: Image, text: String, origin: Vector2i, color: Color, scale: int) -> void:
