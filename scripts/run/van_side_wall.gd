@@ -640,7 +640,8 @@ func _build_side_mesh(wall_sign: float) -> ArrayMesh:
 
 	# Opening returns (thickness around cutouts).
 	_add_opening_returns(st, wall_sign, verts, outer, uvs, solid)
-	# Reveal faces at the door hole — grid returns are edge-on when looking out.
+	# Reveal faces at window + door holes — grid returns are edge-on when looking out.
+	_add_window_opening_reveals(st, wall_sign)
 	_add_door_opening_reveals(st, wall_sign)
 
 	st.generate_normals()
@@ -683,6 +684,67 @@ func _add_door_jambs(wall_sign: float, mat: Material) -> void:
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
+
+
+## Cross-section faces on each window cut perimeter — visible when the sash is open.
+func _add_window_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
+	var half_span := span_z * 0.5
+	const EDGE_SUBDIV := 16
+	var n_poly := WINDOW_CUT_POLY.size()
+	if n_poly < 3:
+		return
+
+	for cz in window_centers_z:
+		for i in range(n_poly):
+			var a: Vector2 = WINDOW_CUT_POLY[i]
+			var b: Vector2 = WINDOW_CUT_POLY[(i + 1) % n_poly]
+			var inward_2d := _poly_edge_inward(a, b, WINDOW_CUT_POLY)
+			for s in range(EDGE_SUBDIV):
+				var la := a.lerp(b, float(s) / float(EDGE_SUBDIV))
+				var lb := a.lerp(b, float(s + 1) / float(EDGE_SUBDIV))
+				var ya := window_center_y + la.y
+				var yb := window_center_y + lb.y
+				var za := cz + la.x
+				var zb := cz + lb.x
+				var xi_a := wall_sign * _profile_x(ya)
+				var xo_a := xi_a + wall_sign * thickness
+				var xi_b := wall_sign * _profile_x(yb)
+				var xo_b := xi_b + wall_sign * thickness
+				var i_a := Vector3(xi_a, ya, za)
+				var o_a := Vector3(xo_a, ya, za)
+				var i_b := Vector3(xi_b, yb, zb)
+				var o_b := Vector3(xo_b, yb, zb)
+				var uva := Vector2((za + half_span) / span_z, ya / wall_height)
+				var uvb := Vector2((zb + half_span) / span_z, yb / wall_height)
+				_add_reveal_quad(st, i_a, o_a, i_b, o_b, uva, uvb, inward_2d)
+
+
+## Inward-pointing 2D normal for a polygon edge (poly coords: z_off, y_off).
+func _poly_edge_inward(a: Vector2, b: Vector2, poly: PackedVector2Array) -> Vector2:
+	var edge := b - a
+	var n := Vector2(-edge.y, edge.x)
+	if not point_in_poly((a + b) * 0.5 + n * 0.01, poly):
+		n = -n
+	return n
+
+
+## Quad bridging inner→outer along an opening edge; normal faces into the hole.
+func _add_reveal_quad(
+	st: SurfaceTool,
+	i_a: Vector3, o_a: Vector3, i_b: Vector3, o_b: Vector3,
+	uva: Vector2, uvb: Vector2,
+	inward_2d: Vector2
+) -> void:
+	var inward_3d := Vector3(0.0, inward_2d.y, inward_2d.x)
+	var thick := o_a - i_a
+	var tangent := i_b - i_a
+	var n := thick.cross(tangent)
+	if n.dot(inward_3d) < 0.0:
+		_add_tri(st, i_a, uva, o_a, uva, o_b, uvb)
+		_add_tri(st, i_a, uva, o_b, uvb, i_b, uvb)
+	else:
+		_add_tri(st, i_a, uva, i_b, uvb, o_b, uvb)
+		_add_tri(st, i_a, uva, o_b, uvb, o_a, uva)
 
 
 ## Cross-section faces on the door hole perimeter — visible when looking out.
