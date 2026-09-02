@@ -37,7 +37,7 @@ func get_rear_outside_reference_z() -> float:
 
 
 ## Door mobs: rear doors, then side cargo doors.
-## Agile mobs: windows only — rear door panes, side windows, then side-door windows.
+## Agile mobs: windows only — rear door panes and side cargo windows.
 ## Never cross pools (door mobs never get windows; agile never open door leaves).
 func assign_breach_point(raider: Node) -> BreachPoint:
 	var points := _all_points()

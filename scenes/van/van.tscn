@@ -138,9 +138,6 @@ roughness = 0.25
 [sub_resource type="BoxShape3D" id="SideWindowInteractShape"]
 size = Vector3(0.2, 1.36, 2.4)
 
-[sub_resource type="BoxShape3D" id="SideDoorGlassShape"]
-size = Vector3(0.22, 0.94, 1.9)
-
 [sub_resource type="BoxShape3D" id="SideDoorShape"]
 size = Vector3(0.18, 3.05, 2.53)
 
@@ -664,12 +661,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, -0.15, 0)
 operation = 2
 size = Vector3(0.05, 2.55, 2.2)
 
-[node name="WindowCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Panel" unique_id=1239395783]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0.12, 0.25, 0)
-operation = 2
-polygon = PackedVector2Array(-0.85, -0.55, -0.97, -0.49, -1.05, -0.38, -1.05, 0.38, -0.97, 0.49, -0.85, 0.55, 0.85, 0.55, 0.97, 0.49, 1.05, 0.38, 1.05, -0.38, 0.97, -0.49, 0.85, -0.55)
-depth = 0.32
-
 [node name="BeltLine" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Panel" unique_id=2138034271]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, -0.05, 0)
 operation = 2
@@ -679,45 +670,6 @@ size = Vector3(0.04, 0.05, 2.2)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, -0.85, 0)
 operation = 2
 size = Vector3(0.04, 0.04, 2.2)
-
-[node name="WindowFrame" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=896779989]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0.02, 0.25, 0)
-
-[node name="Outer" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/WindowFrame" unique_id=127773518]
-polygon = PackedVector2Array(-0.9, -0.6, -1.03, -0.535, -1.12, -0.42, -1.12, 0.42, -1.03, 0.535, -0.9, 0.6, 0.9, 0.6, 1.03, 0.535, 1.12, 0.42, 1.12, -0.42, 1.03, -0.535, 0.9, -0.6)
-depth = 0.06
-material = SubResource("RearWindowFrameMaterial")
-
-[node name="InnerCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/WindowFrame" unique_id=2024020408]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
-operation = 2
-polygon = PackedVector2Array(-0.76, -0.48, -0.88, -0.43, -0.96, -0.33, -0.96, 0.33, -0.88, 0.43, -0.76, 0.48, 0.76, 0.48, 0.88, 0.43, 0.96, 0.33, 0.96, -0.33, 0.88, -0.43, 0.76, -0.48)
-depth = 0.1
-
-[node name="WindowGlass" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=408565394]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0.06, 0.25, 0)
-polygon = PackedVector2Array(-0.76, -0.48, -0.88, -0.43, -0.96, -0.33, -0.96, 0.33, -0.88, 0.43, -0.76, 0.48, 0.76, 0.48, 0.88, 0.43, 0.96, 0.33, 0.96, -0.33, 0.88, -0.43, 0.76, -0.48)
-depth = 0.04
-material = SubResource("RearWindowGlassMaterial")
-
-[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=1696643151 instance=ExtResource("22")]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0.035, 0.25, 0)
-span_width = 1.9
-span_height = 0.94
-bar_width = 0.075
-plate_size = 0.22
-rivet_size = 0.038
-end_pad_size = 0.13
-
-[node name="BreakableGlass" type="Area3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=1847293015]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, 0.25, 0)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("18")
-
-[node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/BreakableGlass" unique_id=1847293016]
-shape = SubResource("SideDoorGlassShape")
 
 [node name="Handle" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=1199291887]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.14, -0.15, 0.85)
@@ -763,12 +715,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.07, -0.15, 0)
 operation = 2
 size = Vector3(0.05, 2.55, 2.2)
 
-[node name="WindowCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Panel" unique_id=425401244]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -0.12, 0.25, 0)
-operation = 2
-polygon = PackedVector2Array(-0.85, -0.55, -0.97, -0.49, -1.05, -0.38, -1.05, 0.38, -0.97, 0.49, -0.85, 0.55, 0.85, 0.55, 0.97, 0.49, 1.05, 0.38, 1.05, -0.38, 0.97, -0.49, 0.85, -0.55)
-depth = 0.32
-
 [node name="BeltLine" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Panel" unique_id=1452546287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09, -0.05, 0)
 operation = 2
@@ -778,45 +724,6 @@ size = Vector3(0.04, 0.05, 2.2)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09, -0.85, 0)
 operation = 2
 size = Vector3(0.04, 0.04, 2.2)
-
-[node name="WindowFrame" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=812845470]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -0.02, 0.25, 0)
-
-[node name="Outer" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/WindowFrame" unique_id=1131451236]
-polygon = PackedVector2Array(-0.9, -0.6, -1.03, -0.535, -1.12, -0.42, -1.12, 0.42, -1.03, 0.535, -0.9, 0.6, 0.9, 0.6, 1.03, 0.535, 1.12, 0.42, 1.12, -0.42, 1.03, -0.535, 0.9, -0.6)
-depth = 0.06
-material = SubResource("RearWindowFrameMaterial")
-
-[node name="InnerCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/WindowFrame" unique_id=240566074]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
-operation = 2
-polygon = PackedVector2Array(-0.76, -0.48, -0.88, -0.43, -0.96, -0.33, -0.96, 0.33, -0.88, 0.43, -0.76, 0.48, 0.76, 0.48, 0.88, 0.43, 0.96, 0.33, 0.96, -0.33, 0.88, -0.43, 0.76, -0.48)
-depth = 0.1
-
-[node name="WindowGlass" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=998923734]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -0.06, 0.25, 0)
-polygon = PackedVector2Array(-0.76, -0.48, -0.88, -0.43, -0.96, -0.33, -0.96, 0.33, -0.88, 0.43, -0.76, 0.48, 0.76, 0.48, 0.88, 0.43, 0.96, 0.33, 0.96, -0.33, 0.88, -0.43, 0.76, -0.48)
-depth = 0.04
-material = SubResource("RearWindowGlassMaterial")
-
-[node name="IronCross" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=1666081022 instance=ExtResource("22")]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -0.035, 0.25, 0)
-span_width = 1.9
-span_height = 0.94
-bar_width = 0.075
-plate_size = 0.22
-rivet_size = 0.038
-end_pad_size = 0.13
-
-[node name="BreakableGlass" type="Area3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=1847293017]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06, 0.25, 0)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("18")
-
-[node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/BreakableGlass" unique_id=1847293018]
-shape = SubResource("SideDoorGlassShape")
 
 [node name="Handle" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=2107383434]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.14, -0.15, 0.85)
@@ -1263,34 +1170,6 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 3.16, 1.62, -3.485)
 
 [node name="Entry" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/SideDoorRight" unique_id=2100462806]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.7, 1.62, -3.485)
-
-[node name="SideDoorLeftWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController" unique_id=2100462807]
-script = ExtResource("17")
-point_id = &"side_door_left_window"
-kind = 3
-priority = 3
-door_side = &"left"
-bars_path = NodePath("../../../Interior/Shell/SideDoors/Left/IronCross")
-
-[node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/SideDoorLeftWindow" unique_id=2100462808]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -3.16, 1.85, -3.485)
-
-[node name="Entry" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/SideDoorLeftWindow" unique_id=2100462809]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.7, 1.85, -3.485)
-
-[node name="SideDoorRightWindow" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController" unique_id=2100462810]
-script = ExtResource("17")
-point_id = &"side_door_right_window"
-kind = 3
-priority = 3
-door_side = &"right"
-bars_path = NodePath("../../../Interior/Shell/SideDoors/Right/IronCross")
-
-[node name="Outside" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/SideDoorRightWindow" unique_id=2100462811]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 3.16, 1.85, -3.485)
-
-[node name="Entry" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/SideDoorRightWindow" unique_id=2100462812]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.7, 1.85, -3.485)
 
 [node name="Player" parent="TravelPath/VanFollow/VanRig" unique_id=88569583 instance=ExtResource("2")]
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 0.05, -2.7)
