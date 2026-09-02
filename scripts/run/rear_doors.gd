@@ -26,6 +26,17 @@ const OUTSIDE_HOLD_LOCAL := Vector3(0.0, 1.62, 5.2)
 ## Shallow pull — rear mount faces the camera, so deep Z travel vanishes into the panel.
 @export var mount_retract_distance := 0.01
 
+const DOOR_THICKNESS := 0.16
+const CENTER_GAP := 0.012
+const Y_MIN := 0.02
+## Window cut polygon (XY offsets from window center) — matches CSG WindowCut.
+var WINDOW_HOLE: PackedVector2Array = PackedVector2Array([
+	Vector2(-0.79, -0.775), Vector2(-0.92, -0.7), Vector2(-0.99, -0.575),
+	Vector2(-0.99, 0.575), Vector2(-0.92, 0.7), Vector2(-0.79, 0.775),
+	Vector2(0.79, 0.775), Vector2(0.92, 0.7), Vector2(0.99, 0.575),
+	Vector2(0.99, -0.575), Vector2(0.92, -0.7), Vector2(0.79, -0.775),
+])
+
 @onready var _left_hinge: Node3D = $LeftHinge
 @onready var _right_hinge: Node3D = $RightHinge
 @onready var _left_glass: Node = $LeftHinge/BreakableGlass
@@ -50,6 +61,7 @@ var _right_tween: Tween
 
 
 func _ready() -> void:
+	_fit_to_hull()
 	_left_grip_closed = _left_grip.position
 	_left_mount_closed = _left_mount.position
 	_right_grip_closed = _right_grip.position
@@ -60,6 +72,56 @@ func _ready() -> void:
 		_left_glass.shattered.connect(func() -> void: glass_shattered.emit(SIDE_LEFT))
 	if _right_glass and _right_glass.has_signal("shattered"):
 		_right_glass.shattered.connect(func() -> void: glass_shattered.emit(SIDE_RIGHT))
+
+
+func _fit_to_hull() -> void:
+	var walls := get_parent().get_node_or_null("SideWalls") as VanSideWall
+	var ceiling := get_parent().get_node_or_null("Ceiling") as VanCeiling
+	_fit_leaf(_left_hinge, -1.0, walls, ceiling)
+	_fit_leaf(_right_hinge, 1.0, walls, ceiling)
+
+
+func _fit_leaf(hinge: Node3D, wall_sign: float, walls: VanSideWall, ceiling: VanCeiling) -> void:
+	if hinge == null:
+		return
+	# Hinge stays put so window frame / glass / handle locals keep working.
+	var hinge_x := absf(hinge.position.x)
+	var hinge_y := hinge.position.y
+	var x_inner := wall_sign * CENTER_GAP
+	var origin := Vector3(wall_sign * hinge_x, hinge_y, 0.0)
+	# World-space window center from the original CSG layout.
+	var hole_center := Vector2(wall_sign * 1.075, 1.775)
+
+	var mat := _steal_door_material(hinge)
+	var panel := hinge.get_node_or_null("Panel") as Node3D
+	if panel:
+		panel.visible = false
+
+	var existing := hinge.get_node_or_null("CurvedBody")
+	if existing:
+		existing.free()
+
+	var body := MeshInstance3D.new()
+	body.name = "CurvedBody"
+	body.mesh = VanHullMesh.build_vaulted_xy_slab(
+		walls, ceiling,
+		x_inner, wall_sign, Y_MIN, DOOR_THICKNESS, origin,
+		0.03, 0.025, 16, 32,
+		WINDOW_HOLE, hole_center,
+		3.05, 0.38, 2.42,
+		true
+	)
+	body.material_override = mat
+	body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	hinge.add_child(body)
+	hinge.move_child(body, 0)
+
+
+func _steal_door_material(hinge: Node3D) -> Material:
+	var body := hinge.get_node_or_null("Panel/Body")
+	if body and body.get("material") != null:
+		return body.get("material") as Material
+	return null
 
 
 func is_open() -> bool:

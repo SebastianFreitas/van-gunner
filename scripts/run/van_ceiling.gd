@@ -376,6 +376,13 @@ func _build_tie_down_rings() -> void:
 		)
 
 
+## Barrel height at lateral position x (ignores Z sag — for end doors / bulkheads).
+func vault_y_at(x: float) -> float:
+	var half_x := maxf(span_x * 0.5, 0.05)
+	var t := clampf(absf(x) / half_x, 0.0, 1.0)
+	return edge_height + peak_rise * (1.0 - t * t)
+
+
 func _vault_surface_y(z_pos: float, x_pos: float = 0.0) -> float:
 	var half_x := span_x * 0.5
 	var t_x := absf(x_pos) / half_x
