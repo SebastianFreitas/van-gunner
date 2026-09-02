@@ -32,6 +32,14 @@ const DOOR_ADJACENT_WINDOWS: Array[StringName] = [
 @export var mount_retract_duration := 0.1
 @export var grip_retract_distance := 0.035
 @export var mount_retract_distance := 0.018
+## Extra outward nudge for glass + iron bars only (frame stays on the wall liner).
+@export var glass_outward_bump := 0.05
+
+## Original CSG glass sat this far into the cabin from the liner face.
+const GLASS_INSET := 0.06
+## Original iron / breakable collider inset (into cabin).
+const IRON_INSET := 0.035
+const BREAKABLE_INSET := 0.04
 
 ## Matches original CSG sash (half extents).
 const SASH_HALF_H := 0.74
@@ -106,6 +114,10 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	# No separate bezel — VanSideWall punches the rounded WindowCut so the liner
 	# itself is the surround (same as the rear door leaf around its pane).
 
+	var glass_x := wall_sign * (glass_outward_bump - GLASS_INSET)
+	var iron_inset := IRON_INSET - glass_outward_bump
+	var breakable_inset := BREAKABLE_INSET - glass_outward_bump
+
 	var frame := MeshInstance3D.new()
 	frame.name = "CurvedFrame"
 	frame.mesh = walls.build_curved_frame_ring_mesh(
@@ -119,7 +131,7 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	var glass := MeshInstance3D.new()
 	glass.name = "WindowGlass"
 	glass.mesh = walls.build_curved_pane_from_poly(
-		wall_sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, -wall_sign * 0.06, 8
+		wall_sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, glass_x, 8
 	)
 	glass.material_override = glass_mat
 	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -130,10 +142,10 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 		breakable.bind_glass_visual(glass)
 
 	var iron_cross := hinge.get_node_or_null("IronCross") as IronCross
-	_place_on_curve(iron_cross, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.035)
+	_place_on_curve(iron_cross, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, iron_inset)
 	if iron_cross:
 		iron_cross.follow_side_wall_curve(walls, mid_y)
-	_place_on_curve(breakable as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.04)
+	_place_on_curve(breakable as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, breakable_inset)
 	_place_on_curve(hinge.get_node_or_null("Interact") as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.0)
 
 	var handle := hinge.get_node_or_null("Handle") as Node3D
