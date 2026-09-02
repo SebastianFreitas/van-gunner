@@ -1,6 +1,7 @@
-[gd_scene format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1"]
+[ext_resource type="Script" path="res://scripts/run/shop_hatch_net.gd" id="2"]
 
 [sub_resource type="ShaderMaterial" id="FloorMaterial"]
 render_priority = 0
@@ -33,11 +34,6 @@ albedo_color = Color(0.78, 0.43, 0.16, 1)
 albedo_color = Color(0.22, 0.18, 0.14, 1)
 metallic = 0.15
 roughness = 0.78
-
-[sub_resource type="StandardMaterial3D" id="HatchMaterial"]
-albedo_color = Color(0.08, 0.09, 0.085, 1)
-metallic = 0.85
-roughness = 0.42
 
 [sub_resource type="StandardMaterial3D" id="HatchPanelMaterial"]
 albedo_color = Color(0.012, 0.018, 0.016, 1)
@@ -92,10 +88,6 @@ size = Vector3(1.2, 1.1, 7.8)
 [sub_resource type="BoxMesh" id="HatchPanelMesh"]
 material = SubResource("HatchPanelMaterial")
 size = Vector3(0.12, 5.5, 7.6)
-
-[sub_resource type="BoxMesh" id="HatchBarMesh"]
-material = SubResource("HatchMaterial")
-size = Vector3(0.08, 6.2, 0.08)
 
 [sub_resource type="BoxMesh" id="LampMesh"]
 material = SubResource("LampMaterial")
@@ -257,49 +249,10 @@ mesh = SubResource("KeeperHeadMesh")
 
 [node name="Hatch" type="Node3D" parent="Shop"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.2, 3.2, 0)
+script = ExtResource("2")
 
 [node name="Panel" type="MeshInstance3D" parent="Shop/Hatch"]
 mesh = SubResource("HatchPanelMesh")
-
-[node name="Bar0" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1, -0.08, 0, -2.5)
-mesh = SubResource("HatchBarMesh")
-
-[node name="Bar1" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1, -0.08, 0, -1.0)
-mesh = SubResource("HatchBarMesh")
-
-[node name="Bar2" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1, -0.08, 0, 0)
-mesh = SubResource("HatchBarMesh")
-
-[node name="Bar3" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1, -0.08, 0, 1.0)
-mesh = SubResource("HatchBarMesh")
-
-[node name="Bar4" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1, -0.08, 0, 2.5)
-mesh = SubResource("HatchBarMesh")
-
-[node name="Bar5" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0, 1, -0.1, 0, -2.5)
-mesh = SubResource("HatchBarMesh")
-
-[node name="Bar6" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0, 1, -0.1, 0, -1.0)
-mesh = SubResource("HatchBarMesh")
-
-[node name="Bar7" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0, 1, -0.1, 0, 0)
-mesh = SubResource("HatchBarMesh")
-
-[node name="Bar8" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0, 1, -0.1, 0, 1.0)
-mesh = SubResource("HatchBarMesh")
-
-[node name="Bar9" type="MeshInstance3D" parent="Shop/Hatch"]
-transform = Transform3D(0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0, 1, -0.1, 0, 2.5)
-mesh = SubResource("HatchBarMesh")
 
 [node name="DockPoint" type="Marker3D" parent="."]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 7.5, 0, 0)
