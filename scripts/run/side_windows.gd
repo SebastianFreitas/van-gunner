@@ -119,7 +119,7 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	var glass := MeshInstance3D.new()
 	glass.name = "WindowGlass"
 	glass.mesh = walls.build_curved_pane_from_poly(
-		wall_sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, wall_sign * 0.03, 8
+		wall_sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, -wall_sign * 0.06, 8
 	)
 	glass.material_override = glass_mat
 	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -130,7 +130,7 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 		breakable.bind_glass_visual(glass)
 
 	var iron_cross := hinge.get_node_or_null("IronCross") as IronCross
-	_place_on_curve(iron_cross, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.02)
+	_place_on_curve(iron_cross, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.035)
 	if iron_cross:
 		iron_cross.follow_side_wall_curve(walls, mid_y)
 	_place_on_curve(breakable as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.04)
