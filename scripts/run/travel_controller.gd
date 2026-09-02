@@ -647,66 +647,29 @@ func _finish_park() -> void:
 
 
 func _build_leave_shop_route() -> void:
+	# Mirror the reverse-park: same curve, forward progress (dock → corridor mouth).
 	_park_reversing = false
-	var van_transform := van_rig.global_transform
-	var side := 1.0 if _shop_bay_side == &"right" else -1.0
-	var handle := maxf(turn_radius * QUARTER_CIRCLE_HANDLE, 2.5)
-	# Nose faces the road. Pull forward out of the bay, swing onto the corridor,
-	# then continue — inverse of the reverse-park, same bezier style as a T-junction.
-	var pull_depth := 3.3
-	var lateral := SHOP_CORRIDOR_LATERAL
-	if is_instance_valid(_active_shop):
-		var dock := _active_shop.get_node_or_null("DockPoint") as Marker3D
-		var exit_pt := _active_shop.get_node_or_null("ExitPoint") as Marker3D
-		if dock and exit_pt:
-			pull_depth = maxf(dock.global_position.distance_to(exit_pt.global_position), 2.0)
-		var mouth_world := _shop_mouth_world()
-		var corridor_world := _shop_corridor_at_mouth(mouth_world)
-		lateral = maxf(mouth_world.distance_to(corridor_world), 6.0)
 
-	var pull_out := Vector3(0.0, 0.0, -pull_depth)
-	var center := pull_out + Vector3(-side * lateral, 0.0, 0.0)
-	# Resume the corridor travel direction the van had when it passed the bay.
-	# Right bay (yaw 0): travel = -shop.z; left bay (yaw PI): travel = +shop.z.
-	var corridor_forward := -van_transform.basis.z
-	if is_instance_valid(_active_shop):
-		corridor_forward = (
-			-side * _active_shop.global_transform.basis.z.normalized()
-		)
+	var curve := travel_path.curve
+	if curve == null or curve.point_count < 2:
+		_clear_shop_state()
+		GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
+		return
 
-	var center_world := van_transform * center
-	var road_end_world := center_world + corridor_forward * route_length
-	var van_inv := van_transform.affine_inverse()
-	var center_local := van_inv * center_world
-	var road_end_local := van_inv * road_end_world
-	var leave_handle := maxf(lateral * QUARTER_CIRCLE_HANDLE, handle)
+	var corridor_join := curve.get_closest_offset(Vector3.ZERO)
+	var last_pos := curve.get_point_position(curve.point_count - 1)
+	if last_pos.is_equal_approx(Vector3.ZERO):
+		curve.add_point(Vector3(0.0, 0.0, -route_length))
 
-	var curve := Curve3D.new()
-	curve.bake_interval = 0.25
-	curve.add_point(Vector3.ZERO, Vector3.ZERO, Vector3(0.0, 0.0, -leave_handle))
-	curve.add_point(
-		pull_out,
-		Vector3(0.0, 0.0, leave_handle * 0.5),
-		Vector3(-side * leave_handle * 0.35, 0.0, 0.0)
-	)
-	curve.add_point(
-		center_local,
-		Vector3(side * leave_handle * 0.35, 0.0, 0.0),
-		(road_end_local - center_local).normalized() * leave_handle
-	)
-	curve.add_point(road_end_local)
-
-	travel_path.curve = curve
-	travel_path.global_transform = van_transform
 	van_follow.progress = 0.0
 	van_rig.transform = Transform3D.IDENTITY
 
 	_turn_state = TurnState.LEAVING_SHOP
-	_turn_end_progress = curve.get_closest_offset(center_local)
-	_next_segment_progress = _turn_end_progress + segment_length
+	_turn_end_progress = corridor_join
+	_next_segment_progress = corridor_join + segment_length
 	_segment_spawning_paused = false
 	_refresh_travel_speed()
-	_spawn_route_segments_until(_turn_end_progress + segment_ahead_distance)
+	_spawn_route_segments_until(corridor_join + segment_ahead_distance)
 
 
 func _finish_leave_shop() -> void:
