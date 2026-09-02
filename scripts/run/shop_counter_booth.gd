@@ -506,19 +506,9 @@ func _build_shop_sign(sign_mat: Material, steel: Material, wall_x: float, view_t
 		steel
 	)
 
-	var sign_tex := _make_sign_texture("SHOP")
-	var sign_face_mat := StandardMaterial3D.new()
-	sign_face_mat.albedo_texture = sign_tex
-	sign_face_mat.roughness = 0.65
-	sign_face_mat.metallic = 0.2
-	sign_face_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	var sign_face_x := wall_x - 0.152
-	_add_sign_face_plane(
-		"ShopSignFace",
-		Vector2(2.38, 0.53),
-		Vector3(sign_face_x, sign_y, 0.0),
-		sign_face_mat
-	)
+	var letter_mat := _sign_letter_material()
+	var face_x := wall_x - 0.18 - 0.03
+	_build_sign_letters(face_x, sign_y, letter_mat)
 
 
 func _build_flyers(
@@ -633,48 +623,40 @@ func _shuffle_array(arr: Array, rng: RandomNumberGenerator) -> void:
 		arr[j] = tmp
 
 
-func _make_sign_texture(text: String) -> ImageTexture:
-	var w := 512
-	var h := 128
-	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
-	var bg := Color(0.42, 0.12, 0.08, 1.0)
-	var ink := Color(0.92, 0.82, 0.55, 1.0)
-	img.fill(bg)
-	for _i in 120:
-		var px := randi() % w
-		var py := randi() % h
-		var wear := bg.darkened(randf_range(0.04, 0.18))
-		img.set_pixel(px, py, wear)
-	var scale := 4
-	var text_w := _text_pixel_width(text, scale)
-	var origin := Vector2i((w - text_w) / 2, (h - 7 * scale) / 2)
-	_draw_block_text(img, text, origin, ink, scale)
-	return ImageTexture.create_from_image(img)
+func _build_sign_letters(face_x: float, sign_y: float, letter_mat: Material) -> void:
+	var text := "SHOP"
+	var cell := 0.066
+	var gap := 0.095
+	var depth := 0.038
+	var glyph_cols := 5
+	var glyph_rows := 7
 
+	var total_z := 0.0
+	for ch in text:
+		if not _glyph_pattern(ch).is_empty():
+			total_z += glyph_cols * cell
+		total_z += gap
+	total_z -= gap
 
-func _add_sign_face_plane(
-	node_name: String,
-	size: Vector2,
-	pos: Vector3,
-	material: Material
-) -> MeshInstance3D:
-	var mesh := PlaneMesh.new()
-	mesh.size = size
-	mesh.orientation = PlaneMesh.FACE_X
-
-	if material is BaseMaterial3D:
-		(material as BaseMaterial3D).render_priority = 1
-
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = mesh
-	mi.material_override = material
-	mi.position = pos
-	mi.rotation_degrees = Vector3(0.0, 180.0, 0.0)
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mi.sorting_offset = 0.02
-	add_child(mi)
-	return mi
+	var cursor_z := -total_z * 0.5
+	for ch in text:
+		var pattern := _glyph_pattern(ch)
+		if pattern.is_empty():
+			cursor_z += gap
+			continue
+		for row in pattern.size():
+			var bits: int = pattern[row]
+			for col in glyph_cols:
+				if (bits >> (glyph_cols - 1 - col)) & 1:
+					var cy := sign_y + (float(glyph_rows) * 0.5 - float(row) - 0.5) * cell
+					var cz := cursor_z + (float(col) + 0.5) * cell
+					_add_box(
+						"SignLetter_%s_%d_%d" % [ch, row, col],
+						Vector3(depth, cell * 0.94, cell * 0.94),
+						Vector3(face_x - depth * 0.5 - 0.004, cy, cz),
+						letter_mat
+					)
+		cursor_z += glyph_cols * cell + gap
 
 
 func _make_flyer_texture(title: String, seed_i: int, rng: RandomNumberGenerator) -> ImageTexture:
@@ -1002,6 +984,16 @@ func _lamp_material() -> StandardMaterial3D:
 	mat.emission_enabled = true
 	mat.emission = Color(1.0, 0.7, 0.35, 1.0)
 	mat.emission_energy_multiplier = 2.2
+	return mat
+
+
+func _sign_letter_material() -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.98, 0.93, 0.72, 1.0)
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.88, 0.5, 1.0)
+	mat.emission_energy_multiplier = 1.4
 	return mat
 
 
