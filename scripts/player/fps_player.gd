@@ -55,12 +55,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		usables.try_use_slot(3)
 
 
-func recall_to_local(local_pos: Vector3) -> void:
-	position = local_pos
-	velocity = Vector3.ZERO
-	_local_horizontal_velocity = Vector3.ZERO
-
-
 func _physics_process(delta: float) -> void:
 	var reference_basis := _movement_reference.global_basis.orthonormalized()
 	if not is_on_floor():
