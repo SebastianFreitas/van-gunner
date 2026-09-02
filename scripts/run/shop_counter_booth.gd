@@ -91,6 +91,9 @@ func _build() -> void:
 	var tx_bottom := transaction_center_y - tx_half_h
 	var tx_top := transaction_center_y + tx_half_h
 
+	# Lights must enter the tree before booth meshes so teardown frees geometry first.
+	_register_booth_lights(wall_x, view_top)
+
 	_build_counter(deck_mat, steel, half_w, wall_x, deck_y)
 	_build_pillars(steel, rivet_mat, half_w, wall_x)
 	_build_wall_panels(panel_mat, steel, half_w, wall_x, face_x, view_bottom, view_top, tx_bottom, tx_top)
@@ -98,7 +101,7 @@ func _build() -> void:
 	_build_armor_details(steel, rivet_mat, panel_mat, half_w, wall_x, face_x, view_top, tx_bottom)
 	_build_viewing_grill(wall_x, view_half_w, view_half_h, grill_mat)
 	_build_window_brow(steel, rivet_mat, wall_x, view_top)
-	_build_lamps(lamp_mat, steel, wall_x, view_top)
+	_build_lamp_visuals(lamp_mat, steel, wall_x, view_top)
 	_build_shop_sign(sign_mat, steel, wall_x, view_top)
 	_build_flyers(face_x, half_w, view_half_w, view_bottom, tx_bottom)
 
@@ -444,7 +447,21 @@ func _build_window_brow(steel: Material, rivet_mat: Material, wall_x: float, vie
 	)
 
 
-func _build_lamps(lamp_mat: Material, steel: Material, wall_x: float, view_top: float) -> void:
+func _register_booth_lights(wall_x: float, view_top: float) -> void:
+	var lamp_y := view_top + 0.42
+	for i in 2:
+		var z := lerpf(-1.1, 1.1, float(i))
+		var light := OmniLight3D.new()
+		light.name = "BoothLampLight_%d" % i
+		light.position = Vector3(wall_x - 0.35, lamp_y - 0.05, z)
+		light.light_color = Color(1.0, 0.72, 0.42, 1.0)
+		light.light_energy = 1.35
+		light.omni_range = 4.5
+		light.shadow_enabled = false
+		add_child(light)
+
+
+func _build_lamp_visuals(lamp_mat: Material, steel: Material, wall_x: float, view_top: float) -> void:
 	var lamp_y := view_top + 0.42
 	for i in 2:
 		var z := lerpf(-1.1, 1.1, float(i))
@@ -460,14 +477,6 @@ func _build_lamps(lamp_mat: Material, steel: Material, wall_x: float, view_top: 
 			Vector3(wall_x - 0.24, lamp_y, z),
 			lamp_mat
 		)
-		var light := OmniLight3D.new()
-		light.name = "BoothLampLight_%d" % i
-		light.position = Vector3(wall_x - 0.35, lamp_y - 0.05, z)
-		light.light_color = Color(1.0, 0.72, 0.42, 1.0)
-		light.light_energy = 1.35
-		light.omni_range = 4.5
-		light.shadow_enabled = false
-		add_child(light)
 
 
 func _build_shop_sign(sign_mat: Material, steel: Material, wall_x: float, view_top: float) -> void:
@@ -497,17 +506,19 @@ func _build_shop_sign(sign_mat: Material, steel: Material, wall_x: float, view_t
 		steel
 	)
 
-	# Stencil-ish letters as raised blocks (SHOP).
-	var letter_mat := sign_mat
-	var letter_y := sign_y
-	var letters_z := [-0.75, -0.25, 0.25, 0.75]
-	for i in letters_z.size():
-		_add_box(
-			"SignLetter_%d" % i,
-			Vector3(0.04, 0.28, 0.28),
-			Vector3(wall_x - 0.22, letter_y, letters_z[i]),
-			letter_mat
-		)
+	var sign_tex := _make_sign_texture("SHOP")
+	var sign_face_mat := StandardMaterial3D.new()
+	sign_face_mat.albedo_texture = sign_tex
+	sign_face_mat.roughness = 0.65
+	sign_face_mat.metallic = 0.2
+	sign_face_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var sign_face_x := wall_x - 0.152
+	_add_sign_face_plane(
+		"ShopSignFace",
+		Vector2(2.38, 0.53),
+		Vector3(sign_face_x, sign_y, 0.0),
+		sign_face_mat
+	)
 
 
 func _build_flyers(
@@ -620,6 +631,50 @@ func _shuffle_array(arr: Array, rng: RandomNumberGenerator) -> void:
 		var tmp = arr[i]
 		arr[i] = arr[j]
 		arr[j] = tmp
+
+
+func _make_sign_texture(text: String) -> ImageTexture:
+	var w := 512
+	var h := 128
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var bg := Color(0.42, 0.12, 0.08, 1.0)
+	var ink := Color(0.92, 0.82, 0.55, 1.0)
+	img.fill(bg)
+	for _i in 120:
+		var px := randi() % w
+		var py := randi() % h
+		var wear := bg.darkened(randf_range(0.04, 0.18))
+		img.set_pixel(px, py, wear)
+	var scale := 4
+	var text_w := _text_pixel_width(text, scale)
+	var origin := Vector2i((w - text_w) / 2, (h - 7 * scale) / 2)
+	_draw_block_text(img, text, origin, ink, scale)
+	return ImageTexture.create_from_image(img)
+
+
+func _add_sign_face_plane(
+	node_name: String,
+	size: Vector2,
+	pos: Vector3,
+	material: Material
+) -> MeshInstance3D:
+	var mesh := PlaneMesh.new()
+	mesh.size = size
+	mesh.orientation = PlaneMesh.FACE_X
+
+	if material is BaseMaterial3D:
+		(material as BaseMaterial3D).render_priority = 1
+
+	var mi := MeshInstance3D.new()
+	mi.name = node_name
+	mi.mesh = mesh
+	mi.material_override = material
+	mi.position = pos
+	mi.rotation_degrees = Vector3(0.0, 180.0, 0.0)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.sorting_offset = 0.02
+	add_child(mi)
+	return mi
 
 
 func _make_flyer_texture(title: String, seed_i: int, rng: RandomNumberGenerator) -> ImageTexture:
