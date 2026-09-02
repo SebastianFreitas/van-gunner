@@ -11,6 +11,8 @@ signal shot_fired(hit: bool)
 @export var step_check_distance := 0.45
 @export var movement_reference_path: NodePath
 
+const _REAR_DOOR_INTERACT_SCRIPT := preload("res://scripts/run/rear_door_interact.gd")
+
 @onready var head: Node3D = $Head
 @onready var interaction_ray: RayCast3D = $Head/Camera3D/InteractionRay
 @onready var weapon: GunController = $Head/Camera3D/Weapon
@@ -160,6 +162,10 @@ func _update_interaction() -> void:
 		var collider := interaction_ray.get_collider()
 		if collider is Interactable:
 			next = collider
+			if collider.get_script() == _REAR_DOOR_INTERACT_SCRIPT:
+				var resolved := _resolve_rear_door_interact(interaction_ray.get_collision_point())
+				if resolved:
+					next = resolved
 	if next == _current_interactable:
 		if next:
 			interaction_prompt_changed.emit(next.get_interaction_prompt())
@@ -168,3 +174,11 @@ func _update_interaction() -> void:
 	interaction_prompt_changed.emit(
 		_current_interactable.get_interaction_prompt() if _current_interactable else ""
 	)
+
+
+func _resolve_rear_door_interact(hit_point: Vector3) -> Interactable:
+	var rear_doors := get_tree().get_first_node_in_group(&"rear_doors")
+	if rear_doors == null:
+		return null
+	var hinge_name := "LeftHinge" if hit_point.x < 0.0 else "RightHinge"
+	return rear_doors.get_node_or_null("%s/Interact" % hinge_name) as Interactable
