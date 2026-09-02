@@ -1,7 +1,8 @@
-[gd_scene load_steps=28 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1"]
 [ext_resource type="Script" path="res://scripts/run/shop_hatch_net.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/run/shop_counter_booth.gd" id="3"]
 
 [sub_resource type="ShaderMaterial" id="FloorMaterial"]
 render_priority = 0
@@ -29,11 +30,6 @@ roughness = 0.61
 [sub_resource type="StandardMaterial3D" id="LampMaterial"]
 shading_mode = 0
 albedo_color = Color(0.78, 0.43, 0.16, 1)
-
-[sub_resource type="StandardMaterial3D" id="CounterMaterial"]
-albedo_color = Color(0.22, 0.18, 0.14, 1)
-metallic = 0.15
-roughness = 0.78
 
 [sub_resource type="StandardMaterial3D" id="HatchPanelMaterial"]
 albedo_color = Color(0.012, 0.018, 0.016, 1)
@@ -80,10 +76,6 @@ size = Vector3(1.2, 1.2, 8.6)
 [sub_resource type="BoxMesh" id="CeilingMesh"]
 material = SubResource("RibMaterial")
 size = Vector3(18, 0.35, 8.6)
-
-[sub_resource type="BoxMesh" id="CounterMesh"]
-material = SubResource("CounterMaterial")
-size = Vector3(1.2, 1.1, 7.8)
 
 [sub_resource type="BoxMesh" id="HatchPanelMesh"]
 material = SubResource("HatchPanelMaterial")
@@ -133,8 +125,14 @@ size = Vector3(1.2, 8, 2.4)
 [sub_resource type="BoxShape3D" id="LintelShape"]
 size = Vector3(1.2, 1.2, 8.6)
 
-[sub_resource type="BoxShape3D" id="CounterShape"]
-size = Vector3(1.2, 1.1, 7.8)
+[sub_resource type="BoxShape3D" id="BoothDeckShape"]
+size = Vector3(1.25, 0.26, 7.6)
+
+[sub_resource type="BoxShape3D" id="BoothWallShape"]
+size = Vector3(0.18, 3.35, 7.6)
+
+[sub_resource type="BoxShape3D" id="BoothPillarShape"]
+size = Vector3(0.5, 3.35, 0.22)
 
 [node name="ShopBay" type="Node3D"]
 
@@ -168,9 +166,21 @@ shape = SubResource("MouthFrameShape")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 5.4, 0)
 shape = SubResource("LintelShape")
 
-[node name="Counter" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.7, 0.45, 0)
-shape = SubResource("CounterShape")
+[node name="BoothDeck" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.45, 0.93, 0)
+shape = SubResource("BoothDeckShape")
+
+[node name="BoothWall" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.93, 1.675, 0)
+shape = SubResource("BoothWallShape")
+
+[node name="BoothPillarNegZ" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.9, 1.675, -3.7)
+shape = SubResource("BoothPillarShape")
+
+[node name="BoothPillarPosZ" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.9, 1.675, 3.7)
+shape = SubResource("BoothPillarShape")
 
 [node name="Bay" type="Node3D" parent="."]
 
@@ -212,32 +222,32 @@ mesh = SubResource("LampMesh")
 
 [node name="Shop" type="Node3D" parent="."]
 
-[node name="Counter" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.7, 0.45, 0)
-mesh = SubResource("CounterMesh")
+[node name="CounterBooth" type="Node3D" parent="Shop"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.85, 0, 0)
+script = ExtResource("3")
 
 [node name="Item0" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 1.22, -2.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.35, 1.12, -2.5)
 mesh = SubResource("ItemSphereMesh")
 
 [node name="Item1" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.65, 1.18, -0.9)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.45, 1.08, -0.9)
 mesh = SubResource("ItemBoxMesh")
 
 [node name="Item2" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.55, 1.2, 0.15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.4, 1.1, 0.15)
 mesh = SubResource("ItemCanMesh")
 
 [node name="Item3" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.7, 1.22, 1.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 1.12, 1.1)
 mesh = SubResource("ItemSphereMesh")
 
 [node name="Item4" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.6, 1.18, 2.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.38, 1.08, 2.5)
 mesh = SubResource("ItemBoxMesh")
 
 [node name="Keeper" type="Node3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.9, 0, -1.6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.05, 0, 0)
 
 [node name="Body" type="MeshInstance3D" parent="Shop/Keeper"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
