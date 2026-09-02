@@ -1,7 +1,7 @@
 class_name RepairWindowBarsEffect
 extends ItemEffect
 
-## Instantly restores all window / side-door-window bars to full HP.
+## Instantly restores all window bars to full HP.
 ## If a point was breached, swaps BrokenIronCross back to the intact IronCross.
 
 
