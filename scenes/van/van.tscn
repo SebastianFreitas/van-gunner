@@ -28,6 +28,8 @@
 [ext_resource type="Script" path="res://scripts/run/van_player_containment.gd" id="27"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_floor.tscn" id="28"]
 [ext_resource type="Shader" path="res://scenes/van/van_floor.gdshader" id="29"]
+[ext_resource type="PackedScene" path="res://scenes/van/van_side_wall.tscn" id="30"]
+[ext_resource type="Shader" path="res://scenes/van/van_wall.gdshader" id="31"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -69,10 +71,24 @@ albedo_color = Color(0.18, 0.13, 0.085, 1)
 roughness = 0.85
 uv1_scale = Vector3(4.24, 4.24, 4.24)
 
-[sub_resource type="StandardMaterial3D" id="WallMaterial"]
-albedo_color = Color(0.27, 0.29, 0.28, 1)
-metallic = 0.35
-roughness = 0.72
+[sub_resource type="ShaderMaterial" id="WallMaterial"]
+render_priority = 0
+shader = ExtResource("31")
+shader_parameter/base_color = Color(0.22, 0.235, 0.225, 1)
+shader_parameter/seam_color = Color(0.07, 0.075, 0.07, 1)
+shader_parameter/kick_color = Color(0.1, 0.095, 0.085, 1)
+shader_parameter/belt_color = Color(0.14, 0.15, 0.145, 1)
+shader_parameter/wear_color = Color(0.32, 0.3, 0.26, 1)
+shader_parameter/stain_color = Color(0.04, 0.035, 0.03, 1)
+shader_parameter/rust_color = Color(0.24, 0.09, 0.035, 1)
+shader_parameter/wall_size_m = Vector2(9.4, 3.08)
+shader_parameter/panel_spacing_m = 1.15
+shader_parameter/rib_spacing_m = 0.42
+shader_parameter/kick_height_m = 0.38
+shader_parameter/belt_y_m = 0.96
+shader_parameter/waist_y_m = 1.48
+shader_parameter/roughness_value = 0.78
+shader_parameter/metallic_value = 0.28
 
 [sub_resource type="BoxMesh" id="SideRailMesh"]
 size = Vector3(0.18, 1.05, 6.9)
@@ -204,113 +220,130 @@ script = ExtResource("27")
 [node name="Floor" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=512164173 instance=ExtResource("28")]
 floor_material = SubResource("FloorMaterial")
 
+[node name="SideWalls" parent="TravelPath/VanFollow/VanRig/Interior/Shell" instance=ExtResource("30")]
+wall_material = SubResource("WallMaterial")
+
 [node name="FloorCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=901514165]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.125, 0)
 shape = SubResource("FloorShape")
 
 [node name="Ceiling" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1700144643 instance=ExtResource("25")]
+span_x = 4.08
+viga_length = 4.12
+edge_height = 3.05
 ceiling_material = SubResource("CeilingMaterial")
 viga_material = SubResource("TableMaterial")
 
 [node name="LeftLowerRail" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=339440941]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 0.525, 1.2)
+transform = Transform3D(0.99385222, -0.11071483, 0, 0.11071483, 0.99385222, 0, 0, 0, 1, -2.49964561, 0.52500000, 1.2)
+visible = false
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SideRailMesh")
 
 [node name="LeftLowerCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1819202474]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 0.525, 1.2)
+transform = Transform3D(0.99385222, -0.11071483, 0, 0.11071483, 0.99385222, 0, 0, 0, 1, -2.49964561, 0.52500000, 1.2)
 shape = SubResource("SideRailShape")
 
 [node name="LeftUpperRail" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=300041863]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 2.85, 1.2)
+transform = Transform3D(0.91836256, 0.39574007, 0, -0.39574007, 0.91836256, 0, 0, 0, 1, -2.10222680, 2.85000000, 1.2)
+visible = false
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SideTopMesh")
 
 [node name="LeftUpperCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1746780477]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 2.85, 1.2)
+transform = Transform3D(0.91836256, 0.39574007, 0, -0.39574007, 0.91836256, 0, 0, 0, 1, -2.10222680, 2.85000000, 1.2)
 shape = SubResource("SideTopShape")
 
 [node name="RightLowerRail" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=259678759]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 0.525, 1.2)
+transform = Transform3D(0.99385222, 0.11071483, 0, -0.11071483, 0.99385222, 0, 0, 0, 1, 2.49964561, 0.52500000, 1.2)
+visible = false
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SideRailMesh")
 
 [node name="RightLowerCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=83138049]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 0.525, 1.2)
+transform = Transform3D(0.99385222, 0.11071483, 0, -0.11071483, 0.99385222, 0, 0, 0, 1, 2.49964561, 0.52500000, 1.2)
 shape = SubResource("SideRailShape")
 
 [node name="RightUpperRail" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=646741751]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 2.85, 1.2)
+transform = Transform3D(0.91836256, -0.39574007, 0, 0.39574007, 0.91836256, 0, 0, 0, 1, 2.10222680, 2.85000000, 1.2)
+visible = false
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SideTopMesh")
 
 [node name="RightUpperCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1390590106]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 2.85, 1.2)
+transform = Transform3D(0.91836256, -0.39574007, 0, 0.39574007, 0.91836256, 0, 0, 0, 1, 2.10222680, 2.85000000, 1.2)
 shape = SubResource("SideTopShape")
 
 [node name="SidePillars" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1734239770]
 
 [node name="LeftRear" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=90263395]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, 4.42)
+transform = Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.49701443, 1.52500000, 4.42)
+visible = false
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SidePillarMesh")
 
 [node name="LeftMiddle" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=1516235068]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, 1.25)
+transform = Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.49701443, 1.52500000, 1.25)
+visible = false
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SidePillarMesh")
 
 [node name="LeftFront" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=925343552]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, -2)
+transform = Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.49701443, 1.52500000, -2)
+visible = false
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SidePillarMesh")
 
 [node name="RightRear" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=2029421694]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, 4.42)
+transform = Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.49701443, 1.52500000, 4.42)
+visible = false
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SidePillarMesh")
 
 [node name="RightMiddle" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=894746951]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, 1.25)
+transform = Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.49701443, 1.52500000, 1.25)
+visible = false
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SidePillarMesh")
 
 [node name="RightFront" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=518299233]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, -2)
+transform = Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.49701443, 1.52500000, -2)
+visible = false
 material_override = SubResource("WallMaterial")
 mesh = SubResource("SidePillarMesh")
 
 [node name="LeftRearCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=1462294698]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, 4.42)
+transform = Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.49701443, 1.52500000, 4.42)
 shape = SubResource("SidePillarShape")
 
 [node name="LeftMiddleCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=1572694219]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, 1.25)
+transform = Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.49701443, 1.52500000, 1.25)
 shape = SubResource("SidePillarShape")
 
 [node name="LeftFrontCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=1923883386]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, -2)
+transform = Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.49701443, 1.52500000, -2)
 shape = SubResource("SidePillarShape")
 
 [node name="RightRearCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=1344796928]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, 4.42)
+transform = Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.49701443, 1.52500000, 4.42)
 shape = SubResource("SidePillarShape")
 
 [node name="RightMiddleCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=370679857]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, 1.25)
+transform = Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.49701443, 1.52500000, 1.25)
 shape = SubResource("SidePillarShape")
 
 [node name="RightFrontCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=556399036]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, -2)
+transform = Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.49701443, 1.52500000, -2)
 shape = SubResource("SidePillarShape")
 
 [node name="SideWindows" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1970653052 groups=["side_windows"]]
 script = ExtResource("23")
 
 [node name="LeftRear" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows" unique_id=297535484]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.775, 2.835)
+transform = Transform3D(0.98043753, 0.19683053, 0, -0.19683053, 0.98043753, 0, 0, 0, 1, -2.45536321, 1.77500000, 2.835)
 
 [node name="WallPanel" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear" unique_id=1158146212]
+visible = false
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/WallPanel" unique_id=528218169]
 size = Vector3(0.18, 1.62, 2.86)
@@ -382,9 +415,10 @@ script = ExtResource("24")
 shape = SubResource("SideWindowInteractShape")
 
 [node name="LeftFront" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows" unique_id=219665426]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.775, -0.375)
+transform = Transform3D(0.98043753, 0.19683053, 0, -0.19683053, 0.98043753, 0, 0, 0, 1, -2.45536321, 1.77500000, -0.375)
 
 [node name="WallPanel" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront" unique_id=1486771477]
+visible = false
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/WallPanel" unique_id=446177907]
 size = Vector3(0.18, 1.62, 2.86)
@@ -457,9 +491,10 @@ window_id = "left_front"
 shape = SubResource("SideWindowInteractShape")
 
 [node name="RightRear" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows" unique_id=1617635276]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.775, 2.835)
+transform = Transform3D(0.98043753, -0.19683053, 0, 0.19683053, 0.98043753, 0, 0, 0, 1, 2.45536321, 1.77500000, 2.835)
 
 [node name="WallPanel" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear" unique_id=892556649]
+visible = false
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/WallPanel" unique_id=234134982]
 size = Vector3(0.18, 1.62, 2.86)
@@ -532,9 +567,10 @@ window_id = "right_rear"
 shape = SubResource("SideWindowInteractShape")
 
 [node name="RightFront" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows" unique_id=1383495958]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.775, -0.375)
+transform = Transform3D(0.98043753, -0.19683053, 0, 0.19683053, 0.98043753, 0, 0, 0, 1, 2.45536321, 1.77500000, -0.375)
 
 [node name="WallPanel" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront" unique_id=1880513044]
+visible = false
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/WallPanel" unique_id=2106676305]
 size = Vector3(0.18, 1.62, 2.86)
@@ -610,7 +646,7 @@ shape = SubResource("SideWindowInteractShape")
 script = ExtResource("19")
 
 [node name="Left" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors" unique_id=285426358]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.31, 1.525, -3.485)
+transform = Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.49701443, 1.52500000, -3.485)
 
 [node name="Panel" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left" unique_id=1992283155]
 
@@ -709,7 +745,7 @@ script = ExtResource("20")
 shape = SubResource("SideDoorShape")
 
 [node name="Right" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors" unique_id=532555923]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.31, 1.525, -3.485)
+transform = Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.49701443, 1.52500000, -3.485)
 
 [node name="Panel" type="CSGCombiner3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right" unique_id=2057324694]
 
@@ -1052,6 +1088,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11881101, 0)
 shape = SubResource("DoorShape")
 
 [node name="Bulkhead" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1359735791 instance=ExtResource("26")]
+van_half_width = 2.40
 
 [node name="Props" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1487223170]
 

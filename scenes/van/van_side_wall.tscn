@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/run/van_side_wall.gd" id="1"]
+
+[node name="VanSideWall" type="Node3D"]
+script = ExtResource("1")
