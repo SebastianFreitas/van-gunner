@@ -35,7 +35,7 @@ func _process(_delta: float) -> void:
 		open()
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func _unhandled_input(_event: InputEvent) -> void:
 	if not visible:
 		return
 	get_viewport().set_input_as_handled()

@@ -78,7 +78,7 @@ func _fit_to_side_walls() -> void:
 	_fit_window_root($RightFront, 1.0, walls.window_centers_z[1], walls)
 
 
-func _fit_window_root(root: Node3D, sign: float, z_center: float, walls: VanSideWall) -> void:
+func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: VanSideWall) -> void:
 	if root == null:
 		return
 
@@ -86,7 +86,7 @@ func _fit_window_root(root: Node3D, sign: float, z_center: float, walls: VanSide
 	var y_hinge := mid_y + SASH_HALF_H
 	var x_ref := walls.wall_x_at(y_hinge)
 	root.rotation = Vector3.ZERO
-	root.position = Vector3(sign * x_ref, y_hinge, z_center)
+	root.position = Vector3(wall_sign * x_ref, y_hinge, z_center)
 
 	var hinge := root.get_node_or_null("Hinge") as Node3D
 	if hinge == null:
@@ -109,7 +109,7 @@ func _fit_window_root(root: Node3D, sign: float, z_center: float, walls: VanSide
 	var frame := MeshInstance3D.new()
 	frame.name = "CurvedFrame"
 	frame.mesh = walls.build_curved_frame_ring_mesh(
-		sign, FRAME_OUTER_POLY, GLASS_POLY,
+		wall_sign, FRAME_OUTER_POLY, GLASS_POLY,
 		x_ref, y_hinge, z_center, mid_y, FRAME_THICKNESS, 0.0, 10
 	)
 	frame.material_override = frame_mat
@@ -119,7 +119,7 @@ func _fit_window_root(root: Node3D, sign: float, z_center: float, walls: VanSide
 	var glass := MeshInstance3D.new()
 	glass.name = "WindowGlass"
 	glass.mesh = walls.build_curved_pane_from_poly(
-		sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, sign * 0.03, 8
+		wall_sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, wall_sign * 0.03, 8
 	)
 	glass.material_override = glass_mat
 	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -130,21 +130,21 @@ func _fit_window_root(root: Node3D, sign: float, z_center: float, walls: VanSide
 		breakable.bind_glass_visual(glass)
 
 	var iron_cross := hinge.get_node_or_null("IronCross") as IronCross
-	_place_on_curve(iron_cross, walls, sign, x_ref, y_hinge, mid_y, 0.0, 0.02)
+	_place_on_curve(iron_cross, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.02)
 	if iron_cross:
 		iron_cross.follow_side_wall_curve(walls, mid_y)
-	_place_on_curve(breakable as Node3D, walls, sign, x_ref, y_hinge, mid_y, 0.0, 0.04)
-	_place_on_curve(hinge.get_node_or_null("Interact") as Node3D, walls, sign, x_ref, y_hinge, mid_y, 0.0, 0.0)
+	_place_on_curve(breakable as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.04)
+	_place_on_curve(hinge.get_node_or_null("Interact") as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.0)
 
 	var handle := hinge.get_node_or_null("Handle") as Node3D
 	if handle:
-		_place_on_curve(handle, walls, sign, x_ref, y_hinge, mid_y - 0.52, -0.95, 0.08)
+		_place_on_curve(handle, walls, wall_sign, x_ref, y_hinge, mid_y - 0.52, -0.95, 0.08)
 
 
 func _place_on_curve(
 	node: Node3D,
 	walls: VanSideWall,
-	sign: float,
+	wall_sign: float,
 	x_ref: float,
 	y_ref: float,
 	world_y: float,
@@ -153,9 +153,9 @@ func _place_on_curve(
 ) -> void:
 	if node == null:
 		return
-	var basis := node.transform.basis
-	var local_x := walls.local_x_on_wall(sign, world_y, x_ref) - sign * into_cabin
-	node.transform = Transform3D(basis, Vector3(local_x, world_y - y_ref, local_z))
+	var node_basis := node.transform.basis
+	var local_x := walls.local_x_on_wall(wall_sign, world_y, x_ref) - wall_sign * into_cabin
+	node.transform = Transform3D(node_basis, Vector3(local_x, world_y - y_ref, local_z))
 
 
 func _hide_node(parent: Node, path: String) -> void:

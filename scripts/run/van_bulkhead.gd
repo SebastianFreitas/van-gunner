@@ -182,23 +182,23 @@ func _add_post(node_name: String, x: float, material: Material) -> void:
 	)
 
 
-func _add_curved_wall_post(node_name: String, sign: float, material: Material) -> void:
+func _add_curved_wall_post(node_name: String, wall_sign: float, material: Material) -> void:
 	var segs := maxi(wall_post_segments, 4)
 	var inset := frame_thickness * 0.5
-	var y_top_limit := _vault_y(sign * (_vault_half() - inset))
+	var y_top_limit := _vault_y(wall_sign * (_vault_half() - inset))
 	for i in range(segs):
 		var t0 := float(i) / float(segs)
 		var t1 := float(i + 1) / float(segs)
 		var y0 := lerpf(0.0, y_top_limit, t0)
 		var y1 := lerpf(0.0, y_top_limit, t1)
-		var x0 := sign * (_wall_half(y0) - inset)
-		var x1 := sign * (_wall_half(y1) - inset)
+		var x0 := wall_sign * (_wall_half(y0) - inset)
+		var x1 := wall_sign * (_wall_half(y1) - inset)
 		# Clip the upper end if it would poke through the vault.
 		if y0 >= _vault_y(x0) - 0.01:
 			continue
 		if y1 > _vault_y(x1):
 			y1 = _vault_y(x1)
-			x1 = sign * (_wall_half(y1) - inset)
+			x1 = wall_sign * (_wall_half(y1) - inset)
 		var dx := x1 - x0
 		var dy := y1 - y0
 		var length := sqrt(dx * dx + dy * dy)

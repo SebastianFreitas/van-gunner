@@ -200,7 +200,7 @@ func _build_scatter_props() -> void:
 	_add_flat("OilStainB", Vector2(0.35, 0.5), Vector3(1.75, 0.003, 3.2), -40.0, oil)
 
 
-func _add_flat(name: String, size: Vector2, pos: Vector3, yaw_deg: float, material: Material) -> void:
+func _add_flat(node_name: String, size: Vector2, pos: Vector3, yaw_deg: float, material: Material) -> void:
 	var mesh := PlaneMesh.new()
 	mesh.size = size
 	mesh.orientation = PlaneMesh.FACE_Y
@@ -211,7 +211,7 @@ func _add_flat(name: String, size: Vector2, pos: Vector3, yaw_deg: float, materi
 		(material as ShaderMaterial).render_priority = 1
 
 	var mi := MeshInstance3D.new()
-	mi.name = name
+	mi.name = node_name
 	mi.mesh = mesh
 	mi.material_override = material
 	mi.position = pos
@@ -221,11 +221,11 @@ func _add_flat(name: String, size: Vector2, pos: Vector3, yaw_deg: float, materi
 	add_child(mi)
 
 
-func _add_box(name: String, size: Vector3, pos: Vector3, material: Material) -> void:
+func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material) -> void:
 	var box := BoxMesh.new()
 	box.size = size
 	var mi := MeshInstance3D.new()
-	mi.name = name
+	mi.name = node_name
 	mi.mesh = box
 	mi.material_override = material
 	mi.position = pos

@@ -103,7 +103,7 @@ func _fit_to_side_walls() -> void:
 	_fit_door_leaf(_right, 1.0, walls)
 
 
-func _fit_door_leaf(leaf: Node3D, sign: float, walls: VanSideWall) -> void:
+func _fit_door_leaf(leaf: Node3D, wall_sign: float, walls: VanSideWall) -> void:
 	var y_min := walls.door_y_min
 	var y_max := walls.door_y_max
 	var mid_y := (y_min + y_max) * 0.5
@@ -113,7 +113,7 @@ func _fit_door_leaf(leaf: Node3D, sign: float, walls: VanSideWall) -> void:
 	var z1 := z_ref + DOOR_HALF_Z
 
 	leaf.rotation = Vector3.ZERO
-	leaf.position = Vector3(sign * x_ref, mid_y, z_ref)
+	leaf.position = Vector3(wall_sign * x_ref, mid_y, z_ref)
 
 	var body_mat := _steal_material(leaf, "Panel/Body")
 	var trim_mat := _steal_material(leaf, "Panel/OuterSkin")
@@ -132,7 +132,7 @@ func _fit_door_leaf(leaf: Node3D, sign: float, walls: VanSideWall) -> void:
 	var body := MeshInstance3D.new()
 	body.name = "CurvedBody"
 	body.mesh = walls.build_curved_shell_mesh(
-		sign, y_min, y_max, z0, z1, x_ref, mid_y, z_ref, DOOR_THICKNESS,
+		wall_sign, y_min, y_max, z0, z1, x_ref, mid_y, z_ref, DOOR_THICKNESS,
 		0.0, 28, 16,
 		INF, -INF, INF, -INF,
 		PackedVector2Array(),
@@ -146,9 +146,9 @@ func _fit_door_leaf(leaf: Node3D, sign: float, walls: VanSideWall) -> void:
 	var outer := MeshInstance3D.new()
 	outer.name = "CurvedOuter"
 	outer.mesh = walls.build_curved_shell_mesh(
-		sign, y_min + 0.02, y_max - 0.02, z0 + 0.02, z1 - 0.02,
+		wall_sign, y_min + 0.02, y_max - 0.02, z0 + 0.02, z1 - 0.02,
 		x_ref, mid_y, z_ref, OUTER_SKIN,
-		sign * DOOR_THICKNESS, 24, 14,
+		wall_sign * DOOR_THICKNESS, 24, 14,
 		INF, -INF, INF, -INF,
 		PackedVector2Array(),
 		DOOR_CUT_POLY,
@@ -161,8 +161,8 @@ func _fit_door_leaf(leaf: Node3D, sign: float, walls: VanSideWall) -> void:
 	var frame := MeshInstance3D.new()
 	frame.name = "CurvedFrame"
 	frame.mesh = walls.build_curved_frame_ring_mesh(
-		sign, DOOR_FRAME_OUTER_POLY, DOOR_GLASS_POLY,
-		x_ref, mid_y, z_ref, DOOR_WIN_CENTER_Y, FRAME_THICKNESS, sign * 0.02, 10
+		wall_sign, DOOR_FRAME_OUTER_POLY, DOOR_GLASS_POLY,
+		x_ref, mid_y, z_ref, DOOR_WIN_CENTER_Y, FRAME_THICKNESS, wall_sign * 0.02, 10
 	)
 	frame.material_override = frame_mat
 	frame.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
@@ -171,7 +171,7 @@ func _fit_door_leaf(leaf: Node3D, sign: float, walls: VanSideWall) -> void:
 	var glass := MeshInstance3D.new()
 	glass.name = "WindowGlass"
 	glass.mesh = walls.build_curved_pane_from_poly(
-		sign, DOOR_GLASS_POLY, x_ref, mid_y, z_ref, DOOR_WIN_CENTER_Y, sign * 0.055, 8
+		wall_sign, DOOR_GLASS_POLY, x_ref, mid_y, z_ref, DOOR_WIN_CENTER_Y, wall_sign * 0.055, 8
 	)
 	glass.material_override = glass_mat
 	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -181,18 +181,18 @@ func _fit_door_leaf(leaf: Node3D, sign: float, walls: VanSideWall) -> void:
 	if breakable and breakable.has_method("bind_glass_visual"):
 		breakable.bind_glass_visual(glass)
 
-	_place_on_curve(leaf.get_node_or_null("Handle") as Node3D, walls, sign, x_ref, mid_y, 1.375, 0.85, 0.12)
+	_place_on_curve(leaf.get_node_or_null("Handle") as Node3D, walls, wall_sign, x_ref, mid_y, 1.375, 0.85, 0.12)
 	var iron_cross := leaf.get_node_or_null("IronCross") as IronCross
-	_place_on_curve(iron_cross, walls, sign, x_ref, mid_y, DOOR_WIN_CENTER_Y, 0.0, 0.03)
+	_place_on_curve(iron_cross, walls, wall_sign, x_ref, mid_y, DOOR_WIN_CENTER_Y, 0.0, 0.03)
 	if iron_cross:
 		iron_cross.follow_side_wall_curve(walls, DOOR_WIN_CENTER_Y)
-	_place_on_curve(breakable as Node3D, walls, sign, x_ref, mid_y, DOOR_WIN_CENTER_Y, 0.0, 0.055)
+	_place_on_curve(breakable as Node3D, walls, wall_sign, x_ref, mid_y, DOOR_WIN_CENTER_Y, 0.0, 0.055)
 
 
 func _place_on_curve(
 	node: Node3D,
 	walls: VanSideWall,
-	sign: float,
+	wall_sign: float,
 	x_ref: float,
 	y_ref: float,
 	world_y: float,
@@ -202,9 +202,9 @@ func _place_on_curve(
 	if node == null:
 		return
 	# Keep any facing rotation; only rewrite translation onto the curve.
-	var basis := node.transform.basis
-	var local_x := walls.local_x_on_wall(sign, world_y, x_ref) - sign * into_cabin
-	node.transform = Transform3D(basis, Vector3(local_x, world_y - y_ref, local_z))
+	var node_basis := node.transform.basis
+	var local_x := walls.local_x_on_wall(wall_sign, world_y, x_ref) - wall_sign * into_cabin
+	node.transform = Transform3D(node_basis, Vector3(local_x, world_y - y_ref, local_z))
 
 
 func _hide_node(parent: Node, path: String) -> void:
@@ -274,8 +274,8 @@ func is_glass_intact(side: StringName) -> bool:
 
 ## Standpoint just outside a closed leaf for scripted mobs (world space).
 func get_outside_hold_position(side: StringName = SIDE_LEFT) -> Vector3:
-	var closed := _left_closed_pos if side == SIDE_LEFT else _right_closed_pos
-	var local := closed + (
+	var closed_pos := _left_closed_pos if side == SIDE_LEFT else _right_closed_pos
+	var local := closed_pos + (
 		Vector3(-0.85, 0.0, 0.0) if side == SIDE_LEFT else Vector3(0.85, 0.0, 0.0)
 	)
 	return to_global(local)

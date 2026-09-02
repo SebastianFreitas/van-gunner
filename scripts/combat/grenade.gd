@@ -113,13 +113,13 @@ func _integrate(delta: float) -> void:
 ## Sweeps in world space but builds both endpoints from the *current* reference
 ## transform, so the van's own movement this frame is not mistaken for motion of
 ## the grenade.
-func _sweep(from_local: Vector3, to_local: Vector3) -> Dictionary:
+func _sweep(from_local: Vector3, end_local: Vector3) -> Dictionary:
 	if not is_instance_valid(_reference):
 		return {}
 	var frame := _reference.global_transform
 	var query := PhysicsRayQueryParameters3D.create(
 		frame * from_local,
-		frame * to_local,
+		frame * end_local,
 		DamageResolver.WORLD_MASK
 	)
 	query.collide_with_areas = false
