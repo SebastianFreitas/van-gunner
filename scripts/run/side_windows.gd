@@ -129,7 +129,10 @@ func _fit_window_root(root: Node3D, sign: float, z_center: float, walls: VanSide
 	if breakable and breakable.has_method("bind_glass_visual"):
 		breakable.bind_glass_visual(glass)
 
-	_place_on_curve(hinge.get_node_or_null("IronCross") as Node3D, walls, sign, x_ref, y_hinge, mid_y, 0.0, 0.02)
+	var iron_cross := hinge.get_node_or_null("IronCross") as IronCross
+	_place_on_curve(iron_cross, walls, sign, x_ref, y_hinge, mid_y, 0.0, 0.02)
+	if iron_cross:
+		iron_cross.follow_side_wall_curve(walls, mid_y)
 	_place_on_curve(breakable as Node3D, walls, sign, x_ref, y_hinge, mid_y, 0.0, 0.04)
 	_place_on_curve(hinge.get_node_or_null("Interact") as Node3D, walls, sign, x_ref, y_hinge, mid_y, 0.0, 0.0)
 

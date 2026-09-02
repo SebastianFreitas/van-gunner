@@ -4,6 +4,7 @@ extends Node3D
 ## Blown-out iron + after a window breach. Same local frame as IronCross:
 ## XY = glass face, +Z = outward. Center plate and mid-bars are gone;
 ## only frame pads + jagged stubs remain.
+## Optional side-wall curve: top/bottom pads + stubs follow VanSideWall.
 
 @export var span_width := 2.2
 @export var span_height := 1.23
@@ -11,6 +12,7 @@ extends Node3D
 @export var bar_depth := 0.055
 @export var rivet_size := 0.045
 @export var end_pad_size := 0.16
+@export var curve_segments := 14
 @export var rebuild_on_ready := true
 
 ## 0 = fresh RNG each rebuild. Non-zero = stable look for that seed.
@@ -26,11 +28,20 @@ extends Node3D
 
 var _built := false
 var _rng := RandomNumberGenerator.new()
+var _curve_walls: VanSideWall = null
+var _curve_mid_y := 0.0
 
 
 func _ready() -> void:
 	if rebuild_on_ready:
 		rebuild()
+
+
+## Bend remaining pads/stubs to match a bowed side wall.
+func follow_side_wall_curve(walls: VanSideWall, mid_y: float) -> void:
+	_curve_walls = walls
+	_curve_mid_y = mid_y
+	rebuild()
 
 
 func rebuild() -> void:
@@ -61,16 +72,26 @@ func _build() -> void:
 	# Frame mounts stay — bars snap off inward of these.
 	_add_box("EndPad", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(half_w, 0.0, pad_z), iron)
 	_add_box("EndPad", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(-half_w, 0.0, pad_z), iron)
-	_add_box("EndPad", Vector3(end_pad_size * 0.85, end_pad_size, pad_depth), Vector3(0.0, half_h, pad_z), iron)
-	_add_box("EndPad", Vector3(end_pad_size * 0.85, end_pad_size, pad_depth), Vector3(0.0, -half_h, pad_z), iron)
+	_add_box(
+		"EndPad",
+		Vector3(end_pad_size * 0.85, end_pad_size, pad_depth),
+		Vector3(0.0, half_h, pad_z + _curve_z(half_h)),
+		iron
+	)
+	_add_box(
+		"EndPad",
+		Vector3(end_pad_size * 0.85, end_pad_size, pad_depth),
+		Vector3(0.0, -half_h, pad_z + _curve_z(-half_h)),
+		iron
+	)
 
 	var tip_rivet := rivet_size * 0.75
 	var tip_z := pad_z + pad_depth * 0.5 + tip_rivet * 0.3
 	for tip in [
 		Vector3(half_w, 0.0, tip_z),
 		Vector3(-half_w, 0.0, tip_z),
-		Vector3(0.0, half_h, tip_z),
-		Vector3(0.0, -half_h, tip_z),
+		Vector3(0.0, half_h, tip_z + _curve_z(half_h)),
+		Vector3(0.0, -half_h, tip_z + _curve_z(-half_h)),
 	]:
 		_add_box("TipRivet", Vector3(tip_rivet, tip_rivet, tip_rivet * 0.65), tip, rivet_mat)
 
@@ -78,8 +99,32 @@ func _build() -> void:
 	# inward = direction from frame toward window center.
 	_add_stub("StubRight", Vector3(half_w, 0.0, z), Vector3(-1.0, 0.0, 0.0), half_w, iron)
 	_add_stub("StubLeft", Vector3(-half_w, 0.0, z), Vector3(1.0, 0.0, 0.0), half_w, iron)
-	_add_stub("StubTop", Vector3(0.0, half_h, z), Vector3(0.0, -1.0, 0.0), half_h, iron)
-	_add_stub("StubBottom", Vector3(0.0, -half_h, z), Vector3(0.0, 1.0, 0.0), half_h, iron)
+	_add_stub(
+		"StubTop",
+		Vector3(0.0, half_h, z + _curve_z(half_h)),
+		_curved_inward(half_h, -1.0),
+		half_h,
+		iron
+	)
+	_add_stub(
+		"StubBottom",
+		Vector3(0.0, -half_h, z + _curve_z(-half_h)),
+		_curved_inward(-half_h, 1.0),
+		half_h,
+		iron
+	)
+
+
+## Unit tangent along the wall curve from local_y toward the center (sign_dir).
+func _curved_inward(local_y: float, sign_dir: float) -> Vector3:
+	if _curve_walls == null:
+		return Vector3(0.0, sign_dir, 0.0)
+	var eps := 0.04 * sign_dir
+	var y1 := local_y + eps
+	var d := Vector3(0.0, y1 - local_y, _curve_z(y1) - _curve_z(local_y))
+	if d.length_squared() < 0.000001:
+		return Vector3(0.0, sign_dir, 0.0)
+	return d.normalized()
 
 
 func _add_stub(
@@ -116,6 +161,9 @@ func _add_stub(
 	if across.length_squared() < 0.001:
 		across = Vector3.RIGHT
 	across = across.normalized()
+	# For curved vertical stubs, across stays world-X (local iron X).
+	if absf(inward.x) < 0.01 and absf(inward.z) > 0.001:
+		across = Vector3.RIGHT
 	var x_axis := across
 	var y_axis := inward.normalized()
 	var z_axis := x_axis.cross(y_axis).normalized()
@@ -183,6 +231,12 @@ func _add_stub(
 			Vector3(0.0, flake_len * 0.5, 0.0),
 			iron
 		)
+
+
+func _curve_z(local_y: float) -> float:
+	if _curve_walls == null:
+		return 0.0
+	return _curve_walls.wall_x_at(_curve_mid_y + local_y) - _curve_walls.wall_x_at(_curve_mid_y)
 
 
 func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material) -> void:

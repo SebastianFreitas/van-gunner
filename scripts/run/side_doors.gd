@@ -182,7 +182,10 @@ func _fit_door_leaf(leaf: Node3D, sign: float, walls: VanSideWall) -> void:
 		breakable.bind_glass_visual(glass)
 
 	_place_on_curve(leaf.get_node_or_null("Handle") as Node3D, walls, sign, x_ref, mid_y, 1.375, 0.85, 0.12)
-	_place_on_curve(leaf.get_node_or_null("IronCross") as Node3D, walls, sign, x_ref, mid_y, DOOR_WIN_CENTER_Y, 0.0, 0.03)
+	var iron_cross := leaf.get_node_or_null("IronCross") as IronCross
+	_place_on_curve(iron_cross, walls, sign, x_ref, mid_y, DOOR_WIN_CENTER_Y, 0.0, 0.03)
+	if iron_cross:
+		iron_cross.follow_side_wall_curve(walls, DOOR_WIN_CENTER_Y)
 	_place_on_curve(breakable as Node3D, walls, sign, x_ref, mid_y, DOOR_WIN_CENTER_Y, 0.0, 0.055)
 
 
