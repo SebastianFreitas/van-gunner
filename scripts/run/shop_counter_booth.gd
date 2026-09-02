@@ -31,6 +31,33 @@ const _FLYER_TEXTS := [
 	"HOT DEALS",
 	"CASH ONLY",
 	"OPEN LATE",
+	"CLOSING OUT",
+	"LIMITED",
+	"BEST PRICE",
+	"TRADE IN",
+	"SPECIAL",
+	"TODAY ONLY",
+	"ROLL BACK",
+	"LAST CHANCE",
+	"RED TAG",
+]
+
+const _FLYER_SUBTEXTS := [
+	"TODAY",
+	"WEEKEND",
+	"BULK",
+	"ASK INSIDE",
+	"FINAL",
+	"CLEARANCE",
+	"SAVE",
+	"MUST GO",
+	"FRESH IN",
+	"WHILE LASTS",
+	"DEAL",
+	"INSIDE",
+	"NOW OPEN",
+	"2 FOR 1",
+	"LOW COST",
 ]
 
 
@@ -310,18 +337,19 @@ func _build_armor_details(
 			steel
 		)
 
-	# Overlapping header plates.
+	# Overlapping header plates — staggered so they do not share the same Z span.
 	var plate_h := 1.15
+	var plate_w := booth_width * 0.38
 	var plate_y0 := view_top + 0.85
 	for i in 3:
 		var y := plate_y0 + float(i) * (plate_h * 0.92)
 		if y + plate_h * 0.5 > wall_height:
 			break
-		var z_off := -0.35 + float(i % 2) * 0.7
+		var z_off := lerpf(-1.55, 1.55, float(i) / 2.0)
 		_add_box(
 			"ArmorPlate_%d" % i,
-			Vector3(plate_overhang * 1.8, plate_h, booth_width * 0.42),
-			Vector3(face_x - 0.03, y, z_off),
+			Vector3(plate_overhang * 1.8, plate_h, plate_w),
+			Vector3(face_x - 0.03 - float(i) * 0.008, y, z_off),
 			panel_mat
 		)
 		_add_rivet_row(
@@ -390,22 +418,24 @@ func _build_viewing_grill(wall_x: float, half_w: float, half_h: float, material:
 	# Diagonal crosshatch for diamond-mesh read.
 	var diag_step := grill_spacing * 1.15
 	var diag_count := maxi(2, int(ceil((usable_w + usable_h) / diag_step)))
-	var diag_len := sqrt(usable_w * usable_w + usable_h * usable_h) * 0.55
+	var diag_len := sqrt(usable_w * usable_w + usable_h * usable_h) * 0.52
 	for i in range(diag_count):
 		var t := lerpf(-0.85, 0.85, float(i) / float(maxi(diag_count - 1, 1)))
 		var z := half_w * t * 0.55
+		var x_a := grill_x - float(i % 3) * 0.004
+		var x_b := grill_x + 0.012 + float(i % 3) * 0.004
 		var mi := _add_box(
 			"GrillDiagA_%d" % i,
-			Vector3(bar_d * 0.7, grill_bar_size * 0.9, diag_len),
-			Vector3(grill_x + 0.01, viewing_center_y, z),
+			Vector3(bar_d * 0.65, grill_bar_size * 0.85, diag_len),
+			Vector3(x_a, viewing_center_y, z),
 			material
 		)
 		mi.rotation_degrees = Vector3(35.0, 0.0, 0.0)
 
 		var mi_b := _add_box(
 			"GrillDiagB_%d" % i,
-			Vector3(bar_d * 0.7, grill_bar_size * 0.9, diag_len),
-			Vector3(grill_x + 0.015, viewing_center_y, z),
+			Vector3(bar_d * 0.65, grill_bar_size * 0.85, diag_len),
+			Vector3(x_b, viewing_center_y, z + diag_step * 0.12),
 			material
 		)
 		mi_b.rotation_degrees = Vector3(-35.0, 0.0, 0.0)
@@ -529,45 +559,111 @@ func _build_flyers(
 	tx_bottom: float
 ) -> void:
 	# Stickers only on solid metal — flanks and header, never in the open window.
-	var placements := [
-		{"z": -(half_w - 1.05), "y": 3.35, "rot": 4.0, "w": 0.55, "h": 0.72, "text": 0},
-		{"z": -(half_w - 1.7), "y": 4.6, "rot": -6.0, "w": 0.48, "h": 0.62, "text": 1},
-		{"z": half_w - 1.1, "y": 3.2, "rot": -3.5, "w": 0.52, "h": 0.68, "text": 2},
-		{"z": half_w - 1.75, "y": 4.45, "rot": 7.0, "w": 0.46, "h": 0.58, "text": 3},
-		{"z": -(half_w - 1.35), "y": maxf(0.45, tx_bottom * 0.5), "rot": 2.5, "w": 0.42, "h": 0.36, "text": 4},
-		{"z": half_w - 1.4, "y": maxf(0.5, tx_bottom * 0.55), "rot": -4.0, "w": 0.4, "h": 0.34, "text": 5},
-		{"z": -2.4, "y": view_bottom + 2.85, "rot": -5.0, "w": 0.5, "h": 0.64, "text": 0},
-		{"z": 2.35, "y": view_bottom + 3.1, "rot": 5.5, "w": 0.47, "h": 0.6, "text": 1},
-	]
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
 
-	for i in placements.size():
-		var p: Dictionary = placements[i]
-		var z := float(p.z)
-		var y := float(p.y)
-		# Skip anything that would sit inside the grilled opening.
-		var in_window_z := absf(z) < view_half_w + 0.2
-		var in_window_y := y > view_bottom - 0.15 and y < viewing_center_y + viewing_height * 0.5 + 0.15
-		if in_window_z and in_window_y:
+	var titles := _FLYER_TEXTS.duplicate()
+	_shuffle_array(titles, rng)
+
+	var placed: Array[Dictionary] = []
+	var target_count := rng.randi_range(5, 7)
+	var flyer_i := 0
+	var attempts := 0
+	var max_attempts := 80
+
+	while placed.size() < target_count and attempts < max_attempts:
+		attempts += 1
+		var w := rng.randf_range(0.36, 0.58)
+		var h := rng.randf_range(0.44, 0.74)
+		var z := rng.randf_range(-half_w + 0.65, half_w - 0.65)
+		var y := _pick_flyer_y(rng, view_bottom, tx_bottom)
+		var rot := rng.randf_range(-9.0, 9.0)
+
+		if _flyer_in_window(z, y, w, h, view_half_w, view_bottom):
+			continue
+		if _flyer_in_transaction(z, y, w, h):
+			continue
+		if _flyer_overlaps(placed, z, y, w, h):
 			continue
 
-		var text: String = _FLYER_TEXTS[int(p.text) % _FLYER_TEXTS.size()]
-		var tex := _make_flyer_texture(text, i)
+		placed.append({"z": z, "y": y, "rot": rot, "w": w, "h": h})
+		var text: String = titles[flyer_i % titles.size()]
+		flyer_i += 1
+		var tex := _make_flyer_texture(text, flyer_i, rng)
 		var mat := StandardMaterial3D.new()
 		mat.albedo_texture = tex
 		mat.roughness = 0.92
 		mat.metallic = 0.0
 		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 
+		var depth := face_x - 0.055 - float(placed.size() - 1) * 0.004 - rng.randf_range(0.0, 0.012)
 		var mi := _add_box(
-			"Flyer_%d" % i,
-			Vector3(0.012, float(p.h), float(p.w)),
-			Vector3(face_x - 0.05, y, z),
+			"Flyer_%d" % (placed.size() - 1),
+			Vector3(0.012, h, w),
+			Vector3(depth, y, z),
 			mat
 		)
-		mi.rotation_degrees = Vector3(0.0, 0.0, float(p.rot))
+		mi.rotation_degrees = Vector3(0.0, 0.0, rot)
 
 
-func _make_flyer_texture(title: String, seed_i: int) -> ImageTexture:
+func _pick_flyer_y(rng: RandomNumberGenerator, view_bottom: float, tx_bottom: float) -> float:
+	# Weight toward flank/header bands; keep clear of the cash slot midline.
+	var band := rng.randi_range(0, 2)
+	match band:
+		0:
+			var y_min := maxf(0.35, tx_bottom * 0.35)
+			var y_max := tx_bottom - 0.12
+			if y_max <= y_min:
+				y_max = y_min + 0.08
+			return rng.randf_range(y_min, y_max)
+		1:
+			return rng.randf_range(view_bottom + 0.55, view_bottom + 1.35)
+		_:
+			return rng.randf_range(viewing_center_y + viewing_height * 0.55, wall_height - 0.55)
+
+
+func _flyer_in_window(z: float, y: float, w: float, h: float, view_half_w: float, view_bottom: float) -> bool:
+	var pad_z := 0.22
+	var pad_y := 0.18
+	var in_window_z := absf(z) < view_half_w + pad_z + w * 0.25
+	var view_top := viewing_center_y + viewing_height * 0.5
+	var in_window_y := y + h * 0.5 > view_bottom - pad_y and y - h * 0.5 < view_top + pad_y
+	return in_window_z and in_window_y
+
+
+func _flyer_in_transaction(z: float, y: float, w: float, h: float) -> bool:
+	var tx_half_w := transaction_width * 0.5
+	var tx_half_h := transaction_height * 0.5
+	var pad_z := 0.18
+	var pad_y := 0.12
+	var in_tx_z := absf(z) < tx_half_w + pad_z + w * 0.2
+	var tx_bottom := transaction_center_y - tx_half_h
+	var tx_top := transaction_center_y + tx_half_h
+	var in_tx_y := y + h * 0.5 > tx_bottom - pad_y and y - h * 0.5 < tx_top + pad_y
+	return in_tx_z and in_tx_y
+
+
+func _flyer_overlaps(placed: Array[Dictionary], z: float, y: float, w: float, h: float) -> bool:
+	var margin := 0.14
+	for p in placed:
+		var pz: float = p.z
+		var py: float = p.y
+		var pw: float = p.w
+		var ph: float = p.h
+		if absf(z - pz) < (w + pw) * 0.5 + margin and absf(y - py) < (h + ph) * 0.5 + margin:
+			return true
+	return false
+
+
+func _shuffle_array(arr: Array, rng: RandomNumberGenerator) -> void:
+	for i in range(arr.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var tmp = arr[i]
+		arr[i] = arr[j]
+		arr[j] = tmp
+
+
+func _make_flyer_texture(title: String, seed_i: int, rng: RandomNumberGenerator) -> ImageTexture:
 	var w := 192
 	var h := 256
 	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
@@ -579,6 +675,8 @@ func _make_flyer_texture(title: String, seed_i: int) -> ImageTexture:
 		Color(0.7, 0.55, 0.4, 1.0),
 		Color(0.65, 0.68, 0.58, 1.0),
 		Color(0.76, 0.58, 0.45, 1.0),
+		Color(0.68, 0.72, 0.64, 1.0),
+		Color(0.74, 0.66, 0.54, 1.0),
 	]
 	var inks := [
 		Color(0.45, 0.08, 0.06, 0.85),
@@ -587,21 +685,21 @@ func _make_flyer_texture(title: String, seed_i: int) -> ImageTexture:
 		Color(0.35, 0.12, 0.05, 0.82),
 		Color(0.1, 0.22, 0.12, 0.78),
 		Color(0.4, 0.05, 0.2, 0.8),
+		Color(0.28, 0.18, 0.08, 0.82),
+		Color(0.05, 0.18, 0.32, 0.78),
 	]
-	var paper: Color = papers[seed_i % papers.size()]
-	var ink: Color = inks[seed_i % inks.size()]
+	var local_rng := RandomNumberGenerator.new()
+	local_rng.seed = 9100 + seed_i * 97 + int(rng.randi())
+	var paper: Color = papers[local_rng.randi() % papers.size()]
+	var ink: Color = inks[local_rng.randi() % inks.size()]
 	img.fill(paper)
-
-	# Dirty stains / coffee rings.
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 9100 + seed_i * 97
-	for _i in 120:
-		var px := rng.randi_range(0, w - 1)
-		var py := rng.randi_range(0, h - 1)
-		var stain := paper.darkened(rng.randf_range(0.08, 0.35))
-		stain.a = rng.randf_range(0.25, 0.7)
+	for _i in local_rng.randi_range(80, 140):
+		var px := local_rng.randi_range(0, w - 1)
+		var py := local_rng.randi_range(0, h - 1)
+		var stain := paper.darkened(local_rng.randf_range(0.08, 0.35))
+		stain.a = local_rng.randf_range(0.25, 0.7)
 		img.set_pixel(px, py, stain)
-		if rng.randf() < 0.35 and px + 1 < w and py + 1 < h:
+		if local_rng.randf() < 0.35 and px + 1 < w and py + 1 < h:
 			img.set_pixel(px + 1, py, stain)
 			img.set_pixel(px, py + 1, stain)
 
@@ -618,10 +716,22 @@ func _make_flyer_texture(title: String, seed_i: int) -> ImageTexture:
 			img.set_pixel(edge_x, y, edge)
 
 	# Crude block-letter headline (intentionally half-legible).
-	_draw_block_text(img, title, Vector2i(16, 70), ink, 3)
-	# Smaller secondary gibberish lines.
-	_draw_block_text(img, "SALE", Vector2i(28, 140), ink.darkened(0.15), 2)
-	_draw_block_text(img, "NOW", Vector2i(40, 175), ink.lightened(0.1), 2)
+	var headline_scale := local_rng.randi_range(2, 3)
+	var headline_x := local_rng.randi_range(10, 28)
+	var headline_y := local_rng.randi_range(58, 88)
+	_draw_block_text(img, title, Vector2i(headline_x, headline_y), ink, headline_scale)
+
+	# One or two varied sub-lines — never the same pair on every flyer.
+	var sub_pool := _FLYER_SUBTEXTS.duplicate()
+	_shuffle_array(sub_pool, local_rng)
+	var sub_count := local_rng.randi_range(1, 2)
+	for sub_i in sub_count:
+		var sub_text: String = sub_pool[sub_i]
+		var sub_scale := local_rng.randi_range(1, 2)
+		var sub_x := local_rng.randi_range(18, 46)
+		var sub_y := headline_y + headline_scale * 28 + sub_i * local_rng.randi_range(28, 38)
+		var sub_ink := ink.darkened(local_rng.randf_range(-0.12, 0.18))
+		_draw_block_text(img, sub_text, Vector2i(sub_x, sub_y), sub_ink, sub_scale)
 
 	# Fade overall so it reads as old paper from a distance.
 	for y in h:

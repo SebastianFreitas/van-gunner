@@ -227,23 +227,23 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.85, 0, 0)
 script = ExtResource("3")
 
 [node name="Item0" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.35, 1.12, -2.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.35, 1.14, -2.65)
 mesh = SubResource("ItemSphereMesh")
 
 [node name="Item1" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.45, 1.08, -0.9)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.42, 1.1, -1.05)
 mesh = SubResource("ItemBoxMesh")
 
 [node name="Item2" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.4, 1.1, 0.15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.38, 1.12, 0.05)
 mesh = SubResource("ItemCanMesh")
 
 [node name="Item3" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 1.12, 1.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.48, 1.14, 1.25)
 mesh = SubResource("ItemSphereMesh")
 
 [node name="Item4" type="MeshInstance3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.38, 1.08, 2.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.4, 1.1, 2.65)
 mesh = SubResource("ItemBoxMesh")
 
 [node name="Keeper" type="Node3D" parent="Shop"]
