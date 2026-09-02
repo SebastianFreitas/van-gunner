@@ -135,8 +135,14 @@ albedo_color = Color(0.55, 0.58, 0.56, 1)
 metallic = 0.9
 roughness = 0.25
 
-[sub_resource type="BoxShape3D" id="SideWindowInteractShape"]
-size = Vector3(0.2, 1.36, 2.4)
+[sub_resource type="BoxShape3D" id="SideWindowInteractBottom"]
+size = Vector3(0.2, 0.14, 2.4)
+
+[sub_resource type="BoxShape3D" id="SideWindowInteractTop"]
+size = Vector3(0.2, 0.14, 2.4)
+
+[sub_resource type="BoxShape3D" id="SideWindowInteractRail"]
+size = Vector3(0.2, 1.08, 0.14)
 
 [sub_resource type="BoxShape3D" id="SideDoorShape"]
 size = Vector3(0.18, 3.05, 2.53)
@@ -409,8 +415,21 @@ collision_layer = 2
 collision_mask = 0
 script = ExtResource("24")
 
-[node name="Hit" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact" unique_id=979292060]
-shape = SubResource("SideWindowInteractShape")
+[node name="Bottom" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact" unique_id=979292060]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.61, 0)
+shape = SubResource("SideWindowInteractBottom")
+
+[node name="Top" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact" unique_id=979292061]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.61, 0)
+shape = SubResource("SideWindowInteractTop")
+
+[node name="LeftRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact" unique_id=979292062]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.13)
+shape = SubResource("SideWindowInteractRail")
+
+[node name="RightRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact" unique_id=979292063]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.13)
+shape = SubResource("SideWindowInteractRail")
 
 [node name="LeftFront" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows" unique_id=219665426]
 transform = Transform3D(0.98043753, 0.19683053, 0, -0.19683053, 0.98043753, 0, 0, 0, 1, -2.45536321, 1.77500000, -0.375)
@@ -485,8 +504,21 @@ collision_mask = 0
 script = ExtResource("24")
 window_id = "left_front"
 
-[node name="Hit" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact" unique_id=1766894247]
-shape = SubResource("SideWindowInteractShape")
+[node name="Bottom" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact" unique_id=1766894247]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.61, 0)
+shape = SubResource("SideWindowInteractBottom")
+
+[node name="Top" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact" unique_id=1766894248]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.61, 0)
+shape = SubResource("SideWindowInteractTop")
+
+[node name="LeftRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact" unique_id=1766894249]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.13)
+shape = SubResource("SideWindowInteractRail")
+
+[node name="RightRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact" unique_id=1766894250]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.13)
+shape = SubResource("SideWindowInteractRail")
 
 [node name="RightRear" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows" unique_id=1617635276]
 transform = Transform3D(0.98043753, -0.19683053, 0, 0.19683053, 0.98043753, 0, 0, 0, 1, 2.45536321, 1.77500000, 2.835)
@@ -561,8 +593,21 @@ collision_mask = 0
 script = ExtResource("24")
 window_id = "right_rear"
 
-[node name="Hit" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact" unique_id=300110584]
-shape = SubResource("SideWindowInteractShape")
+[node name="Bottom" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact" unique_id=300110584]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.61, 0)
+shape = SubResource("SideWindowInteractBottom")
+
+[node name="Top" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact" unique_id=300110585]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.61, 0)
+shape = SubResource("SideWindowInteractTop")
+
+[node name="LeftRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact" unique_id=300110586]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.13)
+shape = SubResource("SideWindowInteractRail")
+
+[node name="RightRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact" unique_id=300110587]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.13)
+shape = SubResource("SideWindowInteractRail")
 
 [node name="RightFront" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows" unique_id=1383495958]
 transform = Transform3D(0.98043753, -0.19683053, 0, 0.19683053, 0.98043753, 0, 0, 0, 1, 2.45536321, 1.77500000, -0.375)
@@ -637,8 +682,21 @@ collision_mask = 0
 script = ExtResource("24")
 window_id = "right_front"
 
-[node name="Hit" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact" unique_id=1074322825]
-shape = SubResource("SideWindowInteractShape")
+[node name="Bottom" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact" unique_id=1074322825]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.61, 0)
+shape = SubResource("SideWindowInteractBottom")
+
+[node name="Top" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact" unique_id=1074322826]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.61, 0)
+shape = SubResource("SideWindowInteractTop")
+
+[node name="LeftRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact" unique_id=1074322827]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.13)
+shape = SubResource("SideWindowInteractRail")
+
+[node name="RightRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact" unique_id=1074322828]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.13)
+shape = SubResource("SideWindowInteractRail")
 
 [node name="SideDoors" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1902064671 groups=["side_doors"]]
 script = ExtResource("19")
