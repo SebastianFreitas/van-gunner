@@ -24,6 +24,9 @@ const _INDUSTRIAL_SHADER := preload("res://scenes/corridor/industrial_surface.gd
 @export var rivet_size := 0.055
 @export var plate_overhang := 0.045
 
+## Tiny lift so stacked counter surfaces do not share the same plane (z-fighting).
+const _SURFACE_EPS := 0.004
+
 const _FLYER_TEXTS := [
 	"50% OFF!",
 	"NEW STOCK",
@@ -71,7 +74,6 @@ func _build() -> void:
 	var panel_mat := _panel_material()
 	var rivet_mat := _rivet_material()
 	var grill_mat := _grill_material()
-	var hazard_mat := _hazard_material()
 	var lamp_mat := _lamp_material()
 	var sign_mat := _sign_material()
 
@@ -95,7 +97,6 @@ func _build() -> void:
 	_build_openings(steel, rivet_mat, wall_x, face_x, view_half_w, view_half_h, tx_half_w, tx_half_h, half_w)
 	_build_armor_details(steel, rivet_mat, panel_mat, half_w, wall_x, face_x, view_top, tx_bottom)
 	_build_viewing_grill(wall_x, view_half_w, view_half_h, grill_mat)
-	_build_hazard_stripe(hazard_mat, wall_x, face_x, tx_bottom)
 	_build_window_brow(steel, rivet_mat, wall_x, view_top)
 	_build_lamps(lamp_mat, steel, wall_x, view_top)
 	_build_shop_sign(sign_mat, steel, wall_x, view_top)
@@ -111,10 +112,11 @@ func _build_counter(deck_mat: Material, steel: Material, half_w: float, wall_x: 
 	)
 
 	var lip_w := booth_width - pillar_size * 1.8
+	var lip_base_y := deck_top_y + _SURFACE_EPS
 	_add_box(
 		"Lip",
 		Vector3(lip_depth, lip_thickness, lip_w),
-		Vector3(-deck_depth - lip_depth * 0.5 + wall_x, deck_top_y + lip_thickness * 0.5, 0.0),
+		Vector3(-deck_depth - lip_depth * 0.5 + wall_x, lip_base_y + lip_thickness * 0.5, 0.0),
 		deck_mat
 	)
 
@@ -122,7 +124,7 @@ func _build_counter(deck_mat: Material, steel: Material, half_w: float, wall_x: 
 	var rim_h := 0.06
 	var rim_t := 0.04
 	var lip_x := -deck_depth - lip_depth * 0.5 + wall_x
-	var lip_top := deck_top_y + lip_thickness
+	var lip_top := lip_base_y + lip_thickness
 	_add_box(
 		"LipRimFront",
 		Vector3(rim_t, rim_h, lip_w),
@@ -270,10 +272,12 @@ func _build_openings(
 	_add_jamb_pair("Tx", wall_x, transaction_center_y, tx_half_w, tx_half_h, half_w, steel)
 	_add_jamb_pair("View", wall_x, viewing_center_y, view_half_w, view_half_h, half_w, steel)
 
+	var tx_bottom := transaction_center_y - tx_half_h
+	var tx_sill_h := maxf(0.04, tx_bottom - (deck_top_y + _SURFACE_EPS))
 	_add_box(
 		"TxSill",
-		Vector3(wall_thickness * 1.35, 0.08, transaction_width + 0.12),
-		Vector3(wall_x - 0.02, transaction_center_y - tx_half_h - 0.04, 0.0),
+		Vector3(wall_thickness * 1.35, tx_sill_h, transaction_width + 0.12),
+		Vector3(wall_x - 0.02, deck_top_y + _SURFACE_EPS + tx_sill_h * 0.5, 0.0),
 		steel
 	)
 	_add_box(
@@ -414,26 +418,6 @@ func _build_viewing_grill(wall_x: float, half_w: float, half_h: float, material:
 			Vector3(grill_x, y, 0.0),
 			material
 		)
-
-
-func _build_hazard_stripe(
-	hazard_mat: Material,
-	wall_x: float,
-	face_x: float,
-	tx_bottom: float
-) -> void:
-	_add_box(
-		"HazardStripe",
-		Vector3(plate_overhang * 1.5, 0.09, transaction_width + 0.35),
-		Vector3(face_x - 0.02, tx_bottom - 0.08, 0.0),
-		hazard_mat
-	)
-	_add_box(
-		"HazardBacking",
-		Vector3(wall_thickness * 0.4, 0.1, transaction_width + 0.4),
-		Vector3(wall_x - 0.05, tx_bottom - 0.08, 0.0),
-		hazard_mat
-	)
 
 
 func _build_window_brow(steel: Material, rivet_mat: Material, wall_x: float, view_top: float) -> void:
@@ -903,14 +887,6 @@ func _rivet_material() -> StandardMaterial3D:
 	mat.albedo_color = Color(0.28, 0.18, 0.1, 1.0)
 	mat.metallic = 0.85
 	mat.roughness = 0.48
-	return mat
-
-
-func _hazard_material() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.72, 0.55, 0.08, 1.0)
-	mat.metallic = 0.15
-	mat.roughness = 0.7
 	return mat
 
 
