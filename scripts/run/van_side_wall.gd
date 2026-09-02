@@ -10,7 +10,7 @@ extends Node3D
 @export var top_half_width := 2.00
 ## Extra outward bulge at mid-height (meters). Makes the body read as curved, not a flat lean.
 @export var bow_out := 0.18
-@export var thickness := 0.10
+@export var thickness := 0.16
 @export var y_segments := 56
 @export var z_segments := 112
 @export var wall_material: Material
@@ -36,6 +36,9 @@ var WINDOW_CUT_POLY: PackedVector2Array = PackedVector2Array([
 @export var door_center_z := -3.485
 @export var door_y_min := 0.02
 @export var door_y_max := 3.05
+## Inset of the door-jamb ring inner edge from the wall opening (meters).
+@export var door_jamb_inset := 0.11
+@export var door_jamb_material: Material
 
 var _built := false
 
@@ -520,8 +523,11 @@ func _build() -> void:
 	_built = true
 
 	var mat := wall_material if wall_material else _default_wall_material()
+	var jamb_mat := door_jamb_material if door_jamb_material else mat
 	_add_side(&"LeftWall", -1.0, mat)
 	_add_side(&"RightWall", 1.0, mat)
+	_add_door_jambs(-1.0, jamb_mat)
+	_add_door_jambs(1.0, jamb_mat)
 	_add_cargo_rails(mat)
 
 
@@ -632,10 +638,124 @@ func _build_side_mesh(wall_sign: float) -> ArrayMesh:
 
 	# Opening returns (thickness around cutouts).
 	_add_opening_returns(st, wall_sign, verts, outer, uvs, solid)
+	# Reveal faces at the door hole — grid returns are edge-on when looking out.
+	_add_door_opening_reveals(st, wall_sign)
 
 	st.generate_normals()
 	st.generate_tangents()
 	return st.commit()
+
+
+func _door_jamb_outer_poly() -> PackedVector2Array:
+	var hz := door_half_length
+	var hy := (door_y_max - door_y_min) * 0.5
+	return PackedVector2Array([
+		Vector2(-hz, -hy), Vector2(hz, -hy), Vector2(hz, hy), Vector2(-hz, hy),
+	])
+
+
+func _door_jamb_inner_poly() -> PackedVector2Array:
+	var hz := door_half_length - door_jamb_inset
+	var hy := (door_y_max - door_y_min) * 0.5 - door_jamb_inset
+	if hz <= 0.05 or hy <= 0.05:
+		return PackedVector2Array()
+	return PackedVector2Array([
+		Vector2(-hz, -hy), Vector2(hz, -hy), Vector2(hz, hy), Vector2(-hz, hy),
+	])
+
+
+func _add_door_jambs(wall_sign: float, mat: Material) -> void:
+	var inner := _door_jamb_inner_poly()
+	if inner.size() < 3:
+		return
+	var mid_y := (door_y_min + door_y_max) * 0.5
+	var x_ref := _profile_x(mid_y)
+	var mi := MeshInstance3D.new()
+	mi.name = "DoorJamb_%s" % ("L" if wall_sign < 0.0 else "R")
+	mi.mesh = build_curved_frame_ring_mesh(
+		wall_sign, _door_jamb_outer_poly(), inner,
+		x_ref, mid_y, door_center_z, mid_y, thickness, 0.0, 8
+	)
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	add_child(mi)
+
+
+## Cross-section faces on the door hole perimeter — visible when looking out.
+func _add_door_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
+	var z0 := door_center_z - door_half_length
+	var z1 := door_center_z + door_half_length
+	var half_span := span_z * 0.5
+	var segs_z := 32
+	var segs_y := 32
+
+	for iz in range(segs_z):
+		var za := lerpf(z0, z1, float(iz) / float(segs_z))
+		var zb := lerpf(z0, z1, float(iz + 1) / float(segs_z))
+		var y_top := door_y_max
+		var xi := wall_sign * _profile_x(y_top)
+		var xo := xi + wall_sign * thickness
+		var i_a := Vector3(xi, y_top, za)
+		var o_a := Vector3(xo, y_top, za)
+		var i_b := Vector3(xi, y_top, zb)
+		var o_b := Vector3(xo, y_top, zb)
+		var uva := Vector2((za + half_span) / span_z, y_top / wall_height)
+		var uvb := Vector2((zb + half_span) / span_z, y_top / wall_height)
+		# Top lintel — normal points down into the opening.
+		_add_tri(st, i_a, uva, o_a, uva, o_b, uvb)
+		_add_tri(st, i_a, uva, o_b, uvb, i_b, uvb)
+
+	for iz in range(segs_z):
+		var za := lerpf(z0, z1, float(iz) / float(segs_z))
+		var zb := lerpf(z0, z1, float(iz + 1) / float(segs_z))
+		var y_bot := door_y_min
+		var xi := wall_sign * _profile_x(y_bot)
+		var xo := xi + wall_sign * thickness
+		var i_a := Vector3(xi, y_bot, za)
+		var o_a := Vector3(xo, y_bot, za)
+		var i_b := Vector3(xi, y_bot, zb)
+		var o_b := Vector3(xo, y_bot, zb)
+		var uva := Vector2((za + half_span) / span_z, y_bot / wall_height)
+		var uvb := Vector2((zb + half_span) / span_z, y_bot / wall_height)
+		# Bottom sill — normal points up into the opening.
+		_add_tri(st, i_a, uva, i_b, uvb, o_b, uvb)
+		_add_tri(st, i_a, uva, o_b, uvb, o_a, uva)
+
+	for iy in range(segs_y):
+		var ya := lerpf(door_y_min, door_y_max, float(iy) / float(segs_y))
+		var yb := lerpf(door_y_min, door_y_max, float(iy + 1) / float(segs_y))
+		var z_fwd := z1
+		var xi_a := wall_sign * _profile_x(ya)
+		var xo_a := xi_a + wall_sign * thickness
+		var xi_b := wall_sign * _profile_x(yb)
+		var xo_b := xi_b + wall_sign * thickness
+		var i_a := Vector3(xi_a, ya, z_fwd)
+		var o_a := Vector3(xo_a, ya, z_fwd)
+		var i_b := Vector3(xi_b, yb, z_fwd)
+		var o_b := Vector3(xo_b, yb, z_fwd)
+		var uva := Vector2((z_fwd + half_span) / span_z, ya / wall_height)
+		var uvb := Vector2((z_fwd + half_span) / span_z, yb / wall_height)
+		# Forward jamb — normal points into the opening (-Z).
+		_add_tri(st, i_a, uva, i_b, uvb, o_b, uvb)
+		_add_tri(st, i_a, uva, o_b, uvb, o_a, uva)
+
+	for iy in range(segs_y):
+		var ya := lerpf(door_y_min, door_y_max, float(iy) / float(segs_y))
+		var yb := lerpf(door_y_min, door_y_max, float(iy + 1) / float(segs_y))
+		var z_rear := z0
+		var xi_a := wall_sign * _profile_x(ya)
+		var xo_a := xi_a + wall_sign * thickness
+		var xi_b := wall_sign * _profile_x(yb)
+		var xo_b := xi_b + wall_sign * thickness
+		var i_a := Vector3(xi_a, ya, z_rear)
+		var o_a := Vector3(xo_a, ya, z_rear)
+		var i_b := Vector3(xi_b, yb, z_rear)
+		var o_b := Vector3(xo_b, yb, z_rear)
+		var uva := Vector2((z_rear + half_span) / span_z, ya / wall_height)
+		var uvb := Vector2((z_rear + half_span) / span_z, yb / wall_height)
+		# Rear jamb — normal points into the opening (+Z).
+		_add_tri(st, i_a, uva, o_a, uva, o_b, uvb)
+		_add_tri(st, i_a, uva, o_b, uvb, i_b, uvb)
 
 
 func _add_opening_returns(
