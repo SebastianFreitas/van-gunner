@@ -415,31 +415,6 @@ func _build_viewing_grill(wall_x: float, half_w: float, half_h: float, material:
 			material
 		)
 
-	# Diagonal crosshatch for diamond-mesh read.
-	var diag_step := grill_spacing * 1.15
-	var diag_count := maxi(2, int(ceil((usable_w + usable_h) / diag_step)))
-	var diag_len := sqrt(usable_w * usable_w + usable_h * usable_h) * 0.52
-	for i in range(diag_count):
-		var t := lerpf(-0.85, 0.85, float(i) / float(maxi(diag_count - 1, 1)))
-		var z := half_w * t * 0.55
-		var x_a := grill_x - float(i % 3) * 0.004
-		var x_b := grill_x + 0.012 + float(i % 3) * 0.004
-		var mi := _add_box(
-			"GrillDiagA_%d" % i,
-			Vector3(bar_d * 0.65, grill_bar_size * 0.85, diag_len),
-			Vector3(x_a, viewing_center_y, z),
-			material
-		)
-		mi.rotation_degrees = Vector3(35.0, 0.0, 0.0)
-
-		var mi_b := _add_box(
-			"GrillDiagB_%d" % i,
-			Vector3(bar_d * 0.65, grill_bar_size * 0.85, diag_len),
-			Vector3(x_b, viewing_center_y, z + diag_step * 0.12),
-			material
-		)
-		mi_b.rotation_degrees = Vector3(-35.0, 0.0, 0.0)
-
 
 func _build_hazard_stripe(
 	hazard_mat: Material,
