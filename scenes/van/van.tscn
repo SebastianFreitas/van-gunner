@@ -32,6 +32,7 @@
 [ext_resource type="Shader" path="res://scenes/van/van_wall.gdshader" id="31"]
 [ext_resource type="Shader" path="res://scenes/van/van_ceiling.gdshader" id="32"]
 [ext_resource type="Shader" path="res://scenes/van/van_viga.gdshader" id="33"]
+[ext_resource type="Script" path="res://scripts/run/front_partition.gd" id="34"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -1044,6 +1045,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.255, 1.775, 4.71)
 shape = SubResource("RearDoorBlockerRail")
 
 [node name="FrontPartition" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=450567163]
+script = ExtResource("34")
 
 [node name="LeftPanel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=772039291]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 1.525, -4.65)
@@ -1064,17 +1066,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.525, -4.65)
 shape = SubResource("FrontPanelShape")
 
 [node name="CabDoor" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1014773238]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2033219, -4.6685543)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.65)
 collision_layer = 3
 script = ExtResource("3")
 
 [node name="Mesh" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/CabDoor" unique_id=455309128]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.116735816, 0)
-material_override = SubResource("DoorMaterial")
+material_override = SubResource("WallMaterial")
 mesh = SubResource("DoorMesh")
 
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/CabDoor" unique_id=1432763136]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11881101, 0)
 shape = SubResource("DoorShape")
 
 [node name="Bulkhead" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1359735791 instance=ExtResource("26")]

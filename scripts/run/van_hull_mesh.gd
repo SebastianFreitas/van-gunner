@@ -21,6 +21,8 @@ static func wall_half(walls: VanSideWall, y: float, fallback: float) -> float:
 
 ## Thick panel in the XY plane. `origin` is subtracted so the mesh sits in hinge-local
 ## space. `interior_is_neg_z` true for rear doors (cabin looks toward -Z of the leaf).
+## When `x_outer_fixed` is finite, the outer X edge is that absolute value (signed by
+## wall_sign) instead of the side-wall profile — used for the front cab door slab.
 static func build_vaulted_xy_slab(
 	walls: VanSideWall,
 	ceiling: VanCeiling,
@@ -38,7 +40,8 @@ static func build_vaulted_xy_slab(
 	edge_height_fallback: float = 3.05,
 	peak_rise_fallback: float = 0.38,
 	bottom_half_fallback: float = 2.42,
-	interior_is_neg_z: bool = true
+	interior_is_neg_z: bool = true,
+	x_outer_fixed: float = INF
 ) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -48,6 +51,7 @@ static func build_vaulted_xy_slab(
 	var cabin_z := -half_z if interior_is_neg_z else half_z
 	var exterior_z := half_z if interior_is_neg_z else -half_z
 	var has_hole := hole_poly.size() >= 3
+	var fixed_outer := is_finite(x_outer_fixed)
 
 	var front: Array = []
 	var back: Array = []
@@ -64,14 +68,23 @@ static func build_vaulted_xy_slab(
 		var row_h: Array = []
 		var ty := float(iy) / float(seg_y)
 		var y := lerpf(y_min, y_peak, ty)
-		var x_outer := wall_sign * (wall_half(walls, y, bottom_half_fallback) - x_inset)
+		var x_outer := (
+			wall_sign * absf(x_outer_fixed)
+			if fixed_outer
+			else wall_sign * (wall_half(walls, y, bottom_half_fallback) - x_inset)
+		)
 		for ix in range(seg_x + 1):
 			var tx := float(ix) / float(seg_x)
 			var x := lerpf(x_inner, x_outer, tx)
 			var y_cap := vault_y(ceiling, x, edge_height_fallback, peak_rise_fallback) - y_inset
 			var above_vault := y > y_cap + 0.001
 			var y_use := minf(y, y_cap)
-			var inside_wall := absf(x) <= wall_half(walls, y_use, bottom_half_fallback) - x_inset + 0.02
+			var half_limit := (
+				absf(x_outer_fixed) + 0.02
+				if fixed_outer
+				else wall_half(walls, y_use, bottom_half_fallback) - x_inset + 0.02
+			)
+			var inside_wall := absf(x) <= half_limit
 			var in_hole := false
 			if has_hole:
 				in_hole = _point_in_poly(Vector2(x - hole_center.x, y_use - hole_center.y), hole_poly)
@@ -92,7 +105,8 @@ static func build_vaulted_xy_slab(
 	_project_fringe(
 		front, back, solid, walls, ceiling, x_inner, wall_sign, y_min, y_peak,
 		x_inset, y_inset, origin, has_hole, hole_poly, hole_center,
-		edge_height_fallback, peak_rise_fallback, bottom_half_fallback
+		edge_height_fallback, peak_rise_fallback, bottom_half_fallback,
+		x_outer_fixed
 	)
 
 	for iy in range(seg_y):
@@ -149,10 +163,12 @@ static func _project_fringe(
 	hole_center: Vector2,
 	edge_height_fallback: float,
 	peak_rise_fallback: float,
-	bottom_half_fallback: float
+	bottom_half_fallback: float,
+	x_outer_fixed: float = INF
 ) -> void:
 	var seg_y: int = solid.size() - 1
 	var seg_x: int = solid[0].size() - 1
+	var fixed_outer := is_finite(x_outer_fixed)
 	for iy in range(seg_y + 1):
 		for ix in range(seg_x + 1):
 			if solid[iy][ix]:
@@ -161,7 +177,11 @@ static func _project_fringe(
 				continue
 			var ty := float(iy) / float(seg_y)
 			var y := lerpf(y_min, y_peak, ty)
-			var x_outer := wall_sign * (wall_half(walls, y, bottom_half_fallback) - x_inset)
+			var x_outer := (
+				wall_sign * absf(x_outer_fixed)
+				if fixed_outer
+				else wall_sign * (wall_half(walls, y, bottom_half_fallback) - x_inset)
+			)
 			var tx := float(ix) / float(seg_x)
 			var x := lerpf(x_inner, x_outer, tx)
 			var y_cap := vault_y(ceiling, x, edge_height_fallback, peak_rise_fallback) - y_inset
@@ -174,7 +194,11 @@ static func _project_fringe(
 			else:
 				# Outer silhouette — sit on the vault (and wall clamp already in x_outer).
 				y_fix = y_cap
-				var half := wall_half(walls, y_fix, bottom_half_fallback) - x_inset
+				var half := (
+					absf(x_outer_fixed)
+					if fixed_outer
+					else wall_half(walls, y_fix, bottom_half_fallback) - x_inset
+				)
 				if absf(x) > half:
 					x = wall_sign * half
 			var local_p := Vector3(x, y_fix, 0.0) - Vector3(origin.x, origin.y, 0.0)
