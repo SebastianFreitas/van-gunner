@@ -794,6 +794,11 @@ func _project_window_cut_fringe(sign: float, verts: Array, outer: Array, solid: 
 				continue
 			var y: float = verts[iy][iz].y
 			var z: float = verts[iy][iz].z
+			# Door-bay fringe must stay open. Snapping those verts onto the nearest
+			# WindowCut stretches liner UVs from the door seam into the adjacent
+			# sash — the dark blob between side door and front window.
+			if _is_door_bay_open(y, z):
+				continue
 			# nearest returns Vector2(world_y, world_z)
 			var p := _nearest_on_window_cut(y, z)
 			var wy := p.x
