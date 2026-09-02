@@ -226,7 +226,10 @@ func _on_debug_console_closed() -> void:
 
 
 func _on_room_changed(_room: StringName) -> void:
-	_on_phase_changed(GameSession.phase)
+	phase_label.text = "%s  ·  %s ROOM" % [
+		GameSession.RunPhase.keys()[GameSession.phase].replace("_", " "),
+		String(GameSession.current_room).to_upper(),
+	]
 
 
 func _on_health_changed(current: float, maximum: float) -> void:
@@ -364,15 +367,20 @@ func _on_driver_talk_close_pressed() -> void:
 
 func seal_van_after_shop() -> void:
 	_set_shop_rear_exit(false)
+	rest_toast.text = "PULLING OUT OF THE SHOP..."
+	rest_toast.show()
 
 
 func _set_shop_rear_exit(allowed: bool) -> void:
 	if player_containment:
 		player_containment.set_rear_exit_allowed(allowed)
-	if allowed:
-		var rear_doors: Node = get_tree().get_first_node_in_group(&"rear_doors")
-		if rear_doors and rear_doors.has_method(&"open"):
-			rear_doors.open()
+	var rear_doors: Node = get_tree().get_first_node_in_group(&"rear_doors")
+	if rear_doors == null:
+		return
+	if allowed and rear_doors.has_method(&"open"):
+		rear_doors.open()
+	elif not allowed and rear_doors.has_method(&"close"):
+		rear_doors.close()
 
 
 func _on_main_menu_pressed() -> void:
