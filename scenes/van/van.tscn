@@ -30,6 +30,8 @@
 [ext_resource type="Shader" path="res://scenes/van/van_floor.gdshader" id="29"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_side_wall.tscn" id="30"]
 [ext_resource type="Shader" path="res://scenes/van/van_wall.gdshader" id="31"]
+[ext_resource type="Shader" path="res://scenes/van/van_ceiling.gdshader" id="32"]
+[ext_resource type="Shader" path="res://scenes/van/van_viga.gdshader" id="33"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -62,9 +64,31 @@ shader_parameter/metallic_value = 0.22
 [sub_resource type="BoxShape3D" id="FloorShape"]
 size = Vector3(4.8, 0.25, 9.6)
 
-[sub_resource type="StandardMaterial3D" id="CeilingMaterial"]
-albedo_color = Color(0.32, 0.3, 0.27, 1)
-roughness = 0.88
+[sub_resource type="ShaderMaterial" id="CeilingMaterial"]
+render_priority = 0
+shader = ExtResource("32")
+shader_parameter/base_color = Color(0.34, 0.32, 0.29, 1)
+shader_parameter/seam_color = Color(0.13, 0.12, 0.105, 1)
+shader_parameter/foam_color = Color(0.42, 0.4, 0.355, 1)
+shader_parameter/stain_color = Color(0.2, 0.16, 0.11, 1)
+shader_parameter/water_color = Color(0.26, 0.245, 0.21, 1)
+shader_parameter/tape_color = Color(0.52, 0.45, 0.3, 1)
+shader_parameter/ceiling_size_m = Vector2(4.08, 9.4)
+shader_parameter/bay_spacing_m = 1.35
+shader_parameter/quilt_scale_m = 0.16
+shader_parameter/roughness_value = 0.94
+shader_parameter/metallic_value = 0.0
+
+[sub_resource type="ShaderMaterial" id="VigaMaterial"]
+render_priority = 0
+shader = ExtResource("33")
+shader_parameter/base_color = Color(0.2, 0.145, 0.09, 1)
+shader_parameter/grain_dark = Color(0.1, 0.07, 0.045, 1)
+shader_parameter/grain_light = Color(0.32, 0.23, 0.14, 1)
+shader_parameter/wear_color = Color(0.36, 0.27, 0.17, 1)
+shader_parameter/beam_length_m = 4.12
+shader_parameter/roughness_value = 0.84
+shader_parameter/metallic_value = 0.0
 
 [sub_resource type="StandardMaterial3D" id="TableMaterial"]
 albedo_color = Color(0.18, 0.13, 0.085, 1)
@@ -236,7 +260,7 @@ span_x = 4.08
 viga_length = 4.12
 edge_height = 3.05
 ceiling_material = SubResource("CeilingMaterial")
-viga_material = SubResource("TableMaterial")
+viga_material = SubResource("VigaMaterial")
 
 [node name="LeftLowerRail" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=339440941]
 transform = Transform3D(0.99385222, -0.11071483, 0, 0.11071483, 0.99385222, 0, 0, 0, 1, -2.49964561, 0.52500000, 1.2)
