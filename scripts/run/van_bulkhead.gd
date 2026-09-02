@@ -185,30 +185,34 @@ func _add_post(node_name: String, x: float, material: Material) -> void:
 func _add_curved_wall_post(node_name: String, sign: float, material: Material) -> void:
 	var segs := maxi(wall_post_segments, 4)
 	var inset := frame_thickness * 0.5
+	var y_top_limit := _vault_y(sign * (_vault_half() - inset))
 	for i in range(segs):
 		var t0 := float(i) / float(segs)
 		var t1 := float(i + 1) / float(segs)
-		# Sample up to just under the vault at the roof wall width.
-		var y_top_limit := _vault_y(sign * (_vault_half() - inset))
 		var y0 := lerpf(0.0, y_top_limit, t0)
 		var y1 := lerpf(0.0, y_top_limit, t1)
-		var y := (y0 + y1) * 0.5
-		var h := absf(y1 - y0) + 0.004
-		var x := sign * (_wall_half(y) - inset)
-		# Don't poke through the vault at this x.
-		if y0 >= _vault_y(x) - 0.01:
+		var x0 := sign * (_wall_half(y0) - inset)
+		var x1 := sign * (_wall_half(y1) - inset)
+		# Clip the upper end if it would poke through the vault.
+		if y0 >= _vault_y(x0) - 0.01:
 			continue
-		if y1 > _vault_y(x):
-			y1 = _vault_y(x)
-			y = (y0 + y1) * 0.5
-			h = absf(y1 - y0)
-			if h < 0.02:
-				continue
+		if y1 > _vault_y(x1):
+			y1 = _vault_y(x1)
+			x1 = sign * (_wall_half(y1) - inset)
+		var dx := x1 - x0
+		var dy := y1 - y0
+		var length := sqrt(dx * dx + dy * dy)
+		if length < 0.02:
+			continue
+		# Box local +Y along the wall tangent. RotZ maps (0,1) → (-sin θ, cos θ),
+		# so θ = atan2(-dx, dy) aims +Y at (dx, dy).
+		var angle := atan2(-dx, dy)
 		_add_box(
 			"%s_%d" % [node_name, i],
-			Vector3(frame_thickness, h, frame_depth),
-			Vector3(x, y, 0.0),
-			material
+			Vector3(frame_thickness, length + 0.006, frame_depth),
+			Vector3((x0 + x1) * 0.5, (y0 + y1) * 0.5, 0.0),
+			material,
+			Vector3(0.0, 0.0, angle)
 		)
 
 
@@ -260,19 +264,27 @@ func _add_curved_header(inner_x: float, outer_x: float, material: Material) -> v
 	var left_x := minf(inner_x, outer_x)
 	var right_x := maxf(inner_x, outer_x)
 	var segments := 10
+	var y_off := frame_thickness * 0.45
 	for i in range(segments):
 		var t0 := float(i) / float(segments)
 		var t1 := float(i + 1) / float(segments)
 		var x0 := lerpf(left_x, right_x, t0)
 		var x1 := lerpf(left_x, right_x, t1)
-		var x := (x0 + x1) * 0.5
-		var y := _vault_y(x) - frame_thickness * 0.45
-		var width := absf(x1 - x0) + 0.01
+		var y0 := _vault_y(x0) - y_off
+		var y1 := _vault_y(x1) - y_off
+		var dx := x1 - x0
+		var dy := y1 - y0
+		var length := sqrt(dx * dx + dy * dy)
+		if length < 0.01:
+			continue
+		# Box local +X is the long axis for the rail — rotate from +X onto the vault tangent.
+		var angle := atan2(dy, dx)
 		_add_box(
 			"TopRail_%d" % i,
-			Vector3(width, frame_thickness, frame_depth),
-			Vector3(x, y, 0.0),
-			material
+			Vector3(length + 0.008, frame_thickness, frame_depth),
+			Vector3((x0 + x1) * 0.5, (y0 + y1) * 0.5, 0.0),
+			material,
+			Vector3(0.0, 0.0, angle)
 		)
 
 
