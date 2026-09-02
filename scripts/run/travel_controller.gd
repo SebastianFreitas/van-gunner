@@ -743,3 +743,13 @@ func _prune_world() -> void:
 			continue
 		piece.queue_free()
 		_world_pieces.remove_at(index)
+
+
+func _exit_tree() -> void:
+	set_process(false)
+	for piece in _world_pieces:
+		if is_instance_valid(piece):
+			piece.free()
+	_world_pieces.clear()
+	_active_junction = null
+	_active_shop = null

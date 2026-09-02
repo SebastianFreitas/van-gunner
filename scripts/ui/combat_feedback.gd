@@ -31,3 +31,9 @@ func show_damage(
 	var screen_pos := camera.unproject_position(world_position)
 	popup.position = screen_pos + Vector2(randf_range(-14.0, 14.0), randf_range(-8.0, 4.0))
 	popup.setup(amount, is_headshot, damage_type)
+
+
+func _exit_tree() -> void:
+	if _layer:
+		for child in _layer.get_children():
+			child.free()

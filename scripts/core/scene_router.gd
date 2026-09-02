@@ -6,6 +6,7 @@ const VAN := "res://scenes/van/van.tscn"
 var _transitioning := false
 var _van_packed: PackedScene
 var _van_preload_started := false
+var _shutting_down := false
 
 
 func go_to_main_menu() -> void:
@@ -45,7 +46,7 @@ func go_to_van() -> void:
 
 func _await_van_packed() -> PackedScene:
 	preload_van()
-	while true:
+	while not _shutting_down:
 		var packed := _resolve_van_packed()
 		if packed != null:
 			return packed
@@ -80,3 +81,11 @@ func _change_scene(path: String) -> void:
 	if error != OK:
 		push_error("Could not load scene %s (error %s)." % [path, error])
 	_transitioning = false
+
+
+func _exit_tree() -> void:
+	_shutting_down = true
+	_transitioning = false
+	_van_preload_started = false
+	_van_packed = null
+	ProjectilePool.shutdown()

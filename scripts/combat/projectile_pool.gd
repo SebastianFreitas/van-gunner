@@ -67,3 +67,15 @@ func _create_projectile() -> Projectile:
 	_holder.add_child(projectile)
 	projectile.reset_for_pool()
 	return projectile
+
+
+func _exit_tree() -> void:
+	shutdown()
+
+
+func shutdown() -> void:
+	if not is_instance_valid(_holder):
+		return
+	for child in _holder.get_children():
+		child.free()
+	_pool.clear()
