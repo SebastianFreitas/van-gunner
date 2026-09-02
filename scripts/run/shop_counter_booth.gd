@@ -557,7 +557,7 @@ func _build_flyers(
 		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 
 		var depth := face_x - 0.055 - float(placed.size() - 1) * 0.004 - rng.randf_range(0.0, 0.012)
-		var mi := _add_flyer_plane(
+		_add_flyer_plane(
 			"Flyer_%d" % (placed.size() - 1),
 			Vector2(w, h),
 			Vector3(depth, y, z),
@@ -741,9 +741,9 @@ func _make_flyer_texture(title: String, seed_i: int, rng: RandomNumberGenerator)
 	return ImageTexture.create_from_image(img)
 
 
-func _text_pixel_width(text: String, scale: int) -> int:
-	var glyph_w := 5 * scale
-	var gap := 2 * scale
+func _text_pixel_width(text: String, text_scale: int) -> int:
+	var glyph_w := 5 * text_scale
+	var gap := 2 * text_scale
 	var width := 0
 	for ch in text.to_upper():
 		var pattern := _glyph_pattern(ch)
@@ -754,8 +754,8 @@ func _text_pixel_width(text: String, scale: int) -> int:
 	return maxi(width - gap, 0)
 
 
-func _centered_text_x(text: String, img_w: int, scale: int, rng: RandomNumberGenerator) -> int:
-	var text_w := _text_pixel_width(text, scale)
+func _centered_text_x(text: String, img_w: int, text_scale: int, rng: RandomNumberGenerator) -> int:
+	var text_w := _text_pixel_width(text, text_scale)
 	var margin := 12
 	var max_x := img_w - margin - text_w
 	if max_x <= margin:
@@ -791,10 +791,10 @@ func _add_flyer_plane(
 	return mi
 
 
-func _draw_block_text(img: Image, text: String, origin: Vector2i, color: Color, scale: int) -> void:
+func _draw_block_text(img: Image, text: String, origin: Vector2i, color: Color, text_scale: int) -> void:
 	var cursor_x := origin.x
-	var glyph_w := 5 * scale
-	var gap := 2 * scale
+	var glyph_w := 5 * text_scale
+	var gap := 2 * text_scale
 	for ch in text.to_upper():
 		var pattern := _glyph_pattern(ch)
 		if pattern.is_empty():
@@ -804,10 +804,10 @@ func _draw_block_text(img: Image, text: String, origin: Vector2i, color: Color, 
 			var bits: int = pattern[row]
 			for col in 5:
 				if (bits >> (4 - col)) & 1:
-					for sy in scale:
-						for sx in scale:
-							var px := cursor_x + col * scale + sx
-							var py := origin.y + row * scale + sy
+					for sy in text_scale:
+						for sx in text_scale:
+							var px := cursor_x + col * text_scale + sx
+							var py := origin.y + row * text_scale + sy
 							if px >= 0 and py >= 0 and px < img.get_width() and py < img.get_height():
 								var existing := img.get_pixel(px, py)
 								img.set_pixel(px, py, existing.lerp(color, color.a))

@@ -126,17 +126,17 @@ func _try_step_up(wish_direction: Vector3) -> bool:
 	if low_hit.normal.y > 0.55:
 		return false
 
-	var head := global_position + Vector3.UP * (step_height + 0.05)
+	var head_pos := global_position + Vector3.UP * (step_height + 0.05)
 	query = PhysicsRayQueryParameters3D.create(
-		head,
-		head + direction * step_check_distance
+		head_pos,
+		head_pos + direction * step_check_distance
 	)
 	query.exclude = exclude
 	query.collision_mask = collision_mask
 	if not space.intersect_ray(query).is_empty():
 		return false
 
-	var probe := head + direction * step_check_distance
+	var probe := head_pos + direction * step_check_distance
 	query = PhysicsRayQueryParameters3D.create(
 		probe,
 		probe + Vector3.DOWN * (step_height + 0.1)
