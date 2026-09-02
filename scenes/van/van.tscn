@@ -1088,7 +1088,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11881101, 0)
 shape = SubResource("DoorShape")
 
 [node name="Bulkhead" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1359735791 instance=ExtResource("26")]
-van_half_width = 2.40
 
 [node name="Props" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1487223170]
 
