@@ -126,13 +126,13 @@ size = Vector3(1.2, 8, 2.4)
 size = Vector3(1.2, 1.2, 8.6)
 
 [sub_resource type="BoxShape3D" id="BoothDeckShape"]
-size = Vector3(1.43, 0.26, 8.2)
+size = Vector3(1.55, 0.28, 8.2)
 
 [sub_resource type="BoxShape3D" id="BoothWallShape"]
-size = Vector3(0.18, 7.15, 8.2)
+size = Vector3(0.28, 7.15, 8.2)
 
 [sub_resource type="BoxShape3D" id="BoothPillarShape"]
-size = Vector3(0.5, 7.15, 0.22)
+size = Vector3(0.72, 7.15, 0.48)
 
 [node name="ShopBay" type="Node3D"]
 
@@ -167,19 +167,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 5.4, 0)
 shape = SubResource("LintelShape")
 
 [node name="BoothDeck" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.355, 0.93, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.32, 0.93, 0)
 shape = SubResource("BoothDeckShape")
 
 [node name="BoothWall" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.93, 3.575, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.96, 3.575, 0)
 shape = SubResource("BoothWallShape")
 
 [node name="BoothPillarNegZ" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.9, 3.575, -4.0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.98, 3.575, -3.89)
 shape = SubResource("BoothPillarShape")
 
 [node name="BoothPillarPosZ" type="CollisionShape3D" parent="Surfaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.9, 3.575, 4.0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.98, 3.575, 3.89)
 shape = SubResource("BoothPillarShape")
 
 [node name="Bay" type="Node3D" parent="."]
@@ -247,7 +247,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.38, 1.08, 2.5)
 mesh = SubResource("ItemBoxMesh")
 
 [node name="Keeper" type="Node3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.05, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.55, 0, 0)
 
 [node name="Body" type="MeshInstance3D" parent="Shop/Keeper"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
