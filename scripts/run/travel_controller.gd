@@ -13,9 +13,10 @@ const QUARTER_CIRCLE_HANDLE := 0.55228475
 const SEGMENT_VARIANT_COUNT := 4
 const NEIGHBORHOOD_MIN_LENGTH := 2
 const NEIGHBORHOOD_MAX_LENGTH := 5
-const SIDE_STREET_RUN_CHANCE := 0.26
-const SIDE_STREET_RUN_MIN := 2
-const SIDE_STREET_RUN_MAX := 4
+const SIDE_STREET_CHANCE := 0.26
+## Empty corridor tiles required between side-street openings (avoids a thin
+## double wall where two branch flank walls meet at the segment seam).
+const SIDE_STREET_GAP := 2
 const SIDE_STREET_START_SEGMENT := 4
 const SHOP_SPAWN_MIN_SEGMENTS_AHEAD := 1
 const SHOP_SPAWN_MAX_SEGMENTS_AHEAD := 2
@@ -60,9 +61,8 @@ var _segment_index := 0
 var _neighborhood_variant := 0
 var _neighborhood_remaining := 0
 var _last_neighborhood_variant := -1
-var _side_street_remaining := 0
-var _side_street_left := false
-var _side_street_right := false
+## Segments left that must stay closed after a side street.
+var _side_street_cooldown := 0
 var _rng: RandomNumberGenerator
 var _van_velocity := Vector3.ZERO
 var _base_travel_speed := 8.0
@@ -383,27 +383,26 @@ func _pick_side_streets() -> Vector2i:
 	if _segment_index < SIDE_STREET_START_SEGMENT:
 		return Vector2i.ZERO
 
-	if _side_street_remaining <= 0:
-		_side_street_left = false
-		_side_street_right = false
-		if _rng.randf() < SIDE_STREET_RUN_CHANCE:
-			match _rng.randi_range(0, 2):
-				0:
-					_side_street_left = true
-				1:
-					_side_street_right = true
-				2:
-					_side_street_left = true
-					_side_street_right = true
-			_side_street_remaining = _rng.randi_range(
-				SIDE_STREET_RUN_MIN,
-				SIDE_STREET_RUN_MAX
-			)
+	if _side_street_cooldown > 0:
+		_side_street_cooldown -= 1
+		return Vector2i.ZERO
 
-	if _side_street_remaining > 0:
-		_side_street_remaining -= 1
+	if _rng.randf() >= SIDE_STREET_CHANCE:
+		return Vector2i.ZERO
 
-	return Vector2i(int(_side_street_left), int(_side_street_right))
+	var left := false
+	var right := false
+	match _rng.randi_range(0, 2):
+		0:
+			left = true
+		1:
+			right = true
+		2:
+			left = true
+			right = true
+
+	_side_street_cooldown = SIDE_STREET_GAP
+	return Vector2i(int(left), int(right))
 
 
 func _sample_route_transform(progress: float) -> Transform3D:
