@@ -8,6 +8,7 @@ const VARIANT_COUNT := 4
 	$Structure/Variant2,
 	$Structure/Variant3,
 ]
+@onready var _road_floor: RoadFloor = $RoadFloor
 @onready var _left_wall: Node3D = $LeftWall
 @onready var _right_wall: Node3D = $RightWall
 @onready var _left_wall_upper: Node3D = $RightWall/LeftWall
@@ -29,6 +30,7 @@ func apply_variant(index: int) -> void:
 func apply_side_streets(left: bool, right: bool) -> void:
 	_set_side_street(&"left", left)
 	_set_side_street(&"right", right)
+	_sync_road_openings()
 
 
 ## Open a wall gap for a shop bay without showing the cosmetic side street.
@@ -36,6 +38,7 @@ func open_shop_bay(side: StringName) -> void:
 	_set_side_street(side, true)
 	var side_street := _side_street_left if side == &"left" else _side_street_right
 	side_street.visible = false
+	_sync_road_openings()
 
 
 func _set_side_street(side: StringName, enabled: bool) -> void:
@@ -54,6 +57,17 @@ func _set_side_street(side: StringName, enabled: bool) -> void:
 	wall_upper_collision.disabled = enabled
 	side_street.visible = enabled
 	_set_side_structure_visible(side, not enabled)
+
+
+func _sync_road_openings() -> void:
+	if _road_floor == null:
+		return
+	# Wall collision disabled means the side is open (side street or shop bay).
+	# Drop sidewalk there so branch / bay road meets flush carriageway.
+	_road_floor.set_side_openings(
+		_left_wall_collision.disabled,
+		_right_wall_collision.disabled
+	)
 
 
 func _set_side_structure_visible(side: StringName, structure_visible: bool) -> void:

@@ -19,6 +19,10 @@ extends Node3D
 @export var curb_face_depth := 0.12
 @export var gutter_width := 0.28
 @export var gutter_depth := 0.04
+## When false, that side becomes continuous carriageway to the tile edge
+## (use for side-street / shop openings so we don't stack sidewalk under the branch).
+@export var sidewalk_left := true
+@export var sidewalk_right := true
 @export var include_collision := true
 @export var detail_seed := 0
 @export var rebuild_on_ready := true
@@ -40,10 +44,24 @@ func _ready() -> void:
 
 
 func rebuild() -> void:
-	for child in get_children():
-		child.queue_free()
+	while get_child_count() > 0:
+		var child := get_child(0)
+		remove_child(child)
+		child.free()
+	_body = null
 	_built = false
 	_build()
+
+
+## Open a side to continuous road (drops sidewalk/curb/gutter on that edge).
+func set_side_openings(left_open: bool, right_open: bool) -> void:
+	var want_left := not left_open
+	var want_right := not right_open
+	if sidewalk_left == want_left and sidewalk_right == want_right and _built:
+		return
+	sidewalk_left = want_left
+	sidewalk_right = want_right
+	rebuild()
 
 
 func _build() -> void:
@@ -84,84 +102,92 @@ func _build() -> void:
 
 	var half_x := span_x * 0.5
 	var road_half := half_x - sidewalk_width
-	var carriage_half := road_half - gutter_width
+	var gutter_inner := road_half - gutter_width
 	var sidewalk_top := road_surface_y + curb_height
 	var slab_bottom := road_surface_y - slab_thickness
 
+	# Carriageway grows to the tile edge on any side without a sidewalk.
+	var left_bound := -half_x if not sidewalk_left else -gutter_inner
+	var right_bound := half_x if not sidewalk_right else gutter_inner
+	var carriage_width := maxf(0.5, right_bound - left_bound)
+	var carriage_center := (left_bound + right_bound) * 0.5
+
 	# --- Primary slabs -------------------------------------------------------
-	# Carriageway (driveable center). Top at road_surface_y.
 	_add_box_centered(
 		"Carriageway",
-		Vector3(carriage_half * 2.0, slab_thickness, span_z),
-		Vector3(0.0, road_surface_y - slab_thickness * 0.5, 0.0),
+		Vector3(carriage_width, slab_thickness, span_z),
+		Vector3(carriage_center, road_surface_y - slab_thickness * 0.5, 0.0),
 		road_mat,
 		true
 	)
 
-	# Sidewalks — raised curb_height above road, same slab bottom so curb face reads.
 	var walk_thickness := sidewalk_top - slab_bottom
 	var walk_center_x := half_x - sidewalk_width * 0.5
-	_add_box_centered(
-		"SidewalkLeft",
-		Vector3(sidewalk_width, walk_thickness, span_z),
-		Vector3(-walk_center_x, slab_bottom + walk_thickness * 0.5, 0.0),
-		walk_mat,
-		true
-	)
-	_add_box_centered(
-		"SidewalkRight",
-		Vector3(sidewalk_width, walk_thickness, span_z),
-		Vector3(walk_center_x, slab_bottom + walk_thickness * 0.5, 0.0),
-		walk_mat,
-		true
-	)
+	if sidewalk_left:
+		_add_box_centered(
+			"SidewalkLeft",
+			Vector3(sidewalk_width, walk_thickness, span_z),
+			Vector3(-walk_center_x, slab_bottom + walk_thickness * 0.5, 0.0),
+			walk_mat,
+			true
+		)
+	if sidewalk_right:
+		_add_box_centered(
+			"SidewalkRight",
+			Vector3(sidewalk_width, walk_thickness, span_z),
+			Vector3(walk_center_x, slab_bottom + walk_thickness * 0.5, 0.0),
+			walk_mat,
+			true
+		)
 
-	# Gutters (slightly depressed strips between curb and carriageway).
 	var gutter_top := road_surface_y - gutter_depth
 	var gutter_thickness := gutter_top - slab_bottom
-	var gutter_center_x := carriage_half + gutter_width * 0.5
-	_add_box_centered(
-		"GutterLeft",
-		Vector3(gutter_width, gutter_thickness, span_z),
-		Vector3(-gutter_center_x, slab_bottom + gutter_thickness * 0.5, 0.0),
-		dark_mat,
-		true
-	)
-	_add_box_centered(
-		"GutterRight",
-		Vector3(gutter_width, gutter_thickness, span_z),
-		Vector3(gutter_center_x, slab_bottom + gutter_thickness * 0.5, 0.0),
-		dark_mat,
-		true
-	)
+	var gutter_center_x := gutter_inner + gutter_width * 0.5
+	if sidewalk_left:
+		_add_box_centered(
+			"GutterLeft",
+			Vector3(gutter_width, gutter_thickness, span_z),
+			Vector3(-gutter_center_x, slab_bottom + gutter_thickness * 0.5, 0.0),
+			dark_mat,
+			true
+		)
+	if sidewalk_right:
+		_add_box_centered(
+			"GutterRight",
+			Vector3(gutter_width, gutter_thickness, span_z),
+			Vector3(gutter_center_x, slab_bottom + gutter_thickness * 0.5, 0.0),
+			dark_mat,
+			true
+		)
 
-	# Curb stones — thin vertical-looking caps on the sidewalk edge.
 	var curb_w := curb_face_depth
 	var curb_h := curb_height + 0.02
 	var curb_x := road_half - curb_w * 0.5
-	_add_box_centered(
-		"CurbLeft",
-		Vector3(curb_w, curb_h, span_z),
-		Vector3(-curb_x, road_surface_y + curb_h * 0.5, 0.0),
-		curb_mat,
-		false
-	)
-	_add_box_centered(
-		"CurbRight",
-		Vector3(curb_w, curb_h, span_z),
-		Vector3(curb_x, road_surface_y + curb_h * 0.5, 0.0),
-		curb_mat,
-		false
-	)
+	if sidewalk_left:
+		_add_box_centered(
+			"CurbLeft",
+			Vector3(curb_w, curb_h, span_z),
+			Vector3(-curb_x, road_surface_y + curb_h * 0.5, 0.0),
+			curb_mat,
+			false
+		)
+	if sidewalk_right:
+		_add_box_centered(
+			"CurbRight",
+			Vector3(curb_w, curb_h, span_z),
+			Vector3(curb_x, road_surface_y + curb_h * 0.5, 0.0),
+			curb_mat,
+			false
+		)
 
-	_build_lane_paint(carriage_half, paint_mat)
-	_build_expansion_joints(carriage_half, dark_mat)
-	_build_drains(carriage_half, grate_mat, metal_mat, dark_mat)
-	_build_manholes(carriage_half, metal_mat, dark_mat)
+	_build_lane_paint(left_bound, right_bound, paint_mat)
+	_build_expansion_joints(carriage_width, carriage_center, dark_mat)
+	_build_drains(gutter_inner, grate_mat, metal_mat, dark_mat)
+	_build_manholes(carriage_width, carriage_center, metal_mat, dark_mat)
 	_build_sidewalk_dressing(half_x, sidewalk_top, metal_mat, curb_mat, dark_mat)
 
 
-func _build_lane_paint(carriage_half: float, paint_mat: Material) -> void:
+func _build_lane_paint(left_bound: float, right_bound: float, paint_mat: Material) -> void:
 	# Broken center line — thin raised paint bars along Z.
 	var dash_len := 1.4
 	var gap := 1.1
@@ -180,28 +206,33 @@ func _build_lane_paint(carriage_half: float, paint_mat: Material) -> void:
 		z += dash_len + gap
 		i += 1
 
-	# Edge lines just inside gutters (solid, thinner).
-	var edge_x := carriage_half - 0.18
-	_add_box_centered(
-		"EdgeLineLeft",
-		Vector3(0.08, paint_h, span_z * 0.92),
-		Vector3(-edge_x, road_surface_y + paint_h * 0.5, 0.0),
-		paint_mat,
-		false
-	)
-	_add_box_centered(
-		"EdgeLineRight",
-		Vector3(0.08, paint_h, span_z * 0.92),
-		Vector3(edge_x, road_surface_y + paint_h * 0.5, 0.0),
-		paint_mat,
-		false
-	)
+	# Edge lines only beside remaining sidewalks / gutters.
+	if sidewalk_left:
+		_add_box_centered(
+			"EdgeLineLeft",
+			Vector3(0.08, paint_h, span_z * 0.92),
+			Vector3(left_bound + 0.18, road_surface_y + paint_h * 0.5, 0.0),
+			paint_mat,
+			false
+		)
+	if sidewalk_right:
+		_add_box_centered(
+			"EdgeLineRight",
+			Vector3(0.08, paint_h, span_z * 0.92),
+			Vector3(right_bound - 0.18, road_surface_y + paint_h * 0.5, 0.0),
+			paint_mat,
+			false
+		)
 
 
-func _build_expansion_joints(carriage_half: float, dark_mat: Material) -> void:
+func _build_expansion_joints(
+	carriage_width: float,
+	carriage_center: float,
+	dark_mat: Material
+) -> void:
 	# Shallow transverse grooves across the carriageway every ~5m.
 	var spacing := 5.0
-	var joint_w := carriage_half * 2.0 - 0.3
+	var joint_w := carriage_width - 0.3
 	var joint_d := 0.06
 	var joint_h := 0.02
 	var z := -span_z * 0.5 + spacing
@@ -210,7 +241,7 @@ func _build_expansion_joints(carriage_half: float, dark_mat: Material) -> void:
 		_add_box_centered(
 			"ExpansionJoint_%d" % i,
 			Vector3(joint_w, joint_h, joint_d),
-			Vector3(0.0, road_surface_y - joint_h * 0.35, z),
+			Vector3(carriage_center, road_surface_y - joint_h * 0.35, z),
 			dark_mat,
 			false
 		)
@@ -219,11 +250,13 @@ func _build_expansion_joints(carriage_half: float, dark_mat: Material) -> void:
 
 
 func _build_drains(
-	carriage_half: float,
+	gutter_inner: float,
 	grate_mat: Material,
 	metal_mat: Material,
 	dark_mat: Material
 ) -> void:
+	if not sidewalk_left and not sidewalk_right:
+		return
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed_value(17)
 	var spacing := 5.0
@@ -231,7 +264,11 @@ func _build_drains(
 	var i := 0
 	while z < span_z * 0.5 - 1.5:
 		for side: float in [-1.0, 1.0]:
-			var gx := side * (carriage_half + gutter_width * 0.5)
+			if side < 0.0 and not sidewalk_left:
+				continue
+			if side > 0.0 and not sidewalk_right:
+				continue
+			var gx := side * (gutter_inner + gutter_width * 0.5)
 			# Frame
 			_add_box_centered(
 				"DrainFrame_%d_%s" % [i, "L" if side < 0.0 else "R"],
@@ -262,15 +299,22 @@ func _build_drains(
 		i += 1
 
 
-func _build_manholes(carriage_half: float, metal_mat: Material, dark_mat: Material) -> void:
+func _build_manholes(
+	carriage_width: float,
+	carriage_center: float,
+	metal_mat: Material,
+	dark_mat: Material
+) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed_value(41)
 	var count := maxi(1, int(span_z / 10.0))
+	var half_w := carriage_width * 0.5
 	for i in count:
-		var mx := rng.randf_range(-carriage_half * 0.55, carriage_half * 0.55)
+		var mx := carriage_center + rng.randf_range(-half_w * 0.55, half_w * 0.55)
 		# Bias away from exact center so van path stays clean-ish.
-		if absf(mx) < 0.9:
-			mx = 1.2 * signf(mx if mx != 0.0 else 1.0)
+		var lateral := mx - carriage_center
+		if absf(lateral) < 0.9:
+			mx = carriage_center + 1.2 * signf(lateral if lateral != 0.0 else 1.0)
 		var mz := rng.randf_range(-span_z * 0.4, span_z * 0.4)
 		var size := rng.randf_range(0.55, 0.72)
 		# Recess well
@@ -313,6 +357,8 @@ func _build_sidewalk_dressing(
 	curb_mat: Material,
 	dark_mat: Material
 ) -> void:
+	if not sidewalk_left and not sidewalk_right:
+		return
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed_value(73)
 	var walk_inner := half_x - sidewalk_width
@@ -323,6 +369,10 @@ func _build_sidewalk_dressing(
 	var i := 0
 	while z < span_z * 0.4:
 		for side: float in [-1.0, 1.0]:
+			if side < 0.0 and not sidewalk_left:
+				continue
+			if side > 0.0 and not sidewalk_right:
+				continue
 			if rng.randf() > 0.55:
 				continue
 			var bx := side * (half_x - 0.35)
@@ -344,6 +394,10 @@ func _build_sidewalk_dressing(
 	i = 0
 	while z < span_z * 0.4:
 		for side: float in [-1.0, 1.0]:
+			if side < 0.0 and not sidewalk_left:
+				continue
+			if side > 0.0 and not sidewalk_right:
+				continue
 			if rng.randf() > 0.4:
 				continue
 			var bx := side * (walk_inner + 0.28)
@@ -371,6 +425,10 @@ func _build_sidewalk_dressing(
 	i = 0
 	while sz < span_z * 0.5 - 0.4:
 		for side: float in [-1.0, 1.0]:
+			if side < 0.0 and not sidewalk_left:
+				continue
+			if side > 0.0 and not sidewalk_right:
+				continue
 			_add_box_centered(
 				"WalkSeam_%d_%s" % [i, "L" if side < 0.0 else "R"],
 				Vector3(sidewalk_width * 0.92, 0.015, 0.04),
