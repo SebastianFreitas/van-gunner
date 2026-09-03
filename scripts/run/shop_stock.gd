@@ -9,9 +9,9 @@ const _OFFER_SCENE := preload("res://scenes/shop/shop_offer.tscn")
 
 ## World slots on the counter lip (booth at x=15.85; lip top ≈ 1.10).
 const _SLOT_POSITIONS: Array[Vector3] = [
-	Vector3(14.64, 1.22, -2.0),
-	Vector3(14.64, 1.22, 0.0),
-	Vector3(14.64, 1.22, 2.0),
+	Vector3(14.64, 1.52, -2.0),
+	Vector3(14.64, 1.52, 0.0),
+	Vector3(14.64, 1.52, 2.0),
 ]
 
 
