@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://cp6kn11gbklv4"]
+[gd_scene load_steps=9 format=3 uid="uid://cp6kn11gbklv4"]
 
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1_shader"]
 [ext_resource type="Script" path="res://scenes/corridor/side_street_branch.gd" id="2_script"]
@@ -10,7 +10,7 @@ shader = ExtResource("1_shader")
 shader_parameter/base_color = Color(0.14, 0.16, 0.15, 1)
 shader_parameter/seam_color = Color(0.03, 0.04, 0.035, 1)
 shader_parameter/rust_color = Color(0.28, 0.095, 0.04, 1)
-shader_parameter/tile_count = Vector2(3, 6)
+shader_parameter/tile_count = Vector2(12, 6)
 shader_parameter/roughness_value = 0.8
 cull_mode = 2
 
@@ -24,13 +24,13 @@ cull_mode = 2
 shading_mode = 0
 albedo_color = Color(0.62, 0.34, 0.12, 1)
 
-[sub_resource type="BoxMesh" id="OuterWallMesh"]
+[sub_resource type="BoxMesh" id="FlankWallMesh"]
 material = SubResource("WallMaterial")
-size = Vector3(0.4, 20, 20)
+size = Vector3(48, 20, 0.4)
 
 [sub_resource type="BoxMesh" id="VoidMesh"]
 material = SubResource("VoidMaterial")
-size = Vector3(2.5, 18, 20)
+size = Vector3(3, 22, 22)
 
 [sub_resource type="BoxMesh" id="LampMesh"]
 material = SubResource("LampMaterial")
@@ -40,30 +40,42 @@ size = Vector3(0.12, 0.42, 1.3)
 script = ExtResource("2_script")
 
 [node name="RoadFloor" parent="." instance=ExtResource("3_road_floor")]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -3.5, 0, 0)
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, 0)
 span_x = 20.0
-span_z = 7.0
+span_z = 48.0
 sidewalk_width = 1.1
 detail_seed = 11
 sidewalk_left = true
 sidewalk_right = true
 
-[node name="OuterWall" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 9.6, 0)
-mesh = SubResource("OuterWallMesh")
+[node name="FlankWallNorth" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 9.6, -10)
+mesh = SubResource("FlankWallMesh")
 
-[node name="Void" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.25, 8, 0)
+[node name="FlankWallSouth" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 9.6, 10)
+mesh = SubResource("FlankWallMesh")
+
+[node name="FarVoid" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -49.5, 8, 0)
 mesh = SubResource("VoidMesh")
 
 [node name="Lamp0" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2, 5.2, -6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 5.2, -6)
 mesh = SubResource("LampMesh")
 
 [node name="Lamp1" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2, 5.2, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 5.2, 6)
 mesh = SubResource("LampMesh")
 
 [node name="Lamp2" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2, 5.2, 6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 5.2, -6)
+mesh = SubResource("LampMesh")
+
+[node name="Lamp3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 5.2, 6)
+mesh = SubResource("LampMesh")
+
+[node name="Lamp4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, 5.2, -4)
 mesh = SubResource("LampMesh")
