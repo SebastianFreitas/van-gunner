@@ -27,12 +27,11 @@ extends Node3D
 @export var detail_seed := 0
 @export var rebuild_on_ready := true
 
-## Optional overrides — leave empty to use industrial_surface with zone colors.
+## Optional overrides — leave empty to use procedural street shaders.
 @export var road_material: Material
 @export var sidewalk_material: Material
 @export var curb_material: Material
 @export var metal_material: Material
-@export var paint_material: Material
 
 var _built := false
 var _body: StaticBody3D
@@ -87,15 +86,11 @@ func spawn_corner_return(
 	ex += OVERLAP
 	ez += OVERLAP
 
-	var walk_mat := sidewalk_material if sidewalk_material else _industrial_mat(
-		Color(0.22, 0.21, 0.195, 1.0),
-		Color(0.08, 0.075, 0.07, 1.0),
-		Color(0.28, 0.12, 0.05, 1.0),
-		Vector2(2.0, 2.0),
-		0.9
+	var walk_mat := sidewalk_material if sidewalk_material else _sidewalk_mat(
+		Vector2(maxf(0.5, extent_x), maxf(0.5, extent_z))
 	)
 	var curb_mat := curb_material if curb_material else _std(
-		Color(0.34, 0.33, 0.3, 1.0), 0.88, 0.05
+		Color(0.3, 0.29, 0.265, 1.0), 0.9, 0.02
 	)
 
 	var half_x := span_x * 0.5
@@ -161,32 +156,6 @@ func _build() -> void:
 		_body.name = "Surfaces"
 		add_child(_body)
 
-	var road_mat := road_material if road_material else _industrial_mat(
-		Color(0.13, 0.135, 0.13, 1.0),
-		Color(0.04, 0.045, 0.04, 1.0),
-		Color(0.22, 0.09, 0.04, 1.0),
-		Vector2(4.0, maxf(6.0, span_z * 0.55)),
-		0.94
-	)
-	var walk_mat := sidewalk_material if sidewalk_material else _industrial_mat(
-		Color(0.22, 0.21, 0.195, 1.0),
-		Color(0.08, 0.075, 0.07, 1.0),
-		Color(0.28, 0.12, 0.05, 1.0),
-		Vector2(3.0, maxf(4.0, span_z * 0.4)),
-		0.9
-	)
-	var curb_mat := curb_material if curb_material else _std(
-		Color(0.34, 0.33, 0.3, 1.0), 0.88, 0.05
-	)
-	var metal_mat := metal_material if metal_material else _std(
-		Color(0.12, 0.125, 0.12, 1.0), 0.55, 0.78
-	)
-	var paint_mat := paint_material if paint_material else _std(
-		Color(0.72, 0.62, 0.18, 1.0), 0.7, 0.05
-	)
-	var grate_mat := _std(Color(0.06, 0.065, 0.06, 1.0), 0.45, 0.85)
-	var dark_mat := _std(Color(0.05, 0.055, 0.05, 1.0), 0.95, 0.1)
-
 	var half_x := span_x * 0.5
 	var road_half := half_x - sidewalk_width
 	var gutter_inner := road_half - gutter_width
@@ -198,6 +167,21 @@ func _build() -> void:
 	var right_bound := half_x if not sidewalk_right else gutter_inner
 	var carriage_width := maxf(0.5, right_bound - left_bound)
 	var carriage_center := (left_bound + right_bound) * 0.5
+
+	var road_mat := road_material if road_material else _asphalt_mat(
+		Vector2(carriage_width, span_z)
+	)
+	var walk_mat := sidewalk_material if sidewalk_material else _sidewalk_mat(
+		Vector2(sidewalk_width, span_z)
+	)
+	var curb_mat := curb_material if curb_material else _std(
+		Color(0.3, 0.29, 0.265, 1.0), 0.9, 0.02
+	)
+	var metal_mat := metal_material if metal_material else _std(
+		Color(0.1, 0.105, 0.1, 1.0), 0.62, 0.72
+	)
+	var grate_mat := _std(Color(0.05, 0.055, 0.05, 1.0), 0.5, 0.8)
+	var dark_mat := _std(Color(0.04, 0.042, 0.038, 1.0), 0.96, 0.08)
 
 	# --- Primary slabs -------------------------------------------------------
 	_add_box_centered(
@@ -267,49 +251,10 @@ func _build() -> void:
 			false
 		)
 
-	_build_lane_paint(left_bound, right_bound, paint_mat)
 	_build_expansion_joints(carriage_width, carriage_center, dark_mat)
 	_build_drains(gutter_inner, grate_mat, metal_mat, dark_mat)
 	_build_manholes(carriage_width, carriage_center, metal_mat, dark_mat)
 	_build_sidewalk_dressing(half_x, sidewalk_top, metal_mat, curb_mat, dark_mat)
-
-
-func _build_lane_paint(left_bound: float, right_bound: float, paint_mat: Material) -> void:
-	# Broken center line — thin raised paint bars along Z.
-	var dash_len := 1.4
-	var gap := 1.1
-	var paint_h := 0.012
-	var paint_w := 0.12
-	var z := -span_z * 0.5 + dash_len * 0.5 + 0.4
-	var i := 0
-	while z < span_z * 0.5 - dash_len * 0.5:
-		_add_box_centered(
-			"CenterDash_%d" % i,
-			Vector3(paint_w, paint_h, dash_len),
-			Vector3(0.0, road_surface_y + paint_h * 0.5, z),
-			paint_mat,
-			false
-		)
-		z += dash_len + gap
-		i += 1
-
-	# Edge lines only beside remaining sidewalks / gutters.
-	if sidewalk_left:
-		_add_box_centered(
-			"EdgeLineLeft",
-			Vector3(0.08, paint_h, span_z * 0.92),
-			Vector3(left_bound + 0.18, road_surface_y + paint_h * 0.5, 0.0),
-			paint_mat,
-			false
-		)
-	if sidewalk_right:
-		_add_box_centered(
-			"EdgeLineRight",
-			Vector3(0.08, paint_h, span_z * 0.92),
-			Vector3(right_bound - 0.18, road_surface_y + paint_h * 0.5, 0.0),
-			paint_mat,
-			false
-		)
 
 
 func _build_expansion_joints(
@@ -581,21 +526,25 @@ func _seed_value(salt: int) -> int:
 	return hash(Vector3(span_x, span_z, float(salt)))
 
 
-func _industrial_mat(
-	base: Color,
-	seam: Color,
-	rust: Color,
-	tile_count: Vector2,
-	roughness: float
-) -> ShaderMaterial:
-	var shader := load("res://scenes/corridor/industrial_surface.gdshader") as Shader
+func _asphalt_mat(_surface_size_m: Vector2) -> ShaderMaterial:
+	var shader := load("res://scenes/corridor/asphalt_surface.gdshader") as Shader
 	var mat := ShaderMaterial.new()
 	mat.shader = shader
-	mat.set_shader_parameter("base_color", base)
-	mat.set_shader_parameter("seam_color", seam)
-	mat.set_shader_parameter("rust_color", rust)
-	mat.set_shader_parameter("tile_count", tile_count)
-	mat.set_shader_parameter("roughness_value", roughness)
+	mat.set_shader_parameter("washout", 0.32)
+	mat.set_shader_parameter("trash", 1.0)
+	mat.set_shader_parameter("roughness_value", 0.94)
+	return mat
+
+
+func _sidewalk_mat(surface_size_m: Vector2) -> ShaderMaterial:
+	var shader := load("res://scenes/corridor/sidewalk_surface.gdshader") as Shader
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+	mat.set_shader_parameter("surface_size_m", surface_size_m)
+	mat.set_shader_parameter("slab_spacing_m", 1.2)
+	mat.set_shader_parameter("washout", 0.5)
+	mat.set_shader_parameter("trash", 0.65)
+	mat.set_shader_parameter("roughness_value", 0.92)
 	return mat
 
 
