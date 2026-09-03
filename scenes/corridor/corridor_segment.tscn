@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://bpjji6mwad67w" path="res://scenes/corridor/corridor_segment.gd" id="1_script"]
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1_shader"]
-[ext_resource type="PackedScene" uid="uid://cside8street1br" path="res://scenes/corridor/side_street_branch.tscn" id="2_side_street"]
-[ext_resource type="PackedScene" uid="uid://brodfloor01seg" path="res://scenes/corridor/road_floor.tscn" id="3_road_floor"]
+[ext_resource type="PackedScene" uid="uid://cp6kn11gbklv4" path="res://scenes/corridor/side_street_branch.tscn" id="2_side_street"]
+[ext_resource type="PackedScene" uid="uid://bf13wxqioffji" path="res://scenes/corridor/road_floor.tscn" id="3_road_floor"]
 
 [sub_resource type="ShaderMaterial" id="WallMaterial"]
 render_priority = 0
@@ -116,7 +116,7 @@ size = Vector3(14, 0.22, 2.4)
 [node name="CorridorSegment" type="Node3D" unique_id=1746387319]
 script = ExtResource("1_script")
 
-[node name="RoadFloor" parent="." instance=ExtResource("3_road_floor")]
+[node name="RoadFloor" parent="." unique_id=1560516355 instance=ExtResource("3_road_floor")]
 
 [node name="LeftWall" type="MeshInstance3D" parent="." unique_id=1652856625]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 9.6, 0)
@@ -220,67 +220,67 @@ mesh = SubResource("LampMesh")
 visible = false
 
 [node name="LeftTowerLow" type="MeshInstance3D" parent="Structure/Variant1" unique_id=2085508098]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.4, 5.5, -6.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.4, 19.805464, -6.5)
 mesh = SubResource("BuildingBlockMesh")
 
 [node name="LeftTowerHigh" type="MeshInstance3D" parent="Structure/Variant1" unique_id=1678206276]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.8, 11, 1.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.8, 25.305464, 1.5)
 mesh = SubResource("BuildingBlockTallMesh")
 
 [node name="LeftWing" type="MeshInstance3D" parent="Structure/Variant1" unique_id=1216040723]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 4, 7)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 18.305464, 7)
 mesh = SubResource("BuildingBlockWideMesh")
 
 [node name="LeftWindow0" type="MeshInstance3D" parent="Structure/Variant1" unique_id=1466089010]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.85, 5, -6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.85, 19.305464, -6)
 mesh = SubResource("WindowRecessMesh")
 
 [node name="LeftWindow1" type="MeshInstance3D" parent="Structure/Variant1" unique_id=429131344]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.85, 8.5, -6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.85, 22.805464, -6)
 mesh = SubResource("WindowRecessMesh")
 
 [node name="LeftWindow2" type="MeshInstance3D" parent="Structure/Variant1" unique_id=440956749]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.85, 12, 2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.85, 26.305464, 2)
 mesh = SubResource("WindowRecessMesh")
 
 [node name="LeftWindow3" type="MeshInstance3D" parent="Structure/Variant1" unique_id=323986367]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.85, 15.5, 2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.85, 29.805464, 2)
 mesh = SubResource("WindowRecessMesh")
 
 [node name="RightTower" type="MeshInstance3D" parent="Structure/Variant1" unique_id=109772831]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.2, 8.5, -2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.2, 22.805464, -2)
 mesh = SubResource("BuildingBlockTallMesh")
 
 [node name="RightStep0" type="MeshInstance3D" parent="Structure/Variant1" unique_id=1540552623]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 3.5, 5.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 17.805464, 5.5)
 mesh = SubResource("BuildingBlockMesh")
 
 [node name="RightStep1" type="MeshInstance3D" parent="Structure/Variant1" unique_id=6457759]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.9, 6.5, 8.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.9, 20.805464, 8.5)
 mesh = SubResource("BuildingBlockWideMesh")
 
 [node name="RightWindow0" type="MeshInstance3D" parent="Structure/Variant1" unique_id=1046808800]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.85, 7, -1.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.85, 21.305464, -1.5)
 mesh = SubResource("WindowRecessMesh")
 
 [node name="RightWindow1" type="MeshInstance3D" parent="Structure/Variant1" unique_id=1799420807]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.85, 11, -1.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.85, 25.305464, -1.5)
 mesh = SubResource("WindowRecessMesh")
 
 [node name="RightWindow2" type="MeshInstance3D" parent="Structure/Variant1" unique_id=750815012]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.85, 4, 5.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.85, 18.305464, 5.5)
 mesh = SubResource("WindowRecessMesh")
 
 [node name="RoofLedge" type="MeshInstance3D" parent="Structure/Variant1" unique_id=1027923649]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18.2, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 32.505463, 0)
 mesh = SubResource("CrossBeamMesh")
 
 [node name="LeftLamp" type="MeshInstance3D" parent="Structure/Variant1" unique_id=1436976963]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.4, 5.2, -5.4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.4, 19.505463, -5.4)
 mesh = SubResource("LampMesh")
 
 [node name="RightLamp" type="MeshInstance3D" parent="Structure/Variant1" unique_id=1127099608]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4, 6.8, 4.9)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4, 21.105465, 4.9)
 mesh = SubResource("LampMesh")
 
 [node name="Variant2" type="Node3D" parent="Structure" unique_id=1241400888]
@@ -425,13 +425,13 @@ mesh = SubResource("LampMesh")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4, 6.8, 4.9)
 mesh = SubResource("LampMesh")
 
-[node name="SideStreets" type="Node3D" parent="."]
+[node name="SideStreets" type="Node3D" parent="." unique_id=1908287180]
 
-[node name="Left" parent="SideStreets" instance=ExtResource("2_side_street")]
+[node name="Left" parent="SideStreets" unique_id=1261634550 instance=ExtResource("2_side_street")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, 0)
 visible = false
 
-[node name="Right" parent="SideStreets" instance=ExtResource("2_side_street")]
+[node name="Right" parent="SideStreets" unique_id=922025484 instance=ExtResource("2_side_street")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 0)
 visible = false
 mirror_x = true
