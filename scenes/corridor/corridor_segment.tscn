@@ -3,19 +3,7 @@
 [ext_resource type="Script" uid="uid://bpjji6mwad67w" path="res://scenes/corridor/corridor_segment.gd" id="1_script"]
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1_shader"]
 [ext_resource type="PackedScene" uid="uid://cside8street1br" path="res://scenes/corridor/side_street_branch.tscn" id="2_side_street"]
-
-[sub_resource type="ShaderMaterial" id="FloorMaterial"]
-render_priority = 0
-shader = ExtResource("1_shader")
-shader_parameter/base_color = Color(0.16, 0.18, 0.17, 1)
-shader_parameter/seam_color = Color(0.035, 0.045, 0.04, 1)
-shader_parameter/rust_color = Color(0.3, 0.105, 0.045, 1)
-shader_parameter/tile_count = Vector2(6, 12)
-shader_parameter/roughness_value = 0.92
-
-[sub_resource type="BoxMesh" id="FloorMesh"]
-material = SubResource("FloorMaterial")
-size = Vector3(18, 0.2, 20)
+[ext_resource type="PackedScene" uid="uid://brodfloor01seg" path="res://scenes/corridor/road_floor.tscn" id="3_road_floor"]
 
 [sub_resource type="ShaderMaterial" id="WallMaterial"]
 render_priority = 0
@@ -29,9 +17,6 @@ shader_parameter/roughness_value = 0.78
 [sub_resource type="BoxMesh" id="WallMesh"]
 material = SubResource("WallMaterial")
 size = Vector3(0.4, 20, 20)
-
-[sub_resource type="BoxShape3D" id="FloorShape"]
-size = Vector3(18, 0.2, 20)
 
 [sub_resource type="BoxShape3D" id="WallShape"]
 size = Vector3(0.4, 20, 20)
@@ -131,9 +116,7 @@ size = Vector3(14, 0.22, 2.4)
 [node name="CorridorSegment" type="Node3D" unique_id=1746387319]
 script = ExtResource("1_script")
 
-[node name="Floor" type="MeshInstance3D" parent="." unique_id=1445539744]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
-mesh = SubResource("FloorMesh")
+[node name="RoadFloor" parent="." instance=ExtResource("3_road_floor")]
 
 [node name="LeftWall" type="MeshInstance3D" parent="." unique_id=1652856625]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 9.6, 0)
@@ -152,10 +135,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0028438568, 19.987495, 0)
 mesh = SubResource("WallMesh")
 
 [node name="Surfaces" type="StaticBody3D" parent="." unique_id=671763696]
-
-[node name="FloorCollision" type="CollisionShape3D" parent="Surfaces" unique_id=1193223466]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
-shape = SubResource("FloorShape")
 
 [node name="LeftWallCollision" type="CollisionShape3D" parent="Surfaces" unique_id=1156373273]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 9.6, 0)

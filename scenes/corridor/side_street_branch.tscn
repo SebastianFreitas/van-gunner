@@ -1,17 +1,8 @@
-[gd_scene format=3 uid="uid://cp6kn11gbklv4"]
+[gd_scene load_steps=8 format=3 uid="uid://cp6kn11gbklv4"]
 
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1_shader"]
 [ext_resource type="Script" path="res://scenes/corridor/side_street_branch.gd" id="2_script"]
-
-[sub_resource type="ShaderMaterial" id="FloorMaterial"]
-render_priority = 1
-shader = ExtResource("1_shader")
-shader_parameter/base_color = Color(0.14, 0.16, 0.15, 1)
-shader_parameter/seam_color = Color(0.03, 0.04, 0.035, 1)
-shader_parameter/rust_color = Color(0.28, 0.095, 0.04, 1)
-shader_parameter/tile_count = Vector2(3, 6)
-shader_parameter/roughness_value = 0.94
-cull_mode = 2
+[ext_resource type="PackedScene" uid="uid://brodfloor01seg" path="res://scenes/corridor/road_floor.tscn" id="3_road_floor"]
 
 [sub_resource type="ShaderMaterial" id="WallMaterial"]
 render_priority = 0
@@ -33,10 +24,6 @@ cull_mode = 2
 shading_mode = 0
 albedo_color = Color(0.62, 0.34, 0.12, 1)
 
-[sub_resource type="BoxMesh" id="FloorMesh"]
-material = SubResource("FloorMaterial")
-size = Vector3(7, 0.2, 20)
-
 [sub_resource type="BoxMesh" id="OuterWallMesh"]
 material = SubResource("WallMaterial")
 size = Vector3(0.4, 20, 20)
@@ -52,9 +39,12 @@ size = Vector3(0.12, 0.42, 1.3)
 [node name="SideStreetBranch" type="Node3D"]
 script = ExtResource("2_script")
 
-[node name="Floor" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, -0.3, 0)
-mesh = SubResource("FloorMesh")
+[node name="RoadFloor" parent="." instance=ExtResource("3_road_floor")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -3.5, 0, 0)
+span_x = 20.0
+span_z = 7.0
+sidewalk_width = 1.1
+detail_seed = 11
 
 [node name="OuterWall" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 9.6, 0)

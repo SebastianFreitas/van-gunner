@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://bf13wxqioffji"]
+
+[ext_resource type="Script" path="res://scripts/run/road_floor.gd" id="1"]
+
+[node name="RoadFloor" type="Node3D"]
+script = ExtResource("1")
+span_x = 18.0
+span_z = 20.0
+road_surface_y = -0.2
+slab_thickness = 0.2
+sidewalk_width = 1.75
+curb_height = 0.14
+include_collision = true
+rebuild_on_ready = true
