@@ -12,6 +12,7 @@ extends Interactable
 var _sold := false
 var _price := 0
 var _base_y := 0.0
+var _bob_initialized := false
 var _time := 0.0
 
 @onready var _sprite: Sprite3D = $Sprite3D
@@ -22,7 +23,6 @@ func _ready() -> void:
 	collision_layer = 2
 	collision_mask = 0
 	_apply_item(item)
-	_base_y = position.y
 	if _collision and _collision.shape == null:
 		var sphere := SphereShape3D.new()
 		sphere.radius = 0.35
@@ -32,6 +32,9 @@ func _ready() -> void:
 func setup(offer_item: ItemDefinition) -> void:
 	item = offer_item
 	_apply_item(item)
+	# Capture height after shop_stock places us — _ready can run before that.
+	_base_y = position.y
+	_bob_initialized = true
 
 
 func _apply_item(offer_item: ItemDefinition) -> void:
@@ -96,6 +99,9 @@ func _mark_sold() -> void:
 func _process(delta: float) -> void:
 	if _sold or not item:
 		return
+	if not _bob_initialized:
+		_base_y = position.y
+		_bob_initialized = true
 	_time += delta
 	position.y = _base_y + sin(_time * bob_speed) * bob_height
 	rotate_y(spin_speed * delta)

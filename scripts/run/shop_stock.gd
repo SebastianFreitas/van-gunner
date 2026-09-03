@@ -7,11 +7,11 @@ extends Node3D
 
 const _OFFER_SCENE := preload("res://scenes/shop/shop_offer.tscn")
 
-## Lip positions along the counter — spaced so three stock items read clearly.
+## World slots on the counter lip (booth at x=15.85; lip top ≈ 1.10).
 const _SLOT_POSITIONS: Array[Vector3] = [
-	Vector3(15.38, 1.16, -2.0),
-	Vector3(15.38, 1.16, 0.0),
-	Vector3(15.38, 1.16, 2.0),
+	Vector3(14.64, 1.22, -2.0),
+	Vector3(14.64, 1.22, 0.0),
+	Vector3(14.64, 1.22, 2.0),
 ]
 
 
@@ -24,6 +24,6 @@ func _stock_offers() -> void:
 	var slot_count := mini(items.size(), _SLOT_POSITIONS.size())
 	for i in range(slot_count):
 		var offer := _OFFER_SCENE.instantiate() as ShopOffer
-		add_child(offer)
 		offer.position = _SLOT_POSITIONS[i]
+		add_child(offer)
 		offer.setup(items[i])
