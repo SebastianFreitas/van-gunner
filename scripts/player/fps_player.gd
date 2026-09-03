@@ -180,5 +180,7 @@ func _resolve_rear_door_interact(hit_point: Vector3) -> Interactable:
 	var rear_doors := get_tree().get_first_node_in_group(&"rear_doors")
 	if rear_doors == null:
 		return null
-	var hinge_name := "LeftHinge" if hit_point.x < 0.0 else "RightHinge"
+	# Van is often yawed in the shop bay — pick the leaf in rear-door local space.
+	var local_x: float = rear_doors.to_local(hit_point).x
+	var hinge_name := "LeftHinge" if local_x < 0.0 else "RightHinge"
 	return rear_doors.get_node_or_null("%s/Interact" % hinge_name) as Interactable

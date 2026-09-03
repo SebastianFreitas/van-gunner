@@ -215,6 +215,8 @@ func get_door_prompt(side: StringName) -> String:
 	if is_door_broken(side):
 		return "BROKEN"
 	if is_door_open(side):
+		if _is_shop_keeping_doors_open():
+			return "SHOP — KEEP OPEN"
 		return "E  CLOSE DOOR"
 	return "E  OPEN DOOR"
 
@@ -223,6 +225,10 @@ func toggle_door(side: StringName) -> void:
 	if is_door_broken(side):
 		return
 	if is_door_open(side):
+		# Player close would clear open flags while shop still needs the gap;
+		# seal then no-ops and leaves the leaf uninteractable.
+		if _is_shop_keeping_doors_open():
+			return
 		close_door(side)
 	else:
 		open_door(side)
@@ -241,7 +247,11 @@ func open_door(side: StringName) -> void:
 
 
 func close_door(side: StringName) -> void:
-	if is_door_broken(side) or not is_door_open(side):
+	if is_door_broken(side):
+		return
+	# Already logically closed — still repair mesh/collision (shop desync / killed tween).
+	if not is_door_open(side):
+		_snap_door_closed(side)
 		return
 	_set_door_open(side, false)
 	_animate_door(side, false)
@@ -263,6 +273,29 @@ func open() -> void:
 func close() -> void:
 	close_door(SIDE_LEFT)
 	close_door(SIDE_RIGHT)
+
+
+func _is_shop_keeping_doors_open() -> bool:
+	return GameSession.phase == GameSession.RunPhase.SHOP
+
+
+func _snap_door_closed(side: StringName) -> void:
+	var existing := _left_tween if side == SIDE_LEFT else _right_tween
+	if existing:
+		existing.kill()
+	var hinge := _left_hinge if side == SIDE_LEFT else _right_hinge
+	var grip := _left_grip if side == SIDE_LEFT else _right_grip
+	var mount := _left_mount if side == SIDE_LEFT else _right_mount
+	var grip_closed := _left_grip_closed if side == SIDE_LEFT else _right_grip_closed
+	var mount_closed := _left_mount_closed if side == SIDE_LEFT else _right_mount_closed
+	if hinge:
+		hinge.rotation.y = 0.0
+	if grip:
+		grip.position = grip_closed
+	if mount:
+		mount.position = mount_closed
+	_set_blocker_enabled(side, true)
+	_set_leaf_collision_enabled(side, false)
 
 
 func toggle() -> void:
