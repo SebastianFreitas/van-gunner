@@ -64,6 +64,93 @@ func set_side_openings(left_open: bool, right_open: bool) -> void:
 	rebuild()
 
 
+## L-shaped sidewalk + curb return at one footprint corner.
+## `corner_x` / `corner_z` are ±1 selecting the corner; `extent_*` is how far the
+## pad reaches inward from that edge (usually the adjoining sidewalk widths).
+## Parents meshes under `host` so junction tiles can keep returns if this floor rebuilds.
+func spawn_corner_return(
+	host: Node3D,
+	corner_x: float,
+	corner_z: float,
+	extent_x: float,
+	extent_z: float,
+	name_prefix: String = "Corner"
+) -> void:
+	var sx := signf(corner_x)
+	var sz := signf(corner_z)
+	if sx == 0.0 or sz == 0.0:
+		return
+	var ex := maxf(0.05, extent_x)
+	var ez := maxf(0.05, extent_z)
+	# Slight overlap into adjoining slabs hides the end-cap seam.
+	const OVERLAP := 0.04
+	ex += OVERLAP
+	ez += OVERLAP
+
+	var walk_mat := sidewalk_material if sidewalk_material else _industrial_mat(
+		Color(0.22, 0.21, 0.195, 1.0),
+		Color(0.08, 0.075, 0.07, 1.0),
+		Color(0.28, 0.12, 0.05, 1.0),
+		Vector2(2.0, 2.0),
+		0.9
+	)
+	var curb_mat := curb_material if curb_material else _std(
+		Color(0.34, 0.33, 0.3, 1.0), 0.88, 0.05
+	)
+
+	var half_x := span_x * 0.5
+	var half_z := span_z * 0.5
+	var sidewalk_top := road_surface_y + curb_height
+	var slab_bottom := road_surface_y - slab_thickness
+	var walk_thickness := sidewalk_top - slab_bottom
+	var walk_y := slab_bottom + walk_thickness * 0.5
+
+	var edge_x := sx * half_x
+	var edge_z := sz * half_z
+	# Inward from the outer corner (overlap extends slightly past the tile edge).
+	var pad_cx := edge_x - sx * (ex * 0.5 - OVERLAP * 0.5)
+	var pad_cz := edge_z - sz * (ez * 0.5 - OVERLAP * 0.5)
+
+	_add_box_centered_to(
+		host,
+		"%sWalk" % name_prefix,
+		Vector3(ex, walk_thickness, ez),
+		Vector3(pad_cx, walk_y, pad_cz),
+		walk_mat,
+		true
+	)
+
+	var curb_w := curb_face_depth
+	var curb_h := curb_height + 0.02
+	var curb_y := road_surface_y + curb_h * 0.5
+	# Inner faces of the L (toward carriageway).
+	var inner_x := edge_x - sx * (ex - OVERLAP)
+	var inner_z := edge_z - sz * (ez - OVERLAP)
+
+	# Curb strip parallel to Z (faces the road along ±X).
+	_add_box_centered_to(
+		host,
+		"%sCurbZ" % name_prefix,
+		Vector3(curb_w, curb_h, ez - OVERLAP),
+		Vector3(inner_x + sx * curb_w * 0.5, curb_y, edge_z - sz * ((ez - OVERLAP) * 0.5)),
+		curb_mat,
+		false
+	)
+	# Curb strip parallel to X (faces the road along ±Z); shorten so corner doesn't double up.
+	_add_box_centered_to(
+		host,
+		"%sCurbX" % name_prefix,
+		Vector3(ex - OVERLAP - curb_w, curb_h, curb_w),
+		Vector3(
+			edge_x - sx * ((ex - OVERLAP + curb_w) * 0.5),
+			curb_y,
+			inner_z + sz * curb_w * 0.5
+		),
+		curb_mat,
+		false
+	)
+
+
 func _build() -> void:
 	if _built:
 		return
@@ -447,6 +534,18 @@ func _add_box_centered(
 	material: Material,
 	collide: bool
 ) -> void:
+	_add_box_centered_to(self, node_name, size, pos, material, collide, _body)
+
+
+func _add_box_centered_to(
+	host: Node3D,
+	node_name: String,
+	size: Vector3,
+	pos: Vector3,
+	material: Material,
+	collide: bool,
+	collision_body: StaticBody3D = null
+) -> void:
 	var box := BoxMesh.new()
 	box.size = size
 	var mi := MeshInstance3D.new()
@@ -455,16 +554,24 @@ func _add_box_centered(
 	mi.material_override = material
 	mi.position = pos
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	add_child(mi)
+	host.add_child(mi)
 
-	if collide and include_collision and _body:
+	var body := collision_body
+	if body == null and collide and include_collision:
+		body = host.get_node_or_null("CornerSurfaces") as StaticBody3D
+		if body == null:
+			body = StaticBody3D.new()
+			body.name = "CornerSurfaces"
+			host.add_child(body)
+
+	if collide and include_collision and body:
 		var col := CollisionShape3D.new()
 		col.name = "%sCollision" % node_name
 		var shape := BoxShape3D.new()
 		shape.size = size
 		col.shape = shape
 		col.position = pos
-		_body.add_child(col)
+		body.add_child(col)
 
 
 func _seed_value(salt: int) -> int:

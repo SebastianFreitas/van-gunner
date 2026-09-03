@@ -2,6 +2,7 @@
 
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1"]
 [ext_resource type="PackedScene" uid="uid://brodfloor01seg" path="res://scenes/corridor/road_floor.tscn" id="2_road_floor"]
+[ext_resource type="Script" path="res://scenes/corridor/corridor_t_junction.gd" id="3_junction"]
 
 [sub_resource type="ShaderMaterial" id="WallMaterial"]
 render_priority = 0
@@ -44,6 +45,7 @@ size = Vector3(0.4, 20, 11.184021)
 size = Vector3(11.172363, 20, 0.4)
 
 [node name="CorridorTJunction" type="Node3D"]
+script = ExtResource("3_junction")
 
 [node name="StemRoad" parent="." instance=ExtResource("2_road_floor")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 14.55)
