@@ -1,8 +1,9 @@
-[gd_scene load_steps=33 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1"]
 [ext_resource type="Script" path="res://scripts/run/shop_hatch_net.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/run/shop_counter_booth.gd" id="3"]
+[ext_resource type="Texture2D" path="res://scenes/shop/vendor.png" id="4"]
 
 [sub_resource type="ShaderMaterial" id="FloorMaterial"]
 render_priority = 0
@@ -48,10 +49,6 @@ roughness = 0.5
 [sub_resource type="StandardMaterial3D" id="ItemMaterialC"]
 albedo_color = Color(0.55, 0.28, 0.22, 1)
 roughness = 0.7
-
-[sub_resource type="StandardMaterial3D" id="KeeperMaterial"]
-albedo_color = Color(0.18, 0.16, 0.14, 1)
-roughness = 0.85
 
 [sub_resource type="BoxMesh" id="BayFloorMesh"]
 material = SubResource("FloorMaterial")
@@ -99,16 +96,6 @@ material = SubResource("ItemMaterialC")
 top_radius = 0.12
 bottom_radius = 0.12
 height = 0.38
-
-[sub_resource type="CapsuleMesh" id="KeeperBodyMesh"]
-material = SubResource("KeeperMaterial")
-radius = 0.28
-height = 1.5
-
-[sub_resource type="SphereMesh" id="KeeperHeadMesh"]
-material = SubResource("KeeperMaterial")
-radius = 0.22
-height = 0.44
 
 [sub_resource type="BoxShape3D" id="BayFloorShape"]
 size = Vector3(18, 0.2, 8.6)
@@ -249,13 +236,12 @@ mesh = SubResource("ItemBoxMesh")
 [node name="Keeper" type="Node3D" parent="Shop"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.55, 0, 0)
 
-[node name="Body" type="MeshInstance3D" parent="Shop/Keeper"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
-mesh = SubResource("KeeperBodyMesh")
-
-[node name="Head" type="MeshInstance3D" parent="Shop/Keeper"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.95, 0)
-mesh = SubResource("KeeperHeadMesh")
+[node name="Sprite3D" type="Sprite3D" parent="Shop/Keeper"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)
+pixel_size = 0.006
+billboard = 1
+alpha_cut = 1
+texture = ExtResource("4")
 
 [node name="Hatch" type="Node3D" parent="Shop"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.2, 3.2, 0)
