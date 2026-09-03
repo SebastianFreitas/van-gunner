@@ -38,5 +38,6 @@ display_name = "Adrenaline Stim"
 description = "Inject and go feral. Huge fire rate and reload speed for 60 seconds. 45s cooldown."
 icon = ExtResource("6")
 kind = 2
+shop_price = 25
 usable = SubResource("Resource_adrenaline_usable")
 effects = Array[ExtResource("2")]([SubResource("Resource_adrenaline_effect")])

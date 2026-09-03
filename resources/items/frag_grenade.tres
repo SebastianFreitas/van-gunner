@@ -20,5 +20,6 @@ display_name = "Frag Grenade"
 description = "A stack of road-grade frags. Shoot to stash, then press 1-4 to throw."
 icon = ExtResource("5")
 kind = 2
+shop_price = 18
 usable = SubResource("Resource_grenade_usable")
 effects = Array[ExtResource("2")]([SubResource("Resource_grenade_effect")])

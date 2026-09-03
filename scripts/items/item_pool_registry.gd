@@ -11,6 +11,7 @@ const _POOL_PATHS := {
 	"cold_boon": "res://resources/items/pools/cold_boon_pool.tres",
 	"physical_boon": "res://resources/items/pools/physical_boon_pool.tres",
 	"rest_tools": "res://resources/items/pools/rest_tools_pool.tres",
+	"shop": "res://resources/items/pools/shop_pool.tres",
 }
 
 const _ELEMENTAL_POOLS: Array[ItemDefinition.BoonPool] = [

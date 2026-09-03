@@ -16,4 +16,5 @@ display_name = "Road Lighter"
 description = "Warm your hands and patch the van. Restores 10% hull on pickup."
 icon = ExtResource("4")
 kind = 3
+shop_price = 6
 effects = Array[ExtResource("2")]([SubResource("Resource_lighter_heal")])

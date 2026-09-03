@@ -19,5 +19,6 @@ display_name = "Window Bar Kit"
 description = "Roadside welding kit. Instantly restores every window bar to full strength — even blown-out ones."
 icon = ExtResource("5")
 kind = 2
+shop_price = 20
 usable = SubResource("Resource_repair_usable")
 effects = Array[ExtResource("2")]([SubResource("Resource_repair_effect")])

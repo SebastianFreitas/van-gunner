@@ -37,6 +37,8 @@ enum BoonPool {
 @export var pickup_radius := 0.0
 ## Overrides the pickup's shot-only hit radius when > 0.
 @export var shot_hit_radius := 0.0
+## Gold cost when sold in a shop. 0 means not priced for sale.
+@export var shop_price := 0
 @export var effects: Array[ItemEffect] = []
 
 
@@ -59,6 +61,24 @@ func is_heal_consumable() -> bool:
 	return true
 
 
+func can_collect(player: Node3D) -> bool:
+	if not player:
+		return false
+	match kind:
+		ItemKind.MONEY:
+			return true
+		ItemKind.CONSUMABLE:
+			if is_heal_consumable() and GameSession.is_van_at_full_health():
+				return false
+			return true
+		ItemKind.BOON:
+			var controller := player.get_node_or_null("Usables") as UsablesController
+			return controller == null or not controller.has_boon(self)
+		ItemKind.TOOL:
+			return true
+	return false
+
+
 func apply_effects(player: Node3D) -> void:
 	for effect in effects:
 		if effect:
@@ -66,18 +86,14 @@ func apply_effects(player: Node3D) -> void:
 
 
 func collect(player: Node3D) -> void:
-	if not player:
+	if not player or not can_collect(player):
 		return
 	match kind:
 		ItemKind.MONEY, ItemKind.CONSUMABLE:
-			if kind == ItemKind.CONSUMABLE and is_heal_consumable() and GameSession.is_van_at_full_health():
-				return
 			apply_effects(player)
 		ItemKind.BOON:
-			var controller := player.get_node_or_null("Usables") as UsablesController
-			if controller and controller.has_boon(self):
-				return
 			apply_effects(player)
+			var controller := player.get_node_or_null("Usables") as UsablesController
 			if controller:
 				controller.register_boon(self)
 		ItemKind.TOOL:
