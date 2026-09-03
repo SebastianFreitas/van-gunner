@@ -9,7 +9,7 @@ uniform vec3 grit_color : source_color = vec3(0.2, 0.19, 0.175);
 uniform vec3 wear_color : source_color = vec3(0.22, 0.21, 0.19);
 uniform vec3 oil_color : source_color = vec3(0.015, 0.014, 0.012);
 uniform vec3 crack_color : source_color = vec3(0.02, 0.018, 0.016);
-uniform vec3 patch_color : source_color = vec3(0.055, 0.052, 0.048);
+uniform vec3 patch_color : source_color = vec3(0.028, 0.026, 0.024);
 uniform vec3 dirt_color : source_color = vec3(0.05, 0.045, 0.035);
 uniform vec3 paper_color : source_color = vec3(0.42, 0.38, 0.3);
 uniform vec3 can_color : source_color = vec3(0.25, 0.12, 0.06);
@@ -102,30 +102,34 @@ void fragment() {
 		smoothstep(0.62, 0.85, blotch_b) * 0.7
 	) * trash;
 
-	// Repair patches — darker asphalt rectangles.
+	// Repair patches — irregular darker asphalt blobs (not rectangles).
 	vec2 patch_cell = floor(pos / vec2(3.2, 3.8));
 	float patch_roll = hash21(patch_cell + 7.0);
 	float patch_mask = step(0.62, patch_roll) * trash;
-	vec2 patch_local = fract(pos / vec2(3.2, 3.8));
-	vec2 patch_jitter = hash22(patch_cell + 3.0);
-	patch_local = (patch_local - 0.5) / (0.35 + 0.25 * patch_jitter) + 0.5;
-	float patch_edge = min(
-		min(patch_local.x, 1.0 - patch_local.x),
-		min(patch_local.y, 1.0 - patch_local.y)
-	);
-	float patch = patch_mask * smoothstep(0.0, 0.1, patch_edge)
-		* step(patch_edge, 0.48)
-		* (0.65 + 0.35 * fbm(pos * 1.4 + patch_cell));
+	vec2 patch_local = fract(pos / vec2(3.2, 3.8)) - 0.5;
+	vec2 patch_off = (hash22(patch_cell + 3.0) - 0.5) * 0.28;
+	vec2 patch_p = patch_local - patch_off;
+	float patch_ang = hash21(patch_cell + 5.0) * 6.28318;
+	float pca = cos(patch_ang);
+	float psa = sin(patch_ang);
+	patch_p = vec2(pca * patch_p.x - psa * patch_p.y, psa * patch_p.x + pca * patch_p.y);
+	vec2 patch_stretch = vec2(0.7, 1.15) + hash22(patch_cell + 9.0) * vec2(0.45, 0.35);
+	float patch_r = length(patch_p / patch_stretch);
+	float patch_warp = fbm(pos * 2.2 + patch_cell) * 0.22;
+	float patch_shape = 1.0 - smoothstep(0.22 + patch_warp, 0.38 + patch_warp * 0.5, patch_r);
+	float patch = patch_mask * patch_shape
+		* (0.7 + 0.3 * fbm(pos * 1.4 + patch_cell));
 
-	// Cracks — wider voronoi seams, more frequent.
+	// Cracks — full-strength seams, but only on ~40% of the road.
+	float crack_coverage = smoothstep(0.56, 0.64, fbm(pos * 0.22 + 11.0));
 	float cf = crack_field(pos * 0.85 + 2.3);
 	float cracks = 1.0 - smoothstep(0.02, 0.08, cf);
-	cracks *= (0.4 + 0.6 * smoothstep(0.35, 0.7, fbm(pos * 0.28 + 11.0))) * trash;
+	cracks *= crack_coverage * trash;
 
-	// Secondary hairline cracks.
+	// Secondary hairline cracks (same coverage mask).
 	float cf2 = crack_field(pos * 1.6 + 9.1);
 	float hair = (1.0 - smoothstep(0.01, 0.04, cf2))
-		* smoothstep(0.5, 0.8, fbm(pos * 0.5 + 5.0)) * trash * 0.7;
+		* smoothstep(0.5, 0.8, fbm(pos * 0.5 + 5.0)) * crack_coverage * trash * 0.7;
 	cracks = max(cracks, hair);
 
 	// Edge dirt / gutter runoff.
@@ -182,7 +186,7 @@ void fragment() {
 	vec3 color = base_color;
 	color = mix(color, grit_color, grit * 0.7);
 	color = mix(color, wear_color, tire * 0.85);
-	color = mix(color, patch_color, patch * 0.95);
+	color = mix(color, patch_color, patch * 1.0);
 	color = mix(color, oil_color, oil * 0.95);
 	color = mix(color, dirt_color, edge_dirt * 0.75);
 	color = mix(color, crack_color, cracks * 0.95);
