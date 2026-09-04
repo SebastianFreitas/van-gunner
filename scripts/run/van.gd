@@ -97,7 +97,9 @@ func _setup_weapon_slots_hud() -> void:
 
 
 func _on_weapon_loadout_changed() -> void:
+	## Ammo label always; reload bar is owned by reloading_changed (don't kill its tween).
 	_on_ammo_changed(weapon.get_current_ammo(), weapon.get_mag_size())
+	reload_label.visible = weapon.is_reloading()
 
 
 func _process(_delta: float) -> void:
@@ -124,13 +126,16 @@ func _on_ammo_changed(current: int, max_ammo: int) -> void:
 		if active:
 			name_prefix = active.family_code()
 	ammo_label.text = "%s  %d / %d" % [name_prefix, current, max_ammo]
-	## Snap chamber fill; reload tween (if any) is restarted from reloading_changed.
+	## While reloading, the chamber bar tween owns ammo_bar — don't snap/kill it.
+	if weapon.is_reloading():
+		ammo_bar.max_value = max_ammo
+		ammo_label.modulate = Color("#c8c8c8")
+		return
 	_kill_ammo_reload_tween()
 	ammo_bar.max_value = max_ammo
 	ammo_bar.value = current
 	var low_ammo := current <= maxi(1, floori(max_ammo * 0.25))
-	if not weapon.is_reloading():
-		ammo_label.modulate = Color("#f0a84a") if low_ammo else Color("#e8d68c")
+	ammo_label.modulate = Color("#f0a84a") if low_ammo else Color("#e8d68c")
 
 
 func _on_reloading_changed(reloading: bool) -> void:
@@ -139,8 +144,10 @@ func _on_reloading_changed(reloading: bool) -> void:
 	if reloading:
 		ammo_label.modulate = Color("#c8c8c8")
 		var mag := float(weapon.get_mag_size())
+		var current := float(weapon.get_current_ammo())
 		var remaining := weapon.get_reload_remaining()
 		ammo_bar.max_value = mag
+		ammo_bar.value = current
 		if remaining <= 0.0:
 			ammo_bar.value = mag
 			return

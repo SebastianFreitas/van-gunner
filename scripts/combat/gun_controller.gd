@@ -23,6 +23,8 @@ var _next_shot_time := 0
 var _is_reloading := false
 ## Absolute msec when the in-progress reload finishes; 0 if idle.
 var _reload_ends_at_msec := 0
+## Bumped on cancel/swap so in-flight reload awaits ignore stale completions.
+var _reload_gen := 0
 var _feedback_tween: Tween
 
 
@@ -112,6 +114,7 @@ func _spread_direction(base: Vector3, spread_degrees: float) -> Vector3:
 
 
 func set_ammo_state(current: int, reloading: bool = false) -> void:
+	_invalidate_reload_waits()
 	_current_ammo = maxi(current, 0)
 	_is_reloading = reloading
 	if not reloading:
@@ -121,21 +124,36 @@ func set_ammo_state(current: int, reloading: bool = false) -> void:
 
 
 func apply_weapon_ammo_from_instance(instance: WeaponInstance) -> void:
+	## Drop any in-flight reload completion from the previous gun.
+	_invalidate_reload_waits()
+	if viewmodel:
+		viewmodel.snap_rest()
 	if instance == null:
+		_is_reloading = false
+		_reload_ends_at_msec = 0
 		_refill_magazine()
+		reloading_changed.emit(false)
 		return
 	var mag := _get_stats().mag_size
 	if instance.current_ammo < 0:
 		_current_ammo = mag
 	else:
 		_current_ammo = mini(instance.current_ammo, mag)
+
+	if instance.is_reloading:
+		if instance.reload_ends_at_msec > Time.get_ticks_msec():
+			_resume_reload(instance)
+			return
+		## Reload finished while this gun was holstered.
+		instance.is_reloading = false
+		instance.reload_ends_at_msec = 0
+		_current_ammo = mag
+		instance.current_ammo = mag
+
 	_is_reloading = false
 	_reload_ends_at_msec = 0
-	if instance.is_reloading and instance.reload_ends_at_msec > Time.get_ticks_msec():
-		_resume_reload(instance)
-	else:
-		ammo_changed.emit(_current_ammo, mag)
-		reloading_changed.emit(false)
+	ammo_changed.emit(_current_ammo, mag)
+	reloading_changed.emit(false)
 
 
 func capture_ammo_to_instance(instance: WeaponInstance) -> void:
@@ -143,14 +161,23 @@ func capture_ammo_to_instance(instance: WeaponInstance) -> void:
 		return
 	instance.current_ammo = _current_ammo
 	instance.is_reloading = _is_reloading
-	## Remaining reload stored as absolute end time; builder of swap sets it.
-	if not _is_reloading:
+	if _is_reloading:
+		instance.reload_ends_at_msec = _reload_ends_at_msec
+	else:
 		instance.reload_ends_at_msec = 0
+
+
+func _invalidate_reload_waits() -> void:
+	_reload_gen += 1
 
 
 func _resume_reload(instance: WeaponInstance) -> void:
 	_is_reloading = true
 	_reload_ends_at_msec = instance.reload_ends_at_msec
+	instance.is_reloading = true
+	instance.reload_ends_at_msec = _reload_ends_at_msec
+	_reload_gen += 1
+	var token := _reload_gen
 	ammo_changed.emit(_current_ammo, _get_stats().mag_size)
 	reloading_changed.emit(true)
 	var remaining_ms := maxi(_reload_ends_at_msec - Time.get_ticks_msec(), 0)
@@ -158,17 +185,9 @@ func _resume_reload(instance: WeaponInstance) -> void:
 	if viewmodel:
 		viewmodel.play_reload(remaining_sec)
 	await get_tree().create_timer(remaining_sec).timeout
-	if not is_inside_tree():
+	if not _reload_wait_still_valid(token):
 		return
-	if instance != null:
-		instance.is_reloading = false
-		instance.reload_ends_at_msec = 0
-	_is_reloading = false
-	_reload_ends_at_msec = 0
-	if viewmodel:
-		viewmodel.snap_rest()
-	_refill_magazine()
-	reloading_changed.emit(false)
+	_complete_reload(instance)
 
 
 func _track_projectile_feedback(projectile: Projectile) -> void:
@@ -297,28 +316,39 @@ func _start_reload() -> void:
 	_is_reloading = true
 	var duration := stats.reload_speed
 	_reload_ends_at_msec = Time.get_ticks_msec() + roundi(duration * 1000.0)
+	var inst: WeaponInstance = null
 	if _stats_controller:
-		var inst := _stats_controller.get_weapon_instance()
+		inst = _stats_controller.get_weapon_instance()
 		if inst:
 			inst.is_reloading = true
 			inst.reload_ends_at_msec = _reload_ends_at_msec
 			inst.current_ammo = _current_ammo
+	_reload_gen += 1
+	var token := _reload_gen
 	reloading_changed.emit(true)
 	if viewmodel:
 		viewmodel.play_reload(duration)
 	await get_tree().create_timer(duration).timeout
-	if not is_inside_tree():
+	if not _reload_wait_still_valid(token):
 		return
+	_complete_reload(inst)
+
+
+func _reload_wait_still_valid(token: int) -> bool:
+	return is_inside_tree() and token == _reload_gen
+
+
+func _complete_reload(instance: WeaponInstance) -> void:
 	_is_reloading = false
 	_reload_ends_at_msec = 0
-	if _stats_controller:
-		var inst2 := _stats_controller.get_weapon_instance()
-		if inst2:
-			inst2.is_reloading = false
-			inst2.reload_ends_at_msec = 0
+	if instance:
+		instance.is_reloading = false
+		instance.reload_ends_at_msec = 0
 	if viewmodel:
 		viewmodel.snap_rest()
 	_refill_magazine()
+	if instance:
+		instance.current_ammo = _current_ammo
 	reloading_changed.emit(false)
 
 
