@@ -4,7 +4,7 @@ extends Node
 @export var travel_before_encounter := 2.5
 ## Soft cap: after this, surviving raiders of the current wave retreat.
 @export var combat_duration := 18.0
-@export var rest_duration := 10.0
+@export var rest_duration := 20.0
 
 @onready var enemy_container: Node3D = $"../../TravelPath/VanFollow/VanRig/EnemyContainer"
 @onready var rear_spawn: Marker3D = (

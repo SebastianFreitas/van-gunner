@@ -8,7 +8,7 @@ signal choice_made(item: ItemDefinition)
 const ACCENT := Color(0.91, 0.78, 0.48, 1.0)
 const MUTED := Color(0.62, 0.66, 0.64, 1.0)
 ## Matches REST break length — if the player doesn't pick, one is chosen at random.
-const CHOICE_TIMEOUT_SECONDS := 10.0
+const CHOICE_TIMEOUT_SECONDS := 20.0
 
 var _player: Node3D
 var _choices: Array[ItemDefinition] = []
