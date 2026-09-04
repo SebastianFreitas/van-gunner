@@ -478,7 +478,11 @@ func _pick_card_id(
 ) -> StringName:
 	if pool.is_empty():
 		return fallback_id
-	var card: ActCardDefinition = pool[rng.randi_range(0, pool.size() - 1)]
+	## Without replacement so a six-card act does not roll the same street twice
+	## while the pool still has unused ids.
+	var idx := rng.randi_range(0, pool.size() - 1)
+	var card: ActCardDefinition = pool[idx]
+	pool.remove_at(idx)
 	if card and card.id != &"":
 		return card.id
 	return fallback_id

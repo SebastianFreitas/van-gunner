@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ActCardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/run/act_card_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/run/effects/wave_count_mult_effect.gd" id="3"]
+[ext_resource type="Texture2D" path="res://scenes/acts/cards/swarm.svg" id="4"]
+
+[sub_resource type="Resource" id="eff_swarm_wave"]
+script = ExtResource("3")
+count_mult = 1.5
+count_add = 1
+
+[resource]
+script = ExtResource("1")
+id = &"swarm"
+display_name = "Swarm"
+description = "50% more raiders per wave, plus one"
+polarity = 1
+icon = ExtResource("4")
+effects = Array[ExtResource("2")]([SubResource("eff_swarm_wave")])

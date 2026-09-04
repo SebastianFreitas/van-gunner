@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ActCardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/run/act_card_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/run/effects/enemy_health_mult_effect.gd" id="3"]
+[ext_resource type="Texture2D" path="res://scenes/acts/cards/thick_hides.svg" id="4"]
+
+[sub_resource type="Resource" id="eff_hides_hp"]
+script = ExtResource("3")
+health_mult = 1.4
+
+[resource]
+script = ExtResource("1")
+id = &"thick_hides"
+display_name = "Thick Hides"
+description = "Raiders have 40% more health"
+polarity = 1
+icon = ExtResource("4")
+effects = Array[ExtResource("2")]([SubResource("eff_hides_hp")])

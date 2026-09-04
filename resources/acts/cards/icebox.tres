@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ActCardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/run/act_card_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/run/effects/temp_boon_trait_effect.gd" id="3"]
+[ext_resource type="Texture2D" path="res://scenes/acts/cards/icebox.svg" id="4"]
+
+[sub_resource type="Resource" id="eff_icebox_freeze"]
+script = ExtResource("3")
+trait_key = &"freeze_chance"
+add_value = 0.03
+
+[resource]
+script = ExtResource("1")
+id = &"icebox"
+display_name = "Icebox"
+description = "+3% chance cold damage freezes the enemy"
+polarity = 0
+icon = ExtResource("4")
+effects = Array[ExtResource("2")]([SubResource("eff_icebox_freeze")])

@@ -216,7 +216,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-131 GDScript files, 21634 lines.
+131 GDScript files, 21682 lines.
 
 ### `scenes/corridor/`
 
@@ -252,10 +252,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `game_balance.gd` | — | 287 | Runtime facade over the Inspector-editable GameBalanceData resource. |
 | `game_balance_data.gd` | `GameBalanceData` | 146 | Inspector-editable balance sheet for encounter pacing and act scaling. |
-| `game_session.gd` | — | 594 | How many face-down streets the player commits to the act boss. Array-backed |
+| `game_session.gd` | — | 598 | How many face-down streets the player commits to the act boss. Array-backed |
 | `loot_collector.gd` | — | 88 | Teleports shot/swept pickups onto the van's center table. Gold is converted |
 | `meta_progression.gd` | — | 76 | FUTURE — persistent street-card back marks (meta, all runs): |
-| `save_manager.gd` | — | 75 |  |
+| `save_manager.gd` | — | 100 |  |
 | `scene_router.gd` | — | 68 | Sync load on the main thread. Threaded load of van.tscn fails cold with a |
 
 ### `scripts/debug/`
@@ -393,7 +393,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `debug_console.gd` | `DebugConsole` | 220 | In-game debug terminal. H to open, Esc to close. |
 | `enemy_health_bar.gd` | `EnemyHealthBar` | 59 |  |
 | `item_hud.gd` | — | 86 | Hotbar for tools and a row of collected boon icons. |
-| `main_menu.gd` | — | 96 |  |
+| `main_menu.gd` | — | 115 | Rejected files (old version, corrupt JSON) used to look like NEW RUN |
 | `usable_slot.gd` | — | 42 |  |
 | `weapon_replace_prompt.gd` | `WeaponReplacePrompt` | 144 | Full inventory: pick a slot to replace, or Esc to cancel (gun stays in world). |
 | `weapon_slots_hud.gd` | `WeaponSlotsHud` | 59 | Two weapon slots near ammo — highlight active, dashed empty. |
@@ -531,8 +531,17 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | id | name | polarity | description |
 |---|---|---|---|
+| brass_road | Brass Road | 0 | +10 physical damage dealt against enemies |
 | cold_road | Cold Road | 0 | +10 cold damage dealt against enemies |
+| empty_pockets | Empty Pockets | 1 | -25% item drops |
+| hairpin | Hairpin | 0 | +100% fire rate while this street is active |
 | hasty_pack | Hasty Pack | 1 | Enemies move 15% faster. +10% item drops. |
+| icebox | Icebox | 0 | +3% chance cold damage freezes the enemy |
+| salvage_lane | Salvage Lane | 0 | +15% item drops |
+| slag_barrels | Slag Barrels | 1 | Fire rate x0.75 while this street is active |
+| swarm | Swarm | 1 | 50% more raiders per wave, plus one |
+| thick_hides | Thick Hides | 1 | Raiders have 40% more health |
+| thin_file | Thin File | 0 | Half as many raiders per wave (min 1) |
 
 ## Enemies
 

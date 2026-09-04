@@ -24,7 +24,7 @@ extends Node
 @export var coin_amount_min := 1
 @export var coin_amount_max := 3
 
-## Extra weapon drop chance when the owning enemy is elite (or flagged).
+## Extra weapon drop chance when the owning enemy is elite.
 @export var treat_as_elite := false
 
 ## Random horizontal offset so simultaneous drops don't perfectly overlap.

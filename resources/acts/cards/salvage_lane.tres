@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ActCardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/run/act_card_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/run/effects/enemy_loot_bonus_effect.gd" id="3"]
+[ext_resource type="Texture2D" path="res://scenes/acts/cards/salvage_lane.svg" id="4"]
+
+[sub_resource type="Resource" id="eff_salvage_loot"]
+script = ExtResource("3")
+chance_bonus = 0.15
+
+[resource]
+script = ExtResource("1")
+id = &"salvage_lane"
+display_name = "Salvage Lane"
+description = "+15% item drops"
+polarity = 0
+icon = ExtResource("4")
+effects = Array[ExtResource("2")]([SubResource("eff_salvage_loot")])

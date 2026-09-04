@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ActCardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/run/act_card_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/run/effects/temp_boon_trait_effect.gd" id="3"]
+[ext_resource type="Texture2D" path="res://scenes/acts/cards/slag_barrels.svg" id="4"]
+
+[sub_resource type="Resource" id="eff_slag_rate"]
+script = ExtResource("3")
+trait_key = &"gun_fire_rate"
+add_value = 0.0
+multiply_value = 0.75
+
+[resource]
+script = ExtResource("1")
+id = &"slag_barrels"
+display_name = "Slag Barrels"
+description = "Fire rate x0.75 while this street is active"
+polarity = 1
+icon = ExtResource("4")
+effects = Array[ExtResource("2")]([SubResource("eff_slag_rate")])

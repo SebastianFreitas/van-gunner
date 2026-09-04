@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ActCardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/run/act_card_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/run/effects/enemy_loot_bonus_effect.gd" id="3"]
+[ext_resource type="Texture2D" path="res://scenes/acts/cards/empty_pockets.svg" id="4"]
+
+[sub_resource type="Resource" id="eff_empty_loot"]
+script = ExtResource("3")
+chance_bonus = -0.25
+
+[resource]
+script = ExtResource("1")
+id = &"empty_pockets"
+display_name = "Empty Pockets"
+description = "-25% item drops"
+polarity = 1
+icon = ExtResource("4")
+effects = Array[ExtResource("2")]([SubResource("eff_empty_loot")])

@@ -32,14 +32,25 @@ func _build_slots() -> void:
 		var button := Button.new()
 		button.custom_minimum_size = Vector2(380.0, 72.0)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		if summary.exists:
+		if not summary.exists:
+			button.text = "SLOT %d  ·  NEW RUN" % slot
+		elif bool(summary.get("compatible", false)):
 			button.text = "SLOT %d  ·  CONTINUE\nRoute %d  ·  Van %d%%" % [
 				slot,
 				summary.route_step,
 				roundi(summary.van_health),
 			]
 		else:
-			button.text = "SLOT %d  ·  NEW RUN" % slot
+			var file_version := int(summary.get("file_version", -1))
+			if file_version >= 0:
+				button.text = "SLOT %d  ·  CAN'T CONTINUE\nv%d save, this build wants v%d" % [
+					slot,
+					file_version,
+					SaveManager.SAVE_VERSION,
+				]
+			else:
+				button.text = "SLOT %d  ·  CAN'T CONTINUE\nSave file is unreadable" % slot
+			button.tooltip_text = "Use NEW to overwrite this slot"
 		button.pressed.connect(_on_slot_pressed.bind(slot))
 		row.add_child(button)
 		if summary.exists:
@@ -57,7 +68,15 @@ func _on_slot_pressed(slot: int) -> void:
 		return
 	_starting = true
 	await _begin_run()
-	if not SaveManager.load_slot(slot):
+	if SaveManager.has_save(slot):
+		if not SaveManager.load_slot(slot):
+			## Rejected files (old version, corrupt JSON) used to look like NEW RUN
+			## and this click started a fresh save over them.
+			_starting = false
+			loading_overlay.hide()
+			_build_slots()
+			return
+	else:
 		GameSession.start_new(slot)
 	SceneRouter.go_to_van()
 

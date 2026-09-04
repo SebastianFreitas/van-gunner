@@ -10,12 +10,31 @@ func has_save(slot: int) -> bool:
 
 
 func get_slot_summary(slot: int) -> Dictionary:
-	var data := load_slot_data(slot)
+	if not has_save(slot):
+		return {"exists": false, "compatible": false, "slot": slot}
+	var data := _read_slot_dict(slot)
 	if data.is_empty():
-		return {"exists": false, "slot": slot}
+		return {
+			"exists": true,
+			"compatible": false,
+			"slot": slot,
+			"file_version": -1,
+		}
+	var file_version := int(data.get("version", -1))
+	if file_version != SAVE_VERSION:
+		return {
+			"exists": true,
+			"compatible": false,
+			"slot": slot,
+			"file_version": file_version,
+			"route_step": int(data.get("route_step", 0)),
+			"van_health": float(data.get("van_health", 100.0)),
+		}
 	return {
 		"exists": true,
+		"compatible": true,
 		"slot": slot,
+		"file_version": file_version,
 		"route_step": int(data.get("route_step", 0)),
 		"van_health": float(data.get("van_health", 100.0)),
 		"saved_at": str(data.get("saved_at", "Unknown")),
@@ -31,17 +50,9 @@ func load_slot(slot: int) -> bool:
 
 
 func load_slot_data(slot: int) -> Dictionary:
-	if not has_save(slot):
+	var data := _read_slot_dict(slot)
+	if data.is_empty():
 		return {}
-	var file := FileAccess.open(SAVE_PATH % slot, FileAccess.READ)
-	if file == null:
-		push_warning("Could not open save slot %d." % slot)
-		return {}
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	if not parsed is Dictionary:
-		push_warning("Save slot %d is not valid JSON data." % slot)
-		return {}
-	var data: Dictionary = parsed
 	var file_version := int(data.get("version", -1))
 	if file_version != SAVE_VERSION:
 		push_warning(
@@ -68,6 +79,20 @@ func delete_slot(slot: int) -> bool:
 	if not _valid_slot(slot) or not has_save(slot):
 		return false
 	return DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH % slot)) == OK
+
+
+func _read_slot_dict(slot: int) -> Dictionary:
+	if not has_save(slot):
+		return {}
+	var file := FileAccess.open(SAVE_PATH % slot, FileAccess.READ)
+	if file == null:
+		push_warning("Could not open save slot %d." % slot)
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if not parsed is Dictionary:
+		push_warning("Save slot %d is not valid JSON data." % slot)
+		return {}
+	return parsed
 
 
 func _valid_slot(slot: int) -> bool:

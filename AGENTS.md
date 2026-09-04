@@ -156,6 +156,7 @@ Breaking these is how the game stops being fun, so they're worth stating flatly.
 9. **Run save version lives only on `SaveManager.SAVE_VERSION`.**
    `GameSession.to_save_data()` must read that constant. Mismatched slot files are
    rejected with a warning that names both versions — never fail silently.
+   The main menu must not treat a rejected file as a new run (use NEW to overwrite).
 10. **`is_elite` is explicit.** Agile (window climbing, green tint) does not imply
     elite loot. Set elite on the raider export, or via `mark_as_boss()` /
     `EncounterDirector._spawn_boss`.
@@ -202,6 +203,10 @@ Each of these has already cost someone real debugging time:
 - **`ActCardRegistry` scans `res://resources/acts/cards/` with `DirAccess`.** Packed
   listings may use `foo.tres.remap`; `list_ids()` strips `.remap` before the
   `.tres` check. An empty list `push_warning`s rather than failing quietly.
+- **Rejected saves used to look like NEW RUN.** `load_slot_data()` returns `{}` for
+  version mismatches and corrupt JSON, which made `get_slot_summary()` report
+  `exists: false`. Clicking the slot then called `start_new`. Incompatible files
+  now show CAN'T CONTINUE and CONTINUE does not overwrite them.
 
 ## 7. Deliberate choices — do not change these without asking
 
