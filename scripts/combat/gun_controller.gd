@@ -357,6 +357,18 @@ func _refill_magazine() -> void:
 	ammo_changed.emit(_current_ammo, _current_ammo)
 
 
+func apply_weapon_visual(instance: WeaponInstance) -> void:
+	var family := WeaponDefinition.Family.BASIC
+	if instance:
+		var def := instance.get_definition()
+		if def:
+			family = def.family
+	if viewmodel:
+		muzzle_offset = Vector3(0.0, 0.0, viewmodel.apply_family(family))
+	if muzzle_flash:
+		muzzle_flash.position = muzzle_offset
+
+
 func _on_stats_changed() -> void:
 	var stats := _get_stats()
 	_current_ammo = mini(_current_ammo, stats.mag_size)

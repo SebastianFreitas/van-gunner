@@ -232,3 +232,5 @@ func _apply_active(restore_ammo: bool) -> void:
 		_stats.set_weapon_instance(active)
 	if restore_ammo and _gun and active:
 		_gun.apply_weapon_ammo_from_instance(active)
+	if _gun:
+		_gun.apply_weapon_visual(active)

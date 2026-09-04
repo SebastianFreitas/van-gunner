@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/fps_player.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/combat/gun_controller.gd" id="2"]
@@ -16,15 +16,6 @@ height = 1.9
 [sub_resource type="CapsuleMesh" id="CapsuleMesh"]
 radius = 0.42
 height = 1.9
-
-[sub_resource type="StandardMaterial3D" id="GunMaterial"]
-albedo_color = Color(0.12, 0.13, 0.13, 1)
-metallic = 0.75
-roughness = 0.34
-
-[sub_resource type="BoxMesh" id="GunMesh"]
-material = SubResource("GunMaterial")
-size = Vector3(0.18, 0.18, 0.65)
 
 [node name="Player" type="CharacterBody3D" groups=["player"]]
 collision_mask = 17
@@ -72,10 +63,6 @@ stats_controller_path = NodePath("../../../GunStats")
 script = ExtResource("8")
 
 [node name="Rig" type="Node3D" parent="Head/Camera3D/Weapon/GunViewmodel"]
-
-[node name="GunMesh" type="MeshInstance3D" parent="Head/Camera3D/Weapon/GunViewmodel/Rig"]
-mesh = SubResource("GunMesh")
-cast_shadow = 0
 
 [node name="MuzzleFlash" type="OmniLight3D" parent="Head/Camera3D/Weapon"]
 visible = false

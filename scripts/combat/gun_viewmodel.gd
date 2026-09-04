@@ -20,6 +20,8 @@ const RELOAD_OVERSHOOT_RAD := deg_to_rad(-6.5)
 @onready var _rig: Node3D = $Rig
 
 var _rest_rotation := Vector3.ZERO
+var _family: int = -1
+var _muzzle_z := -0.38
 var _pitch := 0.0
 var _roll := 0.0
 var _shot_tween: Tween
@@ -37,7 +39,17 @@ var _coast_duration := 0.0
 
 func _ready() -> void:
 	_rest_rotation = _rig.rotation
+	if _family < 0:
+		apply_family(WeaponDefinition.Family.BASIC)
 	_apply()
+
+
+func apply_family(family: WeaponDefinition.Family) -> float:
+	if family == _family and _rig.get_child_count() > 0:
+		return _muzzle_z
+	_family = family
+	_muzzle_z = ArmCannonMesh.build(_rig, family)
+	return _muzzle_z
 
 
 func _process(delta: float) -> void:
