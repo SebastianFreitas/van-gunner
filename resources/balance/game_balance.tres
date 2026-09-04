@@ -19,4 +19,4 @@ weapon_drop_chance_base = 1
 weapon_drop_chance_elite_bonus = 10
 weapon_craft_cost_mult = 1.0
 weapon_shop_price_mult = 1.0
-weapon_max_mods = 6
+weapon_max_mods = 4

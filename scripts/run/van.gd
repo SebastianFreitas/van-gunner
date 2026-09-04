@@ -38,10 +38,16 @@ var _weapon_slots_hud: WeaponSlotsHud
 
 func _ready() -> void:
 	if DebugConfig.ENABLED:
-		_debug_console = preload("res://scenes/ui/debug_console.tscn").instantiate()
-		$HUD.add_child(_debug_console)
-		_debug_console.opened.connect(_on_debug_console_opened)
-		_debug_console.closed.connect(_on_debug_console_closed)
+		## load() not preload() — compile-time preload of the console scene
+		## hard-fails van.gd (and boot's van preload) if the console graph breaks.
+		var console_scene := load("res://scenes/ui/debug_console.tscn") as PackedScene
+		if console_scene:
+			_debug_console = console_scene.instantiate()
+			$HUD.add_child(_debug_console)
+			_debug_console.opened.connect(_on_debug_console_opened)
+			_debug_console.closed.connect(_on_debug_console_closed)
+		else:
+			push_warning("Van: could not load debug_console.tscn")
 	player.interaction_prompt_changed.connect(_on_prompt_changed)
 	player.shot_fired.connect(_on_shot_fired)
 	weapon.ammo_changed.connect(_on_ammo_changed)
@@ -113,7 +119,7 @@ func _on_shot_fired(hit: bool) -> void:
 func _on_ammo_changed(current: int, max_ammo: int) -> void:
 	var name_prefix := "AMMO"
 	if player and player.weapon_inventory:
-		var active: WeaponInstance = player.weapon_inventory.get_active()
+		var active := player.weapon_inventory.get_active() as WeaponInstance
 		if active:
 			name_prefix = active.family_code()
 	ammo_label.text = "%s  %d / %d" % [name_prefix, current, max_ammo]

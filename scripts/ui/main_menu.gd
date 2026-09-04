@@ -15,6 +15,10 @@ func _ready() -> void:
 	settings_panel.hide()
 	loading_overlay.hide()
 	master_volume.value = db_to_linear(AudioServer.get_bus_volume_db(0))
+	call_deferred("_deferred_preload_van")
+
+
+func _deferred_preload_van() -> void:
 	SceneRouter.preload_van()
 
 

@@ -576,7 +576,7 @@ func _refresh_weapons_page() -> void:
 	for i in 2:
 		slots_row.add_child(_build_weapon_slot_card(i))
 
-	var inst: WeaponInstance = _weapon_inventory.get_slot(_selected_weapon_slot)
+	var inst := _weapon_inventory.get_slot(_selected_weapon_slot) as WeaponInstance
 	var detail := VBoxContainer.new()
 	detail.add_theme_constant_override(&"separation", 8)
 	_weapons_content.add_child(detail)
@@ -665,7 +665,9 @@ func _build_weapon_slot_card(index: int) -> PanelContainer:
 
 	var vbox := VBoxContainer.new()
 	panel.add_child(vbox)
-	var inst: WeaponInstance = _weapon_inventory.get_slot(index) if _weapon_inventory else null
+	var inst: WeaponInstance = null
+	if _weapon_inventory:
+		inst = _weapon_inventory.get_slot(index) as WeaponInstance
 	var title := Label.new()
 	title.text = "SLOT %s%s" % [
 		"A" if index == 0 else "B",
@@ -697,7 +699,7 @@ func _build_weapon_slot_card(index: int) -> PanelContainer:
 	return panel
 
 
-func _add_weapon_stat_lines(parent: VBoxContainer, stats: GunStats, inst: WeaponInstance) -> void:
+func _add_weapon_stat_lines(parent: VBoxContainer, stats: GunStats, _inst: WeaponInstance) -> void:
 	var lines := [
 		"Fire rate  %s/s" % ItemDescriber.format_number(stats.fire_rate),
 		"Damage  %s  (split across %d pellets)" % [
@@ -718,19 +720,12 @@ func _add_weapon_stat_lines(parent: VBoxContainer, stats: GunStats, inst: Weapon
 		lab.text = line
 		lab.add_theme_color_override(&"font_color", MUTED)
 		parent.add_child(lab)
-	if inst and not inst.mods.is_empty():
-		var bonus := Label.new()
-		bonus.text = "Move bonus  +%s%%" % ItemDescriber.format_number(
-			stats.movement_speed_bonus_pct
-		)
-		bonus.add_theme_color_override(&"font_color", MUTED)
-		parent.add_child(bonus)
 
 
 func _on_add_mod(slot_index: int) -> void:
 	if _weapon_inventory == null:
 		return
-	var inst: WeaponInstance = _weapon_inventory.get_slot(slot_index)
+	var inst := _weapon_inventory.get_slot(slot_index) as WeaponInstance
 	if inst == null or not inst.can_add_mod():
 		return
 	var cost := WeaponPricing.craft_add_cost(inst)
@@ -751,7 +746,7 @@ func _on_add_mod(slot_index: int) -> void:
 func _on_remove_mod(slot_index: int, mod_index: int) -> void:
 	if _weapon_inventory == null:
 		return
-	var inst: WeaponInstance = _weapon_inventory.get_slot(slot_index)
+	var inst := _weapon_inventory.get_slot(slot_index) as WeaponInstance
 	if inst == null or mod_index < 0 or mod_index >= inst.mods.size():
 		return
 	var cost := WeaponPricing.craft_remove_cost(inst)

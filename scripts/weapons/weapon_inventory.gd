@@ -21,7 +21,6 @@ var active_index: int = 0
 var _stats: GunStatsController
 var _gun: GunController
 var _swap_unlock_msec: int = 0
-var _base_move_speed: float = -1.0
 
 
 func _ready() -> void:
@@ -229,17 +228,3 @@ func _apply_active(restore_ammo: bool) -> void:
 		_stats.set_weapon_instance(active)
 	if restore_ammo and _gun and active:
 		_gun.apply_weapon_ammo_from_instance(active)
-	_apply_movement_bonus()
-
-
-func _apply_movement_bonus() -> void:
-	var player := get_parent()
-	if player == null or not ("move_speed" in player):
-		return
-	if _base_move_speed < 0.0:
-		_base_move_speed = float(player.move_speed)
-	var bonus := 0.0
-	var stats := _stats.get_stats() if _stats else null
-	if stats:
-		bonus = stats.movement_speed_bonus_pct
-	player.move_speed = _base_move_speed * (1.0 + bonus / 100.0)

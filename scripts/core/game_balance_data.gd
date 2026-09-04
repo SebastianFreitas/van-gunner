@@ -87,7 +87,7 @@ extends Resource
 @export var weapon_craft_cost_mult := 1.0
 ## Multiplies shop weapon offer prices.
 @export var weapon_shop_price_mult := 1.0
-@export var weapon_max_mods := 6
+@export var weapon_max_mods := 4
 
 
 func get_base_dps() -> float:

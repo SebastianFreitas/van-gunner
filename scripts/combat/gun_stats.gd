@@ -25,8 +25,6 @@ extends Resource
 ## Shotgun-style multi-projectile. Damage is split across pellets in GunController.
 @export var pellets_per_shot := 1
 @export var pellet_spread_degrees := 0.0
-## Active-weapon movement bonus from exterior Movement Speed mods.
-@export var movement_speed_bonus_pct := 0.0
 
 @export_group("Weapon mod damage %")
 ## Applied in DamageInfo — never as flat damage_per_shot.
@@ -54,7 +52,6 @@ func duplicate_stats() -> GunStats:
 	copy.bounce_damage_retention = bounce_damage_retention
 	copy.pellets_per_shot = pellets_per_shot
 	copy.pellet_spread_degrees = pellet_spread_degrees
-	copy.movement_speed_bonus_pct = movement_speed_bonus_pct
 	copy.phys_damage_increased_pct = phys_damage_increased_pct
 	copy.crit_damage_increased_pct = crit_damage_increased_pct
 	copy.fire_damage_increased_pct = fire_damage_increased_pct

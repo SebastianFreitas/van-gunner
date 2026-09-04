@@ -76,7 +76,7 @@ func _build() -> void:
 	vbox.add_child(row)
 
 	for i in 2:
-		var inst: WeaponInstance = _inventory.get_slot(i)
+		var inst := _inventory.get_slot(i) as WeaponInstance
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(200, 64)
 		if inst:

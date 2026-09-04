@@ -18,7 +18,7 @@ Players find or craft **generated guns** that change *how* the gun shoots (famil
 | # | Constraint | Why |
 |---|------------|-----|
 | C1 | **No flat damage on weapons or weapon mods** | Early-game power spikes; flats stack too hard with boons |
-| C2 | **Max 6 mods per gun** | Simpler HUD / tooltips / crafting |
+| C2 | **Max 4 mods per gun** | Perfect roll = one damage channel + crit + two exteriors; avoids forced dual damage types |
 | C3 | **Interior + exterior pools only** | Specials stay as boons (already true in van-gunner) |
 | C4 | **Exterior includes Reload Speed + Mag Size** | Mag/reload already exist in combat |
 | C5 | **2 weapons max** | Inventory pressure; fits van FPS |
@@ -146,7 +146,6 @@ Fields (conceptual):
   - `max_bounces`
   - `base_mag_size`
   - `base_reload_seconds`
-  - `movement_speed_bonus_pct` optional 0 (prefer mods for this)
 - `drop_tickets: int` for weighted type bag
 - **No `base_damage` field.** Damage always starts from `GameBalance.BASE_DAMAGE_PER_SHOT`.
 
@@ -208,14 +207,14 @@ Start `{ interior: 200, exterior: 200 }`.
 After each roll of a grade, that grade’s weight **−100** (bias toward the other).  
 No special grade.
 
-#### Mod count weights (1–6 only)
+#### Mod count weights (1–4 only)
 
-Replace 1–8 table with 1–6:
+Suggested tickets: `{700, 900, 700, 200}`  
+Approx: ~28% / 36% / 28% / 8%
 
-Suggested tickets: `{700, 900, 900, 700, 400, 80}`  
-Approx: ~19% / 24% / 24% / 19% / 11% / 2%
+Hard clamp: `mod_count = clamp(rolled, 1, 4)` for non-starter; starter = 0.
 
-Hard clamp: `mod_count = clamp(rolled, 1, 6)` for non-starter; starter = 0.
+**Perfect-roll fantasy:** grade bias on 4 slots typically lands **2 interior + 2 exterior**. Ideal = matching channel (Phys/Fire/Cold/Poison) + Critical Damage + two handling exteriors. Cap of 4 avoids the 6-mod problem where ~3 interiors forced a second damage type.
 
 #### Tier scaling (keep handout idea)
 
@@ -248,19 +247,20 @@ If mapping five elemental % mods is awkward on day one, **minimum viable interio
 
 …and add elemental % in a follow-up. Prefer full five if boon damage channels already split cleanly.
 
-#### Exterior (utility) — includes new mag/reload
+#### Exterior (utility) — mag/reload, no Movement Speed
 
 | ID | Name | Bounds | Weight | Effect |
 |----|------|--------|--------|--------|
-| 1 | Movement Speed | 1–3 % | 3 | Player move speed while this gun **active** |
-| 2 | Ricochets | 1–6 % | 3 | Prefer mapping to `max_bounces` chance/extra — or `%` toward bounce count via `round(base * (1+pct/100))` |
-| 3 | Fire Rate | 1–3 % | 2 | `fire_rate *= (1+pct/100)` |
-| 4 | Bullet Speed | 2–5 % | 3 | |
-| 5 | Bullet Size | 1–5 % | 3 | |
-| 6 | **Reload Speed** | 2–5 % | 3 | **NEW** — reduces reload seconds |
-| 7 | **Mag Size** | 2–5 % | 3 | **NEW** — `mag = max(1, round(base * (1+pct/100)))` |
+| 1 | Ricochets | 1–6 % | 3 | Prefer mapping to `max_bounces` chance/extra — or `%` toward bounce count via `round(base * (1+pct/100))` |
+| 2 | Fire Rate | 1–3 % | 2 | `fire_rate *= (1+pct/100)` |
+| 3 | Bullet Speed | 2–5 % | 3 | |
+| 4 | Bullet Size | 1–5 % | 3 | |
+| 5 | **Reload Speed** | 2–5 % | 3 | reduces reload seconds |
+| 6 | **Mag Size** | 2–5 % | 3 | `mag = max(1, round(base * (1+pct/100)))` |
 
-`ExteriorWeight = {3,3,2,3,3,3,3}`
+`ExteriorWeight = {3,2,3,3,3,3}`
+
+**Removed:** Movement Speed (player move speed while gun active).
 
 ### 4.7 `WeaponInstance` (runtime state)
 
@@ -399,7 +399,7 @@ Algorithm:
 
 1. Pick definition from ticket bag (or force).
 2. If starter / `force_mod_count==0`: return with empty mods.
-3. Else roll mod count 1..6 from weights.
+3. Else roll mod count 1..4 from weights.
 4. Init grade weights `{200,200}`.
 5. For each mod slot:
    - Pick grade by weight; decrement that grade −100
@@ -438,7 +438,7 @@ Page 2 layout (keep visual language of bench: accent/muted colors, cell grids, t
   icon/name           icon/name
   family / element    ...
   ammo                ...
-  mod list (≤6)       mod list
+  mod list (≤4)       mod list
 
 [ Selected weapon detail ]
   Full mod lines with values
@@ -472,7 +472,7 @@ Second add on same gun multiplies by times used → quickly 5k–10k+.
 
 **Guardrails:**
 
-- Cannot add if `mods.size() >= 6`
+- Cannot add if `mods.size() >= 4`
 - Cannot add duplicate grade+id
 - Cannot craft on empty slot
 - Cannot destroy starter if it is the only gun (or allow but immediately recreate starter — prefer **block destroy on last remaining gun**)
@@ -577,7 +577,7 @@ Meta progression: **do not** persist run guns between runs unless explicitly des
 | Flat elemental/phys on guns | **Removed** |
 | Special mod grade | **Removed** (boons already cover) |
 | gunParts currency | **Gold instead** |
-| 1–8 mods | **1–6 mods** |
+| 1–8 mods | **1–4 mods** |
 | 4 guns + layout slots | **2 guns only** |
 | Mag/reload systems | **Already exist** — add as exterior mods |
 | Damage formula with huge bases | **Balance-seeded tiny bases + boon scale** |
@@ -618,7 +618,6 @@ shot_damage = definition.flat_damage + sum(flat_mods)
 - Reload in progress → swap weapon: store remaining time; other gun independent.
 - Both slots empty impossible if starter protected.
 - Adding mod while gun active → live rebuild mid-bench OK.
-- Movement speed mod: apply only while that weapon active (listen to `active_weapon_changed`).
 - Bonus projectiles from cold boons: inherit active gun damage_type/stats unless boon says otherwise (keep current `BoonCombat` behavior).
 - Grenades / tools unchanged.
 - `TimedStatModifierEffect` still stacks on controller after weapon mods.
@@ -636,7 +635,7 @@ weapon_drop_chance_base
 weapon_drop_chance_elite_bonus
 weapon_craft_cost_mult          # global knob for “mega expensive”
 weapon_shop_price_mult
-weapon_max_mods                 # = 6
+weapon_max_mods                 # = 4
 ```
 
 ---
@@ -645,13 +644,13 @@ weapon_max_mods                 # = 6
 
 - [ ] Player holds at most 2 weapons; starter basic present.
 - [ ] Scroll and Q swap; ammo/reload persist per gun.
-- [ ] Generated guns roll ≤6 mods; interior/exterior only; no specials; no flat damage mods.
+- [ ] Generated guns roll ≤4 mods; interior/exterior only; no specials; no flat damage mods.
 - [ ] Exterior can roll Reload Speed and Mag Size; both affect live combat correctly.
 - [ ] Elemental variants change damage type only (no flat element packs).
 - [ ] Shotgun pellet math does not multiply DPS by pellet count.
 - [ ] Weapons drop rarely; shop can sell weapons for high gold.
 - [ ] Full inventory prompts replace; replaced gun returns to world.
-- [ ] Bench has Weapons page; add/remove mod costs huge gold; cannot exceed 6 mods.
+- [ ] Bench has Weapons page; add/remove mod costs huge gold; cannot exceed 4 mods.
 - [ ] Long-term DPS still primarily from boons; Act 1 A1 does not break pacing.
 - [ ] Existing boon specials still work with swapped guns.
 - [ ] No `gunParts`; all sinks/spends use `GameSession.coins`.
@@ -683,21 +682,21 @@ weapon_max_mods                 # = 6
 
 **MVP slice (still “whole system” shaped):**
 
-1. Definitions + generator (no flats, max 6, reload/mag exterior).  
+1. Definitions + generator (no flats, max 4, reload/mag exterior).  
 2. Inventory 2 + swap scroll/Q.  
 3. Stats bridge + pellet split.  
 4. Pickup + replace prompt.  
 5. Bench page 2 add/remove with brutal gold costs.  
 6. Tiny drop chance on elites + one shop gun.
 
-Defer: saved-mod layout, disassemble, gunParts, specials-on-guns, 8-mod curve, HellScape damage tables.
+Defer: saved-mod layout, disassemble, gunParts, specials-on-guns, HellScape damage tables.
 
 ---
 
 ## 19. Reference: original handout deltas summary
 
 Source handout ideas kept: families, A1/elemental rarity, interior/exterior grade bias, weighted mod counts, shop/drop/craft loops, reload/mag exterior, specials-as-boons.  
-Source ideas cut/changed: flats, specials, gunParts, 8 mods, 4+layout inventory, absolute high damage bases.
+Source ideas cut/changed: flats, specials, gunParts, 8→4 mods, Movement Speed exterior, 4+layout inventory, absolute high damage bases.
 
 ---
 

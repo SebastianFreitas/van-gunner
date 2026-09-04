@@ -2,11 +2,12 @@ class_name WeaponModCatalog
 extends RefCounted
 
 ## Interior/exterior mod pools + roll weights. No SPECIAL grade. No flat damage.
+## Max 4 mods: perfect roll = one damage channel + crit + two exteriors.
 
-const MAX_MODS := 6
+const MAX_MODS := 4
 
-## Mod count tickets for counts 1..6.
-const MOD_COUNT_TICKETS: Array[int] = [700, 900, 900, 700, 400, 80]
+## Mod count tickets for counts 1..4 (4 rare).
+const MOD_COUNT_TICKETS: Array[int] = [700, 900, 700, 200]
 
 const GRADE_WEIGHT_START := 200
 const GRADE_WEIGHT_STEP := 100
@@ -18,14 +19,13 @@ const INT_FIRE := 3
 const INT_COLD := 4
 const INT_POISON := 5
 
-## Exterior IDs.
-const EXT_MOVEMENT := 1
-const EXT_RICOCHETS := 2
-const EXT_FIRE_RATE := 3
-const EXT_BULLET_SPEED := 4
-const EXT_BULLET_SIZE := 5
-const EXT_RELOAD_SPEED := 6
-const EXT_MAG_SIZE := 7
+## Exterior IDs (handling / feel — no Movement Speed).
+const EXT_RICOCHETS := 1
+const EXT_FIRE_RATE := 2
+const EXT_BULLET_SPEED := 3
+const EXT_BULLET_SIZE := 4
+const EXT_RELOAD_SPEED := 5
+const EXT_MAG_SIZE := 6
 
 
 class ModDef:
@@ -61,7 +61,6 @@ static func interior_defs() -> Array:
 
 static func exterior_defs() -> Array:
 	return [
-		ModDef.new(EXT_MOVEMENT, "Movement Speed", 1.0, 3.0, 3),
 		ModDef.new(EXT_RICOCHETS, "Ricochets", 1.0, 6.0, 3),
 		ModDef.new(EXT_FIRE_RATE, "Fire Rate", 1.0, 3.0, 2),
 		ModDef.new(EXT_BULLET_SPEED, "Bullet Speed", 2.0, 5.0, 3),

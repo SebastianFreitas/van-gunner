@@ -16,7 +16,6 @@ static func build(instance: WeaponInstance) -> GunStats:
 	stats.bounce_damage_retention = 0.8
 	stats.pellets_per_shot = 1
 	stats.pellet_spread_degrees = 0.0
-	stats.movement_speed_bonus_pct = 0.0
 	stats.phys_damage_increased_pct = 0.0
 	stats.crit_damage_increased_pct = 0.0
 	stats.fire_damage_increased_pct = 0.0
@@ -69,8 +68,6 @@ static func _apply_mods(stats: GunStats, mods: Array[WeaponMod]) -> void:
 					stats.poison_damage_increased_pct += pct
 		else:
 			match mod.mod_id:
-				WeaponModCatalog.EXT_MOVEMENT:
-					stats.movement_speed_bonus_pct += pct
 				WeaponModCatalog.EXT_RICOCHETS:
 					## % toward bounce count: round(base * (1+pct/100))
 					stats.max_bounces = maxi(0, roundi(float(stats.max_bounces) * mult))
