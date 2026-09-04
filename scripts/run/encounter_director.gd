@@ -38,8 +38,14 @@ func _sync_spawn_marker_to_balance() -> void:
 func _encounters_enabled() -> bool:
 	if GameSession.route_step <= 0 or GameSession.chill_mode:
 		return false
+	if GameSession.needs_act_reveal():
+		return false
 	var travel := get_tree().get_first_node_in_group(&"travel_controller")
 	if travel and travel.has_method(&"is_shop_visit_active") and travel.is_shop_visit_active():
+		return false
+	if travel and travel.has_method(&"is_act_reveal_active") and travel.is_act_reveal_active():
+		return false
+	if GameSession.phase == GameSession.RunPhase.ACT_REVEAL:
 		return false
 	return true
 
@@ -98,7 +104,10 @@ func _schedule_encounter() -> void:
 
 
 func _run_segment(id: int) -> void:
+	var danger := GameSession.consume_pending_danger()
 	var plan := GameBalance.build_segment_wave_plan(GameSession.route_step)
+	if danger:
+		plan = _apply_danger_bump(plan)
 	for wave_i in plan.size():
 		if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
 			_running = false
@@ -121,7 +130,14 @@ func _run_segment(id: int) -> void:
 	GameSession.set_phase(GameSession.RunPhase.REST)
 	SaveManager.save_active_session()
 	await _wait_for_rest_break(rest_duration)
-	if id == _sequence_id and GameSession.phase == GameSession.RunPhase.REST:
+	if id != _sequence_id:
+		return
+	if GameSession.phase == GameSession.RunPhase.REST and GameSession.needs_act_reveal():
+		await _wait_for_act_reveal()
+	if id == _sequence_id and GameSession.phase in [
+		GameSession.RunPhase.REST,
+		GameSession.RunPhase.ACT_REVEAL,
+	]:
 		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
 
 
@@ -234,25 +250,44 @@ func _despawn_raiders(raiders: Array[WindowRaider]) -> void:
 
 func _wait_for_rest_break(min_seconds: float) -> void:
 	var timer := get_tree().create_timer(_scale_wait(min_seconds))
-	var rewards := get_tree().get_first_node_in_group(&"boon_reward_controller") as BoonRewardController
-	if rewards:
+	var rewards := get_tree().get_first_node_in_group(&"boon_reward_controller")
+	if rewards and rewards.has_method(&"wait_for_rest_resolution"):
 		await rewards.wait_for_rest_resolution()
 	await timer.timeout
 
 
-func _find_travel_controller() -> TravelController:
-	return get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+func _wait_for_act_reveal() -> void:
+	var act_deck := get_tree().get_first_node_in_group(&"act_deck_controller")
+	if act_deck == null:
+		if GameSession.needs_act_reveal():
+			GameSession.begin_new_act_deck()
+		return
+	if act_deck.has_method(&"begin_reveal_if_needed"):
+		act_deck.begin_reveal_if_needed()
+	if act_deck.has_method(&"wait_for_reveal_resolution"):
+		await act_deck.wait_for_reveal_resolution()
+
+
+func _apply_danger_bump(plan: Array[int]) -> Array[int]:
+	var bumped: Array[int] = []
+	for count in plan:
+		bumped.append(maxi(1, ceili(float(count) * 1.35) + 1))
+	return bumped
+
+
+func _find_travel_controller() -> Node:
+	return get_tree().get_first_node_in_group(&"travel_controller")
 
 
 func _scale_wait(seconds: float) -> float:
 	var travel := _find_travel_controller()
-	if travel:
+	if travel and travel.has_method(&"scale_debug_wait"):
 		return travel.scale_debug_wait(seconds)
 	return seconds
 
 
 func _get_debug_time_scale() -> float:
 	var travel := _find_travel_controller()
-	if travel:
+	if travel and travel.has_method(&"get_debug_time_scale"):
 		return travel.get_debug_time_scale()
 	return 1.0

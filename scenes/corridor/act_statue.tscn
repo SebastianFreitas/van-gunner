@@ -1,0 +1,44 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="PedestalMat"]
+albedo_color = Color(0.22, 0.2, 0.18, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="FigureMat"]
+albedo_color = Color(0.55, 0.48, 0.38, 1)
+metallic = 0.35
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="GlowMat"]
+shading_mode = 0
+albedo_color = Color(0.91, 0.78, 0.48, 1)
+
+[sub_resource type="CylinderMesh" id="PedestalMesh"]
+material = SubResource("PedestalMat")
+top_radius = 0.55
+bottom_radius = 0.7
+height = 0.9
+
+[sub_resource type="CapsuleMesh" id="FigureMesh"]
+material = SubResource("FigureMat")
+radius = 0.28
+height = 1.6
+
+[sub_resource type="SphereMesh" id="OrbMesh"]
+material = SubResource("GlowMat")
+radius = 0.18
+height = 0.36
+
+[node name="ActStatue" type="Node3D"]
+
+[node name="Pedestal" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+mesh = SubResource("PedestalMesh")
+
+[node name="Figure" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+mesh = SubResource("FigureMesh")
+
+[node name="Orb" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.65, 0)
+mesh = SubResource("OrbMesh")

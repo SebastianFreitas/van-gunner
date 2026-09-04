@@ -30,6 +30,7 @@ const SHOP_CORRIDOR_LATERAL := 9.0
 @export var segment_scene: PackedScene
 @export var t_junction_scene: PackedScene
 @export var shop_scene: PackedScene
+@export var act_statue_scene: PackedScene
 @export var segment_length := 20.0
 @export var segment_ahead_distance := 80.0
 @export var world_cull_distance := 140.0
@@ -80,6 +81,8 @@ var _active_shop: Node3D
 var _shop_align_progress := INF
 ## When true, PathFollow moves backward along the park curve (rear into bay).
 var _park_reversing := false
+var _active_statue: Node3D
+var _act_reveal_pending := false
 
 @onready var corridor_root: Node3D = $"../../ExteriorCorridor"
 @onready var travel_path: Path3D = $"../../TravelPath"
@@ -92,6 +95,8 @@ func _ready() -> void:
 	add_to_group(&"travel_controller")
 	_rng = RandomNumberGenerator.new()
 	_rng.seed = GameSession.run_seed
+	if act_statue_scene == null:
+		act_statue_scene = load("res://scenes/corridor/act_statue.tscn") as PackedScene
 	_apply_meta_travel_speed()
 	_configure_initial_route()
 	GameSession.phase_changed.connect(_on_phase_changed)
@@ -151,6 +156,7 @@ func can_boost() -> bool:
 		and GameSession.phase != GameSession.RunPhase.GAME_OVER
 		and GameSession.phase != GameSession.RunPhase.SHOP
 		and GameSession.phase != GameSession.RunPhase.PARKING
+		and GameSession.phase != GameSession.RunPhase.ACT_REVEAL
 	)
 
 
@@ -189,6 +195,25 @@ func is_shop_visit_active() -> bool:
 	if _turn_state in [TurnState.PARKING, TurnState.LEAVING_SHOP]:
 		return true
 	return GameSession.phase in [GameSession.RunPhase.PARKING, GameSession.RunPhase.SHOP]
+
+
+func is_act_reveal_active() -> bool:
+	return (
+		_act_reveal_pending
+		or GameSession.phase == GameSession.RunPhase.ACT_REVEAL
+		or is_instance_valid(_active_statue)
+	)
+
+
+## Place a roadside statue and hold the van for the act tarot reveal.
+func begin_act_statue_stop() -> void:
+	_act_reveal_pending = true
+	_spawn_act_statue()
+
+
+func end_act_statue_stop() -> void:
+	_act_reveal_pending = false
+	_clear_act_statue()
 
 
 func leave_shop() -> void:
@@ -416,6 +441,7 @@ func _sample_route_transform(progress: float) -> Transform3D:
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	if next_phase == GameSession.RunPhase.TRAVELLING:
 		_maybe_start_intro()
+		_maybe_resume_act_reveal()
 	elif next_phase == GameSession.RunPhase.ROUTE_CHOICE:
 		_prepare_shop_fork()
 		_spawn_approaching_junction()
@@ -435,21 +461,60 @@ func _maybe_start_intro() -> void:
 	_run_intro(id)
 
 
+## After save/load (or exhausted deck mid-street), re-run the statue reveal.
+func _maybe_resume_act_reveal() -> void:
+	if GameSession.route_step <= 0:
+		return
+	if not GameSession.needs_act_reveal():
+		return
+	if is_act_reveal_active():
+		return
+	_sequence_id += 1
+	var id := _sequence_id
+	_run_resume_act_reveal(id)
+
+
+func _run_resume_act_reveal(id: int) -> void:
+	var act_deck := get_tree().get_first_node_in_group(&"act_deck_controller")
+	if act_deck and act_deck.has_method(&"begin_reveal_if_needed"):
+		act_deck.begin_reveal_if_needed()
+		if act_deck.has_method(&"wait_for_reveal_resolution"):
+			await act_deck.wait_for_reveal_resolution()
+	elif GameSession.needs_act_reveal():
+		GameSession.begin_new_act_deck()
+	if id == _sequence_id and GameSession.phase in [
+		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.TRAVELLING,
+	]:
+		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
+
+
 func _run_intro(id: int) -> void:
 	if is_debug_speed_mode():
-		if id == _sequence_id and GameSession.phase == GameSession.RunPhase.TRAVELLING:
+		var deck := get_tree().get_first_node_in_group(&"act_deck_controller")
+		if deck and deck.has_method(&"begin_reveal_if_needed"):
+			deck.begin_reveal_if_needed()
+			if deck.has_method(&"wait_for_reveal_resolution"):
+				await deck.wait_for_reveal_resolution()
+		elif GameSession.needs_act_reveal():
+			GameSession.begin_new_act_deck()
+		if id == _sequence_id:
 			GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
 		return
 	await get_tree().create_timer(scale_debug_wait(intro_peace_seconds)).timeout
 	if id != _sequence_id or GameSession.phase != GameSession.RunPhase.TRAVELLING:
 		return
-	GameSession.set_phase(GameSession.RunPhase.REST)
-	var timer := get_tree().create_timer(scale_debug_wait(intro_rest_seconds))
-	var rewards := get_tree().get_first_node_in_group(&"boon_reward_controller") as BoonRewardController
-	if rewards:
-		await rewards.wait_for_rest_resolution()
-	await timer.timeout
-	if id == _sequence_id and GameSession.phase == GameSession.RunPhase.REST:
+	var act_deck := get_tree().get_first_node_in_group(&"act_deck_controller")
+	if act_deck and act_deck.has_method(&"begin_reveal_if_needed"):
+		act_deck.begin_reveal_if_needed()
+		if act_deck.has_method(&"wait_for_reveal_resolution"):
+			await act_deck.wait_for_reveal_resolution()
+	elif GameSession.needs_act_reveal():
+		GameSession.begin_new_act_deck()
+	if id == _sequence_id and GameSession.phase in [
+		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.TRAVELLING,
+	]:
 		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
 
 
@@ -725,6 +790,28 @@ func _clear_shop_state() -> void:
 	_park_reversing = false
 
 
+func _spawn_act_statue() -> void:
+	_clear_act_statue()
+	if act_statue_scene == null or not is_instance_valid(van_rig):
+		return
+	_active_statue = act_statue_scene.instantiate() as Node3D
+	if _active_statue == null:
+		return
+	corridor_root.add_child(_active_statue)
+	# Roadside placeholder just ahead and to the right of the van.
+	var offset := van_rig.global_transform.basis * Vector3(4.5, 0.0, -8.0)
+	_active_statue.global_position = van_rig.global_position + offset
+	_active_statue.global_basis = van_rig.global_basis
+	_world_pieces.append(_active_statue)
+
+
+func _clear_act_statue() -> void:
+	if is_instance_valid(_active_statue):
+		_world_pieces.erase(_active_statue)
+		_active_statue.queue_free()
+	_active_statue = null
+
+
 func _prune_world() -> void:
 	if _turn_state != TurnState.NONE:
 		return
@@ -733,7 +820,7 @@ func _prune_world() -> void:
 		if not is_instance_valid(piece):
 			_world_pieces.remove_at(index)
 			continue
-		if piece == _active_shop:
+		if piece == _active_shop or piece == _active_statue:
 			continue
 		if piece.global_position.distance_to(van_rig.global_position) <= world_cull_distance:
 			continue
@@ -749,3 +836,4 @@ func _exit_tree() -> void:
 	_world_pieces.clear()
 	_active_junction = null
 	_active_shop = null
+	_active_statue = null

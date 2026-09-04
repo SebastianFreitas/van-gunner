@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://dmdjjeocfdi7a" path="res://scenes/corridor/corridor_segment.tscn" id="10"]
 [ext_resource type="PackedScene" uid="uid://dyn2nx35s88gm" path="res://scenes/corridor/corridor_t_junction.tscn" id="11"]
 [ext_resource type="PackedScene" path="res://scenes/corridor/shop_bay.tscn" id="11b"]
+[ext_resource type="PackedScene" path="res://scenes/corridor/act_statue.tscn" id="11c"]
 [ext_resource type="PackedScene" path="res://scenes/ui/item_hud.tscn" id="12"]
 [ext_resource type="PackedScene" path="res://scenes/ui/bench_screen.tscn" id="13"]
 [ext_resource type="Script" uid="uid://cukpn3t6vntop" path="res://scripts/run/rear_doors.gd" id="14"]
@@ -1302,6 +1303,7 @@ script = ExtResource("5")
 segment_scene = ExtResource("10")
 t_junction_scene = ExtResource("11")
 shop_scene = ExtResource("11b")
+act_statue_scene = ExtResource("11c")
 
 [node name="EncounterDirector" type="Node" parent="Systems" unique_id=136983041]
 script = ExtResource("6")

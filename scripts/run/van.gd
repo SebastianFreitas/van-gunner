@@ -1,5 +1,9 @@
 extends Node3D
 
+const _ActRevealPanel := preload("res://scripts/ui/act_reveal_panel.gd")
+const _ActDeckController := preload("res://scripts/run/act_deck_controller.gd")
+const _BoonRewardController := preload("res://scripts/run/boon_reward_controller.gd")
+
 @onready var player: FpsPlayer = $TravelPath/VanFollow/VanRig/Player
 @onready var weapon: GunController = $TravelPath/VanFollow/VanRig/Player/Head/Camera3D/Weapon
 @onready var usables: UsablesController = $TravelPath/VanFollow/VanRig/Player/Usables
@@ -30,8 +34,9 @@ extends Node3D
 )
 
 var _debug_console: Control
-var _boon_choice: BoonChoicePanel
-var _boon_rewards: BoonRewardController
+var _act_reveal: Control
+var _act_deck: Node
+var _boon_rewards: Node
 var _driver_talk_open := false
 var _weapon_slots_hud: WeaponSlotsHud
 var _ammo_reload_tween: Tween
@@ -67,12 +72,14 @@ func _ready() -> void:
 	item_hud.bind(usables)
 	usables.item_acquired.connect(_on_item_acquired)
 	usables.usable_activated.connect(_on_usable_activated)
-	_boon_choice = BoonChoicePanel.new()
-	_boon_choice.bind(player)
-	$HUD.add_child(_boon_choice)
-	_boon_rewards = BoonRewardController.new()
+	_act_reveal = _ActRevealPanel.new()
+	$HUD.add_child(_act_reveal)
+	_act_deck = _ActDeckController.new()
+	add_child(_act_deck)
+	_act_deck.bind(_act_reveal)
+	_boon_rewards = _BoonRewardController.new()
 	add_child(_boon_rewards)
-	_boon_rewards.bind(player, _boon_choice)
+	_boon_rewards.bind(player)
 	driver_talk_panel.hide()
 	_refresh_driver_talk_options()
 	_setup_weapon_slots_hud()
@@ -171,6 +178,7 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		GameSession.RunPhase.keys()[next_phase].replace("_", " "),
 		String(GameSession.current_room).to_upper(),
 	]
+	_on_wave_changed(GameSession.wave_count)
 	route_panel.visible = next_phase == GameSession.RunPhase.ROUTE_CHOICE
 	if next_phase == GameSession.RunPhase.ROUTE_CHOICE:
 		_refresh_route_choice_labels()
@@ -182,11 +190,10 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 
 	match next_phase:
 		GameSession.RunPhase.REST:
-			rest_toast.text = (
-				"FIRST FORK AHEAD — ROAD KEEPS MOVING"
-				if GameSession.route_step == 0
-				else "BREAK — ROAD KEEPS MOVING"
-			)
+			rest_toast.text = "BREAK — ROAD KEEPS MOVING"
+			rest_toast.show()
+		GameSession.RunPhase.ACT_REVEAL:
+			rest_toast.text = "THE ROAD AHEAD — STATUE READING"
 			rest_toast.show()
 		GameSession.RunPhase.TURNING:
 			rest_toast.text = "TURNING %s..." % String(GameSession.last_direction).to_upper()
@@ -209,8 +216,9 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		GameSession.RunPhase.ROUTE_CHOICE,
 		GameSession.RunPhase.GAME_OVER,
 		GameSession.RunPhase.PARKING,
+		GameSession.RunPhase.ACT_REVEAL,
 	]
-	if _boon_choice and _boon_choice.visible:
+	if _act_reveal and _act_reveal.visible:
 		bench_blocked = true
 	if _driver_talk_open:
 		bench_blocked = true
@@ -241,11 +249,14 @@ func _refresh_route_choice_labels() -> void:
 
 
 func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
-	var free_cursor := (
+	var reveal_open := _act_reveal != null and _act_reveal.visible
+	var free_cursor: bool = (
 		_driver_talk_open
+		or reveal_open
 		or phase in [
 			GameSession.RunPhase.ROUTE_CHOICE,
 			GameSession.RunPhase.GAME_OVER,
+			GameSession.RunPhase.ACT_REVEAL,
 		]
 	)
 	Input.mouse_mode = (
@@ -265,7 +276,7 @@ func _open_bench() -> void:
 func _on_bench_closed() -> void:
 	if _debug_console and _debug_console.visible:
 		return
-	if _boon_choice and _boon_choice.visible:
+	if _act_reveal and _act_reveal.visible:
 		return
 	if _driver_talk_open:
 		return
@@ -302,7 +313,17 @@ func _on_health_changed(current: float, maximum: float) -> void:
 
 
 func _on_wave_changed(wave: int) -> void:
-	wave_label.text = "WAVES CLEARED  %d  ·  ROUTE EVERY 10" % wave
+	var card_i := GameSession.act_card_index
+	var card_total := GameSession.act_cards.size()
+	if card_total > 0:
+		wave_label.text = "WAVES  %d  ·  ACT %d  ·  CARD %d/%d" % [
+			wave,
+			GameSession.run_act,
+			mini(card_i + 1, card_total),
+			card_total,
+		]
+	else:
+		wave_label.text = "WAVES CLEARED  %d" % wave
 
 
 func _show_message(text: String) -> void:
@@ -357,7 +378,9 @@ func open_driver_talk() -> void:
 		return
 	if GameSession.phase == GameSession.RunPhase.PARKING:
 		return
-	if _boon_choice and _boon_choice.visible:
+	if GameSession.phase == GameSession.RunPhase.ACT_REVEAL:
+		return
+	if _act_reveal and _act_reveal.visible:
 		return
 	if bench_screen.visible:
 		bench_screen.close()
