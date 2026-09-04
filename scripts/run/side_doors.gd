@@ -365,15 +365,19 @@ func is_door_broken(side: StringName) -> bool:
 
 func mark_door_broken(side: StringName) -> void:
 	if is_door_broken(side):
+		if is_door_open(side):
+			_set_passable(side, true)
+		else:
+			# Broken flag stuck while leaf still shut — finish the slide.
+			_smash_open(side)
 		return
 	if side == SIDE_LEFT:
 		_left_broken = true
 	else:
 		_right_broken = true
-	if not is_door_open(side):
-		open_door(side)
-	else:
-		_set_passable(side, true)
+	# Enemy smash: always slide this leaf open (bypasses player window interlock).
+	# Adjacent open sash smash (glass + bars) is handled by BreachPoint.
+	_smash_open(side)
 
 
 ## Standpoint just outside a closed leaf for scripted mobs (world space).
@@ -408,6 +412,19 @@ func open_door(side: StringName) -> void:
 	if is_door_open(side):
 		return
 	if is_blocked_by_adjacent_window(side):
+		return
+	var was_any_open := _left_open or _right_open
+	_set_door_open(side, true)
+	_animate_door(side, true)
+	door_changed.emit(side, true)
+	if not was_any_open:
+		opened.emit()
+
+
+## Breach smash — open this leaf, ignoring the player adjacent-window interlock.
+func _smash_open(side: StringName) -> void:
+	if is_door_open(side):
+		_set_passable(side, true)
 		return
 	var was_any_open := _left_open or _right_open
 	_set_door_open(side, true)
@@ -514,9 +531,12 @@ func _animate_door(side: StringName, opening: bool) -> void:
 		_right_tween = tween
 
 	if opening:
+		# Leaf first so the door always slides even if handle tweens hiccup.
+		tween.set_parallel(true)
+		tween.tween_property(leaf, "position", recessed_pos, recess_duration)
 		tween.tween_property(grip, "position", grip_retracted, grip_retract_duration)
 		tween.tween_property(mount, "position", mount_retracted, mount_retract_duration)
-		tween.tween_property(leaf, "position", recessed_pos, recess_duration)
+		tween.set_parallel(false)
 		tween.tween_property(leaf, "position", open_pos, slide_duration)
 		# Fires alongside the slide step — passage opens mid-slide, later than rear doors.
 		tween.parallel().tween_callback(_set_passable.bind(side, true)).set_delay(

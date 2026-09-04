@@ -1,22 +1,19 @@
 [gd_resource type="Resource" script_class="GameBalanceData" format=3 uid="uid://d1ou0jv6l5ks"]
 
 [ext_resource type="Script" uid="uid://cjbowwnosqakv" path="res://scripts/core/game_balance_data.gd" id="1"]
-[ext_resource type="Resource" path="res://resources/enemies/pools/segment_spawn_pool.tres" id="2"]
+[ext_resource type="Resource" uid="uid://dtc18yfi7eths" path="res://resources/enemies/pools/segment_spawn_pool.tres" id="2"]
 
 [resource]
 script = ExtResource("1")
-segment_spawn_pool = ExtResource("2")
 base_damage_per_shot = 1.5
 base_fire_rate = 1.75
+segment_wave_min = 1
+segment_wave_max = 1
 act_wave_base_count = PackedInt32Array(2, 2, 2)
 act_wave_growth_per_step = PackedInt32Array(1, 1, 1)
 act_last_wave_extra = PackedInt32Array(2, 2, 3)
 act_breather_chance = PackedFloat32Array(0.15, 0.3, 0.35)
 act_engagement_seconds = PackedFloat32Array(10, 8, 6)
 act_expected_upgrade_fraction = PackedFloat32Array(0.333333, 0.666667, 1)
+segment_spawn_pool = ExtResource("2")
 act_target_van_speed = PackedFloat32Array(8, 9, 10)
-weapon_drop_chance_base = 1
-weapon_drop_chance_elite_bonus = 10
-weapon_craft_cost_mult = 1.0
-weapon_shop_price_mult = 1.0
-weapon_max_mods = 4

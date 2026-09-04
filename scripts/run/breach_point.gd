@@ -171,15 +171,44 @@ func _mark_breached() -> void:
 		Kind.SIDE_DOOR:
 			if door_side != &"":
 				var doors := _side_doors()
-				if doors:
+				if doors and doors.has_method("mark_door_broken"):
+					doors.mark_door_broken(door_side)
+				elif doors and doors.has_method("open_door"):
 					doors.open_door(door_side)
-					if doors.has_method("mark_door_broken"):
-						doors.mark_door_broken(door_side)
+				# Open front sash sits in the slide path — smash glass + bars with the door.
+				_breach_adjacent_open_window()
 		Kind.WINDOW, Kind.SIDE_DOOR_WINDOW:
+			# Bars only — sash stays put (player can tip it open separately).
 			_break_bars()
 		_:
 			pass
 	breached.emit()
+
+
+## Complete this window breach immediately (glass + bars). Used when a cargo door
+## slides into an already-open adjacent sash.
+func force_breach() -> void:
+	if kind != Kind.WINDOW and kind != Kind.SIDE_DOOR_WINDOW:
+		return
+	if is_breached:
+		_shatter_window_glass_if_needed()
+		return
+	_shatter_window_glass_if_needed()
+	_mark_breached()
+
+
+func _breach_adjacent_open_window() -> void:
+	if door_side == &"":
+		return
+	var wid: StringName = &"left_front" if door_side == &"left" else &"right_front"
+	var windows := _side_windows()
+	if windows == null or not windows.is_window_open(wid):
+		return
+	var target_id := StringName("%s_window" % String(wid))
+	for node in get_tree().get_nodes_in_group(&"breach_points"):
+		if node is BreachPoint and (node as BreachPoint).point_id == target_id:
+			(node as BreachPoint).force_breach()
+			return
 
 
 func _break_bars() -> void:
@@ -235,7 +264,11 @@ func _rear_doors() -> Node:
 
 
 func _side_doors() -> Node:
-	return get_tree().get_first_node_in_group(&"side_doors")
+	var doors := get_tree().get_first_node_in_group(&"side_doors")
+	if doors:
+		return doors
+	# BreachPoint → BreachController → EnemyContainer → VanRig → Interior/Shell/SideDoors
+	return get_node_or_null("../../../Interior/Shell/SideDoors")
 
 
 func _side_windows() -> Node:
