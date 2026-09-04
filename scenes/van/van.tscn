@@ -1461,10 +1461,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -320.0
-offset_top = -250.0
-offset_right = 320.0
-offset_bottom = 250.0
+offset_left = -300.0
+offset_top = -220.0
+offset_right = 300.0
+offset_bottom = 220.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -1494,12 +1494,12 @@ theme_override_constants/separation = 20
 alignment = 1
 
 [node name="Left" type="Button" parent="HUD/RouteChoice/Layout/Buttons" unique_id=239635189]
-custom_minimum_size = Vector2(248, 292)
+custom_minimum_size = Vector2(236, 268)
 layout_mode = 2
 text = ""
 
 [node name="Right" type="Button" parent="HUD/RouteChoice/Layout/Buttons" unique_id=591988108]
-custom_minimum_size = Vector2(248, 292)
+custom_minimum_size = Vector2(236, 268)
 layout_mode = 2
 text = ""
 

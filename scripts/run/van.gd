@@ -277,7 +277,8 @@ func _populate_route_button(
 	button.text = ""
 	button.clip_contents = true
 	button.focus_mode = Control.FOCUS_NONE
-	button.custom_minimum_size = Vector2(248, 292)
+	button.custom_minimum_size = Vector2(236, 268)
+	button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	button.autowrap_mode = TextServer.AUTOWRAP_OFF
 
 	var is_danger := card != null and card.is_danger()
@@ -306,7 +307,7 @@ func _populate_route_button(
 
 	var stack := VBoxContainer.new()
 	stack.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	stack.add_theme_constant_override(&"separation", 8)
+	stack.add_theme_constant_override(&"separation", 6)
 	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(stack)
 
@@ -314,37 +315,12 @@ func _populate_route_button(
 	dir.text = "← LEFT" if is_left else "RIGHT →"
 	dir.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	dir.add_theme_color_override(&"font_color", _ROUTE_MUTED)
-	dir.add_theme_font_size_override(&"font_size", 12)
+	dir.add_theme_font_size_override(&"font_size", 11)
 	dir.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stack.add_child(dir)
 
-	if is_shop:
-		var shop_banner := PanelContainer.new()
-		shop_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var shop_style := StyleBoxFlat.new()
-		shop_style.bg_color = Color(0.18, 0.32, 0.48, 1.0)
-		shop_style.border_color = _ROUTE_SHOP
-		shop_style.set_border_width_all(1)
-		shop_style.set_corner_radius_all(4)
-		shop_style.content_margin_left = 8
-		shop_style.content_margin_right = 8
-		shop_style.content_margin_top = 6
-		shop_style.content_margin_bottom = 6
-		shop_banner.add_theme_stylebox_override(&"panel", shop_style)
-		var shop_label := Label.new()
-		shop_label.text = "SHOP STOP"
-		shop_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		shop_label.add_theme_color_override(&"font_color", _ROUTE_SHOP.lightened(0.25))
-		shop_label.add_theme_font_size_override(&"font_size", 14)
-		shop_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		shop_banner.add_child(shop_label)
-		stack.add_child(shop_banner)
-
-		var divider := ColorRect.new()
-		divider.custom_minimum_size = Vector2(0, 2)
-		divider.color = _ROUTE_SHOP.darkened(0.25)
-		divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		stack.add_child(divider)
+	# Always occupy the same vertical strip so shop / street cards line up.
+	stack.add_child(_make_route_shop_slot(is_shop))
 
 	if card == null:
 		var empty := Label.new()
@@ -363,15 +339,15 @@ func _populate_route_button(
 	card_style.border_color = polarity
 	card_style.set_border_width_all(2)
 	card_style.set_corner_radius_all(6)
-	card_style.content_margin_left = 8
-	card_style.content_margin_right = 8
-	card_style.content_margin_top = 8
-	card_style.content_margin_bottom = 8
+	card_style.content_margin_left = 6
+	card_style.content_margin_right = 6
+	card_style.content_margin_top = 6
+	card_style.content_margin_bottom = 6
 	card_panel.add_theme_stylebox_override(&"panel", card_style)
 	stack.add_child(card_panel)
 
 	var card_stack := VBoxContainer.new()
-	card_stack.add_theme_constant_override(&"separation", 6)
+	card_stack.add_theme_constant_override(&"separation", 3)
 	card_stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	card_stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card_panel.add_child(card_stack)
@@ -380,7 +356,7 @@ func _populate_route_button(
 	polarity_label.text = card.polarity_label()
 	polarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	polarity_label.add_theme_color_override(&"font_color", polarity)
-	polarity_label.add_theme_font_size_override(&"font_size", 12)
+	polarity_label.add_theme_font_size_override(&"font_size", 10)
 	polarity_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card_stack.add_child(polarity_label)
 
@@ -389,7 +365,7 @@ func _populate_route_button(
 		icon.texture = card.icon
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.custom_minimum_size = Vector2(56, 56)
+		icon.custom_minimum_size = Vector2(36, 36)
 		icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card_stack.add_child(icon)
@@ -399,7 +375,7 @@ func _populate_route_button(
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_label.add_theme_color_override(&"font_color", _ROUTE_ACCENT)
-	name_label.add_theme_font_size_override(&"font_size", 15)
+	name_label.add_theme_font_size_override(&"font_size", 13)
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card_stack.add_child(name_label)
 
@@ -408,10 +384,41 @@ func _populate_route_button(
 	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.add_theme_color_override(&"font_color", _ROUTE_MUTED)
-	body.add_theme_font_size_override(&"font_size", 11)
-	body.custom_minimum_size = Vector2(210, 0)
+	body.add_theme_font_size_override(&"font_size", 9)
+	body.custom_minimum_size = Vector2(196, 0)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card_stack.add_child(body)
+
+
+func _make_route_shop_slot(is_shop: bool) -> Control:
+	var slot := PanelContainer.new()
+	slot.custom_minimum_size = Vector2(0, 26)
+	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.set_corner_radius_all(4)
+	style.content_margin_left = 6
+	style.content_margin_right = 6
+	style.content_margin_top = 3
+	style.content_margin_bottom = 3
+	if is_shop:
+		style.bg_color = Color(0.18, 0.32, 0.48, 1.0)
+		style.border_color = _ROUTE_SHOP
+		style.set_border_width_all(1)
+	else:
+		style.bg_color = Color(0, 0, 0, 0)
+		style.set_border_width_all(0)
+	slot.add_theme_stylebox_override(&"panel", style)
+	var shop_label := Label.new()
+	shop_label.text = "SHOP STOP" if is_shop else " "
+	shop_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	shop_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	shop_label.add_theme_color_override(
+		&"font_color", _ROUTE_SHOP.lightened(0.25) if is_shop else Color(0, 0, 0, 0)
+	)
+	shop_label.add_theme_font_size_override(&"font_size", 11)
+	shop_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot.add_child(shop_label)
+	return slot
 
 
 func _make_route_style(bg: Color, border: Color, border_width: int) -> StyleBoxFlat:
@@ -420,10 +427,10 @@ func _make_route_style(bg: Color, border: Color, border_width: int) -> StyleBoxF
 	style.border_color = border
 	style.set_border_width_all(border_width)
 	style.set_corner_radius_all(8)
-	style.content_margin_left = 12
-	style.content_margin_right = 12
-	style.content_margin_top = 10
-	style.content_margin_bottom = 10
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
 	return style
 
 
