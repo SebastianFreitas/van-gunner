@@ -151,7 +151,14 @@ Breaking these is how the game stops being fun, so they're worth stating flatly.
 6. **Exactly 2 weapon slots**, swapped with scroll or Q. Never bind swapping to 1–4;
    those are tool slots.
 7. **Crafting spends `GameSession.coins`.** There is no second currency.
-8. `HitscanWeapon` is legacy and unused — don't build on it.
+8. **Do not add a hitscan gun.** Combat is projectile-only; the old `HitscanWeapon`
+   script is gone.
+9. **Run save version lives only on `SaveManager.SAVE_VERSION`.**
+   `GameSession.to_save_data()` must read that constant. Mismatched slot files are
+   rejected with a warning that names both versions — never fail silently.
+10. **`is_elite` is explicit.** Agile (window climbing, green tint) does not imply
+    elite loot. Set elite on the raider export, or via `mark_as_boss()` /
+    `EncounterDirector._spawn_boss`.
 
 The long-form reasoning behind all of this is in
 `docs/WEAPON_SYSTEM_VAN_GUNNER.md`, which is still an accurate description of the
@@ -188,11 +195,13 @@ Each of these has already cost someone real debugging time:
   shader sub-resource. Don't "optimise" it back.
 - **`debug_console.tscn` is `load()`ed, not `preload()`ed** in `van.gd`, so a broken
   console scene doesn't hard-fail the whole van scene at compile time.
-- **`DebugConfig.ENABLED` must be set to `false` before an export build.** It gates
-  the console and all debug commands.
-- **`ActCardRegistry` scans `res://resources/acts/cards/` with `DirAccess`.** Verify
-  this still lists cards in an exported build — Godot's "convert text resources to
-  binary" export option renames `.tres` and directory listings change accordingly.
+- **`DebugConfig.ENABLED`** is a `static var` initialised from
+  `OS.has_feature("debug")`. Editor and debug exports get the console (`H`);
+  release exports do not. Set `DebugConfig.FORCE_ENABLED` to `true` to ship the
+  console in a release build.
+- **`ActCardRegistry` scans `res://resources/acts/cards/` with `DirAccess`.** Packed
+  listings may use `foo.tres.remap`; `list_ids()` strips `.remap` before the
+  `.tres` check. An empty list `push_warning`s rather than failing quietly.
 
 ## 7. Deliberate choices — do not change these without asking
 
@@ -231,6 +240,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Touch guns | `scripts/weapons/` + `scripts/combat/gun_*.gd` |
 | Touch the van shell / doors / windows | `scripts/run/van_*.gd`, `side_*.gd`, `rear_doors.gd` |
 | Bench / crafting UI | `scripts/ui/bench_screen.gd` |
+| Bench screenshot tool | `tools/bench_preview.tscn` |
 | Shop | `scripts/run/shop_*.gd` |
 
 ## 9. Running and debugging

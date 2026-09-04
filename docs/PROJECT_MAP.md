@@ -107,10 +107,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal interaction_prompt_changed(text: String)`
 - `signal shot_fired(hit: bool)`
 
-**`scripts/player/hitscan_weapon.gd`**
-
-- `signal fired(hit: bool)`
-
 **`scripts/player/usables_controller.gd`**
 
 - `signal slots_changed`
@@ -220,13 +216,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-132 GDScript files, 21680 lines.
-
-### `./`
-
-| File | class_name | LOC | Summary |
-|---|---|---|---|
-| `bench_preview.gd` | — | 53 |  |
+131 GDScript files, 21634 lines.
 
 ### `scenes/corridor/`
 
@@ -264,8 +254,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `game_balance_data.gd` | `GameBalanceData` | 146 | Inspector-editable balance sheet for encounter pacing and act scaling. |
 | `game_session.gd` | — | 594 | How many face-down streets the player commits to the act boss. Array-backed |
 | `loot_collector.gd` | — | 88 | Teleports shot/swept pickups onto the van's center table. Gold is converted |
-| `meta_progression.gd` | — | 72 | FUTURE — persistent street-card back marks (meta, all runs): |
-| `save_manager.gd` | — | 71 |  |
+| `meta_progression.gd` | — | 76 | FUTURE — persistent street-card back marks (meta, all runs): |
+| `save_manager.gd` | — | 75 |  |
 | `scene_router.gd` | — | 68 | Sync load on the main thread. Threaded load of van.tscn fails cold with a |
 
 ### `scripts/debug/`
@@ -273,7 +263,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `debug_commands.gd` | — | 548 | Parses and runs debug console commands. Add new commands in _register_commands(). |
-| `debug_config.gd` | `DebugConfig` | 6 | Master switch for all debug tooling. Set to false before export builds. |
+| `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. Default follows the build. |
 
 ### `scripts/enemies/`
 
@@ -333,7 +323,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `boon_stat_handlers.gd` | — | 202 | Stat-based boon behavior handlers (add/mult traits, no flags required). |
 | `boon_traits.gd` | `BoonTraits` | 75 | Stores passive boon modifiers that combat systems query at runtime. |
 | `fps_player.gd` | `FpsPlayer` | 229 | Modal / menu UI owns the cursor — don't steal it back into FPS look. |
-| `hitscan_weapon.gd` | `HitscanWeapon` | 62 |  |
 | `usable_state.gd` | `UsableState` | 26 |  |
 | `usables_controller.gd` | `UsablesController` | 166 |  |
 
@@ -345,17 +334,17 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `act_card_definition.gd` | `ActCardDefinition` | 34 | Combat behavior lives in composable `effects`. Boss fights activate an Array of |
 | `act_card_effect.gd` | `ActCardEffect` | 45 | Base class for anything an active street card does while it is the road. |
 | `act_card_effect_context.gd` | `ActCardEffectContext` | 39 | Shared bag for street-card effect hooks. Effects mutate fields; ActCardCombat |
-| `act_card_registry.gd` | `ActCardRegistry` | 41 | Resolves act street-card definitions by id from resources/acts/cards/. |
+| `act_card_registry.gd` | `ActCardRegistry` | 48 | Resolves act street-card definitions by id from resources/acts/cards/. |
 | `act_deck_controller.gd` | `ActDeckController` | 176 | Owns act-start tarot reveals and the act-end boss pick. |
 | `boon_reward_controller.gd` | `BoonRewardController` | 120 | During REST, grants a 3-choice boon for the street card committed at the last fork. |
 | `breach_controller.gd` | `BreachController` | 183 | Assigns raid slots around the van and exposes the bench damage target. |
 | `breach_point.gd` | `BreachPoint` | 284 | Outside attack slot that must be breached (or opened) before mobs can enter. |
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). Surrounding metal stays. |
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. Same local frame as IronCross: |
-| `encounter_director.gd` | `EncounterDirector` | 379 | Soft cap: after this, surviving raiders of the current wave retreat. |
+| `encounter_director.gd` | `EncounterDirector` | 383 | Soft cap: after this, surviving raiders of the current wave retreat. |
 | `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
-| `loot_drop_component.gd` | `LootDropComponent` | 116 | Drop-in component that gives any enemy a chance to drop loot on death. |
+| `loot_drop_component.gd` | `LootDropComponent` | 114 | Drop-in component that gives any enemy a chance to drop loot on death. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
 | `rear_doors.gd` | — | 393 | Truck-style rear double doors. |
 | `road_floor.gd` | `RoadFloor` | 592 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter |
@@ -378,7 +367,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_player_containment.gd` | `VanPlayerContainment` | 69 | Invisible shell that keeps the player inside the van. Uses a dedicated physics |
 | `van_side_wall.gd` | `VanSideWall` | 1111 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, |
 | `weapon_shop_offer.gd` | `WeaponShopOffer` | 87 | Shop counter offer that sells a generated WeaponInstance for gold. |
-| `window_raider.gd` | `WindowRaider` | 380 | Agile raiders can climb window bars; door mobs only smash doors. |
+| `window_raider.gd` | `WindowRaider` | 378 | Agile raiders can climb window bars; door mobs only smash doors. |
 
 ### `scripts/run/effects/`
 
@@ -424,12 +413,17 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `weapon_pricing.gd` | `WeaponPricing` | 41 | Gold prices for shop weapon offers (mega-expensive vs typical boons). |
 | `weapon_stats_builder.gd` | `WeaponStatsBuilder` | 85 | Builds seed GunStats from balance + weapon definition + weapon mods (no flats). |
 
+### `tools/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `bench_preview.gd` | — | 53 |  |
+
 ## Scenes
 
 | Scene | Nodes | Root type |
 |---|---|---|
 | `VanModel.tscn` | 6 | Node3D |
-| `bench_preview.tscn` | 1 | Node |
 | `scenes/boot/boot.tscn` | 3 | Control |
 | `scenes/combat/projectile.tscn` | 4 | Area3D |
 | `scenes/corridor/act_statue.tscn` | 4 | Node3D |
@@ -458,6 +452,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |
 | `scenes/van/van_floor.tscn` | 1 | Node3D |
 | `scenes/van/van_side_wall.tscn` | 1 | Node3D |
+| `tools/bench_preview.tscn` | 1 | Node |
 
 ## Shaders
 
