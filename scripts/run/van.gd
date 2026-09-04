@@ -34,6 +34,7 @@ var _boon_choice: BoonChoicePanel
 var _boon_rewards: BoonRewardController
 var _driver_talk_open := false
 var _weapon_slots_hud: WeaponSlotsHud
+var _ammo_reload_tween: Tween
 
 
 func _ready() -> void:
@@ -123,18 +124,39 @@ func _on_ammo_changed(current: int, max_ammo: int) -> void:
 		if active:
 			name_prefix = active.family_code()
 	ammo_label.text = "%s  %d / %d" % [name_prefix, current, max_ammo]
+	## Snap chamber fill; reload tween (if any) is restarted from reloading_changed.
+	_kill_ammo_reload_tween()
 	ammo_bar.max_value = max_ammo
 	ammo_bar.value = current
 	var low_ammo := current <= maxi(1, floori(max_ammo * 0.25))
-	ammo_label.modulate = Color("#f0a84a") if low_ammo else Color("#e8d68c")
+	if not weapon.is_reloading():
+		ammo_label.modulate = Color("#f0a84a") if low_ammo else Color("#e8d68c")
 
 
 func _on_reloading_changed(reloading: bool) -> void:
 	reload_label.visible = reloading
+	_kill_ammo_reload_tween()
 	if reloading:
 		ammo_label.modulate = Color("#c8c8c8")
+		var mag := float(weapon.get_mag_size())
+		var remaining := weapon.get_reload_remaining()
+		ammo_bar.max_value = mag
+		if remaining <= 0.0:
+			ammo_bar.value = mag
+			return
+		## Fill the chamber bar in sync with reload time (from current rounds).
+		_ammo_reload_tween = create_tween()
+		_ammo_reload_tween.tween_property(ammo_bar, "value", mag, remaining).set_trans(
+			Tween.TRANS_LINEAR
+		)
 	else:
 		_on_ammo_changed(weapon.get_current_ammo(), weapon.get_mag_size())
+
+
+func _kill_ammo_reload_tween() -> void:
+	if _ammo_reload_tween and _ammo_reload_tween.is_valid():
+		_ammo_reload_tween.kill()
+	_ammo_reload_tween = null
 
 
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:

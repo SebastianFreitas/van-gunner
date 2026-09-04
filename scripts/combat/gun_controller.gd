@@ -21,6 +21,8 @@ var _stats_controller: GunStatsController
 var _current_ammo := 0
 var _next_shot_time := 0
 var _is_reloading := false
+## Absolute msec when the in-progress reload finishes; 0 if idle.
+var _reload_ends_at_msec := 0
 var _feedback_tween: Tween
 
 
@@ -112,6 +114,8 @@ func _spread_direction(base: Vector3, spread_degrees: float) -> Vector3:
 func set_ammo_state(current: int, reloading: bool = false) -> void:
 	_current_ammo = maxi(current, 0)
 	_is_reloading = reloading
+	if not reloading:
+		_reload_ends_at_msec = 0
 	ammo_changed.emit(_current_ammo, _get_stats().mag_size)
 	reloading_changed.emit(_is_reloading)
 
@@ -126,6 +130,7 @@ func apply_weapon_ammo_from_instance(instance: WeaponInstance) -> void:
 	else:
 		_current_ammo = mini(instance.current_ammo, mag)
 	_is_reloading = false
+	_reload_ends_at_msec = 0
 	if instance.is_reloading and instance.reload_ends_at_msec > Time.get_ticks_msec():
 		_resume_reload(instance)
 	else:
@@ -145,9 +150,10 @@ func capture_ammo_to_instance(instance: WeaponInstance) -> void:
 
 func _resume_reload(instance: WeaponInstance) -> void:
 	_is_reloading = true
-	reloading_changed.emit(true)
+	_reload_ends_at_msec = instance.reload_ends_at_msec
 	ammo_changed.emit(_current_ammo, _get_stats().mag_size)
-	var remaining_ms := maxi(instance.reload_ends_at_msec - Time.get_ticks_msec(), 0)
+	reloading_changed.emit(true)
+	var remaining_ms := maxi(_reload_ends_at_msec - Time.get_ticks_msec(), 0)
 	var remaining_sec := remaining_ms / 1000.0
 	if viewmodel:
 		viewmodel.play_reload(remaining_sec)
@@ -158,6 +164,7 @@ func _resume_reload(instance: WeaponInstance) -> void:
 		instance.is_reloading = false
 		instance.reload_ends_at_msec = 0
 	_is_reloading = false
+	_reload_ends_at_msec = 0
 	if viewmodel:
 		viewmodel.snap_rest()
 	_refill_magazine()
@@ -193,6 +200,13 @@ func get_mag_size() -> int:
 
 func is_reloading() -> bool:
 	return _is_reloading
+
+
+## Seconds left on the active reload, or 0 when not reloading.
+func get_reload_remaining() -> float:
+	if not _is_reloading or _reload_ends_at_msec <= 0:
+		return 0.0
+	return maxf((_reload_ends_at_msec - Time.get_ticks_msec()) / 1000.0, 0.0)
 
 
 func _get_stats() -> GunStats:
@@ -281,21 +295,22 @@ func _start_reload() -> void:
 	if _current_ammo >= stats.mag_size:
 		return
 	_is_reloading = true
-	reloading_changed.emit(true)
 	var duration := stats.reload_speed
-	var ends_at := Time.get_ticks_msec() + roundi(duration * 1000.0)
+	_reload_ends_at_msec = Time.get_ticks_msec() + roundi(duration * 1000.0)
 	if _stats_controller:
 		var inst := _stats_controller.get_weapon_instance()
 		if inst:
 			inst.is_reloading = true
-			inst.reload_ends_at_msec = ends_at
+			inst.reload_ends_at_msec = _reload_ends_at_msec
 			inst.current_ammo = _current_ammo
+	reloading_changed.emit(true)
 	if viewmodel:
 		viewmodel.play_reload(duration)
 	await get_tree().create_timer(duration).timeout
 	if not is_inside_tree():
 		return
 	_is_reloading = false
+	_reload_ends_at_msec = 0
 	if _stats_controller:
 		var inst2 := _stats_controller.get_weapon_instance()
 		if inst2:
