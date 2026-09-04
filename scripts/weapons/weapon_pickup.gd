@@ -9,10 +9,7 @@ var weapon_instance: WeaponInstance
 func setup(instance: WeaponInstance) -> void:
 	weapon_instance = instance
 	item = null
-	if sprite:
-		## Placeholder tinted quad until weapon icons exist.
-		sprite.modulate = _color_for_family(instance)
-		sprite.pixel_size = 0.006
+	_apply_visual()
 
 
 func _ready() -> void:
@@ -23,8 +20,16 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	if lifetime > 0.0:
 		get_tree().create_timer(lifetime).timeout.connect(_on_lifetime_expired)
-	if weapon_instance and sprite:
-		sprite.modulate = _color_for_family(weapon_instance)
+	_apply_visual()
+
+
+func _apply_visual() -> void:
+	if sprite == null or weapon_instance == null:
+		return
+	## Placeholder tinted glyph until real weapon icons exist.
+	sprite.texture = placeholder_texture()
+	sprite.modulate = _color_for_family(weapon_instance)
+	sprite.pixel_size = 0.006
 
 
 func _use(player: Node3D) -> void:
@@ -66,6 +71,29 @@ func _on_collected(_player: Node3D) -> void:
 func _toast(player: Node3D, text: String) -> void:
 	if player.has_signal("interaction_prompt_changed"):
 		player.interaction_prompt_changed.emit(text)
+
+
+static var _placeholder_tex: ImageTexture
+
+
+static func placeholder_texture() -> Texture2D:
+	if _placeholder_tex != null:
+		return _placeholder_tex
+	## Simple gun silhouette on a soft plate so Sprite3D has something to draw.
+	var img := Image.create(48, 32, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for y in range(6, 26):
+		for x in range(6, 42):
+			var on_plate := x >= 8 and x <= 40 and y >= 8 and y <= 24
+			var on_barrel := y >= 12 and y <= 16 and x >= 18 and x <= 40
+			var on_body := y >= 11 and y <= 20 and x >= 10 and x <= 22
+			var on_grip := y >= 16 and y <= 24 and x >= 12 and x <= 17
+			if on_barrel or on_body or on_grip:
+				img.set_pixel(x, y, Color.WHITE)
+			elif on_plate:
+				img.set_pixel(x, y, Color(1, 1, 1, 0.22))
+	_placeholder_tex = ImageTexture.create_from_image(img)
+	return _placeholder_tex
 
 
 static func _color_for_family(instance: WeaponInstance) -> Color:

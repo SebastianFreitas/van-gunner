@@ -1,12 +1,12 @@
 extends Node3D
 
 ## Rolls 3 unique items from the shop pool and places them on the counter.
-## Occasionally replaces one slot with an expensive generated weapon.
+## Always stocks a generated weapon in the last counter slot.
 
 @export var offer_count := 3
 @export var pool_key := "shop"
-## Chance [0,1] to stock a weapon in the last counter slot.
-@export_range(0.0, 1.0, 0.01) var weapon_offer_chance := 0.35
+## Chance [0,1] to stock a weapon in the last counter slot (1 = always).
+@export_range(0.0, 1.0, 0.01) var weapon_offer_chance := 1.0
 
 const _OFFER_SCENE := preload("res://scenes/shop/shop_offer.tscn")
 const _WEAPON_OFFER_SCENE := preload("res://scenes/shop/weapon_shop_offer.tscn")

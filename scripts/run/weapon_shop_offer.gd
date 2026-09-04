@@ -15,10 +15,9 @@ func setup_weapon(instance: WeaponInstance, price: int = -1) -> void:
 		_collision.disabled = false
 	_price = price if price >= 0 else WeaponPricing.shop_price(instance)
 	if _sprite:
-		var pickup_script = load("res://scripts/weapons/weapon_pickup.gd")
-		if pickup_script:
-			_sprite.modulate = pickup_script._color_for_family(instance)
-		_sprite.pixel_size = 0.006
+		_sprite.texture = WeaponPickup.placeholder_texture()
+		_sprite.modulate = WeaponPickup._color_for_family(instance)
+		_sprite.pixel_size = 0.007
 		_sprite.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 		_sprite.render_priority = 2
 	_base_y = position.y
