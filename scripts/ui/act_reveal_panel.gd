@@ -142,7 +142,11 @@ func _flip_card(index: int, card: ActCardDefinition) -> void:
 
 	var accent := DANGER_COLOR if card.is_danger() else BLESSING_COLOR
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.1, 0.11, 1.0)
+	style.bg_color = (
+		Color(0.16, 0.08, 0.08, 1.0)
+		if card.is_danger()
+		else Color(0.07, 0.13, 0.1, 1.0)
+	)
 	style.border_color = accent
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(6)

@@ -5,6 +5,12 @@ const _ActDeckController := preload("res://scripts/run/act_deck_controller.gd")
 const _BoonChoicePanel := preload("res://scripts/ui/boon_choice_panel.gd")
 const _BoonRewardController := preload("res://scripts/run/boon_reward_controller.gd")
 
+const _ROUTE_ACCENT := Color(0.91, 0.78, 0.48, 1.0)
+const _ROUTE_MUTED := Color(0.62, 0.66, 0.64, 1.0)
+const _ROUTE_BLESSING := Color(0.55, 0.78, 0.62, 1.0)
+const _ROUTE_DANGER := Color(0.86, 0.42, 0.36, 1.0)
+const _ROUTE_SHOP := Color(0.55, 0.74, 0.92, 1.0)
+
 @onready var player: FpsPlayer = $TravelPath/VanFollow/VanRig/Player
 @onready var weapon: GunController = $TravelPath/VanFollow/VanRig/Player/Head/Camera3D/Weapon
 @onready var usables: UsablesController = $TravelPath/VanFollow/VanRig/Player/Usables
@@ -250,31 +256,175 @@ func _refresh_route_choice_labels() -> void:
 	var offers := GameSession.peek_route_cards()
 	var left_card: ActCardDefinition = offers[0] if offers.size() > 0 else null
 	var right_card: ActCardDefinition = offers[1] if offers.size() > 1 else left_card
-	left_btn.custom_minimum_size = Vector2(210, 150)
-	right_btn.custom_minimum_size = Vector2(210, 150)
-	left_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	right_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	left_btn.text = _route_button_text(left_card, shop_side == &"left", true)
-	right_btn.text = _route_button_text(right_card, shop_side == &"right", false)
+	_populate_route_button(left_btn, left_card, shop_side == &"left", true)
+	_populate_route_button(right_btn, right_card, shop_side == &"right", false)
 	var hint: Label = %RouteChoice.get_node("Layout/Hint")
 	if shop_side == &"left":
-		hint.text = "Shop is on the left — each road still carries a street card."
+		hint.text = "Blue banner = shop stop. Green/red = blessing or danger street."
 	elif shop_side == &"right":
-		hint.text = "Shop is on the right — each road still carries a street card."
+		hint.text = "Blue banner = shop stop. Green/red = blessing or danger street."
 	else:
-		hint.text = "One street card per road. Pick a turn — or the road picks for you."
+		hint.text = "Green blessing · red danger — pick a turn, or the road picks for you."
 
 
-func _route_button_text(card: ActCardDefinition, is_shop: bool, is_left: bool) -> String:
-	var heading := "SHOP ←" if is_shop and is_left else ("SHOP →" if is_shop else ("← LEFT" if is_left else "RIGHT →"))
+func _populate_route_button(
+	button: Button, card: ActCardDefinition, is_shop: bool, is_left: bool
+) -> void:
+	for child in button.get_children():
+		button.remove_child(child)
+		child.queue_free()
+
+	button.text = ""
+	button.clip_contents = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.custom_minimum_size = Vector2(248, 292)
+	button.autowrap_mode = TextServer.AUTOWRAP_OFF
+
+	var is_danger := card != null and card.is_danger()
+	var polarity := _ROUTE_DANGER if is_danger else _ROUTE_BLESSING
+	var border := _ROUTE_SHOP if is_shop else polarity
+	var bg := Color(0.07, 0.09, 0.11, 1.0)
+	if is_shop:
+		bg = Color(0.08, 0.11, 0.16, 1.0)
+	elif card != null:
+		bg = (
+			Color(0.14, 0.08, 0.08, 1.0)
+			if is_danger
+			else Color(0.07, 0.12, 0.09, 1.0)
+		)
+
+	button.add_theme_stylebox_override(&"normal", _make_route_style(bg, border, 3 if is_shop else 2))
+	button.add_theme_stylebox_override(
+		&"hover",
+		_make_route_style(bg.lightened(0.08), border.lightened(0.12), 3 if is_shop else 2)
+	)
+	button.add_theme_stylebox_override(
+		&"pressed",
+		_make_route_style(bg.darkened(0.08), border.darkened(0.1), 3 if is_shop else 2)
+	)
+	button.add_theme_stylebox_override(&"focus", _make_route_style(bg, border, 3 if is_shop else 2))
+
+	var stack := VBoxContainer.new()
+	stack.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	stack.add_theme_constant_override(&"separation", 8)
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(stack)
+
+	var dir := Label.new()
+	dir.text = "← LEFT" if is_left else "RIGHT →"
+	dir.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dir.add_theme_color_override(&"font_color", _ROUTE_MUTED)
+	dir.add_theme_font_size_override(&"font_size", 12)
+	dir.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stack.add_child(dir)
+
+	if is_shop:
+		var shop_banner := PanelContainer.new()
+		shop_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var shop_style := StyleBoxFlat.new()
+		shop_style.bg_color = Color(0.18, 0.32, 0.48, 1.0)
+		shop_style.border_color = _ROUTE_SHOP
+		shop_style.set_border_width_all(1)
+		shop_style.set_corner_radius_all(4)
+		shop_style.content_margin_left = 8
+		shop_style.content_margin_right = 8
+		shop_style.content_margin_top = 6
+		shop_style.content_margin_bottom = 6
+		shop_banner.add_theme_stylebox_override(&"panel", shop_style)
+		var shop_label := Label.new()
+		shop_label.text = "SHOP STOP"
+		shop_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		shop_label.add_theme_color_override(&"font_color", _ROUTE_SHOP.lightened(0.25))
+		shop_label.add_theme_font_size_override(&"font_size", 14)
+		shop_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		shop_banner.add_child(shop_label)
+		stack.add_child(shop_banner)
+
+		var divider := ColorRect.new()
+		divider.custom_minimum_size = Vector2(0, 2)
+		divider.color = _ROUTE_SHOP.darkened(0.25)
+		divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		stack.add_child(divider)
+
 	if card == null:
-		return heading
-	return "%s\n\n%s\n%s\n%s" % [
-		heading,
-		card.polarity_label(),
-		card.display_name,
-		card.description.strip_edges(),
-	]
+		var empty := Label.new()
+		empty.text = "Unknown road"
+		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty.add_theme_color_override(&"font_color", _ROUTE_MUTED)
+		empty.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		stack.add_child(empty)
+		return
+
+	var card_panel := PanelContainer.new()
+	card_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	card_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var card_style := StyleBoxFlat.new()
+	card_style.bg_color = Color(0.05, 0.06, 0.07, 0.85)
+	card_style.border_color = polarity
+	card_style.set_border_width_all(2)
+	card_style.set_corner_radius_all(6)
+	card_style.content_margin_left = 8
+	card_style.content_margin_right = 8
+	card_style.content_margin_top = 8
+	card_style.content_margin_bottom = 8
+	card_panel.add_theme_stylebox_override(&"panel", card_style)
+	stack.add_child(card_panel)
+
+	var card_stack := VBoxContainer.new()
+	card_stack.add_theme_constant_override(&"separation", 6)
+	card_stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	card_stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card_panel.add_child(card_stack)
+
+	var polarity_label := Label.new()
+	polarity_label.text = card.polarity_label()
+	polarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	polarity_label.add_theme_color_override(&"font_color", polarity)
+	polarity_label.add_theme_font_size_override(&"font_size", 12)
+	polarity_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card_stack.add_child(polarity_label)
+
+	if card.icon:
+		var icon := TextureRect.new()
+		icon.texture = card.icon
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.custom_minimum_size = Vector2(56, 56)
+		icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card_stack.add_child(icon)
+
+	var name_label := Label.new()
+	name_label.text = card.display_name
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.add_theme_color_override(&"font_color", _ROUTE_ACCENT)
+	name_label.add_theme_font_size_override(&"font_size", 15)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card_stack.add_child(name_label)
+
+	var body := Label.new()
+	body.text = card.description.strip_edges()
+	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_theme_color_override(&"font_color", _ROUTE_MUTED)
+	body.add_theme_font_size_override(&"font_size", 11)
+	body.custom_minimum_size = Vector2(210, 0)
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card_stack.add_child(body)
+
+
+func _make_route_style(bg: Color, border: Color, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
+	return style
 
 
 ## Re-apply the correct mouse mode for the current phase / open overlays.
