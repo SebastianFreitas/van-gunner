@@ -4,12 +4,12 @@ extends Node3D
 ## Simple viewmodel motion: quarter-roll per shot, tip-up accelerating spin on reload.
 
 const SHOT_SPIN := TAU * 0.25
-const SHOT_SPIN_DURATION := 0.1
+const SHOT_SPIN_DURATION := 0.32
 const RELOAD_TIP_RAD := deg_to_rad(42.0)
-const RELOAD_TIP_UP := 0.16
-const RELOAD_TIP_DOWN := 0.2
-const RELOAD_SPIN_START := 4.0
-const RELOAD_SPIN_END := 38.0
+const RELOAD_TIP_UP := 0.28
+const RELOAD_TIP_DOWN := 0.32
+const RELOAD_SPIN_START := 2.0
+const RELOAD_SPIN_END := 18.0
 
 @onready var _rig: Node3D = $Rig
 
@@ -45,7 +45,7 @@ func play_shot() -> void:
 	var target := start - SHOT_SPIN
 	_shot_tween = create_tween()
 	_shot_tween.tween_method(_set_roll, start, target, SHOT_SPIN_DURATION).set_trans(
-		Tween.TRANS_BACK
+		Tween.TRANS_CUBIC
 	).set_ease(Tween.EASE_OUT)
 
 
