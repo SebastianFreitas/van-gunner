@@ -1,5 +1,6 @@
 class_name DebugConfig
 extends RefCounted
 
-## Master switch for all debug tooling. Set to false before export builds.
-const ENABLED := true
+## Set true to ship the console in a release export. Default follows the build.
+const FORCE_ENABLED := false
+static var ENABLED: bool = OS.has_feature("debug") or FORCE_ENABLED
