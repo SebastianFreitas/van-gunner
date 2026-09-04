@@ -1,7 +1,7 @@
 extends Node
 
 const SLOT_COUNT := 3
-const SAVE_VERSION := 2
+const SAVE_VERSION := 4
 const SAVE_PATH := "user://save_slot_%d.json"
 
 
@@ -42,8 +42,12 @@ func load_slot_data(slot: int) -> Dictionary:
 		push_warning("Save slot %d is not valid JSON data." % slot)
 		return {}
 	var data: Dictionary = parsed
-	if int(data.get("version", -1)) != SAVE_VERSION:
-		push_warning("Save slot %d uses an unsupported version." % slot)
+	var file_version := int(data.get("version", -1))
+	if file_version != SAVE_VERSION:
+		push_warning(
+			"Save slot %d uses version %d; this build expects %d."
+			% [slot, file_version, SAVE_VERSION]
+		)
 		return {}
 	return data
 

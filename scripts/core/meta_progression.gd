@@ -51,8 +51,12 @@ func load_profile() -> void:
 		push_warning("Meta progression save is not valid JSON.")
 		return
 	var data: Dictionary = parsed
-	if int(data.get("version", -1)) != SAVE_VERSION:
-		push_warning("Meta progression save uses an unsupported version.")
+	var file_version := int(data.get("version", -1))
+	if file_version != SAVE_VERSION:
+		push_warning(
+			"Meta progression save uses version %d; this build expects %d."
+			% [file_version, SAVE_VERSION]
+		)
 		return
 	van_speed_level = maxi(0, int(data.get("van_speed_level", 0)))
 

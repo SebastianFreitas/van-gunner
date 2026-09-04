@@ -569,7 +569,7 @@ func to_save_data() -> Dictionary:
 	for card_id in boss_modifier_card_ids:
 		boss_strings.append(String(card_id))
 	return {
-		"version": 4,
+		"version": SaveManager.SAVE_VERSION,
 		"run_seed": run_seed,
 		"route_step": route_step,
 		"wave_count": wave_count,
