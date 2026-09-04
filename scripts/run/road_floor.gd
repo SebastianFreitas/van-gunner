@@ -23,6 +23,10 @@ extends Node3D
 ## (use for side-street / shop openings so we don't stack sidewalk under the branch).
 @export var sidewalk_left := true
 @export var sidewalk_right := true
+## Shorten sidewalk/curb/gutter before the +Z / -Z tile edge so a corner
+## return can own the mouth instead of leaving a blunt end-cap.
+@export var sidewalk_trim_z_pos := 0.0
+@export var sidewalk_trim_z_neg := 0.0
 @export var include_collision := true
 @export var detail_seed := 0
 @export var rebuild_on_ready := true
@@ -66,6 +70,7 @@ func set_side_openings(left_open: bool, right_open: bool) -> void:
 ## L-shaped sidewalk + curb return at one footprint corner.
 ## `corner_x` / `corner_z` are ±1 selecting the corner; `extent_*` is how far the
 ## pad reaches inward from that edge (usually the adjoining sidewalk widths).
+## `outward` reaches past the tile edge onto adjoining stem/branch slabs.
 ## Parents meshes under `host` so junction tiles can keep returns if this floor rebuilds.
 func spawn_corner_return(
 	host: Node3D,
@@ -73,21 +78,21 @@ func spawn_corner_return(
 	corner_z: float,
 	extent_x: float,
 	extent_z: float,
-	name_prefix: String = "Corner"
+	name_prefix: String = "Corner",
+	outward: float = 0.25
 ) -> void:
 	var sx := signf(corner_x)
 	var sz := signf(corner_z)
 	if sx == 0.0 or sz == 0.0:
 		return
-	var ex := maxf(0.05, extent_x)
-	var ez := maxf(0.05, extent_z)
-	# Slight overlap into adjoining slabs hides the end-cap seam.
-	const OVERLAP := 0.04
-	ex += OVERLAP
-	ez += OVERLAP
+	var in_x := maxf(0.05, extent_x)
+	var in_z := maxf(0.05, extent_z)
+	var out := maxf(0.02, outward)
+	var ex := in_x + out
+	var ez := in_z + out
 
 	var walk_mat := sidewalk_material if sidewalk_material else _sidewalk_mat(
-		Vector2(maxf(0.5, extent_x), maxf(0.5, extent_z))
+		Vector2(maxf(0.5, in_x), maxf(0.5, in_z))
 	)
 	var curb_mat := curb_material if curb_material else _std(
 		Color(0.3, 0.29, 0.265, 1.0), 0.9, 0.02
@@ -102,9 +107,9 @@ func spawn_corner_return(
 
 	var edge_x := sx * half_x
 	var edge_z := sz * half_z
-	# Inward from the outer corner (overlap extends slightly past the tile edge).
-	var pad_cx := edge_x - sx * (ex * 0.5 - OVERLAP * 0.5)
-	var pad_cz := edge_z - sz * (ez * 0.5 - OVERLAP * 0.5)
+	# Inward by in_*, outward past the tile edge by out (covers trimmed end-caps).
+	var pad_cx := edge_x - sx * (in_x - out) * 0.5
+	var pad_cz := edge_z - sz * (in_z - out) * 0.5
 
 	_add_box_centered_to(
 		host,
@@ -118,16 +123,16 @@ func spawn_corner_return(
 	var curb_w := curb_face_depth
 	var curb_h := curb_height + 0.02
 	var curb_y := road_surface_y + curb_h * 0.5
-	# Inner faces of the L (toward carriageway).
-	var inner_x := edge_x - sx * (ex - OVERLAP)
-	var inner_z := edge_z - sz * (ez - OVERLAP)
+	# Inner faces of the L (toward carriageway), flush with inward extents.
+	var inner_x := edge_x - sx * in_x
+	var inner_z := edge_z - sz * in_z
 
 	# Curb strip parallel to Z (faces the road along ±X).
 	_add_box_centered_to(
 		host,
 		"%sCurbZ" % name_prefix,
-		Vector3(curb_w, curb_h, ez - OVERLAP),
-		Vector3(inner_x + sx * curb_w * 0.5, curb_y, edge_z - sz * ((ez - OVERLAP) * 0.5)),
+		Vector3(curb_w, curb_h, in_z + out * 0.5),
+		Vector3(inner_x + sx * curb_w * 0.5, curb_y, edge_z - sz * (in_z - out * 0.5) * 0.5),
 		curb_mat,
 		false
 	)
@@ -135,9 +140,9 @@ func spawn_corner_return(
 	_add_box_centered_to(
 		host,
 		"%sCurbX" % name_prefix,
-		Vector3(ex - OVERLAP - curb_w, curb_h, curb_w),
+		Vector3(in_x + out * 0.5 - curb_w, curb_h, curb_w),
 		Vector3(
-			edge_x - sx * ((ex - OVERLAP + curb_w) * 0.5),
+			edge_x - sx * (in_x - out * 0.5 + curb_w) * 0.5,
 			curb_y,
 			inner_z + sz * curb_w * 0.5
 		),
@@ -194,19 +199,22 @@ func _build() -> void:
 
 	var walk_thickness := sidewalk_top - slab_bottom
 	var walk_center_x := half_x - sidewalk_width * 0.5
+	var walk_span := _sidewalk_span_z()
+	var walk_len: float = walk_span.x
+	var walk_cz: float = walk_span.y
 	if sidewalk_left:
 		_add_box_centered(
 			"SidewalkLeft",
-			Vector3(sidewalk_width, walk_thickness, span_z),
-			Vector3(-walk_center_x, slab_bottom + walk_thickness * 0.5, 0.0),
+			Vector3(sidewalk_width, walk_thickness, walk_len),
+			Vector3(-walk_center_x, slab_bottom + walk_thickness * 0.5, walk_cz),
 			walk_mat,
 			true
 		)
 	if sidewalk_right:
 		_add_box_centered(
 			"SidewalkRight",
-			Vector3(sidewalk_width, walk_thickness, span_z),
-			Vector3(walk_center_x, slab_bottom + walk_thickness * 0.5, 0.0),
+			Vector3(sidewalk_width, walk_thickness, walk_len),
+			Vector3(walk_center_x, slab_bottom + walk_thickness * 0.5, walk_cz),
 			walk_mat,
 			true
 		)
@@ -217,16 +225,16 @@ func _build() -> void:
 	if sidewalk_left:
 		_add_box_centered(
 			"GutterLeft",
-			Vector3(gutter_width, gutter_thickness, span_z),
-			Vector3(-gutter_center_x, slab_bottom + gutter_thickness * 0.5, 0.0),
+			Vector3(gutter_width, gutter_thickness, walk_len),
+			Vector3(-gutter_center_x, slab_bottom + gutter_thickness * 0.5, walk_cz),
 			dark_mat,
 			true
 		)
 	if sidewalk_right:
 		_add_box_centered(
 			"GutterRight",
-			Vector3(gutter_width, gutter_thickness, span_z),
-			Vector3(gutter_center_x, slab_bottom + gutter_thickness * 0.5, 0.0),
+			Vector3(gutter_width, gutter_thickness, walk_len),
+			Vector3(gutter_center_x, slab_bottom + gutter_thickness * 0.5, walk_cz),
 			dark_mat,
 			true
 		)
@@ -237,16 +245,16 @@ func _build() -> void:
 	if sidewalk_left:
 		_add_box_centered(
 			"CurbLeft",
-			Vector3(curb_w, curb_h, span_z),
-			Vector3(-curb_x, road_surface_y + curb_h * 0.5, 0.0),
+			Vector3(curb_w, curb_h, walk_len),
+			Vector3(-curb_x, road_surface_y + curb_h * 0.5, walk_cz),
 			curb_mat,
 			false
 		)
 	if sidewalk_right:
 		_add_box_centered(
 			"CurbRight",
-			Vector3(curb_w, curb_h, span_z),
-			Vector3(curb_x, road_surface_y + curb_h * 0.5, 0.0),
+			Vector3(curb_w, curb_h, walk_len),
+			Vector3(curb_x, road_surface_y + curb_h * 0.5, walk_cz),
 			curb_mat,
 			false
 		)
@@ -395,11 +403,14 @@ func _build_sidewalk_dressing(
 	rng.seed = _seed_value(73)
 	var walk_inner := half_x - sidewalk_width
 	var walk_mid := half_x - sidewalk_width * 0.5
+	var half_z := span_z * 0.5
+	var z_min := -half_z + maxf(0.0, sidewalk_trim_z_neg) + 0.4
+	var z_max := half_z - maxf(0.0, sidewalk_trim_z_pos) - 0.4
 
 	# Utility boxes against the wall line, sparse.
-	var z := -span_z * 0.35
+	var z := z_min + span_z * 0.1
 	var i := 0
-	while z < span_z * 0.4:
+	while z < z_max - span_z * 0.05:
 		for side: float in [-1.0, 1.0]:
 			if side < 0.0 and not sidewalk_left:
 				continue
@@ -422,9 +433,9 @@ func _build_sidewalk_dressing(
 		i += 1
 
 	# Short bollards near curb, sparse along each side.
-	z = -span_z * 0.4
+	z = z_min + span_z * 0.05
 	i = 0
-	while z < span_z * 0.4:
+	while z < z_max:
 		for side: float in [-1.0, 1.0]:
 			if side < 0.0 and not sidewalk_left:
 				continue
@@ -453,9 +464,9 @@ func _build_sidewalk_dressing(
 
 	# Sidewalk slab seams (visual only).
 	var seam_spacing := 1.2
-	var sz := -span_z * 0.5 + seam_spacing
+	var sz := z_min + seam_spacing * 0.5
 	i = 0
-	while sz < span_z * 0.5 - 0.4:
+	while sz < z_max:
 		for side: float in [-1.0, 1.0]:
 			if side < 0.0 and not sidewalk_left:
 				continue
@@ -524,6 +535,30 @@ func _seed_value(salt: int) -> int:
 		return int(detail_seed) ^ salt
 	# Stable per footprint so tiled segments don't shimmer when rebuilt.
 	return hash(Vector3(span_x, span_z, float(salt)))
+
+
+## Returns (length along Z, center Z) for sidewalk/curb/gutter after end trims.
+func _sidewalk_span_z() -> Vector2:
+	var half_z := span_z * 0.5
+	var z_neg := -half_z + maxf(0.0, sidewalk_trim_z_neg)
+	var z_pos := half_z - maxf(0.0, sidewalk_trim_z_pos)
+	var length := maxf(0.05, z_pos - z_neg)
+	return Vector2(length, (z_neg + z_pos) * 0.5)
+
+
+## Trim sidewalk/curb ends then rebuild (for junction / side-street mouths).
+func set_sidewalk_end_trims(trim_z_pos: float, trim_z_neg: float) -> void:
+	var want_pos := maxf(0.0, trim_z_pos)
+	var want_neg := maxf(0.0, trim_z_neg)
+	if (
+		is_equal_approx(sidewalk_trim_z_pos, want_pos)
+		and is_equal_approx(sidewalk_trim_z_neg, want_neg)
+		and _built
+	):
+		return
+	sidewalk_trim_z_pos = want_pos
+	sidewalk_trim_z_neg = want_neg
+	rebuild()
 
 
 func _asphalt_mat(_surface_size_m: Vector2) -> ShaderMaterial:

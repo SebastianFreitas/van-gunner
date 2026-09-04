@@ -51,6 +51,7 @@ script = ExtResource("3_junction")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 14.55)
 span_x = 18.0
 span_z = 11.1
+sidewalk_width = 1.1
 detail_seed = 21
 
 [node name="JunctionRoad" parent="." instance=ExtResource("2_road_floor")]

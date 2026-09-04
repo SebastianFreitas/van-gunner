@@ -1,6 +1,7 @@
 extends Node3D
 
 const VARIANT_COUNT := 4
+const SIDE_STREET_CORNER_INSET := 0.85
 
 @onready var _variants: Array[Node3D] = [
 	$Structure/Variant0,
@@ -64,10 +65,66 @@ func _sync_road_openings() -> void:
 		return
 	# Wall collision disabled means the side is open (side street or shop bay).
 	# Drop sidewalk there so branch / bay road meets flush carriageway.
-	_road_floor.set_side_openings(
-		_left_wall_collision.disabled,
-		_right_wall_collision.disabled
-	)
+	var left_open := _left_wall_collision.disabled
+	var right_open := _right_wall_collision.disabled
+	_road_floor.set_side_openings(left_open, right_open)
+	_sync_side_street_branch_trims(left_open, right_open)
+	_build_side_street_corner_returns(left_open, right_open)
+
+
+func _sync_side_street_branch_trims(left_open: bool, right_open: bool) -> void:
+	# Trim branch sidewalk ends at the corridor mouth so corner returns own it.
+	var left_road := _side_street_road(_side_street_left)
+	if left_road:
+		if left_open:
+			left_road.set_sidewalk_end_trims(0.0, SIDE_STREET_CORNER_INSET)
+		else:
+			left_road.set_sidewalk_end_trims(0.0, 0.0)
+	var right_road := _side_street_road(_side_street_right)
+	if right_road:
+		if right_open:
+			right_road.set_sidewalk_end_trims(0.0, SIDE_STREET_CORNER_INSET)
+		else:
+			right_road.set_sidewalk_end_trims(0.0, 0.0)
+
+
+func _build_side_street_corner_returns(left_open: bool, right_open: bool) -> void:
+	var existing := get_node_or_null("SideStreetCorners")
+	if existing:
+		remove_child(existing)
+		existing.free()
+	if not left_open and not right_open:
+		return
+
+	var host := Node3D.new()
+	host.name = "SideStreetCorners"
+	add_child(host)
+
+	var main_w := _road_floor.sidewalk_width
+	var outward := SIDE_STREET_CORNER_INSET + 0.08
+
+	if left_open:
+		var left_w := main_w
+		var left_road := _side_street_road(_side_street_left)
+		if left_road:
+			left_w = left_road.sidewalk_width
+		# Mouth corners on the open left edge (±Z).
+		_road_floor.spawn_corner_return(host, -1.0, 1.0, main_w, left_w, "LeftPos", outward)
+		_road_floor.spawn_corner_return(host, -1.0, -1.0, main_w, left_w, "LeftNeg", outward)
+
+	if right_open:
+		var right_w := main_w
+		var right_road := _side_street_road(_side_street_right)
+		if right_road:
+			right_w = right_road.sidewalk_width
+		_road_floor.spawn_corner_return(host, 1.0, 1.0, main_w, right_w, "RightPos", outward)
+		_road_floor.spawn_corner_return(host, 1.0, -1.0, main_w, right_w, "RightNeg", outward)
+
+
+func _side_street_road(side_street: Node3D) -> RoadFloor:
+	if side_street == null:
+		return null
+	return side_street.get_node_or_null("RoadFloor") as RoadFloor
 
 
 func _set_side_structure_visible(side: StringName, structure_visible: bool) -> void:
