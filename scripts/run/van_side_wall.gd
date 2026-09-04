@@ -538,6 +538,7 @@ func _add_side(side_name: StringName, wall_sign: float, mat: Material) -> void:
 	mi.name = String(side_name)
 	mi.mesh = _build_side_mesh(wall_sign)
 	mi.material_override = mat
+	mi.layers = VanLighting.LAYER_VAN_INTERIOR
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
 
@@ -682,6 +683,7 @@ func _add_door_jambs(wall_sign: float, mat: Material) -> void:
 	# Mesh is built around local origin — parent must sit on the wall (same as SideDoors leaves).
 	mi.position = Vector3(wall_sign * x_ref, mid_y, door_center_z)
 	mi.material_override = mat
+	mi.layers = VanLighting.LAYER_VAN_INTERIOR
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
 
@@ -894,6 +896,7 @@ func _add_door_slide_tracks(mat: Material) -> void:
 		track.material_override = mat
 		track.position = Vector3(wall_sign * (x - wall_sign * 0.035), track_y, z_mid)
 		track.rotation.z = wall_sign * lean
+		track.layers = VanLighting.LAYER_VAN_INTERIOR
 		track.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		add_child(track)
 
@@ -921,6 +924,7 @@ func _add_floor_seal_strips(mat: Material) -> void:
 		seal.material_override = mat
 		seal.position = Vector3(wall_sign * seal_center_x, seal_y, z_mid)
 		seal.rotation.z = wall_sign * lean
+		seal.layers = VanLighting.LAYER_VAN_INTERIOR
 		seal.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		add_child(seal)
 
@@ -953,6 +957,7 @@ func _add_rail_segments(mat: Material, rail_y: float, ranges: Array) -> void:
 			# Sit just proud of the interior face.
 			rail.position = Vector3(wall_sign * (x - wall_sign * 0.025), rail_y, z_mid)
 			rail.rotation.z = wall_sign * lean
+			rail.layers = VanLighting.LAYER_VAN_INTERIOR
 			rail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 			add_child(rail)
 		idx += 1

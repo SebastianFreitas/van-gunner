@@ -39,6 +39,7 @@ func _build() -> void:
 	vault.name = "Vault"
 	vault.mesh = _build_vault_mesh()
 	vault.material_override = ceiling_mat
+	vault.layers = VanLighting.LAYER_VAN_INTERIOR
 	vault.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(vault)
 
@@ -203,6 +204,7 @@ func _build_ceiling_lights() -> void:
 		housing.mesh = cyl
 		housing.material_override = fixture_mat
 		housing.position = Vector3(lp.x, ly, lp.z)
+		housing.layers = VanLighting.LAYER_VAN_INTERIOR
 		housing.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		add_child(housing)
 
@@ -217,6 +219,7 @@ func _build_ceiling_lights() -> void:
 		lens.mesh = disc
 		lens.material_override = lens_mat
 		lens.position = Vector3(lp.x, ly - 0.035, lp.z)
+		lens.layers = VanLighting.LAYER_VAN_INTERIOR
 		lens.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(lens)
 
@@ -259,6 +262,7 @@ func _build_tie_down_rings() -> void:
 		ring.material_override = ring_mat
 		ring.position = Vector3(rp.x, ry, rp.z)
 		ring.rotation_degrees = Vector3(90.0, 0.0, 0.0)
+		ring.layers = VanLighting.LAYER_VAN_INTERIOR
 		ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		add_child(ring)
 
@@ -309,6 +313,7 @@ func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material
 	mi.mesh = box
 	mi.material_override = material
 	mi.position = pos
+	mi.layers = VanLighting.LAYER_VAN_INTERIOR
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
 
@@ -332,6 +337,7 @@ func _add_cylinder_run(
 	mi.material_override = material
 	mi.position = pos
 	mi.rotation_degrees = rot_deg
+	mi.layers = VanLighting.LAYER_VAN_INTERIOR
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
 

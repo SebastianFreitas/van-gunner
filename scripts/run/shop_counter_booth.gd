@@ -68,6 +68,13 @@ func _ready() -> void:
 	_build()
 
 
+func _exit_tree() -> void:
+	# Force Forward+ to unpair before lights leave the scenario (Godot #121989-adjacent).
+	for child in get_children():
+		if child is Light3D:
+			(child as Light3D).visible = false
+
+
 func _build() -> void:
 	var steel := _steel_material()
 	var deck_mat := _deck_material()

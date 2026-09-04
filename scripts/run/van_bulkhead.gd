@@ -386,6 +386,7 @@ func _add_box(
 	mi.position = pos
 	mi.rotation = euler
 	mi.material_override = material
+	mi.layers = VanLighting.LAYER_VAN_INTERIOR
 	# Interior layer geometry still casts DoorSpill shadows; the mesh partition
 	# should not occlude that light (only the outer shell should).
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

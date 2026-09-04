@@ -35,6 +35,7 @@ func _build() -> void:
 	deck.name = "Deck"
 	deck.mesh = _build_deck_mesh()
 	deck.material_override = deck_mat
+	deck.layers = VanLighting.LAYER_VAN_INTERIOR
 	deck.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	deck.position = Vector3(0.0, -deck_thickness * 0.5, 0.0)
 	add_child(deck)
@@ -169,6 +170,7 @@ func _build_rear_entry_ramp() -> void:
 	mesh.material_override = metal
 	mesh.position = Vector3(0.0, center_y, center_z)
 	mesh.rotation.x = angle
+	mesh.layers = VanLighting.LAYER_VAN_INTERIOR
 	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mesh)
 
@@ -260,6 +262,7 @@ func _add_flat(node_name: String, size: Vector2, pos: Vector3, yaw_deg: float, m
 	mi.material_override = material
 	mi.position = pos
 	mi.rotation_degrees = Vector3(0.0, yaw_deg, 0.0)
+	mi.layers = VanLighting.LAYER_VAN_INTERIOR
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mi.sorting_offset = 0.02
 	add_child(mi)
@@ -273,6 +276,7 @@ func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material
 	mi.mesh = box
 	mi.material_override = material
 	mi.position = pos
+	mi.layers = VanLighting.LAYER_VAN_INTERIOR
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
 

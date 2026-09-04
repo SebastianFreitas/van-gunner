@@ -188,7 +188,10 @@ func _spawn_blast_fx(center: Vector3) -> void:
 
 	var tween := flash.create_tween()
 	tween.tween_property(flash, "light_energy", 0.0, 0.28)
-	tween.tween_callback(flash.queue_free)
+	tween.tween_callback(func() -> void:
+		flash.visible = false
+		flash.queue_free()
+	)
 
 
 func _to_reference_direction(world_direction: Vector3) -> Vector3:
