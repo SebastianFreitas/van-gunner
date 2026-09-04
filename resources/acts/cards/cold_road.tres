@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ActCardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"cold_road"
+display_name = "Cold Road"
+description = "+10 cold damage dealt against enemies"
+polarity = 0
+cold_damage_bonus = 10.0
+enemy_speed_mult = 1.0
+enemy_loot_chance_bonus = 0.0

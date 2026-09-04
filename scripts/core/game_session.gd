@@ -26,10 +26,8 @@ enum RunPhase {
 
 const BASE_MAX_VAN_HEALTH := 100.0
 const ACT_CARD_COUNT := 6
-const ACT_BOON_COUNT := 3
+const ACT_BLESSING_COUNT := 3
 const ACT_DANGER_COUNT := 3
-const CARD_BOON := &"boon"
-const CARD_DANGER := &"danger"
 
 var selected_slot := 0
 var run_seed := 0
@@ -48,10 +46,15 @@ var pending_weapons_save = null
 
 ## 1-based act index; 0 means no deck has been drawn yet.
 var run_act := 0
-## Play-order deck of CARD_BOON / CARD_DANGER (length ACT_CARD_COUNT when active).
+## Remaining play-order deck of ActCardDefinition ids.
 var act_cards: Array[StringName] = []
-var act_card_index := 0
-## Set when a DANGER card resolves; consumed when the next combat segment starts.
+## How many cards this act started with (for HUD progress).
+var act_cards_total := 0
+## Street card committed at the last route choice; combat reads modifiers from this.
+var active_street_card_id: StringName = &""
+## Card that still owes a REST boon pick (usually same as active until resolved).
+var pending_boon_card_id: StringName = &""
+## Set when a DANGER street is chosen; consumed when the next combat segment starts.
 var pending_danger := false
 
 const _LEFT_AREA_CYCLE: Array[ItemDefinition.BoonPool] = [
@@ -101,9 +104,13 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 	coins = maxi(0, int(data.get("coins", 0)))
 	current_area = _area_from_save(int(data.get("current_area", ItemDefinition.BoonPool.GENERAL)))
 	run_act = maxi(0, int(data.get("run_act", 0)))
-	act_card_index = maxi(0, int(data.get("act_card_index", 0)))
+	act_cards_total = maxi(0, int(data.get("act_cards_total", 0)))
 	pending_danger = bool(data.get("pending_danger", false))
+	active_street_card_id = StringName(str(data.get("active_street_card_id", "")))
+	pending_boon_card_id = StringName(str(data.get("pending_boon_card_id", "")))
 	act_cards = _cards_from_save(data.get("act_cards", []))
+	if act_cards_total <= 0 and not act_cards.is_empty():
+		act_cards_total = ACT_CARD_COUNT
 	set_chill_mode(false)
 	var stored_phase := int(data.get("phase", RunPhase.IDLE))
 	phase = (stored_phase as RunPhase) if stored_phase in RunPhase.values() else RunPhase.IDLE
@@ -220,6 +227,7 @@ func choose_route(direction: StringName) -> void:
 	route_step += 1
 	current_area = _resolve_area_for_fork(direction, route_step)
 	area_changed.emit(current_area)
+	_commit_route_card(direction)
 	route_chosen.emit(direction, route_step)
 	set_phase(RunPhase.TURNING)
 	SaveManager.save_active_session()
@@ -246,44 +254,58 @@ func get_area_flavor_name(area: ItemDefinition.BoonPool = current_area) -> Strin
 
 
 func needs_act_reveal() -> bool:
-	return act_cards.is_empty() or act_card_index >= act_cards.size()
+	return act_cards.is_empty() and pending_boon_card_id == &""
 
 
-## Builds a fresh 3-boon / 3-danger deck, shuffles play order, returns a display-order
-## multiset (also shuffled, independent of play order) for the reveal UI.
-func begin_new_act_deck() -> Array[StringName]:
+## Builds a fresh 3-blessing / 3-danger deck, shuffles play order, returns display-order
+## cards (also shuffled, independent of play order) for the reveal UI.
+func begin_new_act_deck() -> Array[ActCardDefinition]:
 	run_act += 1
-	act_card_index = 0
 	pending_danger = false
-	var deck: Array[StringName] = []
-	for _i in ACT_BOON_COUNT:
-		deck.append(CARD_BOON)
-	for _i in ACT_DANGER_COUNT:
-		deck.append(CARD_DANGER)
+	active_street_card_id = &""
+	pending_boon_card_id = &""
+	var deck_ids := _build_act_deck_ids()
 	var play_rng := _act_rng(0)
-	_shuffle_cards(deck, play_rng)
-	act_cards = deck
-	var display: Array[StringName] = act_cards.duplicate()
+	_shuffle_card_ids(deck_ids, play_rng)
+	act_cards = deck_ids
+	act_cards_total = act_cards.size()
+	var display_ids: Array[StringName] = act_cards.duplicate()
 	var display_rng := _act_rng(1)
-	_shuffle_cards(display, display_rng)
-	return display
+	_shuffle_card_ids(display_ids, display_rng)
+	return _resolve_card_ids(display_ids)
 
 
-func peek_next_act_card() -> StringName:
-	if act_card_index < 0 or act_card_index >= act_cards.size():
-		return &""
-	return act_cards[act_card_index]
+func peek_route_cards() -> Array[ActCardDefinition]:
+	## Up to two face-up offers for left / right. With one card left, both sides show it.
+	var offers: Array[ActCardDefinition] = []
+	if act_cards.is_empty():
+		return offers
+	var left := ActCardRegistry.load_by_id(act_cards[0])
+	if left:
+		offers.append(left)
+	if act_cards.size() >= 2:
+		var right := ActCardRegistry.load_by_id(act_cards[1])
+		if right:
+			offers.append(right)
+	elif left:
+		offers.append(left)
+	return offers
 
 
-## Advances one card. DANGER sets pending_danger. Returns the resolved kind.
-func resolve_next_act_card() -> StringName:
-	if act_card_index < 0 or act_card_index >= act_cards.size():
-		return &""
-	var kind := act_cards[act_card_index]
-	act_card_index += 1
-	if kind == CARD_DANGER:
-		pending_danger = true
-	return kind
+func get_active_street_card() -> ActCardDefinition:
+	return ActCardRegistry.load_by_id(active_street_card_id)
+
+
+func get_pending_boon_card() -> ActCardDefinition:
+	return ActCardRegistry.load_by_id(pending_boon_card_id)
+
+
+func clear_pending_boon_card() -> void:
+	pending_boon_card_id = &""
+
+
+func act_cards_resolved_count() -> int:
+	return clampi(act_cards_total - act_cards.size(), 0, act_cards_total)
 
 
 func consume_pending_danger() -> bool:
@@ -293,10 +315,63 @@ func consume_pending_danger() -> bool:
 	return true
 
 
+func _commit_route_card(direction: StringName) -> void:
+	if act_cards.is_empty():
+		active_street_card_id = &""
+		pending_boon_card_id = &""
+		pending_danger = false
+		return
+	var offer_index := 0
+	if act_cards.size() >= 2 and direction == &"right":
+		offer_index = 1
+	var card_id := act_cards[offer_index]
+	act_cards.remove_at(offer_index)
+	active_street_card_id = card_id
+	pending_boon_card_id = card_id
+	var card := ActCardRegistry.load_by_id(card_id)
+	pending_danger = card != null and card.is_danger()
+
+
+func _build_act_deck_ids() -> Array[StringName]:
+	var deck: Array[StringName] = []
+	var blessings := ActCardRegistry.list_by_polarity(ActCardDefinition.Polarity.BLESSING)
+	var dangers := ActCardRegistry.list_by_polarity(ActCardDefinition.Polarity.DANGER)
+	var pick_rng := _act_rng(2)
+	for _i in ACT_BLESSING_COUNT:
+		deck.append(_pick_card_id(blessings, pick_rng, &"cold_road"))
+	for _i in ACT_DANGER_COUNT:
+		deck.append(_pick_card_id(dangers, pick_rng, &"hasty_pack"))
+	return deck
+
+
+func _pick_card_id(
+	pool: Array[ActCardDefinition],
+	rng: RandomNumberGenerator,
+	fallback_id: StringName
+) -> StringName:
+	if pool.is_empty():
+		return fallback_id
+	var card: ActCardDefinition = pool[rng.randi_range(0, pool.size() - 1)]
+	if card and card.id != &"":
+		return card.id
+	return fallback_id
+
+
+func _resolve_card_ids(ids: Array[StringName]) -> Array[ActCardDefinition]:
+	var cards: Array[ActCardDefinition] = []
+	for card_id in ids:
+		var card := ActCardRegistry.load_by_id(card_id)
+		if card:
+			cards.append(card)
+	return cards
+
+
 func _reset_act_deck() -> void:
 	run_act = 0
 	act_cards.clear()
-	act_card_index = 0
+	act_cards_total = 0
+	active_street_card_id = &""
+	pending_boon_card_id = &""
 	pending_danger = false
 
 
@@ -306,7 +381,7 @@ func _act_rng(channel: int) -> RandomNumberGenerator:
 	return rng
 
 
-func _shuffle_cards(cards: Array[StringName], rng: RandomNumberGenerator) -> void:
+func _shuffle_card_ids(cards: Array[StringName], rng: RandomNumberGenerator) -> void:
 	for i in range(cards.size() - 1, 0, -1):
 		var j := rng.randi_range(0, i)
 		var tmp := cards[i]
@@ -332,9 +407,14 @@ func _cards_from_save(raw) -> Array[StringName]:
 	if typeof(raw) != TYPE_ARRAY:
 		return cards
 	for entry in raw:
-		var kind := StringName(str(entry))
-		if kind == CARD_BOON or kind == CARD_DANGER:
-			cards.append(kind)
+		var card_id := StringName(str(entry))
+		## Migrate legacy type-only decks to placeholder resources.
+		if card_id == &"boon":
+			card_id = &"cold_road"
+		elif card_id == &"danger":
+			card_id = &"hasty_pack"
+		if card_id != &"":
+			cards.append(card_id)
 	return cards
 
 
@@ -349,10 +429,10 @@ func to_save_data() -> Dictionary:
 			if inv != null and inv.has_method("to_save_dict"):
 				weapons = inv.to_save_dict()
 	var card_strings: Array[String] = []
-	for kind in act_cards:
-		card_strings.append(String(kind))
+	for card_id in act_cards:
+		card_strings.append(String(card_id))
 	return {
-		"version": 3,
+		"version": 4,
 		"run_seed": run_seed,
 		"route_step": route_step,
 		"wave_count": wave_count,
@@ -363,8 +443,10 @@ func to_save_data() -> Dictionary:
 		"phase": phase,
 		"current_area": int(current_area),
 		"run_act": run_act,
-		"act_card_index": act_card_index,
+		"act_cards_total": act_cards_total,
 		"act_cards": card_strings,
+		"active_street_card_id": String(active_street_card_id),
+		"pending_boon_card_id": String(pending_boon_card_id),
 		"pending_danger": pending_danger,
 		"weapons": weapons,
 		"saved_at": Time.get_datetime_string_from_system(),

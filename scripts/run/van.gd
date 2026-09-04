@@ -2,6 +2,7 @@ extends Node3D
 
 const _ActRevealPanel := preload("res://scripts/ui/act_reveal_panel.gd")
 const _ActDeckController := preload("res://scripts/run/act_deck_controller.gd")
+const _BoonChoicePanel := preload("res://scripts/ui/boon_choice_panel.gd")
 const _BoonRewardController := preload("res://scripts/run/boon_reward_controller.gd")
 
 @onready var player: FpsPlayer = $TravelPath/VanFollow/VanRig/Player
@@ -36,6 +37,7 @@ const _BoonRewardController := preload("res://scripts/run/boon_reward_controller
 var _debug_console: Control
 var _act_reveal: Control
 var _act_deck: Node
+var _boon_choice: Control
 var _boon_rewards: Node
 var _driver_talk_open := false
 var _weapon_slots_hud: WeaponSlotsHud
@@ -77,9 +79,12 @@ func _ready() -> void:
 	_act_deck = _ActDeckController.new()
 	add_child(_act_deck)
 	_act_deck.bind(_act_reveal)
+	_boon_choice = _BoonChoicePanel.new()
+	$HUD.add_child(_boon_choice)
+	_boon_choice.bind(player)
 	_boon_rewards = _BoonRewardController.new()
 	add_child(_boon_rewards)
-	_boon_rewards.bind(player)
+	_boon_rewards.bind(player, _boon_choice)
 	driver_talk_panel.hide()
 	_refresh_driver_talk_options()
 	_setup_weapon_slots_hud()
@@ -220,6 +225,8 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	]
 	if _act_reveal and _act_reveal.visible:
 		bench_blocked = true
+	if _boon_choice and _boon_choice.visible:
+		bench_blocked = true
 	if _driver_talk_open:
 		bench_blocked = true
 	if bench_screen.visible:
@@ -237,22 +244,43 @@ func _refresh_route_choice_labels() -> void:
 	var shop_side: StringName = &""
 	if travel and travel.has_method(&"get_shop_fork_side"):
 		shop_side = travel.get_shop_fork_side()
-	left_btn.text = "SHOP ←" if shop_side == &"left" else "TURN LEFT"
-	right_btn.text = "SHOP →" if shop_side == &"right" else "TURN RIGHT"
+	var offers := GameSession.peek_route_cards()
+	var left_card: ActCardDefinition = offers[0] if offers.size() > 0 else null
+	var right_card: ActCardDefinition = offers[1] if offers.size() > 1 else left_card
+	left_btn.custom_minimum_size = Vector2(210, 150)
+	right_btn.custom_minimum_size = Vector2(210, 150)
+	left_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	right_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	left_btn.text = _route_button_text(left_card, shop_side == &"left", true)
+	right_btn.text = _route_button_text(right_card, shop_side == &"right", false)
 	var hint: Label = %RouteChoice.get_node("Layout/Hint")
 	if shop_side == &"left":
-		hint.text = "Shop is on the left — or take the other road."
+		hint.text = "Shop is on the left — each road still carries a street card."
 	elif shop_side == &"right":
-		hint.text = "Shop is on the right — or take the other road."
+		hint.text = "Shop is on the right — each road still carries a street card."
 	else:
-		hint.text = "Pick a turn — or the road picks for you."
+		hint.text = "One street card per road. Pick a turn — or the road picks for you."
+
+
+func _route_button_text(card: ActCardDefinition, is_shop: bool, is_left: bool) -> String:
+	var heading := "SHOP ←" if is_shop and is_left else ("SHOP →" if is_shop else ("← LEFT" if is_left else "RIGHT →"))
+	if card == null:
+		return heading
+	return "%s\n\n%s\n%s\n%s" % [
+		heading,
+		card.polarity_label(),
+		card.display_name,
+		card.description.strip_edges(),
+	]
 
 
 func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
 	var reveal_open := _act_reveal != null and _act_reveal.visible
+	var boon_open := _boon_choice != null and _boon_choice.visible
 	var free_cursor: bool = (
 		_driver_talk_open
 		or reveal_open
+		or boon_open
 		or phase in [
 			GameSession.RunPhase.ROUTE_CHOICE,
 			GameSession.RunPhase.GAME_OVER,
@@ -313,13 +341,13 @@ func _on_health_changed(current: float, maximum: float) -> void:
 
 
 func _on_wave_changed(wave: int) -> void:
-	var card_i := GameSession.act_card_index
-	var card_total := GameSession.act_cards.size()
+	var card_total := GameSession.act_cards_total
 	if card_total > 0:
+		var resolved := GameSession.act_cards_resolved_count()
 		wave_label.text = "WAVES  %d  ·  ACT %d  ·  CARD %d/%d" % [
 			wave,
 			GameSession.run_act,
-			mini(card_i + 1, card_total),
+			mini(resolved + 1, card_total),
 			card_total,
 		]
 	else:

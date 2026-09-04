@@ -1,20 +1,26 @@
 class_name BoonRewardController
 extends Node
 
-## Resolves the next act-deck card during REST (auto-grant BOON or flag DANGER).
+## During REST, grants a 3-choice boon for the street card committed at the last fork.
 
 signal rest_resolved
 
-const GRANT_BEAT_SECONDS := 1.6
+const CHOICE_COUNT := 3
 
 var _player: Node3D
+var _panel: Control
 var _awaiting_resolution := false
 
 
-func bind(player: Node3D) -> void:
+func bind(player: Node3D, panel: Control = null) -> void:
 	_player = player
+	_panel = panel
 	add_to_group(&"boon_reward_controller")
-	GameSession.phase_changed.connect(_on_phase_changed)
+	if not GameSession.phase_changed.is_connected(_on_phase_changed):
+		GameSession.phase_changed.connect(_on_phase_changed)
+	if _panel and _panel.has_signal(&"choice_made"):
+		if not _panel.choice_made.is_connected(_on_choice_made):
+			_panel.choice_made.connect(_on_choice_made)
 
 
 func is_awaiting_resolution() -> bool:
@@ -32,45 +38,57 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	if next_phase != GameSession.RunPhase.REST:
 		_awaiting_resolution = false
 		return
-	# Intro / pre-combat rests do not resolve act cards.
+	# Intro / pre-combat rests do not grant street boons.
 	if GameSession.wave_count <= 0:
 		return
+	if GameSession.pending_boon_card_id == &"":
+		return
 	if _is_debug_speed_mode():
-		_resolve_card_immediate()
+		_grant_boon_immediate()
 		return
 	_awaiting_resolution = true
-	_resolve_card()
+	_present_boon_choices()
 
 
-func _resolve_card_immediate() -> void:
-	if GameSession.needs_act_reveal():
+func _grant_boon_immediate() -> void:
+	if GameSession.pending_boon_card_id == &"":
 		return
-	var kind := GameSession.resolve_next_act_card()
-	if kind == GameSession.CARD_BOON:
-		_grant_boon()
+	_auto_collect_one()
+	GameSession.clear_pending_boon_card()
+	SaveManager.save_active_session()
 
 
-func _resolve_card() -> void:
-	if GameSession.needs_act_reveal():
-		_awaiting_resolution = false
-		rest_resolved.emit()
+func _present_boon_choices() -> void:
+	if not _player:
+		_finish_resolution()
 		return
-	var kind := GameSession.resolve_next_act_card()
-	match kind:
-		GameSession.CARD_BOON:
-			_grant_boon()
-			await get_tree().create_timer(GRANT_BEAT_SECONDS).timeout
-		GameSession.CARD_DANGER:
-			_toast_danger()
-			await get_tree().create_timer(GRANT_BEAT_SECONDS).timeout
-		_:
-			pass
+	var exclude := _owned_boon_ids()
+	var area := GameSession.get_rest_area()
+	var choices := ItemPoolRegistry.pick_rest_choices(area, CHOICE_COUNT, exclude)
+	if choices.is_empty():
+		_finish_resolution()
+		return
+	if _panel and _panel.has_method(&"present"):
+		_panel.present(choices)
+	else:
+		choices[0].collect(_player)
+		_finish_resolution()
+
+
+func _on_choice_made(_item: ItemDefinition) -> void:
+	if not _awaiting_resolution:
+		return
+	_finish_resolution()
+
+
+func _finish_resolution() -> void:
+	GameSession.clear_pending_boon_card()
 	_awaiting_resolution = false
 	rest_resolved.emit()
 	SaveManager.save_active_session()
 
 
-func _grant_boon() -> void:
+func _auto_collect_one() -> void:
 	if not _player:
 		return
 	var exclude := _owned_boon_ids()
@@ -80,12 +98,6 @@ func _grant_boon() -> void:
 		return
 	var item: ItemDefinition = choices[0]
 	item.collect(_player)
-
-
-func _toast_danger() -> void:
-	var host := get_parent()
-	if host and host.has_method(&"_show_message"):
-		host.call(&"_show_message", "DANGER  —  HARD ROAD AHEAD")
 
 
 func _owned_boon_ids() -> Array:

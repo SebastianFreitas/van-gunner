@@ -1,13 +1,13 @@
 class_name ActRevealPanel
 extends Control
 
-## Act-start overlay: flips type-only BOON / DANGER cards, then shuffles order out of view.
+## Act-start overlay: flips street cards (name + modifiers), then shuffles order out of view.
 
 signal reveal_finished
 
 const ACCENT := Color(0.91, 0.78, 0.48, 1.0)
 const MUTED := Color(0.62, 0.66, 0.64, 1.0)
-const BOON_COLOR := Color(0.55, 0.78, 0.62, 1.0)
+const BLESSING_COLOR := Color(0.55, 0.78, 0.62, 1.0)
 const DANGER_COLOR := Color(0.86, 0.42, 0.36, 1.0)
 const CARD_BACK := Color(0.12, 0.14, 0.16, 1.0)
 const FLIP_DELAY := 0.35
@@ -25,7 +25,7 @@ func _ready() -> void:
 	hide()
 
 
-func present(display_cards: Array[StringName], act_number: int, area_flavor: String) -> void:
+func present(display_cards: Array[ActCardDefinition], act_number: int, area_flavor: String) -> void:
 	_clear()
 	if display_cards.is_empty():
 		hide()
@@ -63,7 +63,7 @@ func present(display_cards: Array[StringName], act_number: int, area_flavor: Str
 	stack.add_child(flavor)
 
 	var hint := Label.new()
-	hint.text = "Six cards. Content shown. Sequence stays hidden."
+	hint.text = "Six streets. Modifiers shown. Sequence stays hidden. One boon each."
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_color_override(&"font_color", MUTED)
 	hint.add_theme_font_size_override(&"font_size", 12)
@@ -102,7 +102,7 @@ func dismiss() -> void:
 	hide()
 
 
-func _run_reveal(display_cards: Array[StringName], present_id: int) -> void:
+func _run_reveal(display_cards: Array[ActCardDefinition], present_id: int) -> void:
 	for i in display_cards.size():
 		if present_id != _present_id:
 			return
@@ -123,31 +123,53 @@ func _run_reveal(display_cards: Array[StringName], present_id: int) -> void:
 		_continue_btn.disabled = false
 
 
-func _flip_card(index: int, kind: StringName) -> void:
-	if index < 0 or index >= _card_panels.size():
+func _flip_card(index: int, card: ActCardDefinition) -> void:
+	if index < 0 or index >= _card_panels.size() or card == null:
 		return
 	var panel := _card_panels[index]
 	for child in panel.get_children():
 		panel.remove_child(child)
 		child.queue_free()
 
-	var is_boon := kind == GameSession.CARD_BOON
+	var accent := DANGER_COLOR if card.is_danger() else BLESSING_COLOR
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.08, 0.1, 0.11, 1.0)
-	style.border_color = BOON_COLOR if is_boon else DANGER_COLOR
+	style.border_color = accent
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(6)
 	panel.add_theme_stylebox_override(&"panel", style)
 
-	var label := Label.new()
-	label.text = "BOON" if is_boon else "DANGER"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	label.add_theme_color_override(&"font_color", BOON_COLOR if is_boon else DANGER_COLOR)
-	label.add_theme_font_size_override(&"font_size", 16)
-	panel.add_child(label)
-	_card_labels.append(label)
+	var stack := VBoxContainer.new()
+	stack.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	stack.add_theme_constant_override(&"separation", 4)
+	panel.add_child(stack)
+
+	var polarity := Label.new()
+	polarity.text = card.polarity_label()
+	polarity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	polarity.add_theme_color_override(&"font_color", accent)
+	polarity.add_theme_font_size_override(&"font_size", 11)
+	stack.add_child(polarity)
+
+	var name_label := Label.new()
+	name_label.text = card.display_name
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.add_theme_color_override(&"font_color", ACCENT)
+	name_label.add_theme_font_size_override(&"font_size", 13)
+	stack.add_child(name_label)
+
+	var body := Label.new()
+	body.text = card.description.strip_edges()
+	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_theme_color_override(&"font_color", MUTED)
+	body.add_theme_font_size_override(&"font_size", 10)
+	body.custom_minimum_size = Vector2(100, 0)
+	stack.add_child(body)
+
+	_card_labels.append(name_label)
 
 	panel.scale = Vector2(0.85, 1.0)
 	var tween := create_tween()
@@ -164,9 +186,16 @@ func _play_shuffle(present_id: int) -> void:
 			return
 		# Hide faces during the shuffle so play order cannot be read from layout.
 		for child in panel.get_children():
-			if child is Label:
-				(child as Label).text = "?"
-				(child as Label).add_theme_color_override(&"font_color", MUTED)
+			panel.remove_child(child)
+			child.queue_free()
+		var q := Label.new()
+		q.text = "?"
+		q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		q.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		q.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+		q.add_theme_color_override(&"font_color", MUTED)
+		q.add_theme_font_size_override(&"font_size", 28)
+		panel.add_child(q)
 		var style := StyleBoxFlat.new()
 		style.bg_color = CARD_BACK
 		style.border_color = MUTED
@@ -187,8 +216,8 @@ func _play_shuffle(present_id: int) -> void:
 
 func _make_card_back() -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(96, 140)
-	panel.pivot_offset = Vector2(48, 70)
+	panel.custom_minimum_size = Vector2(118, 168)
+	panel.pivot_offset = Vector2(59, 84)
 	var style := StyleBoxFlat.new()
 	style.bg_color = CARD_BACK
 	style.border_color = ACCENT

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ActCardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hasty_pack"
+display_name = "Hasty Pack"
+description = "Enemies move a bit faster"
+polarity = 1
+cold_damage_bonus = 0.0
+enemy_speed_mult = 1.15
+enemy_loot_chance_bonus = 0.1
