@@ -276,7 +276,8 @@ func begin_new_act_deck() -> Array[ActCardDefinition]:
 
 
 func peek_route_cards() -> Array[ActCardDefinition]:
-	## Up to two face-up offers for left / right. With one card left, both sides show it.
+	## Two face-up offers for left / right. Pick one; the other stays in the deck.
+	## With one card left, both sides show it.
 	var offers: Array[ActCardDefinition] = []
 	if act_cards.is_empty():
 		return offers
