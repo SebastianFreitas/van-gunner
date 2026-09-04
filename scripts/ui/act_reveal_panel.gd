@@ -1,7 +1,8 @@
 class_name ActRevealPanel
 extends Control
 
-## Act-start overlay: flips street cards (name + modifiers), then shuffles order out of view.
+## Act-start overlay: flips street cards (name + modifiers) and waits.
+## Continue then shuffles them into a face-down pile so play order stays hidden.
 
 signal reveal_finished
 
@@ -122,12 +123,6 @@ func _run_reveal(display_cards: Array[ActCardDefinition], present_id: int) -> vo
 
 	if present_id != _present_id:
 		return
-	await get_tree().create_timer(0.25).timeout
-	if present_id != _present_id:
-		return
-	await _play_shuffle(present_id)
-	if present_id != _present_id:
-		return
 	if _continue_btn:
 		_continue_btn.disabled = false
 
@@ -201,35 +196,66 @@ func _flip_card(index: int, card: ActCardDefinition) -> void:
 func _play_shuffle(present_id: int) -> void:
 	if _card_panels.is_empty():
 		return
-	var tween := create_tween()
-	tween.set_parallel(true)
+
+	var pile_host := Control.new()
+	pile_host.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	pile_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(pile_host)
+
+	var start_globals: Array[Vector2] = []
+	var start_sizes: Array[Vector2] = []
 	for panel in _card_panels:
+		start_globals.append(panel.global_position)
+		start_sizes.append(panel.size)
+
+	var row := _card_panels[0].get_parent() as Control
+	if row:
+		row.custom_minimum_size = row.size
+
+	var pile_center := Vector2.ZERO
+	for origin in start_globals:
+		pile_center += origin
+	pile_center /= float(start_globals.size())
+	pile_center += start_sizes[0] * 0.5
+
+	for i in _card_panels.size():
 		if present_id != _present_id:
 			return
-		# Hide faces during the shuffle so play order cannot be read from layout.
-		for child in panel.get_children():
-			panel.remove_child(child)
-			child.queue_free()
-		var q := Label.new()
-		q.text = "?"
-		q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		q.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		q.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-		q.add_theme_color_override(&"font_color", MUTED)
-		q.add_theme_font_size_override(&"font_size", 28)
-		panel.add_child(q)
-		var style := StyleBoxFlat.new()
-		style.bg_color = CARD_BACK
-		style.border_color = MUTED
-		style.set_border_width_all(2)
-		style.set_corner_radius_all(6)
-		panel.add_theme_stylebox_override(&"panel", style)
-		var offset := Vector2(randf_range(-28.0, 28.0), randf_range(-10.0, 10.0))
-		tween.tween_property(panel, "position", panel.position + offset, SHUFFLE_DURATION * 0.5)
-		tween.tween_property(panel, "modulate:a", 0.35, SHUFFLE_DURATION).set_delay(
-			SHUFFLE_DURATION * 0.35
+		var panel := _card_panels[i]
+		_show_card_back(panel)
+		panel.reparent(pile_host)
+		panel.size = start_sizes[i]
+		panel.global_position = start_globals[i]
+		panel.pivot_offset = panel.size * 0.5
+		panel.z_index = i
+
+	var gather := create_tween()
+	gather.set_parallel(true)
+	for i in _card_panels.size():
+		var panel := _card_panels[i]
+		var jitter := Vector2(randf_range(-10.0, 10.0), randf_range(-8.0, 8.0))
+		var dest := pile_center - panel.size * 0.5 + jitter
+		var delay := float(i) * 0.045
+		gather.tween_property(panel, "global_position", dest, SHUFFLE_DURATION).set_delay(delay)
+		gather.tween_property(panel, "rotation", randf_range(-0.22, 0.22), SHUFFLE_DURATION).set_delay(
+			delay
 		)
-	await tween.finished
+	await gather.finished
+	if present_id != _present_id:
+		return
+
+	var mix := create_tween()
+	mix.set_parallel(true)
+	for panel in _card_panels:
+		var mix_dest := (
+			pile_center
+			- panel.size * 0.5
+			+ Vector2(randf_range(-12.0, 12.0), randf_range(-10.0, 10.0))
+		)
+		mix.tween_property(panel, "global_position", mix_dest, 0.22)
+		mix.tween_property(panel, "rotation", randf_range(-0.28, 0.28), 0.22)
+		mix.tween_property(panel, "modulate:a", 0.35, 0.28)
+	await mix.finished
 	if present_id != _present_id:
 		return
 	for panel in _card_panels:
@@ -240,26 +266,37 @@ func _make_card_back() -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(118, 196)
 	panel.pivot_offset = Vector2(59, 98)
+	_show_card_back(panel, ACCENT)
+	return panel
+
+
+func _show_card_back(panel: PanelContainer, border_color: Color = MUTED) -> void:
+	for child in panel.get_children():
+		panel.remove_child(child)
+		child.queue_free()
+	var q := Label.new()
+	q.text = "?"
+	q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	q.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	q.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	q.add_theme_color_override(&"font_color", MUTED)
+	q.add_theme_font_size_override(&"font_size", 28)
+	panel.add_child(q)
 	var style := StyleBoxFlat.new()
 	style.bg_color = CARD_BACK
-	style.border_color = ACCENT
+	style.border_color = border_color
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(6)
 	panel.add_theme_stylebox_override(&"panel", style)
 
-	var label := Label.new()
-	label.text = "?"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	label.add_theme_color_override(&"font_color", MUTED)
-	label.add_theme_font_size_override(&"font_size", 28)
-	panel.add_child(label)
-	return panel
-
 
 func _on_continue_pressed() -> void:
-	dismiss()
+	if _continue_btn:
+		_continue_btn.disabled = true
+	var present_id := _present_id
+	await _play_shuffle(present_id)
+	if present_id != _present_id:
+		return
 	reveal_finished.emit()
 
 
