@@ -19,16 +19,23 @@ static func list_ids() -> Array[StringName]:
 	var ids: Array[StringName] = []
 	var dir := DirAccess.open(_SEARCH_DIR)
 	if not dir:
+		push_warning("ActCardRegistry: could not open %s." % _SEARCH_DIR)
 		return ids
 	dir.list_dir_begin()
 	var file_name := dir.get_next()
 	while file_name != "":
-		if not dir.current_is_dir() and file_name.ends_with(".tres"):
-			ids.append(StringName(file_name.get_basename()))
+		if not dir.current_is_dir():
+			var listed := file_name
+			if listed.ends_with(".remap"):
+				listed = listed.trim_suffix(".remap")
+			if listed.ends_with(".tres"):
+				ids.append(StringName(listed.get_basename()))
 		file_name = dir.get_next()
 	ids.sort_custom(func(a: StringName, b: StringName) -> bool:
 		return String(a) < String(b)
 	)
+	if ids.is_empty():
+		push_warning("ActCardRegistry: no street cards found in %s." % _SEARCH_DIR)
 	return ids
 
 
