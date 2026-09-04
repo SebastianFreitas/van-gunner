@@ -72,9 +72,13 @@ func spawn_debug_raider() -> String:
 	var raider := _spawn_raider(0, 1)
 	if raider == null:
 		return "Failed to spawn raider."
-	return "Spawned raider → %s." % (
-		String(raider.assigned_breach.point_id) if raider.assigned_breach else "free"
-	)
+	var breach := String(raider.assigned_breach.point_id) if raider.assigned_breach else "free"
+	return "Spawned raider → %s (agile=%s elite=%s boss=%s)." % [
+		breach,
+		raider.is_agile,
+		raider.is_elite,
+		raider.is_boss,
+	]
 
 
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:

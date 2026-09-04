@@ -12,7 +12,7 @@ enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH }
 @export var max_health := 3.0
 ## Agile raiders can climb window bars; door mobs only smash doors.
 @export var is_agile := false
-## Elite flag for rare weapon drops (agile counts as elite by default).
+## Elite flag for rare weapon drops. Set explicitly (boss spawn / inspector), never from agility.
 @export var is_elite := false
 
 ## Derived world chase speed for this act. Closing = mob_world_speed - live van speed.
@@ -51,8 +51,6 @@ func _ready() -> void:
 	add_to_group(&"enemy")
 	if is_agile:
 		add_to_group(&"agile")
-		if not is_elite:
-			is_elite = true
 		_base_modulate = Color(0.35, 0.95, 0.45)
 		sprite.modulate = _base_modulate
 	health = max_health

@@ -62,8 +62,6 @@ func _try_weapon_drop(world_position: Vector3, container: Node) -> void:
 	var host := get_parent()
 	if host != null and "is_elite" in host:
 		elite = bool(host.is_elite)
-	elif host != null and "is_agile" in host and bool(host.is_agile):
-		elite = true
 	if elite:
 		chance += GameBalance.WEAPON_DROP_CHANCE_ELITE_BONUS
 	## Roll 1..100 as in the design doc.
