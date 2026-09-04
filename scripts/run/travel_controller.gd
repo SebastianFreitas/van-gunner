@@ -105,6 +105,7 @@ func _ready() -> void:
 	MetaProgression.van_speed_changed.connect(_on_van_speed_changed)
 	if GameSession.phase == GameSession.RunPhase.TRAVELLING:
 		_maybe_start_intro()
+		_maybe_resume_act_flow()
 
 
 func _apply_meta_travel_speed() -> void:
@@ -158,6 +159,7 @@ func can_boost() -> bool:
 		and GameSession.phase != GameSession.RunPhase.SHOP
 		and GameSession.phase != GameSession.RunPhase.PARKING
 		and GameSession.phase != GameSession.RunPhase.ACT_REVEAL
+		and GameSession.phase != GameSession.RunPhase.BOSS_PICK
 	)
 
 
@@ -202,6 +204,7 @@ func is_act_reveal_active() -> bool:
 	return (
 		_act_reveal_pending
 		or GameSession.phase == GameSession.RunPhase.ACT_REVEAL
+		or GameSession.phase == GameSession.RunPhase.BOSS_PICK
 		or is_instance_valid(_active_statue)
 	)
 
@@ -442,7 +445,7 @@ func _sample_route_transform(progress: float) -> Transform3D:
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	if next_phase == GameSession.RunPhase.TRAVELLING:
 		_maybe_start_intro()
-		_maybe_resume_act_reveal()
+		_maybe_resume_act_flow()
 	elif next_phase == GameSession.RunPhase.ROUTE_CHOICE:
 		_prepare_shop_fork()
 		_spawn_approaching_junction()
@@ -462,17 +465,35 @@ func _maybe_start_intro() -> void:
 	_run_intro(id)
 
 
-## After save/load (or exhausted deck mid-street), re-run the statue reveal.
-func _maybe_resume_act_reveal() -> void:
+## After save/load (or exhausted deck mid-street), re-run statue reveal or boss pick.
+func _maybe_resume_act_flow() -> void:
 	if GameSession.route_step <= 0:
-		return
-	if not GameSession.needs_act_reveal():
 		return
 	if is_act_reveal_active():
 		return
+	if GameSession.needs_boss_pick():
+		_sequence_id += 1
+		_run_resume_boss_pick(_sequence_id)
+		return
+	if not GameSession.needs_act_reveal():
+		return
 	_sequence_id += 1
-	var id := _sequence_id
-	_run_resume_act_reveal(id)
+	_run_resume_act_reveal(_sequence_id)
+
+
+func _run_resume_boss_pick(id: int) -> void:
+	var act_deck := get_tree().get_first_node_in_group(&"act_deck_controller")
+	if act_deck and act_deck.has_method(&"begin_boss_pick_if_needed"):
+		act_deck.begin_boss_pick_if_needed()
+		if act_deck.has_method(&"wait_for_boss_pick_resolution"):
+			await act_deck.wait_for_boss_pick_resolution()
+	elif GameSession.needs_boss_pick():
+		GameSession.commit_boss_picks([])
+	if id == _sequence_id and GameSession.phase in [
+		GameSession.RunPhase.BOSS_PICK,
+		GameSession.RunPhase.TRAVELLING,
+	]:
+		GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
 
 
 func _run_resume_act_reveal(id: int) -> void:

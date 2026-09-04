@@ -8,13 +8,16 @@ extends Resource
 ## spawn, or loot code changes required unless you need a brand-new hook.
 ##
 ## Lifecycle:
-##   on_activate(ctx)          — card becomes the active street (route commit / load)
-##   on_deactivate(ctx)        — card clears (new act / empty deck)
+##   on_activate(ctx)          — card becomes active (route commit / boss stack / load)
+##   on_deactivate(ctx)        — card clears (new act / boss end / empty deck)
 ## Query hooks (while active):
 ##   modify_outgoing_damage    — player hits (after boons)
 ##   configure_enemy           — each raider spawn
 ##   modify_item_drop_chance   — death loot roll
 ##   modify_wave_plan          — optional wave-size bump (danger polarity still works too)
+##
+## Boss fights activate an Array of cards; every hook runs once per card so
+## modifiers stack. Keep effects additive / multiplicative, not "set absolute".
 
 
 func on_activate(_ctx: ActCardEffectContext) -> void:

@@ -38,14 +38,16 @@ func _sync_spawn_marker_to_balance() -> void:
 func _encounters_enabled() -> bool:
 	if GameSession.route_step <= 0 or GameSession.chill_mode:
 		return false
-	if GameSession.needs_act_reveal():
+	if GameSession.needs_boss_pick():
+		return false
+	if GameSession.needs_act_reveal() and not GameSession.is_boss_combat_queued():
 		return false
 	var travel := get_tree().get_first_node_in_group(&"travel_controller")
 	if travel and travel.has_method(&"is_shop_visit_active") and travel.is_shop_visit_active():
 		return false
 	if travel and travel.has_method(&"is_act_reveal_active") and travel.is_act_reveal_active():
 		return false
-	if GameSession.phase == GameSession.RunPhase.ACT_REVEAL:
+	if GameSession.phase in [GameSession.RunPhase.ACT_REVEAL, GameSession.RunPhase.BOSS_PICK]:
 		return false
 	return true
 
@@ -100,6 +102,9 @@ func _schedule_encounter() -> void:
 		_running = false
 		return
 	GameSession.set_phase(GameSession.RunPhase.COMBAT)
+	if GameSession.is_boss_combat_queued():
+		await _run_boss_segment(id)
+		return
 	await _run_segment(id)
 
 
@@ -133,13 +138,79 @@ func _run_segment(id: int) -> void:
 	await _wait_for_rest_break(rest_duration)
 	if id != _sequence_id:
 		return
-	if GameSession.phase == GameSession.RunPhase.REST and GameSession.needs_act_reveal():
+	if GameSession.phase == GameSession.RunPhase.REST and GameSession.needs_boss_pick():
+		await _wait_for_boss_pick()
+		return
+	if GameSession.phase in [
+		GameSession.RunPhase.REST,
+		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.BOSS_PICK,
+	] and GameSession.needs_act_reveal():
 		await _wait_for_act_reveal()
 	if id == _sequence_id and GameSession.phase in [
 		GameSession.RunPhase.REST,
 		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.BOSS_PICK,
 	]:
 		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
+
+
+func _run_boss_segment(id: int) -> void:
+	var boss := _spawn_boss()
+	if boss == null:
+		await _finish_boss_segment(id)
+		return
+
+	while (
+		is_instance_valid(boss)
+		and not boss.is_defeated
+		and GameSession.phase != GameSession.RunPhase.GAME_OVER
+		and id == _sequence_id
+	):
+		await get_tree().process_frame
+
+	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
+		if is_instance_valid(boss):
+			boss.queue_free()
+		_running = false
+		return
+
+	GameSession.complete_wave()
+	await _finish_boss_segment(id)
+
+
+func _finish_boss_segment(id: int) -> void:
+	GameSession.complete_boss_encounter()
+	_running = false
+	if id != _sequence_id:
+		return
+	GameSession.set_phase(GameSession.RunPhase.REST)
+	SaveManager.save_active_session()
+	if GameSession.needs_act_reveal():
+		await _wait_for_act_reveal()
+	if id == _sequence_id and GameSession.phase in [
+		GameSession.RunPhase.REST,
+		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.BOSS_PICK,
+	]:
+		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
+
+
+func _spawn_boss() -> WindowRaider:
+	var raider := _spawn_raider(0, 1)
+	if raider == null:
+		return null
+	if raider.has_method(&"mark_as_boss"):
+		raider.mark_as_boss()
+	else:
+		raider.is_elite = true
+	raider.scale = Vector3.ONE * 1.65
+	raider.max_health *= 8.0
+	raider.health = raider.max_health
+	raider.attack_damage *= 1.45
+	if raider.health_bar and raider.health_bar.has_method(&"update_ratio"):
+		raider.health_bar.update_ratio(1.0)
+	return raider
 
 
 func _run_wave(id: int, count: int) -> void:
@@ -256,6 +327,18 @@ func _wait_for_rest_break(min_seconds: float) -> void:
 	if rewards and rewards.has_method(&"wait_for_rest_resolution"):
 		await rewards.wait_for_rest_resolution()
 	await timer.timeout
+
+
+func _wait_for_boss_pick() -> void:
+	var act_deck := get_tree().get_first_node_in_group(&"act_deck_controller")
+	if act_deck == null:
+		if GameSession.needs_boss_pick():
+			GameSession.commit_boss_picks([])
+		return
+	if act_deck.has_method(&"begin_boss_pick_if_needed"):
+		act_deck.begin_boss_pick_if_needed()
+	if act_deck.has_method(&"wait_for_boss_pick_resolution"):
+		await act_deck.wait_for_boss_pick_resolution()
 
 
 func _wait_for_act_reveal() -> void:

@@ -210,6 +210,9 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		GameSession.RunPhase.ACT_REVEAL:
 			rest_toast.text = "THE ROAD AHEAD — STATUE READING"
 			rest_toast.show()
+		GameSession.RunPhase.BOSS_PICK:
+			rest_toast.text = "THE JUDGE — TWO STREETS"
+			rest_toast.show()
 		GameSession.RunPhase.TURNING:
 			rest_toast.text = "TURNING %s..." % String(GameSession.last_direction).to_upper()
 			rest_toast.show()
@@ -232,6 +235,7 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		GameSession.RunPhase.GAME_OVER,
 		GameSession.RunPhase.PARKING,
 		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.BOSS_PICK,
 	]
 	if _act_reveal and _act_reveal.visible:
 		bench_blocked = true
@@ -437,6 +441,7 @@ func wants_free_cursor(phase: GameSession.RunPhase = GameSession.phase) -> bool:
 		GameSession.RunPhase.ROUTE_CHOICE,
 		GameSession.RunPhase.GAME_OVER,
 		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.BOSS_PICK,
 		GameSession.RunPhase.REST,
 	]
 
@@ -512,6 +517,13 @@ func _on_health_changed(current: float, maximum: float) -> void:
 
 
 func _on_wave_changed(wave: int) -> void:
+	if GameSession.is_boss_combat_queued() or GameSession.phase == GameSession.RunPhase.BOSS_PICK:
+		var names: PackedStringArray = PackedStringArray()
+		for card in GameSession.get_boss_modifier_cards():
+			names.append(card.display_name)
+		var bound := "  ·  %s" % " + ".join(names) if not names.is_empty() else ""
+		wave_label.text = "BOSS  ·  ACT %d%s" % [GameSession.run_act, bound]
+		return
 	var card_total := GameSession.act_cards_total
 	if card_total > 0:
 		var resolved := GameSession.act_cards_resolved_count()
@@ -578,6 +590,8 @@ func open_driver_talk() -> void:
 	if GameSession.phase == GameSession.RunPhase.PARKING:
 		return
 	if GameSession.phase == GameSession.RunPhase.ACT_REVEAL:
+		return
+	if GameSession.phase == GameSession.RunPhase.BOSS_PICK:
 		return
 	if _act_reveal and _act_reveal.visible:
 		return

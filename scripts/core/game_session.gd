@@ -22,12 +22,16 @@ enum RunPhase {
 	PARKING,
 	SHOP,
 	ACT_REVEAL,
+	BOSS_PICK,
 }
 
 const BASE_MAX_VAN_HEALTH := 100.0
 const ACT_CARD_COUNT := 6
 const ACT_BLESSING_COUNT := 3
 const ACT_DANGER_COUNT := 3
+## How many face-down streets the player commits to the act boss. Array-backed
+## so later acts can stack more than two without a new data model.
+const BOSS_CARD_PICK_COUNT := 2
 
 var selected_slot := 0
 var run_seed := 0
@@ -56,6 +60,14 @@ var active_street_card_id: StringName = &""
 var pending_boon_card_id: StringName = &""
 ## Set when a DANGER street is chosen; consumed when the next combat segment starts.
 var pending_danger := false
+## The six streets drawn for this act, in the order they were shown at reveal.
+## Survives as cards are committed so the boss pick can show the same set again.
+var act_source_cards: Array[StringName] = []
+## Stacked street-card ids for the act boss. Empty during normal streets.
+## Sized for 2 now; combat already iterates the whole list.
+var boss_modifier_card_ids: Array[StringName] = []
+## True after this act's boss is beaten (or skipped); blocks a second pick.
+var boss_cleared_for_act := false
 
 const _LEFT_AREA_CYCLE: Array[ItemDefinition.BoonPool] = [
 	ItemDefinition.BoonPool.FIRE,
@@ -109,6 +121,11 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 	active_street_card_id = StringName(str(data.get("active_street_card_id", "")))
 	pending_boon_card_id = StringName(str(data.get("pending_boon_card_id", "")))
 	act_cards = _cards_from_save(data.get("act_cards", []))
+	act_source_cards = _cards_from_save(data.get("act_source_cards", []))
+	boss_modifier_card_ids = _cards_from_save(data.get("boss_modifier_card_ids", []))
+	boss_cleared_for_act = bool(data.get("boss_cleared_for_act", false))
+	if act_source_cards.is_empty() and not act_cards.is_empty():
+		act_source_cards = act_cards.duplicate()
 	if act_cards_total <= 0 and not act_cards.is_empty():
 		act_cards_total = ACT_CARD_COUNT
 	set_chill_mode(false)
@@ -122,6 +139,7 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 		RunPhase.PARKING,
 		RunPhase.SHOP,
 		RunPhase.ACT_REVEAL,
+		RunPhase.BOSS_PICK,
 	]:
 		phase = RunPhase.TRAVELLING
 	van_health_changed.emit(van_health, van_max_health)
@@ -254,7 +272,108 @@ func get_area_flavor_name(area: ItemDefinition.BoonPool = current_area) -> Strin
 
 
 func needs_act_reveal() -> bool:
-	return act_cards.is_empty() and pending_boon_card_id == &""
+	return (
+		act_cards.is_empty()
+		and pending_boon_card_id == &""
+		and not needs_boss_pick()
+		and not is_boss_combat_queued()
+	)
+
+
+func needs_boss_pick() -> bool:
+	return (
+		act_cards.is_empty()
+		and pending_boon_card_id == &""
+		and not act_source_cards.is_empty()
+		and boss_modifier_card_ids.is_empty()
+		and not boss_cleared_for_act
+	)
+
+
+func is_boss_combat_queued() -> bool:
+	return not boss_modifier_card_ids.is_empty() and not boss_cleared_for_act
+
+
+func get_act_source_cards() -> Array[ActCardDefinition]:
+	return _resolve_card_ids(act_source_cards)
+
+
+func get_boss_modifier_cards() -> Array[ActCardDefinition]:
+	return _resolve_card_ids(boss_modifier_card_ids)
+
+
+## Street modifiers currently in force. Boss fights stack every picked card;
+## normal streets still resolve as a single-entry list.
+func get_active_modifier_cards() -> Array[ActCardDefinition]:
+	if not boss_modifier_card_ids.is_empty():
+		return get_boss_modifier_cards()
+	var street := get_active_street_card()
+	var cards: Array[ActCardDefinition] = []
+	if street:
+		cards.append(street)
+	return cards
+
+
+func get_active_modifier_card_ids() -> Array[StringName]:
+	if not boss_modifier_card_ids.is_empty():
+		return boss_modifier_card_ids.duplicate()
+	var ids: Array[StringName] = []
+	if active_street_card_id != &"":
+		ids.append(active_street_card_id)
+	return ids
+
+
+func commit_boss_picks(card_ids: Array[StringName]) -> void:
+	var picked: Array[StringName] = []
+	for card_id in card_ids:
+		if card_id == &"":
+			continue
+		picked.append(card_id)
+		if picked.size() >= BOSS_CARD_PICK_COUNT:
+			break
+	if picked.is_empty():
+		picked = _debug_fallback_boss_picks()
+	ActCardCombat.clear()
+	active_street_card_id = &""
+	pending_boon_card_id = &""
+	pending_danger = false
+	boss_modifier_card_ids = picked
+	boss_cleared_for_act = false
+	ActCardCombat.activate_active_cards()
+	SaveManager.save_active_session()
+
+
+func complete_boss_encounter() -> void:
+	ActCardCombat.clear()
+	boss_modifier_card_ids.clear()
+	boss_cleared_for_act = true
+	active_street_card_id = &""
+	pending_danger = false
+	SaveManager.save_active_session()
+
+
+## Debug: dump remaining streets and treat the current act as ready for the boss pick.
+func debug_prepare_boss_pick() -> void:
+	if act_source_cards.is_empty():
+		begin_new_act_deck()
+	act_cards.clear()
+	pending_boon_card_id = &""
+	pending_danger = false
+	boss_modifier_card_ids.clear()
+	boss_cleared_for_act = false
+	ActCardCombat.clear()
+	active_street_card_id = &""
+
+
+func _debug_fallback_boss_picks() -> Array[StringName]:
+	var picked: Array[StringName] = []
+	for card_id in act_source_cards:
+		if card_id == &"":
+			continue
+		picked.append(card_id)
+		if picked.size() >= BOSS_CARD_PICK_COUNT:
+			break
+	return picked
 
 
 ## Builds a fresh 3-blessing / 3-danger deck, shuffles play order, returns display-order
@@ -265,6 +384,8 @@ func begin_new_act_deck() -> Array[ActCardDefinition]:
 	ActCardCombat.clear()
 	active_street_card_id = &""
 	pending_boon_card_id = &""
+	boss_modifier_card_ids.clear()
+	boss_cleared_for_act = false
 	var deck_ids := _build_act_deck_ids()
 	var play_rng := _act_rng(0)
 	_shuffle_card_ids(deck_ids, play_rng)
@@ -273,6 +394,7 @@ func begin_new_act_deck() -> Array[ActCardDefinition]:
 	var display_ids: Array[StringName] = act_cards.duplicate()
 	var display_rng := _act_rng(1)
 	_shuffle_card_ids(display_ids, display_rng)
+	act_source_cards = display_ids.duplicate()
 	return _resolve_card_ids(display_ids)
 
 
@@ -375,6 +497,9 @@ func _reset_act_deck() -> void:
 	run_act = 0
 	act_cards.clear()
 	act_cards_total = 0
+	act_source_cards.clear()
+	boss_modifier_card_ids.clear()
+	boss_cleared_for_act = false
 	ActCardCombat.clear()
 	active_street_card_id = &""
 	pending_boon_card_id = &""
@@ -437,6 +562,12 @@ func to_save_data() -> Dictionary:
 	var card_strings: Array[String] = []
 	for card_id in act_cards:
 		card_strings.append(String(card_id))
+	var source_strings: Array[String] = []
+	for card_id in act_source_cards:
+		source_strings.append(String(card_id))
+	var boss_strings: Array[String] = []
+	for card_id in boss_modifier_card_ids:
+		boss_strings.append(String(card_id))
 	return {
 		"version": 4,
 		"run_seed": run_seed,
@@ -451,6 +582,9 @@ func to_save_data() -> Dictionary:
 		"run_act": run_act,
 		"act_cards_total": act_cards_total,
 		"act_cards": card_strings,
+		"act_source_cards": source_strings,
+		"boss_modifier_card_ids": boss_strings,
+		"boss_cleared_for_act": boss_cleared_for_act,
 		"active_street_card_id": String(active_street_card_id),
 		"pending_boon_card_id": String(pending_boon_card_id),
 		"pending_danger": pending_danger,

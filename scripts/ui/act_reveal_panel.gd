@@ -3,8 +3,16 @@ extends Control
 
 ## Act-start overlay: flips street cards (name + modifiers) and waits.
 ## Continue then shuffles them into a face-down pile so play order stays hidden.
+##
+## Boss pick reuses the same chrome: the act's six cards appear face-up again,
+## flip down, shuffle, then the player chooses N of them (stacked on the boss).
+## FUTURE: persistent marks on card *backs* (MetaProgression, all runs) so a
+## player can recognize a street in this face-down pick.
 
 signal reveal_finished
+signal boss_cards_picked(card_ids: Array)
+
+enum Mode { ACT_REVEAL, BOSS_PICK }
 
 const ACCENT := Color(0.86, 0.74, 0.46, 1.0)
 const MUTED := Color(0.42, 0.40, 0.36, 1.0)
@@ -14,11 +22,20 @@ const INK := Color(0.08, 0.08, 0.07, 0.96)
 const CARD_BACK := Color(0.07, 0.07, 0.06, 1.0)
 const FLIP_DELAY := 0.35
 const SHUFFLE_DURATION := 0.55
+const BOSS_HOLD_FACE_UP := 0.7
+const REDEAL_DURATION := 0.4
 
 var _present_id := 0
+var _mode := Mode.ACT_REVEAL
 var _continue_btn: Button
+var _hint_label: Label
 var _card_panels: Array[PanelContainer] = []
 var _card_labels: Array[Label] = []
+var _pick_count := 2
+var _picked_indices: Array[int] = []
+var _shuffled_cards: Array[ActCardDefinition] = []
+var _selectable := false
+var _card_gui_connected: Array[bool] = []
 
 
 func _ready() -> void:
@@ -28,14 +45,55 @@ func _ready() -> void:
 
 
 func present(display_cards: Array[ActCardDefinition], act_number: int, area_flavor: String) -> void:
+	_mode = Mode.ACT_REVEAL
+	_begin_present(
+		display_cards,
+		"ACT %d — THE ROAD AHEAD" % act_number,
+		"Area: %s  ·  Order unknown" % area_flavor,
+		"Six streets. Modifiers shown. Sequence stays hidden. One boon each.",
+		true
+	)
+	if display_cards.is_empty():
+		reveal_finished.emit()
+		return
+	_run_reveal(display_cards, _present_id)
+
+
+func present_boss_pick(
+	display_cards: Array[ActCardDefinition],
+	pick_count: int,
+	act_number: int,
+	area_flavor: String
+) -> void:
+	_mode = Mode.BOSS_PICK
+	_pick_count = maxi(1, pick_count)
+	_begin_present(
+		display_cards,
+		"ACT %d — THE JUDGE" % act_number,
+		"Area: %s  ·  %d streets stack on the boss" % [area_flavor, _pick_count],
+		"Same six streets. They flip down and shuffle. Pick %d." % _pick_count,
+		false
+	)
+	_shuffled_cards = display_cards.duplicate()
+	if display_cards.is_empty():
+		boss_cards_picked.emit([])
+		return
+	_run_boss_pick(display_cards, _present_id)
+
+
+func _begin_present(
+	display_cards: Array[ActCardDefinition],
+	title_text: String,
+	flavor_text: String,
+	hint_text: String,
+	show_continue: bool
+) -> void:
 	_clear()
 	if display_cards.is_empty():
 		hide()
-		reveal_finished.emit()
 		return
 
 	_present_id += 1
-	var present_id := _present_id
 
 	var backdrop := ColorRect.new()
 	backdrop.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
@@ -52,24 +110,24 @@ func present(display_cards: Array[ActCardDefinition], act_number: int, area_flav
 	center.add_child(stack)
 
 	var title := Label.new()
-	title.text = "ACT %d — THE ROAD AHEAD" % act_number
+	title.text = title_text
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_color_override(&"font_color", ACCENT)
 	title.add_theme_font_size_override(&"font_size", 24)
 	stack.add_child(title)
 
 	var flavor := Label.new()
-	flavor.text = "Area: %s  ·  Order unknown" % area_flavor
+	flavor.text = flavor_text
 	flavor.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	flavor.add_theme_color_override(&"font_color", MUTED)
 	stack.add_child(flavor)
 
-	var hint := Label.new()
-	hint.text = "Six streets. Modifiers shown. Sequence stays hidden. One boon each."
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_color_override(&"font_color", MUTED)
-	hint.add_theme_font_size_override(&"font_size", 12)
-	stack.add_child(hint)
+	_hint_label = Label.new()
+	_hint_label.text = hint_text
+	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hint_label.add_theme_color_override(&"font_color", MUTED)
+	_hint_label.add_theme_font_size_override(&"font_size", 12)
+	stack.add_child(_hint_label)
 
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -78,10 +136,15 @@ func present(display_cards: Array[ActCardDefinition], act_number: int, area_flav
 
 	_card_panels.clear()
 	_card_labels.clear()
-	for _i in display_cards.size():
+	_card_gui_connected.clear()
+	for i in display_cards.size():
 		var panel := _make_card_back()
 		row.add_child(panel)
 		_card_panels.append(panel)
+		_card_gui_connected.append(false)
+		var index := i
+		panel.gui_input.connect(func(event: InputEvent) -> void: _on_card_gui_input(index, event))
+		_card_gui_connected[i] = true
 
 	_continue_btn = Button.new()
 	_continue_btn.text = "CONTINUE"
@@ -93,10 +156,12 @@ func present(display_cards: Array[ActCardDefinition], act_number: int, area_flav
 	var btn_wrap := CenterContainer.new()
 	btn_wrap.add_child(_continue_btn)
 	stack.add_child(btn_wrap)
+	if not show_continue:
+		_continue_btn.hide()
+		btn_wrap.hide()
 
 	show()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	_run_reveal(display_cards, present_id)
 
 
 func dismiss() -> void:
@@ -129,6 +194,48 @@ func _run_reveal(display_cards: Array[ActCardDefinition], present_id: int) -> vo
 		_continue_btn.disabled = false
 
 
+func _run_boss_pick(display_cards: Array[ActCardDefinition], present_id: int) -> void:
+	for i in display_cards.size():
+		if present_id != _present_id:
+			return
+		await get_tree().create_timer(FLIP_DELAY).timeout
+		if present_id != _present_id:
+			return
+		_flip_card(i, display_cards[i])
+
+	if present_id != _present_id:
+		return
+	if _hint_label:
+		_hint_label.text = "Remember them. They are about to turn over."
+	await get_tree().create_timer(BOSS_HOLD_FACE_UP).timeout
+	if present_id != _present_id:
+		return
+
+	await _play_shuffle(present_id, true)
+	if present_id != _present_id:
+		return
+
+	_shuffle_pick_order()
+	if _hint_label:
+		_hint_label.text = "Pick %d face-down streets. Both apply to the boss." % _pick_count
+	_selectable = true
+	for panel in _card_panels:
+		panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+
+func _shuffle_pick_order() -> void:
+	if _shuffled_cards.size() <= 1:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	for i in range(_shuffled_cards.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var tmp := _shuffled_cards[i]
+		_shuffled_cards[i] = _shuffled_cards[j]
+		_shuffled_cards[j] = tmp
+
+
 func _flip_card(index: int, card: ActCardDefinition) -> void:
 	if index < 0 or index >= _card_panels.size() or card == null:
 		return
@@ -144,6 +251,7 @@ func _flip_card(index: int, card: ActCardDefinition) -> void:
 	stack.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.add_theme_constant_override(&"separation", 5)
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(stack)
 
 	var polarity := Label.new()
@@ -187,6 +295,7 @@ func _flip_card(index: int, card: ActCardDefinition) -> void:
 	stack.add_child(body)
 
 	_add_corner_ticks(panel, Color(ACCENT, 0.45))
+	_ignore_mouse_tree(stack)
 
 	_card_labels.append(name_label)
 
@@ -195,7 +304,7 @@ func _flip_card(index: int, card: ActCardDefinition) -> void:
 	tween.tween_property(panel, "scale", Vector2.ONE, 0.12)
 
 
-func _play_shuffle(present_id: int) -> void:
+func _play_shuffle(present_id: int, redeal: bool = false) -> void:
 	if _card_panels.is_empty():
 		return
 
@@ -256,18 +365,50 @@ func _play_shuffle(present_id: int) -> void:
 		)
 		mix.tween_property(panel, "global_position", mix_dest, 0.22)
 		mix.tween_property(panel, "rotation", randf_range(-0.28, 0.28), 0.22)
-		mix.tween_property(panel, "modulate:a", 0.35, 0.28)
+		if not redeal:
+			mix.tween_property(panel, "modulate:a", 0.35, 0.28)
 	await mix.finished
 	if present_id != _present_id:
 		return
+	if not redeal:
+		for panel in _card_panels:
+			panel.modulate.a = 0.2
+		return
+
 	for panel in _card_panels:
-		panel.modulate.a = 0.2
+		panel.modulate.a = 1.0
+	var deal := create_tween()
+	deal.set_parallel(true)
+	for i in _card_panels.size():
+		var panel := _card_panels[i]
+		var delay := float(i) * 0.05
+		deal.tween_property(panel, "global_position", start_globals[i], REDEAL_DURATION).set_delay(
+			delay
+		)
+		deal.tween_property(panel, "rotation", 0.0, REDEAL_DURATION).set_delay(delay)
+		deal.tween_property(panel, "modulate:a", 1.0, 0.12).set_delay(delay)
+	await deal.finished
+	if present_id != _present_id:
+		return
+	for i in _card_panels.size():
+		var panel := _card_panels[i]
+		panel.rotation = 0.0
+		panel.z_index = i
+		panel.modulate.a = 1.0
+
+
+func _ignore_mouse_tree(node: Control) -> void:
+	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in node.get_children():
+		if child is Control:
+			_ignore_mouse_tree(child)
 
 
 func _make_card_back() -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(118, 196)
 	panel.pivot_offset = Vector2(59, 98)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_show_card_back(panel, ACCENT)
 	return panel
 
@@ -281,6 +422,7 @@ func _show_card_back(panel: PanelContainer, border_color: Color = MUTED) -> void
 	q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	q.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	q.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	q.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	q.add_theme_color_override(&"font_color", Color(MUTED, 0.55))
 	q.add_theme_font_size_override(&"font_size", 28)
 	panel.add_child(q)
@@ -374,6 +516,48 @@ func _style_continue_button(button: Button) -> void:
 	button.add_theme_color_override(&"font_disabled_color", Color(MUTED, 0.55))
 
 
+func _on_card_gui_input(index: int, event: InputEvent) -> void:
+	if not _selectable or _mode != Mode.BOSS_PICK:
+		return
+	if not (event is InputEventMouseButton):
+		return
+	var mouse := event as InputEventMouseButton
+	if not mouse.pressed or mouse.button_index != MOUSE_BUTTON_LEFT:
+		return
+	_try_pick_card(index)
+
+
+func _try_pick_card(index: int) -> void:
+	if not _selectable:
+		return
+	if index < 0 or index >= _shuffled_cards.size():
+		return
+	if index in _picked_indices:
+		return
+	_picked_indices.append(index)
+	_flip_card(index, _shuffled_cards[index])
+	var remaining := _pick_count - _picked_indices.size()
+	if _hint_label:
+		if remaining > 0:
+			_hint_label.text = "Pick %d more." % remaining
+		else:
+			_hint_label.text = "Those streets bind the judge."
+	if _picked_indices.size() < _pick_count:
+		return
+	_selectable = false
+	var present_id := _present_id
+	await get_tree().create_timer(0.85).timeout
+	if present_id != _present_id:
+		return
+	var ids: Array[StringName] = []
+	for picked_index in _picked_indices:
+		if picked_index >= 0 and picked_index < _shuffled_cards.size():
+			var card := _shuffled_cards[picked_index]
+			if card:
+				ids.append(card.id)
+	boss_cards_picked.emit(ids)
+
+
 func _on_continue_pressed() -> void:
 	if _continue_btn:
 		_continue_btn.disabled = true
@@ -386,8 +570,12 @@ func _on_continue_pressed() -> void:
 
 func _clear() -> void:
 	_continue_btn = null
+	_hint_label = null
+	_selectable = false
+	_picked_indices.clear()
 	_card_panels.clear()
 	_card_labels.clear()
+	_card_gui_connected.clear()
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()

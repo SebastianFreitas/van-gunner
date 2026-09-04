@@ -23,6 +23,7 @@ var approach_speed := 0.0
 var _active := false
 var health := max_health
 var is_defeated := false
+var is_boss := false
 var assault_phase: AssaultPhase = AssaultPhase.IDLE
 var assigned_breach: BreachPoint
 var _last_damage_type: DamageType.Type = DamageType.Type.NORMAL
@@ -95,8 +96,17 @@ func activate() -> void:
 	_start_attack_loop()
 
 
+func mark_as_boss() -> void:
+	is_boss = true
+	is_elite = true
+	add_to_group(&"boss")
+	_base_modulate = Color(0.92, 0.28, 0.22)
+	if sprite:
+		sprite.modulate = _base_modulate
+
+
 func retreat() -> void:
-	if is_defeated:
+	if is_defeated or is_boss:
 		return
 	_active = false
 	_clear_motion()

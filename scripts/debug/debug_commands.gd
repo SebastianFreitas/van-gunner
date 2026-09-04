@@ -102,6 +102,7 @@ func _register_commands() -> void:
 		"boonpool": _cmd_boonpool,
 		"list": _cmd_list,
 		"card": _cmd_card,
+		"boss": _cmd_boss,
 		"reardoor": _cmd_reardoor,
 		"sidedoor": _cmd_sidedoor,
 		"give_weapon": _cmd_give_weapon,
@@ -130,7 +131,8 @@ func _cmd_help(_args: Array) -> String:
 		+ "  list boons [q]  browse boon ids (optional filter)\n"
 		+ "  list items [q]  browse all item ids\n"
 		+ "  list cards [q]  browse street card ids\n"
-		+ "  card [id]       print / force-activate active street card\n"
+		+ "  card [id]       print / force-activate active street card(s)\n"
+		+ "  boss            skip to act-end boss pick (current six streets)\n"
 		+ "  phase          print current run phase\n"
 		+ "  reardoor [open|close|toggle]  swing the van rear doors\n"
 		+ "  sidedoor [open|close|toggle]  slide the van side doors\n"
@@ -346,23 +348,38 @@ func _cmd_list(args: Array) -> String:
 
 func _cmd_card(args: Array) -> String:
 	if args.is_empty():
-		var active := GameSession.get_active_street_card()
-		if active == null:
-			return "No active street card."
-		return "active=%s (%s) — %s" % [
-			active.id,
-			active.polarity_label(),
-			active.description.strip_edges(),
-		]
+		var cards := GameSession.get_active_modifier_cards()
+		if cards.is_empty():
+			return "No active street cards."
+		var lines: PackedStringArray = PackedStringArray()
+		for card in cards:
+			lines.append("%s (%s) — %s" % [
+				card.id,
+				card.polarity_label(),
+				card.description.strip_edges(),
+			])
+		return "active (%d):\n%s" % [cards.size(), "\n".join(lines)]
 	var card_id := StringName(str(args[0]))
 	var card := ActCardRegistry.load_by_id(card_id)
 	if card == null:
 		return "Unknown card: %s" % card_id
 	ActCardCombat.clear()
+	GameSession.boss_modifier_card_ids.clear()
 	GameSession.active_street_card_id = card_id
 	GameSession.pending_danger = card.is_danger()
 	ActCardCombat.activate(card)
 	return "Forced street card: %s (%s)" % [card.display_name, card.polarity_label()]
+
+
+func _cmd_boss(_args: Array) -> String:
+	var deck := get_tree().get_first_node_in_group(&"act_deck_controller")
+	GameSession.debug_prepare_boss_pick()
+	if deck and deck.has_method(&"begin_boss_pick_if_needed"):
+		deck.begin_boss_pick_if_needed()
+		return "Boss pick started — six streets, pick two."
+	GameSession.commit_boss_picks([])
+	GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
+	return "Boss pick skipped UI; stacked fallback cards and queued the fight."
 
 
 func _format_card_list(filter_text: String) -> String:

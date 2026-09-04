@@ -1,8 +1,8 @@
 class_name ActCardDefinition
 extends Resource
 
-## Street card for the act deck. Polarity drives blessing vs danger roads;
-## combat behavior lives in composable `effects` (same idea as ItemEffect).
+## Combat behavior lives in composable `effects`. Boss fights activate an Array of
+## these cards at once — keep effects stackable (add / multiply, not overwrite).
 
 enum Polarity {
 	BLESSING = 0,

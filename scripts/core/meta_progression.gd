@@ -5,6 +5,12 @@ signal van_speed_changed(level: int, speed: float)
 const SAVE_PATH := "user://meta_progression.json"
 const SAVE_VERSION := 1
 
+## FUTURE — persistent street-card back marks (meta, all runs):
+## The full card mechanic should let the player scribble / stamp a mark on the
+## *back* of a street card so they can recognize it in the face-down boss pick.
+## Store those marks here (this JSON on disc), not on the run save, so they
+## survive every new run. Key by ActCardDefinition.id. Unmarked cards stay blank.
+
 var van_speed_level := 0
 
 
