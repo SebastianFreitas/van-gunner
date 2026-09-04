@@ -343,8 +343,8 @@ func _format_weapon_list(filter_text: String) -> String:
 		if not needle.is_empty() and not id.to_lower().contains(needle):
 			continue
 		var def := WeaponCatalog.load_definition(StringName(id))
-		var name := def.display_name if def else id
-		lines.append("  %s  —  %s" % [id, name])
+		var weapon_name := def.display_name if def else id
+		lines.append("  %s  —  %s" % [id, weapon_name])
 		count += 1
 	if count == 0:
 		if filter_text.is_empty():

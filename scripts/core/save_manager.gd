@@ -1,7 +1,7 @@
 extends Node
 
 const SLOT_COUNT := 3
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 const SAVE_PATH := "user://save_slot_%d.json"
 
 

@@ -59,7 +59,7 @@ func _on_slot_pressed(slot: int) -> void:
 	await _begin_run()
 	if not SaveManager.load_slot(slot):
 		GameSession.start_new(slot)
-	await SceneRouter.go_to_van()
+	SceneRouter.go_to_van()
 
 
 func _on_new_run_pressed(slot: int) -> void:
@@ -68,7 +68,7 @@ func _on_new_run_pressed(slot: int) -> void:
 	_starting = true
 	await _begin_run()
 	GameSession.start_new(slot)
-	await SceneRouter.go_to_van()
+	SceneRouter.go_to_van()
 
 
 func _begin_run() -> void:

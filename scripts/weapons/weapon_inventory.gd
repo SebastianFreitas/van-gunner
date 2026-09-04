@@ -187,12 +187,16 @@ func refresh_active_stats() -> void:
 
 func to_save_dict() -> Dictionary:
 	_persist_active_ammo()
+	var saved_slots: Array = []
+	for i in SLOT_COUNT:
+		var inst := slots[i] as WeaponInstance
+		var entry: Variant = null
+		if inst != null:
+			entry = inst.to_dict()
+		saved_slots.append(entry)
 	return {
 		"active_index": active_index,
-		"slots": [
-			(slots[0] as WeaponInstance).to_dict() if slots[0] else null,
-			(slots[1] as WeaponInstance).to_dict() if slots[1] else null,
-		],
+		"slots": saved_slots,
 	}
 
 

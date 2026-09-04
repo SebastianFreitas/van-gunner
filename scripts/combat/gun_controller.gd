@@ -108,9 +108,9 @@ func _spread_direction(base: Vector3, spread_degrees: float) -> Vector3:
 	return (axis + right * tan(yaw) + up * tan(pitch)).normalized()
 
 
-func set_ammo_state(current: int, is_reloading: bool = false) -> void:
+func set_ammo_state(current: int, reloading: bool = false) -> void:
 	_current_ammo = maxi(current, 0)
-	_is_reloading = is_reloading
+	_is_reloading = reloading
 	ammo_changed.emit(_current_ammo, _get_stats().mag_size)
 	reloading_changed.emit(_is_reloading)
 

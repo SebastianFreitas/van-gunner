@@ -58,10 +58,10 @@ func spawn_drops(world_position: Vector3, container: Node) -> void:
 func _try_weapon_drop(world_position: Vector3, container: Node) -> void:
 	var chance := GameBalance.WEAPON_DROP_CHANCE_BASE
 	var elite := treat_as_elite
-	var owner := get_parent()
-	if owner != null and "is_elite" in owner:
-		elite = bool(owner.is_elite)
-	elif owner != null and "is_agile" in owner and bool(owner.is_agile):
+	var host := get_parent()
+	if host != null and "is_elite" in host:
+		elite = bool(host.is_elite)
+	elif host != null and "is_agile" in host and bool(host.is_agile):
 		elite = true
 	if elite:
 		chance += GameBalance.WEAPON_DROP_CHANCE_ELITE_BONUS

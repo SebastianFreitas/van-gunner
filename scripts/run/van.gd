@@ -129,9 +129,9 @@ func _on_ammo_changed(current: int, max_ammo: int) -> void:
 	ammo_label.modulate = Color("#f0a84a") if low_ammo else Color("#e8d68c")
 
 
-func _on_reloading_changed(is_reloading: bool) -> void:
-	reload_label.visible = is_reloading
-	if is_reloading:
+func _on_reloading_changed(reloading: bool) -> void:
+	reload_label.visible = reloading
+	if reloading:
 		ammo_label.modulate = Color("#c8c8c8")
 	else:
 		_on_ammo_changed(weapon.get_current_ammo(), weapon.get_mag_size())
