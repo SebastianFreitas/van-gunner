@@ -179,9 +179,6 @@ size = Vector3(2.38, 0.62, 0.16)
 [sub_resource type="BoxShape3D" id="RearDoorLeafRail"]
 size = Vector3(0.25, 1.44, 0.16)
 
-[sub_resource type="BoxShape3D" id="RearDoorLeafShape"]
-size = Vector3(2.38, 3.1, 0.24)
-
 [sub_resource type="BoxShape3D" id="RearDoorBlockerBottom"]
 size = Vector3(2.38, 1.07, 0.32)
 
@@ -896,8 +893,21 @@ collision_mask = 0
 script = ExtResource("15")
 side = "left"
 
-[node name="Hit" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact" unique_id=2071228218]
-shape = SubResource("RearDoorLeafShape")
+[node name="Bottom" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact" unique_id=2071228218]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.015, 0)
+shape = SubResource("RearDoorLeafBottom")
+
+[node name="Top" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact" unique_id=2071228219]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.24, 0)
+shape = SubResource("RearDoorLeafTop")
+
+[node name="LeftRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact" unique_id=2071228220]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.055, 0.225, 0)
+shape = SubResource("RearDoorLeafRail")
+
+[node name="RightRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact" unique_id=2071228221]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.075, 0.225, 0)
+shape = SubResource("RearDoorLeafRail")
 
 [node name="RightHinge" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall" unique_id=1576193080]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.39, 1.55, 4.71)
@@ -969,8 +979,21 @@ collision_mask = 0
 script = ExtResource("15")
 side = "right"
 
-[node name="Hit" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact" unique_id=1550700880]
-shape = SubResource("RearDoorLeafShape")
+[node name="Bottom" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact" unique_id=1550700880]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.015, 0)
+shape = SubResource("RearDoorLeafBottom")
+
+[node name="Top" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact" unique_id=1550700881]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.24, 0)
+shape = SubResource("RearDoorLeafTop")
+
+[node name="LeftRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact" unique_id=1550700882]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.075, 0.225, 0)
+shape = SubResource("RearDoorLeafRail")
+
+[node name="RightRail" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact" unique_id=1550700883]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.055, 0.225, 0)
+shape = SubResource("RearDoorLeafRail")
 
 [node name="Blocker" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/RearWall" unique_id=1788784777]
 collision_mask = 0
