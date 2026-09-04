@@ -13,6 +13,7 @@ const CAMERA_KICK := 0.012
 
 @onready var camera: Camera3D = get_parent()
 @onready var muzzle_flash: OmniLight3D = $MuzzleFlash
+@onready var viewmodel: GunViewmodel = $GunViewmodel
 
 @onready var _weapon_rest_position: Vector3 = position
 
@@ -147,13 +148,18 @@ func _resume_reload(instance: WeaponInstance) -> void:
 	reloading_changed.emit(true)
 	ammo_changed.emit(_current_ammo, _get_stats().mag_size)
 	var remaining_ms := maxi(instance.reload_ends_at_msec - Time.get_ticks_msec(), 0)
-	await get_tree().create_timer(remaining_ms / 1000.0).timeout
+	var remaining_sec := remaining_ms / 1000.0
+	if viewmodel:
+		viewmodel.play_reload(remaining_sec)
+	await get_tree().create_timer(remaining_sec).timeout
 	if not is_inside_tree():
 		return
 	if instance != null:
 		instance.is_reloading = false
 		instance.reload_ends_at_msec = 0
 	_is_reloading = false
+	if viewmodel:
+		viewmodel.snap_rest()
 	_refill_magazine()
 	reloading_changed.emit(false)
 
@@ -284,6 +290,8 @@ func _start_reload() -> void:
 			inst.is_reloading = true
 			inst.reload_ends_at_msec = ends_at
 			inst.current_ammo = _current_ammo
+	if viewmodel:
+		viewmodel.play_reload(duration)
 	await get_tree().create_timer(duration).timeout
 	if not is_inside_tree():
 		return
@@ -293,6 +301,8 @@ func _start_reload() -> void:
 		if inst2:
 			inst2.is_reloading = false
 			inst2.reload_ends_at_msec = 0
+	if viewmodel:
+		viewmodel.snap_rest()
 	_refill_magazine()
 	reloading_changed.emit(false)
 
@@ -311,6 +321,8 @@ func _on_stats_changed() -> void:
 func _play_feedback() -> void:
 	muzzle_flash.show()
 	muzzle_flash.light_energy = 2.5
+	if viewmodel:
+		viewmodel.play_shot()
 	if _feedback_tween and _feedback_tween.is_valid():
 		_feedback_tween.kill()
 	position = _weapon_rest_position
