@@ -50,19 +50,29 @@ func _unhandled_input(event: InputEvent) -> void:
 			if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 			else Input.MOUSE_MODE_CAPTURED
 		)
+	elif event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if (
+			not mb.pressed
+			and mb.button_index == MOUSE_BUTTON_LEFT
+			and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
+			and not _ui_wants_free_cursor()
+		):
+			## Click in the world after a HUD/UI click stole the cursor.
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			get_viewport().set_input_as_handled()
+			return
+		if _can_swap_weapons() and mb.pressed:
+			if mb.button_index == MOUSE_BUTTON_WHEEL_UP:
+				weapon_inventory.cycle_active(-1)
+			elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				weapon_inventory.cycle_active(1)
 	elif event.is_action_pressed("interact") and _current_interactable:
 		_current_interactable.interact(self)
 	elif event.is_action_pressed("reload") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		weapon.try_reload()
 	elif event.is_action_pressed("use_usable") and _can_swap_weapons():
 		weapon_inventory.swap_active()
-	elif event is InputEventMouseButton and _can_swap_weapons():
-		var mb := event as InputEventMouseButton
-		if mb.pressed:
-			if mb.button_index == MOUSE_BUTTON_WHEEL_UP:
-				weapon_inventory.cycle_active(-1)
-			elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				weapon_inventory.cycle_active(1)
 	elif event.is_action_pressed("use_slot_1"):
 		usables.try_use_slot(0)
 	elif event.is_action_pressed("use_slot_2"):

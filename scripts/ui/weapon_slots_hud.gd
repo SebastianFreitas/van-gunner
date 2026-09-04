@@ -8,6 +8,7 @@ var _slot_labels: Array[Label] = []
 
 
 func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_theme_constant_override(&"separation", 8)
 	for i in 2:
 		var label := Label.new()
@@ -15,6 +16,7 @@ func _ready() -> void:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override(&"font_size", 14)
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(label)
 		_slot_labels.append(label)
 	_refresh()

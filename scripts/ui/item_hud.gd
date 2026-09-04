@@ -13,6 +13,17 @@ var _controller: UsablesController
 var _slot_widgets: Array[PanelContainer] = []
 
 
+func _ready() -> void:
+	_ignore_mouse_tree(self)
+
+
+func _ignore_mouse_tree(node: Node) -> void:
+	if node is Control:
+		(node as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in node.get_children():
+		_ignore_mouse_tree(child)
+
+
 func bind(controller: UsablesController) -> void:
 	if _controller:
 		if _controller.slots_changed.is_connected(_refresh_slots):
@@ -53,6 +64,7 @@ func _refresh_slots() -> void:
 		slots_row.add_child(slot_ui)
 		_slot_widgets.append(slot_ui)
 		slot_ui.setup(slots[index], false, index)
+		_ignore_mouse_tree(slot_ui)
 
 
 func _refresh_boons() -> void:
@@ -69,4 +81,5 @@ func _refresh_boons() -> void:
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture = boon.icon
 		icon.tooltip_text = boon.display_name
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		boons_row.add_child(icon)

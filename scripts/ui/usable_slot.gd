@@ -7,6 +7,7 @@ extends PanelContainer
 
 
 func setup(state: UsableState, _is_active: bool, slot_index: int) -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	custom_minimum_size = Vector2(72, 72)
 	var item := state.definition
 	icon_rect.texture = item.icon if item else null

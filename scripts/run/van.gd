@@ -49,6 +49,10 @@ var _boon_rewards: Node
 var _driver_talk_open := false
 var _weapon_slots_hud: WeaponSlotsHud
 var _ammo_reload_tween: Tween
+var _mouse_capture_gen := 0
+var _route_highlight: StringName = &"left"
+var _left_route_btn: Button
+var _right_route_btn: Button
 
 
 func _ready() -> void:
@@ -98,6 +102,8 @@ func _ready() -> void:
 	driver_talk_panel.hide()
 	_refresh_driver_talk_options()
 	_setup_weapon_slots_hud()
+	_bind_route_choice_buttons()
+	_make_combat_hud_mouse_passthrough($HUD)
 	if player.weapon_inventory:
 		player.weapon_inventory.loadout_changed.connect(_on_weapon_loadout_changed)
 		player.weapon_inventory.active_weapon_changed.connect(
@@ -196,6 +202,7 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	_on_wave_changed(GameSession.wave_count)
 	route_panel.visible = next_phase == GameSession.RunPhase.ROUTE_CHOICE
 	if next_phase == GameSession.RunPhase.ROUTE_CHOICE:
+		_route_highlight = &"left"
 		_refresh_route_choice_labels()
 	game_over_panel.visible = next_phase == GameSession.RunPhase.GAME_OVER
 	if next_phase == GameSession.RunPhase.GAME_OVER or next_phase == GameSession.RunPhase.ROUTE_CHOICE:
@@ -251,9 +258,43 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	_apply_phase_mouse_mode(next_phase)
 
 
+func _bind_route_choice_buttons() -> void:
+	if _left_route_btn and _right_route_btn:
+		return
+	_left_route_btn = %RouteChoice.get_node("Layout/Buttons/Left") as Button
+	_right_route_btn = %RouteChoice.get_node("Layout/Buttons/Right") as Button
+	if _left_route_btn:
+		_left_route_btn.mouse_entered.connect(_set_route_highlight.bind(&"left"))
+	if _right_route_btn:
+		_right_route_btn.mouse_entered.connect(_set_route_highlight.bind(&"right"))
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if GameSession.phase != GameSession.RunPhase.ROUTE_CHOICE:
+		return
+	if not route_panel or not route_panel.visible:
+		return
+	if event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"move_left"):
+		_set_route_highlight(&"left")
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"ui_right") or event.is_action_pressed(&"move_right"):
+		_set_route_highlight(&"right")
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"ui_accept"):
+		GameSession.choose_route(_route_highlight)
+		get_viewport().set_input_as_handled()
+
+
+func _set_route_highlight(direction: StringName) -> void:
+	if direction != &"left" and direction != &"right":
+		return
+	_route_highlight = direction
+	_sync_route_highlight()
+
+
 func _refresh_route_choice_labels() -> void:
-	var left_btn: Button = %RouteChoice.get_node("Layout/Buttons/Left")
-	var right_btn: Button = %RouteChoice.get_node("Layout/Buttons/Right")
+	if _left_route_btn == null or _right_route_btn == null:
+		_bind_route_choice_buttons()
 	var travel := get_tree().get_first_node_in_group(&"travel_controller")
 	var shop_side: StringName = &""
 	if travel and travel.has_method(&"get_shop_fork_side"):
@@ -261,18 +302,53 @@ func _refresh_route_choice_labels() -> void:
 	var offers := GameSession.peek_route_cards()
 	var left_card: ActCardDefinition = offers[0] if offers.size() > 0 else null
 	var right_card: ActCardDefinition = offers[1] if offers.size() > 1 else left_card
-	_populate_route_button(left_btn, left_card, shop_side == &"left", true)
-	_populate_route_button(right_btn, right_card, shop_side == &"right", false)
+	_populate_route_button(_left_route_btn, left_card, shop_side == &"left", true)
+	_populate_route_button(_right_route_btn, right_card, shop_side == &"right", false)
+	_sync_route_highlight()
+
+
+func _sync_route_highlight() -> void:
+	if _left_route_btn == null or _right_route_btn == null:
+		return
+	var left_on := _route_highlight == &"left"
+	_apply_route_highlight_look(_left_route_btn, left_on)
+	_apply_route_highlight_look(_right_route_btn, not left_on)
 	var hint: Label = %RouteChoice.get_node("Layout/Hint")
-	if shop_side == &"left" or shop_side == &"right":
-		hint.text = "Grey strip = shop stop. Blue blessing, red danger."
-	else:
-		hint.text = "Blue blessing · red danger — pick a turn, or the road picks for you."
+	var side := "LEFT" if left_on else "RIGHT"
+	hint.text = "Gold frame is %s. Click that card (or Enter) to take it." % side
+	var pick := _left_route_btn.get_node_or_null("Stack/PickLabel") as Label
+	var other := _right_route_btn.get_node_or_null("Stack/PickLabel") as Label
+	if pick:
+		pick.text = "SELECTED — TAKE THIS ROAD" if left_on else "← LEFT"
+	if other:
+		other.text = "SELECTED — TAKE THIS ROAD" if not left_on else "RIGHT →"
+
+
+func _apply_route_highlight_look(button: Button, selected: bool) -> void:
+	if button == null:
+		return
+	button.modulate = Color.WHITE if selected else Color(0.55, 0.54, 0.52, 1.0)
+	button.z_index = 1 if selected else 0
+	var stripe: Color = button.get_meta(&"route_stripe", _ROUTE_ACCENT)
+	var selected_bg := Color(0.18, 0.16, 0.11, 1.0)
+	var style := _make_route_style(selected_bg if selected else _ROUTE_INK, stripe, selected)
+	button.add_theme_stylebox_override(&"normal", style)
+	button.add_theme_stylebox_override(&"hover", style)
+	button.add_theme_stylebox_override(&"pressed", style)
+	button.add_theme_stylebox_override(&"focus", style)
+	var pick := button.get_node_or_null("Stack/PickLabel") as Label
+	if pick:
+		pick.add_theme_color_override(
+			&"font_color", _ROUTE_ACCENT if selected else _ROUTE_MUTED
+		)
+		pick.add_theme_font_size_override(&"font_size", 13 if selected else 11)
 
 
 func _populate_route_button(
 	button: Button, card: ActCardDefinition, is_shop: bool, is_left: bool
 ) -> void:
+	if button == null:
+		return
 	for child in button.get_children():
 		button.remove_child(child)
 		child.queue_free()
@@ -287,24 +363,17 @@ func _populate_route_button(
 	var is_danger := card != null and card.is_danger()
 	var polarity := _ROUTE_DANGER if is_danger else _ROUTE_BLESSING
 	var stripe := _ROUTE_SHOP if is_shop else polarity
-	var bg := _ROUTE_INK
-
-	button.add_theme_stylebox_override(&"normal", _make_route_style(bg, stripe))
-	button.add_theme_stylebox_override(
-		&"hover", _make_route_style(Color(0.12, 0.11, 0.09, 1.0), stripe.lightened(0.08))
-	)
-	button.add_theme_stylebox_override(
-		&"pressed", _make_route_style(Color(0.05, 0.05, 0.04, 1.0), stripe.darkened(0.08))
-	)
-	button.add_theme_stylebox_override(&"focus", _make_route_style(bg, stripe))
+	button.set_meta(&"route_stripe", stripe)
 
 	var stack := VBoxContainer.new()
+	stack.name = "Stack"
 	stack.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	stack.add_theme_constant_override(&"separation", 6)
 	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(stack)
 
 	var dir := Label.new()
+	dir.name = "PickLabel"
 	dir.text = "← LEFT" if is_left else "RIGHT →"
 	dir.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	dir.add_theme_color_override(&"font_color", _ROUTE_MUTED)
@@ -411,16 +480,23 @@ func _make_route_shop_slot(is_shop: bool) -> Control:
 	return slot
 
 
-func _make_route_style(bg: Color, stripe: Color) -> StyleBoxFlat:
+func _make_route_style(bg: Color, stripe: Color, selected: bool = false) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = bg
 	style.set_corner_radius_all(0)
-	style.set_border_width_all(0)
-	style.border_width_left = 3
-	style.border_color = stripe
-	style.shadow_color = Color(0, 0, 0, 0.55)
-	style.shadow_size = 8
-	style.shadow_offset = Vector2(0, 3)
+	if selected:
+		style.set_border_width_all(4)
+		style.border_color = _ROUTE_ACCENT
+		style.shadow_color = Color(0.95, 0.82, 0.38, 0.55)
+		style.shadow_size = 18
+		style.shadow_offset = Vector2(0, 0)
+	else:
+		style.set_border_width_all(0)
+		style.border_width_left = 3
+		style.border_color = stripe
+		style.shadow_color = Color(0, 0, 0, 0.55)
+		style.shadow_size = 8
+		style.shadow_offset = Vector2(0, 3)
 	style.content_margin_left = 10
 	style.content_margin_right = 10
 	style.content_margin_top = 8
@@ -440,9 +516,6 @@ func wants_free_cursor(phase: GameSession.RunPhase = GameSession.phase) -> bool:
 	return phase in [
 		GameSession.RunPhase.ROUTE_CHOICE,
 		GameSession.RunPhase.GAME_OVER,
-		GameSession.RunPhase.ACT_REVEAL,
-		GameSession.RunPhase.BOSS_PICK,
-		GameSession.RunPhase.REST,
 	]
 
 
@@ -472,10 +545,63 @@ func _has_weapon_replace_prompt() -> bool:
 	return false
 
 
-func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
-	Input.mouse_mode = (
-		Input.MOUSE_MODE_VISIBLE if wants_free_cursor(phase) else Input.MOUSE_MODE_CAPTURED
+func _is_interactive_hud(node: Node) -> bool:
+	return (
+		node == route_panel
+		or node == driver_talk_panel
+		or node == game_over_panel
+		or node == bench_screen
+		or node == _debug_console
+		or node == _act_reveal
+		or node == _boon_choice
 	)
+
+
+## Combat HUD must not eat clicks — that uncaptures the mouse in Godot.
+func _make_combat_hud_mouse_passthrough(node: Node) -> void:
+	if node == null:
+		return
+	if _is_interactive_hud(node):
+		return
+	if node is Control:
+		(node as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in node.get_children():
+		_make_combat_hud_mouse_passthrough(child)
+
+
+func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
+	var viewport := get_viewport()
+	if viewport:
+		viewport.gui_release_focus()
+	if wants_free_cursor(phase):
+		_mouse_capture_gen += 1
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		return
+	_capture_mouse_after_ui_click()
+
+
+func _capture_mouse_after_ui_click() -> void:
+	_mouse_capture_gen += 1
+	var gen := _mouse_capture_gen
+	while (
+		Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+		or Input.is_mouse_button_pressed(MOUSE_BUTTON_MIDDLE)
+	):
+		await get_tree().process_frame
+		if gen != _mouse_capture_gen or wants_free_cursor():
+			return
+	if gen != _mouse_capture_gen or wants_free_cursor():
+		return
+	var viewport := get_viewport()
+	if viewport:
+		viewport.gui_release_focus()
+	## Godot often ignores CAPTURED on the same frame as a GUI click.
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	await get_tree().process_frame
+	if gen != _mouse_capture_gen or wants_free_cursor():
+		return
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _open_bench() -> void:
