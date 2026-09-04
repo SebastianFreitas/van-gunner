@@ -37,6 +37,8 @@ var phase := RunPhase.IDLE
 var coins := 0
 var chill_mode := false
 var current_area: ItemDefinition.BoonPool = ItemDefinition.BoonPool.GENERAL
+## Pending weapon inventory restore applied when the player boots after load.
+var pending_weapons_save = null
 
 const _LEFT_AREA_CYCLE: Array[ItemDefinition.BoonPool] = [
 	ItemDefinition.BoonPool.FIRE,
@@ -63,6 +65,7 @@ func start_new(slot: int) -> void:
 	van_health = BASE_MAX_VAN_HEALTH
 	coins = 0
 	current_area = ItemDefinition.BoonPool.GENERAL
+	pending_weapons_save = null
 	set_chill_mode(false)
 	set_phase(RunPhase.IDLE)
 	SaveManager.save_active_session()
@@ -97,6 +100,7 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 	wave_changed.emit(wave_count)
 	coins_changed.emit(coins)
 	phase_changed.emit(phase)
+	pending_weapons_save = data.get("weapons", null)
 	session_loaded.emit()
 
 
@@ -214,8 +218,17 @@ func _resolve_area_for_fork(direction: StringName, step: int) -> ItemDefinition.
 
 
 func to_save_data() -> Dictionary:
+	var weapons = null
+	var tree := get_tree()
+	if tree:
+		var player := tree.get_first_node_in_group(&"player")
+		if player:
+			## Untyped to avoid class_name cycle with WeaponInventory.
+			var inv = player.get_node_or_null("WeaponInventory")
+			if inv != null and inv.has_method("to_save_dict"):
+				weapons = inv.to_save_dict()
 	return {
-		"version": 1,
+		"version": 2,
 		"run_seed": run_seed,
 		"route_step": route_step,
 		"wave_count": wave_count,
@@ -224,5 +237,6 @@ func to_save_data() -> Dictionary:
 		"van_max_health": van_max_health,
 		"coins": coins,
 		"phase": phase,
+		"weapons": weapons,
 		"saved_at": Time.get_datetime_string_from_system(),
 	}

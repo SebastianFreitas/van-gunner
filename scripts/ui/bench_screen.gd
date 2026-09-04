@@ -26,25 +26,38 @@ var _player: FpsPlayer
 var _usables: UsablesController
 var _gun_stats: GunStatsController
 var _weapon: GunController
+var _weapon_inventory: WeaponInventory
 var _hovered_item: ItemDefinition
 var _stats_target: VBoxContainer
+var _page := 0 ## 0 overview, 1 weapons
+var _selected_weapon_slot := 0
+var _overview_body: Control
+var _weapons_page: Control
+var _tab_overview: Button
+var _tab_weapons: Button
+var _weapons_content: VBoxContainer
 
 
 func _ready() -> void:
 	set_process(false)
 	tooltip.hide()
+	_ensure_tabs()
 
 
 func bind(
 	player: FpsPlayer,
 	usables: UsablesController,
 	gun_stats: GunStatsController,
-	weapon: GunController
+	weapon: GunController,
+	weapon_inventory: WeaponInventory = null
 ) -> void:
 	_player = player
 	_usables = usables
 	_gun_stats = gun_stats
 	_weapon = weapon
+	_weapon_inventory = weapon_inventory
+	if _weapon_inventory == null and _player:
+		_weapon_inventory = _player.get_node_or_null("WeaponInventory") as WeaponInventory
 	if _gun_stats:
 		_gun_stats.stats_changed.connect(_refresh_stats)
 	if _weapon:
@@ -52,6 +65,8 @@ func bind(
 	if _usables:
 		_usables.slots_changed.connect(_refresh_items)
 		_usables.boons_changed.connect(_refresh_items)
+	if _weapon_inventory:
+		_weapon_inventory.loadout_changed.connect(_refresh_weapons_page)
 	GameSession.van_health_changed.connect(_on_van_health_changed)
 	GameSession.coins_changed.connect(_on_coins_changed)
 	GameSession.wave_changed.connect(_on_wave_changed)
@@ -63,8 +78,10 @@ func open() -> void:
 		return
 	show()
 	set_process(true)
+	_show_page(_page)
 	_refresh_stats()
 	_refresh_items()
+	_refresh_weapons_page()
 
 
 func close() -> void:
@@ -465,6 +482,7 @@ func _on_van_health_changed(_current: float, _maximum: float) -> void:
 
 func _on_coins_changed(_total: int) -> void:
 	_refresh_stats()
+	_refresh_weapons_page()
 
 
 func _on_wave_changed(_wave: int) -> void:
@@ -475,3 +493,282 @@ func _clear(container: Node) -> void:
 	for child in container.get_children():
 		container.remove_child(child)
 		child.queue_free()
+
+
+func _ensure_tabs() -> void:
+	var layout := get_node_or_null("Margin/Layout") as VBoxContainer
+	var body := get_node_or_null("Margin/Layout/Body") as Control
+	if layout == null or body == null:
+		return
+	_overview_body = body
+	if layout.has_node("PageTabs"):
+		_tab_overview = layout.get_node("PageTabs/OverviewTab") as Button
+		_tab_weapons = layout.get_node("PageTabs/WeaponsTab") as Button
+		_weapons_page = layout.get_node_or_null("WeaponsPage") as Control
+		return
+
+	var tabs := HBoxContainer.new()
+	tabs.name = &"PageTabs"
+	tabs.add_theme_constant_override(&"separation", 8)
+	layout.add_child(tabs)
+	layout.move_child(tabs, body.get_index())
+
+	_tab_overview = Button.new()
+	_tab_overview.name = &"OverviewTab"
+	_tab_overview.text = "Overview"
+	_tab_overview.focus_mode = Control.FOCUS_NONE
+	_tab_overview.pressed.connect(func() -> void: _show_page(0))
+	tabs.add_child(_tab_overview)
+
+	_tab_weapons = Button.new()
+	_tab_weapons.name = &"WeaponsTab"
+	_tab_weapons.text = "Weapons"
+	_tab_weapons.focus_mode = Control.FOCUS_NONE
+	_tab_weapons.pressed.connect(func() -> void: _show_page(1))
+	tabs.add_child(_tab_weapons)
+
+	_weapons_page = ScrollContainer.new()
+	_weapons_page.name = &"WeaponsPage"
+	_weapons_page.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_weapons_page.visible = false
+	layout.add_child(_weapons_page)
+
+	_weapons_content = VBoxContainer.new()
+	_weapons_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_weapons_content.add_theme_constant_override(&"separation", 12)
+	_weapons_page.add_child(_weapons_content)
+
+
+func _show_page(page: int) -> void:
+	_page = page
+	if _overview_body:
+		_overview_body.visible = page == 0
+	if _weapons_page:
+		_weapons_page.visible = page == 1
+	if _tab_overview:
+		_tab_overview.disabled = page == 0
+	if _tab_weapons:
+		_tab_weapons.disabled = page == 1
+	if page == 0:
+		_refresh_stats()
+		_refresh_items()
+	else:
+		_refresh_weapons_page()
+
+
+func _refresh_weapons_page() -> void:
+	if not visible or _page != 1 or _weapons_content == null:
+		return
+	gold_label.text = "%d GOLD" % GameSession.coins
+	_clear(_weapons_content)
+
+	if _weapon_inventory == null:
+		var empty := Label.new()
+		empty.text = "No weapon inventory."
+		empty.add_theme_color_override(&"font_color", MUTED)
+		_weapons_content.add_child(empty)
+		return
+
+	var slots_row := HBoxContainer.new()
+	slots_row.add_theme_constant_override(&"separation", 16)
+	_weapons_content.add_child(slots_row)
+
+	for i in 2:
+		slots_row.add_child(_build_weapon_slot_card(i))
+
+	var inst: WeaponInstance = _weapon_inventory.get_slot(_selected_weapon_slot)
+	var detail := VBoxContainer.new()
+	detail.add_theme_constant_override(&"separation", 8)
+	_weapons_content.add_child(detail)
+
+	var detail_title := Label.new()
+	detail_title.add_theme_color_override(&"font_color", ACCENT)
+	detail_title.add_theme_font_size_override(&"font_size", 16)
+	detail.add_child(detail_title)
+
+	if inst == null:
+		detail_title.text = "Empty — find a gun"
+		return
+
+	detail_title.text = "%s  ·  Lv %d  ·  %d mods" % [
+		inst.display_name(), inst.weapon_level, inst.mods.size()
+	]
+
+	## Effective stats preview for selected gun (uses builder + active if selected).
+	var preview: GunStats = WeaponStatsBuilder.build(inst)
+	if _gun_stats and _weapon_inventory.active_index == _selected_weapon_slot:
+		preview = _gun_stats.get_stats()
+	_add_weapon_stat_lines(detail, preview, inst)
+
+	var mods_title := Label.new()
+	mods_title.text = "MODS"
+	mods_title.add_theme_color_override(&"font_color", ACCENT)
+	detail.add_child(mods_title)
+	if inst.mods.is_empty():
+		var none := Label.new()
+		none.text = "No mods"
+		none.add_theme_color_override(&"font_color", MUTED)
+		detail.add_child(none)
+	else:
+		for mi in inst.mods.size():
+			var mod: WeaponMod = inst.mods[mi]
+			var row := HBoxContainer.new()
+			var lab := Label.new()
+			lab.text = mod.format_line()
+			lab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.add_child(lab)
+			var rem := Button.new()
+			var rem_cost := WeaponPricing.craft_remove_cost(inst)
+			rem.text = "Remove  %d g" % rem_cost
+			rem.focus_mode = Control.FOCUS_NONE
+			rem.disabled = GameSession.coins < rem_cost
+			rem.pressed.connect(_on_remove_mod.bind(_selected_weapon_slot, mi))
+			row.add_child(rem)
+			detail.add_child(row)
+
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override(&"separation", 12)
+	detail.add_child(actions)
+
+	var add_cost := WeaponPricing.craft_add_cost(inst)
+	var add_btn := Button.new()
+	add_btn.text = "Add Random Mod  %d g" % add_cost
+	add_btn.focus_mode = Control.FOCUS_NONE
+	add_btn.disabled = (
+		not inst.can_add_mod()
+		or GameSession.coins < add_cost
+	)
+	add_btn.pressed.connect(_on_add_mod.bind(_selected_weapon_slot))
+	actions.add_child(add_btn)
+
+	var destroy_btn := Button.new()
+	destroy_btn.text = "Destroy Weapon"
+	destroy_btn.focus_mode = Control.FOCUS_NONE
+	destroy_btn.disabled = _weapon_inventory.occupied_count() <= 1
+	destroy_btn.pressed.connect(_on_destroy_weapon.bind(_selected_weapon_slot))
+	actions.add_child(destroy_btn)
+
+
+func _build_weapon_slot_card(index: int) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(240, 120)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.12, 0.11, 1.0)
+	style.border_color = ACCENT if index == _selected_weapon_slot else DIM
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 12
+	style.content_margin_top = 10
+	style.content_margin_right = 12
+	style.content_margin_bottom = 10
+	panel.add_theme_stylebox_override(&"panel", style)
+
+	var vbox := VBoxContainer.new()
+	panel.add_child(vbox)
+	var inst: WeaponInstance = _weapon_inventory.get_slot(index) if _weapon_inventory else null
+	var title := Label.new()
+	title.text = "SLOT %s%s" % [
+		"A" if index == 0 else "B",
+		"  ·  ACTIVE" if _weapon_inventory and index == _weapon_inventory.active_index else "",
+	]
+	title.add_theme_color_override(&"font_color", ACCENT)
+	vbox.add_child(title)
+	var body := Label.new()
+	if inst:
+		body.text = "%s\n%d mods  ·  ammo %s" % [
+			inst.display_name(),
+			inst.mods.size(),
+			str(inst.current_ammo) if inst.current_ammo >= 0 else "full",
+		]
+	else:
+		body.text = "Empty — find a gun"
+		body.add_theme_color_override(&"font_color", MUTED)
+	vbox.add_child(body)
+
+	var pick := Button.new()
+	pick.text = "Select"
+	pick.focus_mode = Control.FOCUS_NONE
+	pick.disabled = inst == null and index != _selected_weapon_slot
+	pick.pressed.connect(func() -> void:
+		_selected_weapon_slot = index
+		_refresh_weapons_page()
+	)
+	vbox.add_child(pick)
+	return panel
+
+
+func _add_weapon_stat_lines(parent: VBoxContainer, stats: GunStats, inst: WeaponInstance) -> void:
+	var lines := [
+		"Fire rate  %s/s" % ItemDescriber.format_number(stats.fire_rate),
+		"Damage  %s  (split across %d pellets)" % [
+			ItemDescriber.format_number(stats.damage_per_shot),
+			maxi(stats.pellets_per_shot, 1),
+		],
+		"Mag  %d  ·  Reload  %ss" % [
+			stats.mag_size,
+			ItemDescriber.format_number(stats.reload_speed),
+		],
+		"Type  %s  ·  Bounces  %d" % [
+			ItemDescriber.damage_type_name(stats.damage_type),
+			stats.max_bounces,
+		],
+	]
+	for line in lines:
+		var lab := Label.new()
+		lab.text = line
+		lab.add_theme_color_override(&"font_color", MUTED)
+		parent.add_child(lab)
+	if inst and not inst.mods.is_empty():
+		var bonus := Label.new()
+		bonus.text = "Move bonus  +%s%%" % ItemDescriber.format_number(
+			stats.movement_speed_bonus_pct
+		)
+		bonus.add_theme_color_override(&"font_color", MUTED)
+		parent.add_child(bonus)
+
+
+func _on_add_mod(slot_index: int) -> void:
+	if _weapon_inventory == null:
+		return
+	var inst: WeaponInstance = _weapon_inventory.get_slot(slot_index)
+	if inst == null or not inst.can_add_mod():
+		return
+	var cost := WeaponPricing.craft_add_cost(inst)
+	if not GameSession.spend_coins(cost):
+		return
+	var rolled: WeaponMod = WeaponGenerator.roll_one_mod(inst)
+	if rolled == null:
+		GameSession.add_coins(cost)
+		return
+	inst.mods.append(rolled)
+	inst.times_add_used += 1
+	if _weapon_inventory.active_index == slot_index:
+		_weapon_inventory.refresh_active_stats()
+	_refresh_weapons_page()
+	_refresh_stats()
+
+
+func _on_remove_mod(slot_index: int, mod_index: int) -> void:
+	if _weapon_inventory == null:
+		return
+	var inst: WeaponInstance = _weapon_inventory.get_slot(slot_index)
+	if inst == null or mod_index < 0 or mod_index >= inst.mods.size():
+		return
+	var cost := WeaponPricing.craft_remove_cost(inst)
+	if not GameSession.spend_coins(cost):
+		return
+	inst.mods.remove_at(mod_index)
+	if _weapon_inventory.active_index == slot_index:
+		_weapon_inventory.refresh_active_stats()
+	_refresh_weapons_page()
+	_refresh_stats()
+
+
+func _on_destroy_weapon(slot_index: int) -> void:
+	if _weapon_inventory == null:
+		return
+	if not _weapon_inventory.destroy_slot(slot_index):
+		return
+	_selected_weapon_slot = _weapon_inventory.active_index
+	_refresh_weapons_page()
+	_refresh_stats()

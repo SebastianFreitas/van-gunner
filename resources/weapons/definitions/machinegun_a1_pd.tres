@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"machinegun_a1_pd"
+display_name = "Machinegun A1 Poison"
+description = "Machinegun A1 tagged POISON."
+family = 2
+tier = 1
+element = 3
+fire_rate_mult = 1.9
+pellets_per_shot = 1
+pellet_spread_degrees = 0.0
+bullet_speed = 110.0
+bullet_size = 0.04
+max_bounces = 1
+base_mag_size = 40
+base_reload_seconds = 1.8
+drop_tickets = 15

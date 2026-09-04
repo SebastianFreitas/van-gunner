@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"shotgun_a1_pd"
+display_name = "Shotgun A1 Poison"
+description = "Shotgun A1 tagged POISON."
+family = 1
+tier = 1
+element = 3
+fire_rate_mult = 0.65
+pellets_per_shot = 10
+pellet_spread_degrees = 5.0
+bullet_speed = 70.0
+bullet_size = 0.04
+max_bounces = 1
+base_mag_size = 4
+base_reload_seconds = 1.5
+drop_tickets = 15

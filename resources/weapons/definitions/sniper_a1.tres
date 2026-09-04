@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"sniper_a1"
+display_name = "Sniper A1"
+description = "Faster cadence, better mag."
+family = 3
+tier = 1
+element = 0
+fire_rate_mult = 0.45
+pellets_per_shot = 1
+pellet_spread_degrees = 0.0
+bullet_speed = 180.0
+bullet_size = 0.05
+max_bounces = 2
+base_mag_size = 6
+base_reload_seconds = 1.6
+drop_tickets = 20

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"machinegun"
+display_name = "Machinegun"
+description = "High fire rate, large magazine."
+family = 2
+tier = 0
+element = 0
+fire_rate_mult = 2.2
+pellets_per_shot = 1
+pellet_spread_degrees = 0.0
+bullet_speed = 90.0
+bullet_size = 0.04
+max_bounces = 1
+base_mag_size = 30
+base_reload_seconds = 2.0
+drop_tickets = 750

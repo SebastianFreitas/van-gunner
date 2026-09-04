@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/fps_player.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/combat/gun_controller.gd" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="Resource" path="res://resources/combat/default_gun_stats.tres" id="4"]
 [ext_resource type="Script" path="res://scripts/player/usables_controller.gd" id="5"]
 [ext_resource type="Script" path="res://scripts/player/boon_traits.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/weapons/weapon_inventory.gd" id="7"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape"]
 radius = 0.42
@@ -40,6 +41,9 @@ cast_shadow = 0
 [node name="GunStats" type="Node" parent="." groups=["gun_stats"]]
 script = ExtResource("3")
 base_stats = ExtResource("4")
+
+[node name="WeaponInventory" type="Node" parent="."]
+script = ExtResource("7")
 
 [node name="Usables" type="Node" parent="."]
 script = ExtResource("5")

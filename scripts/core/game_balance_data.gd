@@ -78,6 +78,17 @@ extends Resource
 @export var van_speed_max_level := 4
 @export var van_speed_upgrade_base_cost := 50
 
+@export_group("Weapons")
+## Percent chance (1–100 roll) for a normal enemy to drop a generated gun.
+@export var weapon_drop_chance_base := 1
+## Added to base chance for elite/boss kills.
+@export var weapon_drop_chance_elite_bonus := 10
+## Multiplies bench craft gold costs (keep ≥1 for mega-expensive sinks).
+@export var weapon_craft_cost_mult := 1.0
+## Multiplies shop weapon offer prices.
+@export var weapon_shop_price_mult := 1.0
+@export var weapon_max_mods := 6
+
 
 func get_base_dps() -> float:
 	return base_damage_per_shot * base_fire_rate

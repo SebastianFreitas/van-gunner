@@ -33,6 +33,7 @@ var _debug_console: Control
 var _boon_choice: BoonChoicePanel
 var _boon_rewards: BoonRewardController
 var _driver_talk_open := false
+var _weapon_slots_hud: WeaponSlotsHud
 
 
 func _ready() -> void:
@@ -47,7 +48,7 @@ func _ready() -> void:
 	weapon.reloading_changed.connect(_on_reloading_changed)
 	crafting_table.opened.connect(_open_bench)
 	bench_screen.closed.connect(_on_bench_closed)
-	bench_screen.bind(player, usables, player.gun_stats, weapon)
+	bench_screen.bind(player, usables, player.gun_stats, weapon, player.weapon_inventory)
 	GameSession.phase_changed.connect(_on_phase_changed)
 	GameSession.van_health_changed.connect(_on_health_changed)
 	GameSession.wave_changed.connect(_on_wave_changed)
@@ -67,7 +68,29 @@ func _ready() -> void:
 	_boon_rewards.bind(player, _boon_choice)
 	driver_talk_panel.hide()
 	_refresh_driver_talk_options()
+	_setup_weapon_slots_hud()
+	if player.weapon_inventory:
+		player.weapon_inventory.loadout_changed.connect(_on_weapon_loadout_changed)
+		player.weapon_inventory.active_weapon_changed.connect(
+			func(_i: int, _w) -> void: _on_weapon_loadout_changed()
+		)
 	set_process(false)
+
+
+func _setup_weapon_slots_hud() -> void:
+	_weapon_slots_hud = WeaponSlotsHud.new()
+	var top_left := $HUD/TopLeft as VBoxContainer
+	if top_left and reload_label:
+		top_left.add_child(_weapon_slots_hud)
+		top_left.move_child(_weapon_slots_hud, reload_label.get_index())
+	else:
+		$HUD.add_child(_weapon_slots_hud)
+	if player.weapon_inventory:
+		_weapon_slots_hud.bind(player.weapon_inventory)
+
+
+func _on_weapon_loadout_changed() -> void:
+	_on_ammo_changed(weapon.get_current_ammo(), weapon.get_mag_size())
 
 
 func _process(_delta: float) -> void:
@@ -88,7 +111,12 @@ func _on_shot_fired(hit: bool) -> void:
 
 
 func _on_ammo_changed(current: int, max_ammo: int) -> void:
-	ammo_label.text = "AMMO  %d / %d" % [current, max_ammo]
+	var name_prefix := "AMMO"
+	if player and player.weapon_inventory:
+		var active: WeaponInstance = player.weapon_inventory.get_active()
+		if active:
+			name_prefix = active.family_code()
+	ammo_label.text = "%s  %d / %d" % [name_prefix, current, max_ammo]
 	ammo_bar.max_value = max_ammo
 	ammo_bar.value = current
 	var low_ammo := current <= maxi(1, floori(max_ammo * 0.25))

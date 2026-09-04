@@ -8,6 +8,7 @@ signal stats_changed
 var _modifiers: Array[StatModifier] = []
 var _effective_stats: GunStats
 var _traits: BoonTraits
+var _weapon_instance: WeaponInstance
 
 
 func _ready() -> void:
@@ -15,6 +16,15 @@ func _ready() -> void:
 	if _traits:
 		_traits.traits_changed.connect(_rebuild)
 	_rebuild()
+
+
+func set_weapon_instance(instance: WeaponInstance) -> void:
+	_weapon_instance = instance
+	_rebuild()
+
+
+func get_weapon_instance() -> WeaponInstance:
+	return _weapon_instance
 
 
 func add_modifier(modifier: StatModifier) -> void:
@@ -34,10 +44,15 @@ func get_stats() -> GunStats:
 
 
 func _rebuild() -> void:
-	var stats := base_stats.duplicate_stats() if base_stats else GunStats.new()
-	# Balance sheet owns baseline DPS knobs — boons/modifiers stack on top.
-	stats.fire_rate = GameBalance.BASE_FIRE_RATE
-	stats.damage_per_shot = GameBalance.BASE_DAMAGE_PER_SHOT
+	var stats: GunStats
+	if _weapon_instance:
+		## Balance floor + definition identity + weapon mods, then boons/temp mods.
+		stats = WeaponStatsBuilder.build(_weapon_instance)
+	else:
+		stats = base_stats.duplicate_stats() if base_stats else GunStats.new()
+		stats.fire_rate = GameBalance.BASE_FIRE_RATE
+		stats.damage_per_shot = GameBalance.BASE_DAMAGE_PER_SHOT
+		stats.pellets_per_shot = maxi(stats.pellets_per_shot, 1)
 	if _traits:
 		_apply_traits(stats, _traits)
 	for modifier in _modifiers:
@@ -54,6 +69,8 @@ func _rebuild() -> void:
 	stats.max_bounces = maxi(stats.max_bounces, 0)
 	stats.bounce_speed_retention = clampf(stats.bounce_speed_retention, 0.05, 1.0)
 	stats.bounce_damage_retention = clampf(stats.bounce_damage_retention, 0.0, 1.0)
+	stats.pellets_per_shot = maxi(stats.pellets_per_shot, 1)
+	stats.pellet_spread_degrees = maxf(stats.pellet_spread_degrees, 0.0)
 	_effective_stats = stats
 	stats_changed.emit()
 

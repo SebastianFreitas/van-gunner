@@ -177,7 +177,7 @@ static func spawn_projectile(
 	inherited_velocity: Vector3 = Vector3.ZERO,
 	aim_point = null
 ) -> Projectile:
-	var info := DamageInfo.create(stats.damage_per_shot, stats.damage_type, shooter)
+	var info := DamageInfo.create_from_gun_stats(stats, shooter)
 	var spawn_parent := _resolve_projectile_parent(tree, shooter)
 	# Parenting under the van already carries travel motion — don't also bake van velocity
 	# or shots/trails drift backward relative to the cabin.

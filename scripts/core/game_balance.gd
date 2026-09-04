@@ -158,6 +158,26 @@ var VAN_SPEED_UPGRADE_BASE_COST: int:
 	get:
 		return data.van_speed_upgrade_base_cost
 
+var WEAPON_DROP_CHANCE_BASE: int:
+	get:
+		return data.weapon_drop_chance_base
+
+var WEAPON_DROP_CHANCE_ELITE_BONUS: int:
+	get:
+		return data.weapon_drop_chance_elite_bonus
+
+var WEAPON_CRAFT_COST_MULT: float:
+	get:
+		return data.weapon_craft_cost_mult
+
+var WEAPON_SHOP_PRICE_MULT: float:
+	get:
+		return data.weapon_shop_price_mult
+
+var WEAPON_MAX_MODS: int:
+	get:
+		return data.weapon_max_mods
+
 
 # --- Helpers -----------------------------------------------------------------
 

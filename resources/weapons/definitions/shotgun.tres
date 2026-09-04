@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"shotgun"
+display_name = "Shotgun"
+description = "Wide pellet spray. Coverage over single-target DPS."
+family = 1
+tier = 0
+element = 0
+fire_rate_mult = 0.55
+pellets_per_shot = 8
+pellet_spread_degrees = 5.0
+bullet_speed = 70.0
+bullet_size = 0.04
+max_bounces = 1
+base_mag_size = 2
+base_reload_seconds = 1.8
+drop_tickets = 750

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/weapons/weapon_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"basic_a1_cd"
+display_name = "Basic A1 Cold"
+description = "Basic A1 tagged COLD."
+family = 0
+tier = 1
+element = 2
+fire_rate_mult = 0.85
+pellets_per_shot = 1
+pellet_spread_degrees = 0.0
+bullet_speed = 130.0
+bullet_size = 0.045
+max_bounces = 1
+base_mag_size = 10
+base_reload_seconds = 1.0
+drop_tickets = 15

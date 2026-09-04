@@ -24,8 +24,13 @@ extends Node
 @export var coin_amount_min := 1
 @export var coin_amount_max := 3
 
+## Extra weapon drop chance when the owning enemy is elite (or flagged).
+@export var treat_as_elite := false
+
 ## Random horizontal offset so simultaneous drops don't perfectly overlap.
 @export var scatter_radius := 0.55
+
+const _WEAPON_PICKUP_SCENE := preload("res://scenes/items/weapon_pickup.tscn")
 
 
 func spawn_bonus_drop(world_position: Vector3, container: Node) -> void:
@@ -47,6 +52,31 @@ func spawn_drops(world_position: Vector3, container: Node) -> void:
 			item_spawned = true
 	if coin_item and pickup_scene and randf() <= coin_drop_chance:
 		_spawn_coins(world_position, container, item_spawned)
+	_try_weapon_drop(world_position, container)
+
+
+func _try_weapon_drop(world_position: Vector3, container: Node) -> void:
+	var chance := GameBalance.WEAPON_DROP_CHANCE_BASE
+	var elite := treat_as_elite
+	var owner := get_parent()
+	if owner != null and "is_elite" in owner:
+		elite = bool(owner.is_elite)
+	elif owner != null and "is_agile" in owner and bool(owner.is_agile):
+		elite = true
+	if elite:
+		chance += GameBalance.WEAPON_DROP_CHANCE_ELITE_BONUS
+	## Roll 1..100 as in the design doc.
+	if randi_range(1, 100) > chance:
+		return
+	var level := maxi(GameSession.route_step, 1)
+	var inst := WeaponGenerator.create_weapon(level)
+	var pickup = _WEAPON_PICKUP_SCENE.instantiate()
+	if pickup == null:
+		return
+	if pickup.has_method("setup"):
+		pickup.call("setup", inst)
+	container.add_child(pickup)
+	pickup.global_position = world_position + _scatter_offset() + Vector3(0.0, 0.15, 0.0)
 
 
 func _spawn_item(item: ItemDefinition, world_position: Vector3, container: Node) -> void:

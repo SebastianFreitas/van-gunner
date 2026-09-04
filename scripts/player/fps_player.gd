@@ -17,6 +17,7 @@ const _REAR_DOOR_INTERACT_SCRIPT := preload("res://scripts/run/rear_door_interac
 @onready var interaction_ray: RayCast3D = $Head/Camera3D/InteractionRay
 @onready var weapon: GunController = $Head/Camera3D/Weapon
 @onready var gun_stats: GunStatsController = $GunStats
+@onready var weapon_inventory: WeaponInventory = $WeaponInventory
 @onready var usables: UsablesController = $Usables
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
@@ -50,6 +51,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		_current_interactable.interact(self)
 	elif event.is_action_pressed("reload") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		weapon.try_reload()
+	elif event.is_action_pressed("use_usable") and _can_swap_weapons():
+		weapon_inventory.swap_active()
+	elif event is InputEventMouseButton and _can_swap_weapons():
+		var mb := event as InputEventMouseButton
+		if mb.pressed:
+			if mb.button_index == MOUSE_BUTTON_WHEEL_UP:
+				weapon_inventory.cycle_active(-1)
+			elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				weapon_inventory.cycle_active(1)
 	elif event.is_action_pressed("use_slot_1"):
 		usables.try_use_slot(0)
 	elif event.is_action_pressed("use_slot_2"):
@@ -58,6 +68,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		usables.try_use_slot(2)
 	elif event.is_action_pressed("use_slot_4"):
 		usables.try_use_slot(3)
+
+
+func _can_swap_weapons() -> bool:
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		return false
+	## Block while modal UI owns the mouse / pause overlays.
+	if get_tree().paused:
+		return false
+	return true
 
 
 func _physics_process(delta: float) -> void:

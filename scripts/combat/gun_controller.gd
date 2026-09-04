@@ -56,8 +56,23 @@ func try_fire() -> void:
 	if direction.length_squared() < 0.0001:
 		direction = -camera.global_basis.z
 
-	# Van parenting carries travel motion; don't bake van velocity into the shot.
-	var projectile := _spawn_projectile(origin, direction, stats, Vector3.ZERO, muzzle, aim)
+	## Pellet damage is split so shotguns are coverage, not ×N DPS.
+	var pellets := maxi(stats.pellets_per_shot, 1)
+	var pellet_damage := stats.damage_per_shot / float(pellets)
+	var pellet_stats := stats.duplicate_stats()
+	pellet_stats.damage_per_shot = pellet_damage
+
+	var first_projectile: Projectile = null
+	for i in pellets:
+		var shot_dir := direction
+		if pellets > 1 and stats.pellet_spread_degrees > 0.0:
+			shot_dir = _spread_direction(direction, stats.pellet_spread_degrees)
+		var projectile := _spawn_projectile(
+			origin, shot_dir, pellet_stats, Vector3.ZERO, muzzle, aim
+		)
+		if first_projectile == null:
+			first_projectile = projectile
+
 	var player := _get_player()
 	var traits := BoonTraits.find_on(player)
 	if traits:
@@ -70,13 +85,77 @@ func try_fire() -> void:
 			traits,
 			Vector3.ZERO
 		)
-	_track_projectile_feedback(projectile)
+	if first_projectile:
+		_track_projectile_feedback(first_projectile)
 	_current_ammo -= 1
 	_next_shot_time = now + roundi(1000.0 / stats.fire_rate)
 	_play_feedback()
 	ammo_changed.emit(_current_ammo, stats.mag_size)
 	if _current_ammo <= 0:
 		_start_reload()
+
+
+## Random cone offset around the aim direction (degrees half-angle).
+func _spread_direction(base: Vector3, spread_degrees: float) -> Vector3:
+	var axis := base.normalized()
+	var up := Vector3.UP
+	if absf(axis.dot(up)) > 0.95:
+		up = Vector3.RIGHT
+	var right := axis.cross(up).normalized()
+	up = right.cross(axis).normalized()
+	var yaw := deg_to_rad(randf_range(-spread_degrees, spread_degrees))
+	var pitch := deg_to_rad(randf_range(-spread_degrees, spread_degrees))
+	return (axis + right * tan(yaw) + up * tan(pitch)).normalized()
+
+
+func set_ammo_state(current: int, is_reloading: bool = false) -> void:
+	_current_ammo = maxi(current, 0)
+	_is_reloading = is_reloading
+	ammo_changed.emit(_current_ammo, _get_stats().mag_size)
+	reloading_changed.emit(_is_reloading)
+
+
+func apply_weapon_ammo_from_instance(instance: WeaponInstance) -> void:
+	if instance == null:
+		_refill_magazine()
+		return
+	var mag := _get_stats().mag_size
+	if instance.current_ammo < 0:
+		_current_ammo = mag
+	else:
+		_current_ammo = mini(instance.current_ammo, mag)
+	_is_reloading = false
+	if instance.is_reloading and instance.reload_ends_at_msec > Time.get_ticks_msec():
+		_resume_reload(instance)
+	else:
+		ammo_changed.emit(_current_ammo, mag)
+		reloading_changed.emit(false)
+
+
+func capture_ammo_to_instance(instance: WeaponInstance) -> void:
+	if instance == null:
+		return
+	instance.current_ammo = _current_ammo
+	instance.is_reloading = _is_reloading
+	## Remaining reload stored as absolute end time; builder of swap sets it.
+	if not _is_reloading:
+		instance.reload_ends_at_msec = 0
+
+
+func _resume_reload(instance: WeaponInstance) -> void:
+	_is_reloading = true
+	reloading_changed.emit(true)
+	ammo_changed.emit(_current_ammo, _get_stats().mag_size)
+	var remaining_ms := maxi(instance.reload_ends_at_msec - Time.get_ticks_msec(), 0)
+	await get_tree().create_timer(remaining_ms / 1000.0).timeout
+	if not is_inside_tree():
+		return
+	if instance != null:
+		instance.is_reloading = false
+		instance.reload_ends_at_msec = 0
+	_is_reloading = false
+	_refill_magazine()
+	reloading_changed.emit(false)
 
 
 func _track_projectile_feedback(projectile: Projectile) -> void:
@@ -197,10 +276,23 @@ func _start_reload() -> void:
 		return
 	_is_reloading = true
 	reloading_changed.emit(true)
-	await get_tree().create_timer(stats.reload_speed).timeout
+	var duration := stats.reload_speed
+	var ends_at := Time.get_ticks_msec() + roundi(duration * 1000.0)
+	if _stats_controller:
+		var inst := _stats_controller.get_weapon_instance()
+		if inst:
+			inst.is_reloading = true
+			inst.reload_ends_at_msec = ends_at
+			inst.current_ammo = _current_ammo
+	await get_tree().create_timer(duration).timeout
 	if not is_inside_tree():
 		return
 	_is_reloading = false
+	if _stats_controller:
+		var inst2 := _stats_controller.get_weapon_instance()
+		if inst2:
+			inst2.is_reloading = false
+			inst2.reload_ends_at_msec = 0
 	_refill_magazine()
 	reloading_changed.emit(false)
 
