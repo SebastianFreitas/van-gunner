@@ -9,6 +9,7 @@ const FLASH_PAST := 0.055
 
 static var _body: StandardMaterial3D
 static var _accent: StandardMaterial3D
+static var _bore: StandardMaterial3D
 
 
 static func build(parent: Node3D, family: WeaponDefinition.Family) -> float:
@@ -27,9 +28,32 @@ static func build(parent: Node3D, family: WeaponDefinition.Family) -> float:
 
 
 static func _build_basic(parent: Node3D) -> float:
-	## Original 0.18 cube, 0.65 long, centered on the weapon node.
-	_add_box(parent, "Body", Vector3(0.18, 0.18, 0.65), REAR_Z)
-	return REAR_Z - 0.65
+	## Same one-piece buster as before, just slimmer, with a couple of
+	## collar bands and a dark bore in the front face — not a rifle.
+	var body_len := 0.62
+	_add_box(parent, "Body", Vector3(0.145, 0.145, body_len), REAR_Z)
+	_add_box(
+		parent,
+		"BandA",
+		Vector3(0.165, 0.165, 0.035),
+		REAR_Z - 0.18,
+		_accent_mat()
+	)
+	_add_box(
+		parent,
+		"BandB",
+		Vector3(0.165, 0.165, 0.035),
+		REAR_Z - 0.38,
+		_accent_mat()
+	)
+	_add_box(
+		parent,
+		"Bore",
+		Vector3(0.07, 0.07, 0.05),
+		REAR_Z - body_len + 0.02,
+		_bore_mat()
+	)
+	return REAR_Z - body_len
 
 
 static func _build_shotgun(parent: Node3D) -> float:
@@ -76,15 +100,6 @@ static func _build_machinegun(parent: Node3D) -> float:
 	var barrel_len := 0.34
 	_add_box(parent, "Cuff", Vector3(0.20, 0.20, cuff_len), REAR_Z)
 	_add_box(parent, "Housing", Vector3(0.17, 0.17, house_len), REAR_Z - cuff_len)
-	## Side capacitor — Mega Buster tank, not a magazine.
-	var tank := _add_box(
-		parent,
-		"Tank",
-		Vector3(0.08, 0.14, 0.18),
-		REAR_Z - cuff_len - 0.08,
-		_accent_mat()
-	)
-	tank.position.x = 0.14
 	var barrel_rear := REAR_Z - cuff_len - house_len + 0.08
 	var ring := 0.085
 	for i in 6:
@@ -149,3 +164,12 @@ static func _accent_mat() -> StandardMaterial3D:
 		_accent.metallic = 0.82
 		_accent.roughness = 0.28
 	return _accent
+
+
+static func _bore_mat() -> StandardMaterial3D:
+	if _bore == null:
+		_bore = StandardMaterial3D.new()
+		_bore.albedo_color = Color(0.04, 0.04, 0.045, 1)
+		_bore.metallic = 0.35
+		_bore.roughness = 0.62
+	return _bore
