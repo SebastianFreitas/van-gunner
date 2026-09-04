@@ -5,11 +5,12 @@ const _ActDeckController := preload("res://scripts/run/act_deck_controller.gd")
 const _BoonChoicePanel := preload("res://scripts/ui/boon_choice_panel.gd")
 const _BoonRewardController := preload("res://scripts/run/boon_reward_controller.gd")
 
-const _ROUTE_ACCENT := Color(0.91, 0.78, 0.48, 1.0)
-const _ROUTE_MUTED := Color(0.62, 0.66, 0.64, 1.0)
-const _ROUTE_BLESSING := Color(0.55, 0.78, 0.62, 1.0)
-const _ROUTE_DANGER := Color(0.86, 0.42, 0.36, 1.0)
-const _ROUTE_SHOP := Color(0.55, 0.74, 0.92, 1.0)
+const _ROUTE_ACCENT := Color(0.86, 0.74, 0.46, 1.0)
+const _ROUTE_MUTED := Color(0.42, 0.40, 0.36, 1.0)
+const _ROUTE_BLESSING := Color(0.52, 0.70, 0.88, 1.0)
+const _ROUTE_DANGER := Color(0.84, 0.30, 0.24, 1.0)
+const _ROUTE_SHOP := Color(0.46, 0.45, 0.42, 1.0)
+const _ROUTE_INK := Color(0.08, 0.08, 0.07, 1.0)
 
 @onready var player: FpsPlayer = $TravelPath/VanFollow/VanRig/Player
 @onready var weapon: GunController = $TravelPath/VanFollow/VanRig/Player/Head/Camera3D/Weapon
@@ -259,12 +260,10 @@ func _refresh_route_choice_labels() -> void:
 	_populate_route_button(left_btn, left_card, shop_side == &"left", true)
 	_populate_route_button(right_btn, right_card, shop_side == &"right", false)
 	var hint: Label = %RouteChoice.get_node("Layout/Hint")
-	if shop_side == &"left":
-		hint.text = "Blue banner = shop stop. Green/red = blessing or danger street."
-	elif shop_side == &"right":
-		hint.text = "Blue banner = shop stop. Green/red = blessing or danger street."
+	if shop_side == &"left" or shop_side == &"right":
+		hint.text = "Grey strip = shop stop. Blue blessing, red danger."
 	else:
-		hint.text = "Green blessing · red danger — pick a turn, or the road picks for you."
+		hint.text = "Blue blessing · red danger — pick a turn, or the road picks for you."
 
 
 func _populate_route_button(
@@ -283,27 +282,17 @@ func _populate_route_button(
 
 	var is_danger := card != null and card.is_danger()
 	var polarity := _ROUTE_DANGER if is_danger else _ROUTE_BLESSING
-	var border := _ROUTE_SHOP if is_shop else polarity
-	var bg := Color(0.07, 0.09, 0.11, 1.0)
-	if is_shop:
-		bg = Color(0.08, 0.11, 0.16, 1.0)
-	elif card != null:
-		bg = (
-			Color(0.14, 0.08, 0.08, 1.0)
-			if is_danger
-			else Color(0.07, 0.12, 0.09, 1.0)
-		)
+	var stripe := _ROUTE_SHOP if is_shop else polarity
+	var bg := _ROUTE_INK
 
-	button.add_theme_stylebox_override(&"normal", _make_route_style(bg, border, 3 if is_shop else 2))
+	button.add_theme_stylebox_override(&"normal", _make_route_style(bg, stripe))
 	button.add_theme_stylebox_override(
-		&"hover",
-		_make_route_style(bg.lightened(0.08), border.lightened(0.12), 3 if is_shop else 2)
+		&"hover", _make_route_style(Color(0.12, 0.11, 0.09, 1.0), stripe.lightened(0.08))
 	)
 	button.add_theme_stylebox_override(
-		&"pressed",
-		_make_route_style(bg.darkened(0.08), border.darkened(0.1), 3 if is_shop else 2)
+		&"pressed", _make_route_style(Color(0.05, 0.05, 0.04, 1.0), stripe.darkened(0.08))
 	)
-	button.add_theme_stylebox_override(&"focus", _make_route_style(bg, border, 3 if is_shop else 2))
+	button.add_theme_stylebox_override(&"focus", _make_route_style(bg, stripe))
 
 	var stack := VBoxContainer.new()
 	stack.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -335,11 +324,12 @@ func _populate_route_button(
 	card_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	card_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var card_style := StyleBoxFlat.new()
-	card_style.bg_color = Color(0.05, 0.06, 0.07, 0.85)
+	card_style.bg_color = Color(0.06, 0.06, 0.05, 0.92)
+	card_style.set_corner_radius_all(0)
+	card_style.set_border_width_all(0)
+	card_style.border_width_left = 3
 	card_style.border_color = polarity
-	card_style.set_border_width_all(2)
-	card_style.set_corner_radius_all(6)
-	card_style.content_margin_left = 6
+	card_style.content_margin_left = 8
 	card_style.content_margin_right = 6
 	card_style.content_margin_top = 6
 	card_style.content_margin_bottom = 6
@@ -368,6 +358,7 @@ func _populate_route_button(
 		icon.custom_minimum_size = Vector2(36, 36)
 		icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.modulate = Color(0.62, 0.60, 0.56, 1.0)
 		card_stack.add_child(icon)
 
 	var name_label := Label.new()
@@ -395,25 +386,20 @@ func _make_route_shop_slot(is_shop: bool) -> Control:
 	slot.custom_minimum_size = Vector2(0, 26)
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style := StyleBoxFlat.new()
-	style.set_corner_radius_all(4)
+	style.set_corner_radius_all(0)
+	style.set_border_width_all(0)
 	style.content_margin_left = 6
 	style.content_margin_right = 6
 	style.content_margin_top = 3
 	style.content_margin_bottom = 3
-	if is_shop:
-		style.bg_color = Color(0.18, 0.32, 0.48, 1.0)
-		style.border_color = _ROUTE_SHOP
-		style.set_border_width_all(1)
-	else:
-		style.bg_color = Color(0, 0, 0, 0)
-		style.set_border_width_all(0)
+	style.bg_color = Color(0.18, 0.17, 0.16, 1.0) if is_shop else Color(0.11, 0.11, 0.10, 1.0)
 	slot.add_theme_stylebox_override(&"panel", style)
 	var shop_label := Label.new()
-	shop_label.text = "SHOP STOP" if is_shop else " "
+	shop_label.text = "SHOP STOP" if is_shop else "—"
 	shop_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	shop_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	shop_label.add_theme_color_override(
-		&"font_color", _ROUTE_SHOP.lightened(0.25) if is_shop else Color(0, 0, 0, 0)
+		&"font_color", Color(0.72, 0.70, 0.64, 1.0) if is_shop else Color(0.28, 0.27, 0.25, 1.0)
 	)
 	shop_label.add_theme_font_size_override(&"font_size", 11)
 	shop_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -421,12 +407,16 @@ func _make_route_shop_slot(is_shop: bool) -> Control:
 	return slot
 
 
-func _make_route_style(bg: Color, border: Color, border_width: int) -> StyleBoxFlat:
+func _make_route_style(bg: Color, stripe: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = bg
-	style.border_color = border
-	style.set_border_width_all(border_width)
-	style.set_corner_radius_all(8)
+	style.set_corner_radius_all(0)
+	style.set_border_width_all(0)
+	style.border_width_left = 3
+	style.border_color = stripe
+	style.shadow_color = Color(0, 0, 0, 0.55)
+	style.shadow_size = 8
+	style.shadow_offset = Vector2(0, 3)
 	style.content_margin_left = 10
 	style.content_margin_right = 10
 	style.content_margin_top = 8

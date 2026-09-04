@@ -6,11 +6,12 @@ extends Control
 
 signal reveal_finished
 
-const ACCENT := Color(0.91, 0.78, 0.48, 1.0)
-const MUTED := Color(0.62, 0.66, 0.64, 1.0)
-const BLESSING_COLOR := Color(0.55, 0.78, 0.62, 1.0)
-const DANGER_COLOR := Color(0.86, 0.42, 0.36, 1.0)
-const CARD_BACK := Color(0.12, 0.14, 0.16, 1.0)
+const ACCENT := Color(0.86, 0.74, 0.46, 1.0)
+const MUTED := Color(0.42, 0.40, 0.36, 1.0)
+const BLESSING_COLOR := Color(0.52, 0.70, 0.88, 1.0)
+const DANGER_COLOR := Color(0.84, 0.30, 0.24, 1.0)
+const INK := Color(0.08, 0.08, 0.07, 0.96)
+const CARD_BACK := Color(0.07, 0.07, 0.06, 1.0)
 const FLIP_DELAY := 0.35
 const SHUFFLE_DURATION := 0.55
 
@@ -38,7 +39,7 @@ func present(display_cards: Array[ActCardDefinition], act_number: int, area_flav
 
 	var backdrop := ColorRect.new()
 	backdrop.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	backdrop.color = Color(0.02, 0.03, 0.04, 0.78)
+	backdrop.color = Color(0.02, 0.02, 0.02, 0.84)
 	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(backdrop)
 
@@ -84,10 +85,11 @@ func present(display_cards: Array[ActCardDefinition], act_number: int, area_flav
 
 	_continue_btn = Button.new()
 	_continue_btn.text = "CONTINUE"
-	_continue_btn.custom_minimum_size = Vector2(180, 40)
+	_continue_btn.custom_minimum_size = Vector2(196, 42)
 	_continue_btn.disabled = true
 	_continue_btn.focus_mode = Control.FOCUS_NONE
 	_continue_btn.pressed.connect(_on_continue_pressed)
+	_style_continue_button(_continue_btn)
 	var btn_wrap := CenterContainer.new()
 	btn_wrap.add_child(_continue_btn)
 	stack.add_child(btn_wrap)
@@ -136,21 +138,12 @@ func _flip_card(index: int, card: ActCardDefinition) -> void:
 		child.queue_free()
 
 	var accent := DANGER_COLOR if card.is_danger() else BLESSING_COLOR
-	var style := StyleBoxFlat.new()
-	style.bg_color = (
-		Color(0.16, 0.08, 0.08, 1.0)
-		if card.is_danger()
-		else Color(0.07, 0.13, 0.1, 1.0)
-	)
-	style.border_color = accent
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
-	panel.add_theme_stylebox_override(&"panel", style)
+	panel.add_theme_stylebox_override(&"panel", _ink_plate(accent))
 
 	var stack := VBoxContainer.new()
 	stack.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
-	stack.add_theme_constant_override(&"separation", 4)
+	stack.add_theme_constant_override(&"separation", 5)
 	panel.add_child(stack)
 
 	var polarity := Label.new()
@@ -167,6 +160,7 @@ func _flip_card(index: int, card: ActCardDefinition) -> void:
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.custom_minimum_size = Vector2(48, 48)
 		icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		icon.modulate = Color(0.62, 0.60, 0.56, 1.0)
 		stack.add_child(icon)
 
 	var name_label := Label.new()
@@ -177,6 +171,12 @@ func _flip_card(index: int, card: ActCardDefinition) -> void:
 	name_label.add_theme_font_size_override(&"font_size", 13)
 	stack.add_child(name_label)
 
+	var rule := ColorRect.new()
+	rule.color = Color(ACCENT, 0.35)
+	rule.custom_minimum_size = Vector2(36, 1)
+	rule.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	stack.add_child(rule)
+
 	var body := Label.new()
 	body.text = card.description.strip_edges()
 	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -185,6 +185,8 @@ func _flip_card(index: int, card: ActCardDefinition) -> void:
 	body.add_theme_font_size_override(&"font_size", 10)
 	body.custom_minimum_size = Vector2(100, 0)
 	stack.add_child(body)
+
+	_add_corner_ticks(panel, Color(ACCENT, 0.45))
 
 	_card_labels.append(name_label)
 
@@ -279,15 +281,97 @@ func _show_card_back(panel: PanelContainer, border_color: Color = MUTED) -> void
 	q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	q.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	q.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	q.add_theme_color_override(&"font_color", MUTED)
+	q.add_theme_color_override(&"font_color", Color(MUTED, 0.55))
 	q.add_theme_font_size_override(&"font_size", 28)
 	panel.add_child(q)
+	panel.add_theme_stylebox_override(&"panel", _ink_plate(border_color, false))
+	_add_corner_ticks(panel, Color(border_color, 0.28))
+
+
+func _ink_plate(accent: Color, stripe: bool = true) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = CARD_BACK
-	style.border_color = border_color
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
-	panel.add_theme_stylebox_override(&"panel", style)
+	style.bg_color = INK
+	style.set_corner_radius_all(0)
+	style.set_border_width_all(0)
+	if stripe:
+		style.border_width_left = 3
+		style.border_color = accent
+	style.shadow_color = Color(0, 0, 0, 0.62)
+	style.shadow_size = 10
+	style.shadow_offset = Vector2(0, 4)
+	style.content_margin_left = 12 if stripe else 10
+	style.content_margin_right = 10
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
+	return style
+
+
+func _add_corner_ticks(host: Control, color: Color) -> void:
+	var overlay := Control.new()
+	overlay.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.add_child(overlay)
+	var len := 12.0
+	var thick := 1.0
+	_place_tick(overlay, Vector2(6, 6), Vector2(len, thick), color)
+	_place_tick(overlay, Vector2(6, 6), Vector2(thick, len), color)
+	_place_tick(overlay, Vector2(-6 - len, 6), Vector2(len, thick), color, true, false)
+	_place_tick(overlay, Vector2(-6 - thick, 6), Vector2(thick, len), color, true, false)
+	_place_tick(overlay, Vector2(6, -6 - thick), Vector2(len, thick), color, false, true)
+	_place_tick(overlay, Vector2(6, -6 - len), Vector2(thick, len), color, false, true)
+	_place_tick(overlay, Vector2(-6 - len, -6 - thick), Vector2(len, thick), color, true, true)
+	_place_tick(overlay, Vector2(-6 - thick, -6 - len), Vector2(thick, len), color, true, true)
+
+
+func _place_tick(
+	overlay: Control,
+	offset: Vector2,
+	size: Vector2,
+	color: Color,
+	from_right: bool = false,
+	from_bottom: bool = false
+) -> void:
+	var tick := ColorRect.new()
+	tick.color = color
+	tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tick.anchor_left = 1.0 if from_right else 0.0
+	tick.anchor_right = 1.0 if from_right else 0.0
+	tick.anchor_top = 1.0 if from_bottom else 0.0
+	tick.anchor_bottom = 1.0 if from_bottom else 0.0
+	tick.offset_left = offset.x
+	tick.offset_top = offset.y
+	tick.offset_right = offset.x + size.x
+	tick.offset_bottom = offset.y + size.y
+	overlay.add_child(tick)
+
+
+func _style_continue_button(button: Button) -> void:
+	var idle := StyleBoxFlat.new()
+	idle.bg_color = CARD_BACK
+	idle.set_corner_radius_all(0)
+	idle.set_border_width_all(0)
+	idle.border_width_top = 2
+	idle.border_color = ACCENT
+	idle.content_margin_left = 18
+	idle.content_margin_right = 18
+	idle.content_margin_top = 10
+	idle.content_margin_bottom = 10
+	var hover := idle.duplicate()
+	hover.bg_color = Color(0.12, 0.11, 0.09, 1.0)
+	var pressed := idle.duplicate()
+	pressed.bg_color = Color(0.05, 0.05, 0.04, 1.0)
+	var disabled := idle.duplicate()
+	disabled.border_color = Color(ACCENT, 0.22)
+	disabled.bg_color = Color(0.06, 0.06, 0.05, 1.0)
+	button.add_theme_stylebox_override(&"normal", idle)
+	button.add_theme_stylebox_override(&"hover", hover)
+	button.add_theme_stylebox_override(&"pressed", pressed)
+	button.add_theme_stylebox_override(&"disabled", disabled)
+	button.add_theme_stylebox_override(&"focus", idle)
+	button.add_theme_color_override(&"font_color", ACCENT)
+	button.add_theme_color_override(&"font_hover_color", ACCENT.lightened(0.12))
+	button.add_theme_color_override(&"font_pressed_color", ACCENT.darkened(0.1))
+	button.add_theme_color_override(&"font_disabled_color", Color(MUTED, 0.55))
 
 
 func _on_continue_pressed() -> void:
