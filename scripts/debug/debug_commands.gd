@@ -38,7 +38,9 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 			"sidedoor":
 				matches = _filter_prefix(["open", "close", "toggle"], "")
 			"list":
-				matches = _filter_prefix(["boons", "items", "commands", "weapons"], "")
+				matches = _filter_prefix(["boons", "items", "commands", "weapons", "cards"], "")
+			"card":
+				matches = _filter_prefix(_card_id_strings(), "")
 			"give_weapon":
 				matches = _filter_prefix(WeaponCatalog.list_definition_ids(), "")
 			_:
@@ -49,6 +51,8 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 		matches = _filter_prefix(WeaponCatalog.list_definition_ids(), partial)
 	elif parts[0] == "boonpool":
 		matches = _filter_prefix(_boon_pool_names(), partial)
+	elif parts[0] == "card":
+		matches = _filter_prefix(_card_id_strings(), partial)
 	elif parts[0] == "summon":
 		matches = _filter_prefix(["enemy"], partial)
 	elif parts[0] == "reardoor":
@@ -56,7 +60,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 	elif parts[0] == "sidedoor":
 		matches = _filter_prefix(["open", "close", "toggle"], partial)
 	elif parts[0] == "list":
-		matches = _filter_prefix(["boons", "items", "commands", "weapons"], partial)
+		matches = _filter_prefix(["boons", "items", "commands", "weapons", "cards"], partial)
 	else:
 		matches = []
 
@@ -97,6 +101,7 @@ func _register_commands() -> void:
 		"phase": _cmd_phase,
 		"boonpool": _cmd_boonpool,
 		"list": _cmd_list,
+		"card": _cmd_card,
 		"reardoor": _cmd_reardoor,
 		"sidedoor": _cmd_sidedoor,
 		"give_weapon": _cmd_give_weapon,
@@ -124,6 +129,8 @@ func _cmd_help(_args: Array) -> String:
 		+ "  boonpool <pool> roll a boon from general/fire/poison/cold/physical\n"
 		+ "  list boons [q]  browse boon ids (optional filter)\n"
 		+ "  list items [q]  browse all item ids\n"
+		+ "  list cards [q]  browse street card ids\n"
+		+ "  card [id]       print / force-activate active street card\n"
 		+ "  phase          print current run phase\n"
 		+ "  reardoor [open|close|toggle]  swing the van rear doors\n"
 		+ "  sidedoor [open|close|toggle]  slide the van side doors\n"
@@ -313,7 +320,7 @@ func _cmd_force_a1(_args: Array) -> String:
 
 func _cmd_list(args: Array) -> String:
 	if args.is_empty():
-		return "Usage: list boons|items|commands|weapons [filter]"
+		return "Usage: list boons|items|commands|weapons|cards [filter]"
 	var kind: String = str(args[0]).to_lower()
 	var filter_text := " ".join(args.slice(1))
 	match kind:
@@ -331,8 +338,64 @@ func _cmd_list(args: Array) -> String:
 			return _format_item_list(ItemRegistry.list_entries(-1, filter_text), "items", filter_text)
 		"weapons":
 			return _format_weapon_list(filter_text)
+		"cards":
+			return _format_card_list(filter_text)
 		_:
-			return "Unknown list target: %s  (try boons, items, commands, weapons)" % kind
+			return "Unknown list target: %s  (try boons, items, commands, weapons, cards)" % kind
+
+
+func _cmd_card(args: Array) -> String:
+	if args.is_empty():
+		var active := GameSession.get_active_street_card()
+		if active == null:
+			return "No active street card."
+		return "active=%s (%s) — %s" % [
+			active.id,
+			active.polarity_label(),
+			active.description.strip_edges(),
+		]
+	var card_id := StringName(str(args[0]))
+	var card := ActCardRegistry.load_by_id(card_id)
+	if card == null:
+		return "Unknown card: %s" % card_id
+	ActCardCombat.clear()
+	GameSession.active_street_card_id = card_id
+	GameSession.pending_danger = card.is_danger()
+	ActCardCombat.activate(card)
+	return "Forced street card: %s (%s)" % [card.display_name, card.polarity_label()]
+
+
+func _format_card_list(filter_text: String) -> String:
+	var needle := filter_text.strip_edges().to_lower()
+	var lines: PackedStringArray = PackedStringArray()
+	var count := 0
+	for card_id in ActCardRegistry.list_ids():
+		var card := ActCardRegistry.load_by_id(card_id)
+		if card == null:
+			continue
+		var hay := ("%s %s %s" % [card.id, card.display_name, card.description]).to_lower()
+		if not needle.is_empty() and not hay.contains(needle):
+			continue
+		lines.append(
+			"  %s  —  [%s] %s — %s"
+			% [card.id, card.polarity_label(), card.display_name, card.description.strip_edges()]
+		)
+		count += 1
+	if count == 0:
+		if filter_text.is_empty():
+			return "No street cards found."
+		return "No street cards match '%s'." % filter_text
+	var header := "%d street cards" % count
+	if not filter_text.is_empty():
+		header += " matching '%s'" % filter_text
+	return header + ":\n" + "\n".join(lines)
+
+
+func _card_id_strings() -> Array[String]:
+	var out: Array[String] = []
+	for card_id in ActCardRegistry.list_ids():
+		out.append(String(card_id))
+	return out
 
 
 func _format_weapon_list(filter_text: String) -> String:

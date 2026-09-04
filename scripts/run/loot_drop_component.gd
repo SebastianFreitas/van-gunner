@@ -45,7 +45,8 @@ func spawn_drops(world_position: Vector3, container: Node) -> void:
 	if not is_instance_valid(container):
 		return
 	var item_spawned := false
-	if loot_pool and pickup_scene and randf() <= item_drop_chance:
+	var drop_chance := ActCardCombat.modify_item_drop_chance(item_drop_chance)
+	if loot_pool and pickup_scene and randf() <= drop_chance:
 		var rolled_item := loot_pool.pick_item()
 		if rolled_item:
 			_spawn_item(rolled_item, world_position, container)

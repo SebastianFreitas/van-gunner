@@ -145,6 +145,7 @@ func _tick_poison(delta: float) -> void:
 			var traits := _find_attacker_traits()
 			if traits:
 				BoonCombat.modify_outgoing_damage(info, traits, _owner)
+			ActCardCombat.modify_outgoing_damage(info, _owner)
 			_owner.take_damage(info)
 	if _poison_time_left <= 0.0:
 		_poison_dps = 0.0

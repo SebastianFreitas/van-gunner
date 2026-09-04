@@ -262,6 +262,7 @@ func needs_act_reveal() -> bool:
 func begin_new_act_deck() -> Array[ActCardDefinition]:
 	run_act += 1
 	pending_danger = false
+	ActCardCombat.clear()
 	active_street_card_id = &""
 	pending_boon_card_id = &""
 	var deck_ids := _build_act_deck_ids()
@@ -318,6 +319,7 @@ func consume_pending_danger() -> bool:
 
 func _commit_route_card(direction: StringName) -> void:
 	if act_cards.is_empty():
+		ActCardCombat.clear()
 		active_street_card_id = &""
 		pending_boon_card_id = &""
 		pending_danger = false
@@ -327,10 +329,12 @@ func _commit_route_card(direction: StringName) -> void:
 		offer_index = 1
 	var card_id := act_cards[offer_index]
 	act_cards.remove_at(offer_index)
+	ActCardCombat.clear()
 	active_street_card_id = card_id
 	pending_boon_card_id = card_id
 	var card := ActCardRegistry.load_by_id(card_id)
 	pending_danger = card != null and card.is_danger()
+	ActCardCombat.activate(card)
 
 
 func _build_act_deck_ids() -> Array[StringName]:
@@ -371,6 +375,7 @@ func _reset_act_deck() -> void:
 	run_act = 0
 	act_cards.clear()
 	act_cards_total = 0
+	ActCardCombat.clear()
 	active_street_card_id = &""
 	pending_boon_card_id = &""
 	pending_danger = false

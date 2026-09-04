@@ -71,6 +71,7 @@ static func apply_explosion(
 			splash_ctx.damage_info = splash
 			splash_ctx.target = damageable
 			BoonBehaviorRegistry.dispatch_explosion_splash(splash_ctx)
+		ActCardCombat.modify_outgoing_damage(splash, damageable)
 		if damageable is Node3D:
 			splash.hit_position = (damageable as Node3D).global_position + Vector3(0, 1.2, 0)
 		else:

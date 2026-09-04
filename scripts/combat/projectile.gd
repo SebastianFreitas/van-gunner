@@ -324,6 +324,7 @@ func _resolve_hit(collider: Node) -> void:
 		if traits:
 			bonus_phys = BoonCombat.modify_outgoing_damage(damage_info, traits, collider)
 			explosion_radius = BoonCombat.modify_explosion_radius(explosion_radius, damage_info, traits)
+		ActCardCombat.modify_outgoing_damage(damage_info, collider)
 	_has_hit = true
 	if damage_info:
 		damage_info.explosion_radius = explosion_radius

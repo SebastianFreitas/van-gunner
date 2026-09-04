@@ -1,13 +1,24 @@
 [gd_resource type="Resource" script_class="ActCardDefinition" format=3]
 
 [ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/run/act_card_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/run/effects/enemy_speed_mult_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/run/effects/enemy_loot_bonus_effect.gd" id="4"]
+[ext_resource type="Texture2D" path="res://scenes/acts/cards/hasty_pack.svg" id="5"]
+
+[sub_resource type="Resource" id="eff_speed"]
+script = ExtResource("3")
+speed_mult = 1.15
+
+[sub_resource type="Resource" id="eff_loot"]
+script = ExtResource("4")
+chance_bonus = 0.1
 
 [resource]
 script = ExtResource("1")
 id = &"hasty_pack"
 display_name = "Hasty Pack"
-description = "Enemies move a bit faster"
+description = "Enemies move 15% faster. +10% item drops."
 polarity = 1
-cold_damage_bonus = 0.0
-enemy_speed_mult = 1.15
-enemy_loot_chance_bonus = 0.1
+icon = ExtResource("5")
+effects = Array[ExtResource("2")]([SubResource("eff_speed"), SubResource("eff_loot")])

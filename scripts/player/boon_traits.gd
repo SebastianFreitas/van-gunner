@@ -3,12 +3,16 @@ extends Node
 
 ## Stores passive boon modifiers that combat systems query at runtime.
 ## Gun stat keys use the `gun_` prefix (see BoonTraitKeys) and are read by GunStatsController.
+## Street overlay is a replaceable layer from the active act card (TempBoonTraitEffect).
 
 signal traits_changed
 
 var _adds: Dictionary = {}
 var _mults: Dictionary = {}
 var _flags: Dictionary = {}
+var _street_adds: Dictionary = {}
+var _street_mults: Dictionary = {}
+var _street_flags: Dictionary = {}
 
 
 func _ready() -> void:
@@ -30,16 +34,32 @@ func set_flag(key: StringName) -> void:
 	traits_changed.emit()
 
 
+func set_street_overlay(adds: Dictionary, mults: Dictionary, flags: Dictionary) -> void:
+	_street_adds = adds.duplicate()
+	_street_mults = mults.duplicate()
+	_street_flags = flags.duplicate()
+	traits_changed.emit()
+
+
+func clear_street_overlay() -> void:
+	if _street_adds.is_empty() and _street_mults.is_empty() and _street_flags.is_empty():
+		return
+	_street_adds.clear()
+	_street_mults.clear()
+	_street_flags.clear()
+	traits_changed.emit()
+
+
 func get_add(key: StringName) -> float:
-	return float(_adds.get(key, 0.0))
+	return float(_adds.get(key, 0.0)) + float(_street_adds.get(key, 0.0))
 
 
 func get_mult(key: StringName) -> float:
-	return float(_mults.get(key, 1.0))
+	return float(_mults.get(key, 1.0)) * float(_street_mults.get(key, 1.0))
 
 
 func has_flag(key: StringName) -> bool:
-	return bool(_flags.get(key, false))
+	return bool(_flags.get(key, false)) or bool(_street_flags.get(key, false))
 
 
 static func find_on(node: Node) -> BoonTraits:

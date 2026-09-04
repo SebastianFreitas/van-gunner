@@ -1,8 +1,8 @@
 class_name ActCardDefinition
 extends Resource
 
-## Data-only street card for the act deck.
-## Polarity drives good vs danger roads; modifier fields are stored for later combat wiring.
+## Street card for the act deck. Polarity drives blessing vs danger roads;
+## combat behavior lives in composable `effects` (same idea as ItemEffect).
 
 enum Polarity {
 	BLESSING = 0,
@@ -14,12 +14,8 @@ enum Polarity {
 @export_multiline var description := ""
 @export var polarity: Polarity = Polarity.BLESSING
 @export var icon: Texture2D
-
-## Placeholder combat knobs — not applied to enemies yet.
-@export var cold_damage_bonus := 0.0
-@export var enemy_speed_mult := 1.0
-## Scales up with danger; intended for stronger negatives → better loot later.
-@export var enemy_loot_chance_bonus := 0.0
+## Modular combat / spawn / loot hooks. Add new ActCardEffect subclasses freely.
+@export var effects: Array[ActCardEffect] = []
 
 
 func is_danger() -> bool:

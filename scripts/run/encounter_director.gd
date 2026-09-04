@@ -106,6 +106,7 @@ func _schedule_encounter() -> void:
 func _run_segment(id: int) -> void:
 	var danger := GameSession.consume_pending_danger()
 	var plan := GameBalance.build_segment_wave_plan(GameSession.route_step)
+	plan = ActCardCombat.modify_wave_plan(plan)
 	if danger:
 		plan = _apply_danger_bump(plan)
 	for wave_i in plan.size():
@@ -221,6 +222,7 @@ func _spawn_raider(slot: int, count: int) -> WindowRaider:
 			GameSession.route_step, MetaProgression.get_van_speed()
 		)
 		raider.activate()
+	ActCardCombat.configure_enemy(raider)
 	return raider
 
 

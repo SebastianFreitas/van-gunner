@@ -161,6 +161,15 @@ func _flip_card(index: int, card: ActCardDefinition) -> void:
 	polarity.add_theme_font_size_override(&"font_size", 11)
 	stack.add_child(polarity)
 
+	if card.icon:
+		var icon := TextureRect.new()
+		icon.texture = card.icon
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.custom_minimum_size = Vector2(48, 48)
+		icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		stack.add_child(icon)
+
 	var name_label := Label.new()
 	name_label.text = card.display_name
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -225,8 +234,8 @@ func _play_shuffle(present_id: int) -> void:
 
 func _make_card_back() -> PanelContainer:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(118, 168)
-	panel.pivot_offset = Vector2(59, 84)
+	panel.custom_minimum_size = Vector2(118, 196)
+	panel.pivot_offset = Vector2(59, 98)
 	var style := StyleBoxFlat.new()
 	style.bg_color = CARD_BACK
 	style.border_color = ACCENT

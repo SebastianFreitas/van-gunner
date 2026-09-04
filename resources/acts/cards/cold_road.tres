@@ -1,6 +1,14 @@
 [gd_resource type="Resource" script_class="ActCardDefinition" format=3]
 
 [ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/run/act_card_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/run/effects/flat_damage_bonus_effect.gd" id="3"]
+[ext_resource type="Texture2D" path="res://scenes/acts/cards/cold_road.svg" id="4"]
+
+[sub_resource type="Resource" id="eff_cold_flat"]
+script = ExtResource("3")
+damage_type = 5
+amount = 10.0
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +16,5 @@ id = &"cold_road"
 display_name = "Cold Road"
 description = "+10 cold damage dealt against enemies"
 polarity = 0
-cold_damage_bonus = 10.0
-enemy_speed_mult = 1.0
-enemy_loot_chance_bonus = 0.0
+icon = ExtResource("4")
+effects = Array[ExtResource("2")]([SubResource("eff_cold_flat")])

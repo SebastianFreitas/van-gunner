@@ -75,6 +75,8 @@ func _ready() -> void:
 	item_hud.bind(usables)
 	usables.item_acquired.connect(_on_item_acquired)
 	usables.usable_activated.connect(_on_usable_activated)
+	## Re-apply street card overlay after load (player exists now).
+	ActCardCombat.activate_active_card()
 	_act_reveal = _ActRevealPanel.new()
 	$HUD.add_child(_act_reveal)
 	_act_deck = _ActDeckController.new()
