@@ -10,7 +10,7 @@ metadata={
 
 [deps]
 
-source_file="res://bench_preview.png"
+source_file="res://tools/bench_preview.png"
 dest_files=["res://.godot/imported/bench_preview.png-dc966b8d56fc6e4956ba81a5bd93c4a3.ctex"]
 
 [params]

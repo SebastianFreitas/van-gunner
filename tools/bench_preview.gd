@@ -37,7 +37,7 @@ func _ready() -> void:
 		await RenderingServer.frame_post_draw
 
 	var image := get_viewport().get_texture().get_image()
-	image.save_png("res://bench_preview.png")
+	image.save_png("res://tools/bench_preview.png")
 	print("SAVED")
 	get_tree().quit()
 
