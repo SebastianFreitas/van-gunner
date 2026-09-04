@@ -1366,39 +1366,66 @@ text = "RELOADING..."
 
 [node name="InteractionPrompt" type="Label" parent="HUD" unique_id=808459113]
 unique_name_in_owner = true
-offset_left = 390.0
-offset_top = 640.0
-offset_right = 890.0
-offset_bottom = 690.0
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -250.0
+offset_top = -80.0
+offset_right = 250.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 0
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 
 [node name="MessageLabel" type="Label" parent="HUD" unique_id=715288828]
 unique_name_in_owner = true
 visible = false
-offset_left = 300.0
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -340.0
 offset_top = 90.0
-offset_right = 980.0
+offset_right = 340.0
 offset_bottom = 145.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 
 [node name="Crosshair" type="Label" parent="HUD" unique_id=780930844]
 unique_name_in_owner = true
-offset_left = 627.0
-offset_top = 345.0
-offset_right = 653.0
-offset_bottom = 375.0
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -13.0
+offset_top = -15.0
+offset_right = 13.0
+offset_bottom = 15.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_font_sizes/font_size = 22
 text = "+"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Controls" type="Label" parent="HUD" unique_id=1320681238]
-offset_left = 1010.0
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -270.0
 offset_top = 24.0
-offset_right = 1250.0
+offset_right = -30.0
 offset_bottom = 80.0
+grow_horizontal = 0
 theme_override_colors/font_color = Color(0.65, 0.68, 0.67, 1)
 text = "LMB  SHOOT
 R  RELOAD
@@ -1411,10 +1438,15 @@ horizontal_alignment = 2
 [node name="RestToast" type="Label" parent="HUD" unique_id=1339528701]
 unique_name_in_owner = true
 visible = false
-offset_left = 300.0
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -340.0
 offset_top = 72.0
-offset_right = 980.0
+offset_right = 340.0
 offset_bottom = 110.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
 theme_override_font_sizes/font_size = 18
 text = "BREAK — MOVE AROUND AND PREP"
@@ -1423,10 +1455,18 @@ horizontal_alignment = 1
 [node name="RouteChoice" type="PanelContainer" parent="HUD" unique_id=119216816]
 unique_name_in_owner = true
 visible = false
-offset_left = 340.0
-offset_top = 160.0
-offset_right = 940.0
-offset_bottom = 520.0
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -180.0
+offset_right = 300.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Layout" type="VBoxContainer" parent="HUD/RouteChoice" unique_id=596446807]
 layout_mode = 2
@@ -1460,10 +1500,18 @@ text = "TURN RIGHT"
 [node name="DriverTalk" type="PanelContainer" parent="HUD"]
 unique_name_in_owner = true
 visible = false
-offset_left = 410.0
-offset_top = 200.0
-offset_right = 870.0
-offset_bottom = 500.0
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -150.0
+offset_right = 230.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Layout" type="VBoxContainer" parent="HUD/DriverTalk"]
 layout_mode = 2
@@ -1511,10 +1559,18 @@ text = "NEVER MIND"
 [node name="GameOver" type="PanelContainer" parent="HUD" unique_id=500014647]
 unique_name_in_owner = true
 visible = false
-offset_left = 430.0
-offset_top = 250.0
-offset_right = 850.0
-offset_bottom = 450.0
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -100.0
+offset_right = 210.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Layout" type="VBoxContainer" parent="HUD/GameOver" unique_id=239982402]
 layout_mode = 2
