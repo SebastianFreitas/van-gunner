@@ -56,6 +56,7 @@ func _ready() -> void:
 			_debug_console.closed.connect(_on_debug_console_closed)
 		else:
 			push_warning("Van: could not load debug_console.tscn")
+	add_to_group(&"van_run")
 	player.interaction_prompt_changed.connect(_on_prompt_changed)
 	player.shot_fired.connect(_on_shot_fired)
 	weapon.ammo_changed.connect(_on_ammo_changed)
@@ -274,21 +275,52 @@ func _route_button_text(card: ActCardDefinition, is_shop: bool, is_left: bool) -
 	]
 
 
+## Re-apply the correct mouse mode for the current phase / open overlays.
+## Overlays should call this on close instead of hardcoding CAPTURED.
+func refresh_mouse_mode() -> void:
+	_apply_phase_mouse_mode(GameSession.phase)
+
+
+func wants_free_cursor(phase: GameSession.RunPhase = GameSession.phase) -> bool:
+	if has_modal_free_cursor():
+		return true
+	return phase in [
+		GameSession.RunPhase.ROUTE_CHOICE,
+		GameSession.RunPhase.GAME_OVER,
+		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.REST,
+	]
+
+
+## True only when a clickable overlay owns the cursor (blocks Esc FPS toggle).
+func has_modal_free_cursor() -> bool:
+	if _driver_talk_open:
+		return true
+	if bench_screen and bench_screen.visible:
+		return true
+	if _debug_console and _debug_console.visible:
+		return true
+	if _act_reveal and _act_reveal.visible:
+		return true
+	if _boon_choice and _boon_choice.visible:
+		return true
+	if route_panel and route_panel.visible:
+		return true
+	if game_over_panel and game_over_panel.visible:
+		return true
+	return _has_weapon_replace_prompt()
+
+
+func _has_weapon_replace_prompt() -> bool:
+	for node in get_tree().get_nodes_in_group(&"weapon_replace_prompt"):
+		if is_instance_valid(node):
+			return true
+	return false
+
+
 func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
-	var reveal_open := _act_reveal != null and _act_reveal.visible
-	var boon_open := _boon_choice != null and _boon_choice.visible
-	var free_cursor: bool = (
-		_driver_talk_open
-		or reveal_open
-		or boon_open
-		or phase in [
-			GameSession.RunPhase.ROUTE_CHOICE,
-			GameSession.RunPhase.GAME_OVER,
-			GameSession.RunPhase.ACT_REVEAL,
-		]
-	)
 	Input.mouse_mode = (
-		Input.MOUSE_MODE_VISIBLE if free_cursor else Input.MOUSE_MODE_CAPTURED
+		Input.MOUSE_MODE_VISIBLE if wants_free_cursor(phase) else Input.MOUSE_MODE_CAPTURED
 	)
 
 
@@ -298,17 +330,11 @@ func _open_bench() -> void:
 	if _driver_talk_open:
 		close_driver_talk()
 	bench_screen.open()
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	refresh_mouse_mode()
 
 
 func _on_bench_closed() -> void:
-	if _debug_console and _debug_console.visible:
-		return
-	if _act_reveal and _act_reveal.visible:
-		return
-	if _driver_talk_open:
-		return
-	_apply_phase_mouse_mode(GameSession.phase)
+	refresh_mouse_mode()
 
 
 func _on_debug_console_opened() -> void:
@@ -316,15 +342,11 @@ func _on_debug_console_opened() -> void:
 		bench_screen.close()
 	if _driver_talk_open:
 		close_driver_talk()
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	refresh_mouse_mode()
 
 
 func _on_debug_console_closed() -> void:
-	if bench_screen.visible:
-		return
-	if _driver_talk_open:
-		return
-	_apply_phase_mouse_mode(GameSession.phase)
+	refresh_mouse_mode()
 
 
 func _on_room_changed(_room: StringName) -> void:
@@ -415,7 +437,7 @@ func open_driver_talk() -> void:
 	_driver_talk_open = true
 	_refresh_driver_talk_options()
 	driver_talk_panel.show()
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	refresh_mouse_mode()
 	set_process(true)
 
 
@@ -425,7 +447,7 @@ func close_driver_talk() -> void:
 	_driver_talk_open = false
 	driver_talk_panel.hide()
 	set_process(false)
-	_apply_phase_mouse_mode(GameSession.phase)
+	refresh_mouse_mode()
 
 
 func _refresh_driver_talk_options() -> void:

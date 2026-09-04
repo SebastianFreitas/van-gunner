@@ -42,6 +42,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		head.rotate_x(-event.relative.y * mouse_sensitivity)
 		head.rotation.x = clampf(head.rotation.x, deg_to_rad(-80.0), deg_to_rad(80.0))
 	elif event.is_action_pressed("pause"):
+		## Modal / menu UI owns the cursor — don't steal it back into FPS look.
+		if _ui_wants_free_cursor():
+			return
 		Input.mouse_mode = (
 			Input.MOUSE_MODE_VISIBLE
 			if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
@@ -77,6 +80,16 @@ func _can_swap_weapons() -> bool:
 	if get_tree().paused:
 		return false
 	return true
+
+
+func _ui_wants_free_cursor() -> bool:
+	var van := get_tree().get_first_node_in_group(&"van_run")
+	if van and van.has_method(&"has_modal_free_cursor"):
+		return bool(van.has_modal_free_cursor())
+	for node in get_tree().get_nodes_in_group(&"weapon_replace_prompt"):
+		if is_instance_valid(node):
+			return true
+	return false
 
 
 func _physics_process(delta: float) -> void:

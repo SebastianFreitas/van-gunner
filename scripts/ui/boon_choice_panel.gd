@@ -80,6 +80,16 @@ func dismiss() -> void:
 		remove_child(child)
 		child.queue_free()
 	hide()
+	_restore_mouse_mode()
+
+
+func _restore_mouse_mode() -> void:
+	var van := get_tree().get_first_node_in_group(&"van_run")
+	if van and van.has_method(&"refresh_mouse_mode"):
+		van.refresh_mouse_mode()
+		return
+	## Fallback if van isn't available — prefer free cursor over a stuck capture.
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func _arm_timeout(present_id: int) -> void:

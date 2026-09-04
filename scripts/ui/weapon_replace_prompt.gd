@@ -132,6 +132,12 @@ func _on_cancel() -> void:
 
 
 func _close(replaced: bool) -> void:
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	## Drop from the group before restoring so van doesn't still see this prompt.
+	remove_from_group(&"weapon_replace_prompt")
+	var van := get_tree().get_first_node_in_group(&"van_run")
+	if van and van.has_method(&"refresh_mouse_mode"):
+		van.refresh_mouse_mode()
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	resolved.emit(replaced)
 	queue_free()

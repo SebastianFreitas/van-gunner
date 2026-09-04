@@ -100,6 +100,15 @@ func dismiss() -> void:
 	_present_id += 1
 	_clear()
 	hide()
+	_restore_mouse_mode()
+
+
+func _restore_mouse_mode() -> void:
+	var van := get_tree().get_first_node_in_group(&"van_run")
+	if van and van.has_method(&"refresh_mouse_mode"):
+		van.refresh_mouse_mode()
+		return
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func _run_reveal(display_cards: Array[ActCardDefinition], present_id: int) -> void:
