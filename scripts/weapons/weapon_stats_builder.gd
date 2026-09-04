@@ -42,7 +42,7 @@ static func build(instance: WeaponInstance) -> GunStats:
 		stats.bullet_size = 0.045
 		stats.max_bounces = 1
 		stats.mag_size = 8
-		stats.reload_speed = 1.2
+		stats.reload_speed = 3.0
 
 	_apply_mods(stats, instance.mods)
 	return stats

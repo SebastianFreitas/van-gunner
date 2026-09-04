@@ -24,7 +24,7 @@ enum Element { NONE, FIRE, COLD, POISON }
 @export var max_bounces := 1
 @export var base_mag_size := 8
 ## Seconds to reload (duration). Exterior "Reload Speed %" reduces this.
-@export var base_reload_seconds := 1.2
+@export var base_reload_seconds := 3.0
 @export var drop_tickets := 1000
 
 

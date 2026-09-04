@@ -7,7 +7,7 @@ extends Resource
 @export var bullet_speed := 140.0
 @export var bullet_weight := 1.0
 @export var bullet_size := 0.045
-@export var reload_speed := 1.2
+@export var reload_speed := 3.0
 @export var mag_size := 12
 @export var aim_range := 80.0
 @export var damage_type: DamageType.Type = DamageType.Type.NORMAL

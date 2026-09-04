@@ -17,5 +17,5 @@ bullet_speed = 180.0
 bullet_size = 0.05
 max_bounces = 2
 base_mag_size = 6
-base_reload_seconds = 1.6
+base_reload_seconds = 2.8
 drop_tickets = 55
