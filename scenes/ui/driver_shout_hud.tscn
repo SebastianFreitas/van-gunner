@@ -29,7 +29,7 @@ mouse_filter = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.66, 0.64, 1)
 theme_override_font_sizes/font_size = 11
-text = "YELL AT THE DRIVER"
+text = "YELL LET'S GO"
 mouse_filter = 2
 
 [node name="BoostWrap" type="Control" parent="Layout"]
@@ -46,7 +46,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 focus_mode = 0
-text = "SHIFT  GO"
+text = "SHIFT  LET'S GO"
 
 [node name="BoostCooldown" type="ProgressBar" parent="Layout/BoostWrap"]
 unique_name_in_owner = true

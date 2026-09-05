@@ -7,8 +7,10 @@ signal boost_pressed
 signal slow_pressed
 
 
+@onready var hint_label: Label = $Layout/Hint
 @onready var boost_button: Button = %BoostShout
 @onready var slow_button: Button = %SlowShout
+@onready var slow_wrap: Control = $Layout/SlowWrap
 @onready var boost_cooldown: ProgressBar = %BoostCooldown
 @onready var slow_cooldown: ProgressBar = %SlowCooldown
 
@@ -32,13 +34,22 @@ func _travel() -> TravelController:
 
 
 func _refresh() -> void:
-	var idle_or_over := GameSession.phase in [
-		GameSession.RunPhase.IDLE,
-		GameSession.RunPhase.GAME_OVER,
-	]
-	visible = not idle_or_over
-	if not visible:
+	if GameSession.phase == GameSession.RunPhase.GAME_OVER:
+		visible = false
 		return
+	visible = true
+
+	if GameSession.phase == GameSession.RunPhase.IDLE:
+		hint_label.text = "YELL LET'S GO"
+		slow_wrap.visible = false
+		boost_button.disabled = false
+		boost_button.text = "SHIFT  LET'S GO"
+		_set_bar(boost_cooldown, 0.0, false)
+		_set_bar(slow_cooldown, 0.0, false)
+		return
+
+	hint_label.text = "YELL AT THE DRIVER"
+	slow_wrap.visible = true
 
 	var travel := _travel()
 	if travel == null:

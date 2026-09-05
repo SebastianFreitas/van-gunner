@@ -1544,7 +1544,7 @@ horizontal_alignment = 1
 [node name="DriverTalkHint" type="Label" parent="HUD/DriverTalk/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Ready when you are."
+text = "Yell let's go when you're ready."
 horizontal_alignment = 1
 
 [node name="Buttons" type="VBoxContainer" parent="HUD/DriverTalk/Layout"]
@@ -1557,7 +1557,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(260, 58)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "START THE RUN"
+text = "LET'S GO"
 
 [node name="Accelerate" type="Button" parent="HUD/DriverTalk/Layout/Buttons"]
 unique_name_in_owner = true

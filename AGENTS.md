@@ -38,7 +38,7 @@ as *closing speed* (`mob_world_speed - live_van_speed`) rather than a plain velo
 Every system reacts to `phase_changed` rather than driving each other directly.
 
 ```
-IDLE ──(player tells driver to start)──> TRAVELLING
+IDLE ──(Shift GO / yell let's go)──> TRAVELLING
 TRAVELLING ──(act deck empty)──> ACT_REVEAL ──> ROUTE_CHOICE
 ROUTE_CHOICE ──(pick a street card)──> TURNING ──> TRAVELLING
   └── PARKING ──> STOP ──> TRAVELLING  (every street has a side stop)

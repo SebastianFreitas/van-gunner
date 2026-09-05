@@ -820,8 +820,9 @@ func _refresh_driver_talk_options() -> void:
 	accelerate_button.visible = not idle
 	slow_button.visible = not idle
 	if idle:
-		driver_talk_hint.text = "Ready when you are."
+		driver_talk_hint.text = "Yell let's go when you're ready."
 		start_run_button.disabled = false
+		start_run_button.text = "LET'S GO"
 		return
 
 	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
@@ -862,10 +863,7 @@ func _refresh_driver_talk_options() -> void:
 
 
 func _on_start_run_pressed() -> void:
-	GameSession.begin_run()
-	_refresh_driver_talk_options()
-	close_driver_talk()
-	_show_message("RUN STARTED — ROAD AHEAD")
+	request_driver_boost()
 
 
 func _on_accelerate_pressed() -> void:
@@ -893,7 +891,14 @@ func _on_driver_talk_close_pressed() -> void:
 
 
 ## Shift, cab-door ACCELERATE, and the HUD GO button share TravelController boost cooldown.
+## In IDLE the same yell starts the run — no boost cooldown until you're actually travelling.
 func request_driver_boost() -> bool:
+	if GameSession.phase == GameSession.RunPhase.IDLE:
+		GameSession.begin_run()
+		_refresh_driver_talk_options()
+		close_driver_talk()
+		_show_message("LET'S GO")
+		return true
 	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
 	if travel == null or not travel.try_boost():
 		_refresh_driver_talk_options()
