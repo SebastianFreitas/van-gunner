@@ -56,6 +56,17 @@ func rebuild() -> void:
 	_build()
 
 
+## Hide the slab *and* its walk collision. Visibility alone leaves a street-height
+## floor the player stands on while an elevator van drops through it.
+func set_enabled(enabled: bool) -> void:
+	visible = enabled
+	if _body:
+		_body.collision_layer = 1 if enabled else 0
+		for child in _body.get_children():
+			if child is CollisionShape3D:
+				(child as CollisionShape3D).disabled = not enabled
+
+
 ## Open a side to continuous road (drops sidewalk/curb/gutter on that edge).
 func set_side_openings(left_open: bool, right_open: bool) -> void:
 	var want_left := not left_open

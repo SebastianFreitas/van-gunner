@@ -46,6 +46,8 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 				matches = _filter_prefix(_sound_id_strings(), "")
 			"card":
 				matches = _filter_prefix(_card_id_strings(), "")
+			"stop":
+				matches = _filter_prefix(_stop_id_strings(), "")
 			"give_weapon":
 				matches = _filter_prefix(WeaponCatalog.list_definition_ids(), "")
 			_:
@@ -58,6 +60,8 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 		matches = _filter_prefix(_boon_pool_names(), partial)
 	elif parts[0] == "card":
 		matches = _filter_prefix(_card_id_strings(), partial)
+	elif parts[0] == "stop":
+		matches = _filter_prefix(_stop_id_strings(), partial)
 	elif parts[0] == "summon":
 		matches = _filter_prefix(["enemy"], partial)
 	elif parts[0] == "reardoor":
@@ -111,6 +115,7 @@ func _register_commands() -> void:
 		"boonpool": _cmd_boonpool,
 		"list": _cmd_list,
 		"card": _cmd_card,
+		"stop": _cmd_stop,
 		"boss": _cmd_boss,
 		"reardoor": _cmd_reardoor,
 		"sidedoor": _cmd_sidedoor,
@@ -142,6 +147,7 @@ func _cmd_help(_args: Array) -> String:
 		+ "  list items [q]  browse all item ids\n"
 		+ "  list cards [q]  browse street card ids\n"
 		+ "  list stops [q]  browse side-stop ids (shop, garage, mechanic, warehouse, …)\n"
+		+ "  stop <id>       next fork offers that stop on every road (bay or elevator)\n"
 		+ "  card [id]       print / force-activate active street card(s)\n"
 		+ "  boss            skip to act-end boss pick (current six streets)\n"
 		+ "  phase          print current run phase\n"
@@ -391,6 +397,21 @@ func _cmd_card(args: Array) -> String:
 	return "Forced street card: %s (%s)" % [card.display_name, card.polarity_label()]
 
 
+func _cmd_stop(args: Array) -> String:
+	if args.is_empty():
+		return "Usage: stop <id>  (see list stops)"
+	var stop_id := StringName(str(args[0]))
+	var stop := SideStopRegistry.load_by_id(stop_id)
+	if stop == null or stop.scene == null:
+		return "Unknown stop: %s" % stop_id
+	var travel := _find_travel_controller()
+	if travel == null or not travel.has_method(&"force_next_stop"):
+		return "TravelController not found — are you in the van scene?"
+	if not travel.force_next_stop(stop_id):
+		return "Could not queue stop: %s" % stop_id
+	return "Next fork: %s [%s] on every road." % [stop.fork_label(), stop.arrival_label()]
+
+
 func _cmd_boss(_args: Array) -> String:
 	var deck := get_tree().get_first_node_in_group(&"act_deck_controller")
 	GameSession.debug_prepare_boss_pick()
@@ -439,7 +460,10 @@ func _format_stop_list(filter_text: String) -> String:
 		var hay := ("%s %s %s" % [stop.id, stop.display_name, stop.short_label]).to_lower()
 		if not needle.is_empty() and not hay.contains(needle):
 			continue
-		lines.append("  %s  —  %s" % [stop.id, stop.fork_label()])
+		lines.append(
+			"  %s  —  %s [%s, w=%.2f]"
+			% [stop.id, stop.fork_label(), stop.arrival_label(), stop.spawn_weight]
+		)
 		count += 1
 	if count == 0:
 		if filter_text.is_empty():
@@ -449,6 +473,13 @@ func _format_stop_list(filter_text: String) -> String:
 	if not filter_text.is_empty():
 		header += " matching '%s'" % filter_text
 	return header + ":\n" + "\n".join(lines)
+
+
+func _stop_id_strings() -> Array[String]:
+	var out: Array[String] = []
+	for stop_id in SideStopRegistry.list_ids():
+		out.append(String(stop_id))
+	return out
 
 
 func _card_id_strings() -> Array[String]:

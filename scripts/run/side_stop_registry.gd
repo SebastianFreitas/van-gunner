@@ -52,4 +52,30 @@ static func pick(
 			pool.append(stop_id)
 	if pool.is_empty():
 		pool = ids.duplicate()
-	return load_by_id(pool[rng.randi() % pool.size()])
+	return load_by_id(_pick_weighted_id(rng, pool))
+
+
+static func _pick_weighted_id(
+	rng: RandomNumberGenerator,
+	pool: Array[StringName]
+) -> StringName:
+	if pool.is_empty():
+		return &""
+	var weights: Array[float] = []
+	var total := 0.0
+	for stop_id in pool:
+		var stop := load_by_id(stop_id)
+		var weight := 0.0
+		if stop and stop.scene != null:
+			weight = maxf(stop.spawn_weight, 0.0)
+		weights.append(weight)
+		total += weight
+	if total <= 0.0:
+		return pool[rng.randi() % pool.size()]
+	var roll := rng.randf() * total
+	var cursor := 0.0
+	for index in pool.size():
+		cursor += weights[index]
+		if roll <= cursor:
+			return pool[index]
+	return pool[pool.size() - 1]

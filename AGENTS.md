@@ -65,10 +65,16 @@ two (`BOSS_CARD_PICK_COUNT`) to bind to the act boss — both cards' effects sta
 that fight. Beat it and a new deck is drawn.
 
 **Side stops** are separate from street-card effects. Every offered road at a
-fork gets a building (shop, garage, … from `resources/side_stops/`) — blessing
+fork gets a stop (shop, garage, … from `resources/side_stops/`) — blessing
 and DANGER alike, including straight. The card is just that street's combat
-modifier. Taking a road commits the card *and* parks at that stop. While docked
+modifier. Taking a road commits the card *and* visits that stop. While docked
 (`STOP`) the rear doors stay open so you can walk the room.
+
+How the van arrives is data on the stop, not a new travel system: `Arrival.BAY`
+reverse-parks into the shared vestibule; `Arrival.ELEVATOR` halts on the road
+and drops a pad to the same vestibule and roll-up door. Swap `arrival` on the
+`.tres` (and optionally `spawn_weight`) to put warehouse, a rare shop, or
+anything else on the lift — content scenes stay in the shop-bay frame.
 
 Default forks are 4-ways (left / straight / right). T-junctions are used when
 fewer than three cards remain in the act deck, or when **No Through Road** was
@@ -116,7 +122,7 @@ Adding content should almost never mean writing code:
 |---|---|---|
 | a boon or item | `resources/items/` (+ pool entry) | `ItemPoolRegistry`, `ItemRegistry` |
 | a street card | `resources/acts/cards/` | `ActCardRegistry` (scans the folder) |
-| a side stop | `resources/side_stops/` (+ bay scene) | `SideStopRegistry` (scans the folder) |
+| a side stop | `resources/side_stops/` (+ bay scene, `arrival`) | `SideStopRegistry` (scans the folder) |
 | a gun | `resources/weapons/definitions/` | `WeaponCatalog` |
 | an enemy | `resources/enemies/` (+ spawn pool) | `GameBalance.pick_spawn_enemy` |
 | a sound | `resources/audio/sound_bank.tres` (SoundCue) | `AudioDirector` |
@@ -215,6 +221,12 @@ Each of these has already cost someone real debugging time:
 - **`SideStopRegistry` scans `res://resources/side_stops/` the same way.** A stop
   scene must expose `DockPoint` and `ExitPoint` Marker3Ds in the shop-bay frame
   (origin at the corridor wall, +X into the building).
+- **Elevator stops ride `PathFollow3D.v_offset`.** The van stays on the road
+  curve; the pad is a sibling in the corridor, not a new parent. Don't reparent
+  `VanRig` onto the platform. Open the shaft (hide *collision* as well as the
+  mesh) as the ride starts — a street-height `StaticBody` will hold the player
+  at grade while the van drops. Keep the pad below the van deck and inside the
+  shaft so it does not z-fight the interior floor.
 - **Rejected saves used to look like NEW RUN.** `load_slot_data()` returns `{}` for
   version mismatches and corrupt JSON, which made `get_slot_summary()` report
   `exists: false`. Clicking the slot then called `start_new`. Incompatible files
@@ -264,7 +276,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Change the reveal / boss-pick UI | `scripts/ui/act_reveal_panel.gd` |
 | Add a boon | new `.tres` in `resources/items/boons/` + pool + maybe a `BoonBehavior` |
 | Add a street card | new `.tres` in `resources/acts/cards/` + maybe an `ActCardEffect` |
-| Add a side stop | new `.tres` in `resources/side_stops/` + a bay scene with Dock/Exit points |
+| Add a side stop | new `.tres` in `resources/side_stops/` + a bay scene; set `arrival` to `BAY` or `ELEVATOR` |
 | Touch guns | `scripts/weapons/` + `scripts/combat/gun_*.gd` |
 | Add a sound | new `SoundCue` in `resources/audio/sound_bank.tres` — gameplay already emits |
 | Touch the van shell / doors / windows | `scripts/run/van_*.gd`, `side_*.gd`, `rear_doors.gd` |
@@ -277,7 +289,8 @@ These look like bugs. They are not. The project owner set them on purpose.
 
 - Open the project in Godot 4.7; main scene is `scenes/boot/boot.tscn`.
 - In-game console: **H**. `help` lists commands; `list commands|boons|items|weapons|cards|stops|sounds`
-  enumerates content. `sound <cue>` auditions a cue. Full command list is in `PROJECT_MAP.md`.
+  enumerates content. `stop <id>` forces that side stop on the next fork (use
+  `stop rare_shop` to test the elevator). `sound <cue>` auditions a cue.
 - `speed` enables a debug fast-forward that also auto-resolves reveals and boon
   picks — useful for reaching late acts quickly, but it *skips* the panels, so don't
   use it to test UI.

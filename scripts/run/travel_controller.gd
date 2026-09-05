@@ -7,6 +7,7 @@ enum TurnState {
 	TURNING,
 	PARKING,
 	LEAVING_STOP,
+	ELEVATING,
 }
 
 const QUARTER_CIRCLE_HANDLE := 0.55228475
@@ -25,6 +26,12 @@ const STOP_PARK_REVERSE_STRAIGHT := 8.0
 const STOP_CORRIDOR_LATERAL := 9.0
 ## Tighter than road turns so the van can stop in the 5 m vestibule, before the door.
 const STOP_PARK_TURN_RADIUS := 6.0
+## Local copies so this file never needs StopElevator / StopVestibule class_names
+## at parse time (those scripts also have class_name; Godot can fail the cycle).
+const _ELEVATOR_RIDE_SECONDS := 3.2
+const _ELEVATOR_DEPTH := 16.0
+const _DOOR_OPEN_DURATION := 1.4
+const _StopElevator := preload("res://scripts/run/stop_elevator.gd")
 
 ## Overwritten in _ready from MetaProgression → GameBalance van speed curve.
 ## Live value includes temporary driver boosts (raiders read this every frame).
@@ -37,6 +44,8 @@ const STOP_PARK_TURN_RADIUS := 6.0
 @export var act_statue_scene: PackedScene
 ## Shared 5 m mouth + roll-up door. Stop interiors instance behind the door.
 @export var stop_vestibule_scene: PackedScene
+## On-road lift host. Same vestibule + content, dropped under the street.
+@export var stop_elevator_scene: PackedScene
 @export var segment_length := 20.0
 @export var segment_ahead_distance := 80.0
 @export var world_cull_distance := 140.0
@@ -101,6 +110,8 @@ var _stop_align_progress := INF
 var _last_stop_id: StringName = &""
 ## When true, PathFollow moves backward along the park curve (rear into bay).
 var _park_reversing := false
+## Debug: next fork offers this stop on every road, then clears.
+var _forced_next_stop_id: StringName = &""
 var _active_statue: Node3D
 var _act_reveal_pending := false
 
@@ -287,7 +298,7 @@ func is_stop_visit_active() -> bool:
 		return true
 	if is_instance_valid(_active_stop):
 		return true
-	if _turn_state in [TurnState.PARKING, TurnState.LEAVING_STOP]:
+	if _turn_state in [TurnState.PARKING, TurnState.LEAVING_STOP, TurnState.ELEVATING]:
 		return true
 	return GameSession.phase in [GameSession.RunPhase.PARKING, GameSession.RunPhase.STOP]
 
@@ -316,8 +327,17 @@ func end_act_statue_stop() -> void:
 	_clear_act_statue()
 
 
+func force_next_stop(stop_id: StringName) -> bool:
+	if SideStopRegistry.load_by_id(stop_id) == null:
+		return false
+	_forced_next_stop_id = stop_id
+	return true
+
+
 func leave_stop() -> void:
 	if GameSession.phase != GameSession.RunPhase.STOP:
+		return
+	if _turn_state == TurnState.ELEVATING:
 		return
 	if not is_instance_valid(_active_stop):
 		_clear_stop_state()
@@ -328,6 +348,9 @@ func leave_stop() -> void:
 		van.seal_van_after_stop()
 	elif van and van.has_method(&"seal_van_after_shop"):
 		van.seal_van_after_shop()
+	if _is_elevator_stop():
+		_begin_elevator_ascent()
+		return
 	_build_leave_stop_route()
 
 
@@ -360,6 +383,8 @@ func get_van_velocity() -> Vector3:
 
 func _physics_process(delta: float) -> void:
 	_tick_speed_orders(delta)
+	if _turn_state == TurnState.ELEVATING:
+		_keep_player_on_van_rig()
 	if not _should_scroll():
 		_van_velocity = Vector3.ZERO
 		return
@@ -402,6 +427,8 @@ func _tick_speed_orders(delta: float) -> void:
 func _should_scroll() -> bool:
 	# Chill pauses encounters only. IDLE scrolls too so a new game isn't parked
 	# while waiting for the cab-door knock to begin the run.
+	if _turn_state == TurnState.ELEVATING:
+		return false
 	if _turn_state == TurnState.LEAVING_STOP:
 		return true
 	return GameSession.phase in [
@@ -513,6 +540,13 @@ func _attach_stop_on_upcoming_segment(tiles_ahead: int) -> void:
 		)
 		_next_segment_progress = maxf(_next_segment_progress, host_progress + segment_length)
 
+	if _pending_stop.uses_elevator():
+		_place_elevator_stop(host_segment, host_progress)
+	else:
+		_place_bay_stop(host_segment, host_progress)
+
+
+func _place_bay_stop(host_segment: Node3D, host_progress: float) -> void:
 	if host_segment.has_method(&"open_bay"):
 		host_segment.open_bay(_stop_bay_side)
 	elif host_segment.has_method(&"open_shop_bay"):
@@ -520,16 +554,36 @@ func _attach_stop_on_upcoming_segment(tiles_ahead: int) -> void:
 	elif host_segment.has_method(&"apply_side_streets"):
 		host_segment.apply_side_streets(_stop_bay_side == &"left", _stop_bay_side == &"right")
 
-	_active_stop = _instantiate_stop_host(_pending_stop)
-	if _active_stop == null:
-		push_error("Side stop '%s' scene failed to instantiate." % String(_pending_stop.id))
+	if not _spawn_stop_host():
 		return
-	_active_stop_def = _pending_stop
-	corridor_root.add_child(_active_stop)
 	var side := 1.0 if _stop_bay_side == &"right" else -1.0
 	var yaw := 0.0 if _stop_bay_side == &"right" else PI
 	var local := Transform3D(Basis.from_euler(Vector3(0.0, yaw, 0.0)), Vector3(side * 9.0, 0.0, 0.0))
 	_active_stop.global_transform = host_segment.global_transform * local
+	_finish_stop_attach(host_progress)
+
+
+func _place_elevator_stop(host_segment: Node3D, host_progress: float) -> void:
+	if not _spawn_stop_host():
+		return
+	# Sit on the travel sample, not the tile mesh — the van stops on the path.
+	_active_stop.global_transform = _sample_route_transform(host_progress)
+	if _active_stop.has_method(&"bind_host_segment"):
+		_active_stop.bind_host_segment(host_segment)
+	_finish_stop_attach(host_progress)
+
+
+func _spawn_stop_host() -> bool:
+	_active_stop = _instantiate_stop_host(_pending_stop)
+	if _active_stop == null:
+		push_error("Side stop '%s' scene failed to instantiate." % String(_pending_stop.id))
+		return false
+	_active_stop_def = _pending_stop
+	corridor_root.add_child(_active_stop)
+	return true
+
+
+func _finish_stop_attach(host_progress: float) -> void:
 	if _active_stop.has_method(&"mount_content"):
 		_active_stop.mount_content(_pending_stop.scene)
 	_world_pieces.append(_active_stop)
@@ -617,8 +671,12 @@ func _prepare_stop_fork() -> void:
 	var used: Array[StringName] = []
 	if _last_stop_id != &"":
 		used.append(_last_stop_id)
+	var forced := SideStopRegistry.load_by_id(_forced_next_stop_id)
+	_forced_next_stop_id = &""
 	for direction in GameSession.get_route_directions():
-		var stop := SideStopRegistry.pick(_rng, used)
+		var stop: SideStopDefinition = forced
+		if stop == null or stop.scene == null:
+			stop = SideStopRegistry.pick(_rng, used)
 		if stop == null or stop.scene == null:
 			continue
 		_fork_stops[direction] = stop
@@ -867,6 +925,11 @@ func _maybe_begin_stop_park() -> void:
 		GameSession.RunPhase.REST,
 	]:
 		return
+	if _is_elevator_stop():
+		if van_follow.progress < _stop_align_progress:
+			return
+		_begin_elevator_descent()
+		return
 	# Need room for a T-junction quarter-circle plus a short reverse straight.
 	if van_follow.progress < (
 		_stop_align_progress + STOP_PARK_TURN_RADIUS + STOP_PARK_REVERSE_STRAIGHT
@@ -971,11 +1034,123 @@ func _finish_park() -> void:
 
 
 func _instantiate_stop_host(def: SideStopDefinition) -> Node3D:
+	if def != null and def.uses_elevator():
+		if stop_elevator_scene:
+			var elevator := stop_elevator_scene.instantiate() as Node3D
+			if elevator:
+				return elevator
+		return _StopElevator.new() as Node3D
 	if stop_vestibule_scene:
 		var vestibule := stop_vestibule_scene.instantiate() as Node3D
 		if vestibule:
 			return vestibule
 	return def.scene.instantiate() as Node3D
+
+
+func _is_elevator_stop() -> bool:
+	return _active_stop_def != null and _active_stop_def.uses_elevator()
+
+
+func _elevator_ride_seconds() -> float:
+	var seconds := _ELEVATOR_RIDE_SECONDS
+	if is_instance_valid(_active_stop) and _active_stop.has_method(&"ride_seconds"):
+		seconds = float(_active_stop.ride_seconds())
+	return scale_debug_wait(seconds)
+
+
+func _elevator_depth() -> float:
+	if is_instance_valid(_active_stop) and _active_stop.has_method(&"depth"):
+		return float(_active_stop.depth())
+	return _ELEVATOR_DEPTH
+
+
+func _begin_elevator_descent() -> void:
+	van_follow.progress = _stop_align_progress
+	van_rig.transform = Transform3D.IDENTITY
+	_stop_align_progress = INF
+	_segment_spawning_paused = true
+	_turn_state = TurnState.ELEVATING
+	_park_reversing = false
+	_refresh_travel_speed()
+	GameSession.set_phase(GameSession.RunPhase.PARKING)
+	if is_instance_valid(_active_stop) and _active_stop.has_method(&"open_shaft"):
+		_active_stop.open_shaft()
+	_sequence_id += 1
+	_run_elevator_ride(_sequence_id, -_elevator_depth(), true)
+
+
+func _begin_elevator_ascent() -> void:
+	if is_instance_valid(_active_stop) and _active_stop.has_method(&"set_docked"):
+		_active_stop.set_docked(false)
+	if is_instance_valid(_active_stop) and _active_stop.has_method(&"close_door"):
+		_active_stop.close_door()
+	_turn_state = TurnState.ELEVATING
+	_segment_spawning_paused = true
+	_refresh_travel_speed()
+	_sequence_id += 1
+	_run_elevator_ride(_sequence_id, 0.0, false)
+
+
+func _keep_player_on_van_rig() -> void:
+	# CharacterBody3D physics is global. Street-height floors inflate local Y
+	# as PathFollow.v_offset drops the van; snap back onto the rig.
+	if van_rig == null:
+		return
+	var player := van_rig.get_node_or_null("Player") as CharacterBody3D
+	if player == null:
+		return
+	if absf(player.position.y) <= 0.5:
+		return
+	player.position.y = 0.0
+	player.velocity.y = 0.0
+
+
+func _run_elevator_ride(id: int, target_offset: float, opening: bool) -> void:
+	if not opening:
+		await get_tree().create_timer(scale_debug_wait(_DOOR_OPEN_DURATION)).timeout
+		if id != _sequence_id:
+			return
+	var duration := _elevator_ride_seconds()
+	if is_instance_valid(_active_stop) and _active_stop.has_method(&"tween_platform_to"):
+		_active_stop.tween_platform_to(target_offset, duration)
+	var tween := create_tween()
+	tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tween.set_trans(Tween.TRANS_CUBIC)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(van_follow, "v_offset", target_offset, duration)
+	await tween.finished
+	if id != _sequence_id:
+		return
+	if opening:
+		_finish_elevator_descent()
+	else:
+		_finish_elevator_ascent()
+
+
+func _finish_elevator_descent() -> void:
+	_turn_state = TurnState.NONE
+	_refresh_travel_speed()
+	if is_instance_valid(_active_stop) and _active_stop.has_method(&"set_docked"):
+		_active_stop.set_docked(true)
+	if is_instance_valid(_active_stop) and _active_stop.has_method(&"open_door"):
+		_active_stop.open_door()
+	GameSession.set_phase(GameSession.RunPhase.STOP)
+
+
+func _finish_elevator_ascent() -> void:
+	van_follow.v_offset = 0.0
+	van_rig.transform = Transform3D.IDENTITY
+	_turn_state = TurnState.NONE
+	_segment_spawning_paused = false
+	_refresh_travel_speed()
+	if is_instance_valid(_active_stop) and _active_stop.has_method(&"restore_road"):
+		_active_stop.restore_road()
+	if is_instance_valid(_active_stop):
+		_world_pieces.erase(_active_stop)
+		_active_stop.queue_free()
+	_clear_stop_state()
+	_spawn_segments_ahead()
+	GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
 
 
 func _build_leave_stop_route() -> void:
@@ -1017,6 +1192,8 @@ func _finish_leave_stop() -> void:
 
 
 func _clear_stop_state() -> void:
+	if is_instance_valid(van_follow):
+		van_follow.v_offset = 0.0
 	_active_stop = null
 	_active_stop_def = null
 	_pending_stop = null

@@ -1,21 +1,34 @@
 class_name SideStopDefinition
 extends Resource
 
-## A roadside building on a fork road. Every offered street gets one, regardless
-## of card polarity. Taking that road commits the street card *and* parks here.
+## A roadside stop on a fork road. Every offered street gets one, regardless
+## of card polarity. Taking that road commits the street card *and* visits here.
 ##
-## Scene contract: interiors use the shop-bay frame (origin at the corridor
-## wall, +X into the building). TravelController wraps them in a shared
-## vestibule that owns `DockPoint` / `ExitPoint` and the roll-up door.
+## Arrival is how the van reaches the shared vestibule + roll-up door.
+## Content scenes stay in the shop-bay frame (origin at the mouth, +X inward).
+## TravelController wraps them in a vestibule (bay reverse-park) or an elevator
+## shaft (halt on the road, pad drops, same door at the bottom).
+
+enum Arrival {
+	BAY = 0,
+	ELEVATOR = 1,
+}
 
 @export var id: StringName = &""
 @export var display_name := "Stop"
 ## Short word for door prompts / toasts ("SHOP", "GARAGE").
 @export var short_label := "STOP"
 @export var scene: PackedScene
+@export var arrival: Arrival = Arrival.BAY
+## Relative chance to be offered at a fork. Keep rare shops well below 1.
+@export var spawn_weight := 1.0
 @export var parking_toast := ""
 @export var docked_toast := ""
 @export var leaving_toast := ""
+
+
+func uses_elevator() -> bool:
+	return arrival == Arrival.ELEVATOR
 
 
 func fork_label() -> String:
@@ -26,6 +39,8 @@ func fork_label() -> String:
 func label_parking() -> String:
 	if not parking_toast.strip_edges().is_empty():
 		return parking_toast
+	if uses_elevator():
+		return "THE ROAD DROPS — %s..." % short_label
 	return "PULLING INTO THE %s..." % short_label
 
 
@@ -38,4 +53,10 @@ func label_docked() -> String:
 func label_leaving() -> String:
 	if not leaving_toast.strip_edges().is_empty():
 		return leaving_toast
+	if uses_elevator():
+		return "RISING BACK TO THE STREET..."
 	return "PULLING OUT OF THE %s..." % short_label
+
+
+func arrival_label() -> String:
+	return "elevator" if uses_elevator() else "bay"

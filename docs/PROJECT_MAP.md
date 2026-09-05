@@ -157,6 +157,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal door_changed(side: StringName, is_open: bool)`
 - `signal passage_changed(side: StringName, is_passable: bool)`
 
+**`scripts/run/side_stop_definition.gd`**
+
+- `enum Arrival { BAY = 0, ELEVATOR = 1, }`
+
 **`scripts/run/side_windows.gd`**
 
 - `signal opened`
@@ -165,7 +169,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 **`scripts/run/travel_controller.gd`**
 
-- `enum TurnState { NONE, APPROACHING, TURNING, PARKING, LEAVING_STOP, }`
+- `enum TurnState { NONE, APPROACHING, TURNING, PARKING, LEAVING_STOP, ELEVATING, }`
 
 **`scripts/run/van_bulkhead.gd`**
 
@@ -236,13 +240,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-149 GDScript files, 25165 lines.
+150 GDScript files, 25643 lines.
 
 ### `scenes/corridor/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `corridor_segment.gd` | — | 161 | Open a wall gap for a side-stop bay without showing the cosmetic side street. |
+| `corridor_segment.gd` | — | 168 | Open a wall gap for a side-stop bay without showing the cosmetic side street. |
 | `corridor_t_junction.gd` | — | 64 | Fills sidewalk corners where stem / branch / optional through-road meet the |
 | `side_street_branch.gd` | — | 19 |  |
 
@@ -290,7 +294,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `debug_commands.gd` | — | 637 | Parses and runs debug console commands. Add new commands in _register_commands(). |
+| `debug_commands.gd` | — | 668 | Parses and runs debug console commands. Add new commands in _register_commands(). |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. Default follows the build. |
 
 ### `scripts/enemies/`
@@ -386,12 +390,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `shop_stock.gd` | — | 45 | Rolls 3 unique items from the shop pool and places them on the counter. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. Toggles that leaf only. |
 | `side_doors.gd` | — | 551 | Sliding cargo-style side doors. |
-| `side_stop_definition.gd` | `SideStopDefinition` | 42 | A roadside building on a fork road. Every offered street gets one, regardless |
-| `side_stop_registry.gd` | `SideStopRegistry` | 56 | Resolves side-stop definitions by id from resources/side_stops/. |
+| `side_stop_definition.gd` | `SideStopDefinition` | 63 | A roadside stop on a fork road. Every offered street gets one, regardless |
+| `side_stop_registry.gd` | `SideStopRegistry` | 82 | Resolves side-stop definitions by id from resources/side_stops/. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. Toggles that sash only. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
+| `stop_elevator.gd` | `StopElevator` | 245 | On-road lift that drops the van to the shared stop vestibule. Content still |
 | `stop_vestibule.gd` | `StopVestibule` | 188 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
-| `travel_controller.gd` | `TravelController` | 1080 | Empty corridor tiles required between side-street openings (avoids a thin |
+| `travel_controller.gd` | `TravelController` | 1228 | Empty corridor tiles required between side-street openings (avoids a thin |
 | `van.gd` | — | 1002 | load() not preload() — compile-time preload of the console scene |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
@@ -478,6 +483,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/corridor/road_floor.tscn` | 1 | Node3D |
 | `scenes/corridor/shop_bay.tscn` | 31 | Node3D |
 | `scenes/corridor/side_street_branch.tscn` | 10 | Node3D |
+| `scenes/corridor/stop_elevator.tscn` | 1 | Node3D |
 | `scenes/corridor/stop_vestibule.tscn` | 4 | Node3D |
 | `scenes/corridor/warehouse_bay.tscn` | 1 | Node3D |
 | `scenes/enemies/biker_boss.tscn` | 2 |  |
@@ -600,6 +606,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|
 | garage | Garage | GARAGE |
 | mechanic | Mechanic | MECHANIC |
+| rare_shop | Undercroft | VAULT |
 | shop | Shop Stop | SHOP |
 | warehouse | Warehouse | WAREHOUSE |
 
@@ -753,4 +760,4 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `boonpool`, `list`, `card`, `boss`, `reardoor`, `sidedoor`, `give_weapon`, `give_random_weapon`, `force_a1`, `sound`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `boonpool`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `give_weapon`, `give_random_weapon`, `force_a1`, `sound`

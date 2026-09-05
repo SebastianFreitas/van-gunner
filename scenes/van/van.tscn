@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://c4wayjnct01vg" path="res://scenes/corridor/corridor_crossroads.tscn" id="11d"]
 [ext_resource type="PackedScene" path="res://scenes/corridor/act_statue.tscn" id="11c"]
 [ext_resource type="PackedScene" path="res://scenes/corridor/stop_vestibule.tscn" id="11e"]
+[ext_resource type="PackedScene" path="res://scenes/corridor/stop_elevator.tscn" id="11f"]
 [ext_resource type="PackedScene" path="res://scenes/ui/item_hud.tscn" id="12"]
 [ext_resource type="PackedScene" path="res://scenes/ui/bench_screen.tscn" id="13"]
 [ext_resource type="PackedScene" path="res://scenes/ui/driver_shout_hud.tscn" id="33"]
@@ -1307,6 +1308,7 @@ t_junction_scene = ExtResource("11")
 crossroads_scene = ExtResource("11d")
 act_statue_scene = ExtResource("11c")
 stop_vestibule_scene = ExtResource("11e")
+stop_elevator_scene = ExtResource("11f")
 
 [node name="EncounterDirector" type="Node" parent="Systems" unique_id=136983041]
 script = ExtResource("6")
