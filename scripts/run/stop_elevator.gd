@@ -32,7 +32,7 @@ var _pad_body: CollisionObject3D
 var _shaft: Node3D
 var _vestibule: Node3D
 var _host_segment: Node3D
-var _host_road_was_visible := true
+var _hidden_roads: Array[RoadFloor] = []
 var _ride_tween: Tween
 
 
@@ -61,29 +61,26 @@ func close_door() -> void:
 
 func bind_host_segment(segment: Node3D) -> void:
 	_host_segment = segment
-	_host_road_was_visible = true
 	# Keep the street solid until the ride — hiding early leaves a pit, and
 	# hiding only the mesh leaves collision that holds the player at grade.
 
 
-func open_shaft() -> void:
+func open_shaft(world_root: Node = null, van_world: Vector3 = Vector3.ZERO) -> void:
 	if _shaft:
 		_shaft.visible = true
 		_set_tree_solid(_shaft, true)
-	if is_instance_valid(_host_segment) and _host_segment.has_method(
-		&"set_carriageway_visible"
-	):
-		_host_segment.set_carriageway_visible(false)
+	_hide_overlapping_roads(world_root, van_world)
 	# Pad rides with the van. Keep it solid once the street hole opens so a
 	# clip during the drop lands on the platform instead of the shaft void.
 	_set_pad_walkable(true)
 
 
 func restore_road() -> void:
+	_restore_hidden_roads_only()
 	if is_instance_valid(_host_segment) and _host_segment.has_method(
 		&"set_carriageway_visible"
 	):
-		_host_segment.set_carriageway_visible(_host_road_was_visible)
+		_host_segment.set_carriageway_visible(true)
 	_host_segment = null
 
 
@@ -98,6 +95,17 @@ func ride_seconds() -> float:
 
 func depth() -> float:
 	return DEPTH
+
+
+## Keep the pad on the same Y as PathFollow.v_offset. A second tween drifts
+## and leaves the street slab at grade while the van drops through it.
+func sync_platform_offset(offset_y: float) -> void:
+	if _platform == null:
+		return
+	if _ride_tween:
+		_ride_tween.kill()
+		_ride_tween = null
+	_platform.position.y = offset_y
 
 
 ## Tween the pad to `offset_y` (0 at the street, -DEPTH below). Does not move the van.
@@ -136,7 +144,10 @@ func _set_pad_walkable(walkable: bool) -> void:
 
 
 func _build_platform() -> void:
-	_platform = Node3D.new()
+	var pad := AnimatableBody3D.new()
+	pad.sync_to_physics = true
+	_platform = pad
+	_pad_body = pad
 	_platform.name = "Platform"
 	_platform.position = Vector3(0.0, 0.0, 0.0)
 	add_child(_platform)
@@ -164,15 +175,13 @@ func _build_platform() -> void:
 		false
 	)
 
-	_pad_body = StaticBody3D.new()
-	_pad_body.name = "PadBlock"
-	_platform.add_child(_pad_body)
 	var shape := BoxShape3D.new()
 	shape.size = PLATFORM_SIZE
 	var col := CollisionShape3D.new()
+	col.name = "PadBlock"
 	col.shape = shape
 	col.position = Vector3(0.0, pad_center_y, 0.0)
-	_pad_body.add_child(col)
+	_platform.add_child(col)
 	_set_pad_walkable(false)
 
 	var lamp := OmniLight3D.new()
@@ -240,6 +249,57 @@ func _build_shaft() -> void:
 	rim.shadow_enabled = false
 	shaft.add_child(rim)
 	_set_tree_solid(shaft, false)
+
+
+func _hide_overlapping_roads(world_root: Node, van_world: Vector3) -> void:
+	_restore_hidden_roads_only()
+	if world_root == null and is_instance_valid(_host_segment):
+		world_root = _host_segment.get_parent()
+	if world_root == null:
+		if is_instance_valid(_host_segment) and _host_segment.has_method(
+			&"set_carriageway_visible"
+		):
+			_host_segment.set_carriageway_visible(false)
+		return
+	var center := van_world
+	if center == Vector3.ZERO:
+		center = global_position
+	var roads: Array[RoadFloor] = []
+	_collect_road_floors(world_root, roads)
+	for road in roads:
+		if not is_instance_valid(road):
+			continue
+		if not _road_overlaps_drop(road, center):
+			continue
+		road.set_enabled(false)
+		_hidden_roads.append(road)
+	if is_instance_valid(_host_segment) and _host_segment.has_method(
+		&"set_carriageway_visible"
+	):
+		_host_segment.set_carriageway_visible(false)
+
+
+func _restore_hidden_roads_only() -> void:
+	for road in _hidden_roads:
+		if is_instance_valid(road):
+			road.set_enabled(true)
+	_hidden_roads.clear()
+
+
+func _collect_road_floors(root: Node, out: Array[RoadFloor]) -> void:
+	if root is RoadFloor:
+		out.append(root as RoadFloor)
+	for child in root.get_children():
+		_collect_road_floors(child, out)
+
+
+func _road_overlaps_drop(road: RoadFloor, van_world: Vector3) -> bool:
+	var local := road.to_local(van_world)
+	var margin := 2.5
+	return (
+		absf(local.x) <= road.span_x * 0.5 + margin
+		and absf(local.z) <= road.span_z * 0.5 + margin
+	)
 
 
 func _set_tree_solid(root: Node, solid: bool) -> void:

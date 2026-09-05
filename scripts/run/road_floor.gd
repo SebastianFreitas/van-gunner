@@ -60,11 +60,17 @@ func rebuild() -> void:
 ## floor the player stands on while an elevator van drops through it.
 func set_enabled(enabled: bool) -> void:
 	visible = enabled
-	if _body:
-		_body.collision_layer = 1 if enabled else 0
-		for child in _body.get_children():
-			if child is CollisionShape3D:
-				(child as CollisionShape3D).disabled = not enabled
+	_set_tree_walkable(self, enabled)
+
+
+func _set_tree_walkable(root: Node, walkable: bool) -> void:
+	if root is CollisionObject3D:
+		var body := root as CollisionObject3D
+		body.collision_layer = 1 if walkable else 0
+	if root is CollisionShape3D:
+		(root as CollisionShape3D).disabled = not walkable
+	for child in root.get_children():
+		_set_tree_walkable(child, walkable)
 
 
 ## Open a side to continuous road (drops sidewalk/curb/gutter on that edge).

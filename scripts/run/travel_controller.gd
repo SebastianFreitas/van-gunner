@@ -384,6 +384,7 @@ func get_van_velocity() -> Vector3:
 func _physics_process(delta: float) -> void:
 	_tick_speed_orders(delta)
 	if _turn_state == TurnState.ELEVATING:
+		_sync_elevator_platform()
 		_keep_player_on_van_rig()
 	if not _should_scroll():
 		_van_velocity = Vector3.ZERO
@@ -1073,8 +1074,9 @@ func _begin_elevator_descent() -> void:
 	_park_reversing = false
 	_refresh_travel_speed()
 	GameSession.set_phase(GameSession.RunPhase.PARKING)
+	process_physics_priority = 100
 	if is_instance_valid(_active_stop) and _active_stop.has_method(&"open_shaft"):
-		_active_stop.open_shaft()
+		_active_stop.open_shaft(corridor_root, van_rig.global_position)
 	_sequence_id += 1
 	_run_elevator_ride(_sequence_id, -_elevator_depth(), true)
 
@@ -1087,8 +1089,16 @@ func _begin_elevator_ascent() -> void:
 	_turn_state = TurnState.ELEVATING
 	_segment_spawning_paused = true
 	_refresh_travel_speed()
+	process_physics_priority = 100
 	_sequence_id += 1
 	_run_elevator_ride(_sequence_id, 0.0, false)
+
+
+func _sync_elevator_platform() -> void:
+	if not is_instance_valid(_active_stop):
+		return
+	if _active_stop.has_method(&"sync_platform_offset"):
+		_active_stop.sync_platform_offset(van_follow.v_offset)
 
 
 func _keep_player_on_van_rig() -> void:
@@ -1099,10 +1109,9 @@ func _keep_player_on_van_rig() -> void:
 	var player := van_rig.get_node_or_null("Player") as CharacterBody3D
 	if player == null:
 		return
-	if absf(player.position.y) <= 0.5:
-		return
 	player.position.y = 0.0
 	player.velocity.y = 0.0
+	player.floor_snap_length = 0.0
 
 
 func _run_elevator_ride(id: int, target_offset: float, opening: bool) -> void:
@@ -1111,8 +1120,6 @@ func _run_elevator_ride(id: int, target_offset: float, opening: bool) -> void:
 		if id != _sequence_id:
 			return
 	var duration := _elevator_ride_seconds()
-	if is_instance_valid(_active_stop) and _active_stop.has_method(&"tween_platform_to"):
-		_active_stop.tween_platform_to(target_offset, duration)
 	var tween := create_tween()
 	tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tween.set_trans(Tween.TRANS_CUBIC)
@@ -1129,6 +1136,8 @@ func _run_elevator_ride(id: int, target_offset: float, opening: bool) -> void:
 
 func _finish_elevator_descent() -> void:
 	_turn_state = TurnState.NONE
+	process_physics_priority = -100
+	_restore_player_floor_snap()
 	_refresh_travel_speed()
 	if is_instance_valid(_active_stop) and _active_stop.has_method(&"set_docked"):
 		_active_stop.set_docked(true)
@@ -1141,6 +1150,8 @@ func _finish_elevator_ascent() -> void:
 	van_follow.v_offset = 0.0
 	van_rig.transform = Transform3D.IDENTITY
 	_turn_state = TurnState.NONE
+	process_physics_priority = -100
+	_restore_player_floor_snap()
 	_segment_spawning_paused = false
 	_refresh_travel_speed()
 	if is_instance_valid(_active_stop) and _active_stop.has_method(&"restore_road"):
@@ -1191,7 +1202,17 @@ func _finish_leave_stop() -> void:
 	GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
 
 
+func _restore_player_floor_snap() -> void:
+	if van_rig == null:
+		return
+	var player := van_rig.get_node_or_null("Player") as CharacterBody3D
+	if player:
+		player.floor_snap_length = 0.2
+
+
 func _clear_stop_state() -> void:
+	process_physics_priority = -100
+	_restore_player_floor_snap()
 	if is_instance_valid(van_follow):
 		van_follow.v_offset = 0.0
 	_active_stop = null

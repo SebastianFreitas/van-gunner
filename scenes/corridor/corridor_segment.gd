@@ -47,13 +47,13 @@ func open_shop_bay(side: StringName) -> void:
 
 
 ## Elevator stops hide this tile's road so the pad can fall through a real hole.
-func set_carriageway_visible(visible: bool) -> void:
+func set_carriageway_visible(road_on: bool) -> void:
 	if _road_floor == null:
 		return
 	if _road_floor.has_method(&"set_enabled"):
-		_road_floor.set_enabled(visible)
+		_road_floor.set_enabled(road_on)
 	else:
-		_road_floor.visible = visible
+		_road_floor.visible = road_on
 
 
 func _set_side_street(side: StringName, enabled: bool) -> void:
