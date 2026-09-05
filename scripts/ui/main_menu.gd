@@ -2,6 +2,7 @@ extends Control
 
 @onready var slots: VBoxContainer = %Slots
 @onready var settings_panel: PanelContainer = %SettingsPanel
+@onready var master_volume: HSlider = %MasterVolume
 @onready var music_volume: HSlider = %MusicVolume
 @onready var sfx_volume: HSlider = %SfxVolume
 @onready var loading_overlay: ColorRect = %LoadingOverlay
@@ -15,6 +16,7 @@ func _ready() -> void:
 	_build_slots()
 	settings_panel.hide()
 	loading_overlay.hide()
+	master_volume.set_value_no_signal(MetaProgression.master_volume)
 	music_volume.set_value_no_signal(MetaProgression.music_volume)
 	sfx_volume.set_value_no_signal(MetaProgression.sfx_volume)
 	call_deferred("_deferred_preload_van")
@@ -104,6 +106,10 @@ func _on_settings_pressed() -> void:
 	if _starting:
 		return
 	settings_panel.visible = not settings_panel.visible
+
+
+func _on_master_volume_changed(value: float) -> void:
+	MetaProgression.set_master_volume(value)
 
 
 func _on_music_volume_changed(value: float) -> void:

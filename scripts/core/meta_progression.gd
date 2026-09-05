@@ -4,6 +4,7 @@ signal van_speed_changed(level: int, speed: float)
 
 const SAVE_PATH := "user://meta_progression.json"
 const SAVE_VERSION := 1
+const BUS_MASTER := &"Master"
 const BUS_MUSIC := &"Music"
 const BUS_SFX := &"SFX"
 
@@ -14,7 +15,8 @@ const BUS_SFX := &"SFX"
 ## survive every new run. Key by ActCardDefinition.id. Unmarked cards stay blank.
 
 var van_speed_level := 0
-## Linear 0–1 mixer sliders. Master stays at unity; these write Music / SFX.
+## Linear 0–1 mixer sliders. Master is the overall cap; Music / SFX sit under it.
+var master_volume := 0.7
 var music_volume := 1.0
 var sfx_volume := 1.0
 
@@ -48,6 +50,12 @@ func try_upgrade_van_speed(coin_source: int) -> Dictionary:
 	return {"ok": true, "cost": cost, "level": van_speed_level, "speed": get_van_speed()}
 
 
+func set_master_volume(linear: float) -> void:
+	master_volume = clampf(linear, 0.0, 1.0)
+	_apply_bus_volume(BUS_MASTER, master_volume)
+	save_profile()
+
+
 func set_music_volume(linear: float) -> void:
 	music_volume = clampf(linear, 0.0, 1.0)
 	_apply_bus_volume(BUS_MUSIC, music_volume)
@@ -61,9 +69,7 @@ func set_sfx_volume(linear: float) -> void:
 
 
 func apply_audio_settings() -> void:
-	# Old menu wrote Master (bus 0). Sliders now own Music / SFX, so Master
-	# stays at unity or leftover session volume would stack.
-	AudioServer.set_bus_volume_db(0, 0.0)
+	_apply_bus_volume(BUS_MASTER, master_volume)
 	_apply_bus_volume(BUS_MUSIC, music_volume)
 	_apply_bus_volume(BUS_SFX, sfx_volume)
 
@@ -97,6 +103,7 @@ func load_profile() -> void:
 		)
 		return
 	van_speed_level = maxi(0, int(data.get("van_speed_level", 0)))
+	master_volume = clampf(float(data.get("master_volume", 0.7)), 0.0, 1.0)
 	music_volume = clampf(float(data.get("music_volume", 1.0)), 0.0, 1.0)
 	sfx_volume = clampf(float(data.get("sfx_volume", 1.0)), 0.0, 1.0)
 
@@ -117,6 +124,7 @@ func _profile_dict() -> Dictionary:
 	return {
 		"version": SAVE_VERSION,
 		"van_speed_level": van_speed_level,
+		"master_volume": master_volume,
 		"music_volume": music_volume,
 		"sfx_volume": sfx_volume,
 	}

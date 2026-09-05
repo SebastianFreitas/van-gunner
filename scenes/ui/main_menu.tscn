@@ -88,9 +88,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -220.0
-offset_top = -140.0
+offset_top = -190.0
 offset_right = 220.0
-offset_bottom = 140.0
+offset_bottom = 190.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -108,6 +108,17 @@ layout_mode = 2
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "SETTINGS"
+
+[node name="MasterLabel" type="Label" parent="SettingsPanel/SettingsMargin/SettingsLayout"]
+layout_mode = 2
+text = "MASTER"
+
+[node name="MasterVolume" type="HSlider" parent="SettingsPanel/SettingsMargin/SettingsLayout"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+value = 0.7
 
 [node name="MusicLabel" type="Label" parent="SettingsPanel/SettingsMargin/SettingsLayout"]
 layout_mode = 2
@@ -169,6 +180,7 @@ vertical_alignment = 1
 
 [connection signal="pressed" from="Margin/Layout/Menu/Settings" to="." method="_on_settings_pressed"]
 [connection signal="pressed" from="Margin/Layout/Menu/Exit" to="." method="_on_exit_pressed"]
+[connection signal="value_changed" from="SettingsPanel/SettingsMargin/SettingsLayout/MasterVolume" to="." method="_on_master_volume_changed"]
 [connection signal="value_changed" from="SettingsPanel/SettingsMargin/SettingsLayout/MusicVolume" to="." method="_on_music_volume_changed"]
 [connection signal="value_changed" from="SettingsPanel/SettingsMargin/SettingsLayout/SfxVolume" to="." method="_on_sfx_volume_changed"]
 [connection signal="pressed" from="SettingsPanel/SettingsMargin/SettingsLayout/Close" to="." method="_on_settings_pressed"]

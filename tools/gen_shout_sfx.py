@@ -1,4 +1,4 @@
-"""Generate screamier driver-shout WAVs via edge-tts + ffmpeg crush."""
+"""Generate rasped old-man driver-shout WAVs via edge-tts + ffmpeg."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ import imageio_ffmpeg
 
 OUT = Path("assets/audio/shouts")
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
+# Adult male; rasp and age come from pitch-down + grit, not a thin scream.
 VOICE = "en-US-GuyNeural"
 
 # Four beats the van actually uses.
@@ -25,10 +26,9 @@ LINES = [
 
 
 async def synth(text: str) -> bytes:
-	# Rate/pitch/volume pushed hard — neural TTS won't truly scream, so we
-	# also crush it in ffmpeg below.
+	# Slow and low. Neural TTS will not rasp on its own; ffmpeg adds gravel.
 	communicate = edge_tts.Communicate(
-		text, VOICE, rate="+50%", pitch="+30Hz", volume="+80%"
+		text, VOICE, rate="-8%", pitch="-18Hz", volume="+40%"
 	)
 	chunks: list[bytes] = []
 	async for chunk in communicate.stream():
@@ -42,15 +42,19 @@ def crush_to_wav(mp3_bytes: bytes, wav_path: Path) -> None:
 		tmp.write(mp3_bytes)
 		tmp_path = tmp.name
 	try:
-		# Trim leading/trailing hush, pitch up ~3 semitones via asetrate,
-		# compress hard, boost. Keep it under ~2s.
+		# Keep chest (no 280Hz highpass). Drop pitch ~3 semitones, thicken
+		# low-mids, bitcrush for rasp.
 		af = (
 			"silenceremove=start_periods=1:start_silence=0.02:start_threshold=-40dB:"
 			"stop_periods=-1:stop_silence=0.08:stop_threshold=-40dB,"
-			"asetrate=24000*1.28,aresample=48000,"
-			"highpass=f=280,lowpass=f=5200,"
-			"acompressor=threshold=-22dB:ratio=14:attack=2:release=30:makeup=14,"
-			"volume=5,alimiter=limit=0.98"
+			"rubberband=pitch=0.82,"
+			"highpass=f=70,lowpass=f=7200,"
+			"equalizer=f=160:t=q:w=1.1:g=5,"
+			"equalizer=f=420:t=q:w=0.9:g=3,"
+			"equalizer=f=2800:t=q:w=1.4:g=2,"
+			"acompressor=threshold=-18dB:ratio=8:attack=6:release=60:makeup=8,"
+			"acrusher=bits=12:mode=log:aa=1,"
+			"volume=1.8,alimiter=limit=0.95"
 		)
 		cmd = [
 			FFMPEG,
@@ -69,7 +73,12 @@ def crush_to_wav(mp3_bytes: bytes, wav_path: Path) -> None:
 			"2.5",
 			str(wav_path),
 		]
-		subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+		result = subprocess.run(
+			cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
+		)
+		if result.returncode != 0:
+			err = result.stderr.decode("utf-8", errors="replace")
+			raise RuntimeError(f"ffmpeg failed ({result.returncode}): {err}")
 	finally:
 		os.unlink(tmp_path)
 
@@ -82,7 +91,6 @@ async def main() -> None:
 			raise RuntimeError(f"no audio for {name}")
 		wav_path = OUT / f"{name}.wav"
 		crush_to_wav(mp3, wav_path)
-		# Duration sanity check via file size (~768 kbps mono s16 @ 48k).
 		secs = wav_path.stat().st_size / (48000 * 2)
 		print(f"wrote {wav_path.name} ~{secs:.2f}s — {text!r}")
 
