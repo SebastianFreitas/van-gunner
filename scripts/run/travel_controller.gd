@@ -443,7 +443,7 @@ func _spawn_world_segment(world_transform: Transform3D, route_progress: float = 
 	var segment := segment_scene.instantiate() as Node3D
 	corridor_root.add_child(segment)
 	segment.global_transform = world_transform
-	if route_progress.is_finite():
+	if is_finite(route_progress):
 		segment.set_meta(&"route_progress", route_progress)
 	if segment.has_method(&"apply_variant"):
 		segment.apply_variant(_pick_segment_variant())
