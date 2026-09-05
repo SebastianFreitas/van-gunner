@@ -23,33 +23,92 @@ func _build() -> void:
 	var rust := _rust_material()
 	var oil := _oil_material()
 	var lamp := _lamp_material()
+	var primer := _primer_material()
 
-	_build_workbench(wood, dirty_steel, steel, Vector3(16.35, 0.0, 0.0))
-	_build_pegboard(dirty_steel, steel, Vector3(17.55, 1.85, 0.0))
-	_build_engine_stand(dirty_steel, rust, Vector3(13.4, 0.0, -2.55))
-	_build_hoist(steel, dirty_steel, Vector3(14.8, 0.0, 2.85))
-	_build_tires(rubber, Vector3(16.2, 0.0, -3.45))
-	_build_drums(rust, steel, oil, Vector3(16.55, 0.0, 3.45))
-	_build_jack(steel, Vector3(12.6, 0.0, 1.35))
+	# Van rear sits ~13m into the bay. Pack this back third so reverse-in
+	# isn't an empty shed — shop reads filled because of the booth wall.
+	_build_back_cabinets(dirty_steel, steel, Vector3(17.35, 0.0, 0.0))
+	_build_workbench(wood, dirty_steel, steel, Vector3(16.55, 0.0, 0.0))
+	_build_pegboard(dirty_steel, steel, Vector3(17.55, 2.35, 0.0))
+	_build_lift_and_car(steel, dirty_steel, primer, rubber, Vector3(14.85, 0.0, 0.0))
+	_build_engine_stand(dirty_steel, rust, Vector3(16.1, 0.0, -3.15))
+	_build_hoist(steel, dirty_steel, Vector3(15.55, 0.0, 3.15))
+	_build_tires(rubber, Vector3(16.35, 0.0, -3.55))
+	_build_drums(rust, steel, oil, Vector3(16.45, 0.0, 3.55))
+	_build_jack(steel, Vector3(13.85, 0.0, -2.15))
 	_build_lamps(lamp, steel)
 
 	var work_light := OmniLight3D.new()
 	work_light.name = "WorkGlow"
-	work_light.position = Vector3(14.6, 3.4, 0.0)
-	work_light.light_color = Color(0.92, 0.78, 0.48, 1.0)
-	work_light.light_energy = 1.15
-	work_light.omni_range = 8.0
+	work_light.position = Vector3(15.2, 3.6, 0.0)
+	work_light.light_color = Color(0.95, 0.82, 0.52, 1.0)
+	work_light.light_energy = 2.4
+	work_light.omni_range = 10.0
 	work_light.shadow_enabled = false
 	add_child(work_light)
 
+	var keeper_light := OmniLight3D.new()
+	keeper_light.name = "KeeperGlow"
+	keeper_light.position = Vector3(14.1, 2.2, 2.45)
+	keeper_light.light_color = Color(1.0, 0.88, 0.62, 1.0)
+	keeper_light.light_energy = 1.1
+	keeper_light.omni_range = 4.5
+	keeper_light.shadow_enabled = false
+	add_child(keeper_light)
+
 	var spill := OmniLight3D.new()
 	spill.name = "OilSpillGlow"
-	spill.position = Vector3(13.5, 0.8, -2.4)
+	spill.position = Vector3(14.6, 0.8, -2.2)
 	spill.light_color = Color(0.55, 0.32, 0.12, 1.0)
-	spill.light_energy = 0.35
+	spill.light_energy = 0.45
 	spill.omni_range = 3.2
 	spill.shadow_enabled = false
 	add_child(spill)
+
+
+func _build_back_cabinets(dirty_steel: Material, steel: Material, origin: Vector3) -> void:
+	# Tall cabinet run against the back wall — same job as the shop hatch wall.
+	var body := StaticBody3D.new()
+	body.name = "BackCabinets"
+	body.position = origin
+	add_child(body)
+	_add_box(body, "Run", Vector3(0.55, 3.4, 7.6), Vector3(0.0, 1.7, 0.0), dirty_steel)
+	_add_box(body, "Counter", Vector3(0.72, 0.08, 7.6), Vector3(-0.08, 1.08, 0.0), steel)
+	_add_box(body, "Kick", Vector3(0.5, 0.12, 7.6), Vector3(0.0, 0.06, 0.0), steel)
+	for i in 5:
+		var z := lerpf(-3.2, 3.2, float(i) / 4.0)
+		_add_box(body, "Door_%d" % i, Vector3(0.04, 1.55, 1.15), Vector3(-0.3, 2.05, z), steel)
+		_add_box(body, "Handle_%d" % i, Vector3(0.06, 0.22, 0.04), Vector3(-0.34, 2.05, z + 0.42), steel)
+	_add_collision(body, Vector3(0.8, 3.45, 7.7), Vector3(0.0, 1.72, 0.0))
+
+
+func _build_lift_and_car(
+	steel: Material, dirty_steel: Material, primer: Material, rubber: Material, origin: Vector3
+) -> void:
+	var body := StaticBody3D.new()
+	body.name = "LiftAndCar"
+	body.position = origin
+	add_child(body)
+
+	_add_box(body, "PostA", Vector3(0.16, 3.4, 0.16), Vector3(0.55, 1.7, -2.05), steel)
+	_add_box(body, "PostB", Vector3(0.16, 3.4, 0.16), Vector3(0.55, 1.7, 2.05), steel)
+	_add_box(body, "Cross", Vector3(0.12, 0.12, 4.2), Vector3(0.55, 3.35, 0.0), dirty_steel)
+	_add_box(body, "ArmA", Vector3(1.35, 0.08, 0.12), Vector3(-0.12, 1.05, -1.55), steel)
+	_add_box(body, "ArmB", Vector3(1.35, 0.08, 0.12), Vector3(-0.12, 1.05, 1.55), steel)
+	_add_box(body, "PadA", Vector3(0.22, 0.06, 0.22), Vector3(-0.62, 1.12, -1.55), dirty_steel)
+	_add_box(body, "PadB", Vector3(0.22, 0.06, 0.22), Vector3(-0.62, 1.12, 1.55), dirty_steel)
+
+	_add_box(body, "Chassis", Vector3(1.55, 0.22, 3.85), Vector3(-0.15, 1.28, 0.0), dirty_steel)
+	_add_box(body, "Body", Vector3(1.62, 0.55, 3.7), Vector3(-0.15, 1.66, 0.0), primer)
+	_add_box(body, "Cabin", Vector3(1.48, 0.62, 1.85), Vector3(-0.12, 2.22, -0.15), primer)
+	_add_box(body, "Hood", Vector3(1.5, 0.12, 1.05), Vector3(-0.15, 1.98, 1.28), primer)
+	_add_box(body, "BumperF", Vector3(1.58, 0.18, 0.12), Vector3(-0.15, 1.42, 1.92), steel)
+	_add_box(body, "BumperR", Vector3(1.58, 0.18, 0.12), Vector3(-0.15, 1.42, -1.92), steel)
+	_add_box(body, "WheelFL", Vector3(0.28, 0.52, 0.52), Vector3(-0.72, 1.22, 1.35), rubber)
+	_add_box(body, "WheelFR", Vector3(0.28, 0.52, 0.52), Vector3(0.42, 1.22, 1.35), rubber)
+	_add_box(body, "WheelRL", Vector3(0.28, 0.52, 0.52), Vector3(-0.72, 1.22, -1.35), rubber)
+	_add_box(body, "WheelRR", Vector3(0.28, 0.52, 0.52), Vector3(0.42, 1.22, -1.35), rubber)
+	_add_collision(body, Vector3(1.9, 2.6, 4.3), Vector3(0.0, 1.5, 0.0))
 
 
 func _build_workbench(wood: Material, dirty_steel: Material, steel: Material, origin: Vector3) -> void:
@@ -156,8 +215,8 @@ func _build_jack(steel: Material, origin: Vector3) -> void:
 func _build_lamps(lamp: Material, steel: Material) -> void:
 	for i in 2:
 		var z := lerpf(-2.1, 2.1, float(i))
-		_add_box(self, "Cage_%d" % i, Vector3(0.42, 0.12, 0.7), Vector3(14.6, 6.85, z), steel)
-		_add_box(self, "Bulb_%d" % i, Vector3(0.32, 0.08, 0.55), Vector3(14.6, 6.78, z), lamp)
+		_add_box(self, "Cage_%d" % i, Vector3(0.42, 0.12, 0.7), Vector3(15.2, 6.85, z), steel)
+		_add_box(self, "Bulb_%d" % i, Vector3(0.32, 0.08, 0.55), Vector3(15.2, 6.78, z), lamp)
 
 
 func _add_box(
@@ -196,6 +255,13 @@ func _dirty_steel_material() -> StandardMaterial3D:
 	mat.albedo_color = Color(0.22, 0.18, 0.12, 1.0)
 	mat.metallic = 0.55
 	mat.roughness = 0.72
+	return mat
+
+
+func _primer_material() -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.62, 0.38, 0.16, 1.0)
+	mat.roughness = 0.78
 	return mat
 
 

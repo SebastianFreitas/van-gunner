@@ -50,7 +50,8 @@ const STOP_CORRIDOR_LATERAL := 9.0
 @export var slow_multiplier := 0.42
 @export var slow_cooldown := 14.0
 @export var debug_speed_multiplier := 5.0
-@export var park_speed_scale := 0.55
+## Park-in / pull-out as a multiple of live travel speed. 1.65 is 3× the old 0.55 crawl.
+@export var park_speed_scale := 1.65
 
 var distance := 0.0
 
@@ -516,6 +517,9 @@ func _attach_stop_on_upcoming_segment(tiles_ahead: int) -> void:
 		host_segment.apply_side_streets(_stop_bay_side == &"left", _stop_bay_side == &"right")
 
 	_active_stop = _pending_stop.scene.instantiate() as Node3D
+	if _active_stop == null:
+		push_error("Side stop '%s' scene failed to instantiate." % String(_pending_stop.id))
+		return
 	_active_stop_def = _pending_stop
 	corridor_root.add_child(_active_stop)
 	var side := 1.0 if _stop_bay_side == &"right" else -1.0

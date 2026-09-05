@@ -7,8 +7,8 @@
 [sub_resource type="ShaderMaterial" id="FloorMaterial"]
 render_priority = 0
 shader = ExtResource("1")
-shader_parameter/base_color = Color(0.1, 0.1, 0.09, 1)
-shader_parameter/seam_color = Color(0.025, 0.026, 0.022, 1)
+shader_parameter/base_color = Color(0.16, 0.15, 0.13, 1)
+shader_parameter/seam_color = Color(0.04, 0.038, 0.032, 1)
 shader_parameter/rust_color = Color(0.26, 0.1, 0.04, 1)
 shader_parameter/tile_count = Vector2(8, 10)
 shader_parameter/roughness_value = 0.95
@@ -144,17 +144,22 @@ mesh = SubResource("LintelMesh")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 7.2, 0)
 mesh = SubResource("LampMesh")
 
+[node name="BackLamp" type="MeshInstance3D" parent="Bay"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.4, 7.2, 0)
+mesh = SubResource("LampMesh")
+
 [node name="Workshop" type="Node3D" parent="."]
 script = ExtResource("2")
 
 [node name="Keeper" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.15, 0, 0.35)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.15, 0, 2.45)
 
 [node name="Sprite3D" type="Sprite3D" parent="Keeper"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)
 pixel_size = 0.006
 billboard = 1
 alpha_cut = 1
+texture_filter = 0
 texture = ExtResource("3")
 
 [node name="DockPoint" type="Marker3D" parent="."]
