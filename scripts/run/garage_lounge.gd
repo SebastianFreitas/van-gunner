@@ -22,17 +22,36 @@ func _build() -> void:
 	var screen := _screen_material()
 	var rust := _drum_material()
 
-	# Far -Z / back-wall corner. Dock sits near the mouth; this stays out of the way.
+	# Lounge sits at the back wall; the van now docks in the vestibule by the door.
 	_build_sofa(fabric, wood, Vector3(15.4, 0.0, -3.15))
 	_build_tv(steel, wood, screen, Vector3(15.4, 0.0, -1.05))
 	_build_drums(rust, steel, Vector3(16.4, 0.0, 3.35))
+	_build_lamps(steel)
+
+	var bay_light := OmniLight3D.new()
+	bay_light.name = "BayGlow"
+	bay_light.position = Vector3(9.0, 5.1, 0.0)
+	bay_light.light_color = Color(0.95, 0.88, 0.7, 1.0)
+	bay_light.light_energy = 2.4
+	bay_light.omni_range = 12.0
+	bay_light.shadow_enabled = false
+	add_child(bay_light)
+
+	var back_light := OmniLight3D.new()
+	back_light.name = "LoungeGlow"
+	back_light.position = Vector3(15.2, 3.8, -1.4)
+	back_light.light_color = Color(0.9, 0.78, 0.55, 1.0)
+	back_light.light_energy = 1.8
+	back_light.omni_range = 8.5
+	back_light.shadow_enabled = false
+	add_child(back_light)
 
 	var tv_light := OmniLight3D.new()
 	tv_light.name = "TvGlow"
 	tv_light.position = Vector3(15.4, 1.05, -1.15)
 	tv_light.light_color = Color(0.35, 0.55, 0.85, 1.0)
-	tv_light.light_energy = 0.55
-	tv_light.omni_range = 4.2
+	tv_light.light_energy = 0.85
+	tv_light.omni_range = 5.5
 	tv_light.shadow_enabled = false
 	add_child(tv_light)
 
@@ -77,6 +96,16 @@ func _build_drums(rust: Material, steel: Material, origin: Vector3) -> void:
 	_add_box(body, "DrumB", Vector3(0.48, 0.72, 0.48), Vector3(0.62, 0.36, 0.18), rust)
 	_add_box(body, "LidA", Vector3(0.54, 0.04, 0.54), Vector3(0.0, 0.9, 0.0), steel)
 	_add_collision(body, Vector3(1.2, 0.92, 0.8), Vector3(0.28, 0.46, 0.08))
+
+
+func _build_lamps(steel: Material) -> void:
+	var lamp := _lamp_material()
+	for i in 2:
+		var z := lerpf(-2.2, 2.2, float(i))
+		_add_box(self, "Cage_%d" % i, Vector3(0.42, 0.12, 0.7), Vector3(9.0, 6.85, z), steel)
+		_add_box(self, "Bulb_%d" % i, Vector3(0.32, 0.08, 0.55), Vector3(9.0, 6.78, z), lamp)
+	_add_box(self, "CageBack", Vector3(0.42, 0.12, 0.7), Vector3(15.2, 6.85, -1.2), steel)
+	_add_box(self, "BulbBack", Vector3(0.32, 0.08, 0.55), Vector3(15.2, 6.78, -1.2), lamp)
 
 
 func _add_box(
@@ -131,6 +160,16 @@ func _screen_material() -> StandardMaterial3D:
 	mat.emission_enabled = true
 	mat.emission = Color(0.18, 0.32, 0.55, 1.0)
 	mat.emission_energy_multiplier = 0.85
+	return mat
+
+
+func _lamp_material() -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.92, 0.86, 0.68, 1.0)
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.9, 0.65, 1.0)
+	mat.emission_energy_multiplier = 1.4
 	return mat
 
 

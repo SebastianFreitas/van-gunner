@@ -20,9 +20,11 @@ const SIDE_STREET_GAP := 2
 const SIDE_STREET_START_SEGMENT := 4
 const STOP_SPAWN_MIN_SEGMENTS_AHEAD := 1
 const STOP_SPAWN_MAX_SEGMENTS_AHEAD := 2
-## Straight reverse after the quarter-circle. Total pass-distance is turn_radius + this.
+## Straight reverse after the quarter-circle. Total pass-distance is park radius + this.
 const STOP_PARK_REVERSE_STRAIGHT := 8.0
 const STOP_CORRIDOR_LATERAL := 9.0
+## Tighter than road turns so the van can stop in the 5 m vestibule, before the door.
+const STOP_PARK_TURN_RADIUS := 6.0
 
 ## Overwritten in _ready from MetaProgression → GameBalance van speed curve.
 ## Live value includes temporary driver boosts (raiders read this every frame).
@@ -33,6 +35,8 @@ const STOP_CORRIDOR_LATERAL := 9.0
 ## and No Through Road is not pending.
 @export var crossroads_scene: PackedScene
 @export var act_statue_scene: PackedScene
+## Shared 5 m mouth + roll-up door. Stop interiors instance behind the door.
+@export var stop_vestibule_scene: PackedScene
 @export var segment_length := 20.0
 @export var segment_ahead_distance := 80.0
 @export var world_cull_distance := 140.0
@@ -516,7 +520,7 @@ func _attach_stop_on_upcoming_segment(tiles_ahead: int) -> void:
 	elif host_segment.has_method(&"apply_side_streets"):
 		host_segment.apply_side_streets(_stop_bay_side == &"left", _stop_bay_side == &"right")
 
-	_active_stop = _pending_stop.scene.instantiate() as Node3D
+	_active_stop = _instantiate_stop_host(_pending_stop)
 	if _active_stop == null:
 		push_error("Side stop '%s' scene failed to instantiate." % String(_pending_stop.id))
 		return
@@ -526,6 +530,8 @@ func _attach_stop_on_upcoming_segment(tiles_ahead: int) -> void:
 	var yaw := 0.0 if _stop_bay_side == &"right" else PI
 	var local := Transform3D(Basis.from_euler(Vector3(0.0, yaw, 0.0)), Vector3(side * 9.0, 0.0, 0.0))
 	_active_stop.global_transform = host_segment.global_transform * local
+	if _active_stop.has_method(&"mount_content"):
+		_active_stop.mount_content(_pending_stop.scene)
 	_world_pieces.append(_active_stop)
 	_stop_align_progress = host_progress
 	_stop_pending = false
@@ -862,7 +868,9 @@ func _maybe_begin_stop_park() -> void:
 	]:
 		return
 	# Need room for a T-junction quarter-circle plus a short reverse straight.
-	if van_follow.progress < _stop_align_progress + turn_radius + STOP_PARK_REVERSE_STRAIGHT:
+	if van_follow.progress < (
+		_stop_align_progress + STOP_PARK_TURN_RADIUS + STOP_PARK_REVERSE_STRAIGHT
+	):
 		return
 	_build_park_route()
 
@@ -901,17 +909,22 @@ func _build_park_route() -> void:
 	var van_transform := van_rig.global_transform
 	var van_inv := van_transform.affine_inverse()
 	var side := 1.0 if _stop_bay_side == &"right" else -1.0
-	var handle := turn_radius * QUARTER_CIRCLE_HANDLE
+	var park_radius := STOP_PARK_TURN_RADIUS
+	var handle := park_radius * QUARTER_CIRCLE_HANDLE
 
 	var mouth_z := _flatten_local(van_inv, _stop_corridor_at_mouth(_stop_mouth_world())).z
-	mouth_z = maxf(mouth_z, turn_radius + STOP_PARK_REVERSE_STRAIGHT)
-	var dock_lat := maxf(absf(_flatten_local(van_inv, dock.global_position).x), turn_radius + 2.0)
+	mouth_z = maxf(mouth_z, park_radius + STOP_PARK_REVERSE_STRAIGHT)
+	# Use the real dock — do not push the van past the vestibule door.
+	var dock_lat := maxf(
+		absf(_flatten_local(van_inv, dock.global_position).x),
+		park_radius + 2.0
+	)
 
-	var straight_length := mouth_z - turn_radius
+	var straight_length := mouth_z - park_radius
 	var turn_start := Vector3(0.0, 0.0, straight_length)
-	var turn_end := Vector3(side * turn_radius, 0.0, straight_length + turn_radius)
+	var turn_end := Vector3(side * park_radius, 0.0, straight_length + park_radius)
 	var dock_pos := Vector3(side * dock_lat, 0.0, mouth_z)
-	var bay_out := dock_lat - turn_radius
+	var bay_out := dock_lat - park_radius
 
 	# Forward T into the bay would be: van → turn_start → turn_end → dock with
 	#   turn_start.out = (0,0,handle), turn_end.in = (-side*handle, 0, 0)
@@ -942,6 +955,8 @@ func _build_park_route() -> void:
 	_stop_align_progress = INF
 	_segment_spawning_paused = true
 	_refresh_travel_speed()
+	if _active_stop.has_method(&"open_door"):
+		_active_stop.open_door()
 	GameSession.set_phase(GameSession.RunPhase.PARKING)
 
 
@@ -954,9 +969,19 @@ func _finish_park() -> void:
 	GameSession.set_phase(GameSession.RunPhase.STOP)
 
 
+func _instantiate_stop_host(def: SideStopDefinition) -> Node3D:
+	if stop_vestibule_scene:
+		var vestibule := stop_vestibule_scene.instantiate() as Node3D
+		if vestibule:
+			return vestibule
+	return def.scene.instantiate() as Node3D
+
+
 func _build_leave_stop_route() -> void:
 	# Mirror the reverse-park: same curve, forward progress (dock → corridor mouth).
 	_park_reversing = false
+	if is_instance_valid(_active_stop) and _active_stop.has_method(&"close_door"):
+		_active_stop.close_door()
 
 	var curve := travel_path.curve
 	if curve == null or curve.point_count < 2:

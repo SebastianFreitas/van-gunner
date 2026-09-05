@@ -4,8 +4,9 @@ extends Resource
 ## A roadside building on a fork road. Every offered street gets one, regardless
 ## of card polarity. Taking that road commits the street card *and* parks here.
 ##
-## Scene contract: root Node3D in the shop-bay frame (origin at the corridor
-## wall, +X into the building) with `DockPoint` and `ExitPoint` Marker3Ds.
+## Scene contract: interiors use the shop-bay frame (origin at the corridor
+## wall, +X into the building). TravelController wraps them in a shared
+## vestibule that owns `DockPoint` / `ExitPoint` and the roll-up door.
 
 @export var id: StringName = &""
 @export var display_name := "Stop"
