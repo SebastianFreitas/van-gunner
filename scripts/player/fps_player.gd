@@ -9,9 +9,11 @@ signal shot_fired(hit: bool)
 @export var mouse_sensitivity := 0.0022
 @export var step_height := 0.35
 @export var step_check_distance := 0.45
+@export var jump_velocity := 6.0
 @export var movement_reference_path: NodePath
 
 const _REAR_DOOR_INTERACT_SCRIPT := preload("res://scripts/run/rear_door_interact.gd")
+const _JUMP_CLEARANCE := 1.0
 
 @onready var head: Node3D = $Head
 @onready var interaction_ray: RayCast3D = $Head/Camera3D/InteractionRay
@@ -24,6 +26,7 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 
 var _current_interactable: Interactable
 var _movement_reference: Node3D
 var _local_horizontal_velocity := Vector3.ZERO
+var _jump_queued := false
 
 
 func _ready() -> void:
@@ -69,6 +72,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				weapon_inventory.cycle_active(1)
 	elif event.is_action_pressed("interact") and _current_interactable:
 		_current_interactable.interact(self)
+	elif event.is_action_pressed("jump"):
+		_jump_queued = true
 	elif event.is_action_pressed("reload") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		weapon.try_reload()
 	elif event.is_action_pressed("use_usable") and _can_swap_weapons():
@@ -81,6 +86,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		usables.try_use_slot(2)
 	elif event.is_action_pressed("use_slot_4"):
 		usables.try_use_slot(3)
+
+
+func _can_jump_outside_van() -> bool:
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		return false
+	if _ui_wants_free_cursor():
+		return false
+	var van := get_tree().get_first_node_in_group(&"van_run")
+	if van == null:
+		return false
+	var containment := van.get("player_containment") as VanPlayerContainment
+	if containment == null:
+		return false
+	return containment.horizontal_clearance(global_position) > _JUMP_CLEARANCE
 
 
 func _can_swap_weapons() -> bool:
@@ -106,8 +125,11 @@ func _physics_process(delta: float) -> void:
 	var reference_basis := _movement_reference.global_basis.orthonormalized()
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
+	elif _jump_queued and _can_jump_outside_van():
+		velocity.y = jump_velocity
 	else:
 		velocity.y = 0.0
+	_jump_queued = false
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var view_basis_in_reference := reference_basis.inverse() * global_basis.orthonormalized()

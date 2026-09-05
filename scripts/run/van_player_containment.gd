@@ -59,6 +59,14 @@ func is_rear_exit_allowed() -> bool:
 	return _rear_exit_allowed
 
 
+## Horizontal distance past the van hull AABB. Zero while standing inside.
+func horizontal_clearance(world_pos: Vector3) -> float:
+	var local := to_local(world_pos)
+	var dx := maxf(absf(local.x) - half_width, 0.0)
+	var dz := maxf(absf(local.z) - half_length, 0.0)
+	return Vector2(dx, dz).length()
+
+
 func set_rear_exit_allowed(allowed: bool) -> void:
 	if _rear_exit_allowed == allowed:
 		return

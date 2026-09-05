@@ -1,9 +1,10 @@
 class_name StopVestibule
 extends Node3D
 
-## Shared mouth for every roadside stop. Content (shop, garage, mechanic, …)
-## instances under ContentMount in the same shop-bay frame. The van docks in the
-## first ~5 m, in front of a vertical roll-up door; interiors live behind it.
+## Shared mouth for every roadside stop. Content (shop, garage, mechanic,
+## warehouse, …) instances under ContentMount in the same shop-bay frame.
+## The van docks in the first ~5 m, in front of a vertical roll-up door;
+## interiors live behind it.
 
 const DOOR_X := 5.6
 const DOOR_WIDTH := 8.2

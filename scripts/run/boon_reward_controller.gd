@@ -27,6 +27,26 @@ func is_awaiting_resolution() -> bool:
 	return _awaiting_resolution
 
 
+## Bonus 3-choice pick (warehouse chest). Does not consume the street REST boon.
+func present_bonus_choices() -> void:
+	if not _player:
+		return
+	if _is_debug_speed_mode():
+		_auto_collect_one()
+		SaveManager.save_active_session()
+		return
+	var exclude := _owned_boon_ids()
+	var area := GameSession.get_rest_area()
+	var choices := ItemPoolRegistry.pick_rest_choices(area, CHOICE_COUNT, exclude)
+	if choices.is_empty():
+		return
+	if _panel and _panel.has_method(&"present"):
+		_panel.present(choices)
+	else:
+		choices[0].collect(_player)
+		SaveManager.save_active_session()
+
+
 func wait_for_rest_resolution() -> void:
 	if _is_debug_speed_mode():
 		return
@@ -76,9 +96,10 @@ func _present_boon_choices() -> void:
 
 
 func _on_choice_made(_item: ItemDefinition) -> void:
-	if not _awaiting_resolution:
+	if _awaiting_resolution:
+		_finish_resolution()
 		return
-	_finish_resolution()
+	SaveManager.save_active_session()
 
 
 func _finish_resolution() -> void:
