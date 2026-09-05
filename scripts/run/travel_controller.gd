@@ -955,8 +955,6 @@ func _build_park_route() -> void:
 	_stop_align_progress = INF
 	_segment_spawning_paused = true
 	_refresh_travel_speed()
-	if _active_stop.has_method(&"open_door"):
-		_active_stop.open_door()
 	GameSession.set_phase(GameSession.RunPhase.PARKING)
 
 
@@ -966,6 +964,9 @@ func _finish_park() -> void:
 	_turn_end_progress = INF
 	van_follow.progress = 0.0
 	_refresh_travel_speed()
+	# Open after the reverse-park finishes so the gate stays shut while docking.
+	if is_instance_valid(_active_stop) and _active_stop.has_method(&"open_door"):
+		_active_stop.open_door()
 	GameSession.set_phase(GameSession.RunPhase.STOP)
 
 
