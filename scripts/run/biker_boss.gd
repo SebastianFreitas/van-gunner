@@ -7,11 +7,11 @@ extends WindowRaider
 enum BikePhase { IDLE, CHARGE, WINDUP, PEEL, WEAVE, ENTERING, BENCH }
 
 @export var windup_seconds := 2.0
-@export var peel_distance := 14.0
+@export var peel_distance := 28.0
 @export var peel_speed := 12.0
 @export var weave_seconds := 4.0
 @export var weave_amplitude := 3.2
-@export var weave_frequency := 2.1
+@export var weave_frequency := 1.05
 @export var charge_speed_mult := 1.85
 @export var summon_interval := 5.0
 @export var summon_cap := 3
