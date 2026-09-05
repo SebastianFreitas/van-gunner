@@ -20,7 +20,7 @@ VOICE = "en-US-GuyNeural"
 LINES = [
 	("shout_start", "Go, go, GO! Move this thing!"),
 	("shout_slow", "Ease off, ease off! Slow it down!"),
-	("shout_resume", "Awright, normal speed! Drive normal!"),
+	("shout_resume", "Alright, drive!"),
 	("shout_turbo", "Punch it! NOW, DUMBASS!"),
 ]
 
