@@ -2,11 +2,17 @@ class_name StopVestibule
 extends Node3D
 
 ## Shared mouth for every roadside stop. Content (shop, garage, mechanic,
-## warehouse, …) instances under ContentMount in the same shop-bay frame.
-## The van docks in the first ~5 m, in front of a vertical roll-up door;
-## interiors live behind it.
+## warehouse, …) instances under ContentMount, just behind the roll-up.
+## The van docks in this ~5 m bay; interiors live past the door.
 
 const DOOR_X := 5.6
+## Van origin sits here. Rear doors are ~4.8 m further in +X once parked
+## nose-out; keep a couple of metres of vestibule between bumper and roll-up.
+const DOCK_X := -1.0
+const MOUTH_WIDTH := 8.6
+const MOUTH_HEIGHT := 8.0
+const FLOOR_Y := -0.3
+const CEILING_Y := 7.8
 const DOOR_WIDTH := 8.2
 const DOOR_HEIGHT := 6.2
 const DOOR_THICKNESS := 0.14
@@ -43,8 +49,62 @@ func close_door() -> void:
 
 
 func _ready() -> void:
+	_place_markers()
+	_build_mouth()
 	_build_door()
 	_build_lights()
+
+
+func _place_markers() -> void:
+	var mount := get_node_or_null("ContentMount") as Node3D
+	if mount:
+		mount.position = Vector3(DOOR_X, 0.0, 0.0)
+	var dock := get_node_or_null("DockPoint") as Marker3D
+	if dock:
+		dock.position = Vector3(DOCK_X, 0.0, 0.0)
+	var exit_pt := get_node_or_null("ExitPoint") as Marker3D
+	if exit_pt:
+		exit_pt.position = Vector3(1.5, 0.0, 0.0)
+
+
+func _build_mouth() -> void:
+	var floor_mat := _floor_material()
+	var wall_mat := _wall_material()
+	var rib := _steel_material()
+	var surfaces := StaticBody3D.new()
+	surfaces.name = "Surfaces"
+	add_child(surfaces)
+
+	var half_w := MOUTH_WIDTH * 0.5
+	var mid_x := DOOR_X * 0.5
+	_add_solid(
+		surfaces,
+		"Floor",
+		Vector3(DOOR_X, 0.2, MOUTH_WIDTH),
+		Vector3(mid_x, FLOOR_Y, 0.0),
+		floor_mat
+	)
+	_add_solid(
+		surfaces,
+		"WallNegZ",
+		Vector3(DOOR_X, MOUTH_HEIGHT, 0.4),
+		Vector3(mid_x, 3.7, -half_w),
+		wall_mat
+	)
+	_add_solid(
+		surfaces,
+		"WallPosZ",
+		Vector3(DOOR_X, MOUTH_HEIGHT, 0.4),
+		Vector3(mid_x, 3.7, half_w),
+		wall_mat
+	)
+	_add_solid(
+		surfaces,
+		"Ceiling",
+		Vector3(DOOR_X, 0.35, MOUTH_WIDTH),
+		Vector3(mid_x, CEILING_Y, 0.0),
+		rib
+	)
 
 
 func _build_door() -> void:
@@ -81,7 +141,7 @@ func _build_door() -> void:
 
 	_door_leaf = Node3D.new()
 	_door_leaf.name = "Leaf"
-	_door_leaf.position = Vector3(0.0, 0.0, 0.0)
+	_door_leaf.position = Vector3.ZERO
 	door.add_child(_door_leaf)
 
 	var slat_h := DOOR_HEIGHT / float(SLAT_COUNT)
@@ -150,6 +210,19 @@ func _animate_door(open: bool) -> void:
 		_door_collision.disabled = open
 
 
+func _add_solid(
+	body: StaticBody3D, node_name: String, size: Vector3, pos: Vector3, material: Material
+) -> void:
+	_add_box(body, node_name, size, pos, material)
+	var shape := BoxShape3D.new()
+	shape.size = size
+	var col := CollisionShape3D.new()
+	col.name = "%sCol" % node_name
+	col.shape = shape
+	col.position = pos
+	body.add_child(col)
+
+
 func _add_box(
 	parent: Node3D, node_name: String, size: Vector3, pos: Vector3, material: Material
 ) -> void:
@@ -161,6 +234,32 @@ func _add_box(
 	mi.position = pos
 	mi.material_override = material
 	parent.add_child(mi)
+
+
+func _floor_material() -> ShaderMaterial:
+	var shader := load("res://scenes/corridor/industrial_surface.gdshader") as Shader
+	var mat := ShaderMaterial.new()
+	if shader:
+		mat.shader = shader
+		mat.set_shader_parameter("base_color", Color(0.16, 0.18, 0.17, 1.0))
+		mat.set_shader_parameter("seam_color", Color(0.035, 0.045, 0.04, 1.0))
+		mat.set_shader_parameter("rust_color", Color(0.3, 0.105, 0.045, 1.0))
+		mat.set_shader_parameter("tile_count", Vector2(4.0, 8.0))
+		mat.set_shader_parameter("roughness_value", 0.92)
+	return mat
+
+
+func _wall_material() -> ShaderMaterial:
+	var shader := load("res://scenes/corridor/industrial_surface.gdshader") as Shader
+	var mat := ShaderMaterial.new()
+	if shader:
+		mat.shader = shader
+		mat.set_shader_parameter("base_color", Color(0.16, 0.18, 0.17, 1.0))
+		mat.set_shader_parameter("seam_color", Color(0.035, 0.045, 0.04, 1.0))
+		mat.set_shader_parameter("rust_color", Color(0.3, 0.105, 0.045, 1.0))
+		mat.set_shader_parameter("tile_count", Vector2(6.0, 2.0))
+		mat.set_shader_parameter("roughness_value", 0.78)
+	return mat
 
 
 func _steel_material() -> StandardMaterial3D:

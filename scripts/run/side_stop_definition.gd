@@ -4,13 +4,13 @@ extends Resource
 ## A roadside stop on a fork road. Every offered street gets one, regardless
 ## of card polarity. Taking that road commits the street card *and* visits here.
 ##
-## Arrival is how the van reaches the shared vestibule + roll-up door.
-## Content scenes stay in the shop-bay frame (origin at the mouth, +X inward).
-## TravelController wraps them in a vestibule (bay reverse-park) or an elevator
+## A stop is arrival(content): arrival is how the van reaches the shared
+## vestibule + roll-up, content is the interior mounted behind the door.
+## TravelController wraps `scene` in a vestibule (reverse-park) or an elevator
 ## shaft (halt on the road, pad drops, same door at the bottom).
 
 enum Arrival {
-	BAY = 0,
+	REAR_PARK = 0,
 	ELEVATOR = 1,
 }
 
@@ -18,8 +18,9 @@ enum Arrival {
 @export var display_name := "Stop"
 ## Short word for door prompts / toasts ("SHOP", "GARAGE").
 @export var short_label := "STOP"
+## Interior scene. Origin is just inside the roll-up, +X inward. No dock markers.
 @export var scene: PackedScene
-@export var arrival: Arrival = Arrival.BAY
+@export var arrival: Arrival = Arrival.REAR_PARK
 ## Relative chance to be offered at a fork. Keep rare shops well below 1.
 @export var spawn_weight := 1.0
 @export var parking_toast := ""
@@ -33,7 +34,10 @@ func uses_elevator() -> bool:
 
 func fork_label() -> String:
 	var name := display_name.strip_edges()
-	return name.to_upper() if not name.is_empty() else "STOP"
+	var label := name.to_upper() if not name.is_empty() else "STOP"
+	if uses_elevator():
+		return "%s LIFT" % label
+	return label
 
 
 func label_parking() -> String:
@@ -59,4 +63,4 @@ func label_leaving() -> String:
 
 
 func arrival_label() -> String:
-	return "elevator" if uses_elevator() else "bay"
+	return "elevator" if uses_elevator() else "rear_park"

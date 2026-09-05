@@ -9,6 +9,9 @@ const _SEARCH_DIR := "res://resources/side_stops/"
 static func load_by_id(stop_id: StringName) -> SideStopDefinition:
 	if stop_id == &"":
 		return null
+	match String(stop_id).to_lower().replace(" ", "_"):
+		"rare_vendor", "undercroft", "undershop", "vault":
+			stop_id = &"rare_shop"
 	var path := _SEARCH_DIR + String(stop_id) + ".tres"
 	if ResourceLoader.exists(path):
 		return load(path) as SideStopDefinition
@@ -37,6 +40,34 @@ static func list_ids() -> Array[StringName]:
 	if ids.is_empty():
 		push_warning("SideStopRegistry: no side stops found in %s." % _SEARCH_DIR)
 	return ids
+
+
+## Parse "rear_park" / "elevator" (and a few aliases). Returns -1 if unknown.
+static func arrival_from_label(text: String) -> int:
+	var key := text.strip_edges().to_lower().replace(" ", "").replace("_", "")
+	match key:
+		"rearpark", "normalrearpark", "bay":
+			return SideStopDefinition.Arrival.REAR_PARK
+		"elevator", "undergroundelevator", "underground":
+			return SideStopDefinition.Arrival.ELEVATOR
+	return -1
+
+
+## Pair any content stop with an arrival without writing a new .tres.
+static func compose(
+	content_id: StringName, arrival: SideStopDefinition.Arrival
+) -> SideStopDefinition:
+	var stop := load_by_id(content_id)
+	if stop == null or stop.scene == null:
+		return null
+	var copy := stop.duplicate() as SideStopDefinition
+	if copy == null:
+		return null
+	copy.arrival = arrival
+	if arrival != stop.arrival:
+		copy.parking_toast = ""
+		copy.leaving_toast = ""
+	return copy
 
 
 static func pick(

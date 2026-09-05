@@ -46,7 +46,7 @@ TRAVELLING ──(EncounterDirector timer)──> COMBAT ──> REST
 REST ──(boon pick for the committed street card)──> ROUTE_CHOICE
  ...six cards later...
 REST ──> BOSS_PICK ──> TRAVELLING ──> COMBAT (boss) ──> REST ──> ACT_REVEAL (next act)
-any ──(van health hits 0)──> GAME_OVER
+any ──(van hull or player HP hits 0)──> GAME_OVER
 ```
 
 ### Acts and street cards
@@ -70,11 +70,12 @@ and DANGER alike, including straight. The card is just that street's combat
 modifier. Taking a road commits the card *and* visits that stop. While docked
 (`STOP`) the rear doors stay open so you can walk the room.
 
-How the van arrives is data on the stop, not a new travel system: `Arrival.BAY`
-reverse-parks into the shared vestibule; `Arrival.ELEVATOR` halts on the road
-and drops a pad to the same vestibule and roll-up door. Swap `arrival` on the
-`.tres` (and optionally `spawn_weight`) to put warehouse, a rare shop, or
-anything else on the lift — content scenes stay in the shop-bay frame.
+How the van arrives is data on the stop, not a new travel system: a stop is
+`arrival(content)`. `Arrival.REAR_PARK` reverse-parks into the shared vestibule;
+`Arrival.ELEVATOR` halts on the road and drops a pad to the same vestibule and
+roll-up door. Content scenes mount just behind the door (no dock markers). Swap
+`arrival` on the `.tres` (and optionally `spawn_weight`) to put any interior on
+the lift — debug `stop elevator shop` composes the same pairing without a new file.
 
 Default forks are 4-ways (left / straight / right). T-junctions are used when
 fewer than three cards remain in the act deck, or when **No Through Road** was
@@ -122,7 +123,7 @@ Adding content should almost never mean writing code:
 |---|---|---|
 | a boon or item | `resources/items/` (+ pool entry) | `ItemPoolRegistry`, `ItemRegistry` |
 | a street card | `resources/acts/cards/` | `ActCardRegistry` (scans the folder) |
-| a side stop | `resources/side_stops/` (+ bay scene, `arrival`) | `SideStopRegistry` (scans the folder) |
+| a side stop | `resources/side_stops/` (+ content scene, `arrival`) | `SideStopRegistry` (scans the folder) |
 | a gun | `resources/weapons/definitions/` | `WeaponCatalog` |
 | an enemy | `resources/enemies/` (+ spawn pool) | `GameBalance.pick_spawn_enemy` |
 | a sound | `resources/audio/sound_bank.tres` (SoundCue) | `AudioDirector` |
@@ -175,6 +176,8 @@ Breaking these is how the game stops being fun, so they're worth stating flatly.
 10. **`is_elite` is explicit.** Agile (window climbing, green tint) does not imply
     elite loot. Set elite on the raider export, or via `mark_as_boss()` /
     `EncounterDirector._spawn_boss`.
+11. **Player HP and van hull are both fail conditions.** Either bar at 0 is
+    `GAME_OVER`. Heal consumables restore player HP; max-HP boons still raise van hull.
 
 The long-form reasoning behind all of this is in
 `docs/WEAPON_SYSTEM_VAN_GUNNER.md`, which is still an accurate description of the
@@ -218,9 +221,17 @@ Each of these has already cost someone real debugging time:
 - **`ActCardRegistry` scans `res://resources/acts/cards/` with `DirAccess`.** Packed
   listings may use `foo.tres.remap`; `list_ids()` strips `.remap` before the
   `.tres` check. An empty list `push_warning`s rather than failing quietly.
-- **`SideStopRegistry` scans `res://resources/side_stops/` the same way.** A stop
-  scene must expose `DockPoint` and `ExitPoint` Marker3Ds in the shop-bay frame
-  (origin at the corridor wall, +X into the building).
+- **`SideStopRegistry` scans `res://resources/side_stops/` the same way.** Arrival
+  hosts (`stop_vestibule.tscn` / `stop_elevator.tscn`) expose `DockPoint` and
+  `ExitPoint`. Content scenes start just inside the roll-up (`ContentMount` at
+  the door, +X inward) and must not include those markers. `DockPoint.x` is
+  negative so the rear bumper sits in the vestibule, not inside the door.
+- **Stop attach ignores leftover tiles after a curve swap.** Left/right turns
+  replace `travel_path.curve` and reset progress to 0. Old corridor tiles keep
+  their `route_progress` numbers, so a naive "first tile ahead" pick can parent
+  the garage to the street you just left — van reverse-parks on the new road
+  with the building on its side. `TravelController` stamps `_route_gen` and only
+  attaches to tiles that still sit on the live curve.
 - **Elevator stops ride `PathFollow3D.v_offset`.** The van stays on the road
   curve; the pad is a sibling in the corridor, not a new parent. Don't reparent
   `VanRig` onto the platform. Open the shaft (hide *collision* as well as the
@@ -279,12 +290,13 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Change the reveal / boss-pick UI | `scripts/ui/act_reveal_panel.gd` |
 | Add a boon | new `.tres` in `resources/items/boons/` + pool + maybe a `BoonBehavior` |
 | Add a street card | new `.tres` in `resources/acts/cards/` + maybe an `ActCardEffect` |
-| Add a side stop | new `.tres` in `resources/side_stops/` + a bay scene; set `arrival` to `BAY` or `ELEVATOR` |
+| Add a side stop | new `.tres` in `resources/side_stops/` + a content scene; set `arrival` to `REAR_PARK` or `ELEVATOR` |
 | Touch guns | `scripts/weapons/` + `scripts/combat/gun_*.gd` |
 | Add a sound | new `SoundCue` in `resources/audio/sound_bank.tres` — gameplay already emits |
 | Touch the van shell / doors / windows | `scripts/run/van_*.gd`, `side_*.gd`, `rear_doors.gd` |
 | Yell at the driver (Shift GO / C EASY) | `travel_controller.gd` boost/slow + `scripts/ui/driver_shout_hud.gd` |
 | Bench / crafting UI | `scripts/ui/bench_screen.gd` |
+| Loot hopper / death popups | `scripts/core/loot_collector.gd` + `scripts/interactions/loot_machine.gd` |
 | Bench screenshot tool | `tools/bench_preview.tscn` |
 | Shop counter / stock | `scripts/run/shop_*.gd` |
 
@@ -293,7 +305,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 - Open the project in Godot 4.7; main scene is `scenes/boot/boot.tscn`.
 - In-game console: **H**. `help` lists commands; `list commands|boons|items|weapons|cards|stops|sounds`
   enumerates content. `stop <id>` forces that side stop on the next fork (use
-  `stop rare_shop` to test the elevator). `sound <cue>` auditions a cue.
+  `stop rare_shop` or `stop elevator shop` to test the elevator). `sound <cue>` auditions a cue.
 - `speed` enables a debug fast-forward that also auto-resolves reveals and boon
   picks — useful for reaching late acts quickly, but it *skips* the panels, so don't
   use it to test UI.

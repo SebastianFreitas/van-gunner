@@ -111,9 +111,13 @@ var _last_stop_id: StringName = &""
 ## When true, PathFollow moves backward along the park curve (rear into bay).
 var _park_reversing := false
 ## Debug: next fork offers this stop on every road, then clears.
-var _forced_next_stop_id: StringName = &""
+var _forced_next_stop: SideStopDefinition
 var _active_statue: Node3D
 var _act_reveal_pending := false
+## Bumped whenever the travel curve is replaced. Leftover tiles keep their old
+## `route_progress` numbers; without this they look "ahead" on the new lattice
+## and a stop can attach to the previous street.
+var _route_gen := 0
 
 @onready var corridor_root: Node3D = $"../../ExteriorCorridor"
 @onready var travel_path: Path3D = $"../../TravelPath"
@@ -328,9 +332,13 @@ func end_act_statue_stop() -> void:
 
 
 func force_next_stop(stop_id: StringName) -> bool:
-	if SideStopRegistry.load_by_id(stop_id) == null:
+	return force_stop_def(SideStopRegistry.load_by_id(stop_id))
+
+
+func force_stop_def(stop: SideStopDefinition) -> bool:
+	if stop == null or stop.scene == null:
 		return false
-	_forced_next_stop_id = stop_id
+	_forced_next_stop = stop
 	return true
 
 
@@ -359,6 +367,7 @@ func leave_shop() -> void:
 
 
 func _configure_initial_route() -> void:
+	_begin_new_route()
 	var curve := Curve3D.new()
 	curve.bake_interval = 0.5
 	curve.add_point(Vector3.ZERO)
@@ -478,6 +487,7 @@ func _spawn_world_segment(world_transform: Transform3D, route_progress: float = 
 	segment.global_transform = world_transform
 	if is_finite(route_progress):
 		segment.set_meta(&"route_progress", route_progress)
+		segment.set_meta(&"route_gen", _route_gen)
 	if segment.has_method(&"apply_variant"):
 		segment.apply_variant(_pick_segment_variant())
 	if segment.has_method(&"apply_side_streets"):
@@ -493,7 +503,7 @@ func _upcoming_corridor_progress(tiles_ahead: int) -> float:
 	var progresses: Array[float] = []
 	var ahead_of := van_follow.progress + 1.0
 	for piece in _world_pieces:
-		if not is_instance_valid(piece) or not piece.has_meta(&"route_progress"):
+		if not _is_live_route_tile(piece):
 			continue
 		var tile_progress := float(piece.get_meta(&"route_progress"))
 		if tile_progress >= ahead_of:
@@ -513,7 +523,7 @@ func _corridor_segment_near_progress(route_progress: float) -> Node3D:
 	var best: Node3D
 	var best_dist := INF
 	for piece in _world_pieces:
-		if not is_instance_valid(piece) or not piece.has_meta(&"route_progress"):
+		if not _is_live_route_tile(piece):
 			continue
 		var dist := absf(float(piece.get_meta(&"route_progress")) - route_progress)
 		if dist < best_dist:
@@ -522,6 +532,21 @@ func _corridor_segment_near_progress(route_progress: float) -> Node3D:
 	if best == null or best_dist > segment_length * 0.51:
 		return null
 	return best
+
+
+func _is_live_route_tile(piece: Node3D) -> bool:
+	if not is_instance_valid(piece) or not piece.has_meta(&"route_progress"):
+		return false
+	if int(piece.get_meta(&"route_gen", -1)) != _route_gen:
+		return false
+	var tile_progress := float(piece.get_meta(&"route_progress"))
+	var sampled := _sample_route_transform(tile_progress)
+	var slop := segment_length * 0.51
+	return piece.global_position.distance_squared_to(sampled.origin) <= slop * slop
+
+
+func _begin_new_route() -> void:
+	_route_gen += 1
 
 
 func _attach_stop_on_upcoming_segment(tiles_ahead: int) -> void:
@@ -548,12 +573,14 @@ func _attach_stop_on_upcoming_segment(tiles_ahead: int) -> void:
 
 
 func _place_bay_stop(host_segment: Node3D, host_progress: float) -> void:
+	# Drop any decorative side street on this tile first — a leftover branch
+	# next to the vestibule is what made reverse-park look like "another street".
+	if host_segment.has_method(&"apply_side_streets"):
+		host_segment.apply_side_streets(false, false)
 	if host_segment.has_method(&"open_bay"):
 		host_segment.open_bay(_stop_bay_side)
 	elif host_segment.has_method(&"open_shop_bay"):
 		host_segment.open_shop_bay(_stop_bay_side)
-	elif host_segment.has_method(&"apply_side_streets"):
-		host_segment.apply_side_streets(_stop_bay_side == &"left", _stop_bay_side == &"right")
 
 	if not _spawn_stop_host():
 		return
@@ -672,8 +699,8 @@ func _prepare_stop_fork() -> void:
 	var used: Array[StringName] = []
 	if _last_stop_id != &"":
 		used.append(_last_stop_id)
-	var forced := SideStopRegistry.load_by_id(_forced_next_stop_id)
-	_forced_next_stop_id = &""
+	var forced := _forced_next_stop
+	_forced_next_stop = null
 	for direction in GameSession.get_route_directions():
 		var stop: SideStopDefinition = forced
 		if stop == null or stop.scene == null:
@@ -874,6 +901,7 @@ func _build_turn_route() -> void:
 		Vector3(-side * segment_length * 0.25, 0.0, 0.0)
 	)
 
+	_begin_new_route()
 	travel_path.curve = curve
 	travel_path.global_transform = van_transform
 	van_follow.progress = 0.0
@@ -972,17 +1000,21 @@ func _build_park_route() -> void:
 	# arc stays a C — flipping them was what made the serpent S.
 	var van_transform := van_rig.global_transform
 	var van_inv := van_transform.affine_inverse()
-	var side := 1.0 if _stop_bay_side == &"right" else -1.0
 	var park_radius := STOP_PARK_TURN_RADIUS
 	var handle := park_radius * QUARTER_CIRCLE_HANDLE
+	var dock_local := _flatten_local(van_inv, dock.global_position)
+	# Aim at the real bay, not the fork's remembered left/right — after a turn
+	# those can disagree with van-local +X.
+	var side := signf(dock_local.x)
+	if is_zero_approx(side):
+		side = 1.0 if _stop_bay_side == &"right" else -1.0
+	_stop_bay_side = &"right" if side > 0.0 else &"left"
 
 	var mouth_z := _flatten_local(van_inv, _stop_corridor_at_mouth(_stop_mouth_world())).z
 	mouth_z = maxf(mouth_z, park_radius + STOP_PARK_REVERSE_STRAIGHT)
-	# Use the real dock — do not push the van past the vestibule door.
-	var dock_lat := maxf(
-		absf(_flatten_local(van_inv, dock.global_position).x),
-		park_radius + 2.0
-	)
+	# Real dock lateral. Do not clamp outward — that shoved the van 1–2 m past
+	# the marker and into the roll-up.
+	var dock_lat := maxf(absf(dock_local.x), park_radius)
 
 	var straight_length := mouth_z - park_radius
 	var turn_start := Vector3(0.0, 0.0, straight_length)
@@ -1008,6 +1040,7 @@ func _build_park_route() -> void:
 	)
 	curve.add_point(Vector3.ZERO)
 
+	_begin_new_route()
 	travel_path.curve = curve
 	travel_path.global_transform = van_transform
 	van_follow.progress = curve.get_baked_length()
@@ -1181,6 +1214,7 @@ func _build_leave_stop_route() -> void:
 	if last_pos.is_equal_approx(Vector3.ZERO):
 		curve.add_point(Vector3(0.0, 0.0, -route_length))
 
+	_begin_new_route()
 	van_follow.progress = 0.0
 	van_rig.transform = Transform3D.IDENTITY
 
