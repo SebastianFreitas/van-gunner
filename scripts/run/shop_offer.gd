@@ -64,7 +64,7 @@ func get_interaction_prompt() -> String:
 		return "E  %s — %d GOLD (need %d)" % [name_text, _price, _price - GameSession.coins]
 	if not item.can_collect(get_tree().get_first_node_in_group(&"player") as Node3D):
 		if item.is_heal_consumable():
-			return "E  %s — %d GOLD (hull full)" % [name_text, _price]
+			return "E  %s — %d GOLD (health full)" % [name_text, _price]
 		return "E  %s — %d GOLD (can't use)" % [name_text, _price]
 	return "E  BUY %s — %d GOLD" % [name_text, _price]
 

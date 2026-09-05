@@ -11,11 +11,11 @@ extends Node3D
 const _OFFER_SCENE := preload("res://scenes/shop/shop_offer.tscn")
 const _WEAPON_OFFER_SCENE := preload("res://scenes/shop/weapon_shop_offer.tscn")
 
-## World slots on the counter lip (booth at x=15.85; lip top ≈ 1.10).
+## World slots on the counter lip (booth at x=2.65; lip top ≈ 1.10).
 const _SLOT_POSITIONS: Array[Vector3] = [
-	Vector3(14.64, 1.52, -2.0),
-	Vector3(14.64, 1.52, 0.0),
-	Vector3(14.64, 1.52, 2.0),
+	Vector3(1.44, 1.52, -2.0),
+	Vector3(1.44, 1.52, 0.0),
+	Vector3(1.44, 1.52, 2.0),
 ]
 
 

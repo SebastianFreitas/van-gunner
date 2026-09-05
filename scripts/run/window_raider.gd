@@ -5,7 +5,7 @@ signal attack_landed(amount: float)
 signal defeated
 signal assault_finished
 
-enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH }
+enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH, ATTACKING_PLAYER }
 
 @export var attack_damage := 8.0
 @export var attack_interval := 1.25
@@ -18,6 +18,10 @@ enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH }
 const _BOSS_SPRITE := preload("res://scenes/enemies/wanjna.png")
 ## Window climbers get their own sprite; the scene default is the door goon.
 const _AGILE_SPRITE := preload("res://scenes/enemies/agile_raider.png")
+const _MELEE_RANGE := 1.2
+const _RETARGET_SECS := 0.5
+const _BENCH_BIAS := 0.6
+const _PLAYER_BIAS := 0.4
 
 ## Derived world chase speed for this act. Closing = mob_world_speed - live van speed.
 var mob_world_speed := 0.0
@@ -43,6 +47,7 @@ var _move_marker: Node3D
 var _move_speed := 0.0
 var _move_use_van_relative := false
 var _move_arrived := true
+var _chase_player := false
 
 @onready var sprite: Sprite3D = $Sprite3D
 @onready var hitbox: Area3D = $Hitbox
@@ -66,7 +71,9 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not _active or is_defeated:
 		return
-	if _move_marker and is_instance_valid(_move_marker) and not _move_arrived:
+	if _chase_player:
+		_physics_chase_player(delta)
+	elif _move_marker and is_instance_valid(_move_marker) and not _move_arrived:
 		_physics_chase_marker(delta)
 	elif _attach_marker and is_instance_valid(_attach_marker):
 		_snap_to_marker(_attach_marker)
@@ -91,11 +98,15 @@ func activate() -> void:
 	if _active or is_defeated:
 		return
 	_active = true
-	assault_phase = AssaultPhase.ATTACKING_BENCH
-	var controller := _breach_controller()
-	if controller:
-		_attach_marker = controller.bench_marker
-	_start_attack_loop()
+	_run_interior_combat()
+
+
+func is_inside_cabin() -> bool:
+	return assault_phase in [
+		AssaultPhase.ENTERING,
+		AssaultPhase.ATTACKING_BENCH,
+		AssaultPhase.ATTACKING_PLAYER,
+	]
 
 
 func mark_as_boss() -> void:
@@ -174,7 +185,6 @@ func _die() -> void:
 	_active = false
 	_clear_motion()
 	_release_breach()
-	assault_phase = AssaultPhase.IDLE
 	health_bar.visible = false
 	hitbox.collision_layer = 0
 	if has_node("HeadHitbox"):
@@ -182,6 +192,7 @@ func _die() -> void:
 	BoonCombat.apply_on_enemy_death(self, _last_damage_type)
 	if loot_drop:
 		loot_drop.spawn_drops(global_position, get_parent())
+	assault_phase = AssaultPhase.IDLE
 	GameSession.notify_enemy_defeated(self)
 	defeated.emit()
 	assault_finished.emit()
@@ -216,20 +227,7 @@ func _run_assault() -> void:
 	await _move_to_marker(assigned_breach.entry_marker, interior_speed, false)
 	if not _active or is_defeated:
 		return
-
-	var controller := _breach_controller()
-	var bench_marker: Node3D = (
-		controller.bench_marker
-		if controller
-		else assigned_breach.entry_marker
-	)
-	await _move_to_marker(bench_marker, interior_speed, false)
-	if not _active or is_defeated:
-		return
-	_attach_marker = bench_marker
-
-	assault_phase = AssaultPhase.ATTACKING_BENCH
-	_start_attack_loop()
+	await _run_interior_combat()
 
 
 func _breach_until_open() -> void:
@@ -283,11 +281,13 @@ func _attack_loop() -> void:
 		await get_tree().create_timer(wait_time).timeout
 		if not _active or is_defeated:
 			break
-		if assault_phase != AssaultPhase.ATTACKING_BENCH:
-			continue
 		var outgoing := _outgoing_damage()
-		attack_landed.emit(outgoing)
-		GameSession.damage_van(outgoing)
+		if assault_phase == AssaultPhase.ATTACKING_BENCH:
+			attack_landed.emit(outgoing)
+			GameSession.damage_van(outgoing)
+		elif assault_phase == AssaultPhase.ATTACKING_PLAYER and _in_player_melee():
+			attack_landed.emit(outgoing)
+			GameSession.damage_player(outgoing)
 	_attack_loop_running = false
 
 
@@ -356,6 +356,92 @@ func _clear_motion() -> void:
 	_move_marker = null
 	_move_use_van_relative = false
 	_move_arrived = true
+	_chase_player = false
+
+
+func _physics_chase_player(delta: float) -> void:
+	var player := get_tree().get_first_node_in_group(&"player") as Node3D
+	var parent_3d := get_parent() as Node3D
+	if player == null or parent_3d == null:
+		_move_arrived = true
+		return
+	var target_local := parent_3d.to_local(player.global_position)
+	target_local.y = position.y
+	var to_target := target_local - position
+	to_target.y = 0.0
+	var remaining := to_target.length()
+	if remaining <= _MELEE_RANGE:
+		_move_arrived = true
+		return
+	_move_arrived = false
+	var speed := GameBalance.MOB_INTERIOR_SPEED
+	var step := minf(speed * delta, remaining - _MELEE_RANGE + 0.02)
+	if remaining > 0.001:
+		position += to_target / remaining * step
+
+
+func _run_interior_combat() -> void:
+	assault_phase = AssaultPhase.ATTACKING_BENCH
+	_start_attack_loop()
+	var speed := GameBalance.MOB_INTERIOR_SPEED
+	while _active and is_inside_tree() and not is_defeated:
+		if _wants_player_target():
+			assault_phase = AssaultPhase.ATTACKING_PLAYER
+			_attach_marker = null
+			_move_marker = null
+			_chase_player = true
+			_move_arrived = false
+		else:
+			_chase_player = false
+			assault_phase = AssaultPhase.ATTACKING_BENCH
+			var bench := _bench_marker()
+			if bench:
+				var parent_3d := get_parent() as Node3D
+				var far := true
+				if parent_3d:
+					var local := parent_3d.to_local(bench.global_position)
+					far = _horizontal_xz(position, local) > 0.4
+				if far:
+					await _move_to_marker(bench, speed, false)
+					if not _active or is_defeated:
+						return
+				_attach_marker = bench
+		var elapsed := 0.0
+		while elapsed < _RETARGET_SECS:
+			await get_tree().create_timer(0.1).timeout
+			elapsed += 0.1
+			if not _active or is_defeated:
+				return
+
+
+func _wants_player_target() -> bool:
+	var player := get_tree().get_first_node_in_group(&"player") as Node3D
+	var bench := _bench_marker()
+	if player == null or bench == null:
+		return false
+	var d_player := _horizontal_xz(global_position, player.global_position)
+	var d_bench := _horizontal_xz(global_position, bench.global_position)
+	return d_player * _BENCH_BIAS < d_bench * _PLAYER_BIAS
+
+
+func _in_player_melee() -> bool:
+	var player := get_tree().get_first_node_in_group(&"player") as Node3D
+	if player == null:
+		return false
+	return _horizontal_xz(global_position, player.global_position) <= _MELEE_RANGE + 0.15
+
+
+func _horizontal_xz(a: Vector3, b: Vector3) -> float:
+	return Vector2(a.x - b.x, a.z - b.z).length()
+
+
+func _bench_marker() -> Node3D:
+	var controller := _breach_controller()
+	if controller and controller.bench_marker:
+		return controller.bench_marker
+	if assigned_breach:
+		return assigned_breach.entry_marker
+	return null
 
 
 func _next_attack_wait() -> float:

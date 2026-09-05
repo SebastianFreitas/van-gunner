@@ -69,6 +69,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `signal phase_changed(phase: RunPhase)`
 - `signal van_health_changed(current: float, maximum: float)`
+- `signal player_health_changed(current: float, maximum: float)`
 - `signal route_chosen(direction: StringName, step: int)`
 - `signal wave_changed(wave: int)`
 - `signal room_changed(room: StringName)`
@@ -78,6 +79,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal chill_mode_changed(enabled: bool)`
 - `signal area_changed(area: ItemDefinition.BoonPool)`
 - `enum RunPhase { IDLE, TRAVELLING, COMBAT, ROUTE_CHOICE, TURNING, GAME_OVER, REST, PARKING, STOP, ACT_REVEAL, BOSS_PICK, }`
+
+**`scripts/core/loot_collector.gd`**
+
+- `signal queue_changed`
 
 **`scripts/core/meta_progression.gd`**
 
@@ -159,7 +164,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 **`scripts/run/side_stop_definition.gd`**
 
-- `enum Arrival { BAY = 0, ELEVATOR = 1, }`
+- `enum Arrival { REAR_PARK = 0, ELEVATOR = 1, }`
 
 **`scripts/run/side_windows.gd`**
 
@@ -189,7 +194,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal attack_landed(amount: float)`
 - `signal defeated`
 - `signal assault_finished`
-- `enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH }`
+- `enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH, ATTACKING_PLAYER }`
 
 **`scripts/ui/act_reveal_panel.gd`**
 
@@ -240,13 +245,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-150 GDScript files, 25643 lines.
+152 GDScript files, 26304 lines.
 
 ### `scenes/corridor/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `corridor_segment.gd` | — | 168 | Open a wall gap for a side-stop bay without showing the cosmetic side street. |
+| `corridor_segment.gd` | — | 171 | Open a wall gap for a side-stop bay without showing the cosmetic side street. |
 | `corridor_t_junction.gd` | — | 64 | Fills sidewalk corners where stem / branch / optional through-road meet the |
 | `side_street_branch.gd` | — | 19 |  |
 
@@ -284,8 +289,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `game_balance.gd` | — | 287 | Runtime facade over the Inspector-editable GameBalanceData resource. |
 | `game_balance_data.gd` | `GameBalanceData` | 146 | Inspector-editable balance sheet for encounter pacing and act scaling. |
-| `game_session.gd` | — | 638 | How many face-down streets the player commits to the act boss. Array-backed |
-| `loot_collector.gd` | — | 88 | Teleports shot/swept pickups onto the van's center table. Gold is converted |
+| `game_session.gd` | — | 680 | How many face-down streets the player commits to the act boss. Array-backed |
+| `loot_collector.gd` | — | 253 | Hopper for street-kill loot. Floor drops stay walkable; REST vacuums |
 | `meta_progression.gd` | — | 131 | FUTURE — persistent street-card back marks (meta, all runs): |
 | `save_manager.gd` | — | 100 |  |
 | `scene_router.gd` | — | 68 | Sync load on the main thread. Threaded load of van.tscn fails cold with a |
@@ -294,7 +299,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `debug_commands.gd` | — | 668 | Parses and runs debug console commands. Add new commands in _register_commands(). |
+| `debug_commands.gd` | — | 694 | Parses and runs debug console commands. Add new commands in _register_commands(). |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. Default follows the build. |
 
 ### `scripts/enemies/`
@@ -310,8 +315,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `cab_door.gd` | — | 185 | Decorative cab-facing door at the front partition. |
-| `crafting_table.gd` | `CraftingTable` | 15 |  |
+| `crafting_table.gd` | `CraftingTable` | 9 |  |
 | `interactable.gd` | `Interactable` | 13 |  |
+| `loot_machine.gd` | `LootMachine` | 31 | Left-wall hopper. Street-kill loot queues here; E on the cabinet ejects one item. |
 
 ### `scripts/items/`
 
@@ -324,9 +330,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `item_pool_registry.gd` | `ItemPoolRegistry` | 154 | Loads loot pools by name. Pools are plain LootPool .tres files. |
 | `item_registry.gd` | `ItemRegistry` | 63 | Resolves item definitions by id from the standard item directories. |
 | `item_usable_config.gd` | `ItemUsableConfig` | 24 | Runtime rules for tools and abilities held in the player's hotbar. |
+| `loot_catch.gd` | `LootCatch` | 44 | One hopper / popup entry: either an ItemDefinition or a rolled weapon. |
 | `loot_pool.gd` | `LootPool` | 62 | A weighted collection of items to roll drops from. |
 | `loot_pool_entry.gd` | `LootPoolEntry` | 8 | A single weighted slot inside a LootPool. |
-| `pickup.gd` | `Pickup` | 307 | Shoot a pickup to send it to the van's center table. Walk into it (on the |
+| `pickup.gd` | `Pickup` | 297 | Walk into a floor pickup to use it. Idle pickups bob, spin, and gently |
 
 ### `scripts/items/effects/`
 
@@ -334,10 +341,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `boon_trait_effect.gd` | `BoonTraitEffect` | 25 | Registers a passive boon trait on the player's BoonTraits node. |
 | `composite_effect.gd` | `CompositeEffect` | 13 | Runs multiple child effects when a boon is collected. |
-| `full_heal_effect.gd` | `FullHealEffect` | 9 | Heals the van to full hull health. |
+| `full_heal_effect.gd` | `FullHealEffect` | 9 | Heals the player to full health. |
 | `grant_coin_effect.gd` | `GrantCoinEffect` | 10 | Grants a random amount of coins to the session. |
 | `gun_stat_modifier_effect.gd` | `GunStatModifierEffect` | 22 | Permanently changes gun stats for the rest of the run via BoonTraits. |
-| `heal_effect.gd` | `HealEffect` | 11 | Heals the van by a percentage of its maximum health. |
+| `heal_effect.gd` | `HealEffect` | 11 | Heals the player by a percentage of their maximum health. |
 | `max_health_effect.gd` | `MaxHealthEffect` | 11 | Permanently increases the van's maximum hull health for the run. |
 | `repair_window_bars_effect.gd` | `RepairWindowBarsEffect` | 14 | Instantly restores all window bars to full HP. |
 | `throw_grenade_effect.gd` | `ThrowGrenadeEffect` | 32 | Throws an explosive grenade from the player's view direction. |
@@ -351,7 +358,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `boon_behavior_context.gd` | `BoonBehaviorContext` | 30 | Shared payload passed to boon behavior handlers during combat events. |
 | `boon_behavior_handlers.gd` | — | 193 | Concrete boon behavior handlers. Each inner class maps one trait to combat logic. |
 | `boon_behavior_registry.gd` | `BoonBehaviorRegistry` | 185 | Dispatches combat events to registered boon behavior handlers. |
-| `boon_combat.gd` | `BoonCombat` | 293 | Thin dispatcher for boon combat logic. All behavior lives in BoonBehaviorRegistry handlers. |
+| `boon_combat.gd` | `BoonCombat` | 285 | Thin dispatcher for boon combat logic. All behavior lives in BoonBehaviorRegistry handlers. |
 | `boon_stat_handlers.gd` | — | 202 | Stat-based boon behavior handlers (add/mult traits, no flags required). |
 | `boon_traits.gd` | `BoonTraits` | 75 | Stores passive boon modifiers that combat systems query at runtime. |
 | `fps_player.gd` | `FpsPlayer` | 251 | Modal / menu UI owns the cursor — don't steal it back into FPS look. |
@@ -368,7 +375,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `act_card_effect_context.gd` | `ActCardEffectContext` | 39 | Shared bag for street-card effect hooks. Effects mutate fields; ActCardCombat |
 | `act_card_registry.gd` | `ActCardRegistry` | 48 | Resolves act street-card definitions by id from resources/acts/cards/. |
 | `act_deck_controller.gd` | `ActDeckController` | 176 | Owns act-start tarot reveals and the act-end boss pick. |
-| `biker_boss.gd` | `BikerBoss` | 308 | Wanjna: hit-and-run biker. Fast charge, slow axe on a door, peel and weave. |
+| `biker_boss.gd` | `BikerBoss` | 301 | Wanjna: hit-and-run biker. Fast charge, slow axe on a door, peel and weave. |
 | `boon_reward_controller.gd` | `BoonRewardController` | 141 | During REST, grants a 3-choice boon for the street card committed at the last fork. |
 | `breach_controller.gd` | `BreachController` | 255 | Assigns raid slots around the van and exposes the bench damage target. |
 | `breach_point.gd` | `BreachPoint` | 284 | Outside attack slot that must be breached (or opened) before mobs can enter. |
@@ -378,11 +385,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
 | `garage_lounge.gd` | — | 185 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
-| `loot_drop_component.gd` | `LootDropComponent` | 114 | Drop-in component that gives any enemy a chance to drop loot on death. |
-| `mechanic_workshop.gd` | — | 309 | Open auto-repair bay — workbench, hoist, tires. No shop counter. |
+| `loot_drop_component.gd` | `LootDropComponent` | 91 | Drop-in component that gives any enemy a chance to drop loot on death. |
+| `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. No shop counter. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
 | `rear_doors.gd` | — | 402 | Truck-style rear double doors. |
-| `road_floor.gd` | `RoadFloor` | 592 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter |
+| `road_floor.gd` | `RoadFloor` | 609 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter |
 | `room_zone.gd` | `RoomZone` | 14 |  |
 | `shop_counter_booth.gd` | — | 1013 | Fortified metal shop counter — armored face, cash slot, eye-level grilled window. |
 | `shop_hatch_net.gd` | — | 125 | Cargo-net screen on the shop hatch — thin diamond mesh, not solid bars. |
@@ -390,14 +397,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `shop_stock.gd` | — | 45 | Rolls 3 unique items from the shop pool and places them on the counter. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. Toggles that leaf only. |
 | `side_doors.gd` | — | 551 | Sliding cargo-style side doors. |
-| `side_stop_definition.gd` | `SideStopDefinition` | 63 | A roadside stop on a fork road. Every offered street gets one, regardless |
-| `side_stop_registry.gd` | `SideStopRegistry` | 82 | Resolves side-stop definitions by id from resources/side_stops/. |
+| `side_stop_definition.gd` | `SideStopDefinition` | 67 | A roadside stop on a fork road. Every offered street gets one, regardless |
+| `side_stop_registry.gd` | `SideStopRegistry` | 113 | Resolves side-stop definitions by id from resources/side_stops/. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. Toggles that sash only. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
-| `stop_elevator.gd` | `StopElevator` | 245 | On-road lift that drops the van to the shared stop vestibule. Content still |
-| `stop_vestibule.gd` | `StopVestibule` | 188 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
-| `travel_controller.gd` | `TravelController` | 1228 | Empty corridor tiles required between side-street openings (avoids a thin |
-| `van.gd` | — | 1002 | load() not preload() — compile-time preload of the console scene |
+| `stop_elevator.gd` | `StopElevator` | 368 | On-road lift that drops the van to the shared stop vestibule. Content |
+| `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
+| `travel_controller.gd` | `TravelController` | 1312 | Empty corridor tiles required between side-street openings (avoids a thin |
+| `van.gd` | — | 1027 | load() not preload() — compile-time preload of the console scene |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -409,11 +416,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `warehouse_director.gd` | `WarehouseDirector` | 176 | Picks one hide layout per visit. Early triggers (shoot / walk / laser) or |
 | `warehouse_dummy.gd` | `WarehouseDummy` | 108 | Standing shootable raider for warehouse hides. Not in `&"enemy"` — street |
 | `warehouse_hide.gd` | `WarehouseHide` | 149 | One ambush pocket. `trigger()` is idempotent — shooting, walking a volume, |
-| `warehouse_interior.gd` | — | 306 | Flared warehouse bay: shell, wrapped dressing, table + chest, one hide layout. |
+| `warehouse_interior.gd` | — | 243 | Flared warehouse bay: shell, wrapped dressing, table + chest, one hide layout. |
 | `warehouse_laser.gd` | `WarehouseLaser` | 72 | Waist-high trip across the aisle. Jump over to stay quiet; walking through |
-| `warehouse_look.gd` | `WarehouseLook` | 144 | Shared palette / mesh helpers for the warehouse bay and its hide layouts. |
+| `warehouse_look.gd` | `WarehouseLook` | 143 | Shared palette / mesh helpers for the warehouse bay and its hide layouts. |
 | `weapon_shop_offer.gd` | `WeaponShopOffer` | 87 | Shop counter offer that sells a generated WeaponInstance for gold. |
-| `window_raider.gd` | `WindowRaider` | 385 | Agile raiders can climb window bars; door mobs only smash doors. |
+| `window_raider.gd` | `WindowRaider` | 471 | Agile raiders can climb window bars; door mobs only smash doors. |
 
 ### `scripts/run/effects/`
 
@@ -457,7 +464,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `weapon_inventory.gd` | `WeaponInventory` | 237 | Exactly 2 weapon slots. Active gun drives GunStatsController + GunController. |
 | `weapon_mod.gd` | `WeaponMod` | 53 | One rolled gun mod. INCREASED % only — no flats (C1). |
 | `weapon_mod_catalog.gd` | `WeaponModCatalog` | 170 | Interior/exterior mod pools + roll weights. No SPECIAL grade. No flat damage. |
-| `weapon_pickup.gd` | `WeaponPickup` | 129 | World gun loot — shoot to stash, walk to collect into WeaponInventory. |
+| `weapon_pickup.gd` | `WeaponPickup` | 129 | World gun loot — walk to collect into WeaponInventory. |
 | `weapon_pricing.gd` | `WeaponPricing` | 41 | Gold prices for shop weapon offers (mega-expensive vs typical boons). |
 | `weapon_stats_builder.gd` | `WeaponStatsBuilder` | 85 | Builds seed GunStats from balance + weapon definition + weapon mods (no flats). |
 
@@ -478,10 +485,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/corridor/corridor_crossroads.tscn` | 37 | Node3D |
 | `scenes/corridor/corridor_segment.tscn` | 84 | Node3D |
 | `scenes/corridor/corridor_t_junction.tscn` | 31 | Node3D |
-| `scenes/corridor/garage_bay.tscn` | 22 | Node3D |
-| `scenes/corridor/mechanic_bay.tscn` | 25 | Node3D |
+| `scenes/corridor/garage_bay.tscn` | 14 | Node3D |
+| `scenes/corridor/mechanic_bay.tscn` | 17 | Node3D |
 | `scenes/corridor/road_floor.tscn` | 1 | Node3D |
-| `scenes/corridor/shop_bay.tscn` | 31 | Node3D |
+| `scenes/corridor/shop_bay.tscn` | 23 | Node3D |
 | `scenes/corridor/side_street_branch.tscn` | 10 | Node3D |
 | `scenes/corridor/stop_elevator.tscn` | 1 | Node3D |
 | `scenes/corridor/stop_vestibule.tscn` | 4 | Node3D |
@@ -502,7 +509,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
-| `scenes/van/van.tscn` | 294 | Node3D |
+| `scenes/van/loot_machine.tscn` | 7 | StaticBody3D |
+| `scenes/van/van.tscn` | 298 | Node3D |
 | `scenes/van/vanSave.tscn` | 93 | Node3D |
 | `scenes/van/van_bulkhead.tscn` | 1 | StaticBody3D |
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |

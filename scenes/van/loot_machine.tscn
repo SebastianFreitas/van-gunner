@@ -1,0 +1,62 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/interactions/loot_machine.gd" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="BodyMat"]
+albedo_color = Color(0.18, 0.17, 0.16, 1)
+metallic = 0.45
+roughness = 0.55
+
+[sub_resource type="BoxMesh" id="BodyMesh"]
+size = Vector3(0.72, 1.18, 0.52)
+
+[sub_resource type="BoxShape3D" id="BodyShape"]
+size = Vector3(0.72, 1.18, 0.52)
+
+[sub_resource type="StandardMaterial3D" id="ButtonMat"]
+albedo_color = Color(0.72, 0.12, 0.1, 1)
+roughness = 0.4
+emission_enabled = true
+emission = Color(0.45, 0.05, 0.04, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="CylinderMesh" id="ButtonMesh"]
+top_radius = 0.14
+bottom_radius = 0.16
+height = 0.08
+
+[sub_resource type="StandardMaterial3D" id="WindowMat"]
+albedo_color = Color(0.04, 0.05, 0.06, 1)
+roughness = 0.2
+metallic = 0.15
+
+[sub_resource type="BoxMesh" id="WindowMesh"]
+size = Vector3(0.42, 0.55, 0.04)
+
+[node name="LootMachine" type="StaticBody3D"]
+collision_layer = 3
+script = ExtResource("1")
+prompt = "Dispense loot"
+
+[node name="Body" type="MeshInstance3D" parent="."]
+material_override = SubResource("BodyMat")
+mesh = SubResource("BodyMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("BodyShape")
+
+[node name="Button" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.05, 0.28)
+material_override = SubResource("ButtonMat")
+mesh = SubResource("ButtonMesh")
+
+[node name="WindowPane" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.28, 0.26)
+material_override = SubResource("WindowMat")
+mesh = SubResource("WindowMesh")
+
+[node name="HopperWindow" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0.28)
+
+[node name="EjectPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.48, 0.55)

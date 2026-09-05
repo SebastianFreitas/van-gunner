@@ -1,7 +1,7 @@
 class_name WeaponPickup
 extends Pickup
 
-## World gun loot — shoot to stash, walk to collect into WeaponInventory.
+## World gun loot — walk to collect into WeaponInventory.
 
 var weapon_instance: WeaponInstance
 

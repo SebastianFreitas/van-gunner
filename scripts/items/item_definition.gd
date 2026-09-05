@@ -68,7 +68,7 @@ func can_collect(player: Node3D) -> bool:
 		ItemKind.MONEY:
 			return true
 		ItemKind.CONSUMABLE:
-			if is_heal_consumable() and GameSession.is_van_at_full_health():
+			if is_heal_consumable() and GameSession.is_player_at_full_health():
 				return false
 			return true
 		ItemKind.BOON:

@@ -30,33 +30,35 @@ extends Node
 ## Random horizontal offset so simultaneous drops don't perfectly overlap.
 @export var scatter_radius := 0.55
 
-const _WEAPON_PICKUP_SCENE := preload("res://scenes/items/weapon_pickup.tscn")
-
 
 func spawn_bonus_drop(world_position: Vector3, container: Node) -> void:
-	if not loot_pool or not pickup_scene or not is_instance_valid(container):
+	if not loot_pool or not is_instance_valid(container):
 		return
 	var rolled_item := loot_pool.pick_item()
 	if rolled_item:
-		_spawn_item(rolled_item, world_position, container)
+		LootCollector.deliver_item(rolled_item, world_position, container, get_parent())
 
 
 func spawn_drops(world_position: Vector3, container: Node) -> void:
 	if not is_instance_valid(container):
 		return
-	var item_spawned := false
+	var catches: Array[LootCatch] = []
 	var drop_chance := ActCardCombat.modify_item_drop_chance(item_drop_chance)
-	if loot_pool and pickup_scene and randf() <= drop_chance:
+	if loot_pool and randf() <= drop_chance:
 		var rolled_item := loot_pool.pick_item()
 		if rolled_item:
-			_spawn_item(rolled_item, world_position, container)
-			item_spawned = true
-	if coin_item and pickup_scene and randf() <= coin_drop_chance:
-		_spawn_coins(world_position, container, item_spawned)
-	_try_weapon_drop(world_position, container)
+			catches.append(LootCatch.from_item(rolled_item))
+	if coin_item and randf() <= coin_drop_chance:
+		var coin := _rolled_coin_item()
+		if coin:
+			catches.append(LootCatch.from_item(coin))
+	var weapon := _rolled_weapon()
+	if weapon:
+		catches.append(LootCatch.from_weapon(weapon))
+	LootCollector.deliver_catches(catches, world_position, container, get_parent())
 
 
-func _try_weapon_drop(world_position: Vector3, container: Node) -> void:
+func _rolled_weapon() -> WeaponInstance:
 	var chance := GameBalance.WEAPON_DROP_CHANCE_BASE
 	var elite := treat_as_elite
 	var host := get_parent()
@@ -66,31 +68,14 @@ func _try_weapon_drop(world_position: Vector3, container: Node) -> void:
 		chance += GameBalance.WEAPON_DROP_CHANCE_ELITE_BONUS
 	## Roll 1..100 as in the design doc.
 	if randi_range(1, 100) > chance:
-		return
+		return null
 	var level := maxi(GameSession.route_step, 1)
-	var inst := WeaponGenerator.create_weapon(level)
-	var pickup = _WEAPON_PICKUP_SCENE.instantiate()
-	if pickup == null:
-		return
-	if pickup.has_method("setup"):
-		pickup.call("setup", inst)
-	container.add_child(pickup)
-	pickup.global_position = world_position + _scatter_offset() + Vector3(0.0, 0.15, 0.0)
+	return WeaponGenerator.create_weapon(level)
 
 
-func _spawn_item(item: ItemDefinition, world_position: Vector3, container: Node) -> void:
-	var pickup := pickup_scene.instantiate() as Pickup
-	if not pickup:
-		return
-	pickup.item = item
-	container.add_child(pickup)
-	pickup.global_position = world_position + _scatter_offset()
-
-
-func _spawn_coins(world_position: Vector3, container: Node, offset_from_item: bool) -> void:
-	var pickup := pickup_scene.instantiate() as Pickup
-	if not pickup:
-		return
+func _rolled_coin_item() -> ItemDefinition:
+	if coin_item == null:
+		return null
 	var instanced_coin := coin_item.duplicate() as ItemDefinition
 	var new_effects: Array[ItemEffect] = []
 	for effect in instanced_coin.effects:
@@ -101,13 +86,5 @@ func _spawn_coins(world_position: Vector3, container: Node, offset_from_item: bo
 		else:
 			new_effects.append(effect)
 	instanced_coin.effects = new_effects
-	pickup.item = instanced_coin
-	container.add_child(pickup)
-	var extra := Vector3(0.45, 0.0, 0.0) if offset_from_item else Vector3.ZERO
-	pickup.global_position = world_position + _scatter_offset() + extra
+	return instanced_coin
 
-
-func _scatter_offset() -> Vector3:
-	var angle := randf() * TAU
-	var radius := randf() * scatter_radius
-	return Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)

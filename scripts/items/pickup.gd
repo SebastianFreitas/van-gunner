@@ -1,9 +1,8 @@
 class_name Pickup
 extends Area3D
 
-## Shoot a pickup to send it to the van's center table. Walk into it (on the
-## ground or on the table) to actually use it. Idle pickups bob, spin, and
-## gently push/slide away from each other — Binding of Isaac style.
+## Walk into a floor pickup to use it. Idle pickups bob, spin, and gently
+## push/slide away from each other — Binding of Isaac style.
 
 @export var item: ItemDefinition
 
@@ -13,7 +12,7 @@ extends Area3D
 @export var bob_height := 0.12
 @export var bob_speed := 2.4
 @export var spin_speed := 1.4
-## Safety net: stash on the bench after this many seconds if still on the ground.
+## Safety net: street pickups vacuum into the hopper after this many seconds.
 @export var lifetime := 45.0
 
 @export_group("Personal Space")
@@ -215,31 +214,20 @@ func _turn_toward_player(delta: float) -> void:
 
 
 func take_damage(_amount = null) -> void:
-	if _used or _stashed:
-		return
-	_stash(get_tree().get_first_node_in_group(&"player"))
+	## Shots no longer stash loot; walk over floor drops or use the hopper.
+	pass
 
 
 func force_collect() -> void:
 	if _used or _stashed:
 		return
-	_stash(get_tree().get_first_node_in_group(&"player"))
+	LootCollector.absorb_world_pickup(self)
 
 
 func _on_body_entered(body: Node3D) -> void:
 	if not body.is_in_group(&"player"):
 		return
 	_use(body)
-
-
-func _stash(player: Node3D) -> void:
-	if _stashed or _used:
-		return
-	_stashed = true
-	_collector = player
-	set_deferred("monitoring", false)
-	_set_shot_hit_active(false)
-	LootCollector.collect(self)
 
 
 func _use(player: Node3D) -> void:
@@ -260,7 +248,7 @@ func _on_collected(player: Node3D) -> void:
 		item.collect(player)
 
 
-## Called by LootCollector once this pickup has landed on the center table.
+## Called after an ejected pickup is placed; gold cashes immediately.
 func _on_stashed(land_index: int = 0) -> void:
 	_bob_initialized = false
 	_base_y = position.y
@@ -302,5 +290,7 @@ func _consume() -> void:
 
 
 func _on_lifetime_expired() -> void:
-	if not _stashed and not _used:
-		_stash(null)
+	if _stashed or _used:
+		return
+	if LootCollector.is_world_pos_outside_van(global_position):
+		force_collect()

@@ -22,15 +22,15 @@ func _build() -> void:
 	var screen := _screen_material()
 	var rust := _drum_material()
 
-	# Lounge sits at the back wall; the van now docks in the vestibule by the door.
-	_build_sofa(fabric, wood, Vector3(15.4, 0.0, -3.15))
-	_build_tv(steel, wood, screen, Vector3(15.4, 0.0, -1.05))
-	_build_drums(rust, steel, Vector3(16.4, 0.0, 3.35))
+	# Lounge sits just behind the roll-up; the van docks in the vestibule.
+	_build_sofa(fabric, wood, Vector3(5.4, 0.0, -3.15))
+	_build_tv(steel, wood, screen, Vector3(5.4, 0.0, -1.05))
+	_build_drums(rust, steel, Vector3(6.4, 0.0, 3.35))
 	_build_lamps(steel)
 
 	var bay_light := OmniLight3D.new()
 	bay_light.name = "BayGlow"
-	bay_light.position = Vector3(9.0, 5.1, 0.0)
+	bay_light.position = Vector3(4.0, 5.1, 0.0)
 	bay_light.light_color = Color(0.95, 0.88, 0.7, 1.0)
 	bay_light.light_energy = 2.4
 	bay_light.omni_range = 12.0
@@ -39,7 +39,7 @@ func _build() -> void:
 
 	var back_light := OmniLight3D.new()
 	back_light.name = "LoungeGlow"
-	back_light.position = Vector3(15.2, 3.8, -1.4)
+	back_light.position = Vector3(5.2, 3.8, -1.4)
 	back_light.light_color = Color(0.9, 0.78, 0.55, 1.0)
 	back_light.light_energy = 1.8
 	back_light.omni_range = 8.5
@@ -48,7 +48,7 @@ func _build() -> void:
 
 	var tv_light := OmniLight3D.new()
 	tv_light.name = "TvGlow"
-	tv_light.position = Vector3(15.4, 1.05, -1.15)
+	tv_light.position = Vector3(5.4, 1.05, -1.15)
 	tv_light.light_color = Color(0.35, 0.55, 0.85, 1.0)
 	tv_light.light_energy = 0.85
 	tv_light.omni_range = 5.5
@@ -102,10 +102,10 @@ func _build_lamps(steel: Material) -> void:
 	var lamp := _lamp_material()
 	for i in 2:
 		var z := lerpf(-2.2, 2.2, float(i))
-		_add_box(self, "Cage_%d" % i, Vector3(0.42, 0.12, 0.7), Vector3(9.0, 6.85, z), steel)
-		_add_box(self, "Bulb_%d" % i, Vector3(0.32, 0.08, 0.55), Vector3(9.0, 6.78, z), lamp)
-	_add_box(self, "CageBack", Vector3(0.42, 0.12, 0.7), Vector3(15.2, 6.85, -1.2), steel)
-	_add_box(self, "BulbBack", Vector3(0.32, 0.08, 0.55), Vector3(15.2, 6.78, -1.2), lamp)
+		_add_box(self, "Cage_%d" % i, Vector3(0.42, 0.12, 0.7), Vector3(4.0, 6.85, z), steel)
+		_add_box(self, "Bulb_%d" % i, Vector3(0.32, 0.08, 0.55), Vector3(4.0, 6.78, z), lamp)
+	_add_box(self, "CageBack", Vector3(0.42, 0.12, 0.7), Vector3(5.2, 6.85, -1.2), steel)
+	_add_box(self, "BulbBack", Vector3(0.32, 0.08, 0.55), Vector3(5.2, 6.78, -1.2), lamp)
 
 
 func _add_box(

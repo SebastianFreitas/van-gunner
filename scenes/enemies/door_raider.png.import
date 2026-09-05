@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bdoorraider01a"
-path="res://.godot/imported/door_raider.png-bdoorraider01a.ctex"
+uid="uid://cv0xgq73bx47e"
+path="res://.godot/imported/door_raider.png-0044dff616dbae8193793e809dee50ae.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://scenes/enemies/door_raider.png"
-dest_files=["res://.godot/imported/door_raider.png-bdoorraider01a.ctex"]
+dest_files=["res://.godot/imported/door_raider.png-0044dff616dbae8193793e809dee50ae.ctex"]
 
 [params]
 

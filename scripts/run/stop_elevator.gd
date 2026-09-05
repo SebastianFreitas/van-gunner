@@ -1,8 +1,8 @@
 class_name StopElevator
 extends Node3D
 
-## On-road lift that drops the van to the shared stop vestibule. Content still
-## instances in the shop-bay frame behind the roll-up door; only the approach
+## On-road lift that drops the van to the shared stop vestibule. Content
+## mounts behind the roll-up the same as a rear-park stop; only the approach
 ## changes. Bind a corridor tile so its carriageway can hide while the pad falls.
 
 const DEPTH := 16.0

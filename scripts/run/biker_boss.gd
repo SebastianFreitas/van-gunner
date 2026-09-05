@@ -204,15 +204,8 @@ func _enter_van() -> void:
 		await _move_to_marker(door.entry_marker, interior_speed, false)
 		if not _active or is_defeated:
 			return
-	var bench: Node3D = controller.bench_marker if controller else null
-	if bench:
-		await _move_to_marker(bench, interior_speed, false)
-		if not _active or is_defeated:
-			return
-		_attach_marker = bench
-	assault_phase = AssaultPhase.ATTACKING_BENCH
 	_bike_phase = BikePhase.BENCH
-	_start_attack_loop()
+	await _run_interior_combat()
 
 
 func _summon_loop() -> void:

@@ -23,6 +23,9 @@ const _ROUTE_INK := Color(0.08, 0.08, 0.07, 1.0)
 @onready var wave_label: Label = %WaveLabel
 @onready var health_bar: ProgressBar = %VanHealth
 @onready var health_label: Label = %HealthLabel
+@onready var player_health_bar: ProgressBar = %PlayerHealth
+@onready var player_health_label: Label = %PlayerHealthLabel
+@onready var hit_flash: ColorRect = %HitFlash
 @onready var message_label: Label = %MessageLabel
 @onready var crosshair: Label = %Crosshair
 @onready var ammo_label: Label = %AmmoLabel
@@ -55,6 +58,7 @@ var _route_highlight: StringName = &"left"
 var _left_route_btn: Button
 var _straight_route_btn: Button
 var _right_route_btn: Button
+var _last_player_hp := -1.0
 
 
 func _ready() -> void:
@@ -80,9 +84,11 @@ func _ready() -> void:
 	bench_screen.bind(player, usables, player.gun_stats, weapon, player.weapon_inventory)
 	GameSession.phase_changed.connect(_on_phase_changed)
 	GameSession.van_health_changed.connect(_on_health_changed)
+	GameSession.player_health_changed.connect(_on_player_health_changed)
 	GameSession.wave_changed.connect(_on_wave_changed)
 	GameSession.room_changed.connect(_on_room_changed)
 	_on_health_changed(GameSession.van_health, GameSession.get_max_van_health())
+	_on_player_health_changed(GameSession.player_health, GameSession.get_max_player_health())
 	_on_wave_changed(GameSession.wave_count)
 	_on_phase_changed(GameSession.phase)
 	_on_ammo_changed(weapon.get_current_ammo(), weapon.get_mag_size())
@@ -716,6 +722,25 @@ func _on_health_changed(current: float, maximum: float) -> void:
 	health_bar.max_value = maximum
 	health_bar.value = current
 	health_label.text = "VAN  %d / %d" % [roundi(current), roundi(maximum)]
+
+
+func _on_player_health_changed(current: float, maximum: float) -> void:
+	player_health_bar.max_value = maximum
+	player_health_bar.value = current
+	player_health_label.text = "YOU  %d / %d" % [roundi(current), roundi(maximum)]
+	if _last_player_hp >= 0.0 and current < _last_player_hp - 0.001:
+		_flash_player_hit()
+	_last_player_hp = current
+
+
+func _flash_player_hit() -> void:
+	if hit_flash == null:
+		return
+	hit_flash.visible = true
+	hit_flash.modulate.a = 1.0
+	var tween := create_tween()
+	tween.tween_property(hit_flash, "modulate:a", 0.0, 0.22)
+	tween.tween_callback(func() -> void: hit_flash.visible = false)
 
 
 func _on_wave_changed(wave: int) -> void:

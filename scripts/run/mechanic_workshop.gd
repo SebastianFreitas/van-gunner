@@ -25,22 +25,21 @@ func _build() -> void:
 	var lamp := _lamp_material()
 	var primer := _primer_material()
 
-	# Van rear sits ~13m into the bay. Pack this back third so reverse-in
-	# isn't an empty shed — shop reads filled because of the booth wall.
-	_build_back_cabinets(dirty_steel, steel, Vector3(17.35, 0.0, 0.0))
-	_build_workbench(wood, dirty_steel, steel, Vector3(16.55, 0.0, 0.0))
-	_build_pegboard(dirty_steel, steel, Vector3(17.55, 2.35, 0.0))
-	_build_lift_and_car(steel, dirty_steel, primer, rubber, Vector3(14.85, 0.0, 0.0))
-	_build_engine_stand(dirty_steel, rust, Vector3(16.1, 0.0, -3.15))
-	_build_hoist(steel, dirty_steel, Vector3(15.55, 0.0, 3.15))
-	_build_tires(rubber, Vector3(16.35, 0.0, -3.55))
-	_build_drums(rust, steel, oil, Vector3(16.45, 0.0, 3.55))
-	_build_jack(steel, Vector3(13.85, 0.0, -2.15))
+	# Packed just behind the roll-up — the van docks in the vestibule.
+	_build_back_cabinets(dirty_steel, steel, Vector3(7.35, 0.0, 0.0))
+	_build_workbench(wood, dirty_steel, steel, Vector3(6.55, 0.0, 0.0))
+	_build_pegboard(dirty_steel, steel, Vector3(7.55, 2.35, 0.0))
+	_build_lift_and_car(steel, dirty_steel, primer, rubber, Vector3(4.85, 0.0, 0.0))
+	_build_engine_stand(dirty_steel, rust, Vector3(6.1, 0.0, -3.15))
+	_build_hoist(steel, dirty_steel, Vector3(5.55, 0.0, 3.15))
+	_build_tires(rubber, Vector3(6.35, 0.0, -3.55))
+	_build_drums(rust, steel, oil, Vector3(6.45, 0.0, 3.55))
+	_build_jack(steel, Vector3(3.85, 0.0, -2.15))
 	_build_lamps(lamp, steel)
 
 	var work_light := OmniLight3D.new()
 	work_light.name = "WorkGlow"
-	work_light.position = Vector3(15.2, 3.6, 0.0)
+	work_light.position = Vector3(5.2, 3.6, 0.0)
 	work_light.light_color = Color(0.95, 0.82, 0.52, 1.0)
 	work_light.light_energy = 2.4
 	work_light.omni_range = 10.0
@@ -49,7 +48,7 @@ func _build() -> void:
 
 	var keeper_light := OmniLight3D.new()
 	keeper_light.name = "KeeperGlow"
-	keeper_light.position = Vector3(14.1, 2.2, 2.45)
+	keeper_light.position = Vector3(4.1, 2.2, 2.45)
 	keeper_light.light_color = Color(1.0, 0.88, 0.62, 1.0)
 	keeper_light.light_energy = 1.1
 	keeper_light.omni_range = 4.5
@@ -58,7 +57,7 @@ func _build() -> void:
 
 	var spill := OmniLight3D.new()
 	spill.name = "OilSpillGlow"
-	spill.position = Vector3(14.6, 0.8, -2.2)
+	spill.position = Vector3(4.6, 0.8, -2.2)
 	spill.light_color = Color(0.55, 0.32, 0.12, 1.0)
 	spill.light_energy = 0.45
 	spill.omni_range = 3.2
@@ -215,8 +214,8 @@ func _build_jack(steel: Material, origin: Vector3) -> void:
 func _build_lamps(lamp: Material, steel: Material) -> void:
 	for i in 2:
 		var z := lerpf(-2.1, 2.1, float(i))
-		_add_box(self, "Cage_%d" % i, Vector3(0.42, 0.12, 0.7), Vector3(15.2, 6.85, z), steel)
-		_add_box(self, "Bulb_%d" % i, Vector3(0.32, 0.08, 0.55), Vector3(15.2, 6.78, z), lamp)
+		_add_box(self, "Cage_%d" % i, Vector3(0.42, 0.12, 0.7), Vector3(5.2, 6.85, z), steel)
+		_add_box(self, "Bulb_%d" % i, Vector3(0.32, 0.08, 0.55), Vector3(5.2, 6.78, z), lamp)
 
 
 func _add_box(

@@ -117,8 +117,8 @@ static func _lines_for_effect(effect: ItemEffect) -> PackedStringArray:
 				])
 	elif effect is HealEffect:
 		var heal := effect as HealEffect
-		lines.append("Repairs %s van hull (%s%%)" % [
-			format_number(GameSession.get_max_van_health() * heal.heal_percent),
+		lines.append("Heals %s HP (%s%%)" % [
+			format_number(GameSession.get_max_player_health() * heal.heal_percent),
 			format_number(heal.heal_percent * 100.0),
 		])
 	elif effect is GrantCoinEffect:
@@ -134,7 +134,7 @@ static func _lines_for_effect(effect: ItemEffect) -> PackedStringArray:
 		var max_hp := effect as MaxHealthEffect
 		lines.append("+%s max van hull" % format_number(max_hp.bonus_health))
 	elif effect is FullHealEffect:
-		lines.append("Heal to full hull")
+		lines.append("Heal to full")
 	elif effect is RepairWindowBarsEffect:
 		lines.append("Fully repairs all window bars")
 	elif effect is BoonTraitEffect:

@@ -2,6 +2,7 @@ extends Node
 
 signal phase_changed(phase: RunPhase)
 signal van_health_changed(current: float, maximum: float)
+signal player_health_changed(current: float, maximum: float)
 signal route_chosen(direction: StringName, step: int)
 signal wave_changed(wave: int)
 signal room_changed(room: StringName)
@@ -26,6 +27,7 @@ enum RunPhase {
 }
 
 const BASE_MAX_VAN_HEALTH := 100.0
+const BASE_MAX_PLAYER_HEALTH := 50.0
 const ACT_CARD_COUNT := 6
 const ACT_BLESSING_COUNT := 3
 const ACT_DANGER_COUNT := 3
@@ -41,6 +43,8 @@ var last_direction: StringName = &"straight"
 var current_room: StringName = &"center"
 var van_max_health := BASE_MAX_VAN_HEALTH
 var van_health := BASE_MAX_VAN_HEALTH
+var player_max_health := BASE_MAX_PLAYER_HEALTH
+var player_health := BASE_MAX_PLAYER_HEALTH
 var phase := RunPhase.IDLE
 var coins := 0
 var chill_mode := false
@@ -100,6 +104,9 @@ func start_new(slot: int) -> void:
 	current_room = &"center"
 	van_max_health = BASE_MAX_VAN_HEALTH
 	van_health = BASE_MAX_VAN_HEALTH
+	player_max_health = BASE_MAX_PLAYER_HEALTH
+	player_health = BASE_MAX_PLAYER_HEALTH
+	LootCollector.clear()
 	coins = 0
 	current_area = ItemDefinition.BoonPool.GENERAL
 	pending_weapons_save = null
@@ -121,6 +128,14 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 		9999.0
 	)
 	van_health = clampf(float(data.get("van_health", van_max_health)), 0.0, van_max_health)
+	player_max_health = clampf(
+		float(data.get("player_max_health", BASE_MAX_PLAYER_HEALTH)),
+		BASE_MAX_PLAYER_HEALTH,
+		9999.0
+	)
+	player_health = clampf(
+		float(data.get("player_health", player_max_health)), 0.0, player_max_health
+	)
 	coins = maxi(0, int(data.get("coins", 0)))
 	current_area = _area_from_save(int(data.get("current_area", ItemDefinition.BoonPool.GENERAL)))
 	run_act = maxi(0, int(data.get("run_act", 0)))
@@ -152,6 +167,7 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 	]:
 		phase = RunPhase.TRAVELLING
 	van_health_changed.emit(van_health, van_max_health)
+	player_health_changed.emit(player_health, player_max_health)
 	wave_changed.emit(wave_count)
 	coins_changed.emit(coins)
 	phase_changed.emit(phase)
@@ -220,6 +236,30 @@ func heal_van(amount: float) -> void:
 		return
 	van_health = minf(van_max_health, van_health + amount)
 	van_health_changed.emit(van_health, van_max_health)
+
+
+func get_max_player_health() -> float:
+	return player_max_health
+
+
+func is_player_at_full_health() -> bool:
+	return player_health >= player_max_health - 0.001
+
+
+func damage_player(amount: float) -> void:
+	if amount <= 0.0 or phase == RunPhase.GAME_OVER:
+		return
+	player_health = maxf(0.0, player_health - amount)
+	player_health_changed.emit(player_health, player_max_health)
+	if is_zero_approx(player_health):
+		set_phase(RunPhase.GAME_OVER)
+
+
+func heal_player(amount: float) -> void:
+	if amount <= 0.0 or phase == RunPhase.GAME_OVER:
+		return
+	player_health = minf(player_max_health, player_health + amount)
+	player_health_changed.emit(player_health, player_max_health)
 
 
 func add_coins(amount: int) -> void:
@@ -619,6 +659,8 @@ func to_save_data() -> Dictionary:
 		"last_direction": String(last_direction),
 		"van_health": van_health,
 		"van_max_health": van_max_health,
+		"player_health": player_health,
+		"player_max_health": player_max_health,
 		"coins": coins,
 		"phase": phase,
 		"current_area": int(current_area),

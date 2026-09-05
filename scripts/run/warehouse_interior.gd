@@ -1,6 +1,7 @@
 extends Node3D
 
 ## Flared warehouse bay: shell, wrapped dressing, table + chest, one hide layout.
+## Origin is just inside the roll-up; the vestibule owns the mouth.
 
 
 func _ready() -> void:
@@ -37,43 +38,15 @@ func _build_shell() -> void:
 	bay.name = "Bay"
 	add_child(bay)
 
-	# Mouth (vestibule overlap) stays door-width; room flares after the roll-up.
-	_shell_box(
-		bay,
-		surfaces,
-		"MouthFloor",
-		Vector3(WarehouseLook.MOUTH_LEN, 0.2, WarehouseLook.MOUTH_WIDTH),
-		Vector3(WarehouseLook.MOUTH_LEN * 0.5, WarehouseLook.FLOOR_Y, 0.0),
-		floor_mat
-	)
+	# Vestibule owns the mouth. Room flares from the roll-up.
+	var room_mid_x := WarehouseLook.ROOM_START_X + WarehouseLook.ROOM_DEPTH * 0.5
 	_shell_box(
 		bay,
 		surfaces,
 		"RoomFloor",
 		Vector3(WarehouseLook.ROOM_DEPTH, 0.2, WarehouseLook.ROOM_WIDTH),
-		Vector3(
-			WarehouseLook.ROOM_START_X + WarehouseLook.ROOM_DEPTH * 0.5,
-			WarehouseLook.FLOOR_Y,
-			0.0
-		),
+		Vector3(room_mid_x, WarehouseLook.FLOOR_Y, 0.0),
 		floor_mat
-	)
-
-	_shell_box(
-		bay,
-		surfaces,
-		"MouthWallNegZ",
-		Vector3(WarehouseLook.MOUTH_LEN, WarehouseLook.HEIGHT, 0.4),
-		Vector3(WarehouseLook.MOUTH_LEN * 0.5, 3.7, -WarehouseLook.HALF_MOUTH),
-		wall_mat
-	)
-	_shell_box(
-		bay,
-		surfaces,
-		"MouthWallPosZ",
-		Vector3(WarehouseLook.MOUTH_LEN, WarehouseLook.HEIGHT, 0.4),
-		Vector3(WarehouseLook.MOUTH_LEN * 0.5, 3.7, WarehouseLook.HALF_MOUTH),
-		wall_mat
 	)
 
 	var shoulder_z := (WarehouseLook.HALF_MOUTH + WarehouseLook.HALF_ROOM) * 0.5
@@ -95,7 +68,6 @@ func _build_shell() -> void:
 		wall_mat
 	)
 
-	var room_mid_x := WarehouseLook.ROOM_START_X + WarehouseLook.ROOM_DEPTH * 0.5
 	_shell_box(
 		bay,
 		surfaces,
@@ -124,48 +96,14 @@ func _build_shell() -> void:
 	_shell_box(
 		bay,
 		surfaces,
-		"MouthFrameNegZ",
-		Vector3(1.2, WarehouseLook.HEIGHT, 2.4),
-		Vector3(0.2, 3.7, -5.5),
-		wall_mat
-	)
-	_shell_box(
-		bay,
-		surfaces,
-		"MouthFramePosZ",
-		Vector3(1.2, WarehouseLook.HEIGHT, 2.4),
-		Vector3(0.2, 3.7, 5.5),
-		wall_mat
-	)
-	_shell_box(
-		bay,
-		surfaces,
-		"Lintel",
-		Vector3(1.2, 1.2, WarehouseLook.MOUTH_WIDTH),
-		Vector3(0.2, 5.4, 0.0),
-		rib
-	)
-
-	_shell_box(
-		bay,
-		surfaces,
-		"MouthCeiling",
-		Vector3(WarehouseLook.MOUTH_LEN, 0.35, WarehouseLook.MOUTH_WIDTH),
-		Vector3(WarehouseLook.MOUTH_LEN * 0.5, WarehouseLook.CEILING_Y, 0.0),
-		rib
-	)
-	_shell_box(
-		bay,
-		surfaces,
 		"RoomCeiling",
 		Vector3(WarehouseLook.ROOM_DEPTH, 0.35, WarehouseLook.ROOM_WIDTH),
 		Vector3(room_mid_x, WarehouseLook.CEILING_Y, 0.0),
 		rib
 	)
 
-	WarehouseLook.add_box(bay, "MouthLamp", Vector3(1.3, 0.42, 0.12), Vector3(3.0, 7.2, 0.0), lamp)
-	WarehouseLook.add_box(bay, "RoomLampA", Vector3(1.6, 0.42, 0.12), Vector3(12.0, 7.2, 0.0), lamp)
-	WarehouseLook.add_box(bay, "RoomLampB", Vector3(1.6, 0.42, 0.12), Vector3(20.0, 7.2, 0.0), lamp)
+	WarehouseLook.add_box(bay, "RoomLampA", Vector3(1.6, 0.42, 0.12), Vector3(6.0, 7.2, 0.0), lamp)
+	WarehouseLook.add_box(bay, "RoomLampB", Vector3(1.6, 0.42, 0.12), Vector3(14.0, 7.2, 0.0), lamp)
 
 
 func _shell_box(
@@ -189,22 +127,22 @@ func _build_dressing() -> void:
 	var rope := WarehouseLook.rope_material()
 
 	# Packed walls, empty aisle. Layouts add their own special hides on top.
-	_wrapped_stack(tarp, rope, Vector3(8.4, 0.0, -4.85), Vector3(1.7, 1.25, 1.4), 2)
-	_wrapped_stack(canvas, rope, Vector3(11.6, 0.0, -4.95), Vector3(1.4, 1.55, 1.2), 1)
-	_wrapped_stack(tarp_dark, rope, Vector3(15.2, 0.0, -4.8), Vector3(1.9, 1.1, 1.5), 2)
-	_wrapped_stack(tarp, rope, Vector3(19.4, 0.0, -4.9), Vector3(1.5, 1.7, 1.3), 1)
-	_wrapped_stack(canvas, rope, Vector3(23.1, 0.0, -4.7), Vector3(1.6, 1.35, 1.45), 2)
+	_wrapped_stack(tarp, rope, Vector3(2.4, 0.0, -4.85), Vector3(1.7, 1.25, 1.4), 2)
+	_wrapped_stack(canvas, rope, Vector3(5.6, 0.0, -4.95), Vector3(1.4, 1.55, 1.2), 1)
+	_wrapped_stack(tarp_dark, rope, Vector3(9.2, 0.0, -4.8), Vector3(1.9, 1.1, 1.5), 2)
+	_wrapped_stack(tarp, rope, Vector3(13.4, 0.0, -4.9), Vector3(1.5, 1.7, 1.3), 1)
+	_wrapped_stack(canvas, rope, Vector3(17.1, 0.0, -4.7), Vector3(1.6, 1.35, 1.45), 2)
 
-	_wrapped_stack(tarp_dark, rope, Vector3(8.6, 0.0, 4.85), Vector3(1.55, 1.4, 1.35), 1)
-	_wrapped_stack(tarp, rope, Vector3(12.2, 0.0, 4.9), Vector3(1.8, 1.15, 1.5), 2)
-	_wrapped_stack(canvas, rope, Vector3(16.4, 0.0, 4.8), Vector3(1.45, 1.65, 1.25), 1)
-	_wrapped_stack(tarp, rope, Vector3(20.5, 0.0, 4.95), Vector3(1.7, 1.3, 1.4), 2)
-	_wrapped_stack(tarp_dark, rope, Vector3(23.4, 0.0, 4.75), Vector3(1.5, 1.5, 1.35), 1)
+	_wrapped_stack(tarp_dark, rope, Vector3(2.6, 0.0, 4.85), Vector3(1.55, 1.4, 1.35), 1)
+	_wrapped_stack(tarp, rope, Vector3(6.2, 0.0, 4.9), Vector3(1.8, 1.15, 1.5), 2)
+	_wrapped_stack(canvas, rope, Vector3(10.4, 0.0, 4.8), Vector3(1.45, 1.65, 1.25), 1)
+	_wrapped_stack(tarp, rope, Vector3(14.5, 0.0, 4.95), Vector3(1.7, 1.3, 1.4), 2)
+	_wrapped_stack(tarp_dark, rope, Vector3(17.4, 0.0, 4.75), Vector3(1.5, 1.5, 1.35), 1)
 
-	_sofa_lump(tarp, wood, Vector3(24.4, 0.0, -2.15))
-	_crate_cluster(crate, tarp, rope, Vector3(24.5, 0.0, 2.2))
-	_tall_wardrobe(canvas, rope, Vector3(9.2, 0.0, 3.35))
-	_tall_wardrobe(tarp_dark, rope, Vector3(9.0, 0.0, -3.4))
+	_sofa_lump(tarp, wood, Vector3(18.4, 0.0, -2.15))
+	_crate_cluster(crate, tarp, rope, Vector3(18.5, 0.0, 2.2))
+	_tall_wardrobe(canvas, rope, Vector3(3.2, 0.0, 3.35))
+	_tall_wardrobe(tarp_dark, rope, Vector3(3.0, 0.0, -3.4))
 
 
 func _wrapped_stack(
@@ -288,10 +226,9 @@ func _build_table() -> void:
 
 
 func _build_lights() -> void:
-	_omni("MouthGlow", Vector3(3.2, 4.8, 0.0), Color(1.0, 0.86, 0.62, 1.0), 1.5, 8.0)
-	_omni("AisleGlow", Vector3(16.0, 5.2, 0.0), Color(0.95, 0.82, 0.58, 1.0), 2.6, 14.0)
-	_omni("BackGlow", Vector3(23.5, 4.4, 0.0), Color(0.85, 0.72, 0.48, 1.0), 1.6, 9.0)
-	_omni("ChestGlow", Vector3(16.0, 2.2, 0.0), Color(0.95, 0.78, 0.42, 1.0), 0.85, 4.5)
+	_omni("AisleGlow", Vector3(10.0, 5.2, 0.0), Color(0.95, 0.82, 0.58, 1.0), 2.6, 14.0)
+	_omni("BackGlow", Vector3(17.5, 4.4, 0.0), Color(0.85, 0.72, 0.48, 1.0), 1.6, 9.0)
+	_omni("ChestGlow", Vector3(10.0, 2.2, 0.0), Color(0.95, 0.78, 0.42, 1.0), 0.85, 4.5)
 
 
 func _omni(light_name: String, pos: Vector3, color: Color, energy: float, omni_range: float) -> void:

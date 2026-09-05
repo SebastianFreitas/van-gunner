@@ -120,7 +120,7 @@ class VampiricPoisonDeathStatBehavior extends BoonBehavior:
 			return
 		var heal_chance := ctx.traits.get_add(BoonTraitKeys.VAMPIRIC_POISON_CHANCE)
 		if heal_chance > 0.0 and randf() <= heal_chance:
-			BoonCombat.spawn_heal_pickup(ctx.explosion_center, ctx.loot_container)
+			BoonCombat.spawn_heal_pickup(ctx.explosion_center, ctx.loot_container, ctx.enemy)
 
 
 class FrozenLootDeathStatBehavior extends BoonBehavior:

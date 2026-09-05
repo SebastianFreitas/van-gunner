@@ -3,18 +3,17 @@ extends RefCounted
 
 ## Shared palette / mesh helpers for the warehouse bay and its hide layouts.
 
-const MOUTH_LEN := 6.0
 const MOUTH_WIDTH := 8.6
-const ROOM_START_X := 6.0
-const BACK_X := 26.0
+const ROOM_START_X := 0.0
+const BACK_X := 20.0
 const ROOM_DEPTH := 20.0
 const ROOM_WIDTH := 12.0
-const HALF_MOUTH := 4.3
+const HALF_MOUTH := MOUTH_WIDTH * 0.5
 const HALF_ROOM := 6.0
 const HEIGHT := 8.0
 const FLOOR_Y := -0.3
 const CEILING_Y := 7.8
-const TABLE := Vector3(16.0, 0.0, 0.0)
+const TABLE := Vector3(10.0, 0.0, 0.0)
 const INDUSTRIAL_SHADER := preload("res://scenes/corridor/industrial_surface.gdshader")
 
 

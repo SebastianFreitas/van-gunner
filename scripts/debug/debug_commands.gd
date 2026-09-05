@@ -47,7 +47,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 			"card":
 				matches = _filter_prefix(_card_id_strings(), "")
 			"stop":
-				matches = _filter_prefix(_stop_id_strings(), "")
+				matches = _filter_prefix(_stop_force_tokens(), "")
 			"give_weapon":
 				matches = _filter_prefix(WeaponCatalog.list_definition_ids(), "")
 			_:
@@ -61,7 +61,10 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 	elif parts[0] == "card":
 		matches = _filter_prefix(_card_id_strings(), partial)
 	elif parts[0] == "stop":
-		matches = _filter_prefix(_stop_id_strings(), partial)
+		if parts.size() >= 2 and SideStopRegistry.arrival_from_label(str(parts[1])) >= 0:
+			matches = _filter_prefix(_stop_id_strings(), partial)
+		else:
+			matches = _filter_prefix(_stop_force_tokens(), partial)
 	elif parts[0] == "summon":
 		matches = _filter_prefix(["enemy"], partial)
 	elif parts[0] == "reardoor":
@@ -141,13 +144,14 @@ func _cmd_help(_args: Array) -> String:
 		+ "  give <item_id> add item to player (e.g. give frag_grenade)\n"
 		+ "  spawn <item_id> drop a pickup near the player\n"
 		+ "  coins <n>      add coins\n"
-		+ "  heal [amount]  heal the van\n"
+		+ "  heal [amount]  heal the player\n"
 		+ "  boonpool <pool> roll a boon from general/fire/poison/cold/physical\n"
 		+ "  list boons [q]  browse boon ids (optional filter)\n"
 		+ "  list items [q]  browse all item ids\n"
 		+ "  list cards [q]  browse street card ids\n"
 		+ "  list stops [q]  browse side-stop ids (shop, garage, mechanic, warehouse, …)\n"
-		+ "  stop <id>       next fork offers that stop on every road (bay or elevator)\n"
+		+ "  stop <id>       next fork offers that stop on every road\n"
+		+ "  stop <arrival> <content>  compose e.g. stop elevator shop\n"
 		+ "  card [id]       print / force-activate active street card(s)\n"
 		+ "  boss            skip to act-end boss pick (current six streets)\n"
 		+ "  phase          print current run phase\n"
@@ -248,9 +252,9 @@ func _cmd_coins(args: Array) -> String:
 
 
 func _cmd_heal(args: Array) -> String:
-	var amount: float = float(args[0]) if not args.is_empty() else GameSession.get_max_van_health()
-	GameSession.heal_van(amount)
-	return "Van healed by %.0f." % amount
+	var amount: float = float(args[0]) if not args.is_empty() else GameSession.get_max_player_health()
+	GameSession.heal_player(amount)
+	return "Player healed by %.0f." % amount
 
 
 func _cmd_boonpool(args: Array) -> String:
@@ -399,16 +403,32 @@ func _cmd_card(args: Array) -> String:
 
 func _cmd_stop(args: Array) -> String:
 	if args.is_empty():
-		return "Usage: stop <id>  (see list stops)"
-	var stop_id := StringName(str(args[0]))
-	var stop := SideStopRegistry.load_by_id(stop_id)
-	if stop == null or stop.scene == null:
-		return "Unknown stop: %s" % stop_id
+		return "Usage: stop <id> | stop <arrival> <content>  (see list stops)"
+	var stop: SideStopDefinition
+	if args.size() >= 2:
+		var arrival := SideStopRegistry.arrival_from_label(str(args[0]))
+		if arrival < 0:
+			return "Unknown arrival '%s' — use rear_park or elevator." % str(args[0])
+		var content_id := StringName(str(args[1]))
+		stop = SideStopRegistry.compose(content_id, arrival as SideStopDefinition.Arrival)
+		if stop == null:
+			return "Unknown content stop: %s" % content_id
+	else:
+		var stop_id := StringName(str(args[0]))
+		stop = SideStopRegistry.load_by_id(stop_id)
+		if stop == null or stop.scene == null:
+			return "Unknown stop: %s" % stop_id
 	var travel := _find_travel_controller()
-	if travel == null or not travel.has_method(&"force_next_stop"):
+	if travel == null:
 		return "TravelController not found — are you in the van scene?"
-	if not travel.force_next_stop(stop_id):
-		return "Could not queue stop: %s" % stop_id
+	if travel.has_method(&"force_stop_def"):
+		if not travel.force_stop_def(stop):
+			return "Could not queue stop: %s" % String(stop.id)
+	elif travel.has_method(&"force_next_stop"):
+		if not travel.force_next_stop(stop.id):
+			return "Could not queue stop: %s" % String(stop.id)
+	else:
+		return "TravelController not found — are you in the van scene?"
 	return "Next fork: %s [%s] on every road." % [stop.fork_label(), stop.arrival_label()]
 
 
@@ -479,6 +499,12 @@ func _stop_id_strings() -> Array[String]:
 	var out: Array[String] = []
 	for stop_id in SideStopRegistry.list_ids():
 		out.append(String(stop_id))
+	return out
+
+
+func _stop_force_tokens() -> Array[String]:
+	var out: Array[String] = ["rear_park", "elevator"]
+	out.append_array(_stop_id_strings())
 	return out
 
 

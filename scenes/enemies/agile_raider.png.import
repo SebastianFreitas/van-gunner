@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cagileraider01"
-path="res://.godot/imported/agile_raider.png-cagileraider01.ctex"
+uid="uid://cqksdsm7qxv41"
+path="res://.godot/imported/agile_raider.png-c404b0b571323f1c5fa07f48cbf428b9.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://scenes/enemies/agile_raider.png"
-dest_files=["res://.godot/imported/agile_raider.png-cagileraider01.ctex"]
+dest_files=["res://.godot/imported/agile_raider.png-c404b0b571323f1c5fa07f48cbf428b9.ctex"]
 
 [params]
 

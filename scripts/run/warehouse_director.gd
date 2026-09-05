@@ -45,10 +45,10 @@ func trigger_all() -> void:
 
 func _build_ceiling_hatches() -> void:
 	var spots: Array[Vector3] = [
-		Vector3(11.5, 7.55, -1.4),
-		Vector3(18.2, 7.55, 1.5),
-		Vector3(21.4, 7.55, -0.6),
-		Vector3(13.8, 7.55, 1.8),
+		Vector3(5.5, 7.55, -1.4),
+		Vector3(12.2, 7.55, 1.5),
+		Vector3(15.4, 7.55, -0.6),
+		Vector3(7.8, 7.55, 1.8),
 	]
 	var tarp := WarehouseLook.tarp_dark_material()
 	for i in spots.size():
@@ -66,7 +66,7 @@ func _build_far_crates() -> void:
 	var zs: Array[float] = [-3.2, 0.0, 3.2]
 	for i in zs.size():
 		var hide := _make_hide("FarCrate_%d" % i)
-		hide.position = Vector3(24.55, 0.0, zs[i])
+		hide.position = Vector3(18.55, 0.0, zs[i])
 		hide.reveal = WarehouseHide.Reveal.BURST
 		hide.dummy_count = 1
 		hide.dummy_offsets = _offsets([Vector3(-0.9, 0.0, 0.0)])
@@ -76,7 +76,7 @@ func _build_far_crates() -> void:
 
 func _build_big_crate() -> void:
 	var hide := _make_hide("BigCrate")
-	hide.position = Vector3(12.2, 0.0, 0.0)
+	hide.position = Vector3(6.2, 0.0, 0.0)
 	hide.reveal = WarehouseHide.Reveal.BURST
 	hide.dummy_count = 4
 	hide.dummy_offsets = _offsets([
@@ -93,7 +93,7 @@ func _build_big_crate() -> void:
 func _build_laser() -> void:
 	_laser = WarehouseLaser.new()
 	_laser.name = "LaserTrap"
-	_laser.position = Vector3(13.2, 0.0, 0.0)
+	_laser.position = Vector3(7.2, 0.0, 0.0)
 	add_child(_laser)
 	_laser.setup(4.4)
 	_laser.sprung.connect(_on_laser_sprung)
@@ -102,7 +102,7 @@ func _build_laser() -> void:
 
 func _add_laser_pockets() -> void:
 	var tarp := WarehouseLook.tarp_material()
-	var spots: Array[Vector3] = [Vector3(14.4, 0.0, -3.35), Vector3(14.4, 0.0, 3.35)]
+	var spots: Array[Vector3] = [Vector3(8.4, 0.0, -3.35), Vector3(8.4, 0.0, 3.35)]
 	for i in spots.size():
 		var hide := _make_hide("LaserPocket_%d" % i)
 		hide.position = spots[i]
@@ -121,10 +121,10 @@ func _on_laser_sprung() -> void:
 func _build_wall_ninjas() -> void:
 	var tarp := WarehouseLook.tarp_dark_material()
 	var spots: Array[Dictionary] = [
-		{"pos": Vector3(11.2, 0.0, -5.72), "yaw": 0.0},
-		{"pos": Vector3(18.6, 0.0, -5.72), "yaw": 0.0},
-		{"pos": Vector3(11.2, 0.0, 5.72), "yaw": PI},
-		{"pos": Vector3(18.6, 0.0, 5.72), "yaw": PI},
+		{"pos": Vector3(5.2, 0.0, -5.72), "yaw": 0.0},
+		{"pos": Vector3(12.6, 0.0, -5.72), "yaw": 0.0},
+		{"pos": Vector3(5.2, 0.0, 5.72), "yaw": PI},
+		{"pos": Vector3(12.6, 0.0, 5.72), "yaw": PI},
 	]
 	for i in spots.size():
 		var spec: Dictionary = spots[i]
@@ -141,9 +141,9 @@ func _build_wrapped_piles() -> void:
 	var tarp := WarehouseLook.tarp_material()
 	var canvas := WarehouseLook.canvas_material()
 	var specs: Array[Dictionary] = [
-		{"pos": Vector3(10.2, 0.0, -3.7), "size": Vector3(1.6, 1.35, 1.7), "mat": tarp},
-		{"pos": Vector3(15.1, 0.0, 3.85), "size": Vector3(1.85, 1.55, 1.5), "mat": canvas},
-		{"pos": Vector3(20.4, 0.0, -3.55), "size": Vector3(1.5, 1.2, 1.6), "mat": tarp},
+		{"pos": Vector3(4.2, 0.0, -3.7), "size": Vector3(1.6, 1.35, 1.7), "mat": tarp},
+		{"pos": Vector3(9.1, 0.0, 3.85), "size": Vector3(1.85, 1.55, 1.5), "mat": canvas},
+		{"pos": Vector3(14.4, 0.0, -3.55), "size": Vector3(1.5, 1.2, 1.6), "mat": tarp},
 	]
 	for i in specs.size():
 		var spec: Dictionary = specs[i]

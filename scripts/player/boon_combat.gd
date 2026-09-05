@@ -4,7 +4,6 @@ extends RefCounted
 ## Thin dispatcher for boon combat logic. All behavior lives in BoonBehaviorRegistry handlers.
 
 const _HEAL_POTION := preload("res://resources/items/heal_potion.tres")
-const _PICKUP_SCENE := preload("res://scenes/items/pickup.tscn")
 const RICOCHET_COLD_COUNT := 2
 
 
@@ -256,15 +255,8 @@ static func spawn_cold_projectiles_from_direction(
 		spawn_projectile(tree, origin + Vector3(0.0, 1.0, 0.0), direction, stats, shooter)
 
 
-static func spawn_heal_pickup(world_position: Vector3, container: Node) -> void:
-	if not is_instance_valid(container):
-		return
-	var pickup := _PICKUP_SCENE.instantiate() as Pickup
-	if not pickup:
-		return
-	pickup.item = _HEAL_POTION
-	container.add_child(pickup)
-	pickup.global_position = world_position + Vector3(randf_range(-0.4, 0.4), 0.0, randf_range(-0.4, 0.4))
+static func spawn_heal_pickup(world_position: Vector3, container: Node, enemy: Node = null) -> void:
+	LootCollector.deliver_item(_HEAL_POTION, world_position, container, enemy)
 
 
 static func find_poison_follow_target(tree: SceneTree, from: Vector3, max_range: float) -> Node3D:
