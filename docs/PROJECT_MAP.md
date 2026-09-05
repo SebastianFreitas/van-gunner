@@ -125,6 +125,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal reveal_resolved`
 - `signal boss_pick_resolved`
 
+**`scripts/run/biker_boss.gd`**
+
+- `enum BikePhase { IDLE, CHARGE, WINDUP, PEEL, WEAVE, ENTERING, BENCH }`
+
 **`scripts/run/boon_reward_controller.gd`**
 
 - `signal rest_resolved`
@@ -223,7 +227,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-140 GDScript files, 23339 lines.
+141 GDScript files, 23775 lines.
 
 ### `scenes/corridor/`
 
@@ -237,7 +241,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `audio_director.gd` | — | 377 | Central sound playback. Gameplay code says *what happened* (`&"gun_fire"`), |
+| `audio_director.gd` | — | 379 | Central sound playback. Gameplay code says *what happened* (`&"gun_fire"`), |
 | `sound_bank.gd` | `SoundBank` | 42 | Flat list of SoundCues, indexed by id once at load. |
 | `sound_cue.gd` | `SoundCue` | 41 | One addressable sound. Adding audio should mean adding a .tres, never a |
 
@@ -269,7 +273,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `game_balance_data.gd` | `GameBalanceData` | 146 | Inspector-editable balance sheet for encounter pacing and act scaling. |
 | `game_session.gd` | — | 638 | How many face-down streets the player commits to the act boss. Array-backed |
 | `loot_collector.gd` | — | 88 | Teleports shot/swept pickups onto the van's center table. Gold is converted |
-| `meta_progression.gd` | — | 123 | FUTURE — persistent street-card back marks (meta, all runs): |
+| `meta_progression.gd` | — | 131 | FUTURE — persistent street-card back marks (meta, all runs): |
 | `save_manager.gd` | — | 100 |  |
 | `scene_router.gd` | — | 68 | Sync load on the main thread. Threaded load of van.tscn fails cold with a |
 
@@ -277,7 +281,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `debug_commands.gd` | — | 636 | Parses and runs debug console commands. Add new commands in _register_commands(). |
+| `debug_commands.gd` | — | 637 | Parses and runs debug console commands. Add new commands in _register_commands(). |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. Default follows the build. |
 
 ### `scripts/enemies/`
@@ -351,12 +355,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `act_card_effect_context.gd` | `ActCardEffectContext` | 39 | Shared bag for street-card effect hooks. Effects mutate fields; ActCardCombat |
 | `act_card_registry.gd` | `ActCardRegistry` | 48 | Resolves act street-card definitions by id from resources/acts/cards/. |
 | `act_deck_controller.gd` | `ActDeckController` | 176 | Owns act-start tarot reveals and the act-end boss pick. |
+| `biker_boss.gd` | `BikerBoss` | 308 | Wanjna: hit-and-run biker. Fast charge, slow axe on a door, peel and weave. |
 | `boon_reward_controller.gd` | `BoonRewardController` | 120 | During REST, grants a 3-choice boon for the street card committed at the last fork. |
-| `breach_controller.gd` | `BreachController` | 183 | Assigns raid slots around the van and exposes the bench damage target. |
+| `breach_controller.gd` | `BreachController` | 255 | Assigns raid slots around the van and exposes the bench damage target. |
 | `breach_point.gd` | `BreachPoint` | 284 | Outside attack slot that must be breached (or opened) before mobs can enter. |
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). Surrounding metal stays. |
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. Same local frame as IronCross: |
-| `encounter_director.gd` | `EncounterDirector` | 383 | Soft cap: after this, surviving raiders of the current wave retreat. |
+| `encounter_director.gd` | `EncounterDirector` | 418 | Soft cap: after this, surviving raiders of the current wave retreat. |
 | `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
 | `garage_lounge.gd` | — | 146 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
@@ -377,7 +382,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. Toggles that sash only. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
 | `travel_controller.gd` | `TravelController` | 1050 | Empty corridor tiles required between side-street openings (avoids a thin |
-| `van.gd` | — | 998 | load() not preload() — compile-time preload of the console scene |
+| `van.gd` | — | 1002 | load() not preload() — compile-time preload of the console scene |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -411,10 +416,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `combat_feedback.gd` | — | 40 |  |
 | `damage_number.gd` | `DamageNumber` | 54 |  |
 | `debug_console.gd` | `DebugConsole` | 220 | In-game debug terminal. H to open, Esc to close. |
-| `driver_shout_hud.gd` | `DriverShoutHud` | 109 | Always-on GO / EASY shouts. Voice barks come later — buttons are the placeholder. |
+| `driver_shout_hud.gd` | `DriverShoutHud` | 109 | Always-on GO / EASY shouts. van.gd plays shout_start / shout_turbo / shout_slow / shout_resume. |
 | `enemy_health_bar.gd` | `EnemyHealthBar` | 59 |  |
 | `item_hud.gd` | — | 86 | Hotbar for tools and a row of collected boon icons. |
-| `main_menu.gd` | — | 121 | Rejected files (old version, corrupt JSON) used to look like NEW RUN |
+| `main_menu.gd` | — | 127 | Rejected files (old version, corrupt JSON) used to look like NEW RUN |
 | `usable_slot.gd` | — | 42 |  |
 | `weapon_replace_prompt.gd` | `WeaponReplacePrompt` | 144 | Full inventory: pick a slot to replace, or Esc to cancel (gun stays in world). |
 | `weapon_slots_hud.gd` | `WeaponSlotsHud` | 59 | Two weapon slots near ammo — highlight active, dashed empty. |
@@ -456,6 +461,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/corridor/road_floor.tscn` | 1 | Node3D |
 | `scenes/corridor/shop_bay.tscn` | 31 | Node3D |
 | `scenes/corridor/side_street_branch.tscn` | 10 | Node3D |
+| `scenes/enemies/biker_boss.tscn` | 2 |  |
 | `scenes/enemies/window_raider.tscn` | 9 | Node3D |
 | `scenes/items/pickup.tscn` | 3 | Area3D |
 | `scenes/items/weapon_pickup.tscn` | 3 | Area3D |
@@ -467,7 +473,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/debug_console.tscn` | 8 | Control |
 | `scenes/ui/driver_shout_hud.tscn` | 9 | Control |
 | `scenes/ui/item_hud.tscn` | 7 | Control |
-| `scenes/ui/main_menu.tscn` | 23 | Control |
+| `scenes/ui/main_menu.tscn` | 25 | Control |
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
@@ -582,6 +588,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | id | name | agile |
 |---|---|---|
 | agile_raider | Window Raider | true |
+| biker_boss | Wanjna | false |
 | door_raider | Door Raider | false |
 
 ## Boons
@@ -671,6 +678,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | stinger_rest | SFX | false | 0.0 | 4 |
 | stinger_reveal | SFX | false | 0.0 | 4 |
 | stinger_game_over | SFX | false | 0.0 | 4 |
+| shout_start | SFX | false | 0.2 | 1 |
+| shout_slow | SFX | false | 0.2 | 1 |
+| shout_resume | SFX | false | 0.2 | 1 |
+| shout_turbo | SFX | false | 0.2 | 1 |
 
 ## Boon trait keys
 

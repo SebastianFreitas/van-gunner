@@ -36,6 +36,45 @@ func get_rear_outside_reference_z() -> float:
 	return sum / float(count)
 
 
+## True when every door and window can be climbed through.
+func all_breaches_passable() -> bool:
+	for point in _all_points():
+		if not point.is_passable():
+			return false
+	return true
+
+
+## Rear + side cargo leaves only. Windows can still be barred.
+func all_doors_passable() -> bool:
+	for point in _all_points():
+		if _is_door_kind(point.kind) and not point.is_passable():
+			return false
+	return true
+
+
+## Closed rear doors first (left-to-right), then side cargo doors. Wraps inside
+## the current tier so the biker boss alternates leaves instead of camping one.
+func next_closed_door(after: BreachPoint) -> BreachPoint:
+	var rear := _closed_doors_of(BreachPoint.Kind.REAR_DOOR)
+	if not rear.is_empty():
+		return _next_after(rear, after)
+	var side := _closed_doors_of(BreachPoint.Kind.SIDE_DOOR)
+	if not side.is_empty():
+		return _next_after(side, after)
+	return null
+
+
+## Prefer an open door leaf; fall back to any passable window.
+func first_passable_door() -> BreachPoint:
+	for point in _all_points():
+		if _is_door_kind(point.kind) and point.is_passable():
+			return point
+	for point in _all_points():
+		if point.is_passable():
+			return point
+	return null
+
+
 ## Door mobs: rear doors, then side cargo doors.
 ## Agile mobs: windows only — rear door panes and side cargo windows.
 ## Never cross pools (door mobs never get windows; agile never open door leaves).
@@ -180,3 +219,36 @@ func _pick_random(points: Array[BreachPoint]) -> BreachPoint:
 	if points.is_empty():
 		return null
 	return points[randi() % points.size()]
+
+
+func _closed_doors_of(kind: BreachPoint.Kind) -> Array[BreachPoint]:
+	var result: Array[BreachPoint] = []
+	for point in _all_points():
+		if point.kind != kind or point.is_passable():
+			continue
+		result.append(point)
+	var parent_3d := get_parent() as Node3D
+	result.sort_custom(func(a: BreachPoint, b: BreachPoint) -> bool:
+		if (
+			parent_3d == null
+			or a.outside_marker == null
+			or b.outside_marker == null
+		):
+			return String(a.point_id) < String(b.point_id)
+		return (
+			parent_3d.to_local(a.outside_marker.global_position).x
+			< parent_3d.to_local(b.outside_marker.global_position).x
+		)
+	)
+	return result
+
+
+func _next_after(doors: Array[BreachPoint], after: BreachPoint) -> BreachPoint:
+	if doors.is_empty():
+		return null
+	if after == null:
+		return doors[0]
+	var idx := doors.find(after)
+	if idx < 0:
+		return doors[0]
+	return doors[(idx + 1) % doors.size()]

@@ -62,6 +62,7 @@ func _on_chill_mode_changed(enabled: bool) -> void:
 func _cancel_encounters() -> void:
 	_sequence_id += 1
 	_running = false
+	_despawn_all_enemies()
 	# Chill aborts the async segment; without this, phase stays COMBAT/REST and
 	# unchill never re-enters the TRAVELLING encounter loop.
 	if GameSession.phase in [GameSession.RunPhase.COMBAT, GameSession.RunPhase.REST]:
@@ -81,6 +82,14 @@ func spawn_debug_raider() -> String:
 	]
 
 
+## Window climbers for the biker boss. Caller owns the alive-cap.
+func spawn_agile_raider() -> WindowRaider:
+	if not is_inside_tree() or enemy_container == null:
+		return null
+	const _AGILE := preload("res://resources/enemies/agile_raider.tres")
+	return _spawn_from_definition(_AGILE, 0, 1)
+
+
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	if next_phase == GameSession.RunPhase.TRAVELLING and not _running and _encounters_enabled():
 		_schedule_encounter()
@@ -95,6 +104,7 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 func _cancel_encounters_keep_phase() -> void:
 	_sequence_id += 1
 	_running = false
+	_despawn_all_enemies()
 
 
 func _schedule_encounter() -> void:
@@ -174,11 +184,11 @@ func _run_boss_segment(id: int) -> void:
 		await get_tree().process_frame
 
 	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
-		if is_instance_valid(boss):
-			boss.queue_free()
+		_despawn_all_enemies()
 		_running = false
 		return
 
+	_retreat_non_boss_enemies()
 	GameSession.complete_wave()
 	await _finish_boss_segment(id)
 
@@ -201,20 +211,20 @@ func _finish_boss_segment(id: int) -> void:
 
 
 func _spawn_boss() -> WindowRaider:
-	var raider := _spawn_raider(0, 1)
-	if raider == null:
+	const _SCENE := preload("res://scenes/enemies/biker_boss.tscn")
+	var boss := _SCENE.instantiate() as WindowRaider
+	if boss == null:
 		return null
-	if raider.has_method(&"mark_as_boss"):
-		raider.mark_as_boss()
-	else:
-		raider.is_elite = true
-	raider.scale = Vector3.ONE * 1.65
-	raider.max_health *= 8.0
-	raider.health = raider.max_health
-	raider.attack_damage *= 1.45
-	if raider.health_bar and raider.health_bar.has_method(&"update_ratio"):
-		raider.health_bar.update_ratio(1.0)
-	return raider
+	enemy_container.add_child(boss)
+	var ref_z := breach_controller.get_rear_outside_reference_z()
+	var local_pos := Vector3(0.0, rear_spawn.position.y, ref_z + GameBalance.SPAWN_DISTANCE)
+	boss.transform = Transform3D(rear_spawn.transform.basis, local_pos)
+	var world_speed := GameBalance.get_mob_world_speed(GameSession.route_step)
+	boss.begin_assault(null, world_speed)
+	ActCardCombat.configure_enemy(boss)
+	if boss.health_bar and boss.health_bar.has_method(&"update_ratio") and boss.max_health > 0.0:
+		boss.health_bar.update_ratio(boss.health / boss.max_health)
+	return boss
 
 
 func _run_wave(id: int, count: int) -> void:
@@ -268,7 +278,10 @@ func _run_wave(id: int, count: int) -> void:
 
 
 func _spawn_raider(slot: int, count: int) -> WindowRaider:
-	var enemy_def := GameBalance.pick_spawn_enemy()
+	return _spawn_from_definition(GameBalance.pick_spawn_enemy(), slot, count)
+
+
+func _spawn_from_definition(enemy_def: EnemyDefinition, slot: int, count: int) -> WindowRaider:
 	if enemy_def == null or enemy_def.scene == null:
 		return null
 	var raider := enemy_def.scene.instantiate() as WindowRaider
@@ -323,6 +336,28 @@ func _despawn_raiders(raiders: Array[WindowRaider]) -> void:
 	for raider in raiders:
 		if is_instance_valid(raider):
 			raider.queue_free()
+
+
+func _despawn_all_enemies() -> void:
+	if not is_inside_tree():
+		return
+	for node in get_tree().get_nodes_in_group(&"enemy"):
+		if is_instance_valid(node):
+			node.queue_free()
+
+
+func _retreat_non_boss_enemies() -> void:
+	if not is_inside_tree():
+		return
+	for node in get_tree().get_nodes_in_group(&"enemy"):
+		if not is_instance_valid(node):
+			continue
+		if bool(node.get("is_boss")) or bool(node.get("is_defeated")):
+			continue
+		if node.has_method(&"retreat"):
+			node.retreat()
+		else:
+			node.queue_free()
 
 
 func _wait_for_rest_break(min_seconds: float) -> void:
