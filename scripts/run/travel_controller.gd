@@ -46,6 +46,9 @@ const STOP_CORRIDOR_LATERAL := 9.0
 @export var boost_multiplier := 1.75
 @export var boost_duration := 5.0
 @export var boost_cooldown := 14.0
+## Hold-the-line: raiders close faster until the player shouts let's go.
+@export var slow_multiplier := 0.42
+@export var slow_cooldown := 14.0
 @export var debug_speed_multiplier := 5.0
 @export var park_speed_scale := 0.55
 
@@ -72,6 +75,8 @@ var _van_velocity := Vector3.ZERO
 var _base_travel_speed := 8.0
 var _boost_remaining := 0.0
 var _boost_cooldown_remaining := 0.0
+var _slowing := false
+var _slow_cooldown_remaining := 0.0
 var _debug_speed_mode := false
 
 ## Per-direction stop on the live fork. Every offered road gets one.
@@ -133,6 +138,8 @@ func _refresh_travel_speed() -> void:
 		mult = debug_speed_multiplier
 	elif _boost_remaining > 0.0:
 		mult = boost_multiplier
+	elif _slowing:
+		mult = slow_multiplier
 	if _turn_state in [TurnState.PARKING, TurnState.LEAVING_STOP]:
 		mult *= park_speed_scale
 	travel_speed = _base_travel_speed * mult
@@ -159,16 +166,22 @@ func scale_debug_wait(seconds: float) -> float:
 	return maxf(0.1, seconds / debug_speed_multiplier)
 
 
-func can_boost() -> bool:
+func _speed_order_phase_ok() -> bool:
 	return (
-		_boost_remaining <= 0.0
-		and _boost_cooldown_remaining <= 0.0
-		and GameSession.phase != GameSession.RunPhase.IDLE
+		GameSession.phase != GameSession.RunPhase.IDLE
 		and GameSession.phase != GameSession.RunPhase.GAME_OVER
 		and GameSession.phase != GameSession.RunPhase.STOP
 		and GameSession.phase != GameSession.RunPhase.PARKING
 		and GameSession.phase != GameSession.RunPhase.ACT_REVEAL
 		and GameSession.phase != GameSession.RunPhase.BOSS_PICK
+	)
+
+
+func can_boost() -> bool:
+	return (
+		_boost_remaining <= 0.0
+		and _boost_cooldown_remaining <= 0.0
+		and _speed_order_phase_ok()
 	)
 
 
@@ -180,12 +193,54 @@ func get_boost_cooldown_remaining() -> float:
 	return maxf(_boost_cooldown_remaining, 0.0)
 
 
+func get_boost_remaining() -> float:
+	return maxf(_boost_remaining, 0.0)
+
+
 ## Temporary overspeed so raiders close slower (or fall behind). Returns false if on cooldown.
+## Cab-door ACCELERATE, Shift, and the HUD GO button all share this cooldown.
 func try_boost() -> bool:
 	if not can_boost():
 		return false
+	_slowing = false
 	_boost_remaining = boost_duration
 	_boost_cooldown_remaining = boost_cooldown
+	_refresh_travel_speed()
+	return true
+
+
+func can_slow() -> bool:
+	return (
+		not _slowing
+		and _boost_remaining <= 0.0
+		and _slow_cooldown_remaining <= 0.0
+		and _speed_order_phase_ok()
+	)
+
+
+func is_slowing() -> bool:
+	return _slowing
+
+
+func get_slow_cooldown_remaining() -> float:
+	return maxf(_slow_cooldown_remaining, 0.0)
+
+
+## Drop speed until try_resume_speed(). C / HUD while already slow is let's go, not this.
+func try_slow() -> bool:
+	if not can_slow():
+		return false
+	_slowing = true
+	_slow_cooldown_remaining = slow_cooldown
+	_refresh_travel_speed()
+	return true
+
+
+## Cancel a hold-back. Always free while slowing — cooldown already started on try_slow.
+func try_resume_speed() -> bool:
+	if not _slowing:
+		return false
+	_slowing = false
 	_refresh_travel_speed()
 	return true
 
@@ -299,7 +354,7 @@ func get_van_velocity() -> Vector3:
 
 
 func _physics_process(delta: float) -> void:
-	_tick_boost(delta)
+	_tick_speed_orders(delta)
 	if not _should_scroll():
 		_van_velocity = Vector3.ZERO
 		return
@@ -328,13 +383,15 @@ func _physics_process(delta: float) -> void:
 	_prune_world()
 
 
-func _tick_boost(delta: float) -> void:
+func _tick_speed_orders(delta: float) -> void:
 	if _boost_remaining > 0.0:
 		_boost_remaining = maxf(0.0, _boost_remaining - delta)
 		if _boost_remaining <= 0.0:
 			_refresh_travel_speed()
 	if _boost_cooldown_remaining > 0.0:
 		_boost_cooldown_remaining = maxf(0.0, _boost_cooldown_remaining - delta)
+	if _slow_cooldown_remaining > 0.0:
+		_slow_cooldown_remaining = maxf(0.0, _slow_cooldown_remaining - delta)
 
 
 func _should_scroll() -> bool:
@@ -493,6 +550,17 @@ func _sample_route_transform(progress: float) -> Transform3D:
 
 
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
+	if next_phase in [
+		GameSession.RunPhase.IDLE,
+		GameSession.RunPhase.GAME_OVER,
+		GameSession.RunPhase.STOP,
+		GameSession.RunPhase.PARKING,
+		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.BOSS_PICK,
+	]:
+		if _slowing:
+			_slowing = false
+			_refresh_travel_speed()
 	if next_phase == GameSession.RunPhase.TRAVELLING:
 		_maybe_start_intro()
 		_maybe_resume_act_flow()

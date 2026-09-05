@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SideStopDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/side_stop_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/corridor/mechanic_bay.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"mechanic"
+display_name = "Mechanic"
+short_label = "MECHANIC"
+parking_toast = "PULLING INTO THE MECHANIC..."
+docked_toast = "MECHANIC — STEP OUT BACK, THEN TELL THE DRIVER TO CONTINUE"
+leaving_toast = "PULLING OUT OF THE MECHANIC..."
+scene = ExtResource("2")

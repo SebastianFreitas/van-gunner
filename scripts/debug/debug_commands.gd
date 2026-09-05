@@ -131,7 +131,7 @@ func _cmd_help(_args: Array) -> String:
 		+ "  list boons [q]  browse boon ids (optional filter)\n"
 		+ "  list items [q]  browse all item ids\n"
 		+ "  list cards [q]  browse street card ids\n"
-		+ "  list stops [q]  browse side-stop ids (shop, garage, …)\n"
+		+ "  list stops [q]  browse side-stop ids (shop, garage, mechanic, …)\n"
 		+ "  card [id]       print / force-activate active street card(s)\n"
 		+ "  boss            skip to act-end boss pick (current six streets)\n"
 		+ "  phase          print current run phase\n"

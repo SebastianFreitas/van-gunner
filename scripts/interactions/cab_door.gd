@@ -2,7 +2,8 @@ extends Interactable
 
 ## Decorative cab-facing door at the front partition.
 ## Looks like a side cargo door (same liner shader + dark trim) but does not open —
-## interaction talks to the driver / leaves the shop. Mesh follows the vaulted hull.
+## interaction talks to the driver / leaves the shop (same accelerate cooldown as Shift).
+## Mesh follows the vaulted hull.
 
 const PARTITION_Z := -4.65
 const DOOR_HALF_W := 0.775

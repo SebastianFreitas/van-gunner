@@ -256,6 +256,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Add a side stop | new `.tres` in `resources/side_stops/` + a bay scene with Dock/Exit points |
 | Touch guns | `scripts/weapons/` + `scripts/combat/gun_*.gd` |
 | Touch the van shell / doors / windows | `scripts/run/van_*.gd`, `side_*.gd`, `rear_doors.gd` |
+| Yell at the driver (Shift GO / C EASY) | `travel_controller.gd` boost/slow + `scripts/ui/driver_shout_hud.gd` |
 | Bench / crafting UI | `scripts/ui/bench_screen.gd` |
 | Bench screenshot tool | `tools/bench_preview.tscn` |
 | Shop counter / stock | `scripts/run/shop_*.gd` |

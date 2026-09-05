@@ -33,6 +33,8 @@ const _ROUTE_INK := Color(0.08, 0.08, 0.07, 1.0)
 @onready var driver_talk_hint: Label = %DriverTalkHint
 @onready var start_run_button: Button = %StartRun
 @onready var accelerate_button: Button = %Accelerate
+@onready var slow_button: Button = %SlowDown
+@onready var driver_shout_hud: DriverShoutHud = %DriverShoutHud
 @onready var rest_toast: Label = %RestToast
 @onready var game_over_panel: Control = %GameOver
 @onready var bench_screen: BenchScreen = %BenchScreen
@@ -101,6 +103,9 @@ func _ready() -> void:
 	_boon_rewards.bind(player, _boon_choice)
 	driver_talk_panel.hide()
 	_refresh_driver_talk_options()
+	if driver_shout_hud:
+		driver_shout_hud.boost_pressed.connect(_on_hud_boost_pressed)
+		driver_shout_hud.slow_pressed.connect(_on_hud_slow_pressed)
 	_setup_weapon_slots_hud()
 	_bind_route_choice_buttons()
 	_make_combat_hud_mouse_passthrough($HUD)
@@ -277,6 +282,14 @@ func _bind_route_choice_buttons() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"driver_boost") and not _driver_shout_keys_blocked():
+		request_driver_boost()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed(&"driver_slow") and not _driver_shout_keys_blocked():
+		request_driver_slow_or_go()
+		get_viewport().set_input_as_handled()
+		return
 	if GameSession.phase != GameSession.RunPhase.ROUTE_CHOICE:
 		return
 	if not route_panel or not route_panel.visible:
@@ -606,6 +619,7 @@ func _is_interactive_hud(node: Node) -> bool:
 	return (
 		node == route_panel
 		or node == driver_talk_panel
+		or node == driver_shout_hud
 		or node == game_over_panel
 		or node == bench_screen
 		or node == _debug_console
@@ -804,6 +818,7 @@ func _refresh_driver_talk_options() -> void:
 	var idle := GameSession.phase == GameSession.RunPhase.IDLE
 	start_run_button.visible = idle
 	accelerate_button.visible = not idle
+	slow_button.visible = not idle
 	if idle:
 		driver_talk_hint.text = "Ready when you are."
 		start_run_button.disabled = false
@@ -811,9 +826,11 @@ func _refresh_driver_talk_options() -> void:
 
 	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
 	if travel == null:
-		driver_talk_hint.text = "Ask the driver for more speed."
+		driver_talk_hint.text = "Yell at the driver — speed up or ease off."
 		accelerate_button.disabled = true
 		accelerate_button.text = "ACCELERATE"
+		slow_button.disabled = true
+		slow_button.text = "EASY"
 		return
 
 	if travel.is_boosting():
@@ -826,9 +843,22 @@ func _refresh_driver_talk_options() -> void:
 		accelerate_button.disabled = true
 		accelerate_button.text = "WAIT %ds" % wait
 	else:
-		driver_talk_hint.text = "Ask the driver for more speed."
+		driver_talk_hint.text = "Yell at the driver — speed up or ease off."
 		accelerate_button.disabled = false
 		accelerate_button.text = "ACCELERATE"
+
+	if travel.is_slowing():
+		slow_button.disabled = false
+		slow_button.text = "LET'S GO"
+		if not travel.is_boosting() and travel.can_boost():
+			driver_talk_hint.text = "Holding back — shout when you want speed."
+	elif not travel.can_slow():
+		var slow_wait := ceili(travel.get_slow_cooldown_remaining())
+		slow_button.disabled = true
+		slow_button.text = "WAIT %ds" % slow_wait if slow_wait > 0 else "EASY"
+	else:
+		slow_button.disabled = false
+		slow_button.text = "EASY"
 
 
 func _on_start_run_pressed() -> void:
@@ -839,16 +869,73 @@ func _on_start_run_pressed() -> void:
 
 
 func _on_accelerate_pressed() -> void:
-	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
-	if travel == null or not travel.try_boost():
-		_refresh_driver_talk_options()
-		return
-	close_driver_talk()
-	_show_message("DRIVER FLOORS IT")
+	if request_driver_boost():
+		close_driver_talk()
+
+
+func _on_slow_pressed() -> void:
+	if request_driver_slow_or_go():
+		close_driver_talk()
+
+
+func _on_hud_boost_pressed() -> void:
+	request_driver_boost()
+	_capture_mouse_after_ui_click()
+
+
+func _on_hud_slow_pressed() -> void:
+	request_driver_slow_or_go()
+	_capture_mouse_after_ui_click()
 
 
 func _on_driver_talk_close_pressed() -> void:
 	close_driver_talk()
+
+
+## Shift, cab-door ACCELERATE, and the HUD GO button share TravelController boost cooldown.
+func request_driver_boost() -> bool:
+	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+	if travel == null or not travel.try_boost():
+		_refresh_driver_talk_options()
+		return false
+	_refresh_driver_talk_options()
+	_show_message("GO GO GO — DRIVER FLOORS IT")
+	return true
+
+
+## C / HUD: ease off, or let's go if already crawling. Voices come later.
+func request_driver_slow_or_go() -> bool:
+	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+	if travel == null:
+		_refresh_driver_talk_options()
+		return false
+	if travel.is_slowing():
+		if not travel.try_resume_speed():
+			_refresh_driver_talk_options()
+			return false
+		_refresh_driver_talk_options()
+		_show_message("LET'S GO")
+		return true
+	if not travel.try_slow():
+		_refresh_driver_talk_options()
+		return false
+	_refresh_driver_talk_options()
+	_show_message("EASY — SLOW IT DOWN")
+	return true
+
+
+func _driver_shout_keys_blocked() -> bool:
+	if _debug_console and _debug_console.visible:
+		return true
+	if bench_screen and bench_screen.visible:
+		return true
+	if _act_reveal and _act_reveal.visible:
+		return true
+	if _boon_choice and _boon_choice.visible:
+		return true
+	if game_over_panel and game_over_panel.visible:
+		return true
+	return false
 
 
 func seal_van_after_stop() -> void:

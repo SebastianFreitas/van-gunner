@@ -14,6 +14,8 @@ enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH }
 @export var is_agile := false
 ## Elite flag for rare weapon drops. Set explicitly (boss spawn / inspector), never from agility.
 @export var is_elite := false
+## Act-1 boss portrait. Swapped in by `mark_as_boss`.
+const _BOSS_SPRITE := preload("res://scenes/enemies/wanjna.png")
 
 ## Derived world chase speed for this act. Closing = mob_world_speed - live van speed.
 var mob_world_speed := 0.0
@@ -98,9 +100,12 @@ func mark_as_boss() -> void:
 	is_boss = true
 	is_elite = true
 	add_to_group(&"boss")
-	_base_modulate = Color(0.92, 0.28, 0.22)
+	# Wanjna's sprite already carries the sodium-lamp gang color.
+	_base_modulate = Color.WHITE
 	if sprite:
+		sprite.texture = _BOSS_SPRITE
 		sprite.modulate = _base_modulate
+		sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 
 
 func retreat() -> void:

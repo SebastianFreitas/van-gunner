@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" path="res://scenes/corridor/act_statue.tscn" id="11c"]
 [ext_resource type="PackedScene" path="res://scenes/ui/item_hud.tscn" id="12"]
 [ext_resource type="PackedScene" path="res://scenes/ui/bench_screen.tscn" id="13"]
+[ext_resource type="PackedScene" path="res://scenes/ui/driver_shout_hud.tscn" id="33"]
 [ext_resource type="Script" uid="uid://cukpn3t6vntop" path="res://scripts/run/rear_doors.gd" id="14"]
 [ext_resource type="Script" uid="uid://ce3o67nngpd38" path="res://scripts/run/rear_door_interact.gd" id="15"]
 [ext_resource type="Script" uid="uid://b70p1yv8tyk4e" path="res://scripts/run/breach_controller.gd" id="16"]
@@ -1430,10 +1431,15 @@ theme_override_colors/font_color = Color(0.65, 0.68, 0.67, 1)
 text = "LMB  SHOOT
 R  RELOAD
 E  INTERACT
+SHIFT  GO
+C  EASY
 1-4  USE TOOL"
 horizontal_alignment = 2
 
 [node name="ItemHUD" parent="HUD" unique_id=34599471 instance=ExtResource("12")]
+
+[node name="DriverShoutHud" parent="HUD" instance=ExtResource("33")]
+unique_name_in_owner = true
 
 [node name="RestToast" type="Label" parent="HUD" unique_id=1339528701]
 unique_name_in_owner = true
@@ -1561,6 +1567,14 @@ layout_mode = 2
 size_flags_horizontal = 4
 text = "ACCELERATE"
 
+[node name="SlowDown" type="Button" parent="HUD/DriverTalk/Layout/Buttons"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(260, 58)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "EASY"
+
 [node name="Close" type="Button" parent="HUD/DriverTalk/Layout/Buttons"]
 custom_minimum_size = Vector2(260, 44)
 layout_mode = 2
@@ -1605,5 +1619,6 @@ unique_name_in_owner = true
 [connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Right" to="." method="_on_right_route_pressed"]
 [connection signal="pressed" from="HUD/DriverTalk/Layout/Buttons/StartRun" to="." method="_on_start_run_pressed"]
 [connection signal="pressed" from="HUD/DriverTalk/Layout/Buttons/Accelerate" to="." method="_on_accelerate_pressed"]
+[connection signal="pressed" from="HUD/DriverTalk/Layout/Buttons/SlowDown" to="." method="_on_slow_pressed"]
 [connection signal="pressed" from="HUD/DriverTalk/Layout/Buttons/Close" to="." method="_on_driver_talk_close_pressed"]
 [connection signal="pressed" from="HUD/GameOver/Layout/Menu" to="." method="_on_main_menu_pressed"]

@@ -25,7 +25,7 @@
 
 ## Input actions
 
-`move_forward`, `move_back`, `move_left`, `move_right`, `interact`, `shoot`, `reload`, `pause`, `use_usable`, `use_slot_1`, `use_slot_2`, `use_slot_3`, `use_slot_4`, `debug_console`
+`move_forward`, `move_back`, `move_left`, `move_right`, `interact`, `shoot`, `reload`, `pause`, `use_usable`, `use_slot_1`, `use_slot_2`, `use_slot_3`, `use_slot_4`, `debug_console`, `driver_boost`, `driver_slow`
 
 ## Node groups
 
@@ -191,6 +191,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal opened`
 - `signal closed`
 
+**`scripts/ui/driver_shout_hud.gd`**
+
+- `signal boost_pressed`
+- `signal slow_pressed`
+
 **`scripts/ui/weapon_replace_prompt.gd`**
 
 - `signal resolved(replaced: bool)`
@@ -216,7 +221,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-135 GDScript files, 22181 lines.
+137 GDScript files, 22701 lines.
 
 ### `scenes/corridor/`
 
@@ -277,7 +282,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `cab_door.gd` | — | 184 | Decorative cab-facing door at the front partition. |
+| `cab_door.gd` | — | 185 | Decorative cab-facing door at the front partition. |
 | `crafting_table.gd` | `CraftingTable` | 15 |  |
 | `interactable.gd` | `Interactable` | 13 |  |
 
@@ -346,6 +351,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `garage_lounge.gd` | — | 146 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
 | `loot_drop_component.gd` | `LootDropComponent` | 114 | Drop-in component that gives any enemy a chance to drop loot on death. |
+| `mechanic_workshop.gd` | — | 243 | Open auto-repair bay — workbench, hoist, tires. No shop counter. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
 | `rear_doors.gd` | — | 402 | Truck-style rear double doors. |
 | `road_floor.gd` | `RoadFloor` | 592 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter |
@@ -356,12 +362,12 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `shop_stock.gd` | — | 45 | Rolls 3 unique items from the shop pool and places them on the counter. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. Toggles that leaf only. |
 | `side_doors.gd` | — | 551 | Sliding cargo-style side doors. |
-| `side_stop_definition.gd` | `SideStopDefinition` | 41 | A roadside building on a fork (never the straight). Taking that side commits |
-| `side_stop_registry.gd` | `SideStopRegistry` | 53 | Resolves side-stop definitions by id from resources/side_stops/. |
+| `side_stop_definition.gd` | `SideStopDefinition` | 41 | A roadside building on a fork road. Every offered street gets one, regardless |
+| `side_stop_registry.gd` | `SideStopRegistry` | 56 | Resolves side-stop definitions by id from resources/side_stops/. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. Toggles that sash only. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
-| `travel_controller.gd` | `TravelController` | 931 | Empty corridor tiles required between side-street openings (avoids a thin |
-| `van.gd` | — | 902 | load() not preload() — compile-time preload of the console scene |
+| `travel_controller.gd` | `TravelController` | 1020 | Empty corridor tiles required between side-street openings (avoids a thin |
+| `van.gd` | — | 988 | load() not preload() — compile-time preload of the console scene |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -395,6 +401,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `combat_feedback.gd` | — | 40 |  |
 | `damage_number.gd` | `DamageNumber` | 54 |  |
 | `debug_console.gd` | `DebugConsole` | 220 | In-game debug terminal. H to open, Esc to close. |
+| `driver_shout_hud.gd` | `DriverShoutHud` | 98 | Always-on GO / EASY shouts. Voice barks come later — buttons are the placeholder. |
 | `enemy_health_bar.gd` | `EnemyHealthBar` | 59 |  |
 | `item_hud.gd` | — | 86 | Hotbar for tools and a row of collected boon icons. |
 | `main_menu.gd` | — | 115 | Rejected files (old version, corrupt JSON) used to look like NEW RUN |
@@ -435,6 +442,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/corridor/corridor_segment.tscn` | 84 | Node3D |
 | `scenes/corridor/corridor_t_junction.tscn` | 31 | Node3D |
 | `scenes/corridor/garage_bay.tscn` | 22 | Node3D |
+| `scenes/corridor/mechanic_bay.tscn` | 24 | Node3D |
 | `scenes/corridor/road_floor.tscn` | 1 | Node3D |
 | `scenes/corridor/shop_bay.tscn` | 31 | Node3D |
 | `scenes/corridor/side_street_branch.tscn` | 10 | Node3D |
@@ -447,12 +455,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/bench_screen.tscn` | 24 | Control |
 | `scenes/ui/damage_number.tscn` | 1 | Label |
 | `scenes/ui/debug_console.tscn` | 8 | Control |
+| `scenes/ui/driver_shout_hud.tscn` | 9 | Control |
 | `scenes/ui/item_hud.tscn` | 7 | Control |
 | `scenes/ui/main_menu.tscn` | 21 | Control |
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
-| `scenes/van/van.tscn` | 292 | Node3D |
+| `scenes/van/van.tscn` | 294 | Node3D |
 | `scenes/van/vanSave.tscn` | 93 | Node3D |
 | `scenes/van/van_bulkhead.tscn` | 1 | StaticBody3D |
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |
@@ -555,6 +564,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | id | name | short_label |
 |---|---|---|
 | garage | Garage | GARAGE |
+| mechanic | Mechanic | MECHANIC |
 | shop | Shop Stop | SHOP |
 
 ## Enemies
