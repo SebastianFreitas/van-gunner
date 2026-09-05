@@ -432,14 +432,19 @@ func _spawn_segments_ahead() -> void:
 func _spawn_route_segments_until(target_progress: float) -> void:
 	var route_end := travel_path.curve.get_baked_length()
 	while _next_segment_progress <= target_progress and _next_segment_progress < route_end:
-		_spawn_world_segment(_sample_route_transform(_next_segment_progress))
+		_spawn_world_segment(
+			_sample_route_transform(_next_segment_progress),
+			_next_segment_progress
+		)
 		_next_segment_progress += segment_length
 
 
-func _spawn_world_segment(world_transform: Transform3D) -> void:
+func _spawn_world_segment(world_transform: Transform3D, route_progress: float = NAN) -> Node3D:
 	var segment := segment_scene.instantiate() as Node3D
 	corridor_root.add_child(segment)
 	segment.global_transform = world_transform
+	if route_progress.is_finite():
+		segment.set_meta(&"route_progress", route_progress)
 	if segment.has_method(&"apply_variant"):
 		segment.apply_variant(_pick_segment_variant())
 	if segment.has_method(&"apply_side_streets"):
@@ -447,23 +452,67 @@ func _spawn_world_segment(world_transform: Transform3D) -> void:
 		segment.apply_side_streets(side_streets.x != 0, side_streets.y != 0)
 	_world_pieces.append(segment)
 	_segment_index += 1
+	return segment
 
 
-func _attach_stop_at_progress(stop_progress: float) -> void:
+## First / second / … corridor tile still ahead of the van on the spawn lattice.
+func _upcoming_corridor_progress(tiles_ahead: int) -> float:
+	var progresses: Array[float] = []
+	var ahead_of := van_follow.progress + 1.0
+	for piece in _world_pieces:
+		if not is_instance_valid(piece) or not piece.has_meta(&"route_progress"):
+			continue
+		var tile_progress := float(piece.get_meta(&"route_progress"))
+		if tile_progress >= ahead_of:
+			progresses.append(tile_progress)
+	progresses.sort()
+	var index := maxi(tiles_ahead, 1) - 1
+	if index < progresses.size():
+		return progresses[index]
+	if progresses.is_empty():
+		return _next_segment_progress + segment_length * float(index)
+	return progresses[progresses.size() - 1] + segment_length * float(
+		index - progresses.size() + 1
+	)
+
+
+func _corridor_segment_near_progress(route_progress: float) -> Node3D:
+	var best: Node3D
+	var best_dist := INF
+	for piece in _world_pieces:
+		if not is_instance_valid(piece) or not piece.has_meta(&"route_progress"):
+			continue
+		var dist := absf(float(piece.get_meta(&"route_progress")) - route_progress)
+		if dist < best_dist:
+			best_dist = dist
+			best = piece
+	if best == null or best_dist > segment_length * 0.51:
+		return null
+	return best
+
+
+func _attach_stop_on_upcoming_segment(tiles_ahead: int) -> void:
 	if _pending_stop == null or _pending_stop.scene == null or is_instance_valid(_active_stop):
 		return
 	if _stop_bay_side != &"left" and _stop_bay_side != &"right":
 		_stop_bay_side = &"right" if _rng.randi() % 2 == 0 else &"left"
 
-	# Make sure a corridor tile exists under the bay, then open that wall.
-	_spawn_route_segments_until(stop_progress + segment_length * 0.5)
-	var segment_transform := _sample_route_transform(stop_progress)
-	var host_segment := _find_nearest_corridor_segment(segment_transform.origin)
-	if host_segment and host_segment.has_method(&"open_bay"):
+	var host_progress := _upcoming_corridor_progress(tiles_ahead)
+	_spawn_route_segments_until(host_progress)
+	var host_segment := _corridor_segment_near_progress(host_progress)
+	if host_segment == null:
+		# Lattice skipped this slot (straight-through used to leave a 10m void).
+		host_segment = _spawn_world_segment(
+			_sample_route_transform(host_progress),
+			host_progress
+		)
+		_next_segment_progress = maxf(_next_segment_progress, host_progress + segment_length)
+
+	if host_segment.has_method(&"open_bay"):
 		host_segment.open_bay(_stop_bay_side)
-	elif host_segment and host_segment.has_method(&"open_shop_bay"):
+	elif host_segment.has_method(&"open_shop_bay"):
 		host_segment.open_shop_bay(_stop_bay_side)
-	elif host_segment and host_segment.has_method(&"apply_side_streets"):
+	elif host_segment.has_method(&"apply_side_streets"):
 		host_segment.apply_side_streets(_stop_bay_side == &"left", _stop_bay_side == &"right")
 
 	_active_stop = _pending_stop.scene.instantiate() as Node3D
@@ -472,30 +521,11 @@ func _attach_stop_at_progress(stop_progress: float) -> void:
 	var side := 1.0 if _stop_bay_side == &"right" else -1.0
 	var yaw := 0.0 if _stop_bay_side == &"right" else PI
 	var local := Transform3D(Basis.from_euler(Vector3(0.0, yaw, 0.0)), Vector3(side * 9.0, 0.0, 0.0))
-	_active_stop.global_transform = segment_transform * local
+	_active_stop.global_transform = host_segment.global_transform * local
 	_world_pieces.append(_active_stop)
-	_stop_align_progress = stop_progress
+	_stop_align_progress = host_progress
 	_stop_pending = false
 	_stop_attach_segment_index = -1
-
-
-func _find_nearest_corridor_segment(world_origin: Vector3) -> Node3D:
-	var best: Node3D
-	var best_dist := INF
-	for piece in _world_pieces:
-		if not is_instance_valid(piece):
-			continue
-		if (
-			not piece.has_method(&"apply_variant")
-			and not piece.has_method(&"open_bay")
-			and not piece.has_method(&"open_shop_bay")
-		):
-			continue
-		var dist := piece.global_position.distance_to(world_origin)
-		if dist < best_dist:
-			best_dist = dist
-			best = piece
-	return best
 
 
 func _pick_segment_variant() -> int:
@@ -788,14 +818,15 @@ func _build_turn_route() -> void:
 
 
 func _build_straight_route() -> void:
-	# Stay on the live -Z curve; just resume tiles after the crossroads mouth.
+	# Stay on the live -Z curve. `through` already ends at the outgoing mouth
+	# (~20m past the junction); a full extra tile here left a 10m void.
 	var van_transform := van_rig.global_transform
 	var junction_local := van_transform.affine_inverse() * _active_junction.global_position
 	var through := maxf(segment_length, -junction_local.z + 20.0)
 	_turn_state = TurnState.TURNING
 	_approach_stop_progress = INF
 	_turn_end_progress = van_follow.progress + through
-	_next_segment_progress = _turn_end_progress + segment_length
+	_next_segment_progress = _turn_end_progress + segment_length * 0.5
 
 
 func _finish_turn() -> void:
@@ -805,10 +836,9 @@ func _finish_turn() -> void:
 	_turn_end_progress = INF
 	_segment_spawning_paused = false
 	if _stop_pending and not is_instance_valid(_active_stop):
-		var ahead := float(
+		_attach_stop_on_upcoming_segment(
 			_rng.randi_range(STOP_SPAWN_MIN_SEGMENTS_AHEAD, STOP_SPAWN_MAX_SEGMENTS_AHEAD)
 		)
-		_attach_stop_at_progress(van_follow.progress + segment_length * ahead)
 	_spawn_segments_ahead()
 	GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
 
