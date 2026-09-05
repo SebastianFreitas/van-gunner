@@ -1,7 +1,10 @@
 class_name GunController
 extends Node3D
 
+## Hit/miss for the HUD once the first pellet resolves. Not a muzzle event.
 signal fired(hit: bool)
+## Round actually left the gun. AudioDirector listens here, never inside try_fire.
+signal shot
 signal ammo_changed(current: int, max_ammo: int)
 signal reloading_changed(is_reloading: bool)
 
@@ -29,6 +32,7 @@ var _feedback_tween: Tween
 
 
 func _ready() -> void:
+	add_to_group(&"gun_controller")
 	_stats_controller = get_node_or_null(stats_controller_path) as GunStatsController
 	if not _stats_controller:
 		_stats_controller = get_tree().get_first_node_in_group(&"gun_stats") as GunStatsController
@@ -95,6 +99,7 @@ func try_fire() -> void:
 	_current_ammo -= 1
 	_next_shot_time = now + roundi(1000.0 / stats.fire_rate)
 	_play_feedback()
+	shot.emit()
 	ammo_changed.emit(_current_ammo, stats.mag_size)
 	if _current_ammo <= 0:
 		_start_reload()

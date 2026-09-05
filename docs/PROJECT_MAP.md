@@ -18,6 +18,7 @@
 | GameSession | `res://scripts/core/game_session.gd` |
 | GameBalance | `res://scripts/core/game_balance.gd` |
 | MetaProgression | `res://scripts/core/meta_progression.gd` |
+| AudioDirector | `res://scripts/audio/audio_director.gd` |
 | LootCollector | `res://scripts/core/loot_collector.gd` |
 | ProjectilePool | `res://scripts/combat/projectile_pool.gd` |
 | CombatFeedback | `res://scripts/ui/combat_feedback.gd` |
@@ -29,9 +30,9 @@
 
 ## Node groups
 
-Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `encounter_director`, `enemy`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `weapon_pickup`, `weapon_replace_prompt`
+Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `weapon_pickup`, `weapon_replace_prompt`
 
-Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `encounter_director`, `enemy`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `weapon_replace_prompt`
+Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `weapon_replace_prompt`
 
 ## Signals and enums
 
@@ -46,6 +47,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 **`scripts/combat/gun_controller.gd`**
 
 - `signal fired(hit: bool)`
+- `signal shot`
 - `signal ammo_changed(current: int, max_ammo: int)`
 - `signal reloading_changed(is_reloading: bool)`
 
@@ -221,7 +223,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-137 GDScript files, 22701 lines.
+140 GDScript files, 23339 lines.
 
 ### `scenes/corridor/`
 
@@ -230,6 +232,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `corridor_segment.gd` | — | 161 | Open a wall gap for a side-stop bay without showing the cosmetic side street. |
 | `corridor_t_junction.gd` | — | 64 | Fills sidewalk corners where stem / branch / optional through-road meet the |
 | `side_street_branch.gd` | — | 19 |  |
+
+### `scripts/audio/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `audio_director.gd` | — | 377 | Central sound playback. Gameplay code says *what happened* (`&"gun_fire"`), |
+| `sound_bank.gd` | `SoundBank` | 42 | Flat list of SoundCues, indexed by id once at load. |
+| `sound_cue.gd` | `SoundCue` | 41 | One addressable sound. Adding audio should mean adding a .tres, never a |
 
 ### `scripts/combat/`
 
@@ -242,11 +252,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `damage_resolver.gd` | `DamageResolver` | 135 |  |
 | `damage_type.gd` | `DamageType` | 12 |  |
 | `grenade.gd` | `Grenade` | 201 | Hand-integrated ballistics instead of a RigidBody3D. |
-| `gun_controller.gd` | `GunController` | 399 | Brief camera pitch punch on fire (radians). Recovers in feedback tween. |
+| `gun_controller.gd` | `GunController` | 404 | Hit/miss for the HUD once the first pellet resolves. Not a muzzle event. |
 | `gun_stats.gd` | `GunStats` | 61 | Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance. |
 | `gun_stats_controller.gd` | `GunStatsController` | 136 | Balance floor + definition identity + weapon mods, then boons/temp mods. |
 | `gun_viewmodel.gd` | `GunViewmodel` | 222 | Viewmodel motion: quarter-roll per shot, tip-up accelerating spin on reload |
-| `projectile.gd` | `Projectile` | 377 | Distance the bullet is pushed off a surface after a bounce so the next sweep |
+| `projectile.gd` | `Projectile` | 380 | Distance the bullet is pushed off a surface after a bounce so the next sweep |
 | `projectile_pool.gd` | — | 82 | Reuses Projectile nodes to avoid instantiate/free churn during heavy fire. |
 | `stat_modifier.gd` | `StatModifier` | 13 |  |
 | `status_effect_controller.gd` | `StatusEffectController` | 220 |  |
@@ -259,7 +269,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `game_balance_data.gd` | `GameBalanceData` | 146 | Inspector-editable balance sheet for encounter pacing and act scaling. |
 | `game_session.gd` | — | 638 | How many face-down streets the player commits to the act boss. Array-backed |
 | `loot_collector.gd` | — | 88 | Teleports shot/swept pickups onto the van's center table. Gold is converted |
-| `meta_progression.gd` | — | 76 | FUTURE — persistent street-card back marks (meta, all runs): |
+| `meta_progression.gd` | — | 123 | FUTURE — persistent street-card back marks (meta, all runs): |
 | `save_manager.gd` | — | 100 |  |
 | `scene_router.gd` | — | 68 | Sync load on the main thread. Threaded load of van.tscn fails cold with a |
 
@@ -267,7 +277,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `debug_commands.gd` | — | 577 | Parses and runs debug console commands. Add new commands in _register_commands(). |
+| `debug_commands.gd` | — | 636 | Parses and runs debug console commands. Add new commands in _register_commands(). |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. Default follows the build. |
 
 ### `scripts/enemies/`
@@ -366,8 +376,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `side_stop_registry.gd` | `SideStopRegistry` | 56 | Resolves side-stop definitions by id from resources/side_stops/. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. Toggles that sash only. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
-| `travel_controller.gd` | `TravelController` | 1020 | Empty corridor tiles required between side-street openings (avoids a thin |
-| `van.gd` | — | 988 | load() not preload() — compile-time preload of the console scene |
+| `travel_controller.gd` | `TravelController` | 1050 | Empty corridor tiles required between side-street openings (avoids a thin |
+| `van.gd` | — | 998 | load() not preload() — compile-time preload of the console scene |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -376,7 +386,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_player_containment.gd` | `VanPlayerContainment` | 69 | Invisible shell that keeps the player inside the van. Uses a dedicated physics |
 | `van_side_wall.gd` | `VanSideWall` | 1111 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, |
 | `weapon_shop_offer.gd` | `WeaponShopOffer` | 87 | Shop counter offer that sells a generated WeaponInstance for gold. |
-| `window_raider.gd` | `WindowRaider` | 378 | Agile raiders can climb window bars; door mobs only smash doors. |
+| `window_raider.gd` | `WindowRaider` | 385 | Agile raiders can climb window bars; door mobs only smash doors. |
 
 ### `scripts/run/effects/`
 
@@ -401,10 +411,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `combat_feedback.gd` | — | 40 |  |
 | `damage_number.gd` | `DamageNumber` | 54 |  |
 | `debug_console.gd` | `DebugConsole` | 220 | In-game debug terminal. H to open, Esc to close. |
-| `driver_shout_hud.gd` | `DriverShoutHud` | 98 | Always-on GO / EASY shouts. Voice barks come later — buttons are the placeholder. |
+| `driver_shout_hud.gd` | `DriverShoutHud` | 109 | Always-on GO / EASY shouts. Voice barks come later — buttons are the placeholder. |
 | `enemy_health_bar.gd` | `EnemyHealthBar` | 59 |  |
 | `item_hud.gd` | — | 86 | Hotbar for tools and a row of collected boon icons. |
-| `main_menu.gd` | — | 115 | Rejected files (old version, corrupt JSON) used to look like NEW RUN |
+| `main_menu.gd` | — | 121 | Rejected files (old version, corrupt JSON) used to look like NEW RUN |
 | `usable_slot.gd` | — | 42 |  |
 | `weapon_replace_prompt.gd` | `WeaponReplacePrompt` | 144 | Full inventory: pick a slot to replace, or Esc to cancel (gun stays in world). |
 | `weapon_slots_hud.gd` | `WeaponSlotsHud` | 59 | Two weapon slots near ammo — highlight active, dashed empty. |
@@ -457,7 +467,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/debug_console.tscn` | 8 | Control |
 | `scenes/ui/driver_shout_hud.tscn` | 9 | Control |
 | `scenes/ui/item_hud.tscn` | 7 | Control |
-| `scenes/ui/main_menu.tscn` | 21 | Control |
+| `scenes/ui/main_menu.tscn` | 23 | Control |
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
@@ -642,6 +652,26 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 `cold_boon_pool`, `fire_boon_pool`, `general_boon_pool`, `goon_pool`, `physical_boon_pool`, `poison_boon_pool`, `rest_tools_pool`, `shop_pool`
 
+## Sound cues (`resources/audio/sound_bank.tres`)
+
+| id | bus | positional | min_interval | max_voices |
+|---|---|---|---|---|
+| gun_fire | SFX | false | 0.04 | 4 |
+| gun_reload | SFX | false | 0.15 | 2 |
+| bullet_impact | SFX | true | 0.04 | 3 |
+| bullet_ricochet | SFX | true | 0.04 | 2 |
+| breach | SFX | true | 0.08 | 4 |
+| glass_shatter | SFX | true | 0.05 | 4 |
+| window_open | Interior | true | 0.05 | 4 |
+| window_close | Interior | true | 0.05 | 4 |
+| usable | SFX | false | 0.05 | 2 |
+| coin | SFX | false | 0.04 | 4 |
+| enemy_down | SFX | true | 0.05 | 4 |
+| stinger_combat | SFX | false | 0.0 | 4 |
+| stinger_rest | SFX | false | 0.0 | 4 |
+| stinger_reveal | SFX | false | 0.0 | 4 |
+| stinger_game_over | SFX | false | 0.0 | 4 |
+
 ## Boon trait keys
 
 | Constant | StringName |
@@ -692,4 +722,4 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `boonpool`, `list`, `card`, `boss`, `reardoor`, `sidedoor`, `give_weapon`, `give_random_weapon`, `force_a1`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `boonpool`, `list`, `card`, `boss`, `reardoor`, `sidedoor`, `give_weapon`, `give_random_weapon`, `force_a1`, `sound`

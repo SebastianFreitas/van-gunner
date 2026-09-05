@@ -1,7 +1,7 @@
 class_name DriverShoutHud
 extends Control
 
-## Always-on GO / EASY shouts. Voice barks come later — buttons are the placeholder.
+## Always-on GO / EASY shouts. van.gd plays shout_start / shout_turbo / shout_slow / shout_resume.
 
 signal boost_pressed
 signal slow_pressed

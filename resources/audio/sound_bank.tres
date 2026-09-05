@@ -1,0 +1,152 @@
+[gd_resource type="Resource" script_class="SoundBank" format=3]
+
+[ext_resource type="Script" path="res://scripts/audio/sound_bank.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/audio/sound_cue.gd" id="2"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/shouts/shout_start.wav" id="3"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/shouts/shout_slow.wav" id="4"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/shouts/shout_resume.wav" id="5"]
+[ext_resource type="AudioStreamWAV" path="res://assets/audio/shouts/shout_turbo.wav" id="6"]
+
+[sub_resource type="Resource" id="Cue_gun_fire"]
+script = ExtResource("2")
+id = &"gun_fire"
+bus = &"SFX"
+min_interval = 0.04
+max_voices = 4
+
+[sub_resource type="Resource" id="Cue_gun_reload"]
+script = ExtResource("2")
+id = &"gun_reload"
+bus = &"SFX"
+min_interval = 0.15
+max_voices = 2
+
+[sub_resource type="Resource" id="Cue_bullet_impact"]
+script = ExtResource("2")
+id = &"bullet_impact"
+bus = &"SFX"
+min_interval = 0.04
+max_voices = 3
+positional = true
+
+[sub_resource type="Resource" id="Cue_bullet_ricochet"]
+script = ExtResource("2")
+id = &"bullet_ricochet"
+bus = &"SFX"
+min_interval = 0.04
+max_voices = 2
+positional = true
+
+[sub_resource type="Resource" id="Cue_breach"]
+script = ExtResource("2")
+id = &"breach"
+bus = &"SFX"
+min_interval = 0.08
+max_voices = 4
+positional = true
+
+[sub_resource type="Resource" id="Cue_glass_shatter"]
+script = ExtResource("2")
+id = &"glass_shatter"
+bus = &"SFX"
+min_interval = 0.05
+max_voices = 4
+positional = true
+
+[sub_resource type="Resource" id="Cue_window_open"]
+script = ExtResource("2")
+id = &"window_open"
+bus = &"Interior"
+min_interval = 0.05
+max_voices = 4
+positional = true
+
+[sub_resource type="Resource" id="Cue_window_close"]
+script = ExtResource("2")
+id = &"window_close"
+bus = &"Interior"
+min_interval = 0.05
+max_voices = 4
+positional = true
+
+[sub_resource type="Resource" id="Cue_usable"]
+script = ExtResource("2")
+id = &"usable"
+bus = &"SFX"
+min_interval = 0.05
+max_voices = 2
+
+[sub_resource type="Resource" id="Cue_coin"]
+script = ExtResource("2")
+id = &"coin"
+bus = &"SFX"
+min_interval = 0.04
+max_voices = 4
+
+[sub_resource type="Resource" id="Cue_enemy_down"]
+script = ExtResource("2")
+id = &"enemy_down"
+bus = &"SFX"
+min_interval = 0.05
+max_voices = 4
+positional = true
+
+[sub_resource type="Resource" id="Cue_stinger_combat"]
+script = ExtResource("2")
+id = &"stinger_combat"
+bus = &"SFX"
+
+[sub_resource type="Resource" id="Cue_stinger_rest"]
+script = ExtResource("2")
+id = &"stinger_rest"
+bus = &"SFX"
+
+[sub_resource type="Resource" id="Cue_stinger_reveal"]
+script = ExtResource("2")
+id = &"stinger_reveal"
+bus = &"SFX"
+
+[sub_resource type="Resource" id="Cue_stinger_game_over"]
+script = ExtResource("2")
+id = &"stinger_game_over"
+bus = &"SFX"
+
+[sub_resource type="Resource" id="Cue_shout_start"]
+script = ExtResource("2")
+id = &"shout_start"
+stream = ExtResource("3")
+bus = &"SFX"
+volume_db = 3.0
+min_interval = 0.2
+max_voices = 1
+
+[sub_resource type="Resource" id="Cue_shout_slow"]
+script = ExtResource("2")
+id = &"shout_slow"
+stream = ExtResource("4")
+bus = &"SFX"
+volume_db = 2.5
+min_interval = 0.2
+max_voices = 1
+
+[sub_resource type="Resource" id="Cue_shout_resume"]
+script = ExtResource("2")
+id = &"shout_resume"
+stream = ExtResource("5")
+bus = &"SFX"
+volume_db = 2.5
+min_interval = 0.2
+max_voices = 1
+
+[sub_resource type="Resource" id="Cue_shout_turbo"]
+script = ExtResource("2")
+id = &"shout_turbo"
+stream = ExtResource("6")
+bus = &"SFX"
+volume_db = 4.0
+min_interval = 0.2
+max_voices = 1
+
+[resource]
+script = ExtResource("1")
+cues = Array[ExtResource("2")]([SubResource("Cue_gun_fire"), SubResource("Cue_gun_reload"), SubResource("Cue_bullet_impact"), SubResource("Cue_bullet_ricochet"), SubResource("Cue_breach"), SubResource("Cue_glass_shatter"), SubResource("Cue_window_open"), SubResource("Cue_window_close"), SubResource("Cue_usable"), SubResource("Cue_coin"), SubResource("Cue_enemy_down"), SubResource("Cue_stinger_combat"), SubResource("Cue_stinger_rest"), SubResource("Cue_stinger_reveal"), SubResource("Cue_stinger_game_over"), SubResource("Cue_shout_start"), SubResource("Cue_shout_slow"), SubResource("Cue_shout_resume"), SubResource("Cue_shout_turbo")])

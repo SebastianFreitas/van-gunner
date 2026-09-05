@@ -3,6 +3,7 @@ extends Node
 ## Parses and runs debug console commands. Add new commands in _register_commands().
 
 const _PICKUP_SCENE := preload("res://scenes/items/pickup.tscn")
+const _SoundCue := preload("res://scripts/audio/sound_cue.gd")
 
 var _commands: Dictionary = {}
 
@@ -38,7 +39,11 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 			"sidedoor":
 				matches = _filter_prefix(["open", "close", "toggle"], "")
 			"list":
-				matches = _filter_prefix(["boons", "items", "commands", "weapons", "cards", "stops"], "")
+				matches = _filter_prefix(
+					["boons", "items", "commands", "weapons", "cards", "stops", "sounds"], ""
+				)
+			"sound":
+				matches = _filter_prefix(_sound_id_strings(), "")
 			"card":
 				matches = _filter_prefix(_card_id_strings(), "")
 			"give_weapon":
@@ -60,7 +65,11 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 	elif parts[0] == "sidedoor":
 		matches = _filter_prefix(["open", "close", "toggle"], partial)
 	elif parts[0] == "list":
-		matches = _filter_prefix(["boons", "items", "commands", "weapons", "cards", "stops"], partial)
+		matches = _filter_prefix(
+			["boons", "items", "commands", "weapons", "cards", "stops", "sounds"], partial
+		)
+	elif parts[0] == "sound":
+		matches = _filter_prefix(_sound_id_strings(), partial)
 	else:
 		matches = []
 
@@ -108,6 +117,7 @@ func _register_commands() -> void:
 		"give_weapon": _cmd_give_weapon,
 		"give_random_weapon": _cmd_give_random_weapon,
 		"force_a1": _cmd_force_a1,
+		"sound": _cmd_sound,
 	}
 
 
@@ -141,6 +151,8 @@ func _cmd_help(_args: Array) -> String:
 		+ "  give_random_weapon [level]  equip a random generated gun\n"
 		+ "  force_a1         drop a random A1 gun near the player\n"
 		+ "  list weapons [q] browse weapon definition ids\n"
+		+ "  list sounds [q] browse SoundCue ids\n"
+		+ "  sound <cue>     play a cue (audition without a run)\n"
 		+ "  Tab            autocomplete command or item id"
 	) % ", ".join(names)
 
@@ -323,7 +335,7 @@ func _cmd_force_a1(_args: Array) -> String:
 
 func _cmd_list(args: Array) -> String:
 	if args.is_empty():
-		return "Usage: list boons|items|commands|weapons|cards|stops [filter]"
+		return "Usage: list boons|items|commands|weapons|cards|stops|sounds [filter]"
 	var kind: String = str(args[0]).to_lower()
 	var filter_text := " ".join(args.slice(1))
 	match kind:
@@ -345,9 +357,11 @@ func _cmd_list(args: Array) -> String:
 			return _format_card_list(filter_text)
 		"stops":
 			return _format_stop_list(filter_text)
+		"sounds":
+			return _format_sound_list(filter_text)
 		_:
 			return (
-				"Unknown list target: %s  (try boons, items, commands, weapons, cards, stops)"
+				"Unknown list target: %s  (try boons, items, commands, weapons, cards, stops, sounds)"
 				% kind
 			)
 
@@ -463,6 +477,52 @@ func _format_weapon_list(filter_text: String) -> String:
 	if not filter_text.is_empty():
 		header += " matching '%s'" % filter_text
 	return header + ":\n" + "\n".join(lines)
+
+
+func _cmd_sound(args: Array) -> String:
+	if args.is_empty():
+		return "Usage: sound <cue_id>  (try list sounds)"
+	var cue_id := StringName(str(args[0]))
+	if AudioDirector.bank == null or not AudioDirector.bank.has_cue(cue_id):
+		return "Unknown cue: %s  (try list sounds)" % cue_id
+	var cue := AudioDirector.bank.get_cue(cue_id) as _SoundCue
+	if cue == null or cue.stream == null:
+		return "Cue %s has no stream yet — drop a .wav / .ogg on the SoundCue." % cue_id
+	# Always the non-positional path so you can hear it from the console.
+	AudioDirector.play(cue_id)
+	return "Playing %s." % cue_id
+
+
+func _format_sound_list(filter_text: String) -> String:
+	var needle := filter_text.strip_edges().to_lower()
+	var lines: PackedStringArray = PackedStringArray()
+	var count := 0
+	for cue_id in _sound_id_strings():
+		if not needle.is_empty() and not cue_id.to_lower().contains(needle):
+			continue
+		var cue := AudioDirector.bank.get_cue(StringName(cue_id)) as _SoundCue
+		var stream_note := "ready" if cue and cue.stream else "no stream"
+		var where := "3D" if cue and cue.positional else "2D"
+		var interval: float = cue.min_interval if cue else 0.0
+		lines.append("  %s  —  %s %s  min=%.3f" % [cue_id, where, stream_note, interval])
+		count += 1
+	if count == 0:
+		if filter_text.is_empty():
+			return "No sounds found."
+		return "No sounds match '%s'." % filter_text
+	var header := "%d sounds" % count
+	if not filter_text.is_empty():
+		header += " matching '%s'" % filter_text
+	return header + ":\n" + "\n".join(lines)
+
+
+func _sound_id_strings() -> Array[String]:
+	var out: Array[String] = []
+	if AudioDirector.bank == null:
+		return out
+	for cue_id in AudioDirector.bank.list_ids():
+		out.append(String(cue_id))
+	return out
 
 
 func _cmd_phase(_args: Array) -> String:

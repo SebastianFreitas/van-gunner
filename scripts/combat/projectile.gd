@@ -190,6 +190,8 @@ func _ricochet(point: Vector3, normal: Vector3) -> void:
 	else:
 		_update_trail()
 	ricocheted.emit(global_position, safe_normal)
+	# Pool/queue_free would cut a child player mid-tail; the director's pool outlives us.
+	AudioDirector.play_at(&"bullet_ricochet", self)
 	if velocity.length() < MIN_BOUNCE_SPEED or _distance_travelled >= max_distance:
 		_despawn()
 		return
@@ -359,6 +361,7 @@ func _resolve_hit(collider: Node) -> void:
 					traits
 				)
 		hit_target.emit(collider)
+		AudioDirector.play_at(&"bullet_impact", self)
 	var keep_alive := BoonCombat.should_keep_alive_after_hit(traits, damage_info, self)
 	if keep_alive:
 		_has_hit = false

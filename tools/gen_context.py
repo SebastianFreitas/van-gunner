@@ -154,6 +154,24 @@ def debug_commands():
     return re.findall(r'"(\w+)"\s*:', block.group(1))
 
 
+def sound_cues():
+    path = os.path.join(ROOT, "resources/audio/sound_bank.tres")
+    if not os.path.isfile(path):
+        return []
+    txt = read("resources/audio/sound_bank.tres")
+    rows = []
+    for block in re.split(r"\[sub_resource[^\]]*\]", txt)[1:]:
+        cue_id = tres_field(block, "id")
+        if not cue_id:
+            continue
+        bus = tres_field(block, "bus") or "SFX"
+        positional = tres_field(block, "positional") or "false"
+        interval = tres_field(block, "min_interval") or "0.0"
+        voices = tres_field(block, "max_voices") or "4"
+        rows.append([cue_id, bus, positional, interval, voices])
+    return rows
+
+
 def trait_keys():
     txt = read("scripts/items/boon_trait_keys.gd")
     return re.findall(r"^const\s+(\w+)\s*:=\s*&\"(\w+)\"", txt, re.M)
@@ -328,6 +346,9 @@ def build():
         f[:-5] for f in os.listdir(os.path.join(ROOT, "resources/items/pools"))
     )
     doc.append("`" + "`, `".join(pools) + "`\n")
+
+    doc.append(section("Sound cues (`resources/audio/sound_bank.tres`)"))
+    doc.append(md_table(["id", "bus", "positional", "min_interval", "max_voices"], sound_cues()))
 
     doc.append(section("Boon trait keys"))
     doc.append(

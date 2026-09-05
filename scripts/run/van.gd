@@ -70,6 +70,7 @@ func _ready() -> void:
 		else:
 			push_warning("Van: could not load debug_console.tscn")
 	add_to_group(&"van_run")
+	AudioDirector.bind_run()
 	player.interaction_prompt_changed.connect(_on_prompt_changed)
 	player.shot_fired.connect(_on_shot_fired)
 	weapon.ammo_changed.connect(_on_ammo_changed)
@@ -115,6 +116,10 @@ func _ready() -> void:
 			func(_i: int, _w) -> void: _on_weapon_loadout_changed()
 		)
 	set_process(false)
+
+
+func _exit_tree() -> void:
+	AudioDirector.unbind_run()
 
 
 func _setup_weapon_slots_hud() -> void:
@@ -897,6 +902,7 @@ func request_driver_boost() -> bool:
 		GameSession.begin_run()
 		_refresh_driver_talk_options()
 		close_driver_talk()
+		AudioDirector.play(&"shout_start")
 		_show_message("LET'S GO")
 		return true
 	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
@@ -904,11 +910,12 @@ func request_driver_boost() -> bool:
 		_refresh_driver_talk_options()
 		return false
 	_refresh_driver_talk_options()
+	AudioDirector.play(&"shout_turbo")
 	_show_message("GO GO GO — DRIVER FLOORS IT")
 	return true
 
 
-## C / HUD: ease off, or let's go if already crawling. Voices come later.
+## C / HUD: ease off, or resume if already crawling.
 func request_driver_slow_or_go() -> bool:
 	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
 	if travel == null:
@@ -919,12 +926,14 @@ func request_driver_slow_or_go() -> bool:
 			_refresh_driver_talk_options()
 			return false
 		_refresh_driver_talk_options()
+		AudioDirector.play(&"shout_resume")
 		_show_message("LET'S GO")
 		return true
 	if not travel.try_slow():
 		_refresh_driver_talk_options()
 		return false
 	_refresh_driver_talk_options()
+	AudioDirector.play(&"shout_slow")
 	_show_message("EASY — SLOW IT DOWN")
 	return true
 

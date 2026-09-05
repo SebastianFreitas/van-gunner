@@ -2,7 +2,8 @@ extends Control
 
 @onready var slots: VBoxContainer = %Slots
 @onready var settings_panel: PanelContainer = %SettingsPanel
-@onready var master_volume: HSlider = %MasterVolume
+@onready var music_volume: HSlider = %MusicVolume
+@onready var sfx_volume: HSlider = %SfxVolume
 @onready var loading_overlay: ColorRect = %LoadingOverlay
 @onready var loading_label: Label = %LoadingLabel
 
@@ -14,7 +15,8 @@ func _ready() -> void:
 	_build_slots()
 	settings_panel.hide()
 	loading_overlay.hide()
-	master_volume.value = db_to_linear(AudioServer.get_bus_volume_db(0))
+	music_volume.set_value_no_signal(MetaProgression.music_volume)
+	sfx_volume.set_value_no_signal(MetaProgression.sfx_volume)
 	call_deferred("_deferred_preload_van")
 
 
@@ -104,8 +106,12 @@ func _on_settings_pressed() -> void:
 	settings_panel.visible = not settings_panel.visible
 
 
-func _on_volume_changed(value: float) -> void:
-	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(value, 0.001)))
+func _on_music_volume_changed(value: float) -> void:
+	MetaProgression.set_music_volume(value)
+
+
+func _on_sfx_volume_changed(value: float) -> void:
+	MetaProgression.set_sfx_volume(value)
 
 
 func _on_exit_pressed() -> void:

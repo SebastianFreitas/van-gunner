@@ -4,6 +4,8 @@ signal van_speed_changed(level: int, speed: float)
 
 const SAVE_PATH := "user://meta_progression.json"
 const SAVE_VERSION := 1
+const BUS_MUSIC := &"Music"
+const BUS_SFX := &"SFX"
 
 ## FUTURE — persistent street-card back marks (meta, all runs):
 ## The full card mechanic should let the player scribble / stamp a mark on the
@@ -12,10 +14,14 @@ const SAVE_VERSION := 1
 ## survive every new run. Key by ActCardDefinition.id. Unmarked cards stay blank.
 
 var van_speed_level := 0
+## Linear 0–1 mixer sliders. Master stays at unity; these write Music / SFX.
+var music_volume := 1.0
+var sfx_volume := 1.0
 
 
 func _ready() -> void:
 	load_profile()
+	apply_audio_settings()
 
 
 func get_van_speed() -> float:
@@ -42,6 +48,38 @@ func try_upgrade_van_speed(coin_source: int) -> Dictionary:
 	return {"ok": true, "cost": cost, "level": van_speed_level, "speed": get_van_speed()}
 
 
+func set_music_volume(linear: float) -> void:
+	music_volume = clampf(linear, 0.0, 1.0)
+	_apply_bus_volume(BUS_MUSIC, music_volume)
+	save_profile()
+
+
+func set_sfx_volume(linear: float) -> void:
+	sfx_volume = clampf(linear, 0.0, 1.0)
+	_apply_bus_volume(BUS_SFX, sfx_volume)
+	save_profile()
+
+
+func apply_audio_settings() -> void:
+	# Old menu wrote Master (bus 0). Sliders now own Music / SFX, so Master
+	# stays at unity or leftover session volume would stack.
+	AudioServer.set_bus_volume_db(0, 0.0)
+	_apply_bus_volume(BUS_MUSIC, music_volume)
+	_apply_bus_volume(BUS_SFX, sfx_volume)
+
+
+func _apply_bus_volume(bus_name: StringName, linear: float) -> void:
+	var idx := AudioServer.get_bus_index(bus_name)
+	if idx < 0:
+		push_warning("MetaProgression: missing audio bus %s" % bus_name)
+		return
+	var silent := linear <= 0.001
+	AudioServer.set_bus_mute(idx, silent)
+	if silent:
+		return
+	AudioServer.set_bus_volume_db(idx, linear_to_db(linear))
+
+
 func load_profile() -> void:
 	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
 	if file == null:
@@ -59,6 +97,8 @@ func load_profile() -> void:
 		)
 		return
 	van_speed_level = maxi(0, int(data.get("van_speed_level", 0)))
+	music_volume = clampf(float(data.get("music_volume", 1.0)), 0.0, 1.0)
+	sfx_volume = clampf(float(data.get("sfx_volume", 1.0)), 0.0, 1.0)
 
 
 func save_profile() -> void:
@@ -66,10 +106,17 @@ func save_profile() -> void:
 	if file == null:
 		push_error("Could not write meta progression save.")
 		return
-	file.store_string(
-		JSON.stringify({"version": SAVE_VERSION, "van_speed_level": van_speed_level}, "\t")
-	)
+	file.store_string(JSON.stringify(_profile_dict(), "\t"))
 
 
 func to_save_data() -> Dictionary:
-	return {"version": SAVE_VERSION, "van_speed_level": van_speed_level}
+	return _profile_dict()
+
+
+func _profile_dict() -> Dictionary:
+	return {
+		"version": SAVE_VERSION,
+		"van_speed_level": van_speed_level,
+		"music_volume": music_volume,
+		"sfx_volume": sfx_volume,
+	}

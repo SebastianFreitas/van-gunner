@@ -119,6 +119,7 @@ Adding content should almost never mean writing code:
 | a side stop | `resources/side_stops/` (+ bay scene) | `SideStopRegistry` (scans the folder) |
 | a gun | `resources/weapons/definitions/` | `WeaponCatalog` |
 | an enemy | `resources/enemies/` (+ spawn pool) | `GameBalance.pick_spawn_enemy` |
+| a sound | `resources/audio/sound_bank.tres` (SoundCue) | `AudioDirector` |
 | a balance tweak | `resources/balance/game_balance.tres` | `GameBalance` facade |
 
 New *behaviour* means a new small `Resource` subclass — `ItemEffect`,
@@ -218,6 +219,15 @@ Each of these has already cost someone real debugging time:
   version mismatches and corrupt JSON, which made `get_slot_summary()` report
   `exists: false`. Clicking the slot then called `start_new`. Incompatible files
   now show CAN'T CONTINUE and CONTINUE does not overwrite them.
+- **Positional audio is van-local.** Enemies and projectiles live under `VanRig`,
+  so a 3D sound left at a world position pans to the rear within a second.
+  `AudioDirector.play_at()` reparents the pooled player into the emitter's space.
+  Don't parent an `AudioStreamPlayer3D` to an enemy or a pooled projectile — both
+  die (or recycle) before the tail finishes. Don't call `play()` from
+  `gun_controller`; emit `shot` and let the autoload map it to a `SoundCue`.
+  The `Interior` bus sends to SFX and has no FX yet — that's the van-shell
+  low-pass / short-reverb slot. Import SFX as `.wav` (no decode latency) and
+  music as `.ogg` with the loop flag.
 
 ## 7. Deliberate choices — do not change these without asking
 
@@ -255,6 +265,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Add a street card | new `.tres` in `resources/acts/cards/` + maybe an `ActCardEffect` |
 | Add a side stop | new `.tres` in `resources/side_stops/` + a bay scene with Dock/Exit points |
 | Touch guns | `scripts/weapons/` + `scripts/combat/gun_*.gd` |
+| Add a sound | new `SoundCue` in `resources/audio/sound_bank.tres` — gameplay already emits |
 | Touch the van shell / doors / windows | `scripts/run/van_*.gd`, `side_*.gd`, `rear_doors.gd` |
 | Yell at the driver (Shift GO / C EASY) | `travel_controller.gd` boost/slow + `scripts/ui/driver_shout_hud.gd` |
 | Bench / crafting UI | `scripts/ui/bench_screen.gd` |
@@ -264,8 +275,8 @@ These look like bugs. They are not. The project owner set them on purpose.
 ## 9. Running and debugging
 
 - Open the project in Godot 4.7; main scene is `scenes/boot/boot.tscn`.
-- In-game console: **H**. `help` lists commands; `list commands|boons|items|weapons|cards|stops`
-  enumerates content. Full command list is in `PROJECT_MAP.md`.
+- In-game console: **H**. `help` lists commands; `list commands|boons|items|weapons|cards|stops|sounds`
+  enumerates content. `sound <cue>` auditions a cue. Full command list is in `PROJECT_MAP.md`.
 - `speed` enables a debug fast-forward that also auto-resolves reveals and boon
   picks — useful for reaching late acts quickly, but it *skips* the panels, so don't
   use it to test UI.
