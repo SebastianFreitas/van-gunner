@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dht8od8f2tydx"
-path="res://.godot/imported/wanjna.png-d3d86a56a2578a70b21f73700d2c0350.ctex"
+uid="uid://bdoorraider01a"
+path="res://.godot/imported/door_raider.png-bdoorraider01a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://scenes/enemies/wanjna.png"
-dest_files=["res://.godot/imported/wanjna.png-d3d86a56a2578a70b21f73700d2c0350.ctex"]
+source_file="res://scenes/enemies/door_raider.png"
+dest_files=["res://.godot/imported/door_raider.png-bdoorraider01a.ctex"]
 
 [params]
 

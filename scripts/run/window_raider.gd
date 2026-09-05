@@ -16,6 +16,8 @@ enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH }
 @export var is_elite := false
 ## Act-1 boss portrait. Swapped in by `mark_as_boss`.
 const _BOSS_SPRITE := preload("res://scenes/enemies/wanjna.png")
+## Window climbers get their own sprite; the scene default is the door goon.
+const _AGILE_SPRITE := preload("res://scenes/enemies/agile_raider.png")
 
 ## Derived world chase speed for this act. Closing = mob_world_speed - live van speed.
 var mob_world_speed := 0.0
@@ -30,7 +32,7 @@ var assault_phase: AssaultPhase = AssaultPhase.IDLE
 var assigned_breach: BreachPoint
 var _last_damage_type: DamageType.Type = DamageType.Type.NORMAL
 var _attack_loop_running := false
-## Rest color after hit flash (agile window dudes are green-tinted).
+## Rest color after hit flash.
 var _base_modulate := Color.WHITE
 
 ## Lock to this marker each physics tick while standing (van keeps moving).
@@ -53,8 +55,8 @@ func _ready() -> void:
 	add_to_group(&"enemy")
 	if is_agile:
 		add_to_group(&"agile")
-		_base_modulate = Color(0.35, 0.95, 0.45)
-		sprite.modulate = _base_modulate
+		sprite.texture = _AGILE_SPRITE
+		sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 	health = max_health
 	# After TravelController (-100) so we see the van's updated PathFollow transform.
 	process_physics_priority = -50
