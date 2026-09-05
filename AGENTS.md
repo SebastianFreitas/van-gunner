@@ -226,7 +226,10 @@ Each of these has already cost someone real debugging time:
   `VanRig` onto the platform. Open the shaft (hide *collision* as well as the
   mesh) as the ride starts — a street-height `StaticBody` will hold the player
   at grade while the van drops. Keep the pad below the van deck and inside the
-  shaft so it does not z-fight the interior floor.
+  shaft so it does not z-fight the interior floor. Vestibule yaw is `-PI/2`
+  so shop `+X` faces van rear (`+Z`); `+PI/2` puts the door at the nose and
+  walking out the back falls into the shaft. Don't place the shop slab under
+  the van deck (origin needs to sit aft of the rear doors).
 - **Rejected saves used to look like NEW RUN.** `load_slot_data()` returns `{}` for
   version mismatches and corrupt JSON, which made `get_slot_summary()` report
   `exists: false`. Clicking the slot then called `start_new`. Incompatible files

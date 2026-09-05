@@ -18,9 +18,12 @@ const PLATFORM_SIZE := Vector3(
 	SHAFT_INNER.z - PAD_CLEAR * 2.0
 )
 const DOOR_HEIGHT := 6.2
-## Vestibule origin so DockPoint sits on the pad and +X faces the van's rear (+Z).
-## z = SHAFT_INNER.z/2 + WALL_THICK/2 - vestibule DOOR_X (5.6).
-const VESTIBULE_ORIGIN := Vector3(0.0, -16.0, 2.21)
+## Godot Yaw +90° maps vestibule +X (into the shop) onto path -Z — the van nose.
+## -90° maps +X onto +Z, which is the rear doors.
+const VESTIBULE_YAW := -PI * 0.5
+## Just aft of the rear doors (hinge z=4.71, deck ends 4.8) so the shop slab
+## is on the pad, not under the van floor.
+const VESTIBULE_ORIGIN := Vector3(0.0, -DEPTH, 5.35)
 
 const _VestibuleScene := preload("res://scenes/corridor/stop_vestibule.tscn")
 
@@ -71,7 +74,9 @@ func open_shaft() -> void:
 		&"set_carriageway_visible"
 	):
 		_host_segment.set_carriageway_visible(false)
-	_set_pad_walkable(false)
+	# Pad rides with the van. Keep it solid once the street hole opens so a
+	# clip during the drop lands on the platform instead of the shaft void.
+	_set_pad_walkable(true)
 
 
 func restore_road() -> void:
@@ -83,7 +88,8 @@ func restore_road() -> void:
 
 
 func set_docked(docked: bool) -> void:
-	_set_pad_walkable(docked)
+	if docked:
+		_set_pad_walkable(true)
 
 
 func ride_seconds() -> float:
@@ -119,7 +125,7 @@ func _mount_vestibule() -> void:
 		return
 	_vestibule.name = "Vestibule"
 	_vestibule.position = VESTIBULE_ORIGIN
-	_vestibule.rotation.y = PI * 0.5
+	_vestibule.rotation.y = VESTIBULE_YAW
 	add_child(_vestibule)
 
 
