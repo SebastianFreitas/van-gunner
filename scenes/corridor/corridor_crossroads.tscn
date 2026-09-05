@@ -1,0 +1,197 @@
+[gd_scene format=3 uid="uid://c4wayjnct01vg"]
+
+[ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1"]
+[ext_resource type="PackedScene" uid="uid://brodfloor01seg" path="res://scenes/corridor/road_floor.tscn" id="2_road_floor"]
+[ext_resource type="Script" path="res://scenes/corridor/corridor_t_junction.gd" id="3_junction"]
+
+[sub_resource type="ShaderMaterial" id="WallMaterial"]
+render_priority = 0
+shader = ExtResource("1")
+shader_parameter/base_color = Color(0.16, 0.18, 0.17, 1)
+shader_parameter/seam_color = Color(0.035, 0.045, 0.04, 1)
+shader_parameter/rust_color = Color(0.3, 0.105, 0.045, 1)
+shader_parameter/tile_count = Vector2(14, 2)
+shader_parameter/roughness_value = 0.78
+
+[sub_resource type="BoxMesh" id="WallMesh"]
+material = SubResource("WallMaterial")
+size = Vector3(0.4, 20, 11.184021)
+
+[sub_resource type="StandardMaterial3D" id="RibMaterial"]
+albedo_color = Color(0.055, 0.064, 0.061, 1)
+metallic = 0.72
+roughness = 0.61
+
+[sub_resource type="BoxMesh" id="CrossBeamMesh"]
+material = SubResource("RibMaterial")
+size = Vector3(18, 0.5, 0.55)
+
+[sub_resource type="StandardMaterial3D" id="LampMaterial"]
+shading_mode = 0
+albedo_color = Color(0.78, 0.43, 0.16, 1)
+
+[sub_resource type="BoxMesh" id="LampMesh"]
+material = SubResource("LampMaterial")
+size = Vector3(0.12, 0.42, 1.3)
+
+[sub_resource type="BoxMesh" id="BranchWallMesh"]
+material = SubResource("WallMaterial")
+size = Vector3(11.172363, 20, 0.4)
+
+[sub_resource type="BoxShape3D" id="StemWallShape"]
+size = Vector3(0.4, 20, 11.184021)
+
+[sub_resource type="BoxShape3D" id="BranchWallShape"]
+size = Vector3(11.172363, 20, 0.4)
+
+[node name="CorridorCrossroads" type="Node3D"]
+script = ExtResource("3_junction")
+
+[node name="StemRoad" parent="." instance=ExtResource("2_road_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 14.55)
+span_x = 18.0
+span_z = 11.1
+sidewalk_width = 1.1
+detail_seed = 21
+
+[node name="JunctionRoad" parent="." instance=ExtResource("2_road_floor")]
+span_x = 18.0
+span_z = 18.0
+sidewalk_left = false
+sidewalk_right = false
+detail_seed = 22
+
+[node name="OutgoingRoad" parent="." instance=ExtResource("2_road_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -14.55)
+span_x = 18.0
+span_z = 11.1
+sidewalk_width = 1.1
+detail_seed = 25
+
+[node name="BranchLeftRoad" parent="." instance=ExtResource("2_road_floor")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -14.5, 0, 0)
+span_x = 18.0
+span_z = 11.0
+sidewalk_width = 1.1
+detail_seed = 23
+
+[node name="BranchRightRoad" parent="." instance=ExtResource("2_road_floor")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 14.5, 0, 0)
+span_x = 18.0
+span_z = 11.0
+sidewalk_width = 1.1
+detail_seed = 24
+
+[node name="Surfaces" type="StaticBody3D" parent="."]
+
+[node name="StemLeftWall" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 9.6, 14.470272)
+shape = SubResource("StemWallShape")
+
+[node name="StemRightWall" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 9.6, 14.522358)
+shape = SubResource("StemWallShape")
+
+[node name="OutgoingLeftWall" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 9.6, -14.470272)
+shape = SubResource("StemWallShape")
+
+[node name="OutgoingRightWall" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 9.6, -14.522358)
+shape = SubResource("StemWallShape")
+
+[node name="BranchLeftNorthWall" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.5, 9.6, -9)
+shape = SubResource("BranchWallShape")
+
+[node name="BranchLeftSouthWall" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.5, 9.6, 9)
+shape = SubResource("BranchWallShape")
+
+[node name="BranchRightNorthWall" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 9.6, -9)
+shape = SubResource("BranchWallShape")
+
+[node name="BranchRightSouthWall" type="CollisionShape3D" parent="Surfaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 9.6, 9)
+shape = SubResource("BranchWallShape")
+
+[node name="Stem" type="Node3D" parent="."]
+
+[node name="LeftWall" type="MeshInstance3D" parent="Stem"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 9.6, 14.470272)
+mesh = SubResource("WallMesh")
+
+[node name="RightWall" type="MeshInstance3D" parent="Stem"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 9.6, 14.522358)
+mesh = SubResource("WallMesh")
+
+[node name="Beam0" type="MeshInstance3D" parent="Stem"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.91317, 9.639535)
+mesh = SubResource("CrossBeamMesh")
+
+[node name="Beam1" type="MeshInstance3D" parent="Stem"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 14.6, 14)
+mesh = SubResource("CrossBeamMesh")
+
+[node name="LeftLamp" type="MeshInstance3D" parent="Stem"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.755289, 5.2, 11.685037)
+mesh = SubResource("LampMesh")
+
+[node name="RightLamp" type="MeshInstance3D" parent="Stem"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4, 5.2, 12)
+mesh = SubResource("LampMesh")
+
+[node name="Outgoing" type="Node3D" parent="."]
+
+[node name="LeftWall" type="MeshInstance3D" parent="Outgoing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 9.6, -14.470272)
+mesh = SubResource("WallMesh")
+
+[node name="RightWall" type="MeshInstance3D" parent="Outgoing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 9.6, -14.522358)
+mesh = SubResource("WallMesh")
+
+[node name="Beam0" type="MeshInstance3D" parent="Outgoing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.91317, -9.639535)
+mesh = SubResource("CrossBeamMesh")
+
+[node name="Beam1" type="MeshInstance3D" parent="Outgoing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 14.6, -14)
+mesh = SubResource("CrossBeamMesh")
+
+[node name="LeftLamp" type="MeshInstance3D" parent="Outgoing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.755289, 5.2, -11.685037)
+mesh = SubResource("LampMesh")
+
+[node name="RightLamp" type="MeshInstance3D" parent="Outgoing"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4, 5.2, -12)
+mesh = SubResource("LampMesh")
+
+[node name="BranchLeft" type="Node3D" parent="."]
+
+[node name="NorthWall" type="MeshInstance3D" parent="BranchLeft"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.5, 9.6, -9)
+mesh = SubResource("BranchWallMesh")
+
+[node name="SouthWall" type="MeshInstance3D" parent="BranchLeft"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.5, 9.6, 9)
+mesh = SubResource("BranchWallMesh")
+
+[node name="Lamp" type="MeshInstance3D" parent="BranchLeft"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 5.2, -7)
+mesh = SubResource("LampMesh")
+
+[node name="BranchRight" type="Node3D" parent="."]
+
+[node name="NorthWall" type="MeshInstance3D" parent="BranchRight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 9.6, -9)
+mesh = SubResource("BranchWallMesh")
+
+[node name="SouthWall" type="MeshInstance3D" parent="BranchRight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 9.6, 9)
+mesh = SubResource("BranchWallMesh")
+
+[node name="Lamp" type="MeshInstance3D" parent="BranchRight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 5.2, 7)
+mesh = SubResource("LampMesh")

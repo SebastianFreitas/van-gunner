@@ -52,6 +52,7 @@ var _ammo_reload_tween: Tween
 var _mouse_capture_gen := 0
 var _route_highlight: StringName = &"left"
 var _left_route_btn: Button
+var _straight_route_btn: Button
 var _right_route_btn: Button
 
 
@@ -221,7 +222,10 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 			rest_toast.text = "THE JUDGE — TWO STREETS"
 			rest_toast.show()
 		GameSession.RunPhase.TURNING:
-			rest_toast.text = "TURNING %s..." % String(GameSession.last_direction).to_upper()
+			if GameSession.last_direction == &"straight":
+				rest_toast.text = "HOLDING STRAIGHT..."
+			else:
+				rest_toast.text = "TURNING %s..." % String(GameSession.last_direction).to_upper()
 			rest_toast.show()
 			route_panel.hide()
 		GameSession.RunPhase.PARKING:
@@ -259,14 +263,18 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 
 
 func _bind_route_choice_buttons() -> void:
-	if _left_route_btn and _right_route_btn:
-		return
-	_left_route_btn = %RouteChoice.get_node("Layout/Buttons/Left") as Button
-	_right_route_btn = %RouteChoice.get_node("Layout/Buttons/Right") as Button
-	if _left_route_btn:
-		_left_route_btn.mouse_entered.connect(_set_route_highlight.bind(&"left"))
-	if _right_route_btn:
-		_right_route_btn.mouse_entered.connect(_set_route_highlight.bind(&"right"))
+	if _left_route_btn == null:
+		_left_route_btn = %RouteChoice.get_node("Layout/Buttons/Left") as Button
+		if _left_route_btn:
+			_left_route_btn.mouse_entered.connect(_set_route_highlight.bind(&"left"))
+	if _straight_route_btn == null:
+		_straight_route_btn = %RouteChoice.get_node_or_null("Layout/Buttons/Straight") as Button
+		if _straight_route_btn:
+			_straight_route_btn.mouse_entered.connect(_set_route_highlight.bind(&"straight"))
+	if _right_route_btn == null:
+		_right_route_btn = %RouteChoice.get_node("Layout/Buttons/Right") as Button
+		if _right_route_btn:
+			_right_route_btn.mouse_entered.connect(_set_route_highlight.bind(&"right"))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -280,48 +288,89 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"ui_right") or event.is_action_pressed(&"move_right"):
 		_set_route_highlight(&"right")
 		get_viewport().set_input_as_handled()
+	elif (
+		event.is_action_pressed(&"ui_up")
+		or event.is_action_pressed(&"move_forward")
+	) and not GameSession.uses_t_junction():
+		_set_route_highlight(&"straight")
+		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(&"ui_accept"):
 		GameSession.choose_route(_route_highlight)
 		get_viewport().set_input_as_handled()
 
 
 func _set_route_highlight(direction: StringName) -> void:
-	if direction != &"left" and direction != &"right":
+	if direction not in GameSession.get_route_directions():
 		return
 	_route_highlight = direction
 	_sync_route_highlight()
 
 
 func _refresh_route_choice_labels() -> void:
-	if _left_route_btn == null or _right_route_btn == null:
-		_bind_route_choice_buttons()
+	_bind_route_choice_buttons()
 	var travel := get_tree().get_first_node_in_group(&"travel_controller")
 	var shop_side: StringName = &""
 	if travel and travel.has_method(&"get_shop_fork_side"):
 		shop_side = travel.get_shop_fork_side()
 	var offers := GameSession.peek_route_cards()
+	var t_fork := GameSession.uses_t_junction()
+	var title: Label = %RouteChoice.get_node_or_null("Layout/Title") as Label
+	if title:
+		title.text = "THE ROAD SPLITS" if t_fork else "FOUR WAYS"
+	if _straight_route_btn:
+		_straight_route_btn.visible = not t_fork
 	var left_card: ActCardDefinition = offers[0] if offers.size() > 0 else null
-	var right_card: ActCardDefinition = offers[1] if offers.size() > 1 else left_card
-	_populate_route_button(_left_route_btn, left_card, shop_side == &"left", true)
-	_populate_route_button(_right_route_btn, right_card, shop_side == &"right", false)
+	var straight_card: ActCardDefinition = offers[1] if (not t_fork and offers.size() > 1) else null
+	var right_card: ActCardDefinition
+	if t_fork:
+		right_card = offers[1] if offers.size() > 1 else left_card
+	else:
+		right_card = offers[2] if offers.size() > 2 else straight_card
+	_populate_route_button(_left_route_btn, left_card, shop_side == &"left", &"left")
+	_populate_route_button(
+		_straight_route_btn, straight_card, shop_side == &"straight", &"straight"
+	)
+	_populate_route_button(_right_route_btn, right_card, shop_side == &"right", &"right")
+	if _route_highlight not in GameSession.get_route_directions():
+		_route_highlight = &"left"
 	_sync_route_highlight()
 
 
 func _sync_route_highlight() -> void:
 	if _left_route_btn == null or _right_route_btn == null:
 		return
-	var left_on := _route_highlight == &"left"
-	_apply_route_highlight_look(_left_route_btn, left_on)
-	_apply_route_highlight_look(_right_route_btn, not left_on)
+	_apply_route_highlight_look(_left_route_btn, _route_highlight == &"left")
+	if _straight_route_btn and _straight_route_btn.visible:
+		_apply_route_highlight_look(_straight_route_btn, _route_highlight == &"straight")
+	_apply_route_highlight_look(_right_route_btn, _route_highlight == &"right")
 	var hint: Label = %RouteChoice.get_node("Layout/Hint")
-	var side := "LEFT" if left_on else "RIGHT"
+	var side := String(_route_highlight).to_upper()
 	hint.text = "Gold frame is %s. Click that card (or Enter) to take it." % side
-	var pick := _left_route_btn.get_node_or_null("Stack/PickLabel") as Label
-	var other := _right_route_btn.get_node_or_null("Stack/PickLabel") as Label
-	if pick:
-		pick.text = "SELECTED — TAKE THIS ROAD" if left_on else "← LEFT"
-	if other:
-		other.text = "SELECTED — TAKE THIS ROAD" if not left_on else "RIGHT →"
+	_set_route_pick_label(_left_route_btn, &"left")
+	_set_route_pick_label(_straight_route_btn, &"straight")
+	_set_route_pick_label(_right_route_btn, &"right")
+
+
+func _set_route_pick_label(button: Button, direction: StringName) -> void:
+	if button == null:
+		return
+	var pick := button.get_node_or_null("Stack/PickLabel") as Label
+	if pick == null:
+		return
+	if _route_highlight == direction:
+		pick.text = "SELECTED — TAKE THIS ROAD"
+	else:
+		pick.text = _route_dir_caption(direction)
+
+
+func _route_dir_caption(direction: StringName) -> String:
+	match direction:
+		&"left":
+			return "← LEFT"
+		&"straight":
+			return "↑ STRAIGHT"
+		_:
+			return "RIGHT →"
 
 
 func _apply_route_highlight_look(button: Button, selected: bool) -> void:
@@ -345,7 +394,7 @@ func _apply_route_highlight_look(button: Button, selected: bool) -> void:
 
 
 func _populate_route_button(
-	button: Button, card: ActCardDefinition, is_shop: bool, is_left: bool
+	button: Button, card: ActCardDefinition, is_shop: bool, direction: StringName
 ) -> void:
 	if button == null:
 		return
@@ -374,7 +423,7 @@ func _populate_route_button(
 
 	var dir := Label.new()
 	dir.name = "PickLabel"
-	dir.text = "← LEFT" if is_left else "RIGHT →"
+	dir.text = _route_dir_caption(direction)
 	dir.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	dir.add_theme_color_override(&"font_color", _ROUTE_MUTED)
 	dir.add_theme_font_size_override(&"font_size", 11)
@@ -700,6 +749,10 @@ func _on_usable_activated(item: ItemDefinition, success: bool) -> void:
 
 func _on_left_route_pressed() -> void:
 	GameSession.choose_route(&"left")
+
+
+func _on_straight_route_pressed() -> void:
+	GameSession.choose_route(&"straight")
 
 
 func _on_right_route_pressed() -> void:

@@ -29,6 +29,9 @@ const SHOP_CORRIDOR_LATERAL := 9.0
 @export var travel_speed := 8.0
 @export var segment_scene: PackedScene
 @export var t_junction_scene: PackedScene
+## 4-way (left / straight / right). Used when the act deck still has 3+ cards
+## and No Through Road is not pending.
+@export var crossroads_scene: PackedScene
 @export var shop_scene: PackedScene
 @export var act_statue_scene: PackedScene
 @export var segment_length := 20.0
@@ -319,7 +322,8 @@ func _maybe_auto_choose_route(delta: float) -> void:
 	var remaining := _approach_stop_progress - van_follow.progress
 	if remaining > travel_speed * delta:
 		return
-	var direction: StringName = &"left" if _rng.randi() % 2 == 0 else &"right"
+	var dirs := GameSession.get_route_directions()
+	var direction: StringName = dirs[_rng.randi() % dirs.size()]
 	GameSession.choose_route(direction)
 
 
@@ -576,7 +580,10 @@ func _spawn_special_ahead(scene: PackedScene) -> void:
 
 
 func _spawn_approaching_junction() -> void:
-	_spawn_special_ahead(t_junction_scene)
+	var scene := t_junction_scene if GameSession.uses_t_junction() else crossroads_scene
+	if scene == null:
+		scene = t_junction_scene
+	_spawn_special_ahead(scene)
 
 
 func _on_route_chosen(direction: StringName, _step: int) -> void:
@@ -609,6 +616,9 @@ func _update_turn() -> void:
 
 
 func _build_turn_route() -> void:
+	if _turn_direction == &"straight":
+		_build_straight_route()
+		return
 	var van_transform := van_rig.global_transform
 	var junction_local := van_transform.affine_inverse() * _active_junction.global_position
 	var straight_length := maxf(0.0, -junction_local.z - turn_radius)
@@ -642,6 +652,17 @@ func _build_turn_route() -> void:
 	_turn_end_progress = curve.get_closest_offset(turn_end)
 	_next_segment_progress = _turn_end_progress + segment_length
 	_spawn_route_segments_until(_turn_end_progress + segment_ahead_distance)
+
+
+func _build_straight_route() -> void:
+	# Stay on the live -Z curve; just resume tiles after the crossroads mouth.
+	var van_transform := van_rig.global_transform
+	var junction_local := van_transform.affine_inverse() * _active_junction.global_position
+	var through := maxf(segment_length, -junction_local.z + 20.0)
+	_turn_state = TurnState.TURNING
+	_approach_stop_progress = INF
+	_turn_end_progress = van_follow.progress + through
+	_next_segment_progress = _turn_end_progress + segment_length
 
 
 func _finish_turn() -> void:

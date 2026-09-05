@@ -216,14 +216,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-131 GDScript files, 21682 lines.
+132 GDScript files, 21808 lines.
 
 ### `scenes/corridor/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `corridor_segment.gd` | — | 157 | Open a wall gap for a shop bay without showing the cosmetic side street. |
-| `corridor_t_junction.gd` | — | 58 | Fills the blunt L where stem / branch sidewalks meet the open junction slab. |
+| `corridor_t_junction.gd` | — | 64 | Fills the blunt L where stem / branch sidewalks meet the open junction slab. |
 | `side_street_branch.gd` | — | 19 |  |
 
 ### `scripts/combat/`
@@ -252,7 +252,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `game_balance.gd` | — | 287 | Runtime facade over the Inspector-editable GameBalanceData resource. |
 | `game_balance_data.gd` | `GameBalanceData` | 146 | Inspector-editable balance sheet for encounter pacing and act scaling. |
-| `game_session.gd` | — | 598 | How many face-down streets the player commits to the act boss. Array-backed |
+| `game_session.gd` | — | 637 | How many face-down streets the player commits to the act boss. Array-backed |
 | `loot_collector.gd` | — | 88 | Teleports shot/swept pickups onto the van's center table. Gold is converted |
 | `meta_progression.gd` | — | 76 | FUTURE — persistent street-card back marks (meta, all runs): |
 | `save_manager.gd` | — | 100 |  |
@@ -357,8 +357,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `side_doors.gd` | — | 551 | Sliding cargo-style side doors. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. Toggles that sash only. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
-| `travel_controller.gd` | `TravelController` | 862 | Empty corridor tiles required between side-street openings (avoids a thin |
-| `van.gd` | — | 814 | load() not preload() — compile-time preload of the console scene |
+| `travel_controller.gd` | `TravelController` | 881 | Empty corridor tiles required between side-street openings (avoids a thin |
+| `van.gd` | — | 864 | load() not preload() — compile-time preload of the console scene |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -377,6 +377,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `enemy_loot_bonus_effect.gd` | `EnemyLootBonusEffect` | 11 | Adds to the item drop chance roll on enemy death (0.1 = +10%). |
 | `enemy_speed_mult_effect.gd` | `EnemySpeedMultEffect` | 18 | Scales raider world chase speed on spawn (1.15 = 15% faster). |
 | `flat_damage_bonus_effect.gd` | `FlatDamageBonusEffect` | 16 | Adds flat damage to outgoing hits of a given damage type while the card is active. |
+| `narrow_fork_effect.gd` | `NarrowForkEffect` | 12 | After this street, the next fork is a T — two face-up cards instead of three. |
 | `temp_boon_trait_effect.gd` | `TempBoonTraitEffect` | 18 | While this street is active, grants a boon trait via BoonTraits street overlay. |
 | `wave_count_mult_effect.gd` | `WaveCountMultEffect` | 19 | Bumps each wave's spawn count (danger roads). Multiplies then optionally adds. |
 
@@ -427,6 +428,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/boot/boot.tscn` | 3 | Control |
 | `scenes/combat/projectile.tscn` | 4 | Area3D |
 | `scenes/corridor/act_statue.tscn` | 4 | Node3D |
+| `scenes/corridor/corridor_crossroads.tscn` | 37 | Node3D |
 | `scenes/corridor/corridor_segment.tscn` | 84 | Node3D |
 | `scenes/corridor/corridor_t_junction.tscn` | 31 | Node3D |
 | `scenes/corridor/road_floor.tscn` | 1 | Node3D |
@@ -446,7 +448,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
-| `scenes/van/van.tscn` | 291 | Node3D |
+| `scenes/van/van.tscn` | 292 | Node3D |
 | `scenes/van/vanSave.tscn` | 93 | Node3D |
 | `scenes/van/van_bulkhead.tscn` | 1 | StaticBody3D |
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |
@@ -537,6 +539,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | hairpin | Hairpin | 0 | +100% fire rate while this street is active |
 | hasty_pack | Hasty Pack | 1 | Enemies move 15% faster. +10% item drops. |
 | icebox | Icebox | 0 | +3% chance cold damage freezes the enemy |
+| no_through | No Through Road | 1 | Next fork is a T — two streets instead of three |
 | salvage_lane | Salvage Lane | 0 | +15% item drops |
 | slag_barrels | Slag Barrels | 1 | Fire rate x0.75 while this street is active |
 | swarm | Swarm | 1 | 50% more raiders per wave, plus one |

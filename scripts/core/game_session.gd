@@ -60,6 +60,8 @@ var active_street_card_id: StringName = &""
 var pending_boon_card_id: StringName = &""
 ## Set when a DANGER street is chosen; consumed when the next combat segment starts.
 var pending_danger := false
+## Set by No Through Road; next fork is a T (2 cards) instead of a 4-way (3).
+var pending_narrow_fork := false
 ## The six streets drawn for this act, in the order they were shown at reveal.
 ## Survives as cards are committed so the boss pick can show the same set again.
 var act_source_cards: Array[StringName] = []
@@ -80,6 +82,12 @@ const _RIGHT_AREA_CYCLE: Array[ItemDefinition.BoonPool] = [
 	ItemDefinition.BoonPool.POISON,
 	ItemDefinition.BoonPool.COLD,
 	ItemDefinition.BoonPool.FIRE,
+]
+const _STRAIGHT_AREA_CYCLE: Array[ItemDefinition.BoonPool] = [
+	ItemDefinition.BoonPool.PHYSICAL,
+	ItemDefinition.BoonPool.FIRE,
+	ItemDefinition.BoonPool.COLD,
+	ItemDefinition.BoonPool.POISON,
 ]
 
 
@@ -118,6 +126,7 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 	run_act = maxi(0, int(data.get("run_act", 0)))
 	act_cards_total = maxi(0, int(data.get("act_cards_total", 0)))
 	pending_danger = bool(data.get("pending_danger", false))
+	pending_narrow_fork = bool(data.get("pending_narrow_fork", false))
 	active_street_card_id = StringName(str(data.get("active_street_card_id", "")))
 	pending_boon_card_id = StringName(str(data.get("pending_boon_card_id", "")))
 	act_cards = _cards_from_save(data.get("act_cards", []))
@@ -239,16 +248,39 @@ func complete_wave() -> void:
 
 
 func choose_route(direction: StringName) -> void:
-	if phase != RunPhase.ROUTE_CHOICE or direction not in [&"left", &"right"]:
+	var offer_count := get_fork_offer_count()
+	if phase != RunPhase.ROUTE_CHOICE or direction not in get_route_directions():
 		return
 	last_direction = direction
 	route_step += 1
 	current_area = _resolve_area_for_fork(direction, route_step)
 	area_changed.emit(current_area)
-	_commit_route_card(direction)
+	# Consume before commit so a freshly picked No Through Road still taxes the *next* fork.
+	pending_narrow_fork = false
+	_commit_route_card(direction, offer_count)
 	route_chosen.emit(direction, route_step)
 	set_phase(RunPhase.TURNING)
 	SaveManager.save_active_session()
+
+
+## 4-way shows three face-up streets; a T (narrow card, or fewer than three left) shows two.
+func get_fork_offer_count() -> int:
+	if act_cards.is_empty():
+		return 2
+	if pending_narrow_fork or act_cards.size() < 3:
+		return 2
+	return 3
+
+
+func uses_t_junction() -> bool:
+	return get_fork_offer_count() < 3
+
+
+func get_route_directions() -> Array[StringName]:
+	var dirs: Array[StringName] = [&"left", &"right"]
+	if not uses_t_junction():
+		dirs.insert(1, &"straight")
+	return dirs
 
 
 func get_rest_area() -> ItemDefinition.BoonPool:
@@ -359,6 +391,7 @@ func debug_prepare_boss_pick() -> void:
 	act_cards.clear()
 	pending_boon_card_id = &""
 	pending_danger = false
+	pending_narrow_fork = false
 	boss_modifier_card_ids.clear()
 	boss_cleared_for_act = false
 	ActCardCombat.clear()
@@ -381,6 +414,7 @@ func _debug_fallback_boss_picks() -> Array[StringName]:
 func begin_new_act_deck() -> Array[ActCardDefinition]:
 	run_act += 1
 	pending_danger = false
+	pending_narrow_fork = false
 	ActCardCombat.clear()
 	active_street_card_id = &""
 	pending_boon_card_id = &""
@@ -399,20 +433,17 @@ func begin_new_act_deck() -> Array[ActCardDefinition]:
 
 
 func peek_route_cards() -> Array[ActCardDefinition]:
-	## Two face-up offers for left / right. Pick one; the other stays in the deck.
-	## With one card left, both sides show it.
+	## Face-up offers for the live fork. Pick one; the rest stay in the deck.
+	## With one card left, both T buttons show it.
 	var offers: Array[ActCardDefinition] = []
 	if act_cards.is_empty():
 		return offers
-	var left := ActCardRegistry.load_by_id(act_cards[0])
-	if left:
-		offers.append(left)
-	if act_cards.size() >= 2:
-		var right := ActCardRegistry.load_by_id(act_cards[1])
-		if right:
-			offers.append(right)
-	elif left:
-		offers.append(left)
+	var count := get_fork_offer_count()
+	for i in count:
+		var idx := mini(i, act_cards.size() - 1)
+		var card := ActCardRegistry.load_by_id(act_cards[idx])
+		if card:
+			offers.append(card)
 	return offers
 
 
@@ -439,7 +470,7 @@ func consume_pending_danger() -> bool:
 	return true
 
 
-func _commit_route_card(direction: StringName) -> void:
+func _commit_route_card(direction: StringName, offer_count: int) -> void:
 	if act_cards.is_empty():
 		ActCardCombat.clear()
 		active_street_card_id = &""
@@ -447,8 +478,13 @@ func _commit_route_card(direction: StringName) -> void:
 		pending_danger = false
 		return
 	var offer_index := 0
-	if act_cards.size() >= 2 and direction == &"right":
-		offer_index = 1
+	match direction:
+		&"straight":
+			if offer_count >= 3:
+				offer_index = 1
+		&"right":
+			offer_index = 1 if offer_count < 3 else 2
+	offer_index = mini(offer_index, act_cards.size() - 1)
 	var card_id := act_cards[offer_index]
 	act_cards.remove_at(offer_index)
 	ActCardCombat.clear()
@@ -508,6 +544,7 @@ func _reset_act_deck() -> void:
 	active_street_card_id = &""
 	pending_boon_card_id = &""
 	pending_danger = false
+	pending_narrow_fork = false
 
 
 func _act_rng(channel: int) -> RandomNumberGenerator:
@@ -528,6 +565,8 @@ func _resolve_area_for_fork(direction: StringName, step: int) -> ItemDefinition.
 	var index := (step - 1) % 4
 	if direction == &"left":
 		return _LEFT_AREA_CYCLE[index]
+	if direction == &"straight":
+		return _STRAIGHT_AREA_CYCLE[index]
 	return _RIGHT_AREA_CYCLE[index]
 
 
@@ -592,6 +631,7 @@ func to_save_data() -> Dictionary:
 		"active_street_card_id": String(active_street_card_id),
 		"pending_boon_card_id": String(pending_boon_card_id),
 		"pending_danger": pending_danger,
+		"pending_narrow_fork": pending_narrow_fork,
 		"weapons": weapons,
 		"saved_at": Time.get_datetime_string_from_system(),
 	}

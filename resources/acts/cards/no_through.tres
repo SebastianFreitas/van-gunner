@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ActCardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/run/act_card_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/run/effects/narrow_fork_effect.gd" id="3"]
+[ext_resource type="Texture2D" path="res://scenes/acts/cards/no_through.svg" id="4"]
+
+[sub_resource type="Resource" id="eff_narrow_fork"]
+script = ExtResource("3")
+
+[resource]
+script = ExtResource("1")
+id = &"no_through"
+display_name = "No Through Road"
+description = "Next fork is a T — two streets instead of three"
+polarity = 1
+icon = ExtResource("4")
+effects = Array[ExtResource("2")]([SubResource("eff_narrow_fork")])

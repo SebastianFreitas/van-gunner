@@ -40,7 +40,7 @@ Every system reacts to `phase_changed` rather than driving each other directly.
 ```
 IDLE ──(player tells driver to start)──> TRAVELLING
 TRAVELLING ──(act deck empty)──> ACT_REVEAL ──> ROUTE_CHOICE
-ROUTE_CHOICE ──(pick left/right card)──> TURNING ──> TRAVELLING
+ROUTE_CHOICE ──(pick a street card)──> TURNING ──> TRAVELLING
 TRAVELLING ──(EncounterDirector timer)──> COMBAT ──> REST
 REST ──(boon pick for the committed street card)──> ROUTE_CHOICE
    ...six cards later...
@@ -52,9 +52,9 @@ any ──(van health hits 0)──> GAME_OVER
 ### Acts and street cards
 
 An **act** is a deck of 6 street cards: 3 BLESSING, 3 DANGER, drawn at a roadside
-statue (`ACT_REVEAL`) and shown shuffled. At each fork the player sees the top two
-cards face-up as the left/right options; taking one commits it and leaves the other
-in the deck. A committed card:
+statue (`ACT_REVEAL`) and shown shuffled. At each fork the player sees the top
+cards face-up (three at a 4-way, two at a T); taking one commits it and leaves
+the others in the deck. A committed card:
 
 - applies its `ActCardEffect`s to combat for that street (`ActCardCombat`)
 - owes the player a 3-choice boon at the following `REST`
@@ -64,9 +64,14 @@ When the deck empties, the six cards come back **face-down** and the player pick
 two (`BOSS_CARD_PICK_COUNT`) to bind to the act boss — both cards' effects stack on
 that fight. Beat it and a new deck is drawn.
 
-Shops are separate from cards: every fork currently offers a shop on one side
-(`TravelController._prepare_shop_fork`), and taking that side gets you both the shop
-*and* the card.
+Shops are separate from cards: every fork currently offers a shop on left or
+right (`TravelController._prepare_shop_fork`), never on the straight. Taking that
+side gets you both the shop *and* the card.
+
+Default forks are 4-ways (left / straight / right). T-junctions are used when
+fewer than three cards remain in the act deck, or when **No Through Road** was
+the previous street — that DANGER card sets `GameSession.pending_narrow_fork`
+so the next choice drops from 3 to 2.
 
 ### Determinism
 

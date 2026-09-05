@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://cd7a8olfe604k" path="res://scripts/run/room_zone.gd" id="9"]
 [ext_resource type="PackedScene" uid="uid://dmdjjeocfdi7a" path="res://scenes/corridor/corridor_segment.tscn" id="10"]
 [ext_resource type="PackedScene" uid="uid://dyn2nx35s88gm" path="res://scenes/corridor/corridor_t_junction.tscn" id="11"]
+[ext_resource type="PackedScene" uid="uid://c4wayjnct01vg" path="res://scenes/corridor/corridor_crossroads.tscn" id="11d"]
 [ext_resource type="PackedScene" path="res://scenes/corridor/shop_bay.tscn" id="11b"]
 [ext_resource type="PackedScene" path="res://scenes/corridor/act_statue.tscn" id="11c"]
 [ext_resource type="PackedScene" path="res://scenes/ui/item_hud.tscn" id="12"]
@@ -1302,6 +1303,7 @@ spot_angle_attenuation = 0.85
 script = ExtResource("5")
 segment_scene = ExtResource("10")
 t_junction_scene = ExtResource("11")
+crossroads_scene = ExtResource("11d")
 shop_scene = ExtResource("11b")
 act_statue_scene = ExtResource("11c")
 
@@ -1461,9 +1463,9 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
+offset_left = -420.0
 offset_top = -220.0
-offset_right = 300.0
+offset_right = 420.0
 offset_bottom = 220.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -1484,7 +1486,7 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.66, 0.64, 1)
 theme_override_font_sizes/font_size = 12
-text = "Blue blessing · red danger — pick a turn, or the road picks for you."
+text = "Blue blessing · red danger — pick a road, or the van picks for you."
 horizontal_alignment = 1
 autowrap_mode = 3
 
@@ -1494,6 +1496,11 @@ theme_override_constants/separation = 20
 alignment = 1
 
 [node name="Left" type="Button" parent="HUD/RouteChoice/Layout/Buttons" unique_id=239635189]
+custom_minimum_size = Vector2(236, 268)
+layout_mode = 2
+text = ""
+
+[node name="Straight" type="Button" parent="HUD/RouteChoice/Layout/Buttons" unique_id=239635190]
 custom_minimum_size = Vector2(236, 268)
 layout_mode = 2
 text = ""
@@ -1596,6 +1603,7 @@ text = "RETURN TO MENU"
 unique_name_in_owner = true
 
 [connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Left" to="." method="_on_left_route_pressed"]
+[connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Straight" to="." method="_on_straight_route_pressed"]
 [connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Right" to="." method="_on_right_route_pressed"]
 [connection signal="pressed" from="HUD/DriverTalk/Layout/Buttons/StartRun" to="." method="_on_start_run_pressed"]
 [connection signal="pressed" from="HUD/DriverTalk/Layout/Buttons/Accelerate" to="." method="_on_accelerate_pressed"]
