@@ -43,7 +43,7 @@ func _encounters_enabled() -> bool:
 	if GameSession.needs_act_reveal() and not GameSession.is_boss_combat_queued():
 		return false
 	var travel := get_tree().get_first_node_in_group(&"travel_controller")
-	if travel and travel.has_method(&"is_shop_visit_active") and travel.is_shop_visit_active():
+	if travel and travel.has_method(&"is_stop_visit_active") and travel.is_stop_visit_active():
 		return false
 	if travel and travel.has_method(&"is_act_reveal_active") and travel.is_act_reveal_active():
 		return false
@@ -87,7 +87,7 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	elif next_phase in [
 		GameSession.RunPhase.GAME_OVER,
 		GameSession.RunPhase.PARKING,
-		GameSession.RunPhase.SHOP,
+		GameSession.RunPhase.STOP,
 	]:
 		_cancel_encounters_keep_phase()
 

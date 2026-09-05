@@ -34,12 +34,16 @@ func apply_side_streets(left: bool, right: bool) -> void:
 	_sync_road_openings()
 
 
-## Open a wall gap for a shop bay without showing the cosmetic side street.
-func open_shop_bay(side: StringName) -> void:
+## Open a wall gap for a side-stop bay without showing the cosmetic side street.
+func open_bay(side: StringName) -> void:
 	_set_side_street(side, true)
 	var side_street := _side_street_left if side == &"left" else _side_street_right
 	side_street.visible = false
 	_sync_road_openings()
+
+
+func open_shop_bay(side: StringName) -> void:
+	open_bay(side)
 
 
 func _set_side_street(side: StringName, enabled: bool) -> void:
@@ -63,7 +67,7 @@ func _set_side_street(side: StringName, enabled: bool) -> void:
 func _sync_road_openings() -> void:
 	if _road_floor == null:
 		return
-	# Wall collision disabled means the side is open (side street or shop bay).
+	# Wall collision disabled means the side is open (side street or stop bay).
 	# Drop sidewalk there so branch / bay road meets flush carriageway.
 	var left_open := _left_wall_collision.disabled
 	var right_open := _right_wall_collision.disabled

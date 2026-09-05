@@ -27,7 +27,7 @@ side windows. The van drives itself; the player never steers. Progress is made b
 choosing which street to turn onto at forks.
 
 Nothing about the van moves in world space in the way you'd expect: the van rig is
-parented to a `PathFollow3D`, and the world (corridor segments, junctions, shops)
+parented to a `PathFollow3D`, and the world (corridor segments, junctions, side stops)
 is spawned ahead and culled behind. Enemies live in `EnemyContainer`, a child of the
 van rig, so their positions are **van-local**. This is why chase speed is expressed
 as *closing speed* (`mob_world_speed - live_van_speed`) rather than a plain velocity.
@@ -41,11 +41,11 @@ Every system reacts to `phase_changed` rather than driving each other directly.
 IDLE ──(player tells driver to start)──> TRAVELLING
 TRAVELLING ──(act deck empty)──> ACT_REVEAL ──> ROUTE_CHOICE
 ROUTE_CHOICE ──(pick a street card)──> TURNING ──> TRAVELLING
+  └── PARKING ──> STOP ──> TRAVELLING  (every street has a side stop)
 TRAVELLING ──(EncounterDirector timer)──> COMBAT ──> REST
 REST ──(boon pick for the committed street card)──> ROUTE_CHOICE
-   ...six cards later...
+ ...six cards later...
 REST ──> BOSS_PICK ──> TRAVELLING ──> COMBAT (boss) ──> REST ──> ACT_REVEAL (next act)
-TRAVELLING ──(shop fork was taken)──> PARKING ──> SHOP ──> TRAVELLING
 any ──(van health hits 0)──> GAME_OVER
 ```
 
@@ -64,9 +64,11 @@ When the deck empties, the six cards come back **face-down** and the player pick
 two (`BOSS_CARD_PICK_COUNT`) to bind to the act boss — both cards' effects stack on
 that fight. Beat it and a new deck is drawn.
 
-Shops are separate from cards: every fork currently offers a shop on left or
-right (`TravelController._prepare_shop_fork`), never on the straight. Taking that
-side gets you both the shop *and* the card.
+**Side stops** are separate from street-card effects. Every offered road at a
+fork gets a building (shop, garage, … from `resources/side_stops/`) — blessing
+and DANGER alike, including straight. The card is just that street's combat
+modifier. Taking a road commits the card *and* parks at that stop. While docked
+(`STOP`) the rear doors stay open so you can walk the room.
 
 Default forks are 4-ways (left / straight / right). T-junctions are used when
 fewer than three cards remain in the act deck, or when **No Through Road** was
@@ -114,6 +116,7 @@ Adding content should almost never mean writing code:
 |---|---|---|
 | a boon or item | `resources/items/` (+ pool entry) | `ItemPoolRegistry`, `ItemRegistry` |
 | a street card | `resources/acts/cards/` | `ActCardRegistry` (scans the folder) |
+| a side stop | `resources/side_stops/` (+ bay scene) | `SideStopRegistry` (scans the folder) |
 | a gun | `resources/weapons/definitions/` | `WeaponCatalog` |
 | an enemy | `resources/enemies/` (+ spawn pool) | `GameBalance.pick_spawn_enemy` |
 | a balance tweak | `resources/balance/game_balance.tres` | `GameBalance` facade |
@@ -208,6 +211,9 @@ Each of these has already cost someone real debugging time:
 - **`ActCardRegistry` scans `res://resources/acts/cards/` with `DirAccess`.** Packed
   listings may use `foo.tres.remap`; `list_ids()` strips `.remap` before the
   `.tres` check. An empty list `push_warning`s rather than failing quietly.
+- **`SideStopRegistry` scans `res://resources/side_stops/` the same way.** A stop
+  scene must expose `DockPoint` and `ExitPoint` Marker3Ds in the shop-bay frame
+  (origin at the corridor wall, +X into the building).
 - **Rejected saves used to look like NEW RUN.** `load_slot_data()` returns `{}` for
   version mismatches and corrupt JSON, which made `get_slot_summary()` report
   `exists: false`. Clicking the slot then called `start_new`. Incompatible files
@@ -242,21 +248,22 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Change run pacing / phases | `scripts/core/game_session.gd` |
 | Change wave sizes, enemy speed, spawn geometry | `resources/balance/game_balance.tres` |
 | Change how encounters are sequenced | `scripts/run/encounter_director.gd` |
-| Change road, turns, shop parking, statues | `scripts/run/travel_controller.gd` |
+| Change road, turns, side-stop parking, statues | `scripts/run/travel_controller.gd` |
 | Change act deck / boss pick logic | `game_session.gd` + `scripts/run/act_deck_controller.gd` |
 | Change the reveal / boss-pick UI | `scripts/ui/act_reveal_panel.gd` |
 | Add a boon | new `.tres` in `resources/items/boons/` + pool + maybe a `BoonBehavior` |
 | Add a street card | new `.tres` in `resources/acts/cards/` + maybe an `ActCardEffect` |
+| Add a side stop | new `.tres` in `resources/side_stops/` + a bay scene with Dock/Exit points |
 | Touch guns | `scripts/weapons/` + `scripts/combat/gun_*.gd` |
 | Touch the van shell / doors / windows | `scripts/run/van_*.gd`, `side_*.gd`, `rear_doors.gd` |
 | Bench / crafting UI | `scripts/ui/bench_screen.gd` |
 | Bench screenshot tool | `tools/bench_preview.tscn` |
-| Shop | `scripts/run/shop_*.gd` |
+| Shop counter / stock | `scripts/run/shop_*.gd` |
 
 ## 9. Running and debugging
 
 - Open the project in Godot 4.7; main scene is `scenes/boot/boot.tscn`.
-- In-game console: **H**. `help` lists commands; `list commands|boons|items|weapons|cards`
+- In-game console: **H**. `help` lists commands; `list commands|boons|items|weapons|cards|stops`
   enumerates content. Full command list is in `PROJECT_MAP.md`.
 - `speed` enables a debug fast-forward that also auto-resolves reveals and boon
   picks — useful for reaching late acts quickly, but it *skips* the panels, so don't

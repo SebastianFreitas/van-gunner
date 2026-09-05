@@ -38,7 +38,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 			"sidedoor":
 				matches = _filter_prefix(["open", "close", "toggle"], "")
 			"list":
-				matches = _filter_prefix(["boons", "items", "commands", "weapons", "cards"], "")
+				matches = _filter_prefix(["boons", "items", "commands", "weapons", "cards", "stops"], "")
 			"card":
 				matches = _filter_prefix(_card_id_strings(), "")
 			"give_weapon":
@@ -60,7 +60,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 	elif parts[0] == "sidedoor":
 		matches = _filter_prefix(["open", "close", "toggle"], partial)
 	elif parts[0] == "list":
-		matches = _filter_prefix(["boons", "items", "commands", "weapons", "cards"], partial)
+		matches = _filter_prefix(["boons", "items", "commands", "weapons", "cards", "stops"], partial)
 	else:
 		matches = []
 
@@ -131,6 +131,7 @@ func _cmd_help(_args: Array) -> String:
 		+ "  list boons [q]  browse boon ids (optional filter)\n"
 		+ "  list items [q]  browse all item ids\n"
 		+ "  list cards [q]  browse street card ids\n"
+		+ "  list stops [q]  browse side-stop ids (shop, garage, …)\n"
 		+ "  card [id]       print / force-activate active street card(s)\n"
 		+ "  boss            skip to act-end boss pick (current six streets)\n"
 		+ "  phase          print current run phase\n"
@@ -322,7 +323,7 @@ func _cmd_force_a1(_args: Array) -> String:
 
 func _cmd_list(args: Array) -> String:
 	if args.is_empty():
-		return "Usage: list boons|items|commands|weapons|cards [filter]"
+		return "Usage: list boons|items|commands|weapons|cards|stops [filter]"
 	var kind: String = str(args[0]).to_lower()
 	var filter_text := " ".join(args.slice(1))
 	match kind:
@@ -342,8 +343,13 @@ func _cmd_list(args: Array) -> String:
 			return _format_weapon_list(filter_text)
 		"cards":
 			return _format_card_list(filter_text)
+		"stops":
+			return _format_stop_list(filter_text)
 		_:
-			return "Unknown list target: %s  (try boons, items, commands, weapons, cards)" % kind
+			return (
+				"Unknown list target: %s  (try boons, items, commands, weapons, cards, stops)"
+				% kind
+			)
 
 
 func _cmd_card(args: Array) -> String:
@@ -403,6 +409,29 @@ func _format_card_list(filter_text: String) -> String:
 			return "No street cards found."
 		return "No street cards match '%s'." % filter_text
 	var header := "%d street cards" % count
+	if not filter_text.is_empty():
+		header += " matching '%s'" % filter_text
+	return header + ":\n" + "\n".join(lines)
+
+
+func _format_stop_list(filter_text: String) -> String:
+	var needle := filter_text.strip_edges().to_lower()
+	var lines: PackedStringArray = PackedStringArray()
+	var count := 0
+	for stop_id in SideStopRegistry.list_ids():
+		var stop := SideStopRegistry.load_by_id(stop_id)
+		if stop == null:
+			continue
+		var hay := ("%s %s %s" % [stop.id, stop.display_name, stop.short_label]).to_lower()
+		if not needle.is_empty() and not hay.contains(needle):
+			continue
+		lines.append("  %s  —  %s" % [stop.id, stop.fork_label()])
+		count += 1
+	if count == 0:
+		if filter_text.is_empty():
+			return "No side stops found."
+		return "No side stops match '%s'." % filter_text
+	var header := "%d side stops" % count
 	if not filter_text.is_empty():
 		header += " matching '%s'" % filter_text
 	return header + ":\n" + "\n".join(lines)

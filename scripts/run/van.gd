@@ -9,7 +9,6 @@ const _ROUTE_ACCENT := Color(0.86, 0.74, 0.46, 1.0)
 const _ROUTE_MUTED := Color(0.42, 0.40, 0.36, 1.0)
 const _ROUTE_BLESSING := Color(0.52, 0.70, 0.88, 1.0)
 const _ROUTE_DANGER := Color(0.84, 0.30, 0.24, 1.0)
-const _ROUTE_SHOP := Color(0.46, 0.45, 0.42, 1.0)
 const _ROUTE_INK := Color(0.08, 0.08, 0.07, 1.0)
 
 @onready var player: FpsPlayer = $TravelPath/VanFollow/VanRig/Player
@@ -229,15 +228,15 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 			rest_toast.show()
 			route_panel.hide()
 		GameSession.RunPhase.PARKING:
-			rest_toast.text = "PULLING INTO THE SHOP..."
+			rest_toast.text = _stop_toast_parking()
 			rest_toast.show()
-		GameSession.RunPhase.SHOP:
-			_set_shop_rear_exit(true)
-			rest_toast.text = "SHOP — STEP OUT BACK, THEN TELL THE DRIVER TO CONTINUE"
+		GameSession.RunPhase.STOP:
+			_set_stop_rear_exit(true)
+			rest_toast.text = _stop_toast_docked()
 			rest_toast.show()
 		_:
 			if player_containment and player_containment.is_rear_exit_allowed():
-				_set_shop_rear_exit(false)
+				_set_stop_rear_exit(false)
 			rest_toast.hide()
 
 	var bench_blocked := next_phase in [
@@ -309,9 +308,6 @@ func _set_route_highlight(direction: StringName) -> void:
 func _refresh_route_choice_labels() -> void:
 	_bind_route_choice_buttons()
 	var travel := get_tree().get_first_node_in_group(&"travel_controller")
-	var shop_side: StringName = &""
-	if travel and travel.has_method(&"get_shop_fork_side"):
-		shop_side = travel.get_shop_fork_side()
 	var offers := GameSession.peek_route_cards()
 	var t_fork := GameSession.uses_t_junction()
 	var title: Label = %RouteChoice.get_node_or_null("Layout/Title") as Label
@@ -326,11 +322,14 @@ func _refresh_route_choice_labels() -> void:
 		right_card = offers[1] if offers.size() > 1 else left_card
 	else:
 		right_card = offers[2] if offers.size() > 2 else straight_card
-	_populate_route_button(_left_route_btn, left_card, shop_side == &"left", &"left")
+	var left_stop := _fork_stop_for(travel, &"left")
+	var straight_stop := _fork_stop_for(travel, &"straight")
+	var right_stop := _fork_stop_for(travel, &"right")
+	_populate_route_button(_left_route_btn, left_card, left_stop != null, &"left", left_stop)
 	_populate_route_button(
-		_straight_route_btn, straight_card, shop_side == &"straight", &"straight"
+		_straight_route_btn, straight_card, straight_stop != null, &"straight", straight_stop
 	)
-	_populate_route_button(_right_route_btn, right_card, shop_side == &"right", &"right")
+	_populate_route_button(_right_route_btn, right_card, right_stop != null, &"right", right_stop)
 	if _route_highlight not in GameSession.get_route_directions():
 		_route_highlight = &"left"
 	_sync_route_highlight()
@@ -361,6 +360,12 @@ func _set_route_pick_label(button: Button, direction: StringName) -> void:
 		pick.text = "SELECTED — TAKE THIS ROAD"
 	else:
 		pick.text = _route_dir_caption(direction)
+
+
+func _fork_stop_for(travel: Node, direction: StringName) -> SideStopDefinition:
+	if travel == null or not travel.has_method(&"get_fork_stop_for"):
+		return null
+	return travel.get_fork_stop_for(direction) as SideStopDefinition
 
 
 func _route_dir_caption(direction: StringName) -> String:
@@ -394,7 +399,11 @@ func _apply_route_highlight_look(button: Button, selected: bool) -> void:
 
 
 func _populate_route_button(
-	button: Button, card: ActCardDefinition, is_shop: bool, direction: StringName
+	button: Button,
+	card: ActCardDefinition,
+	is_stop: bool,
+	direction: StringName,
+	fork_stop: SideStopDefinition = null
 ) -> void:
 	if button == null:
 		return
@@ -411,8 +420,7 @@ func _populate_route_button(
 
 	var is_danger := card != null and card.is_danger()
 	var polarity := _ROUTE_DANGER if is_danger else _ROUTE_BLESSING
-	var stripe := _ROUTE_SHOP if is_shop else polarity
-	button.set_meta(&"route_stripe", stripe)
+	button.set_meta(&"route_stripe", polarity)
 
 	var stack := VBoxContainer.new()
 	stack.name = "Stack"
@@ -430,8 +438,8 @@ func _populate_route_button(
 	dir.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stack.add_child(dir)
 
-	# Always occupy the same vertical strip so shop / street cards line up.
-	stack.add_child(_make_route_shop_slot(is_shop))
+	# Always occupy the same vertical strip so stop / street cards line up.
+	stack.add_child(_make_route_stop_slot(is_stop, fork_stop))
 
 	if card == null:
 		var empty := Label.new()
@@ -503,7 +511,7 @@ func _populate_route_button(
 	card_stack.add_child(body)
 
 
-func _make_route_shop_slot(is_shop: bool) -> Control:
+func _make_route_stop_slot(is_stop: bool, fork_stop: SideStopDefinition) -> Control:
 	var slot := PanelContainer.new()
 	slot.custom_minimum_size = Vector2(0, 26)
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -514,18 +522,18 @@ func _make_route_shop_slot(is_shop: bool) -> Control:
 	style.content_margin_right = 6
 	style.content_margin_top = 3
 	style.content_margin_bottom = 3
-	style.bg_color = Color(0.18, 0.17, 0.16, 1.0) if is_shop else Color(0.11, 0.11, 0.10, 1.0)
+	style.bg_color = Color(0.18, 0.17, 0.16, 1.0) if is_stop else Color(0.11, 0.11, 0.10, 1.0)
 	slot.add_theme_stylebox_override(&"panel", style)
-	var shop_label := Label.new()
-	shop_label.text = "SHOP STOP" if is_shop else "—"
-	shop_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	shop_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	shop_label.add_theme_color_override(
-		&"font_color", Color(0.72, 0.70, 0.64, 1.0) if is_shop else Color(0.28, 0.27, 0.25, 1.0)
+	var stop_label := Label.new()
+	stop_label.text = fork_stop.fork_label() if is_stop and fork_stop else "—"
+	stop_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stop_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	stop_label.add_theme_color_override(
+		&"font_color", Color(0.72, 0.70, 0.64, 1.0) if is_stop else Color(0.28, 0.27, 0.25, 1.0)
 	)
-	shop_label.add_theme_font_size_override(&"font_size", 11)
-	shop_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	slot.add_child(shop_label)
+	stop_label.add_theme_font_size_override(&"font_size", 11)
+	stop_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot.add_child(stop_label)
 	return slot
 
 
@@ -764,7 +772,7 @@ func open_driver_talk() -> void:
 		return
 	if GameSession.phase == GameSession.RunPhase.ROUTE_CHOICE:
 		return
-	if GameSession.phase == GameSession.RunPhase.SHOP:
+	if GameSession.phase == GameSession.RunPhase.STOP:
 		return
 	if GameSession.phase == GameSession.RunPhase.PARKING:
 		return
@@ -843,13 +851,17 @@ func _on_driver_talk_close_pressed() -> void:
 	close_driver_talk()
 
 
-func seal_van_after_shop() -> void:
-	_set_shop_rear_exit(false)
-	rest_toast.text = "PULLING OUT OF THE SHOP..."
+func seal_van_after_stop() -> void:
+	_set_stop_rear_exit(false)
+	rest_toast.text = _stop_toast_leaving()
 	rest_toast.show()
 
 
-func _set_shop_rear_exit(allowed: bool) -> void:
+func seal_van_after_shop() -> void:
+	seal_van_after_stop()
+
+
+func _set_stop_rear_exit(allowed: bool) -> void:
 	if player_containment:
 		player_containment.set_rear_exit_allowed(allowed)
 	var rear_doors: Node = get_tree().get_first_node_in_group(&"rear_doors")
@@ -859,6 +871,28 @@ func _set_shop_rear_exit(allowed: bool) -> void:
 		rear_doors.open()
 	elif not allowed and rear_doors.has_method(&"close"):
 		rear_doors.close()
+
+
+func _active_side_stop() -> SideStopDefinition:
+	var travel := get_tree().get_first_node_in_group(&"travel_controller")
+	if travel and travel.has_method(&"get_active_stop"):
+		return travel.get_active_stop()
+	return null
+
+
+func _stop_toast_parking() -> String:
+	var stop := _active_side_stop()
+	return stop.label_parking() if stop else "PULLING IN..."
+
+
+func _stop_toast_docked() -> String:
+	var stop := _active_side_stop()
+	return stop.label_docked() if stop else "STEP OUT BACK, THEN TELL THE DRIVER TO CONTINUE"
+
+
+func _stop_toast_leaving() -> String:
+	var stop := _active_side_stop()
+	return stop.label_leaving() if stop else "PULLING OUT..."
 
 
 func _on_main_menu_pressed() -> void:

@@ -287,6 +287,16 @@ def build():
         )
     )
 
+    doc.append(section("Side stops"))
+    doc.append(
+        md_table(
+            ["id", "name", "short_label"],
+            resource_table(
+                "resources/side_stops", ["display_name", "short_label"]
+            ),
+        )
+    )
+
     doc.append(section("Enemies"))
     doc.append(
         md_table(

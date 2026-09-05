@@ -20,7 +20,7 @@ extends Node3D
 @export var gutter_width := 0.28
 @export var gutter_depth := 0.04
 ## When false, that side becomes continuous carriageway to the tile edge
-## (use for side-street / shop openings so we don't stack sidewalk under the branch).
+## (use for side-street / stop-bay openings so we don't stack sidewalk under the branch).
 @export var sidewalk_left := true
 @export var sidewalk_right := true
 ## Shorten sidewalk/curb/gutter before the +Z / -Z tile edge so a corner

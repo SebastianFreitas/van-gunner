@@ -6,7 +6,7 @@ enum TurnState {
 	APPROACHING,
 	TURNING,
 	PARKING,
-	LEAVING_SHOP,
+	LEAVING_STOP,
 }
 
 const QUARTER_CIRCLE_HANDLE := 0.55228475
@@ -18,11 +18,11 @@ const SIDE_STREET_CHANCE := 0.26
 ## double wall where two branch flank walls meet at the segment seam).
 const SIDE_STREET_GAP := 2
 const SIDE_STREET_START_SEGMENT := 4
-const SHOP_SPAWN_MIN_SEGMENTS_AHEAD := 1
-const SHOP_SPAWN_MAX_SEGMENTS_AHEAD := 2
+const STOP_SPAWN_MIN_SEGMENTS_AHEAD := 1
+const STOP_SPAWN_MAX_SEGMENTS_AHEAD := 2
 ## Straight reverse after the quarter-circle. Total pass-distance is turn_radius + this.
-const SHOP_PARK_REVERSE_STRAIGHT := 8.0
-const SHOP_CORRIDOR_LATERAL := 9.0
+const STOP_PARK_REVERSE_STRAIGHT := 8.0
+const STOP_CORRIDOR_LATERAL := 9.0
 
 ## Overwritten in _ready from MetaProgression → GameBalance van speed curve.
 ## Live value includes temporary driver boosts (raiders read this every frame).
@@ -32,7 +32,6 @@ const SHOP_CORRIDOR_LATERAL := 9.0
 ## 4-way (left / straight / right). Used when the act deck still has 3+ cards
 ## and No Through Road is not pending.
 @export var crossroads_scene: PackedScene
-@export var shop_scene: PackedScene
 @export var act_statue_scene: PackedScene
 @export var segment_length := 20.0
 @export var segment_ahead_distance := 80.0
@@ -75,14 +74,21 @@ var _boost_remaining := 0.0
 var _boost_cooldown_remaining := 0.0
 var _debug_speed_mode := false
 
-## Which fork button is the shop this choice (left/right). Empty when none.
-var _shop_fork_side: StringName = &""
-## Player took the shop fork — spawn a side bay after the turn.
-var _shop_pending := false
-var _shop_attach_segment_index := -1
-var _shop_bay_side: StringName = &""
-var _active_shop: Node3D
-var _shop_align_progress := INF
+## Per-direction stop on the live fork. Every offered road gets one.
+var _fork_stops: Dictionary = {}
+## First assigned stop this fork — kept for older duck-typed callers.
+var _fork_stop: SideStopDefinition
+## First assigned stop side this fork — kept for older duck-typed callers.
+var _stop_fork_side: StringName = &""
+## Player took the stop fork — spawn that bay after the turn.
+var _stop_pending := false
+var _pending_stop: SideStopDefinition
+var _stop_attach_segment_index := -1
+var _stop_bay_side: StringName = &""
+var _active_stop: Node3D
+var _active_stop_def: SideStopDefinition
+var _stop_align_progress := INF
+var _last_stop_id: StringName = &""
 ## When true, PathFollow moves backward along the park curve (rear into bay).
 var _park_reversing := false
 var _active_statue: Node3D
@@ -127,7 +133,7 @@ func _refresh_travel_speed() -> void:
 		mult = debug_speed_multiplier
 	elif _boost_remaining > 0.0:
 		mult = boost_multiplier
-	if _turn_state in [TurnState.PARKING, TurnState.LEAVING_SHOP]:
+	if _turn_state in [TurnState.PARKING, TurnState.LEAVING_STOP]:
 		mult *= park_speed_scale
 	travel_speed = _base_travel_speed * mult
 
@@ -159,7 +165,7 @@ func can_boost() -> bool:
 		and _boost_cooldown_remaining <= 0.0
 		and GameSession.phase != GameSession.RunPhase.IDLE
 		and GameSession.phase != GameSession.RunPhase.GAME_OVER
-		and GameSession.phase != GameSession.RunPhase.SHOP
+		and GameSession.phase != GameSession.RunPhase.STOP
 		and GameSession.phase != GameSession.RunPhase.PARKING
 		and GameSession.phase != GameSession.RunPhase.ACT_REVEAL
 		and GameSession.phase != GameSession.RunPhase.BOSS_PICK
@@ -184,23 +190,50 @@ func try_boost() -> bool:
 	return true
 
 
+func get_stop_fork_side() -> StringName:
+	return _stop_fork_side
+
+
+func get_fork_stop() -> SideStopDefinition:
+	return _fork_stop
+
+
+func get_fork_stop_for(direction: StringName) -> SideStopDefinition:
+	if not _fork_stops.has(direction):
+		return null
+	return _fork_stops[direction] as SideStopDefinition
+
+
+func get_active_stop() -> SideStopDefinition:
+	return _active_stop_def if _active_stop_def else _pending_stop
+
+
+## Duck-typed alias — older callers still ask for the shop fork.
 func get_shop_fork_side() -> StringName:
-	return _shop_fork_side
+	return get_stop_fork_side()
+
+
+func is_stop_docked() -> bool:
+	return GameSession.phase == GameSession.RunPhase.STOP
 
 
 func is_shop_docked() -> bool:
-	return GameSession.phase == GameSession.RunPhase.SHOP
+	return is_stop_docked()
 
 
-## True from shop-fork choice until the van has left the bay — blocks wave combat.
+## True from stop-fork choice until the van has left the bay — blocks wave combat.
+func is_stop_visit_active() -> bool:
+	if _stop_pending:
+		return true
+	if is_instance_valid(_active_stop):
+		return true
+	if _turn_state in [TurnState.PARKING, TurnState.LEAVING_STOP]:
+		return true
+	return GameSession.phase in [GameSession.RunPhase.PARKING, GameSession.RunPhase.STOP]
+
+
 func is_shop_visit_active() -> bool:
-	if _shop_pending:
-		return true
-	if is_instance_valid(_active_shop):
-		return true
-	if _turn_state in [TurnState.PARKING, TurnState.LEAVING_SHOP]:
-		return true
-	return GameSession.phase in [GameSession.RunPhase.PARKING, GameSession.RunPhase.SHOP]
+	return is_stop_visit_active()
 
 
 func is_act_reveal_active() -> bool:
@@ -223,17 +256,23 @@ func end_act_statue_stop() -> void:
 	_clear_act_statue()
 
 
-func leave_shop() -> void:
-	if GameSession.phase != GameSession.RunPhase.SHOP:
+func leave_stop() -> void:
+	if GameSession.phase != GameSession.RunPhase.STOP:
 		return
-	if not is_instance_valid(_active_shop):
-		_clear_shop_state()
+	if not is_instance_valid(_active_stop):
+		_clear_stop_state()
 		GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
 		return
 	var van := get_node("../..")
-	if van and van.has_method(&"seal_van_after_shop"):
+	if van and van.has_method(&"seal_van_after_stop"):
+		van.seal_van_after_stop()
+	elif van and van.has_method(&"seal_van_after_shop"):
 		van.seal_van_after_shop()
-	_build_leave_shop_route()
+	_build_leave_stop_route()
+
+
+func leave_shop() -> void:
+	leave_stop()
 
 
 func _configure_initial_route() -> void:
@@ -284,7 +323,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		_van_velocity = Vector3.ZERO
 	_spawn_segments_ahead()
-	_maybe_begin_shop_park()
+	_maybe_begin_stop_park()
 	_update_turn()
 	_prune_world()
 
@@ -301,7 +340,7 @@ func _tick_boost(delta: float) -> void:
 func _should_scroll() -> bool:
 	# Chill pauses encounters only. IDLE scrolls too so a new game isn't parked
 	# while waiting for the cab-door knock to begin the run.
-	if _turn_state == TurnState.LEAVING_SHOP:
+	if _turn_state == TurnState.LEAVING_STOP:
 		return true
 	return GameSession.phase in [
 		GameSession.RunPhase.IDLE,
@@ -353,31 +392,34 @@ func _spawn_world_segment(world_transform: Transform3D) -> void:
 	_segment_index += 1
 
 
-func _attach_shop_at_progress(shop_progress: float) -> void:
-	if shop_scene == null or is_instance_valid(_active_shop):
+func _attach_stop_at_progress(stop_progress: float) -> void:
+	if _pending_stop == null or _pending_stop.scene == null or is_instance_valid(_active_stop):
 		return
-	if _shop_bay_side != &"left" and _shop_bay_side != &"right":
-		_shop_bay_side = &"right" if _rng.randi() % 2 == 0 else &"left"
+	if _stop_bay_side != &"left" and _stop_bay_side != &"right":
+		_stop_bay_side = &"right" if _rng.randi() % 2 == 0 else &"left"
 
 	# Make sure a corridor tile exists under the bay, then open that wall.
-	_spawn_route_segments_until(shop_progress + segment_length * 0.5)
-	var segment_transform := _sample_route_transform(shop_progress)
+	_spawn_route_segments_until(stop_progress + segment_length * 0.5)
+	var segment_transform := _sample_route_transform(stop_progress)
 	var host_segment := _find_nearest_corridor_segment(segment_transform.origin)
-	if host_segment and host_segment.has_method(&"open_shop_bay"):
-		host_segment.open_shop_bay(_shop_bay_side)
+	if host_segment and host_segment.has_method(&"open_bay"):
+		host_segment.open_bay(_stop_bay_side)
+	elif host_segment and host_segment.has_method(&"open_shop_bay"):
+		host_segment.open_shop_bay(_stop_bay_side)
 	elif host_segment and host_segment.has_method(&"apply_side_streets"):
-		host_segment.apply_side_streets(_shop_bay_side == &"left", _shop_bay_side == &"right")
+		host_segment.apply_side_streets(_stop_bay_side == &"left", _stop_bay_side == &"right")
 
-	_active_shop = shop_scene.instantiate() as Node3D
-	corridor_root.add_child(_active_shop)
-	var side := 1.0 if _shop_bay_side == &"right" else -1.0
-	var yaw := 0.0 if _shop_bay_side == &"right" else PI
+	_active_stop = _pending_stop.scene.instantiate() as Node3D
+	_active_stop_def = _pending_stop
+	corridor_root.add_child(_active_stop)
+	var side := 1.0 if _stop_bay_side == &"right" else -1.0
+	var yaw := 0.0 if _stop_bay_side == &"right" else PI
 	var local := Transform3D(Basis.from_euler(Vector3(0.0, yaw, 0.0)), Vector3(side * 9.0, 0.0, 0.0))
-	_active_shop.global_transform = segment_transform * local
-	_world_pieces.append(_active_shop)
-	_shop_align_progress = shop_progress
-	_shop_pending = false
-	_shop_attach_segment_index = -1
+	_active_stop.global_transform = segment_transform * local
+	_world_pieces.append(_active_stop)
+	_stop_align_progress = stop_progress
+	_stop_pending = false
+	_stop_attach_segment_index = -1
 
 
 func _find_nearest_corridor_segment(world_origin: Vector3) -> Node3D:
@@ -386,7 +428,11 @@ func _find_nearest_corridor_segment(world_origin: Vector3) -> Node3D:
 	for piece in _world_pieces:
 		if not is_instance_valid(piece):
 			continue
-		if not piece.has_method(&"apply_variant") and not piece.has_method(&"open_shop_bay"):
+		if (
+			not piece.has_method(&"apply_variant")
+			and not piece.has_method(&"open_bay")
+			and not piece.has_method(&"open_shop_bay")
+		):
 			continue
 		var dist := piece.global_position.distance_to(world_origin)
 		if dist < best_dist:
@@ -451,13 +497,28 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		_maybe_start_intro()
 		_maybe_resume_act_flow()
 	elif next_phase == GameSession.RunPhase.ROUTE_CHOICE:
-		_prepare_shop_fork()
+		_prepare_stop_fork()
 		_spawn_approaching_junction()
 
 
-func _prepare_shop_fork() -> void:
-	# Every fork offers a shop on one side for now.
-	_shop_fork_side = &"left" if _rng.randi() % 2 == 0 else &"right"
+func _prepare_stop_fork() -> void:
+	# Cards are street modifiers. Every offered road still gets a building.
+	_fork_stops.clear()
+	_fork_stop = null
+	_stop_fork_side = &""
+	var used: Array[StringName] = []
+	if _last_stop_id != &"":
+		used.append(_last_stop_id)
+	for direction in GameSession.get_route_directions():
+		var stop := SideStopRegistry.pick(_rng, used)
+		if stop == null or stop.scene == null:
+			continue
+		_fork_stops[direction] = stop
+		if stop.id not in used:
+			used.append(stop.id)
+		if _fork_stop == null:
+			_fork_stop = stop
+			_stop_fork_side = direction
 
 
 func _maybe_start_intro() -> void:
@@ -590,16 +651,20 @@ func _on_route_chosen(direction: StringName, _step: int) -> void:
 	if _turn_state != TurnState.APPROACHING or not is_instance_valid(_active_junction):
 		return
 	_turn_direction = direction
-	# Choosing a non-shop fork abandons any unfinished shop visit from a prior pick.
-	if direction == _shop_fork_side and shop_scene != null:
-		_shop_pending = true
-		_shop_bay_side = &"left" if _rng.randi() % 2 == 0 else &"right"
+	# Choosing a road with no building abandons any unfinished visit from a prior pick.
+	var chosen_stop := get_fork_stop_for(direction)
+	if chosen_stop != null and chosen_stop.scene != null:
+		_stop_pending = true
+		_pending_stop = chosen_stop
+		_last_stop_id = chosen_stop.id
+		_stop_bay_side = &"left" if _rng.randi() % 2 == 0 else &"right"
 	else:
-		if not is_instance_valid(_active_shop):
-			_shop_pending = false
-			_shop_bay_side = &""
-			_shop_attach_segment_index = -1
-			_shop_align_progress = INF
+		if not is_instance_valid(_active_stop):
+			_stop_pending = false
+			_pending_stop = null
+			_stop_bay_side = &""
+			_stop_attach_segment_index = -1
+			_stop_align_progress = INF
 	_build_turn_route()
 
 
@@ -610,9 +675,9 @@ func _update_turn() -> void:
 	elif _turn_state == TurnState.PARKING:
 		if van_follow.progress <= 0.05:
 			_finish_park()
-	elif _turn_state == TurnState.LEAVING_SHOP:
+	elif _turn_state == TurnState.LEAVING_STOP:
 		if van_follow.progress >= _turn_end_progress:
-			_finish_leave_shop()
+			_finish_leave_stop()
 
 
 func _build_turn_route() -> void:
@@ -671,21 +736,21 @@ func _finish_turn() -> void:
 	_active_junction = null
 	_turn_end_progress = INF
 	_segment_spawning_paused = false
-	if _shop_pending and not is_instance_valid(_active_shop):
+	if _stop_pending and not is_instance_valid(_active_stop):
 		var ahead := float(
-			_rng.randi_range(SHOP_SPAWN_MIN_SEGMENTS_AHEAD, SHOP_SPAWN_MAX_SEGMENTS_AHEAD)
+			_rng.randi_range(STOP_SPAWN_MIN_SEGMENTS_AHEAD, STOP_SPAWN_MAX_SEGMENTS_AHEAD)
 		)
-		_attach_shop_at_progress(van_follow.progress + segment_length * ahead)
+		_attach_stop_at_progress(van_follow.progress + segment_length * ahead)
 	_spawn_segments_ahead()
 	GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
 
 
-func _maybe_begin_shop_park() -> void:
+func _maybe_begin_stop_park() -> void:
 	if _turn_state != TurnState.NONE:
 		return
-	if not is_instance_valid(_active_shop):
+	if not is_instance_valid(_active_stop):
 		return
-	if _shop_align_progress >= INF:
+	if _stop_align_progress >= INF:
 		return
 	# Park while the road is still scrolling (combat used to skip this and blow past).
 	if GameSession.phase not in [
@@ -695,22 +760,22 @@ func _maybe_begin_shop_park() -> void:
 	]:
 		return
 	# Need room for a T-junction quarter-circle plus a short reverse straight.
-	if van_follow.progress < _shop_align_progress + turn_radius + SHOP_PARK_REVERSE_STRAIGHT:
+	if van_follow.progress < _stop_align_progress + turn_radius + STOP_PARK_REVERSE_STRAIGHT:
 		return
 	_build_park_route()
 
 
-func _shop_mouth_world() -> Vector3:
-	var exit_pt := _active_shop.get_node_or_null("ExitPoint") as Marker3D
+func _stop_mouth_world() -> Vector3:
+	var exit_pt := _active_stop.get_node_or_null("ExitPoint") as Marker3D
 	if exit_pt:
 		return exit_pt.global_position
-	return _active_shop.to_global(Vector3(1.5, 0.0, 0.0))
+	return _active_stop.to_global(Vector3(1.5, 0.0, 0.0))
 
 
-func _shop_corridor_at_mouth(mouth_world: Vector3) -> Vector3:
-	# Project the mouth onto the corridor centerline (shop sits SHOP_CORRIDOR_LATERAL out).
-	var into_bay := _active_shop.global_transform.basis.x.normalized()
-	var corridor_ref := _active_shop.global_position - into_bay * SHOP_CORRIDOR_LATERAL
+func _stop_corridor_at_mouth(mouth_world: Vector3) -> Vector3:
+	# Project the mouth onto the corridor centerline (bay sits STOP_CORRIDOR_LATERAL out).
+	var into_bay := _active_stop.global_transform.basis.x.normalized()
+	var corridor_ref := _active_stop.global_position - into_bay * STOP_CORRIDOR_LATERAL
 	return mouth_world - into_bay * into_bay.dot(mouth_world - corridor_ref)
 
 
@@ -721,9 +786,9 @@ func _flatten_local(van_inv: Transform3D, world_pos: Vector3) -> Vector3:
 
 
 func _build_park_route() -> void:
-	if not is_instance_valid(_active_shop):
+	if not is_instance_valid(_active_stop):
 		return
-	var dock := _active_shop.get_node_or_null("DockPoint") as Marker3D
+	var dock := _active_stop.get_node_or_null("DockPoint") as Marker3D
 	if dock == null:
 		return
 
@@ -733,11 +798,11 @@ func _build_park_route() -> void:
 	# arc stays a C — flipping them was what made the serpent S.
 	var van_transform := van_rig.global_transform
 	var van_inv := van_transform.affine_inverse()
-	var side := 1.0 if _shop_bay_side == &"right" else -1.0
+	var side := 1.0 if _stop_bay_side == &"right" else -1.0
 	var handle := turn_radius * QUARTER_CIRCLE_HANDLE
 
-	var mouth_z := _flatten_local(van_inv, _shop_corridor_at_mouth(_shop_mouth_world())).z
-	mouth_z = maxf(mouth_z, turn_radius + SHOP_PARK_REVERSE_STRAIGHT)
+	var mouth_z := _flatten_local(van_inv, _stop_corridor_at_mouth(_stop_mouth_world())).z
+	mouth_z = maxf(mouth_z, turn_radius + STOP_PARK_REVERSE_STRAIGHT)
 	var dock_lat := maxf(absf(_flatten_local(van_inv, dock.global_position).x), turn_radius + 2.0)
 
 	var straight_length := mouth_z - turn_radius
@@ -772,7 +837,7 @@ func _build_park_route() -> void:
 	_park_reversing = true
 	_turn_state = TurnState.PARKING
 	_turn_end_progress = 0.0
-	_shop_align_progress = INF
+	_stop_align_progress = INF
 	_segment_spawning_paused = true
 	_refresh_travel_speed()
 	GameSession.set_phase(GameSession.RunPhase.PARKING)
@@ -784,16 +849,16 @@ func _finish_park() -> void:
 	_turn_end_progress = INF
 	van_follow.progress = 0.0
 	_refresh_travel_speed()
-	GameSession.set_phase(GameSession.RunPhase.SHOP)
+	GameSession.set_phase(GameSession.RunPhase.STOP)
 
 
-func _build_leave_shop_route() -> void:
+func _build_leave_stop_route() -> void:
 	# Mirror the reverse-park: same curve, forward progress (dock → corridor mouth).
 	_park_reversing = false
 
 	var curve := travel_path.curve
 	if curve == null or curve.point_count < 2:
-		_clear_shop_state()
+		_clear_stop_state()
 		GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
 		return
 
@@ -805,7 +870,7 @@ func _build_leave_shop_route() -> void:
 	van_follow.progress = 0.0
 	van_rig.transform = Transform3D.IDENTITY
 
-	_turn_state = TurnState.LEAVING_SHOP
+	_turn_state = TurnState.LEAVING_STOP
 	_turn_end_progress = corridor_join
 	_next_segment_progress = corridor_join + segment_length
 	_segment_spawning_paused = false
@@ -813,23 +878,27 @@ func _build_leave_shop_route() -> void:
 	_spawn_route_segments_until(corridor_join + segment_ahead_distance)
 
 
-func _finish_leave_shop() -> void:
+func _finish_leave_stop() -> void:
 	_turn_state = TurnState.NONE
 	_turn_end_progress = INF
-	_clear_shop_state()
+	_clear_stop_state()
 	_segment_spawning_paused = false
 	_refresh_travel_speed()
 	_spawn_segments_ahead()
 	GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
 
 
-func _clear_shop_state() -> void:
-	_active_shop = null
-	_shop_pending = false
-	_shop_attach_segment_index = -1
-	_shop_bay_side = &""
-	_shop_align_progress = INF
-	_shop_fork_side = &""
+func _clear_stop_state() -> void:
+	_active_stop = null
+	_active_stop_def = null
+	_pending_stop = null
+	_fork_stop = null
+	_fork_stops.clear()
+	_stop_pending = false
+	_stop_attach_segment_index = -1
+	_stop_bay_side = &""
+	_stop_align_progress = INF
+	_stop_fork_side = &""
 	_park_reversing = false
 
 
@@ -863,7 +932,7 @@ func _prune_world() -> void:
 		if not is_instance_valid(piece):
 			_world_pieces.remove_at(index)
 			continue
-		if piece == _active_shop or piece == _active_statue:
+		if piece == _active_stop or piece == _active_statue:
 			continue
 		if piece.global_position.distance_to(van_rig.global_position) <= world_cull_distance:
 			continue
@@ -878,5 +947,5 @@ func _exit_tree() -> void:
 			piece.free()
 	_world_pieces.clear()
 	_active_junction = null
-	_active_shop = null
+	_active_stop = null
 	_active_statue = null

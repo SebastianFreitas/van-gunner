@@ -215,8 +215,8 @@ func get_door_prompt(side: StringName) -> String:
 	if is_door_broken(side):
 		return "BROKEN"
 	if is_door_open(side):
-		if _is_shop_keeping_doors_open():
-			return "SHOP — KEEP OPEN"
+		if _is_stop_keeping_doors_open():
+			return "%s — KEEP OPEN" % _stop_short_label()
 		return "E  CLOSE DOOR"
 	return "E  OPEN DOOR"
 
@@ -227,7 +227,7 @@ func toggle_door(side: StringName) -> void:
 	if is_door_open(side):
 		# Player close would clear open flags while shop still needs the gap;
 		# seal then no-ops and leaves the leaf uninteractable.
-		if _is_shop_keeping_doors_open():
+		if _is_stop_keeping_doors_open():
 			return
 		close_door(side)
 	else:
@@ -249,7 +249,7 @@ func open_door(side: StringName) -> void:
 func close_door(side: StringName) -> void:
 	if is_door_broken(side):
 		return
-	# Already logically closed — still repair mesh/collision (shop desync / killed tween).
+	# Already logically closed — still repair mesh/collision (stop desync / killed tween).
 	if not is_door_open(side):
 		_snap_door_closed(side)
 		return
@@ -275,8 +275,17 @@ func close() -> void:
 	close_door(SIDE_RIGHT)
 
 
-func _is_shop_keeping_doors_open() -> bool:
-	return GameSession.phase == GameSession.RunPhase.SHOP
+func _is_stop_keeping_doors_open() -> bool:
+	return GameSession.phase == GameSession.RunPhase.STOP
+
+
+func _stop_short_label() -> String:
+	var travel := get_tree().get_first_node_in_group(&"travel_controller")
+	if travel and travel.has_method(&"get_active_stop"):
+		var stop: SideStopDefinition = travel.get_active_stop()
+		if stop:
+			return stop.short_label
+	return "STOP"
 
 
 func _snap_door_closed(side: StringName) -> void:

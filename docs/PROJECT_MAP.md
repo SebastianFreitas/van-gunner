@@ -75,7 +75,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal session_loaded`
 - `signal chill_mode_changed(enabled: bool)`
 - `signal area_changed(area: ItemDefinition.BoonPool)`
-- `enum RunPhase { IDLE, TRAVELLING, COMBAT, ROUTE_CHOICE, TURNING, GAME_OVER, REST, PARKING, SHOP, ACT_REVEAL, BOSS_PICK, }`
+- `enum RunPhase { IDLE, TRAVELLING, COMBAT, ROUTE_CHOICE, TURNING, GAME_OVER, REST, PARKING, STOP, ACT_REVEAL, BOSS_PICK, }`
 
 **`scripts/core/meta_progression.gd`**
 
@@ -159,7 +159,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 **`scripts/run/travel_controller.gd`**
 
-- `enum TurnState { NONE, APPROACHING, TURNING, PARKING, LEAVING_SHOP, }`
+- `enum TurnState { NONE, APPROACHING, TURNING, PARKING, LEAVING_STOP, }`
 
 **`scripts/run/van_bulkhead.gd`**
 
@@ -216,14 +216,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-132 GDScript files, 21808 lines.
+135 GDScript files, 22181 lines.
 
 ### `scenes/corridor/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `corridor_segment.gd` | — | 157 | Open a wall gap for a shop bay without showing the cosmetic side street. |
-| `corridor_t_junction.gd` | — | 64 | Fills the blunt L where stem / branch sidewalks meet the open junction slab. |
+| `corridor_segment.gd` | — | 161 | Open a wall gap for a side-stop bay without showing the cosmetic side street. |
+| `corridor_t_junction.gd` | — | 64 | Fills sidewalk corners where stem / branch / optional through-road meet the |
 | `side_street_branch.gd` | — | 19 |  |
 
 ### `scripts/combat/`
@@ -252,7 +252,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `game_balance.gd` | — | 287 | Runtime facade over the Inspector-editable GameBalanceData resource. |
 | `game_balance_data.gd` | `GameBalanceData` | 146 | Inspector-editable balance sheet for encounter pacing and act scaling. |
-| `game_session.gd` | — | 637 | How many face-down streets the player commits to the act boss. Array-backed |
+| `game_session.gd` | — | 638 | How many face-down streets the player commits to the act boss. Array-backed |
 | `loot_collector.gd` | — | 88 | Teleports shot/swept pickups onto the van's center table. Gold is converted |
 | `meta_progression.gd` | — | 76 | FUTURE — persistent street-card back marks (meta, all runs): |
 | `save_manager.gd` | — | 100 |  |
@@ -262,7 +262,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `debug_commands.gd` | — | 548 | Parses and runs debug console commands. Add new commands in _register_commands(). |
+| `debug_commands.gd` | — | 577 | Parses and runs debug console commands. Add new commands in _register_commands(). |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. Default follows the build. |
 
 ### `scripts/enemies/`
@@ -277,7 +277,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `cab_door.gd` | — | 182 | Decorative cab-facing door at the front partition. |
+| `cab_door.gd` | — | 184 | Decorative cab-facing door at the front partition. |
 | `crafting_table.gd` | `CraftingTable` | 15 |  |
 | `interactable.gd` | `Interactable` | 13 |  |
 
@@ -343,10 +343,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. Same local frame as IronCross: |
 | `encounter_director.gd` | `EncounterDirector` | 383 | Soft cap: after this, surviving raiders of the current wave retreat. |
 | `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
+| `garage_lounge.gd` | — | 146 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
 | `loot_drop_component.gd` | `LootDropComponent` | 114 | Drop-in component that gives any enemy a chance to drop loot on death. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
-| `rear_doors.gd` | — | 393 | Truck-style rear double doors. |
+| `rear_doors.gd` | — | 402 | Truck-style rear double doors. |
 | `road_floor.gd` | `RoadFloor` | 592 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter |
 | `room_zone.gd` | `RoomZone` | 14 |  |
 | `shop_counter_booth.gd` | — | 1013 | Fortified metal shop counter — armored face, cash slot, eye-level grilled window. |
@@ -355,10 +356,12 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `shop_stock.gd` | — | 45 | Rolls 3 unique items from the shop pool and places them on the counter. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. Toggles that leaf only. |
 | `side_doors.gd` | — | 551 | Sliding cargo-style side doors. |
+| `side_stop_definition.gd` | `SideStopDefinition` | 41 | A roadside building on a fork (never the straight). Taking that side commits |
+| `side_stop_registry.gd` | `SideStopRegistry` | 53 | Resolves side-stop definitions by id from resources/side_stops/. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. Toggles that sash only. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
-| `travel_controller.gd` | `TravelController` | 881 | Empty corridor tiles required between side-street openings (avoids a thin |
-| `van.gd` | — | 864 | load() not preload() — compile-time preload of the console scene |
+| `travel_controller.gd` | `TravelController` | 931 | Empty corridor tiles required between side-street openings (avoids a thin |
+| `van.gd` | — | 902 | load() not preload() — compile-time preload of the console scene |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -431,6 +434,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/corridor/corridor_crossroads.tscn` | 37 | Node3D |
 | `scenes/corridor/corridor_segment.tscn` | 84 | Node3D |
 | `scenes/corridor/corridor_t_junction.tscn` | 31 | Node3D |
+| `scenes/corridor/garage_bay.tscn` | 22 | Node3D |
 | `scenes/corridor/road_floor.tscn` | 1 | Node3D |
 | `scenes/corridor/shop_bay.tscn` | 31 | Node3D |
 | `scenes/corridor/side_street_branch.tscn` | 10 | Node3D |
@@ -545,6 +549,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | swarm | Swarm | 1 | 50% more raiders per wave, plus one |
 | thick_hides | Thick Hides | 1 | Raiders have 40% more health |
 | thin_file | Thin File | 0 | Half as many raiders per wave (min 1) |
+
+## Side stops
+
+| id | name | short_label |
+|---|---|---|
+| garage | Garage | GARAGE |
+| shop | Shop Stop | SHOP |
 
 ## Enemies
 

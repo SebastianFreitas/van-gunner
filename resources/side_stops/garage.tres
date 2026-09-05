@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SideStopDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/run/side_stop_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/corridor/garage_bay.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"garage"
+display_name = "Garage"
+short_label = "GARAGE"
+scene = ExtResource("2")
+parking_toast = "PULLING INTO THE GARAGE..."
+docked_toast = "GARAGE — STEP OUT BACK, THEN TELL THE DRIVER TO CONTINUE"
+leaving_toast = "PULLING OUT OF THE GARAGE..."

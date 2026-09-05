@@ -20,7 +20,7 @@ enum RunPhase {
 	GAME_OVER,
 	REST,
 	PARKING,
-	SHOP,
+	STOP,
 	ACT_REVEAL,
 	BOSS_PICK,
 }
@@ -146,7 +146,7 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 		RunPhase.REST,
 		RunPhase.TURNING,
 		RunPhase.PARKING,
-		RunPhase.SHOP,
+		RunPhase.STOP,
 		RunPhase.ACT_REVEAL,
 		RunPhase.BOSS_PICK,
 	]:
