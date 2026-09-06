@@ -88,6 +88,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		usables.try_use_slot(3)
 
 
+func get_look_interactable() -> Interactable:
+	return _current_interactable
+
+
 func _can_jump_outside_van() -> bool:
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return false

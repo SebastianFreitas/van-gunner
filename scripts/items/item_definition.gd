@@ -79,10 +79,15 @@ func can_collect(player: Node3D) -> bool:
 	return false
 
 
-func apply_effects(player: Node3D) -> void:
+func apply_effects(player: Node3D) -> bool:
+	var ok := true
+	var had := false
 	for effect in effects:
 		if effect:
-			effect.apply(player)
+			had = true
+			if not effect.try_apply(player):
+				ok = false
+	return ok if had else true
 
 
 func collect(player: Node3D) -> void:

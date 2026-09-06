@@ -136,7 +136,11 @@ static func _lines_for_effect(effect: ItemEffect) -> PackedStringArray:
 	elif effect is FullHealEffect:
 		lines.append("Heal to full")
 	elif effect is RepairWindowBarsEffect:
-		lines.append("Fully repairs all window bars")
+		var weld := effect as RepairWindowBarsEffect
+		lines.append(
+			"Look-at repair %s on a machine, door, or window"
+			% format_number(weld.repair_amount)
+		)
 	elif effect is BoonTraitEffect:
 		lines.append_array(_lines_for_trait_effect(effect as BoonTraitEffect))
 	elif effect is CompositeEffect:

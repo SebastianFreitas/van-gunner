@@ -129,17 +129,53 @@ func take_damage(amount: float) -> void:
 		_mark_breached()
 
 
+## Restore HP on this opening. Un-breaches and un-breaks a door if HP returns.
+## Does not close leaves or restore shattered glass.
+func repair(amount: float) -> float:
+	if amount <= 0.0:
+		return 0.0
+	var before := health
+	var was_breached := is_breached
+	health = minf(max_health, health + amount)
+	var gained := health - before
+	if gained <= 0.001 and not was_breached:
+		return 0.0
+	if health > 0.001:
+		is_breached = false
+		if was_breached:
+			_restore_after_repair()
+	health_changed.emit(health, max_health)
+	return gained
+
+
+func is_at_full_health() -> bool:
+	return not is_breached and health >= max_health - 0.001
+
+
 ## Instantly restore window-bar HP. If breached, swap BrokenIronCross back to intact bars.
 ## Does not restore shattered glass or close door leaves.
 func repair_bars() -> void:
 	if kind != Kind.WINDOW and kind != Kind.SIDE_DOOR_WINDOW:
 		return
-	var was_breached := is_breached
-	health = max_health
-	is_breached = false
-	health_changed.emit(health, max_health)
-	if was_breached:
-		_repair_bars_visual()
+	repair(max_health)
+
+
+func _restore_after_repair() -> void:
+	match kind:
+		Kind.REAR_DOOR:
+			if door_side != &"":
+				var doors := _rear_doors()
+				if doors and doors.has_method("clear_door_broken"):
+					doors.clear_door_broken(door_side)
+		Kind.SIDE_DOOR:
+			if door_side != &"":
+				var doors := _side_doors()
+				if doors and doors.has_method("clear_door_broken"):
+					doors.clear_door_broken(door_side)
+		Kind.WINDOW, Kind.SIDE_DOOR_WINDOW:
+			_repair_bars_visual()
+		_:
+			pass
 
 
 func _repair_bars_visual() -> void:
@@ -251,6 +287,10 @@ func _shatter_window_glass_if_needed() -> void:
 
 func _is_door_kind() -> bool:
 	return kind == Kind.REAR_DOOR or kind == Kind.SIDE_DOOR
+
+
+func is_door_kind() -> bool:
+	return _is_door_kind()
 
 
 func _prune_occupants() -> void:

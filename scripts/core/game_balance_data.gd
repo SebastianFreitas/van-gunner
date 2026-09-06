@@ -65,8 +65,9 @@ extends Resource
 @export_group("Breach / entry")
 ## Rear doors are tough — about 12 hits at default raider damage (8).
 @export var rear_door_breach_hp := 96.0
-## Side windows open faster — about 4 hits at default raider damage.
-@export var window_breach_hp := 32.0
+## Side windows open faster — weld kit is 50, so one use fully restores bars
+## until window HP is upgraded.
+@export var window_breach_hp := 50.0
 ## Door / window glass panes — applied by breakable_glass at runtime.
 @export var rear_window_glass_hp := 1.0
 ## Interior move speed after a breach (van-local units/sec).

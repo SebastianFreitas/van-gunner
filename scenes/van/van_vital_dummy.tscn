@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/interactions/interactable.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/run/van_vital.gd" id="2"]
+
+[sub_resource type="StandardMaterial3D" id="BodyMat"]
+albedo_color = Color(0.22, 0.2, 0.18, 1)
+metallic = 0.4
+roughness = 0.55
+
+[sub_resource type="BoxMesh" id="BodyMesh"]
+size = Vector3(0.42, 0.72, 0.28)
+
+[sub_resource type="BoxShape3D" id="BodyShape"]
+size = Vector3(0.42, 0.72, 0.28)
+
+[node name="VitalDummy" type="StaticBody3D"]
+collision_layer = 3
+script = ExtResource("1")
+prompt = "Machine"
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+material_override = SubResource("BodyMat")
+mesh = SubResource("BodyMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("BodyShape")
+
+[node name="VanVital" type="Node3D" parent="."]
+script = ExtResource("2")
+
+[node name="AttackMarker" type="Marker3D" parent="VanVital"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, 0.35, 0)

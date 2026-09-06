@@ -206,6 +206,13 @@ func mark_door_broken(side: StringName) -> void:
 		_set_leaf_collision_enabled(side, true)
 
 
+func clear_door_broken(side: StringName) -> void:
+	if side == SIDE_LEFT:
+		_left_broken = false
+	else:
+		_right_broken = false
+
+
 ## Standpoint outside closed doors for scripted mobs (world space).
 func get_outside_hold_position() -> Vector3:
 	return to_global(OUTSIDE_HOLD_LOCAL)

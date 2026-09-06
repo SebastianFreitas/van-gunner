@@ -117,7 +117,9 @@ func _try_use_state(state: UsableState) -> bool:
 	if not player:
 		usable_activated.emit(state.definition, false)
 		return false
-	state.definition.apply_effects(player)
+	if not state.definition.apply_effects(player):
+		usable_activated.emit(state.definition, false)
+		return false
 	var config := state.get_config()
 	if config:
 		if config.is_consumed_on_use:

@@ -37,6 +37,9 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/driver_shout_hud.tscn" id="33"]
 [ext_resource type="Script" uid="uid://cg24f5srch27x" path="res://scripts/run/front_partition.gd" id="34"]
 [ext_resource type="PackedScene" path="res://scenes/van/loot_machine.tscn" id="35"]
+[ext_resource type="Script" uid="uid://bgxcer8818k7j" path="res://scripts/run/van_vital.gd" id="36"]
+[ext_resource type="PackedScene" path="res://scenes/van/van_vital_dummy.tscn" id="37"]
+[ext_resource type="Script" uid="uid://cmdwe4o0k1nme" path="res://scripts/ui/van_health_bar.gd" id="38"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -1084,11 +1087,27 @@ mesh = SubResource("TableMesh")
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable" unique_id=319181811]
 shape = SubResource("TableShape")
 
+[node name="VanVital" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable" unique_id=552475281]
+script = ExtResource("36")
+vital_id = &"bench"
+display_name = "Crafting bench"
+
+[node name="AttackMarker" type="Marker3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable/VanVital" unique_id=158219309]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.75)
+
 [node name="LootAnchor" type="Marker3D" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1267364196]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8885281, 0.43830076, -1.8)
 
 [node name="LootMachine" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1988471201 instance=ExtResource("35")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.62164927, 1.4382443, 0.96901906)
+
+[node name="FuseBox" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=718172379 instance=ExtResource("37")]
+transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 2.2095766, 0.55, 2.5374727)
+prompt = "Fuse box"
+
+[node name="CabRelay" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=219581774 instance=ExtResource("37")]
+transform = Transform3D(4.371139e-08, 0, -1, 0, 1, 0, 1, 0, 4.371139e-08, 0.9800526, 1.8457549, -4.592293)
+prompt = "Cab relay"
 
 [node name="RoomZones" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1307820521]
 
@@ -1330,12 +1349,13 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "VAN 100 / 100"
 
-[node name="VanHealth" type="ProgressBar" parent="HUD/TopLeft" unique_id=682510640]
+[node name="VanHealth" type="Control" parent="HUD/TopLeft" unique_id=682510640]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 18)
 layout_mode = 2
-value = 100.0
-show_percentage = false
+size_flags_horizontal = 3
+mouse_filter = 2
+script = ExtResource("38")
 
 [node name="PlayerHealthLabel" type="Label" parent="HUD/TopLeft" unique_id=1496366239]
 unique_name_in_owner = true

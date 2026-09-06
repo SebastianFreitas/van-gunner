@@ -12,3 +12,8 @@ extends Resource
 
 func apply(_player: Node3D) -> void:
 	push_warning("ItemEffect.apply() not implemented for %s" % get_script())
+
+
+func try_apply(player: Node3D) -> bool:
+	apply(player)
+	return true

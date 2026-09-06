@@ -380,6 +380,13 @@ func mark_door_broken(side: StringName) -> void:
 	_smash_open(side)
 
 
+func clear_door_broken(side: StringName) -> void:
+	if side == SIDE_LEFT:
+		_left_broken = false
+	else:
+		_right_broken = false
+
+
 ## Standpoint just outside a closed leaf for scripted mobs (world space).
 func get_outside_hold_position(side: StringName = SIDE_LEFT) -> Vector3:
 	var closed_pos := _left_closed_pos if side == SIDE_LEFT else _right_closed_pos

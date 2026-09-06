@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/interactions/loot_machine.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/run/van_vital.gd" id="2"]
 
 [sub_resource type="StandardMaterial3D" id="BodyMat"]
 albedo_color = Color(0.18, 0.17, 0.16, 1)
@@ -60,3 +61,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0.28)
 
 [node name="EjectPoint" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.48, 0.55)
+
+[node name="VanVital" type="Node3D" parent="."]
+script = ExtResource("2")
+vital_id = &"hopper"
+display_name = "Loot hopper"
+
+[node name="AttackMarker" type="Marker3D" parent="VanVital"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, -0.4, 0)

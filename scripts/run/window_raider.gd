@@ -34,6 +34,7 @@ var is_defeated := false
 var is_boss := false
 var assault_phase: AssaultPhase = AssaultPhase.IDLE
 var assigned_breach: BreachPoint
+var _assigned_vital: Node
 var _last_damage_type: DamageType.Type = DamageType.Type.NORMAL
 var _attack_loop_running := false
 ## Rest color after hit flash.
@@ -283,8 +284,15 @@ func _attack_loop() -> void:
 			break
 		var outgoing := _outgoing_damage()
 		if assault_phase == AssaultPhase.ATTACKING_BENCH:
+			var vital := _living_assigned_vital()
+			if vital == null:
+				vital = _pick_vital()
+				_assigned_vital = vital
 			attack_landed.emit(outgoing)
-			GameSession.damage_van(outgoing)
+			if vital and vital.has_method("take_damage"):
+				vital.take_damage(outgoing)
+			else:
+				GameSession.damage_van(outgoing)
 		elif assault_phase == AssaultPhase.ATTACKING_PLAYER and _in_player_melee():
 			attack_landed.emit(outgoing)
 			GameSession.damage_player(outgoing)
@@ -394,18 +402,20 @@ func _run_interior_combat() -> void:
 		else:
 			_chase_player = false
 			assault_phase = AssaultPhase.ATTACKING_BENCH
-			var bench := _bench_marker()
-			if bench:
+			var vital := _pick_vital()
+			_assigned_vital = vital
+			var marker := _vital_marker(vital)
+			if marker:
 				var parent_3d := get_parent() as Node3D
 				var far := true
 				if parent_3d:
-					var local := parent_3d.to_local(bench.global_position)
+					var local := parent_3d.to_local(marker.global_position)
 					far = _horizontal_xz(position, local) > 0.4
 				if far:
-					await _move_to_marker(bench, speed, false)
+					await _move_to_marker(marker, speed, false)
 					if not _active or is_defeated:
 						return
-				_attach_marker = bench
+				_attach_marker = marker
 		var elapsed := 0.0
 		while elapsed < _RETARGET_SECS:
 			await get_tree().create_timer(0.1).timeout
@@ -416,12 +426,14 @@ func _run_interior_combat() -> void:
 
 func _wants_player_target() -> bool:
 	var player := get_tree().get_first_node_in_group(&"player") as Node3D
-	var bench := _bench_marker()
-	if player == null or bench == null:
+	var marker := _vital_marker(_living_assigned_vital())
+	if marker == null:
+		marker = _vital_marker(_pick_vital())
+	if player == null or marker == null:
 		return false
 	var d_player := _horizontal_xz(global_position, player.global_position)
-	var d_bench := _horizontal_xz(global_position, bench.global_position)
-	return d_player * _BENCH_BIAS < d_bench * _PLAYER_BIAS
+	var d_vital := _horizontal_xz(global_position, marker.global_position)
+	return d_player * _BENCH_BIAS < d_vital * _PLAYER_BIAS
 
 
 func _in_player_melee() -> bool:
@@ -435,13 +447,28 @@ func _horizontal_xz(a: Vector3, b: Vector3) -> float:
 	return Vector2(a.x - b.x, a.z - b.z).length()
 
 
-func _bench_marker() -> Node3D:
+func _pick_vital() -> Node:
 	var controller := _breach_controller()
-	if controller and controller.bench_marker:
-		return controller.bench_marker
-	if assigned_breach:
-		return assigned_breach.entry_marker
+	if controller and controller.has_method("pick_vital_near"):
+		var picked: Node = controller.pick_vital_near(global_position)
+		if picked:
+			return picked
 	return null
+
+
+func _living_assigned_vital() -> Node:
+	if _assigned_vital and is_instance_valid(_assigned_vital):
+		if _assigned_vital.has_method("is_alive") and _assigned_vital.is_alive():
+			return _assigned_vital
+	return null
+
+
+func _vital_marker(vital: Node) -> Node3D:
+	if vital == null or not is_instance_valid(vital):
+		return null
+	if vital.has_method("get_attack_marker"):
+		return vital.get_attack_marker() as Node3D
+	return vital as Node3D
 
 
 func _next_attack_wait() -> float:

@@ -1,7 +1,7 @@
 class_name BreachController
 extends Node3D
 
-## Assigns raid slots around the van and exposes the bench damage target.
+## Assigns raid slots around the van and interior vital damage targets.
 
 @onready var bench_marker: Marker3D = $BenchAttackMarker
 
@@ -10,12 +10,59 @@ func _ready() -> void:
 	add_to_group(&"breach_controller")
 
 
+func get_vitals() -> Array:
+	var result: Array = []
+	if get_tree() == null:
+		return result
+	for node in get_tree().get_nodes_in_group(&"van_vitals"):
+		if node and node.has_method("is_alive"):
+			result.append(node)
+	return result
+
+
+func pick_vital_near(from_global: Vector3) -> Node:
+	var best: Node = null
+	var best_d := INF
+	for vital in get_vitals():
+		if not vital.is_alive():
+			continue
+		var marker: Node3D = (
+			vital.get_attack_marker()
+			if vital.has_method("get_attack_marker")
+			else vital
+		)
+		if marker == null:
+			continue
+		var d := Vector2(
+			from_global.x - marker.global_position.x,
+			from_global.z - marker.global_position.z
+		).length()
+		if d < best_d:
+			best_d = d
+			best = vital
+	return best
+
+
 func get_bench_position() -> Vector3:
-	return bench_marker.global_position
+	var vital := pick_vital_near(global_position)
+	if vital and vital.has_method("get_attack_marker"):
+		var marker: Node3D = vital.get_attack_marker()
+		if marker:
+			return marker.global_position
+	if bench_marker:
+		return bench_marker.global_position
+	return global_position
 
 
 func get_bench_basis() -> Basis:
-	return bench_marker.global_basis
+	var vital := pick_vital_near(global_position)
+	if vital and vital.has_method("get_attack_marker"):
+		var marker: Node3D = vital.get_attack_marker()
+		if marker:
+			return marker.global_basis
+	if bench_marker:
+		return bench_marker.global_basis
+	return global_basis
 
 
 ## Average EnemyContainer-local Z of rear-door Outside markers.

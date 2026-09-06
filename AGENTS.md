@@ -177,7 +177,10 @@ Breaking these is how the game stops being fun, so they're worth stating flatly.
     elite loot. Set elite on the raider export, or via `mark_as_boss()` /
     `EncounterDirector._spawn_boss`.
 11. **Player HP and van hull are both fail conditions.** Either bar at 0 is
-    `GAME_OVER`. Heal consumables restore player HP; max-HP boons still raise van hull.
+    `GAME_OVER`. Van hull is the **sum of interior vitals** (bench, hopper, fuse
+    box, cab relay), not door/window smash HP. Heal consumables restore player
+    HP only; the weld kit (look-at, +50) repairs a machine, door, or window.
+    Max-HP boons still raise van hull (split across the vitals).
 
 The long-form reasoning behind all of this is in
 `docs/WEAPON_SYSTEM_VAN_GUNNER.md`, which is still an accurate description of the
@@ -294,6 +297,8 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Touch guns | `scripts/weapons/` + `scripts/combat/gun_*.gd` |
 | Add a sound | new `SoundCue` in `resources/audio/sound_bank.tres` — gameplay already emits |
 | Touch the van shell / doors / windows | `scripts/run/van_*.gd`, `side_*.gd`, `rear_doors.gd` |
+| Van hull / interior vitals | `scripts/run/van_vital.gd` + HUD `scripts/ui/van_health_bar.gd` |
+| Weld kit (look-at repair) | `scripts/items/effects/repair_window_bars_effect.gd` |
 | Yell at the driver (Shift GO / C EASY) | `travel_controller.gd` boost/slow + `scripts/ui/driver_shout_hud.gd` |
 | Bench / crafting UI | `scripts/ui/bench_screen.gd` |
 | Loot hopper / death popups | `scripts/core/loot_collector.gd` + `scripts/interactions/loot_machine.gd` |

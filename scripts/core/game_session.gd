@@ -28,6 +28,8 @@ enum RunPhase {
 
 const BASE_MAX_VAN_HEALTH := 100.0
 const BASE_MAX_PLAYER_HEALTH := 50.0
+## Interior machines that sum to van death HP. Equal share of van_max_health.
+const VITAL_COUNT := 4
 const ACT_CARD_COUNT := 6
 const ACT_BLESSING_COUNT := 3
 const ACT_DANGER_COUNT := 3
@@ -51,6 +53,8 @@ var chill_mode := false
 var current_area: ItemDefinition.BoonPool = ItemDefinition.BoonPool.GENERAL
 ## Pending weapon inventory restore applied when the player boots after load.
 var pending_weapons_save = null
+## Per-vital current HP (string id → float). Applied when VanVital nodes bind.
+var pending_vital_health: Dictionary = {}
 
 ## 1-based act index; 0 means no deck has been drawn yet.
 var run_act := 0
@@ -110,6 +114,8 @@ func start_new(slot: int) -> void:
 	coins = 0
 	current_area = ItemDefinition.BoonPool.GENERAL
 	pending_weapons_save = null
+	pending_vital_health = {}
+	_reset_vitals_in_tree()
 	_reset_act_deck()
 	set_chill_mode(false)
 	set_phase(RunPhase.IDLE)
@@ -166,6 +172,8 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 		RunPhase.BOSS_PICK,
 	]:
 		phase = RunPhase.TRAVELLING
+	_parse_vital_health(data)
+	_apply_pending_to_tree()
 	van_health_changed.emit(van_health, van_max_health)
 	player_health_changed.emit(player_health, player_max_health)
 	wave_changed.emit(wave_count)
@@ -207,19 +215,64 @@ func get_max_van_health() -> float:
 	return van_max_health
 
 
+func get_vital_max_share() -> float:
+	return van_max_health / float(VITAL_COUNT)
+
+
+func bind_vital(vital: Node) -> void:
+	if vital == null or not ("vital_id" in vital):
+		return
+	var share_max := get_vital_max_share()
+	var key := String(vital.vital_id)
+	var share_cur := share_max
+	if pending_vital_health.has(key):
+		share_cur = float(pending_vital_health[key])
+	if vital.has_method("apply_saved"):
+		vital.apply_saved(share_cur, share_max)
+	sync_van_health_from_vitals()
+
+
+func sync_van_health_from_vitals() -> void:
+	var vitals := _vital_nodes()
+	if vitals.is_empty():
+		return
+	var cur := 0.0
+	var mx := 0.0
+	for vital in vitals:
+		cur += float(vital.health)
+		mx += float(vital.max_health)
+	van_health = cur
+	van_max_health = maxf(BASE_MAX_VAN_HEALTH, mx)
+	van_health_changed.emit(van_health, van_max_health)
+	if is_zero_approx(van_health) and phase != RunPhase.GAME_OVER:
+		set_phase(RunPhase.GAME_OVER)
+
+
 func add_max_van_health(amount: float) -> void:
 	if is_zero_approx(amount):
 		return
 	van_max_health = maxf(BASE_MAX_VAN_HEALTH, van_max_health + amount)
-	if amount > 0.0:
-		van_health += amount
-	else:
-		van_health = minf(van_health, van_max_health)
-	van_health_changed.emit(van_health, van_max_health)
+	var vitals := _vital_nodes()
+	if vitals.is_empty():
+		if amount > 0.0:
+			van_health += amount
+		else:
+			van_health = minf(van_health, van_max_health)
+		van_health_changed.emit(van_health, van_max_health)
+		return
+	var share := amount / float(vitals.size())
+	for vital in vitals:
+		if vital.has_method("add_max"):
+			vital.add_max(share)
+	sync_van_health_from_vitals()
 
 
 func damage_van(amount: float) -> void:
 	if amount <= 0.0 or phase == RunPhase.GAME_OVER:
+		return
+	var target := _lowest_hp_living_vital()
+	if target and target.has_method("take_damage"):
+		target.take_damage(amount)
 		return
 	van_health = maxf(0.0, van_health - amount)
 	van_health_changed.emit(van_health, van_max_health)
@@ -233,6 +286,10 @@ func is_van_at_full_health() -> bool:
 
 func heal_van(amount: float) -> void:
 	if amount <= 0.0 or phase == RunPhase.GAME_OVER:
+		return
+	var target := _most_damaged_vital()
+	if target and target.has_method("heal"):
+		target.heal(amount)
 		return
 	van_health = minf(van_max_health, van_health + amount)
 	van_health_changed.emit(van_health, van_max_health)
@@ -632,6 +689,89 @@ func _cards_from_save(raw) -> Array[StringName]:
 	return cards
 
 
+func _parse_vital_health(data: Dictionary) -> void:
+	pending_vital_health = {}
+	var raw = data.get("vital_health", {})
+	if typeof(raw) == TYPE_DICTIONARY and not (raw as Dictionary).is_empty():
+		for key in raw:
+			pending_vital_health[str(key)] = float(raw[key])
+		return
+	## Old slots stored a single hull number — split evenly across the four machines.
+	var share := float(data.get("van_health", van_health)) / float(VITAL_COUNT)
+	for vital_id in [&"bench", &"hopper", &"fuse_box", &"cab_relay"]:
+		pending_vital_health[String(vital_id)] = share
+
+
+func _apply_pending_to_tree() -> void:
+	var vitals := _vital_nodes()
+	if vitals.is_empty():
+		return
+	var share_max := get_vital_max_share()
+	for vital in vitals:
+		var key := String(vital.vital_id)
+		var share_cur := share_max
+		if pending_vital_health.has(key):
+			share_cur = float(pending_vital_health[key])
+		if vital.has_method("apply_saved"):
+			vital.apply_saved(share_cur, share_max)
+	sync_van_health_from_vitals()
+
+
+func _reset_vitals_in_tree() -> void:
+	pending_vital_health = {}
+	var vitals := _vital_nodes()
+	if vitals.is_empty():
+		return
+	var share := get_vital_max_share()
+	for vital in vitals:
+		if vital.has_method("apply_saved"):
+			vital.apply_saved(share, share)
+	sync_van_health_from_vitals()
+
+
+func _vital_health_dict() -> Dictionary:
+	var stored := {}
+	for vital in _vital_nodes():
+		stored[String(vital.vital_id)] = float(vital.health)
+	if stored.is_empty():
+		return pending_vital_health.duplicate()
+	return stored
+
+
+func _vital_nodes() -> Array:
+	var tree := get_tree()
+	if tree == null:
+		return []
+	var result: Array = []
+	for node in tree.get_nodes_in_group(&"van_vitals"):
+		if node and "health" in node and "max_health" in node:
+			result.append(node)
+	return result
+
+
+func _lowest_hp_living_vital() -> Node:
+	var best: Node = null
+	var best_hp := INF
+	for vital in _vital_nodes():
+		if float(vital.health) <= 0.001:
+			continue
+		if float(vital.health) < best_hp:
+			best_hp = float(vital.health)
+			best = vital
+	return best
+
+
+func _most_damaged_vital() -> Node:
+	var best: Node = null
+	var best_missing := 0.0
+	for vital in _vital_nodes():
+		var missing := float(vital.max_health) - float(vital.health)
+		if missing > best_missing:
+			best_missing = missing
+			best = vital
+	return best
+
+
 func to_save_data() -> Dictionary:
 	var weapons = null
 	var tree := get_tree()
@@ -659,6 +799,7 @@ func to_save_data() -> Dictionary:
 		"last_direction": String(last_direction),
 		"van_health": van_health,
 		"van_max_health": van_max_health,
+		"vital_health": _vital_health_dict(),
 		"player_health": player_health,
 		"player_max_health": player_max_health,
 		"coins": coins,

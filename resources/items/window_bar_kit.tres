@@ -15,8 +15,8 @@ script = ExtResource("3")
 [resource]
 script = ExtResource("1")
 id = &"window_bar_kit"
-display_name = "Window Bar Kit"
-description = "Roadside welding kit. Instantly restores every window bar to full strength — even blown-out ones."
+display_name = "Weld Kit"
+description = "Look at a machine, door, or window and restore 50 integrity."
 icon = ExtResource("5")
 kind = 2
 usable = SubResource("Resource_repair_usable")
