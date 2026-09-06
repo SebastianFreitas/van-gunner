@@ -247,9 +247,12 @@ func _physics_charge(delta: float) -> void:
 	var remaining := position.distance_to(target_local)
 	var speed := mob_world_speed * charge_speed_mult - _current_van_speed()
 	approach_speed = speed
+	speed = _apply_status_move_speed(speed)
 	var progress := 1.0 - clampf(remaining / _charge_start_dist, 0.0, 1.0)
 	var amp := weave_amplitude * (1.0 - progress)
-	_weave_time += delta
+	_weave_time += delta * maxf(
+		status_effects.get_move_speed_multiplier() if status_effects else 1.0, 0.0
+	)
 	var woven := target_local
 	woven.x += _weave_offset(_weave_time, amp)
 	var to_woven := woven - position
@@ -279,11 +282,13 @@ func _physics_peel(delta: float) -> void:
 		position.z = target.z
 		_peel_arrived = true
 		return
-	position += to_target / remaining * minf(peel_speed * delta, remaining)
+	position += to_target / remaining * minf(_apply_status_move_speed(peel_speed) * delta, remaining)
 
 
 func _physics_weave(delta: float) -> void:
-	_weave_time += delta
+	_weave_time += delta * maxf(
+		status_effects.get_move_speed_multiplier() if status_effects else 1.0, 0.0
+	)
 	position.x = _weave_offset(_weave_time, weave_amplitude)
 	position.z = _standoff_z
 

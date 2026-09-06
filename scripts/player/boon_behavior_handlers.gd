@@ -7,10 +7,10 @@ class DoublePhysColdBehavior extends BoonBehavior:
 		return BoonTraitKeys.DOUBLE_PHYS_COLD
 
 	func modify_outgoing_damage(ctx: BoonBehaviorContext) -> void:
-		if ctx.damage_info.damage_type != DamageType.Type.NORMAL:
+		if not ctx.damage_info or not ctx.damage_info.has_channel(DamageType.Type.NORMAL):
 			return
 		if ctx.status and ctx.status.is_frozen():
-			ctx.damage_info.amount *= 2.0
+			ctx.damage_info.scale_channel(DamageType.Type.NORMAL, 2.0)
 
 
 class TripleCritPhysBehavior extends BoonBehavior:
@@ -18,10 +18,10 @@ class TripleCritPhysBehavior extends BoonBehavior:
 		return BoonTraitKeys.TRIPLE_CRIT_PHYS
 
 	func modify_outgoing_damage(ctx: BoonBehaviorContext) -> void:
-		if ctx.damage_info.damage_type != DamageType.Type.NORMAL:
+		if not ctx.damage_info or not ctx.damage_info.has_channel(DamageType.Type.NORMAL):
 			return
 		if ctx.damage_info.is_headshot:
-			ctx.damage_info.amount *= 1.5
+			ctx.damage_info.scale_channel(DamageType.Type.NORMAL, 1.5)
 
 
 class PhysToColdCritBehavior extends BoonBehavior:
@@ -31,7 +31,7 @@ class PhysToColdCritBehavior extends BoonBehavior:
 	func on_post_hit(ctx: BoonBehaviorContext) -> void:
 		if not ctx.status or not ctx.damage_info:
 			return
-		if not ctx.damage_info.is_headshot or ctx.damage_info.damage_type != DamageType.Type.NORMAL:
+		if not ctx.damage_info.is_headshot or not ctx.damage_info.has_channel(DamageType.Type.NORMAL):
 			return
 		ctx.status.apply_cold(0.55, 3.0)
 		ctx.status.try_apply_freeze(
@@ -46,7 +46,7 @@ class RicochetStackBehavior extends BoonBehavior:
 
 	func on_ricochet(ctx: BoonBehaviorContext) -> void:
 		if ctx.damage_info:
-			ctx.damage_info.amount *= 1.0 + float(ctx.bounce_count) * 0.15
+			ctx.damage_info.scale_channels(1.0 + float(ctx.bounce_count) * 0.15)
 
 
 class ColdShatteringRicochetBehavior extends BoonBehavior:
@@ -61,7 +61,7 @@ class ColdShatteringRicochetBehavior extends BoonBehavior:
 			ctx.projectile.global_position if ctx.projectile else Vector3.ZERO,
 			ctx.velocity.normalized(),
 			BoonCombat.RICOCHET_COLD_COUNT,
-			ctx.damage_info.amount * 0.55
+			ctx.damage_info.total_channels() * 0.55
 		)
 
 
@@ -89,7 +89,7 @@ class DelayedFireBehavior extends BoonBehavior:
 		return BoonTraitKeys.DELAYED_FIRE
 
 	func should_delay_fire(ctx: BoonBehaviorContext) -> bool:
-		return ctx.damage_info != null and ctx.damage_info.damage_type == DamageType.Type.FIRE
+		return ctx.damage_info != null and ctx.damage_info.has_explosive()
 
 
 class RicochetExplosiveBehavior extends BoonBehavior:
@@ -100,7 +100,7 @@ class RicochetExplosiveBehavior extends BoonBehavior:
 		if not ctx.projectile or not ctx.damage_info:
 			return false
 		return (
-			ctx.damage_info.damage_type == DamageType.Type.FIRE
+			ctx.damage_info.has_explosive()
 			and ctx.projectile.get_bounces_left() > 0
 		)
 
@@ -125,14 +125,12 @@ class PoisonExplosionsBehavior extends BoonBehavior:
 		return BoonTraitKeys.POISON_EXPLOSIONS
 
 	func on_explosion_splash(ctx: BoonBehaviorContext) -> void:
-		if not ctx.damage_info or ctx.damage_info.damage_type != DamageType.Type.FIRE:
+		if not ctx.damage_info or not ctx.damage_info.has_explosive():
 			return
 		var damageable := DamageResolver.find_damageable(ctx.target)
 		if not damageable:
 			return
-		var poison_info := ctx.damage_info.duplicate_info()
-		poison_info.damage_type = DamageType.Type.POISON
-		poison_info.amount *= 0.35
+		var poison_info := DamageInfo.create(ctx.damage_info.get_final_amount() * 0.35, DamageType.Type.POISON)
 		DamageResolver.apply_status_from_hit(poison_info, damageable)
 
 
@@ -161,12 +159,13 @@ class InstantPoisonBehavior extends BoonBehavior:
 	func on_status_apply(ctx: BoonBehaviorContext) -> bool:
 		if not ctx.status or not ctx.damage_info or not ctx.target:
 			return false
-		var instant := ctx.status.get_poison_total_damage_for_dps(ctx.damage_info.amount * 0.35) * 0.5
+		var poison := ctx.damage_info.get_final_channel(DamageType.Type.POISON)
+		var instant := poison * 0.5
 		if instant <= 0.0:
 			return true
-		var poison_hit := ctx.damage_info.duplicate_info()
-		poison_hit.amount = instant
-		poison_hit.damage_type = DamageType.Type.POISON
+		var poison_hit := DamageInfo.create(instant, DamageType.Type.POISON, ctx.damage_info.source)
+		poison_hit.is_dot_tick = true
+		poison_hit.hit_position = ctx.damage_info.hit_position
 		var damageable := DamageResolver.find_damageable(ctx.target)
 		if damageable:
 			damageable.take_damage(poison_hit)

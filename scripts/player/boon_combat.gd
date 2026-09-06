@@ -28,7 +28,9 @@ static func modify_outgoing_damage(info: DamageInfo, traits: BoonTraits, target:
 		return 0.0
 	var ctx := _make_damage_ctx(info, traits, target)
 	BoonBehaviorRegistry.dispatch_modify_damage(ctx)
-	return ctx.bonus_phys
+	if ctx.bonus_phys > 0.0:
+		info.add_channel(DamageType.Type.NORMAL, ctx.bonus_phys)
+	return 0.0
 
 
 static func apply_bonus_physical_hit(
@@ -177,6 +179,10 @@ static func spawn_projectile(
 	aim_point = null
 ) -> Projectile:
 	var info := DamageInfo.create_from_gun_stats(stats, shooter)
+	var traits := get_player_traits(tree)
+	if traits:
+		modify_outgoing_damage(info, traits, null)
+	ActCardCombat.modify_outgoing_damage(info, null)
 	var spawn_parent := _resolve_projectile_parent(tree, shooter)
 	# Parenting under the van already carries travel motion — don't also bake van velocity
 	# or shots/trails drift backward relative to the cabin.

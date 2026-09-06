@@ -17,6 +17,7 @@ var _sprite: Sprite3D
 func _ready() -> void:
 	health = max_health
 	_build()
+	BoonCombat.configure_enemy_status_effects(self, get_tree())
 
 
 func drop_to(dest: Vector3, duration := 0.42) -> void:
@@ -34,9 +35,9 @@ func take_damage(amount = null) -> void:
 		info = amount
 	else:
 		info = DamageInfo.create(float(amount) if amount != null else 1.0, DamageType.Type.NORMAL)
-	if info.amount <= 0.0:
-		return
 	var damage_amount := info.get_final_amount()
+	if damage_amount <= 0.0:
+		return
 	health = maxf(0.0, health - damage_amount)
 	var popup_pos := info.hit_position
 	if popup_pos == Vector3.ZERO:
@@ -89,6 +90,10 @@ func _build() -> void:
 	var head_col := CollisionShape3D.new()
 	head_col.shape = head_shape
 	head.add_child(head_col)
+
+	var status := StatusEffectController.new()
+	status.name = "StatusEffects"
+	add_child(status)
 
 
 func _flash_hit() -> void:

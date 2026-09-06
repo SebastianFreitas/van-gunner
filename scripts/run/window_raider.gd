@@ -143,12 +143,10 @@ func take_damage(amount) -> void:
 		info = amount
 	else:
 		info = DamageInfo.create(float(amount), DamageType.Type.NORMAL)
-	if info.amount <= 0.0:
+	var damage_amount := info.get_final_amount()
+	if damage_amount <= 0.0:
 		return
 	_last_damage_type = info.damage_type
-	var damage_amount := info.get_final_amount()
-	if info.damage_type in [DamageType.Type.POISON, DamageType.Type.FIRE]:
-		damage_amount = info.amount
 	if status_effects:
 		damage_amount *= status_effects.get_outgoing_damage_multiplier()
 	health = maxf(0.0, health - damage_amount)
@@ -333,6 +331,7 @@ func _physics_chase_marker(delta: float) -> void:
 		# World chase vs live van speed. Boost → lower/negative closing → gain distance.
 		speed = mob_world_speed - _current_van_speed()
 		approach_speed = speed
+	speed = _apply_status_move_speed(speed)
 	if remaining <= 0.05:
 		if speed < 0.0:
 			# Van still pulling away — don't latch onto the marker yet.
@@ -383,6 +382,7 @@ func _physics_chase_player(delta: float) -> void:
 		return
 	_move_arrived = false
 	var speed := GameBalance.MOB_INTERIOR_SPEED
+	speed = _apply_status_move_speed(speed)
 	var step := minf(speed * delta, remaining - _MELEE_RANGE + 0.02)
 	if remaining > 0.001:
 		position += to_target / remaining * step
@@ -469,6 +469,12 @@ func _vital_marker(vital: Node) -> Node3D:
 	if vital.has_method("get_attack_marker"):
 		return vital.get_attack_marker() as Node3D
 	return vital as Node3D
+
+
+func _apply_status_move_speed(speed: float) -> float:
+	if speed <= 0.0 or status_effects == null:
+		return speed
+	return speed * maxf(status_effects.get_move_speed_multiplier(), 0.0)
 
 
 func _next_attack_wait() -> float:

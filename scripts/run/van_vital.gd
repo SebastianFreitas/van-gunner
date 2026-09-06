@@ -50,17 +50,26 @@ func add_max(amount: float) -> void:
 	health_changed.emit(health, max_health)
 
 
-func take_damage(amount: float) -> void:
-	if amount <= 0.0 or not is_alive() or GameSession.phase == GameSession.RunPhase.GAME_OVER:
+func take_damage(amount) -> void:
+	if not is_alive() or GameSession.phase == GameSession.RunPhase.GAME_OVER:
 		return
-	health = maxf(0.0, health - amount)
+	var dmg := 0.0
+	var dtype := DamageType.Type.NORMAL
+	if amount is DamageInfo:
+		dmg = (amount as DamageInfo).get_final_amount()
+		dtype = (amount as DamageInfo).damage_type
+	else:
+		dmg = float(amount)
+	if dmg <= 0.0:
+		return
+	health = maxf(0.0, health - dmg)
 	health_changed.emit(health, max_health)
 	var pos := get_attack_marker().global_position
 	CombatFeedback.show_damage(
 		pos + Vector3(0, 0.6, 0),
-		amount,
+		dmg,
 		false,
-		DamageType.Type.NORMAL
+		dtype
 	)
 	GameSession.sync_van_health_from_vitals()
 

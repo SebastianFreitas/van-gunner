@@ -171,7 +171,7 @@ Tune for current baseline (`BASE_DAMAGE=1.5`, `BASE_FIRE_RATE=1.75`). Values are
 | sniper_a1_* | 0.45 | 1 | 0 | 180 | 2 | 6 | 1.6 | Element tag |
 
 **Elemental rule for van-gunner:**  
-Elemental variants set `GunStats.damage_type` to FIRE/COLD/POISON and **do not** add a second damage channel on the gun. Conversion / bonus phys / etc. remain **boon** territory (`fire_to_phys_ratio`, `phys_damage_bonus`, …).
+Elemental variants **seed** `GunStats.damage_type` (FIRE/COLD/POISON/NORMAL). Extra channels come from interior % mods, boons, and act cards. Trail color is the largest channel. Fire/explosive amounts explode and do not ricochet.
 
 **A1 power budget:** mag, reload, pellets, bullet speed, slight fire_rate_mult shifts, rarity — **never** “×3 damage”.
 

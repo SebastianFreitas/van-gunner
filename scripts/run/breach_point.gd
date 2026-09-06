@@ -112,18 +112,27 @@ func release(raider: Node) -> void:
 	_occupants.erase(raider)
 
 
-func take_damage(amount: float) -> void:
-	if amount <= 0.0 or is_passable():
+func take_damage(amount) -> void:
+	if is_passable():
+		return
+	var dmg := 0.0
+	var dtype := DamageType.Type.NORMAL
+	if amount is DamageInfo:
+		dmg = (amount as DamageInfo).get_final_amount()
+		dtype = (amount as DamageInfo).damage_type
+	else:
+		dmg = float(amount)
+	if dmg <= 0.0:
 		return
 	# First smash on a barred window always pops the pane if it is still intact.
 	_shatter_window_glass_if_needed()
-	health = maxf(0.0, health - amount)
+	health = maxf(0.0, health - dmg)
 	health_changed.emit(health, max_health)
 	CombatFeedback.show_damage(
 		get_outside_position() + Vector3(0, 0.6, 0),
-		amount,
+		dmg,
 		false,
-		DamageType.Type.NORMAL
+		dtype
 	)
 	if is_zero_approx(health):
 		_mark_breached()

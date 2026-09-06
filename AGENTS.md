@@ -160,8 +160,11 @@ Breaking these is how the game stops being fun, so they're worth stating flatly.
    `grade + mod_id`.
 3. **Shotgun pellets split damage**, they don't multiply it. An 8-pellet shotgun is
    coverage, not ×8 DPS.
-4. **Elemental gun variants only set `damage_type`.** They never add a second damage
-   channel — conversions and bonuses are boon territory.
+4. **Elemental gun variants seed one damage channel.** Extra phys/fire/cold/poison
+   comes from mods, boons, and act cards — not a second identity on the gun.
+   Trail color is the largest channel. Any fire/explosive amount explodes and
+   does not ricochet (unless a boon says otherwise). Poison is a stacking DoT;
+   cold slows movement and attacks.
 5. **"Reload Speed %" lowers duration:** `seconds / (1 + pct/100)`. Never add the
    percentage onto the seconds field.
 6. **Exactly 2 weapon slots**, swapped with scroll or Q. Never bind swapping to 1–4;
@@ -295,6 +298,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Add a street card | new `.tres` in `resources/acts/cards/` + maybe an `ActCardEffect` |
 | Add a side stop | new `.tres` in `resources/side_stops/` + a content scene; set `arrival` to `REAR_PARK` or `ELEVATOR` |
 | Touch guns | `scripts/weapons/` + `scripts/combat/gun_*.gd` |
+| Damage types / DoT / blast | `scripts/combat/damage_*.gd`, `status_effect_controller.gd`, `explosion_fx.gd` |
 | Add a sound | new `SoundCue` in `resources/audio/sound_bank.tres` — gameplay already emits |
 | Touch the van shell / doors / windows | `scripts/run/van_*.gd`, `side_*.gd`, `rear_doors.gd` |
 | Van hull / interior vitals | `scripts/run/van_vital.gd` + HUD `scripts/ui/van_health_bar.gd` |

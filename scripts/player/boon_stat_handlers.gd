@@ -10,10 +10,16 @@ class FireDamageStatBehavior extends BoonBehavior:
 		)
 
 	func modify_outgoing_damage(ctx: BoonBehaviorContext) -> void:
-		if ctx.damage_info.damage_type != DamageType.Type.FIRE:
+		if ctx.target != null or not ctx.damage_info:
 			return
-		ctx.damage_info.amount += ctx.traits.get_add(BoonTraitKeys.FIRE_DAMAGE_BONUS)
-		ctx.damage_info.amount *= ctx.traits.get_mult(BoonTraitKeys.FIRE_DAMAGE_MULT)
+		ctx.damage_info.add_channel(
+			DamageType.Type.FIRE, ctx.traits.get_add(BoonTraitKeys.FIRE_DAMAGE_BONUS)
+		)
+		var fire := ctx.damage_info.get_channel(DamageType.Type.FIRE)
+		if fire > 0.0:
+			ctx.damage_info.set_channel(
+				DamageType.Type.FIRE, fire * ctx.traits.get_mult(BoonTraitKeys.FIRE_DAMAGE_MULT)
+			)
 
 
 class ExtraPoisonToFireStatBehavior extends BoonBehavior:
@@ -21,13 +27,17 @@ class ExtraPoisonToFireStatBehavior extends BoonBehavior:
 		return trait_add_active(traits, BoonTraitKeys.EXTRA_POISON_TO_FIRE)
 
 	func modify_outgoing_damage(ctx: BoonBehaviorContext) -> void:
-		if ctx.damage_info.damage_type != DamageType.Type.FIRE:
+		if ctx.target == null or not ctx.damage_info:
+			return
+		if not ctx.damage_info.has_explosive():
 			return
 		if not ctx.status or not ctx.status.is_poisoned():
 			return
 		var poison_bonus := ctx.traits.get_add(BoonTraitKeys.EXTRA_POISON_TO_FIRE)
 		if poison_bonus > 0.0:
-			ctx.damage_info.amount += ctx.status.get_poison_dps() * poison_bonus
+			ctx.damage_info.add_channel(
+				DamageType.Type.FIRE, ctx.status.get_poison_dps() * poison_bonus
+			)
 
 
 class FireToPhysStatBehavior extends BoonBehavior:
@@ -35,20 +45,17 @@ class FireToPhysStatBehavior extends BoonBehavior:
 		return trait_add_active(traits, BoonTraitKeys.FIRE_TO_PHYS_RATIO)
 
 	func modify_outgoing_damage(ctx: BoonBehaviorContext) -> void:
-		if ctx.damage_info.damage_type != DamageType.Type.FIRE:
+		if ctx.target != null or not ctx.damage_info:
 			return
 		var ratio := clampf(ctx.traits.get_add(BoonTraitKeys.FIRE_TO_PHYS_RATIO), 0.0, 1.0)
 		if ratio <= 0.0:
 			return
-		var converted := ctx.damage_info.amount * ratio
-		ctx.damage_info.amount -= converted
+		var fire := ctx.damage_info.get_channel(DamageType.Type.FIRE)
+		var converted := fire * ratio
 		if converted <= 0.0:
 			return
-		if is_zero_approx(ctx.damage_info.amount):
-			ctx.damage_info.amount = converted
-			ctx.damage_info.damage_type = DamageType.Type.NORMAL
-		else:
-			ctx.bonus_phys += converted
+		ctx.damage_info.add_channel(DamageType.Type.FIRE, -converted)
+		ctx.damage_info.add_channel(DamageType.Type.NORMAL, converted)
 
 
 class PhysDamageStatBehavior extends BoonBehavior:
@@ -56,9 +63,11 @@ class PhysDamageStatBehavior extends BoonBehavior:
 		return trait_add_active(traits, BoonTraitKeys.PHYS_DAMAGE_BONUS)
 
 	func modify_outgoing_damage(ctx: BoonBehaviorContext) -> void:
-		if ctx.damage_info.damage_type != DamageType.Type.NORMAL:
+		if ctx.target != null or not ctx.damage_info:
 			return
-		ctx.damage_info.amount += ctx.traits.get_add(BoonTraitKeys.PHYS_DAMAGE_BONUS)
+		ctx.damage_info.add_channel(
+			DamageType.Type.NORMAL, ctx.traits.get_add(BoonTraitKeys.PHYS_DAMAGE_BONUS)
+		)
 
 
 class PoisonedColdBonusStatBehavior extends BoonBehavior:
@@ -66,10 +75,15 @@ class PoisonedColdBonusStatBehavior extends BoonBehavior:
 		return trait_add_active(traits, BoonTraitKeys.POISONED_COLD_BONUS)
 
 	func modify_outgoing_damage(ctx: BoonBehaviorContext) -> void:
-		if ctx.damage_info.damage_type != DamageType.Type.POISON or not ctx.status:
+		if not ctx.damage_info or not ctx.status:
+			return
+		if not ctx.damage_info.has_channel(DamageType.Type.POISON):
 			return
 		if ctx.status.is_frozen() or ctx.status.is_chilled():
-			ctx.damage_info.amount *= 1.0 + ctx.traits.get_add(BoonTraitKeys.POISONED_COLD_BONUS)
+			ctx.damage_info.scale_channel(
+				DamageType.Type.POISON,
+				1.0 + ctx.traits.get_add(BoonTraitKeys.POISONED_COLD_BONUS)
+			)
 
 
 class FrozenDamageMultStatBehavior extends BoonBehavior:
@@ -77,10 +91,14 @@ class FrozenDamageMultStatBehavior extends BoonBehavior:
 		return trait_mult_active(traits, BoonTraitKeys.FROZEN_DAMAGE_MULT)
 
 	func modify_outgoing_damage(ctx: BoonBehaviorContext) -> void:
-		if ctx.damage_info.damage_type != DamageType.Type.COLD or not ctx.status:
+		if not ctx.damage_info or not ctx.status:
+			return
+		if not ctx.damage_info.has_channel(DamageType.Type.COLD):
 			return
 		if ctx.status.is_frozen() or ctx.status.is_chilled():
-			ctx.damage_info.amount *= ctx.traits.get_mult(BoonTraitKeys.FROZEN_DAMAGE_MULT)
+			ctx.damage_info.scale_channel(
+				DamageType.Type.COLD, ctx.traits.get_mult(BoonTraitKeys.FROZEN_DAMAGE_MULT)
+			)
 
 
 class FireAreaMultStatBehavior extends BoonBehavior:
@@ -88,7 +106,7 @@ class FireAreaMultStatBehavior extends BoonBehavior:
 		return trait_mult_active(traits, BoonTraitKeys.FIRE_AREA_MULT)
 
 	func modify_explosion_radius(ctx: BoonBehaviorContext) -> void:
-		if not ctx.damage_info or ctx.damage_info.damage_type != DamageType.Type.FIRE:
+		if not ctx.damage_info or not ctx.damage_info.has_explosive():
 			return
 		ctx.explosion_radius *= ctx.traits.get_mult(BoonTraitKeys.FIRE_AREA_MULT)
 
@@ -103,7 +121,7 @@ class ColdFreezeStatBehavior extends BoonBehavior:
 	func on_post_hit(ctx: BoonBehaviorContext) -> void:
 		if not ctx.status or not ctx.damage_info:
 			return
-		if ctx.damage_info.damage_type != DamageType.Type.COLD:
+		if not ctx.damage_info.has_channel(DamageType.Type.COLD):
 			return
 		ctx.status.try_apply_freeze(
 			ctx.traits.get_add(BoonTraitKeys.FREEZE_CHANCE),

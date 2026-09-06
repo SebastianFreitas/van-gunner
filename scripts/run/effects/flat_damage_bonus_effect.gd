@@ -10,6 +10,6 @@ extends ActCardEffect
 func modify_outgoing_damage(ctx: ActCardEffectContext) -> void:
 	if amount == 0.0 or ctx == null or ctx.damage_info == null:
 		return
-	if ctx.damage_info.damage_type != damage_type:
+	if ctx.target != null:
 		return
-	ctx.damage_info.amount += amount
+	ctx.damage_info.add_channel(damage_type, amount)

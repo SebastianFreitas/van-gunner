@@ -162,9 +162,11 @@ func _sweep_for_hit(from: Vector3, to: Vector3) -> Dictionary:
 	return result
 
 
-## Bullets only bounce off scenery. Anything that can take damage eats the shot.
+## Bullets only bounce off scenery. Fire/explosive shots detonate on first contact.
 func _can_ricochet_off(collider: Node) -> bool:
 	if _bounces_left <= 0 or collider == null:
+		return false
+	if damage_info and damage_info.has_explosive():
 		return false
 	return DamageResolver.find_damageable(collider) == null
 
@@ -179,7 +181,7 @@ func _ricochet(point: Vector3, normal: Vector3) -> void:
 	var exit := point + safe_normal * (_radius + SURFACE_OFFSET)
 	global_position = exit
 	if damage_info:
-		damage_info.amount *= bounce_damage_retention
+		damage_info.scale_channels(bounce_damage_retention)
 		var traits: BoonTraits = BoonCombat.get_player_traits(get_tree())
 		if traits:
 			velocity = BoonCombat.dispatch_ricochet(self, traits, _bounce_count, velocity)
@@ -234,7 +236,7 @@ func _apply_trail_color(info: DamageInfo) -> void:
 		return
 	var dmg_type := DamageType.Type.NORMAL
 	if info:
-		dmg_type = info.damage_type
+		dmg_type = info.dominant_type()
 	if _trail_line.has_method("set_trail_color"):
 		_trail_line.call("set_trail_color", BulletTrail.color_for_damage_type(dmg_type))
 
@@ -319,25 +321,20 @@ func _resolve_hit(collider: Node) -> void:
 	if collider is CollisionObject3D and (collider as CollisionObject3D).get_rid() == owner_rid:
 		return
 	var traits: BoonTraits = BoonCombat.get_player_traits(get_tree())
-	var bonus_phys := 0.0
 	if damage_info:
 		damage_info.hit_position = global_position
 		damage_info.is_headshot = DamageResolver.is_headshot(collider, damage_info.hit_position)
 		if traits:
-			bonus_phys = BoonCombat.modify_outgoing_damage(damage_info, traits, collider)
+			BoonCombat.modify_outgoing_damage(damage_info, traits, collider)
 			explosion_radius = BoonCombat.modify_explosion_radius(explosion_radius, damage_info, traits)
 		ActCardCombat.modify_outgoing_damage(damage_info, collider)
 	_has_hit = true
 	if damage_info:
 		damage_info.explosion_radius = explosion_radius
-		DamageResolver.apply_hit(damage_info, collider)
-		if bonus_phys > 0.0:
-			BoonCombat.apply_bonus_physical_hit(bonus_phys, damage_info, collider, traits)
-		DamageResolver.apply_status_from_hit(damage_info, collider)
+		DamageResolver.apply_direct_channels(damage_info, collider, traits)
 		if traits:
 			BoonCombat.apply_post_hit(damage_info, collider, traits)
-		var should_explode := damage_info.damage_type in [DamageType.Type.EXPLOSIVE, DamageType.Type.FIRE]
-		if should_explode:
+		if damage_info.has_explosive():
 			var space_state := get_world_3d().direct_space_state
 			var exclude: Array[RID] = []
 			if owner_rid.is_valid():
@@ -363,7 +360,7 @@ func _resolve_hit(collider: Node) -> void:
 		hit_target.emit(collider)
 		AudioDirector.play_at(&"bullet_impact", self)
 	var keep_alive := BoonCombat.should_keep_alive_after_hit(traits, damage_info, self)
-	if keep_alive:
+	if keep_alive and DamageResolver.find_damageable(collider) != null:
 		_has_hit = false
 		return
 	_despawn()

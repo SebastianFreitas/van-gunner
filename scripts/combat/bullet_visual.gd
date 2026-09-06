@@ -126,6 +126,7 @@ func _ensure_nodes() -> void:
 		mat.emission_energy_multiplier = 4.0
 		sphere.material = mat
 		_bullet_mesh.mesh = sphere
+		_bullet_mesh.material_override = mat
 		add_child(_bullet_mesh)
 
 	if not _trail_line:
@@ -133,6 +134,16 @@ func _ensure_nodes() -> void:
 		_trail_line.name = &"TrailLine"
 		_trail_line.set_script(preload("res://scripts/combat/bullet_trail.gd"))
 		add_child(_trail_line)
+
+
+func _tint_mesh(color: Color) -> void:
+	if not _bullet_mesh:
+		return
+	var mat := _bullet_mesh.material_override as StandardMaterial3D
+	if mat == null:
+		return
+	mat.albedo_color = Color(color.r, color.g, color.b, 1.0)
+	mat.emission = color
 
 
 func _apply_size(size: float) -> void:
@@ -143,13 +154,13 @@ func _apply_size(size: float) -> void:
 
 
 func _apply_trail_color(info: DamageInfo) -> void:
-	if not _trail_line:
-		return
 	var dmg_type := DamageType.Type.NORMAL
 	if info:
-		dmg_type = info.damage_type
-	if _trail_line.has_method("set_trail_color"):
-		_trail_line.call("set_trail_color", BulletTrail.color_for_damage_type(dmg_type))
+		dmg_type = info.dominant_type()
+	var color := BulletTrail.color_for_damage_type(dmg_type)
+	if _trail_line and _trail_line.has_method("set_trail_color"):
+		_trail_line.call("set_trail_color", color)
+	_tint_mesh(color)
 
 
 func _orient_to_velocity() -> void:

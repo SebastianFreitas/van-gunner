@@ -139,59 +139,11 @@ func _explode() -> void:
 	_armed = false
 	var center := global_position
 	var info := DamageInfo.create(_explosion_damage, DamageType.Type.EXPLOSIVE)
-	for node in get_tree().get_nodes_in_group(&"enemy"):
-		var enemy := node as Node3D
-		if not is_instance_valid(enemy) or not enemy.has_method(&"take_damage"):
-			continue
-		var distance := center.distance_to(enemy.global_position)
-		if distance > _explosion_radius:
-			continue
-		var falloff := 1.0 - clampf(distance / _explosion_radius, 0.0, 1.0)
-		var blast := info.duplicate_info()
-		blast.amount = _explosion_damage * falloff
-		blast.hit_position = enemy.global_position + Vector3(0, 1.2, 0)
-		blast.explosion_radius = _explosion_radius
-		enemy.take_damage(blast)
-	_spawn_blast_fx(center)
+	info.explosion_radius = _explosion_radius
+	var space_state := get_world_3d().direct_space_state
+	DamageResolver.apply_explosion(center, _explosion_radius, info, space_state)
 	exploded.emit(center)
 	queue_free()
-
-
-func _spawn_blast_fx(center: Vector3) -> void:
-	var host := _reference if is_instance_valid(_reference) else get_tree().current_scene
-	if not host:
-		return
-
-	var flash := OmniLight3D.new()
-	flash.light_color = Color(1.0, 0.66, 0.28, 1.0)
-	flash.light_energy = 9.0
-	flash.omni_range = _explosion_radius * 2.0
-	host.add_child(flash)
-	flash.global_position = center
-
-	var sparks := CPUParticles3D.new()
-	sparks.amount = 48
-	sparks.lifetime = 0.5
-	sparks.one_shot = true
-	sparks.explosiveness = 1.0
-	sparks.spread = 180.0
-	sparks.initial_velocity_min = _explosion_radius * 1.5
-	sparks.initial_velocity_max = _explosion_radius * 4.0
-	sparks.gravity = Vector3(0.0, -6.0, 0.0)
-	sparks.scale_amount_min = 0.06
-	sparks.scale_amount_max = 0.16
-	sparks.color = Color(1.0, 0.72, 0.3, 1.0)
-	host.add_child(sparks)
-	sparks.global_position = center
-	sparks.finished.connect(sparks.queue_free)
-	sparks.emitting = true
-
-	var tween := flash.create_tween()
-	tween.tween_property(flash, "light_energy", 0.0, 0.28)
-	tween.tween_callback(func() -> void:
-		flash.visible = false
-		flash.queue_free()
-	)
 
 
 func _to_reference_direction(world_direction: Vector3) -> Vector3:
