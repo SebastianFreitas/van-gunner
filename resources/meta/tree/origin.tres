@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SkillNodeDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/meta/skill_node_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://scenes/meta/tree/origin.svg" id="2"]
+[ext_resource type="Script" path="res://scripts/meta/skill_node_effect.gd" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"origin"
+display_name = "Chassis"
+description = "The van's schematic. Requests start here."
+icon = ExtResource("2")
+branch = 0
+parent_id = &""
+cost = 0
+layout_offset = Vector2(0, 0)
+effects = Array[ExtResource("3")]([])

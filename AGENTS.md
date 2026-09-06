@@ -169,17 +169,23 @@ Breaking these is how the game stops being fun, so they're worth stating flatly.
    percentage onto the seconds field.
 6. **Exactly 2 weapon slots**, swapped with scroll or Q. Never bind swapping to 1–4;
    those are tool slots.
-7. **Crafting spends `GameSession.coins`.** There is no second currency.
-8. **Do not add a hitscan gun.** Combat is projectile-only; the old `HitscanWeapon`
+7. **Crafting spends `GameSession.coins`.** Rare Parts (`MetaProgression.rare_parts`)
+   are a second wallet for the van schematic only — boss drops, 3 per run max.
+   Do not spend gold on meta tree nodes, and do not spend Rare Parts at the bench.
+8. **Van speed is tree-written.** `van_speed_level` still feeds the chase formula
+   (`closing = mob_world_speed - live_van_speed`). Only allocated schematic nodes
+   change it; pending requests wait until the next run (or apply in `IDLE`).
+   Do not buy speed with gold at the bench.
+9. **Do not add a hitscan gun.** Combat is projectile-only; the old `HitscanWeapon`
    script is gone.
-9. **Run save version lives only on `SaveManager.SAVE_VERSION`.**
-   `GameSession.to_save_data()` must read that constant. Mismatched slot files are
-   rejected with a warning that names both versions — never fail silently.
-   The main menu must not treat a rejected file as a new run (use NEW to overwrite).
-10. **`is_elite` is explicit.** Agile (window climbing, green tint) does not imply
+10. **Run save version lives only on `SaveManager.SAVE_VERSION`.**
+    `GameSession.to_save_data()` must read that constant. Mismatched slot files are
+    rejected with a warning that names both versions — never fail silently.
+    The main menu must not treat a rejected file as a new run (use NEW to overwrite).
+11. **`is_elite` is explicit.** Agile (window climbing, green tint) does not imply
     elite loot. Set elite on the raider export, or via `mark_as_boss()` /
     `EncounterDirector._spawn_boss`.
-11. **Player HP and van hull are both fail conditions.** Either bar at 0 is
+12. **Player HP and van hull are both fail conditions.** Either bar at 0 is
     `GAME_OVER`. Van hull is the **sum of interior vitals** (bench, hopper, fuse
     box, cab relay), not door/window smash HP. Heal consumables restore player
     HP only; the weld kit (look-at, +50) repairs a machine, door, or window.
@@ -220,7 +226,9 @@ Each of these has already cost someone real debugging time:
   uses a synchronous `ResourceLoader.load`; the threaded path dies on the floor
   shader sub-resource. Don't "optimise" it back.
 - **`debug_console.tscn` is `load()`ed, not `preload()`ed** in `van.gd`, so a broken
-  console scene doesn't hard-fail the whole van scene at compile time.
+  console scene doesn't hard-fail the whole van scene at compile time. The
+  schematic HUD is instanced in `van.tscn` but also not preloaded into `van.gd`
+  for the same reason.
 - **`DebugConfig.ENABLED`** is a `static var` initialised from
   `OS.has_feature("debug")`. Editor and debug exports get the console (`H`);
   release exports do not. Set `DebugConfig.FORCE_ENABLED` to `true` to ship the
@@ -228,6 +236,11 @@ Each of these has already cost someone real debugging time:
 - **`ActCardRegistry` scans `res://resources/acts/cards/` with `DirAccess`.** Packed
   listings may use `foo.tres.remap`; `list_ids()` strips `.remap` before the
   `.tres` check. An empty list `push_warning`s rather than failing quietly.
+- **`SkillTreeRegistry` scans `res://resources/meta/tree/` the same way.** Callers
+  preload the script (it is not an autoload and has no `class_name`). Pending
+  node buys must not emit `van_speed_changed` or the chase window jumps mid-street.
+  Fuse box / cab relay vitals need explicit `vital_id` on the `van.tscn` instances
+  — the dummy scene leaves the id empty so both become `&"van_vital"`.
 - **`SideStopRegistry` scans `res://resources/side_stops/` the same way.** Arrival
   hosts (`stop_vestibule.tscn` / `stop_elevator.tscn`) expose `DockPoint` and
   `ExitPoint`. Content scenes start just inside the roll-up (`ContentMount` at
@@ -309,6 +322,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Weld kit (look-at repair) | `scripts/items/effects/repair_window_bars_effect.gd` |
 | Yell at the driver (Shift GO / C EASY) | `travel_controller.gd` boost/slow + `scripts/ui/driver_shout_hud.gd` |
 | Bench / crafting UI | `scripts/ui/bench_screen.gd` |
+| Van schematic / skill tree | `scripts/ui/skill_tree_hud.gd` + `scripts/core/meta_progression.gd` + `resources/meta/tree/` |
 | Loot hopper / death popups | `scripts/core/loot_collector.gd` + `scripts/interactions/loot_machine.gd` |
 | Bench screenshot tool | `tools/bench_preview.tscn` |
 | Shop counter / stock | `scripts/run/shop_*.gd` |
@@ -317,9 +331,10 @@ These look like bugs. They are not. The project owner set them on purpose.
 ## 9. Running and debugging
 
 - Open the project in Godot 4.7; main scene is `scenes/boot/boot.tscn`.
-- In-game console: **H**. `help` lists commands; `list commands|boons|items|weapons|cards|stops|sounds`
+- In-game console: **H**. `help` lists commands; `list commands|boons|items|weapons|cards|stops|sounds|tree`
   enumerates content. `stop <id>` forces that side stop on the next fork (use
   `stop rare_shop` or `stop elevator shop` to test the elevator). `sound <cue>` auditions a cue.
+  `parts [n]` grants Rare Parts; `tree_reset` wipes the schematic back to origin.
 - `speed` enables a debug fast-forward that also auto-resolves reveals and boon
   picks — useful for reaching late acts quickly, but it *skips* the panels, so don't
   use it to test UI.

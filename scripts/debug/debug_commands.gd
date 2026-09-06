@@ -4,6 +4,7 @@ extends Node
 
 const _PICKUP_SCENE := preload("res://scenes/items/pickup.tscn")
 const _SoundCue := preload("res://scripts/audio/sound_cue.gd")
+const _SkillTreeRegistry := preload("res://scripts/core/skill_tree_registry.gd")
 
 var _commands: Dictionary = {}
 
@@ -40,7 +41,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 				matches = _filter_prefix(["open", "close", "toggle"], "")
 			"list":
 				matches = _filter_prefix(
-					["boons", "items", "commands", "weapons", "cards", "stops", "sounds"], ""
+					["boons", "items", "commands", "weapons", "cards", "stops", "sounds", "tree"], ""
 				)
 			"sound":
 				matches = _filter_prefix(_sound_id_strings(), "")
@@ -73,7 +74,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 		matches = _filter_prefix(["open", "close", "toggle"], partial)
 	elif parts[0] == "list":
 		matches = _filter_prefix(
-			["boons", "items", "commands", "weapons", "cards", "stops", "sounds"], partial
+			["boons", "items", "commands", "weapons", "cards", "stops", "sounds", "tree"], partial
 		)
 	elif parts[0] == "sound":
 		matches = _filter_prefix(_sound_id_strings(), partial)
@@ -126,6 +127,8 @@ func _register_commands() -> void:
 		"give_random_weapon": _cmd_give_random_weapon,
 		"force_a1": _cmd_force_a1,
 		"sound": _cmd_sound,
+		"parts": _cmd_parts,
+		"tree_reset": _cmd_tree_reset,
 	}
 
 
@@ -162,7 +165,10 @@ func _cmd_help(_args: Array) -> String:
 		+ "  force_a1         drop a random A1 gun near the player\n"
 		+ "  list weapons [q] browse weapon definition ids\n"
 		+ "  list sounds [q] browse SoundCue ids\n"
+		+ "  list tree [q]   browse skill-tree node ids\n"
 		+ "  sound <cue>     play a cue (audition without a run)\n"
+		+ "  parts [n]       add Rare Parts (meta schematic currency)\n"
+		+ "  tree_reset      wipe the schematic back to origin (keeps parts)\n"
 		+ "  Tab            autocomplete command or item id"
 	) % ", ".join(names)
 
@@ -249,6 +255,22 @@ func _cmd_coins(args: Array) -> String:
 	var amount: int = int(args[0]) if not args.is_empty() else 10
 	GameSession.add_coins(amount)
 	return "Added %d coins (total %d)." % [amount, GameSession.coins]
+
+
+func _cmd_parts(args: Array) -> String:
+	var amount: int = int(args[0]) if not args.is_empty() else 1
+	if amount <= 0:
+		return "Usage: parts [n]  (n > 0)"
+	MetaProgression.add_rare_parts(amount)
+	return "Added %d Rare Parts (total %d)." % [amount, MetaProgression.rare_parts]
+
+
+func _cmd_tree_reset(_args: Array) -> String:
+	MetaProgression.debug_reset_tree()
+	return "Schematic reset to origin. Speed level %d. Rare Parts %d." % [
+		MetaProgression.van_speed_level,
+		MetaProgression.rare_parts,
+	]
 
 
 func _cmd_heal(args: Array) -> String:
@@ -345,7 +367,7 @@ func _cmd_force_a1(_args: Array) -> String:
 
 func _cmd_list(args: Array) -> String:
 	if args.is_empty():
-		return "Usage: list boons|items|commands|weapons|cards|stops|sounds [filter]"
+		return "Usage: list boons|items|commands|weapons|cards|stops|sounds|tree [filter]"
 	var kind: String = str(args[0]).to_lower()
 	var filter_text := " ".join(args.slice(1))
 	match kind:
@@ -369,9 +391,11 @@ func _cmd_list(args: Array) -> String:
 			return _format_stop_list(filter_text)
 		"sounds":
 			return _format_sound_list(filter_text)
+		"tree":
+			return _format_tree_list(filter_text)
 		_:
 			return (
-				"Unknown list target: %s  (try boons, items, commands, weapons, cards, stops, sounds)"
+				"Unknown list target: %s  (try boons, items, commands, weapons, cards, stops, sounds, tree)"
 				% kind
 			)
 
@@ -568,6 +592,43 @@ func _format_sound_list(filter_text: String) -> String:
 			return "No sounds found."
 		return "No sounds match '%s'." % filter_text
 	var header := "%d sounds" % count
+	if not filter_text.is_empty():
+		header += " matching '%s'" % filter_text
+	return header + ":\n" + "\n".join(lines)
+
+
+func _format_tree_list(filter_text: String) -> String:
+	var needle := filter_text.strip_edges().to_lower()
+	var lines: PackedStringArray = PackedStringArray()
+	var count := 0
+	for node in _SkillTreeRegistry.list_definitions():
+		var hay := ("%s %s %s" % [node.id, node.display_name, node.description]).to_lower()
+		if not needle.is_empty() and not hay.contains(needle):
+			continue
+		var mark := "locked"
+		if MetaProgression.is_allocated(node.id):
+			mark = "live"
+		elif MetaProgression.is_pending(node.id):
+			mark = "queued"
+		elif node.is_stub():
+			mark = "stub"
+		lines.append("  %s  —  [%s] %s — %s" % [
+			node.id,
+			mark,
+			node.display_name,
+			node.description.strip_edges(),
+		])
+		count += 1
+	if count == 0:
+		if filter_text.is_empty():
+			return "No skill-tree nodes found."
+		return "No skill-tree nodes match '%s'." % filter_text
+	var header := "%d tree nodes  ·  %d live+queued / %d cap  ·  %d parts" % [
+		count,
+		MetaProgression.allocation_count(),
+		_SkillTreeRegistry.MAX_ALLOCATED,
+		MetaProgression.rare_parts,
+	]
 	if not filter_text.is_empty():
 		header += " matching '%s'" % filter_text
 	return header + ":\n" + "\n".join(lines)

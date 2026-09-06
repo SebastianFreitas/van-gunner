@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SkillNodeDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/meta/skill_node_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://scenes/meta/tree/left_stub.svg" id="2"]
+[ext_resource type="Script" path="res://scripts/meta/skill_node_effect.gd" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = &"left_stub"
+display_name = "Port plans"
+description = "Not wired yet. Guns, shell, or economy — later."
+icon = ExtResource("2")
+branch = 3
+parent_id = &"origin"
+cost = 1
+layout_offset = Vector2(-2, 0)
+effects = Array[ExtResource("3")]([])

@@ -40,6 +40,8 @@
 [ext_resource type="Script" uid="uid://bgxcer8818k7j" path="res://scripts/run/van_vital.gd" id="36"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_vital_dummy.tscn" id="37"]
 [ext_resource type="Script" uid="uid://cmdwe4o0k1nme" path="res://scripts/ui/van_health_bar.gd" id="38"]
+[ext_resource type="PackedScene" path="res://scenes/van/request_board.tscn" id="39"]
+[ext_resource type="PackedScene" path="res://scenes/ui/skill_tree_hud.tscn" id="40"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -1105,9 +1107,21 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.6
 transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 2.2095766, 0.55, 2.5374727)
 prompt = "Fuse box"
 
+[node name="VanVital" parent="TravelPath/VanFollow/VanRig/Interior/Props/FuseBox" index="2"]
+vital_id = &"fuse_box"
+display_name = "Fuse box"
+
 [node name="CabRelay" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=219581774 instance=ExtResource("37")]
 transform = Transform3D(4.371139e-08, 0, -1, 0, 1, 0, 1, 0, 4.371139e-08, 0.9800526, 1.8457549, -4.592293)
 prompt = "Cab relay"
+
+[node name="VanVital" parent="TravelPath/VanFollow/VanRig/Interior/Props/CabRelay" index="2"]
+vital_id = &"cab_relay"
+display_name = "Cab relay"
+
+[node name="RequestBoard" parent="TravelPath/VanFollow/VanRig/Interior/Props" instance=ExtResource("39")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -1.62, 0.95, -1.8)
+prompt = "Open schematic"
 
 [node name="RoomZones" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1307820521]
 
@@ -1652,6 +1666,9 @@ layout_mode = 2
 text = "RETURN TO MENU"
 
 [node name="BenchScreen" parent="HUD" unique_id=840301130 instance=ExtResource("13")]
+unique_name_in_owner = true
+
+[node name="SkillTreeHud" parent="HUD" instance=ExtResource("40")]
 unique_name_in_owner = true
 
 [connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Left" to="." method="_on_left_route_pressed"]

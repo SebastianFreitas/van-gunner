@@ -87,8 +87,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 **`scripts/core/meta_progression.gd`**
 
 - `signal van_speed_changed(level: int, speed: float)`
+- `signal rare_parts_changed(total: int)`
+- `signal tree_changed`
 
 **`scripts/interactions/crafting_table.gd`**
+
+- `signal opened`
+
+**`scripts/interactions/request_board.gd`**
 
 - `signal opened`
 
@@ -104,6 +110,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 **`scripts/items/pickup.gd`**
 
 - `enum _AnimState { SPIN, FACE }`
+
+**`scripts/meta/skill_node_definition.gd`**
+
+- `enum Branch { ORIGIN = 0, UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, }`
 
 **`scripts/player/boon_traits.gd`**
 
@@ -224,6 +234,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal boost_pressed`
 - `signal slow_pressed`
 
+**`scripts/ui/skill_tree_hud.gd`**
+
+- `signal closed`
+
 **`scripts/ui/weapon_replace_prompt.gd`**
 
 - `signal resolved(replaced: bool)`
@@ -249,7 +263,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-159 GDScript files, 28052 lines.
+166 GDScript files, 28875 lines.
 
 ### `scenes/corridor/`
 
@@ -294,17 +308,18 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `game_balance.gd` | — | 295 | Runtime facade over the Inspector-editable GameBalanceData resource. |
 | `game_balance_data.gd` | `GameBalanceData` | 153 | Inspector-editable balance sheet for encounter pacing and act scaling. |
-| `game_session.gd` | — | 854 | Interior machines that sum to van death HP. Equal share of van_max_health. |
+| `game_session.gd` | — | 911 | Interior machines that sum to van death HP. Equal share of van_max_health. |
 | `loot_collector.gd` | — | 253 | Hopper for street-kill loot. Floor drops stay walkable; REST vacuums |
-| `meta_progression.gd` | — | 131 | FUTURE — persistent street-card back marks (meta, all runs): |
+| `meta_progression.gd` | — | 328 | Preload-as-type: this autoload cannot name SkillNodeDefinition / the tree |
 | `save_manager.gd` | — | 100 |  |
 | `scene_router.gd` | — | 68 | Sync load on the main thread. Threaded load of van.tscn fails cold with a |
+| `skill_tree_registry.gd` | — | 94 | Resolves skill-tree nodes from resources/meta/tree/. Not an autoload and |
 
 ### `scripts/debug/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `debug_commands.gd` | — | 694 | Parses and runs debug console commands. Add new commands in _register_commands(). |
+| `debug_commands.gd` | — | 755 | Parses and runs debug console commands. Add new commands in _register_commands(). |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. Default follows the build. |
 
 ### `scripts/dialogue/`
@@ -330,6 +345,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `crafting_table.gd` | `CraftingTable` | 9 |  |
 | `interactable.gd` | `Interactable` | 13 |  |
 | `loot_machine.gd` | `LootMachine` | 31 | Left-wall hopper. Street-kill loot queues here; E on the cabinet ejects one item. |
+| `request_board.gd` | — | 8 |  |
 
 ### `scripts/items/`
 
@@ -361,6 +377,20 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `repair_window_bars_effect.gd` | `RepairWindowBarsEffect` | 70 | Look-at weld: restore `repair_amount` on a machine, door, or window. |
 | `throw_grenade_effect.gd` | `ThrowGrenadeEffect` | 32 | Throws a fire grenade from the player's view direction. |
 | `timed_stat_modifier_effect.gd` | `TimedStatModifierEffect` | 28 | Applies temporary gun stat modifiers, then removes them after a duration. |
+
+### `scripts/meta/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `skill_node_definition.gd` | `SkillNodeDefinition` | 47 | One cell on the van schematic. Gameplay lives in `effects`; layout is grid |
+| `skill_node_effect.gd` | `SkillNodeEffect` | 21 | One gameplay hook on a meta skill-tree node. Nodes hold an Array of these — |
+
+### `scripts/meta/effects/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `van_speed_level_effect.gd` | `VanSpeedLevelEffect` | 19 | Feeds the existing MetaProgression.van_speed_level curve. Do not invent a |
+| `vital_max_health_effect.gd` | `VitalMaxHealthEffect` | 40 | Raises interior-machine max HP. Empty vital_id applies `amount` to each of |
 
 ### `scripts/player/`
 
@@ -417,7 +447,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `stop_elevator.gd` | `StopElevator` | 368 | On-road lift that drops the van to the shared stop vestibule. Content |
 | `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
 | `travel_controller.gd` | `TravelController` | 1312 | Empty corridor tiles required between side-street openings (avoids a thin |
-| `van.gd` | — | 1040 | Preload so van.tscn can type the bar without a class_name parse cycle. |
+| `van.gd` | — | 1081 | Preload so van.tscn can type the bar without a class_name parse cycle. |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -453,7 +483,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `act_reveal_panel.gd` | `ActRevealPanel` | 581 | Act-start overlay: flips street cards (name + modifiers) and waits. |
-| `bench_screen.gd` | `BenchScreen` | 769 | Bench overlay: stats + gold spending on the left, boons and tools on the right. |
+| `bench_screen.gd` | `BenchScreen` | 720 | Bench overlay: stats + gold spending on the left, boons and tools on the right. |
 | `boon_choice_panel.gd` | `BoonChoicePanel` | 160 | REST-break overlay: pick one of several offered boons. |
 | `boot.gd` | — | 17 | Defer van preload one frame so global class registration finishes. |
 | `combat_feedback.gd` | — | 40 |  |
@@ -464,6 +494,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `enemy_health_bar.gd` | `EnemyHealthBar` | 59 |  |
 | `item_hud.gd` | — | 86 | Hotbar for tools and a row of collected boon icons. |
 | `main_menu.gd` | — | 127 | Rejected files (old version, corrupt JSON) used to look like NEW RUN |
+| `skill_tree_hud.gd` | — | 287 | Van schematic overlay. Hover/click nodes; pending requests ghost until the |
 | `usable_slot.gd` | — | 42 |  |
 | `van_health_bar.gd` | `VanHealthBar` | 77 | Single hull line: left half = interior vitals (death HP), right half = doors. |
 | `weapon_replace_prompt.gd` | `WeaponReplacePrompt` | 144 | Full inventory: pick a slot to replace, or Esc to cancel (gun stays in world). |
@@ -522,11 +553,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/driver_shout_hud.tscn` | 9 | Control |
 | `scenes/ui/item_hud.tscn` | 7 | Control |
 | `scenes/ui/main_menu.tscn` | 25 | Control |
+| `scenes/ui/skill_tree_hud.tscn` | 16 | Control |
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/loot_machine.tscn` | 9 | StaticBody3D |
-| `scenes/van/van.tscn` | 302 | Node3D |
+| `scenes/van/request_board.tscn` | 4 | StaticBody3D |
+| `scenes/van/van.tscn` | 306 | Node3D |
 | `scenes/van/vanSave.tscn` | 93 | Node3D |
 | `scenes/van/van_bulkhead.tscn` | 1 | StaticBody3D |
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |
@@ -787,4 +820,4 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `boonpool`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `give_weapon`, `give_random_weapon`, `force_a1`, `sound`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `boonpool`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `give_weapon`, `give_random_weapon`, `force_a1`, `sound`, `parts`, `tree_reset`

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SkillNodeDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/meta/skill_node_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://scenes/meta/tree/hull_all.svg" id="2"]
+[ext_resource type="Script" path="res://scripts/meta/skill_node_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/meta/effects/vital_max_health_effect.gd" id="4"]
+
+[sub_resource type="Resource" id="eff_hull"]
+script = ExtResource("4")
+vital_id = &""
+amount = 5.0
+
+[resource]
+script = ExtResource("1")
+id = &"hull_all"
+display_name = "Plate the frame"
+description = "Thicker plating on every interior machine."
+icon = ExtResource("2")
+branch = 2
+parent_id = &"origin"
+cost = 1
+layout_offset = Vector2(0, 1)
+effects = Array[ExtResource("3")]([SubResource("eff_hull")])

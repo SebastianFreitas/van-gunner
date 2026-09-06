@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SkillNodeDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/meta/skill_node_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://scenes/meta/tree/speed_4.svg" id="2"]
+[ext_resource type="Script" path="res://scripts/meta/skill_node_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/meta/effects/van_speed_level_effect.gd" id="4"]
+
+[sub_resource type="Resource" id="eff_speed"]
+script = ExtResource("4")
+levels = 1
+
+[resource]
+script = ExtResource("1")
+id = &"speed_4"
+display_name = "Redline"
+description = "Top of the van speed curve."
+icon = ExtResource("2")
+branch = 1
+parent_id = &"speed_3"
+cost = 1
+layout_offset = Vector2(0, -4)
+effects = Array[ExtResource("3")]([SubResource("eff_speed")])

@@ -138,7 +138,6 @@ func _refresh_stats() -> void:
 		"Speed level",
 		"%d / %d" % [MetaProgression.van_speed_level, GameBalance.VAN_SPEED_MAX_LEVEL]
 	)
-	_add_upgrade_button()
 
 	_stats_target = stats_secondary
 	_add_section("GUNNER")
@@ -213,54 +212,6 @@ func _add_health_bar() -> void:
 	bar.custom_minimum_size = Vector2(0, 12)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_stats_target.add_child(bar)
-
-
-func _add_upgrade_button() -> void:
-	if not MetaProgression.can_upgrade_van_speed():
-		_add_row("Van speed", "Max")
-		return
-
-	var cost := MetaProgression.get_van_speed_upgrade_cost()
-	var next_speed := GameBalance.get_van_speed_for_level(MetaProgression.van_speed_level + 1)
-	var can_afford := GameSession.coins >= cost
-
-	var button := Button.new()
-	button.text = "Speed → %s m/s  ·  %d gold" % [
-		ItemDescriber.format_number(next_speed),
-		cost,
-	]
-	button.disabled = not can_afford
-	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override(&"font_size", 14)
-	button.add_theme_color_override(&"font_color", ACCENT)
-	button.add_theme_color_override(&"font_disabled_color", DIM)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.12, 0.14, 0.13, 1.0)
-	style.border_color = ACCENT if can_afford else DIM
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
-	style.content_margin_left = 12
-	style.content_margin_top = 10
-	style.content_margin_right = 12
-	style.content_margin_bottom = 10
-	button.add_theme_stylebox_override(&"normal", style)
-	var hover := style.duplicate() as StyleBoxFlat
-	hover.bg_color = Color(0.16, 0.18, 0.17, 1.0)
-	button.add_theme_stylebox_override(&"hover", hover)
-	var disabled := style.duplicate() as StyleBoxFlat
-	disabled.border_color = DIM
-	disabled.bg_color = Color(0.08, 0.09, 0.09, 1.0)
-	button.add_theme_stylebox_override(&"disabled", disabled)
-	button.pressed.connect(_on_van_speed_upgrade_pressed)
-	_stats_target.add_child(button)
-
-
-func _on_van_speed_upgrade_pressed() -> void:
-	var result := MetaProgression.try_upgrade_van_speed(GameSession.coins)
-	if not result.get("ok", false):
-		return
-	GameSession.spend_coins(int(result.get("cost", 0)))
-	_refresh_stats()
 
 
 func _on_meta_van_speed_changed(_level: int, _speed: float) -> void:

@@ -36,6 +36,8 @@ const ACT_DANGER_COUNT := 3
 ## How many face-down streets the player commits to the act boss. Array-backed
 ## so later acts can stack more than two without a new data model.
 const BOSS_CARD_PICK_COUNT := 2
+## Preload-as-type avoids autoload parse order issues with global class_name.
+const _SkillNodeDefinition := preload("res://scripts/meta/skill_node_definition.gd")
 
 var selected_slot := 0
 var run_seed := 0
@@ -55,6 +57,10 @@ var current_area: ItemDefinition.BoonPool = ItemDefinition.BoonPool.GENERAL
 var pending_weapons_save = null
 ## Per-vital current HP (string id → float). Applied when VanVital nodes bind.
 var pending_vital_health: Dictionary = {}
+## Per-vital max HP from CONTINUE. Missing on new runs so meta bonuses apply.
+var pending_vital_max: Dictionary = {}
+## Rare Parts already granted this run (cap 3). Run save, not meta.
+var boss_parts_granted_this_run := 0
 
 ## 1-based act index; 0 means no deck has been drawn yet.
 var run_act := 0
@@ -115,6 +121,9 @@ func start_new(slot: int) -> void:
 	current_area = ItemDefinition.BoonPool.GENERAL
 	pending_weapons_save = null
 	pending_vital_health = {}
+	pending_vital_max = {}
+	boss_parts_granted_this_run = 0
+	MetaProgression.commit_pending()
 	_reset_vitals_in_tree()
 	_reset_act_deck()
 	set_chill_mode(false)
@@ -173,6 +182,7 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 	]:
 		phase = RunPhase.TRAVELLING
 	_parse_vital_health(data)
+	boss_parts_granted_this_run = maxi(0, int(data.get("boss_parts_granted_this_run", 0)))
 	_apply_pending_to_tree()
 	van_health_changed.emit(van_health, van_max_health)
 	player_health_changed.emit(player_health, player_max_health)
@@ -222,8 +232,8 @@ func get_vital_max_share() -> float:
 func bind_vital(vital: Node) -> void:
 	if vital == null or not ("vital_id" in vital):
 		return
-	var share_max := get_vital_max_share()
 	var key := String(vital.vital_id)
+	var share_max := _bind_max_for_vital(vital)
 	var share_cur := share_max
 	if pending_vital_health.has(key):
 		share_cur = float(pending_vital_health[key])
@@ -246,6 +256,22 @@ func sync_van_health_from_vitals() -> void:
 	van_health_changed.emit(van_health, van_max_health)
 	if is_zero_approx(van_health) and phase != RunPhase.GAME_OVER:
 		set_phase(RunPhase.GAME_OVER)
+
+
+func apply_meta_vital_delta(node: _SkillNodeDefinition) -> void:
+	if node == null or phase == RunPhase.GAME_OVER:
+		return
+	var vitals := _vital_nodes()
+	if vitals.is_empty():
+		return
+	for vital in vitals:
+		var add := 0.0
+		for effect in node.effects:
+			if effect:
+				add += effect.vital_max_bonus(vital.vital_id)
+		if not is_zero_approx(add) and vital.has_method("add_max"):
+			vital.add_max(add)
+	sync_van_health_from_vitals()
 
 
 func add_max_van_health(amount: float) -> void:
@@ -511,6 +537,9 @@ func complete_boss_encounter() -> void:
 	boss_cleared_for_act = true
 	active_street_card_id = &""
 	pending_danger = false
+	if boss_parts_granted_this_run < 3:
+		boss_parts_granted_this_run += 1
+		MetaProgression.add_rare_parts(1)
 	SaveManager.save_active_session()
 
 
@@ -724,24 +753,40 @@ func _cards_from_save(raw) -> Array[StringName]:
 
 func _parse_vital_health(data: Dictionary) -> void:
 	pending_vital_health = {}
+	pending_vital_max = {}
 	var raw = data.get("vital_health", {})
 	if typeof(raw) == TYPE_DICTIONARY and not (raw as Dictionary).is_empty():
 		for key in raw:
 			pending_vital_health[str(key)] = float(raw[key])
-		return
-	## Old slots stored a single hull number — split evenly across the four machines.
-	var share := float(data.get("van_health", van_health)) / float(VITAL_COUNT)
-	for vital_id in [&"bench", &"hopper", &"fuse_box", &"cab_relay"]:
-		pending_vital_health[String(vital_id)] = share
+	else:
+		## Old slots stored a single hull number — split evenly across the four machines.
+		var share := float(data.get("van_health", van_health)) / float(VITAL_COUNT)
+		for vital_id in [&"bench", &"hopper", &"fuse_box", &"cab_relay"]:
+			pending_vital_health[String(vital_id)] = share
+	var raw_max = data.get("vital_max", {})
+	if typeof(raw_max) == TYPE_DICTIONARY:
+		for key in raw_max:
+			pending_vital_max[str(key)] = float(raw_max[key])
+
+
+func _bind_max_for_vital(vital: Node) -> float:
+	var key := String(vital.vital_id)
+	if pending_vital_max.has(key):
+		return maxf(0.1, float(pending_vital_max[key]))
+	var base := BASE_MAX_VAN_HEALTH / float(VITAL_COUNT)
+	var bonus := 0.0
+	if "vital_id" in vital:
+		bonus = MetaProgression.get_allocated_vital_max_bonus(vital.vital_id)
+	return maxf(0.1, base + bonus)
 
 
 func _apply_pending_to_tree() -> void:
 	var vitals := _vital_nodes()
 	if vitals.is_empty():
 		return
-	var share_max := get_vital_max_share()
 	for vital in vitals:
 		var key := String(vital.vital_id)
+		var share_max := _bind_max_for_vital(vital)
 		var share_cur := share_max
 		if pending_vital_health.has(key):
 			share_cur = float(pending_vital_health[key])
@@ -752,11 +797,12 @@ func _apply_pending_to_tree() -> void:
 
 func _reset_vitals_in_tree() -> void:
 	pending_vital_health = {}
+	pending_vital_max = {}
 	var vitals := _vital_nodes()
 	if vitals.is_empty():
 		return
-	var share := get_vital_max_share()
 	for vital in vitals:
+		var share := _bind_max_for_vital(vital)
 		if vital.has_method("apply_saved"):
 			vital.apply_saved(share, share)
 	sync_van_health_from_vitals()
@@ -768,6 +814,15 @@ func _vital_health_dict() -> Dictionary:
 		stored[String(vital.vital_id)] = float(vital.health)
 	if stored.is_empty():
 		return pending_vital_health.duplicate()
+	return stored
+
+
+func _vital_max_dict() -> Dictionary:
+	var stored := {}
+	for vital in _vital_nodes():
+		stored[String(vital.vital_id)] = float(vital.max_health)
+	if stored.is_empty():
+		return pending_vital_max.duplicate()
 	return stored
 
 
@@ -833,9 +888,11 @@ func to_save_data() -> Dictionary:
 		"van_health": van_health,
 		"van_max_health": van_max_health,
 		"vital_health": _vital_health_dict(),
+		"vital_max": _vital_max_dict(),
 		"player_health": player_health,
 		"player_max_health": player_max_health,
 		"coins": coins,
+		"boss_parts_granted_this_run": boss_parts_granted_this_run,
 		"phase": phase,
 		"current_area": int(current_area),
 		"run_act": run_act,

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SkillNodeDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/meta/skill_node_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://scenes/meta/tree/hull_bench.svg" id="2"]
+[ext_resource type="Script" path="res://scripts/meta/skill_node_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/meta/effects/vital_max_health_effect.gd" id="4"]
+
+[sub_resource type="Resource" id="eff_hull"]
+script = ExtResource("4")
+vital_id = &"bench"
+amount = 10.0
+
+[resource]
+script = ExtResource("1")
+id = &"hull_bench"
+display_name = "Brace the bench"
+description = "The crafting bench takes more punishment before it dies."
+icon = ExtResource("2")
+branch = 2
+parent_id = &"hull_all"
+cost = 1
+layout_offset = Vector2(-1.5, 2)
+effects = Array[ExtResource("3")]([SubResource("eff_hull")])

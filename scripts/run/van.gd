@@ -44,8 +44,15 @@ const _ROUTE_INK := Color(0.08, 0.08, 0.07, 1.0)
 @onready var rest_toast: Label = %RestToast
 @onready var game_over_panel: Control = %GameOver
 @onready var bench_screen: BenchScreen = %BenchScreen
+## Untyped on purpose — do not preload the schematic HUD into this file
+## (same reason debug_console is load()ed: a HUD parse error must not
+## hard-fail van.tscn).
+@onready var skill_tree_hud = %SkillTreeHud
 @onready var crafting_table: CraftingTable = (
 	$TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable
+)
+@onready var request_board = (
+	$TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard
 )
 
 var _debug_console: Control
@@ -86,6 +93,8 @@ func _ready() -> void:
 	crafting_table.opened.connect(_open_bench)
 	bench_screen.closed.connect(_on_bench_closed)
 	bench_screen.bind(player, usables, player.gun_stats, weapon, player.weapon_inventory)
+	request_board.opened.connect(_open_skill_tree)
+	skill_tree_hud.closed.connect(_on_skill_tree_closed)
 	GameSession.phase_changed.connect(_on_phase_changed)
 	GameSession.van_health_changed.connect(_on_health_changed)
 	GameSession.player_health_changed.connect(_on_player_health_changed)
@@ -279,6 +288,14 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		# close() re-applies the mouse mode through _on_bench_closed.
 		if bench_blocked:
 			bench_screen.close()
+		return
+	if skill_tree_hud and skill_tree_hud.visible:
+		if next_phase in [
+			GameSession.RunPhase.ROUTE_CHOICE,
+			GameSession.RunPhase.ACT_REVEAL,
+			GameSession.RunPhase.BOSS_PICK,
+		]:
+			skill_tree_hud.close()
 		return
 	_apply_phase_mouse_mode(next_phase)
 
@@ -612,6 +629,8 @@ func has_modal_free_cursor() -> bool:
 		return true
 	if bench_screen and bench_screen.visible:
 		return true
+	if skill_tree_hud and skill_tree_hud.visible:
+		return true
 	if _debug_console and _debug_console.visible:
 		return true
 	if _dialogue_hud and _dialogue_hud.visible:
@@ -641,6 +660,7 @@ func _is_interactive_hud(node: Node) -> bool:
 		or node == driver_shout_hud
 		or node == game_over_panel
 		or node == bench_screen
+		or node == skill_tree_hud
 		or node == _debug_console
 		or node == _dialogue_hud
 		or node == _act_reveal
@@ -702,6 +722,8 @@ func _open_bench() -> void:
 		return
 	if _driver_talk_open:
 		close_driver_talk()
+	if skill_tree_hud and skill_tree_hud.visible:
+		skill_tree_hud.close()
 	bench_screen.open()
 	refresh_mouse_mode()
 
@@ -710,9 +732,24 @@ func _on_bench_closed() -> void:
 	refresh_mouse_mode()
 
 
+func _open_skill_tree() -> void:
+	if _driver_talk_open:
+		close_driver_talk()
+	if bench_screen.visible:
+		bench_screen.close()
+	skill_tree_hud.open()
+	refresh_mouse_mode()
+
+
+func _on_skill_tree_closed() -> void:
+	refresh_mouse_mode()
+
+
 func _on_debug_console_opened() -> void:
 	if bench_screen.visible:
 		bench_screen.close()
+	if skill_tree_hud and skill_tree_hud.visible:
+		skill_tree_hud.close()
 	if _driver_talk_open:
 		close_driver_talk()
 	refresh_mouse_mode()
@@ -839,6 +876,8 @@ func open_driver_talk() -> void:
 		return
 	if bench_screen.visible:
 		bench_screen.close()
+	if skill_tree_hud and skill_tree_hud.visible:
+		skill_tree_hud.close()
 	_driver_talk_open = true
 	_refresh_driver_talk_options()
 	driver_talk_panel.show()
@@ -980,6 +1019,8 @@ func _driver_shout_keys_blocked() -> bool:
 	if _dialogue_hud and _dialogue_hud.visible:
 		return true
 	if bench_screen and bench_screen.visible:
+		return true
+	if skill_tree_hud and skill_tree_hud.visible:
 		return true
 	if _act_reveal and _act_reveal.visible:
 		return true
