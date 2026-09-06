@@ -1,8 +1,8 @@
 class_name NpcTalk
 extends Interactable
 
-## Look + E opens numbered dialogue. Keys 1–4 pick; E or walking off closes.
-## Subclass and override `build_choices` / `execute_choice`. Keep the mouse captured.
+## Look + E opens talk. Hover + click picks; E or walking off closes.
+## Subclass and override `build_choices` / `execute_choice`. Frees the cursor.
 
 @export var speaker_name := "Someone"
 @export_multiline var greeting := "Yeah?"

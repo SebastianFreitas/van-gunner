@@ -210,7 +210,8 @@ Each of these has already cost someone real debugging time:
   click. `van.gd` works around it with `_capture_mouse_after_ui_click()` and a
   `_mouse_capture_gen` counter. New overlays must call `refresh_mouse_mode()` on
   close rather than setting the mode themselves, and register in
-  `has_modal_free_cursor()`.
+  `has_modal_free_cursor()`. Don't `gui_release_focus()` while the debug console
+  is open — that unfocuses the LineEdit so you have to click it to type.
 - **HUD eating clicks.** Any non-interactive HUD control must be
   `MOUSE_FILTER_IGNORE`, otherwise clicking through it uncaptures the mouse.
   `_make_combat_hud_mouse_passthrough()` handles this — add genuinely interactive
@@ -247,9 +248,9 @@ Each of these has already cost someone real debugging time:
   so shop `+X` faces van rear (`+Z`); `+PI/2` puts the door at the nose and
   walking out the back falls into the shaft. Don't place the shop slab under
   the van deck (origin needs to sit aft of the rear doors).
-- **Dialogue keys 1–4.** Tool slots use the same actions. `fps_player` routes them
-  to `DialogueHud.try_choose` first while talk is open, so a leftover weld kit
-  does not fire mid-conversation.
+- **Dialogue hover.** Talk frees the cursor (`has_modal_free_cursor`) so options
+  highlight on hover and click to pick. E still walks away. Keys 1–4 still route
+  to `DialogueHud.try_choose` first so a leftover weld kit does not fire mid-talk.
 - **Rejected saves used to look like NEW RUN.** `load_slot_data()` returns `{}` for
   version mismatches and corrupt JSON, which made `get_slot_summary()` report
   `exists: false`. Clicking the slot then called `start_new`. Incompatible files
@@ -311,7 +312,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Loot hopper / death popups | `scripts/core/loot_collector.gd` + `scripts/interactions/loot_machine.gd` |
 | Bench screenshot tool | `tools/bench_preview.tscn` |
 | Shop counter / stock | `scripts/run/shop_*.gd` |
-| NPC numbered dialogue | `scripts/dialogue/npc_talk.gd` + `scripts/ui/dialogue_hud.gd` |
+| NPC talk (hover + click) | `scripts/dialogue/npc_talk.gd` + `scripts/ui/dialogue_hud.gd` |
 
 ## 9. Running and debugging
 

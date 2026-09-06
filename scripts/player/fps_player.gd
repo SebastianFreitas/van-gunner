@@ -141,8 +141,6 @@ func _ui_wants_free_cursor() -> bool:
 
 
 func _try_dialogue_choice(index: int) -> bool:
-	if _ui_wants_free_cursor():
-		return false
 	var hud := _dialogue_hud()
 	if hud == null or not hud.has_method(&"try_choose"):
 		return false

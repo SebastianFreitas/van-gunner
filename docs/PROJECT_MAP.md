@@ -249,7 +249,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-159 GDScript files, 27917 lines.
+159 GDScript files, 28052 lines.
 
 ### `scenes/corridor/`
 
@@ -311,8 +311,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `dialogue_choice.gd` | `DialogueChoice` | 21 | One numbered line in an NPC talk. Built in code; the HUD just renders it. |
-| `npc_talk.gd` | `NpcTalk` | 116 | Look + E opens numbered dialogue. Keys 1–4 pick; E or walking off closes. |
+| `dialogue_choice.gd` | `DialogueChoice` | 25 | One option in an NPC talk. Built in code; the HUD just renders it. |
+| `npc_talk.gd` | `NpcTalk` | 116 | Look + E opens talk. Hover + click picks; E or walking off closes. |
 
 ### `scripts/enemies/`
 
@@ -373,7 +373,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `boon_combat.gd` | `BoonCombat` | 291 | Thin dispatcher for boon combat logic. All behavior lives in BoonBehaviorRegistry handlers. |
 | `boon_stat_handlers.gd` | — | 220 | Stat-based boon behavior handlers (add/mult traits, no flags required). |
 | `boon_traits.gd` | `BoonTraits` | 75 | Stores passive boon modifiers that combat systems query at runtime. |
-| `fps_player.gd` | `FpsPlayer` | 289 | Modal / menu UI owns the cursor — don't steal it back into FPS look. |
+| `fps_player.gd` | `FpsPlayer` | 287 | Modal / menu UI owns the cursor — don't steal it back into FPS look. |
 | `usable_state.gd` | `UsableState` | 26 |  |
 | `usables_controller.gd` | `UsablesController` | 168 |  |
 
@@ -398,7 +398,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `garage_lounge.gd` | — | 185 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
 | `loot_drop_component.gd` | `LootDropComponent` | 91 | Drop-in component that gives any enemy a chance to drop loot on death. |
-| `mechanic_talk.gd` | `MechanicTalk` | 145 | Mechanic bay keeper. Three buys: full van patch, a van-pool boon, a weld kit. |
+| `mechanic_talk.gd` | `MechanicTalk` | 146 | Mechanic bay keeper. Three buys: full van patch, a van-pool boon, a weld kit. |
 | `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. No shop counter. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
 | `rear_doors.gd` | — | 409 | Truck-style rear double doors. |
@@ -417,7 +417,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `stop_elevator.gd` | `StopElevator` | 368 | On-road lift that drops the van to the shared stop vestibule. Content |
 | `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
 | `travel_controller.gd` | `TravelController` | 1312 | Empty corridor tiles required between side-street openings (avoids a thin |
-| `van.gd` | — | 1033 | Preload so van.tscn can type the bar without a class_name parse cycle. |
+| `van.gd` | — | 1040 | Preload so van.tscn can type the bar without a class_name parse cycle. |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -458,8 +458,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `boot.gd` | — | 17 | Defer van preload one frame so global class registration finishes. |
 | `combat_feedback.gd` | — | 40 |  |
 | `damage_number.gd` | `DamageNumber` | 54 |  |
-| `debug_console.gd` | `DebugConsole` | 220 | In-game debug terminal. H to open, Esc to close. |
-| `dialogue_hud.gd` | `DialogueHud` | 184 | Numbered NPC talk. Mouse stays captured — 1–4 pick, E walks away. |
+| `debug_console.gd` | `DebugConsole` | 259 | In-game debug terminal. H to open, Esc to close. |
+| `dialogue_hud.gd` | `DialogueHud` | 270 | Hover-to-highlight NPC talk, Slay-the-Spire style. Click picks; E walks away. |
 | `driver_shout_hud.gd` | `DriverShoutHud` | 109 | Always-on GO / EASY shouts. van.gd plays shout_start / shout_turbo / shout_slow / shout_resume. |
 | `enemy_health_bar.gd` | `EnemyHealthBar` | 59 |  |
 | `item_hud.gd` | — | 86 | Hotbar for tools and a row of collected boon icons. |

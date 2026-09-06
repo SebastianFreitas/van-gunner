@@ -18,6 +18,7 @@ var _history: PackedStringArray = PackedStringArray()
 var _history_index := -1
 var _completion_index := -1
 var _completion_key := ""
+var _keep_input_focus := false
 
 
 func _ready() -> void:
@@ -26,7 +27,12 @@ func _ready() -> void:
 		return
 	_apply_closed_state()
 	set_process(true)
+	input_line.keep_editing_on_text_submit = true
+	input_line.select_all_on_focus = false
+	input_line.focus_mode = Control.FOCUS_ALL
 	input_line.text_changed.connect(_on_input_text_changed)
+	input_line.focus_exited.connect(_on_input_focus_exited)
+	output.focus_mode = Control.FOCUS_NONE
 	_log("Debug console ready. H to open, Esc to close. Try: help, list boons, give <tab>")
 
 
@@ -44,13 +50,13 @@ func _unhandled_input(_event: InputEvent) -> void:
 func _input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if not input_line.has_focus() and event is InputEventKey and event.pressed and not event.echo:
-		input_line.grab_focus()
 	if event.is_action_pressed(&"pause"):
 		close()
 		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
+		if not input_line.has_focus():
+			_steal_key_into_input(event as InputEventKey)
 		if event.keycode == KEY_TAB:
 			_apply_tab_completion(event.shift_pressed)
 			get_viewport().set_input_as_handled()
@@ -65,13 +71,17 @@ func _input(event: InputEvent) -> void:
 
 func open() -> void:
 	if visible:
+		_focus_input()
 		return
 	show()
 	mouse_filter = MOUSE_FILTER_STOP
 	input_line.text = ""
-	input_line.grab_focus()
+	_keep_input_focus = true
 	_update_suggestion()
+	## Mouse must be free before LineEdit will actually edit.
 	opened.emit()
+	_focus_input()
+	_focus_input.call_deferred()
 
 
 func close() -> void:
@@ -89,24 +99,53 @@ func toggle() -> void:
 
 
 func _apply_closed_state() -> void:
+	_keep_input_focus = false
 	hide()
 	mouse_filter = MOUSE_FILTER_IGNORE
-	input_line.release_focus()
+	if input_line:
+		input_line.release_focus()
 
 
 func _on_input_submitted(text: String) -> void:
 	var line := text.strip_edges()
 	input_line.clear()
-	if line.is_empty():
-		input_line.grab_focus()
-		return
-	_log(PROMPT + line)
-	_push_history(line)
-	var result := DebugCommands.run(line)
-	if not result.is_empty():
-		_log(result)
-	input_line.grab_focus()
+	if not line.is_empty():
+		_log(PROMPT + line)
+		_push_history(line)
+		var result := DebugCommands.run(line)
+		if not result.is_empty():
+			_log(result)
 	_update_suggestion()
+	_focus_input()
+	_focus_input.call_deferred()
+
+
+func _on_input_focus_exited() -> void:
+	if not _keep_input_focus or not visible:
+		return
+	await get_tree().process_frame
+	if _keep_input_focus and visible and not input_line.has_focus():
+		_focus_input()
+
+
+func _focus_input() -> void:
+	if not _keep_input_focus or not visible or input_line == null:
+		return
+	if not input_line.is_inside_tree():
+		return
+	input_line.grab_focus()
+	input_line.edit()
+	input_line.caret_column = input_line.text.length()
+
+
+func _steal_key_into_input(event: InputEventKey) -> void:
+	_focus_input()
+	if event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE, KEY_TAB, KEY_UP, KEY_DOWN]:
+		return
+	if event.unicode < 32:
+		return
+	input_line.insert_text_at_caret(String.chr(event.unicode))
+	get_viewport().set_input_as_handled()
 
 
 func _log(text: String) -> void:

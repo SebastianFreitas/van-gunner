@@ -614,6 +614,8 @@ func has_modal_free_cursor() -> bool:
 		return true
 	if _debug_console and _debug_console.visible:
 		return true
+	if _dialogue_hud and _dialogue_hud.visible:
+		return true
 	if _act_reveal and _act_reveal.visible:
 		return true
 	if _boon_choice and _boon_choice.visible:
@@ -640,6 +642,7 @@ func _is_interactive_hud(node: Node) -> bool:
 		or node == game_over_panel
 		or node == bench_screen
 		or node == _debug_console
+		or node == _dialogue_hud
 		or node == _act_reveal
 		or node == _boon_choice
 	)
@@ -659,7 +662,9 @@ func _make_combat_hud_mouse_passthrough(node: Node) -> void:
 
 func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
 	var viewport := get_viewport()
-	if viewport:
+	## Console keeps a LineEdit focused — releasing here forces a click to type.
+	var console_open := _debug_console != null and _debug_console.visible
+	if viewport and not console_open:
 		viewport.gui_release_focus()
 	if wants_free_cursor(phase):
 		_mouse_capture_gen += 1
@@ -971,6 +976,8 @@ func request_driver_slow_or_go() -> bool:
 
 func _driver_shout_keys_blocked() -> bool:
 	if _debug_console and _debug_console.visible:
+		return true
+	if _dialogue_hud and _dialogue_hud.visible:
 		return true
 	if bench_screen and bench_screen.visible:
 		return true
