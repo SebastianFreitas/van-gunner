@@ -1088,7 +1088,7 @@ shape = SubResource("TableShape")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8885281, 0.43830076, -1.8)
 
 [node name="LootMachine" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1988471201 instance=ExtResource("35")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.6559289, 1.4382443, 0.07)
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.62164927, 1.4382443, 0.96901906)
 
 [node name="RoomZones" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1307820521]
 
