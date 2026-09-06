@@ -284,6 +284,39 @@ func is_van_at_full_health() -> bool:
 	return van_health >= van_max_health - 0.001
 
 
+func is_van_fully_repaired() -> bool:
+	if not is_van_at_full_health():
+		return false
+	var tree := get_tree()
+	if tree == null:
+		return true
+	for node in tree.get_nodes_in_group(&"breach_points"):
+		if node and node.has_method(&"is_at_full_health") and not node.is_at_full_health():
+			return false
+	return true
+
+
+func repair_van_full() -> bool:
+	if phase == RunPhase.GAME_OVER:
+		return false
+	var any := false
+	for vital in _vital_nodes():
+		if not vital.has_method(&"heal"):
+			continue
+		var cap := float(vital.max_health) if "max_health" in vital else 0.0
+		if vital.heal(cap) > 0.001:
+			any = true
+	var tree := get_tree()
+	if tree:
+		for node in tree.get_nodes_in_group(&"breach_points"):
+			if node == null or not node.has_method(&"repair"):
+				continue
+			var cap := float(node.max_health) if "max_health" in node else 0.0
+			if node.repair(cap) > 0.001:
+				any = true
+	return any
+
+
 func heal_van(amount: float) -> void:
 	if amount <= 0.0 or phase == RunPhase.GAME_OVER:
 		return

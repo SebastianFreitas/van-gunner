@@ -79,6 +79,12 @@ extends Resource
 @export var van_speed_max_level := 4
 @export var van_speed_upgrade_base_cost := 50
 
+@export_group("Mechanic")
+## Full patch: interior vitals plus every door / window breach.
+@export var mechanic_full_repair_cost := 45
+## Random roll from the van (general) boon pool.
+@export var mechanic_van_boon_cost := 40
+
 @export_group("Weapons")
 ## Percent chance (1–100 roll) for a normal enemy to drop a generated gun.
 @export var weapon_drop_chance_base := 1

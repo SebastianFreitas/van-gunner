@@ -4,6 +4,7 @@ const _ActRevealPanel := preload("res://scripts/ui/act_reveal_panel.gd")
 const _ActDeckController := preload("res://scripts/run/act_deck_controller.gd")
 const _BoonChoicePanel := preload("res://scripts/ui/boon_choice_panel.gd")
 const _BoonRewardController := preload("res://scripts/run/boon_reward_controller.gd")
+const _DialogueHud := preload("res://scripts/ui/dialogue_hud.gd")
 ## Preload so van.tscn can type the bar without a class_name parse cycle.
 const _VanHealthBar := preload("res://scripts/ui/van_health_bar.gd")
 
@@ -52,6 +53,7 @@ var _act_reveal: Control
 var _act_deck: Node
 var _boon_choice: Control
 var _boon_rewards: Node
+var _dialogue_hud: Control
 var _driver_talk_open := false
 var _weapon_slots_hud: WeaponSlotsHud
 var _ammo_reload_tween: Tween
@@ -110,6 +112,8 @@ func _ready() -> void:
 	_boon_rewards = _BoonRewardController.new()
 	add_child(_boon_rewards)
 	_boon_rewards.bind(player, _boon_choice)
+	_dialogue_hud = _DialogueHud.new()
+	$HUD.add_child(_dialogue_hud)
 	driver_talk_panel.hide()
 	_refresh_driver_talk_options()
 	if driver_shout_hud:

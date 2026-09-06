@@ -30,9 +30,9 @@
 
 ## Node groups
 
-Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`, `weapon_pickup`, `weapon_replace_prompt`
+Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`, `weapon_pickup`, `weapon_replace_prompt`
 
-Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`, `weapon_replace_prompt`
+Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`, `weapon_replace_prompt`
 
 ## Signals and enums
 
@@ -249,7 +249,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-155 GDScript files, 27125 lines.
+159 GDScript files, 27917 lines.
 
 ### `scenes/corridor/`
 
@@ -274,11 +274,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `arm_cannon_mesh.gd` | `ArmCannonMesh` | 176 | Boxy Mega Man forearm cannons. Rear face stays at REAR_Z so length grows |
 | `bullet_trail.gd` | `BulletTrail` | 136 | When set, points are stored in this node's local space (usually VanRig) so the |
 | `bullet_visual.gd` | `BulletVisual` | 172 | Cosmetic bullet mesh + trail. Starts at the gun muzzle and flies on a frozen |
-| `damage_info.gd` | `DamageInfo` | 194 | Extra headshot multiplier from weapon Critical Damage % mods (1.0 = none). |
+| `damage_info.gd` | `DamageInfo` | 196 | Extra headshot multiplier from weapon Critical Damage % mods (1.0 = none). |
 | `damage_resolver.gd` | `DamageResolver` | 196 |  |
 | `damage_type.gd` | `DamageType` | 12 |  |
-| `explosion_fx.gd` | `ExplosionFx` | 72 | Billboard disc that matches the 3D blast radius, then fades. |
-| `grenade.gd` | `Grenade` | 153 | Hand-integrated ballistics instead of a RigidBody3D. |
+| `explosion_fx.gd` | `ExplosionFx` | 304 | Pixel-art billboard blast. The ring's outer edge is the same sphere |
+| `grenade.gd` | `Grenade` | 156 | Hand-integrated ballistics instead of a RigidBody3D. |
 | `gun_controller.gd` | `GunController` | 404 | Hit/miss for the HUD once the first pellet resolves. Not a muzzle event. |
 | `gun_stats.gd` | `GunStats` | 61 | Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance. |
 | `gun_stats_controller.gd` | `GunStatsController` | 136 | Balance floor + definition identity + weapon mods, then boons/temp mods. |
@@ -292,9 +292,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `game_balance.gd` | — | 287 | Runtime facade over the Inspector-editable GameBalanceData resource. |
-| `game_balance_data.gd` | `GameBalanceData` | 147 | Inspector-editable balance sheet for encounter pacing and act scaling. |
-| `game_session.gd` | — | 821 | Interior machines that sum to van death HP. Equal share of van_max_health. |
+| `game_balance.gd` | — | 295 | Runtime facade over the Inspector-editable GameBalanceData resource. |
+| `game_balance_data.gd` | `GameBalanceData` | 153 | Inspector-editable balance sheet for encounter pacing and act scaling. |
+| `game_session.gd` | — | 854 | Interior machines that sum to van death HP. Equal share of van_max_health. |
 | `loot_collector.gd` | — | 253 | Hopper for street-kill loot. Floor drops stay walkable; REST vacuums |
 | `meta_progression.gd` | — | 131 | FUTURE — persistent street-card back marks (meta, all runs): |
 | `save_manager.gd` | — | 100 |  |
@@ -306,6 +306,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `debug_commands.gd` | — | 694 | Parses and runs debug console commands. Add new commands in _register_commands(). |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. Default follows the build. |
+
+### `scripts/dialogue/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `dialogue_choice.gd` | `DialogueChoice` | 21 | One numbered line in an NPC talk. Built in code; the HUD just renders it. |
+| `npc_talk.gd` | `NpcTalk` | 116 | Look + E opens numbered dialogue. Keys 1–4 pick; E or walking off closes. |
 
 ### `scripts/enemies/`
 
@@ -332,7 +339,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `item_definition.gd` | `ItemDefinition` | 110 | Data-only description of a single item. |
 | `item_describer.gd` | `ItemDescriber` | 194 | Turns item resources into readable lines for UI. Effects only carry raw |
 | `item_effect.gd` | `ItemEffect` | 20 | Base class for anything an item/boon does when it is collected. |
-| `item_pool_registry.gd` | `ItemPoolRegistry` | 154 | Loads loot pools by name. Pools are plain LootPool .tres files. |
+| `item_pool_registry.gd` | `ItemPoolRegistry` | 156 | Loads loot pools by name. Pools are plain LootPool .tres files. |
 | `item_registry.gd` | `ItemRegistry` | 63 | Resolves item definitions by id from the standard item directories. |
 | `item_usable_config.gd` | `ItemUsableConfig` | 24 | Runtime rules for tools and abilities held in the player's hotbar. |
 | `loot_catch.gd` | `LootCatch` | 44 | One hopper / popup entry: either an ItemDefinition or a rolled weapon. |
@@ -352,7 +359,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `heal_effect.gd` | `HealEffect` | 11 | Heals the player by a percentage of their maximum health. |
 | `max_health_effect.gd` | `MaxHealthEffect` | 11 | Permanently increases the van's maximum hull health for the run. |
 | `repair_window_bars_effect.gd` | `RepairWindowBarsEffect` | 70 | Look-at weld: restore `repair_amount` on a machine, door, or window. |
-| `throw_grenade_effect.gd` | `ThrowGrenadeEffect` | 32 | Throws an explosive grenade from the player's view direction. |
+| `throw_grenade_effect.gd` | `ThrowGrenadeEffect` | 32 | Throws a fire grenade from the player's view direction. |
 | `timed_stat_modifier_effect.gd` | `TimedStatModifierEffect` | 28 | Applies temporary gun stat modifiers, then removes them after a duration. |
 
 ### `scripts/player/`
@@ -361,12 +368,12 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `boon_behavior.gd` | `BoonBehavior` | 75 | Base class for boon combat behaviors. |
 | `boon_behavior_context.gd` | `BoonBehaviorContext` | 30 | Shared payload passed to boon behavior handlers during combat events. |
-| `boon_behavior_handlers.gd` | — | 192 | Concrete boon behavior handlers. Each inner class maps one trait to combat logic. |
+| `boon_behavior_handlers.gd` | — | 194 | Concrete boon behavior handlers. Each inner class maps one trait to combat logic. |
 | `boon_behavior_registry.gd` | `BoonBehaviorRegistry` | 185 | Dispatches combat events to registered boon behavior handlers. |
 | `boon_combat.gd` | `BoonCombat` | 291 | Thin dispatcher for boon combat logic. All behavior lives in BoonBehaviorRegistry handlers. |
 | `boon_stat_handlers.gd` | — | 220 | Stat-based boon behavior handlers (add/mult traits, no flags required). |
 | `boon_traits.gd` | `BoonTraits` | 75 | Stores passive boon modifiers that combat systems query at runtime. |
-| `fps_player.gd` | `FpsPlayer` | 255 | Modal / menu UI owns the cursor — don't steal it back into FPS look. |
+| `fps_player.gd` | `FpsPlayer` | 289 | Modal / menu UI owns the cursor — don't steal it back into FPS look. |
 | `usable_state.gd` | `UsableState` | 26 |  |
 | `usables_controller.gd` | `UsablesController` | 168 |  |
 
@@ -391,6 +398,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `garage_lounge.gd` | — | 185 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
 | `loot_drop_component.gd` | `LootDropComponent` | 91 | Drop-in component that gives any enemy a chance to drop loot on death. |
+| `mechanic_talk.gd` | `MechanicTalk` | 145 | Mechanic bay keeper. Three buys: full van patch, a van-pool boon, a weld kit. |
 | `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. No shop counter. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
 | `rear_doors.gd` | — | 409 | Truck-style rear double doors. |
@@ -409,7 +417,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `stop_elevator.gd` | `StopElevator` | 368 | On-road lift that drops the van to the shared stop vestibule. Content |
 | `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
 | `travel_controller.gd` | `TravelController` | 1312 | Empty corridor tiles required between side-street openings (avoids a thin |
-| `van.gd` | — | 1029 | Preload so van.tscn can type the bar without a class_name parse cycle. |
+| `van.gd` | — | 1033 | Preload so van.tscn can type the bar without a class_name parse cycle. |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -451,6 +459,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `combat_feedback.gd` | — | 40 |  |
 | `damage_number.gd` | `DamageNumber` | 54 |  |
 | `debug_console.gd` | `DebugConsole` | 220 | In-game debug terminal. H to open, Esc to close. |
+| `dialogue_hud.gd` | `DialogueHud` | 184 | Numbered NPC talk. Mouse stays captured — 1–4 pick, E walks away. |
 | `driver_shout_hud.gd` | `DriverShoutHud` | 109 | Always-on GO / EASY shouts. van.gd plays shout_start / shout_turbo / shout_slow / shout_resume. |
 | `enemy_health_bar.gd` | `EnemyHealthBar` | 59 |  |
 | `item_hud.gd` | — | 86 | Hotbar for tools and a row of collected boon icons. |
@@ -493,7 +502,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/corridor/corridor_segment.tscn` | 84 | Node3D |
 | `scenes/corridor/corridor_t_junction.tscn` | 31 | Node3D |
 | `scenes/corridor/garage_bay.tscn` | 14 | Node3D |
-| `scenes/corridor/mechanic_bay.tscn` | 17 | Node3D |
+| `scenes/corridor/mechanic_bay.tscn` | 19 | Node3D |
 | `scenes/corridor/road_floor.tscn` | 1 | Node3D |
 | `scenes/corridor/shop_bay.tscn` | 23 | Node3D |
 | `scenes/corridor/side_street_branch.tscn` | 10 | Node3D |
@@ -548,6 +557,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `act_expected_upgrade_fraction` | `PackedFloat32Array(0.333333, 0.666667, 1)` |
 | `segment_spawn_pool` | `ExtResource("2")` |
 | `act_target_van_speed` | `PackedFloat32Array(8, 9, 10)` |
+| `mechanic_full_repair_cost` | `45` |
+| `mechanic_van_boon_cost` | `40` |
 
 **Still on script defaults (`game_balance_data.gd`):**
 

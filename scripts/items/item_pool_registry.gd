@@ -5,6 +5,8 @@ extends RefCounted
 
 const _POOL_PATHS := {
 	"goon": "res://resources/items/pools/goon_pool.tres",
+	## Alias of general_boon — mechanic / van-identity rolls use this key.
+	"van": "res://resources/items/pools/general_boon_pool.tres",
 	"general_boon": "res://resources/items/pools/general_boon_pool.tres",
 	"fire_boon": "res://resources/items/pools/fire_boon_pool.tres",
 	"poison_boon": "res://resources/items/pools/poison_boon_pool.tres",

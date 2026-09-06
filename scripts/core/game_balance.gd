@@ -178,6 +178,14 @@ var WEAPON_MAX_MODS: int:
 	get:
 		return data.weapon_max_mods
 
+var MECHANIC_FULL_REPAIR_COST: int:
+	get:
+		return data.mechanic_full_repair_cost
+
+var MECHANIC_VAN_BOON_COST: int:
+	get:
+		return data.mechanic_van_boon_cost
+
 
 # --- Helpers -----------------------------------------------------------------
 

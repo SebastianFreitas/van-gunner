@@ -1,8 +1,9 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1"]
 [ext_resource type="Script" path="res://scripts/run/mechanic_workshop.gd" id="2"]
 [ext_resource type="Texture2D" path="res://scenes/mechanic/mechanic.png" id="3"]
+[ext_resource type="Script" path="res://scripts/run/mechanic_talk.gd" id="4"]
 
 [sub_resource type="ShaderMaterial" id="FloorMaterial"]
 render_priority = 0
@@ -59,6 +60,10 @@ size = Vector3(8, 8, 0.4)
 
 [sub_resource type="BoxShape3D" id="BackWallShape"]
 size = Vector3(0.4, 8, 8.6)
+
+[sub_resource type="CapsuleShape3D" id="TalkShape"]
+radius = 0.48
+height = 1.9
 
 [node name="MechanicBay" type="Node3D"]
 
@@ -123,3 +128,12 @@ billboard = 1
 alpha_cut = 1
 texture_filter = 0
 texture = ExtResource("3")
+
+[node name="Talk" type="StaticBody3D" parent="Keeper"]
+collision_layer = 3
+collision_mask = 0
+script = ExtResource("4")
+
+[node name="Collision" type="CollisionShape3D" parent="Keeper/Talk"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+shape = SubResource("TalkShape")

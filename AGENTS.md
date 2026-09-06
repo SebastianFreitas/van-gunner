@@ -247,6 +247,9 @@ Each of these has already cost someone real debugging time:
   so shop `+X` faces van rear (`+Z`); `+PI/2` puts the door at the nose and
   walking out the back falls into the shaft. Don't place the shop slab under
   the van deck (origin needs to sit aft of the rear doors).
+- **Dialogue keys 1–4.** Tool slots use the same actions. `fps_player` routes them
+  to `DialogueHud.try_choose` first while talk is open, so a leftover weld kit
+  does not fire mid-conversation.
 - **Rejected saves used to look like NEW RUN.** `load_slot_data()` returns `{}` for
   version mismatches and corrupt JSON, which made `get_slot_summary()` report
   `exists: false`. Clicking the slot then called `start_new`. Incompatible files
@@ -308,6 +311,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Loot hopper / death popups | `scripts/core/loot_collector.gd` + `scripts/interactions/loot_machine.gd` |
 | Bench screenshot tool | `tools/bench_preview.tscn` |
 | Shop counter / stock | `scripts/run/shop_*.gd` |
+| NPC numbered dialogue | `scripts/dialogue/npc_talk.gd` + `scripts/ui/dialogue_hud.gd` |
 
 ## 9. Running and debugging
 

@@ -70,8 +70,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				weapon_inventory.cycle_active(-1)
 			elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 				weapon_inventory.cycle_active(1)
-	elif event.is_action_pressed("interact") and _current_interactable:
-		_current_interactable.interact(self)
+	elif event.is_action_pressed("interact"):
+		if _current_interactable:
+			_current_interactable.interact(self)
+		else:
+			_close_open_dialogue()
 	elif event.is_action_pressed("jump"):
 		_jump_queued = true
 	elif event.is_action_pressed("reload") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -79,13 +82,25 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("use_usable") and _can_swap_weapons():
 		weapon_inventory.swap_active()
 	elif event.is_action_pressed("use_slot_1"):
-		usables.try_use_slot(0)
+		if _try_dialogue_choice(0):
+			get_viewport().set_input_as_handled()
+		else:
+			usables.try_use_slot(0)
 	elif event.is_action_pressed("use_slot_2"):
-		usables.try_use_slot(1)
+		if _try_dialogue_choice(1):
+			get_viewport().set_input_as_handled()
+		else:
+			usables.try_use_slot(1)
 	elif event.is_action_pressed("use_slot_3"):
-		usables.try_use_slot(2)
+		if _try_dialogue_choice(2):
+			get_viewport().set_input_as_handled()
+		else:
+			usables.try_use_slot(2)
 	elif event.is_action_pressed("use_slot_4"):
-		usables.try_use_slot(3)
+		if _try_dialogue_choice(3):
+			get_viewport().set_input_as_handled()
+		else:
+			usables.try_use_slot(3)
 
 
 func get_look_interactable() -> Interactable:
@@ -123,6 +138,25 @@ func _ui_wants_free_cursor() -> bool:
 		if is_instance_valid(node):
 			return true
 	return false
+
+
+func _try_dialogue_choice(index: int) -> bool:
+	if _ui_wants_free_cursor():
+		return false
+	var hud := _dialogue_hud()
+	if hud == null or not hud.has_method(&"try_choose"):
+		return false
+	return bool(hud.try_choose(index))
+
+
+func _close_open_dialogue() -> void:
+	var hud := _dialogue_hud()
+	if hud and hud.has_method(&"is_open") and hud.is_open() and hud.has_method(&"close"):
+		hud.close()
+
+
+func _dialogue_hud() -> Node:
+	return get_tree().get_first_node_in_group(&"dialogue_hud")
 
 
 func _physics_process(delta: float) -> void:
