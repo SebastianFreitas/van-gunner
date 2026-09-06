@@ -125,7 +125,7 @@ static func _lines_for_effect(effect: ItemEffect) -> PackedStringArray:
 		lines.append("+%d coins" % (effect as GrantCoinEffect).amount)
 	elif effect is ThrowGrenadeEffect:
 		var grenade := effect as ThrowGrenadeEffect
-		lines.append("Throws a grenade — %s damage in %sm" % [
+		lines.append("Throws a fire grenade — %s damage in %sm" % [
 			format_number(grenade.explosion_damage),
 			format_number(grenade.explosion_radius),
 		])

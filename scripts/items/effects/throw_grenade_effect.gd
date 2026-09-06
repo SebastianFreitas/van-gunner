@@ -1,7 +1,7 @@
 class_name ThrowGrenadeEffect
 extends ItemEffect
 
-## Throws an explosive grenade from the player's view direction.
+## Throws a fire grenade from the player's view direction.
 
 @export var throw_speed := 16.0
 @export var fuse_time := 1.35

@@ -619,7 +619,7 @@ shot_damage = definition.flat_damage + sum(flat_mods)
 - Both slots empty impossible if starter protected.
 - Adding mod while gun active → live rebuild mid-bench OK.
 - Bonus projectiles from cold boons: inherit active gun damage_type/stats unless boon says otherwise (keep current `BoonCombat` behavior).
-- Grenades / tools unchanged.
+- Grenades are fire blasts: same `apply_explosion` path as gun fire and Funeral Pyre, and they take fire damage / blast-radius boons. Fuse and ricochet stay projectile-only.
 - `TimedStatModifierEffect` still stacks on controller after weapon mods.
 
 ---

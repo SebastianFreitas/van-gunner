@@ -180,10 +180,12 @@ class FireDeathBehavior extends BoonBehavior:
 		if not ctx.space_state:
 			return
 		var info := DamageInfo.create(12.0, DamageType.Type.FIRE)
-		info.explosion_radius = 2.2
+		BoonCombat.modify_outgoing_damage(info, ctx.traits, null)
+		var radius := BoonCombat.modify_explosion_radius(2.2, info, ctx.traits)
+		info.explosion_radius = radius
 		DamageResolver.apply_explosion(
 			ctx.explosion_center,
-			info.explosion_radius,
+			radius,
 			info,
 			ctx.space_state,
 			[],

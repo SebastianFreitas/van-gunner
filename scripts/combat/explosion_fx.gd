@@ -1,10 +1,10 @@
 class_name ExplosionFx
 extends Sprite3D
 
-## Billboard disc that matches the 3D blast radius, then fades.
+## Billboard pixel burst sized to the 3D blast radius, then fades.
 
-const TEX_SIZE := 128
-const FADE_SECONDS := 0.32
+const TEX_SIZE := 16
+const FADE_SECONDS := 0.28
 
 static var _texture: Texture2D
 
@@ -30,7 +30,8 @@ static func spawn(center: Vector3, radius: float, host: Node = null) -> void:
 
 func _play(radius: float) -> void:
 	billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
+	texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 	transparent = true
 	shaded = false
 	double_sided = true
@@ -38,34 +39,36 @@ func _play(radius: float) -> void:
 	render_priority = 4
 	texture = _ensure_texture()
 	pixel_size = (2.0 * radius) / float(TEX_SIZE)
-	modulate = Color(1.0, 0.72, 0.28, 0.95)
-	scale = Vector3(0.28, 0.28, 0.28)
+	modulate = Color(1.0, 1.0, 1.0, 1.0)
+	scale = Vector3(0.35, 0.35, 0.35)
 	var tween := create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(self, "scale", Vector3.ONE, FADE_SECONDS).set_trans(
 		Tween.TRANS_QUAD
 	).set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "modulate:a", 0.0, FADE_SECONDS).set_delay(0.06)
+	tween.tween_property(self, "modulate:a", 0.0, FADE_SECONDS).set_delay(0.05)
 	tween.chain().tween_callback(queue_free)
 
 
 static func _ensure_texture() -> Texture2D:
 	if _texture:
 		return _texture
-	var grad := Gradient.new()
-	grad.offsets = PackedFloat32Array([0.0, 0.22, 0.62, 1.0])
-	grad.colors = PackedColorArray([
-		Color(1.0, 0.95, 0.7, 1.0),
-		Color(1.0, 0.55, 0.18, 0.9),
-		Color(0.95, 0.22, 0.05, 0.4),
-		Color(0.4, 0.05, 0.0, 0.0),
-	])
-	var tex := GradientTexture2D.new()
-	tex.gradient = grad
-	tex.width = TEX_SIZE
-	tex.height = TEX_SIZE
-	tex.fill = GradientTexture2D.FILL_RADIAL
-	tex.fill_from = Vector2(0.5, 0.5)
-	tex.fill_to = Vector2(1.0, 0.5)
-	_texture = tex
+	var image := Image.create(TEX_SIZE, TEX_SIZE, false, Image.FORMAT_RGBA8)
+	var mid := (TEX_SIZE - 1) * 0.5
+	for y in TEX_SIZE:
+		for x in TEX_SIZE:
+			var dx := absf(float(x) - mid)
+			var dy := absf(float(y) - mid)
+			var chebyshev := maxf(dx, dy)
+			var color := Color(0, 0, 0, 0)
+			if chebyshev <= 1.5:
+				color = Color(1.0, 1.0, 0.85, 1.0)
+			elif chebyshev <= 3.5:
+				color = Color(1.0, 0.92, 0.18, 1.0)
+			elif chebyshev <= 5.5:
+				color = Color(1.0, 0.72, 0.08, 1.0)
+			elif chebyshev <= 7.0:
+				color = Color(0.95, 0.42, 0.08, 1.0)
+			image.set_pixel(x, y, color)
+	_texture = ImageTexture.create_from_image(image)
 	return _texture
