@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/skill_tree_hud.gd" id="1"]
 
@@ -13,6 +13,22 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="FitStyle"]
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+bg_color = Color(0.12, 0.14, 0.13, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.91, 0.78, 0.48, 0.85)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="TooltipStyle"]
 content_margin_left = 12.0
@@ -63,10 +79,11 @@ theme_override_constants/margin_bottom = 24
 
 [node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 
 [node name="Header" type="HBoxContainer" parent="Margin/Layout"]
 layout_mode = 2
+theme_override_constants/separation = 16
 
 [node name="Title" type="Label" parent="Margin/Layout/Header"]
 layout_mode = 2
@@ -74,6 +91,17 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
 theme_override_font_sizes/font_size = 26
 text = "SCHEMATIC"
+
+[node name="FitButton" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("FitStyle")
+theme_override_styles/hover = SubResource("FitStyle")
+theme_override_styles/pressed = SubResource("FitStyle")
+text = "FIT"
 
 [node name="CapLabel" type="Label" parent="Margin/Layout/Header"]
 unique_name_in_owner = true
@@ -95,17 +123,31 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.66, 0.64, 1)
 theme_override_font_sizes/font_size = 13
-text = "E / ESC to close  ·  hover a node for details"
+text = "Requests queue for the next run. Click a queued node to refund."
+
+[node name="ControlsLabel" type="Label" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.48, 0.47, 1)
+theme_override_font_sizes/font_size = 12
+text = "Drag empty space to pan  ·  middle-drag anywhere  ·  scroll to zoom  ·  FIT / double-click to frame  ·  E / ESC close"
 
 [node name="TreePanel" type="PanelContainer" parent="Margin/Layout"]
+clip_contents = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("PanelStyle")
 
 [node name="TreeCanvas" type="Control" parent="Margin/Layout/TreePanel"]
 unique_name_in_owner = true
+clip_contents = true
 layout_mode = 2
 mouse_filter = 1
+
+[node name="TreeWorld" type="Control" parent="Margin/Layout/TreePanel/TreeCanvas"]
+unique_name_in_owner = true
+layout_mode = 0
+mouse_filter = 2
 
 [node name="Tooltip" type="PanelContainer" parent="."]
 unique_name_in_owner = true
