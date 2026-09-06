@@ -4,6 +4,8 @@ const _ActRevealPanel := preload("res://scripts/ui/act_reveal_panel.gd")
 const _ActDeckController := preload("res://scripts/run/act_deck_controller.gd")
 const _BoonChoicePanel := preload("res://scripts/ui/boon_choice_panel.gd")
 const _BoonRewardController := preload("res://scripts/run/boon_reward_controller.gd")
+## Preload so van.tscn can type the bar without a class_name parse cycle.
+const _VanHealthBar := preload("res://scripts/ui/van_health_bar.gd")
 
 const _ROUTE_ACCENT := Color(0.86, 0.74, 0.46, 1.0)
 const _ROUTE_MUTED := Color(0.42, 0.40, 0.36, 1.0)
@@ -21,7 +23,7 @@ const _ROUTE_INK := Color(0.08, 0.08, 0.07, 1.0)
 @onready var prompt_label: Label = %InteractionPrompt
 @onready var phase_label: Label = %PhaseLabel
 @onready var wave_label: Label = %WaveLabel
-@onready var health_bar: ProgressBar = %VanHealth
+@onready var health_bar: _VanHealthBar = %VanHealth
 @onready var health_label: Label = %HealthLabel
 @onready var player_health_bar: ProgressBar = %PlayerHealth
 @onready var player_health_label: Label = %PlayerHealthLabel
@@ -719,9 +721,9 @@ func _on_room_changed(_room: StringName) -> void:
 
 
 func _on_health_changed(current: float, maximum: float) -> void:
-	health_bar.max_value = maximum
-	health_bar.value = current
 	health_label.text = "VAN  %d / %d" % [roundi(current), roundi(maximum)]
+	if health_bar:
+		health_bar.queue_redraw()
 
 
 func _on_player_health_changed(current: float, maximum: float) -> void:

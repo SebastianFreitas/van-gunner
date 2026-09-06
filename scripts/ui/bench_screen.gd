@@ -5,6 +5,8 @@ extends Control
 
 signal closed
 
+const _VanHealthBar := preload("res://scripts/ui/van_health_bar.gd")
+
 const ACCENT := Color(0.91, 0.78, 0.48, 1.0)
 const MUTED := Color(0.62, 0.66, 0.64, 1.0)
 const DIM := Color(0.45, 0.48, 0.47, 1.0)
@@ -207,11 +209,8 @@ func _add_spacer(height: float) -> void:
 
 
 func _add_health_bar() -> void:
-	var bar := ProgressBar.new()
+	var bar := _VanHealthBar.new()
 	bar.custom_minimum_size = Vector2(0, 12)
-	bar.max_value = GameSession.get_max_van_health()
-	bar.value = GameSession.van_health
-	bar.show_percentage = false
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_stats_target.add_child(bar)
 
