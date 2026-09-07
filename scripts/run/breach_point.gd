@@ -19,6 +19,9 @@ enum Kind { REAR_DOOR, SIDE_DOOR, WINDOW, SIDE_DOOR_WINDOW }
 ## Window / side-door-window: IronCross swapped to BrokenIronCross when breached.
 @export var bars_path: NodePath = NodePath()
 
+## Rear leaf vs its pane sit ~0.15m apart. XZ under this = the same hole.
+const _SAME_OPENING_XZ := 0.75
+
 @onready var outside_marker: Marker3D = $Outside
 @onready var entry_marker: Marker3D = $Entry
 
@@ -89,8 +92,7 @@ func is_passable() -> bool:
 
 
 func has_vacancy() -> bool:
-	_prune_occupants()
-	return _occupants.size() < max_occupants
+	return _cluster_occupant_count() < max_occupants
 
 
 func occupant_count() -> int:
@@ -102,7 +104,7 @@ func claim(raider: Node) -> bool:
 	_prune_occupants()
 	if raider in _occupants:
 		return true
-	if _occupants.size() >= max_occupants:
+	if _cluster_occupant_count() >= max_occupants:
 		return false
 	_occupants.append(raider)
 	return true
@@ -306,6 +308,56 @@ func _prune_occupants() -> void:
 	for i in range(_occupants.size() - 1, -1, -1):
 		if not is_instance_valid(_occupants[i]):
 			_occupants.remove_at(i)
+
+
+## Door leaf + its own window are separate BreachPoints (door goon vs climber
+## pools) but they share one stand slot. CabinNav never occupies outside holes,
+## so without this a mixed pack stacks on the same marker.
+func _cluster_occupant_count() -> int:
+	var seen := {}
+	var n := 0
+	for point in _opening_cluster():
+		point._prune_occupants()
+		for occ in point._occupants:
+			if seen.has(occ):
+				continue
+			seen[occ] = true
+			n += 1
+	return n
+
+
+func _opening_cluster() -> Array[BreachPoint]:
+	var cluster: Array[BreachPoint] = [self]
+	if get_tree() == null:
+		return cluster
+	for node in get_tree().get_nodes_in_group(&"breach_points"):
+		if node == self or not (node is BreachPoint):
+			continue
+		var other := node as BreachPoint
+		if _shares_opening(other):
+			cluster.append(other)
+	return cluster
+
+
+func _shares_opening(other: BreachPoint) -> bool:
+	if other == null:
+		return false
+	if door_side != &"" and door_side == other.door_side:
+		var rear_pair := (
+			(kind == Kind.REAR_DOOR and other.kind == Kind.WINDOW)
+			or (kind == Kind.WINDOW and other.kind == Kind.REAR_DOOR)
+		)
+		var side_pair := (
+			(kind == Kind.SIDE_DOOR and other.kind == Kind.SIDE_DOOR_WINDOW)
+			or (kind == Kind.SIDE_DOOR_WINDOW and other.kind == Kind.SIDE_DOOR)
+		)
+		if rear_pair or side_pair:
+			return true
+	if outside_marker == null or other.outside_marker == null:
+		return false
+	var a := outside_marker.global_position
+	var b := other.outside_marker.global_position
+	return Vector2(a.x - b.x, a.z - b.z).length() < _SAME_OPENING_XZ
 
 
 func _rear_doors() -> Node:

@@ -104,14 +104,14 @@ func all_doors_passable() -> bool:
 
 ## Closed rear doors first (left-to-right), then side cargo doors. Wraps inside
 ## the current tier so the biker boss alternates leaves instead of camping one.
+## Skips a leaf whose window pane is already occupied so Wanjna does not stack.
 func next_closed_door(after: BreachPoint) -> BreachPoint:
 	var rear := _closed_doors_of(BreachPoint.Kind.REAR_DOOR)
-	if not rear.is_empty():
-		return _next_after(rear, after)
+	var pick := _next_vacant_after(rear, after)
+	if pick:
+		return pick
 	var side := _closed_doors_of(BreachPoint.Kind.SIDE_DOOR)
-	if not side.is_empty():
-		return _next_after(side, after)
-	return null
+	return _next_vacant_after(side, after)
 
 
 ## Prefer an open door leaf; fall back to any passable window.
@@ -128,6 +128,7 @@ func first_passable_door() -> BreachPoint:
 ## Door mobs: rear doors, then side cargo doors.
 ## Agile mobs: windows only — rear door panes and side cargo windows.
 ## Never cross pools (door mobs never get windows; agile never open door leaves).
+## A door and its pane still share occupancy — mixed packs cannot stack on one hole.
 func assign_breach_point(raider: Node) -> BreachPoint:
 	var points := _all_points()
 	if points.is_empty():
@@ -282,12 +283,16 @@ func _cabin_nav() -> CabinNav:
 	return get_tree().get_first_node_in_group(&"cabin_nav") as CabinNav
 
 
-func _next_after(doors: Array[BreachPoint], after: BreachPoint) -> BreachPoint:
+func _next_vacant_after(doors: Array[BreachPoint], after: BreachPoint) -> BreachPoint:
 	if doors.is_empty():
 		return null
-	if after == null:
-		return doors[0]
-	var idx := doors.find(after)
-	if idx < 0:
-		return doors[0]
-	return doors[(idx + 1) % doors.size()]
+	var start := 0
+	if after != null:
+		var idx := doors.find(after)
+		if idx >= 0:
+			start = (idx + 1) % doors.size()
+	for i in doors.size():
+		var door := doors[(start + i) % doors.size()]
+		if door.has_vacancy():
+			return door
+	return null

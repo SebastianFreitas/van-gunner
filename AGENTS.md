@@ -282,6 +282,10 @@ Each of these has already cost someone real debugging time:
   on that parent slides and fights the van-local lerp. Indoor paths go through
   `CabinNav` (bulkhead doorway, occupancy slots). Warehouse buildings are
   world-static — bake a `NavigationRegion3D` there later, not on the van.
+- **A rear door and its window pane are two BreachPoints.** Door goons and
+  agile climbers use separate pools, but the Outside markers sit ~15cm apart.
+  Occupancy is clustered on the opening (`BreachPoint._shares_opening`); CabinNav
+  never occupies outside holes. Do not split that cluster or a mixed pack stacks.
 
 ## 7. Deliberate choices — do not change these without asking
 
