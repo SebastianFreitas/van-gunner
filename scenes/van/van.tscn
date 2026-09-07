@@ -42,6 +42,7 @@
 [ext_resource type="Script" uid="uid://cmdwe4o0k1nme" path="res://scripts/ui/van_health_bar.gd" id="38"]
 [ext_resource type="PackedScene" path="res://scenes/van/request_board.tscn" id="39"]
 [ext_resource type="PackedScene" path="res://scenes/ui/skill_tree_hud.tscn" id="40"]
+[ext_resource type="Script" uid="uid://d8k2nv4cabinav" path="res://scripts/run/cabin_nav.gd" id="41"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -1142,6 +1143,24 @@ transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0,
 
 [node name="RearSpawnMarker" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer" unique_id=76291566]
 transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 1.62, 51.62)
+
+[node name="CabinNav" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer" unique_id=2100462910]
+script = ExtResource("41")
+
+[node name="BulkheadPassage" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/CabinNav" unique_id=2100462911]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.58, 1.62, 1.0)
+
+[node name="BackStaging" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/CabinNav" unique_id=2100462912]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.62, 2.55)
+
+[node name="CabinStaging" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/CabinNav" unique_id=2100462913]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.62, -1.55)
+
+[node name="RearCornerLeft" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/CabinNav" unique_id=2100462914]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 1.62, 5.5)
+
+[node name="RearCornerRight" type="Marker3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer/CabinNav" unique_id=2100462915]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 1.62, 5.5)
 
 [node name="BreachController" type="Node3D" parent="TravelPath/VanFollow/VanRig/EnemyContainer" unique_id=1006425113]
 script = ExtResource("16")

@@ -20,7 +20,10 @@ func get_vitals() -> Array:
 	return result
 
 
-func pick_vital_near(from_global: Vector3) -> Node:
+func pick_vital_near(from_global: Vector3, raider: Node = null) -> Node:
+	var nav := _cabin_nav()
+	if nav:
+		return nav.pick_free_vital_near(from_global, raider)
 	var best: Node = null
 	var best_d := INF
 	for vital in get_vitals():
@@ -148,9 +151,9 @@ func assign_breach_point(raider: Node) -> BreachPoint:
 	else:
 		pick = _pick_door(pool)
 
-	# Reserve closed slots immediately so two spawns don't share one door.
-	if pick and not pick.is_passable():
-		pick.claim(raider)
+	# Reserve even passable openings so two raiders don't funnel one hole.
+	if pick == null or not pick.claim(raider):
+		return null
 	return pick
 
 
@@ -178,16 +181,15 @@ func _pick_door(pool: Array[BreachPoint]) -> BreachPoint:
 	var free_side: Array[BreachPoint] = []
 
 	for point in pool:
+		if not point.has_vacancy():
+			continue
 		var is_rear := point.kind == BreachPoint.Kind.REAR_DOOR
 		if point.is_passable():
 			if is_rear:
 				passable_rear.append(point)
 			else:
 				passable_side.append(point)
-			continue
-		if not point.has_vacancy():
-			continue
-		if is_rear:
+		elif is_rear:
 			free_rear.append(point)
 		else:
 			free_side.append(point)
@@ -199,8 +201,6 @@ func _pick_door(pool: Array[BreachPoint]) -> BreachPoint:
 		pick = _pick_random(passable_side)
 	if pick == null:
 		pick = _pick_random(free_side)
-	if pick == null:
-		pick = _least_contested(pool)
 	return pick
 
 
@@ -209,18 +209,16 @@ func _pick_agile(pool: Array[BreachPoint]) -> BreachPoint:
 	var free_windows: Array[BreachPoint] = []
 
 	for point in pool:
-		if point.is_passable():
-			passable_windows.append(point)
-			continue
 		if not point.has_vacancy():
 			continue
-		free_windows.append(point)
+		if point.is_passable():
+			passable_windows.append(point)
+		else:
+			free_windows.append(point)
 
 	var pick := _pick_best_priority(passable_windows)
 	if pick == null:
 		pick = _pick_best_priority(free_windows)
-	if pick == null:
-		pick = _least_contested(pool)
 	return pick
 
 
@@ -239,16 +237,10 @@ func _pick_best_priority(points: Array[BreachPoint]) -> BreachPoint:
 	return _pick_random(tied)
 
 
-func _least_contested(points: Array[BreachPoint]) -> BreachPoint:
+func _pick_random(points: Array[BreachPoint]) -> BreachPoint:
 	if points.is_empty():
 		return null
-	var sorted := points.duplicate()
-	sorted.sort_custom(func(a: BreachPoint, b: BreachPoint) -> bool:
-		if a.occupant_count() == b.occupant_count():
-			return a.priority < b.priority
-		return a.occupant_count() < b.occupant_count()
-	)
-	return sorted[0]
+	return points[randi() % points.size()]
 
 
 func _all_points() -> Array[BreachPoint]:
@@ -260,12 +252,6 @@ func _all_points() -> Array[BreachPoint]:
 		return a.priority < b.priority
 	)
 	return result
-
-
-func _pick_random(points: Array[BreachPoint]) -> BreachPoint:
-	if points.is_empty():
-		return null
-	return points[randi() % points.size()]
 
 
 func _closed_doors_of(kind: BreachPoint.Kind) -> Array[BreachPoint]:
@@ -288,6 +274,12 @@ func _closed_doors_of(kind: BreachPoint.Kind) -> Array[BreachPoint]:
 		)
 	)
 	return result
+
+
+func _cabin_nav() -> CabinNav:
+	if get_tree() == null:
+		return null
+	return get_tree().get_first_node_in_group(&"cabin_nav") as CabinNav
 
 
 func _next_after(doors: Array[BreachPoint], after: BreachPoint) -> BreachPoint:

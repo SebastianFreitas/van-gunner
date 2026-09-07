@@ -70,8 +70,8 @@ extends Resource
 @export var window_breach_hp := 50.0
 ## Door / window glass panes — applied by breakable_glass at runtime.
 @export var rear_window_glass_hp := 1.0
-## Interior move speed after a breach (van-local units/sec).
-@export var mob_interior_speed := 4.5
+## Interior move speed after a breach (van-local units/sec). Indoor FPS pace.
+@export var mob_interior_speed := 1.6
 
 @export_group("Van speed upgrades")
 ## End-of-curve van speed targets (meta shop). Last entry is the fully-upgraded speed.

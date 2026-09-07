@@ -3,6 +3,7 @@ extends Node3D
 
 ## Standing shootable raider for warehouse hides. Not in `&"enemy"` — street
 ## waves despawn that group. No assault AI; indoor combat is a later pass.
+## When layouts exist, reuse CabinNav occupancy + WindowRaider indoor speed.
 
 const _SPRITE := preload("res://scenes/enemies/door_raider.png")
 

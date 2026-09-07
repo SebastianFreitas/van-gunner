@@ -30,9 +30,9 @@
 
 ## Node groups
 
-Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`, `weapon_pickup`, `weapon_replace_prompt`
+Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`, `weapon_pickup`, `weapon_replace_prompt`
 
-Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`, `weapon_replace_prompt`
+Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`, `weapon_replace_prompt`
 
 ## Signals and enums
 
@@ -158,6 +158,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `signal shattered`
 
+**`scripts/run/cabin_nav.gd`**
+
+- `enum Room { BACK, CABIN }`
+
 **`scripts/run/rear_doors.gd`**
 
 - `signal opened`
@@ -263,7 +267,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-166 GDScript files, 28875 lines.
+167 GDScript files, 29720 lines.
 
 ### `scenes/corridor/`
 
@@ -417,13 +421,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `act_card_effect_context.gd` | `ActCardEffectContext` | 39 | Shared bag for street-card effect hooks. Effects mutate fields; ActCardCombat |
 | `act_card_registry.gd` | `ActCardRegistry` | 48 | Resolves act street-card definitions by id from resources/acts/cards/. |
 | `act_deck_controller.gd` | `ActDeckController` | 176 | Owns act-start tarot reveals and the act-end boss pick. |
-| `biker_boss.gd` | `BikerBoss` | 306 | Wanjna: hit-and-run biker. Fast charge, slow axe on a door, peel and weave. |
+| `biker_boss.gd` | `BikerBoss` | 310 | Wanjna: hit-and-run biker. Fast charge, slow axe on a door, peel and weave. |
 | `boon_reward_controller.gd` | `BoonRewardController` | 141 | During REST, grants a 3-choice boon for the street card committed at the last fork. |
-| `breach_controller.gd` | `BreachController` | 302 | Assigns raid slots around the van and interior vital damage targets. |
+| `breach_controller.gd` | `BreachController` | 294 | Assigns raid slots around the van and interior vital damage targets. |
 | `breach_point.gd` | `BreachPoint` | 333 | Outside attack slot that must be breached (or opened) before mobs can enter. |
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). Surrounding metal stays. |
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. Same local frame as IronCross: |
-| `encounter_director.gd` | `EncounterDirector` | 418 | Soft cap: after this, surviving raiders of the current wave retreat. |
+| `cabin_nav.gd` | `CabinNav` | 478 | Van-local waypoint graph + occupancy. Raiders stay Node3D; this is how they |
+| `encounter_director.gd` | `EncounterDirector` | 411 | Soft cap: after this, surviving raiders of the current wave retreat. |
 | `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
 | `garage_lounge.gd` | — | 185 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
@@ -458,13 +463,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_vital.gd` | `VanVital` | 98 | One interior machine whose HP is a slice of van death hull. |
 | `warehouse_chest.gd` | `WarehouseChest` | 60 | Table-top crate. E opens a bonus 3-choice boon, then springs leftover hides. |
 | `warehouse_director.gd` | `WarehouseDirector` | 176 | Picks one hide layout per visit. Early triggers (shoot / walk / laser) or |
-| `warehouse_dummy.gd` | `WarehouseDummy` | 113 | Standing shootable raider for warehouse hides. Not in `&"enemy"` — street |
+| `warehouse_dummy.gd` | `WarehouseDummy` | 114 | Standing shootable raider for warehouse hides. Not in `&"enemy"` — street |
 | `warehouse_hide.gd` | `WarehouseHide` | 149 | One ambush pocket. `trigger()` is idempotent — shooting, walking a volume, |
 | `warehouse_interior.gd` | — | 243 | Flared warehouse bay: shell, wrapped dressing, table + chest, one hide layout. |
 | `warehouse_laser.gd` | `WarehouseLaser` | 72 | Waist-high trip across the aisle. Jump over to stay quiet; walking through |
 | `warehouse_look.gd` | `WarehouseLook` | 143 | Shared palette / mesh helpers for the warehouse bay and its hide layouts. |
 | `weapon_shop_offer.gd` | `WeaponShopOffer` | 87 | Shop counter offer that sells a generated WeaponInstance for gold. |
-| `window_raider.gd` | `WindowRaider` | 504 | Agile raiders can climb window bars; door mobs only smash doors. |
+| `window_raider.gd` | `WindowRaider` | 681 | Agile raiders can climb window bars; door mobs only smash doors. |
 
 ### `scripts/run/effects/`
 
@@ -494,7 +499,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `enemy_health_bar.gd` | `EnemyHealthBar` | 59 |  |
 | `item_hud.gd` | — | 86 | Hotbar for tools and a row of collected boon icons. |
 | `main_menu.gd` | — | 127 | Rejected files (old version, corrupt JSON) used to look like NEW RUN |
-| `skill_tree_hud.gd` | — | 287 | Van schematic overlay. Hover/click nodes; pending requests ghost until the |
+| `skill_tree_hud.gd` | — | 487 | Van schematic overlay. Hover/click nodes; pending requests ghost until the |
 | `usable_slot.gd` | — | 42 |  |
 | `van_health_bar.gd` | `VanHealthBar` | 77 | Single hull line: left half = interior vitals (death HP), right half = doors. |
 | `weapon_replace_prompt.gd` | `WeaponReplacePrompt` | 144 | Full inventory: pick a slot to replace, or Esc to cancel (gun stays in world). |
@@ -553,13 +558,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/driver_shout_hud.tscn` | 9 | Control |
 | `scenes/ui/item_hud.tscn` | 7 | Control |
 | `scenes/ui/main_menu.tscn` | 25 | Control |
-| `scenes/ui/skill_tree_hud.tscn` | 16 | Control |
+| `scenes/ui/skill_tree_hud.tscn` | 19 | Control |
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/loot_machine.tscn` | 9 | StaticBody3D |
 | `scenes/van/request_board.tscn` | 4 | StaticBody3D |
-| `scenes/van/van.tscn` | 306 | Node3D |
+| `scenes/van/van.tscn` | 310 | Node3D |
 | `scenes/van/vanSave.tscn` | 93 | Node3D |
 | `scenes/van/van_bulkhead.tscn` | 1 | StaticBody3D |
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |
@@ -589,6 +594,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `act_engagement_seconds` | `PackedFloat32Array(10, 8, 6)` |
 | `act_expected_upgrade_fraction` | `PackedFloat32Array(0.333333, 0.666667, 1)` |
 | `segment_spawn_pool` | `ExtResource("2")` |
+| `mob_interior_speed` | `1.6` |
 | `act_target_van_speed` | `PackedFloat32Array(8, 9, 10)` |
 | `mechanic_full_repair_cost` | `45` |
 | `mechanic_van_boon_cost` | `40` |
@@ -609,7 +615,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `rear_door_breach_hp` | `96.0` |
 | `window_breach_hp` | `50.0` |
 | `rear_window_glass_hp` | `1.0` |
-| `mob_interior_speed` | `4.5` |
 | `van_speed_max_level` | `4` |
 | `van_speed_upgrade_base_cost` | `50` |
 | `weapon_drop_chance_base` | `1` |

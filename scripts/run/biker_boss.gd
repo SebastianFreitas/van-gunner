@@ -201,7 +201,11 @@ func _enter_van() -> void:
 	var interior_speed := GameBalance.MOB_INTERIOR_SPEED
 	if door:
 		assigned_breach = door
-		await _move_to_marker(door.entry_marker, interior_speed, false)
+		await _approach_breach(door, peel_speed, false)
+		if not _active or is_defeated:
+			return
+		if door.entry_marker:
+			await _move_to_marker(door.entry_marker, interior_speed, false)
 		if not _active or is_defeated:
 			return
 	_bike_phase = BikePhase.BENCH

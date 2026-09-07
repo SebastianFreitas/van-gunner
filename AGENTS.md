@@ -277,6 +277,11 @@ Each of these has already cost someone real debugging time:
   The `Interior` bus sends to SFX and has no FX yet — that's the van-shell
   low-pass / short-reverb slot. Import SFX as `.wav` (no decode latency) and
   music as `.ogg` with the loop flag.
+- **Van raiders use a waypoint graph, not a navmesh.** They are `Node3D`s under
+  `EnemyContainer` on a `PathFollow3D`. `NavigationAgent3D` / `CharacterBody3D`
+  on that parent slides and fights the van-local lerp. Indoor paths go through
+  `CabinNav` (bulkhead doorway, occupancy slots). Warehouse buildings are
+  world-static — bake a `NavigationRegion3D` there later, not on the van.
 
 ## 7. Deliberate choices — do not change these without asking
 
@@ -307,6 +312,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Change run pacing / phases | `scripts/core/game_session.gd` |
 | Change wave sizes, enemy speed, spawn geometry | `resources/balance/game_balance.tres` |
 | Change how encounters are sequenced | `scripts/run/encounter_director.gd` |
+| Van raider pathing / occupancy | `scripts/run/cabin_nav.gd` + `window_raider.gd` |
 | Act boss (Wanjna the biker) | `scripts/run/biker_boss.gd` + `_spawn_boss` in `encounter_director.gd` |
 | Change road, turns, side-stop parking, statues | `scripts/run/travel_controller.gd` |
 | Change act deck / boss pick logic | `game_session.gd` + `scripts/run/act_deck_controller.gd` |

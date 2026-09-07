@@ -16,6 +16,7 @@ act_breather_chance = PackedFloat32Array(0.15, 0.3, 0.35)
 act_engagement_seconds = PackedFloat32Array(10, 8, 6)
 act_expected_upgrade_fraction = PackedFloat32Array(0.333333, 0.666667, 1)
 segment_spawn_pool = ExtResource("2")
+mob_interior_speed = 1.6
 act_target_van_speed = PackedFloat32Array(8, 9, 10)
 mechanic_full_repair_cost = 45
 mechanic_van_boon_cost = 40

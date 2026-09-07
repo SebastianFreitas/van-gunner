@@ -302,14 +302,7 @@ func _spawn_from_definition(enemy_def: EnemyDefinition, slot: int, count: int) -
 	raider.transform = Transform3D(rear_spawn.transform.basis, local_pos)
 	var world_speed := GameBalance.get_mob_world_speed(GameSession.route_step)
 	var breach := breach_controller.assign_breach_point(raider)
-	if breach:
-		raider.begin_assault(breach, world_speed)
-	else:
-		raider.mob_world_speed = world_speed
-		raider.approach_speed = GameBalance.get_closing_speed(
-			GameSession.route_step, MetaProgression.get_van_speed()
-		)
-		raider.activate()
+	raider.begin_assault(breach, world_speed)
 	ActCardCombat.configure_enemy(raider)
 	return raider
 
