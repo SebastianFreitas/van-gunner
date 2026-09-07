@@ -1104,24 +1104,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8885281, 0.43830076, -1.8)
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.62164927, 1.4382443, 0.96901906)
 
 [node name="FuseBox" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=718172379 instance=ExtResource("37")]
-transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 2.2095766, 0.55, 2.5374727)
+transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 2.2095766, 0.48705465, 1.2149754)
 prompt = "Fuse box"
 
-[node name="VanVital" parent="TravelPath/VanFollow/VanRig/Interior/Props/FuseBox" index="2"]
-vital_id = &"fuse_box"
-display_name = "Fuse box"
-
 [node name="CabRelay" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=219581774 instance=ExtResource("37")]
-transform = Transform3D(4.371139e-08, 0, -1, 0, 1, 0, 1, 0, 4.371139e-08, 0.9800526, 1.8457549, -4.592293)
+transform = Transform3D(4.371139e-08, 0, -1, -1, -4.371139e-08, -4.371139e-08, -4.371139e-08, 1, -1.9106855e-15, -1.3101273, 2.7922862, -4.20212)
 prompt = "Cab relay"
 
-[node name="VanVital" parent="TravelPath/VanFollow/VanRig/Interior/Props/CabRelay" index="2"]
-vital_id = &"cab_relay"
-display_name = "Cab relay"
-
-[node name="RequestBoard" parent="TravelPath/VanFollow/VanRig/Interior/Props" instance=ExtResource("39")]
-transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -1.62, 0.95, -1.8)
-prompt = "Open schematic"
+[node name="RequestBoard" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1411434472 instance=ExtResource("39")]
+transform = Transform3D(8.742278e-08, 0, -1, 0, 1, 0, 1, 0, 8.742278e-08, -1.62, 0.95, -4.552016)
 
 [node name="RoomZones" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1307820521]
 
@@ -1668,7 +1659,7 @@ text = "RETURN TO MENU"
 [node name="BenchScreen" parent="HUD" unique_id=840301130 instance=ExtResource("13")]
 unique_name_in_owner = true
 
-[node name="SkillTreeHud" parent="HUD" instance=ExtResource("40")]
+[node name="SkillTreeHud" parent="HUD" unique_id=1486896779 instance=ExtResource("40")]
 unique_name_in_owner = true
 
 [connection signal="pressed" from="HUD/RouteChoice/Layout/Buttons/Left" to="." method="_on_left_route_pressed"]
