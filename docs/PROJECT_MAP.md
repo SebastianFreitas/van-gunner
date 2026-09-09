@@ -238,6 +238,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal boost_pressed`
 - `signal slow_pressed`
 
+**`scripts/ui/pause_menu.gd`**
+
+- `signal opened`
+- `signal closed`
+- `signal quit_to_menu_requested`
+- `signal quit_game_requested`
+
 **`scripts/ui/skill_tree_hud.gd`**
 
 - `signal closed`
@@ -267,7 +274,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-167 GDScript files, 29720 lines.
+168 GDScript files, 29945 lines.
 
 ### `scenes/corridor/`
 
@@ -316,7 +323,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `loot_collector.gd` | — | 253 | Hopper for street-kill loot. Floor drops stay walkable; REST vacuums |
 | `meta_progression.gd` | — | 328 | Preload-as-type: this autoload cannot name SkillNodeDefinition / the tree |
 | `save_manager.gd` | — | 100 |  |
-| `scene_router.gd` | — | 68 | Sync load on the main thread. Threaded load of van.tscn fails cold with a |
+| `scene_router.gd` | — | 77 | Sync load on the main thread. Threaded load of van.tscn fails cold with a |
 | `skill_tree_registry.gd` | — | 94 | Resolves skill-tree nodes from resources/meta/tree/. Not an autoload and |
 
 ### `scripts/debug/`
@@ -407,7 +414,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `boon_combat.gd` | `BoonCombat` | 291 | Thin dispatcher for boon combat logic. All behavior lives in BoonBehaviorRegistry handlers. |
 | `boon_stat_handlers.gd` | — | 220 | Stat-based boon behavior handlers (add/mult traits, no flags required). |
 | `boon_traits.gd` | `BoonTraits` | 75 | Stores passive boon modifiers that combat systems query at runtime. |
-| `fps_player.gd` | `FpsPlayer` | 287 | Modal / menu UI owns the cursor — don't steal it back into FPS look. |
+| `fps_player.gd` | `FpsPlayer` | 278 | Click in the world after a HUD/UI click stole the cursor. |
 | `usable_state.gd` | `UsableState` | 26 |  |
 | `usables_controller.gd` | `UsablesController` | 168 |  |
 
@@ -423,8 +430,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `act_deck_controller.gd` | `ActDeckController` | 176 | Owns act-start tarot reveals and the act-end boss pick. |
 | `biker_boss.gd` | `BikerBoss` | 310 | Wanjna: hit-and-run biker. Fast charge, slow axe on a door, peel and weave. |
 | `boon_reward_controller.gd` | `BoonRewardController` | 141 | During REST, grants a 3-choice boon for the street card committed at the last fork. |
-| `breach_controller.gd` | `BreachController` | 294 | Assigns raid slots around the van and interior vital damage targets. |
-| `breach_point.gd` | `BreachPoint` | 333 | Outside attack slot that must be breached (or opened) before mobs can enter. |
+| `breach_controller.gd` | `BreachController` | 299 | Assigns raid slots around the van and interior vital damage targets. |
+| `breach_point.gd` | `BreachPoint` | 385 | Outside attack slot that must be breached (or opened) before mobs can enter. |
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). Surrounding metal stays. |
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. Same local frame as IronCross: |
 | `cabin_nav.gd` | `CabinNav` | 478 | Van-local waypoint graph + occupancy. Raiders stay Node3D; this is how they |
@@ -452,7 +459,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `stop_elevator.gd` | `StopElevator` | 368 | On-road lift that drops the van to the shared stop vestibule. Content |
 | `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
 | `travel_controller.gd` | `TravelController` | 1312 | Empty corridor tiles required between side-street openings (avoids a thin |
-| `van.gd` | — | 1081 | Preload so van.tscn can type the bar without a class_name parse cycle. |
+| `van.gd` | — | 1156 | Preload so van.tscn can type the bar without a class_name parse cycle. |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -499,6 +506,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `enemy_health_bar.gd` | `EnemyHealthBar` | 59 |  |
 | `item_hud.gd` | — | 86 | Hotbar for tools and a row of collected boon icons. |
 | `main_menu.gd` | — | 127 | Rejected files (old version, corrupt JSON) used to look like NEW RUN |
+| `pause_menu.gd` | `PauseMenu` | 93 | Esc overlay. PROCESS_MODE_ALWAYS so Resume/Esc still work while the tree is paused. |
 | `skill_tree_hud.gd` | — | 487 | Van schematic overlay. Hover/click nodes; pending requests ghost until the |
 | `usable_slot.gd` | — | 42 |  |
 | `van_health_bar.gd` | `VanHealthBar` | 77 | Single hull line: left half = interior vitals (death HP), right half = doors. |
@@ -558,13 +566,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/driver_shout_hud.tscn` | 9 | Control |
 | `scenes/ui/item_hud.tscn` | 7 | Control |
 | `scenes/ui/main_menu.tscn` | 25 | Control |
+| `scenes/ui/pause_menu.tscn` | 22 | Control |
 | `scenes/ui/skill_tree_hud.tscn` | 19 | Control |
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/loot_machine.tscn` | 9 | StaticBody3D |
 | `scenes/van/request_board.tscn` | 4 | StaticBody3D |
-| `scenes/van/van.tscn` | 310 | Node3D |
+| `scenes/van/van.tscn` | 311 | Node3D |
 | `scenes/van/vanSave.tscn` | 93 | Node3D |
 | `scenes/van/van_bulkhead.tscn` | 1 | StaticBody3D |
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |

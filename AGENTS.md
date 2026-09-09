@@ -218,6 +218,11 @@ Each of these has already cost someone real debugging time:
   close rather than setting the mode themselves, and register in
   `has_modal_free_cursor()`. Don't `gui_release_focus()` while the debug console
   is open — that unfocuses the LineEdit so you have to click it to type.
+- **Pause menu.** Esc opens it and sets `get_tree().paused`. The overlay is
+  `PROCESS_MODE_ALWAYS` so Resume still works. `SceneRouter` unpauses on every
+  scene change — if you skip that, the main menu loads frozen. Don't open pause
+  on `GAME_OVER` (those buttons are pausable). Bench / schematic / console / weapon
+  replace still eat Esc first and close themselves.
 - **HUD eating clicks.** Any non-interactive HUD control must be
   `MOUSE_FILTER_IGNORE`, otherwise clicking through it uncaptures the mouse.
   `_make_combat_hud_mouse_passthrough()` handles this — add genuinely interactive
@@ -337,6 +342,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Bench screenshot tool | `tools/bench_preview.tscn` |
 | Shop counter / stock | `scripts/run/shop_*.gd` |
 | NPC talk (hover + click) | `scripts/dialogue/npc_talk.gd` + `scripts/ui/dialogue_hud.gd` |
+| Pause menu (Esc) | `scripts/ui/pause_menu.gd` — settings, return to menu, quit |
 
 ## 9. Running and debugging
 

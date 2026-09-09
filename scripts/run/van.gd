@@ -43,6 +43,7 @@ const _ROUTE_INK := Color(0.08, 0.08, 0.07, 1.0)
 @onready var driver_shout_hud: DriverShoutHud = %DriverShoutHud
 @onready var rest_toast: Label = %RestToast
 @onready var game_over_panel: Control = %GameOver
+@onready var pause_menu: PauseMenu = %PauseMenu
 @onready var bench_screen: BenchScreen = %BenchScreen
 ## Untyped on purpose — do not preload the schematic HUD into this file
 ## (same reason debug_console is load()ed: a HUD parse error must not
@@ -130,6 +131,7 @@ func _ready() -> void:
 		driver_shout_hud.slow_pressed.connect(_on_hud_slow_pressed)
 	_setup_weapon_slots_hud()
 	_bind_route_choice_buttons()
+	_bind_pause_menu()
 	_make_combat_hud_mouse_passthrough($HUD)
 	if player.weapon_inventory:
 		player.weapon_inventory.loadout_changed.connect(_on_weapon_loadout_changed)
@@ -141,6 +143,10 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	AudioDirector.unbind_run()
+	## Don't leave the next scene (main menu) frozen if this run is torn down paused.
+	var tree := get_tree()
+	if tree and tree.paused:
+		tree.paused = false
 
 
 func _setup_weapon_slots_hud() -> void:
@@ -236,6 +242,9 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		_route_highlight = &"left"
 		_refresh_route_choice_labels()
 	game_over_panel.visible = next_phase == GameSession.RunPhase.GAME_OVER
+	if next_phase == GameSession.RunPhase.GAME_OVER and pause_menu and pause_menu.visible:
+		## Game-over buttons are PAUSABLE; leaving the tree paused bricks RETURN TO MENU.
+		pause_menu.close()
 	if next_phase == GameSession.RunPhase.GAME_OVER or next_phase == GameSession.RunPhase.ROUTE_CHOICE:
 		close_driver_talk()
 	else:
@@ -316,6 +325,10 @@ func _bind_route_choice_buttons() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"pause"):
+		if _try_open_pause():
+			get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed(&"driver_boost") and not _driver_shout_keys_blocked():
 		request_driver_boost()
 		get_viewport().set_input_as_handled()
@@ -623,8 +636,10 @@ func wants_free_cursor(phase: GameSession.RunPhase = GameSession.phase) -> bool:
 	]
 
 
-## True only when a clickable overlay owns the cursor (blocks Esc FPS toggle).
+## True only when a clickable overlay owns the cursor (blocks Esc FPS look).
 func has_modal_free_cursor() -> bool:
+	if pause_menu and pause_menu.visible:
+		return true
 	if _driver_talk_open:
 		return true
 	if bench_screen and bench_screen.visible:
@@ -653,12 +668,53 @@ func _has_weapon_replace_prompt() -> bool:
 	return false
 
 
+func _bind_pause_menu() -> void:
+	if pause_menu == null:
+		return
+	pause_menu.opened.connect(_on_pause_opened)
+	pause_menu.closed.connect(_on_pause_closed)
+	pause_menu.quit_to_menu_requested.connect(leave_to_main_menu)
+	pause_menu.quit_game_requested.connect(quit_game)
+	## Stay above dynamically added HUD overlays (reveal, boon pick, talk).
+	$HUD.move_child(pause_menu, -1)
+
+
+func _try_open_pause() -> bool:
+	if pause_menu == null or pause_menu.visible:
+		return false
+	if GameSession.phase == GameSession.RunPhase.GAME_OVER:
+		return false
+	## Overlays that already eat Esc (close themselves). Don't stack pause on top.
+	if bench_screen and bench_screen.visible:
+		return false
+	if skill_tree_hud and skill_tree_hud.visible:
+		return false
+	if _debug_console and _debug_console.visible:
+		return false
+	if _has_weapon_replace_prompt():
+		return false
+	$HUD.move_child(pause_menu, -1)
+	pause_menu.open()
+	return true
+
+
+func _on_pause_opened() -> void:
+	refresh_mouse_mode()
+	if pause_menu:
+		pause_menu.resume_button.grab_focus()
+
+
+func _on_pause_closed() -> void:
+	refresh_mouse_mode()
+
+
 func _is_interactive_hud(node: Node) -> bool:
 	return (
 		node == route_panel
 		or node == driver_talk_panel
 		or node == driver_shout_hud
 		or node == game_over_panel
+		or node == pause_menu
 		or node == bench_screen
 		or node == skill_tree_hud
 		or node == _debug_console
@@ -683,8 +739,12 @@ func _make_combat_hud_mouse_passthrough(node: Node) -> void:
 func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
 	var viewport := get_viewport()
 	## Console keeps a LineEdit focused — releasing here forces a click to type.
-	var console_open := _debug_console != null and _debug_console.visible
-	if viewport and not console_open:
+	## Pause keeps Resume focused so Enter unpauses.
+	var keep_focus := (
+		(_debug_console != null and _debug_console.visible)
+		or (pause_menu != null and pause_menu.visible)
+	)
+	if viewport and not keep_focus:
 		viewport.gui_release_focus()
 	if wants_free_cursor(phase):
 		_mouse_capture_gen += 1
@@ -1014,6 +1074,8 @@ func request_driver_slow_or_go() -> bool:
 
 
 func _driver_shout_keys_blocked() -> bool:
+	if pause_menu and pause_menu.visible:
+		return true
 	if _debug_console and _debug_console.visible:
 		return true
 	if _dialogue_hud and _dialogue_hud.visible:
@@ -1076,5 +1138,18 @@ func _stop_toast_leaving() -> String:
 
 
 func _on_main_menu_pressed() -> void:
+	leave_to_main_menu()
+
+
+func leave_to_main_menu() -> void:
 	SaveManager.save_active_session()
 	SceneRouter.go_to_main_menu()
+
+
+func quit_game() -> void:
+	SaveManager.save_active_session()
+	var tree := get_tree()
+	if tree == null:
+		return
+	tree.paused = false
+	tree.quit()

@@ -11,6 +11,7 @@ var _shutting_down := false
 
 func go_to_main_menu() -> void:
 	GameSession.set_chill_mode(false)
+	_unpause()
 	_change_scene(MAIN_MENU)
 	call_deferred("preload_van")
 
@@ -37,6 +38,7 @@ func is_van_ready() -> bool:
 func go_to_van() -> void:
 	if _transitioning:
 		return
+	_unpause()
 	_transitioning = true
 	preload_van()
 	var error := OK
@@ -49,9 +51,16 @@ func go_to_van() -> void:
 	_transitioning = false
 
 
+func _unpause() -> void:
+	var tree := get_tree()
+	if tree:
+		tree.paused = false
+
+
 func _change_scene(path: String) -> void:
 	if _transitioning:
 		return
+	_unpause()
 	_transitioning = true
 	var error := get_tree().change_scene_to_file(path)
 	if error != OK:

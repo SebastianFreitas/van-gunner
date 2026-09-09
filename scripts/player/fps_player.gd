@@ -44,15 +44,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		head.rotate_x(-event.relative.y * mouse_sensitivity)
 		head.rotation.x = clampf(head.rotation.x, deg_to_rad(-80.0), deg_to_rad(80.0))
-	elif event.is_action_pressed("pause"):
-		## Modal / menu UI owns the cursor — don't steal it back into FPS look.
-		if _ui_wants_free_cursor():
-			return
-		Input.mouse_mode = (
-			Input.MOUSE_MODE_VISIBLE
-			if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
-			else Input.MOUSE_MODE_CAPTURED
-		)
 	elif event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if (
