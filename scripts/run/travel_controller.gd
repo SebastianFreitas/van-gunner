@@ -265,14 +265,6 @@ func try_resume_speed() -> bool:
 	return true
 
 
-func get_stop_fork_side() -> StringName:
-	return _stop_fork_side
-
-
-func get_fork_stop() -> SideStopDefinition:
-	return _fork_stop
-
-
 func get_fork_stop_for(direction: StringName) -> SideStopDefinition:
 	if not _fork_stops.has(direction):
 		return null
@@ -281,19 +273,6 @@ func get_fork_stop_for(direction: StringName) -> SideStopDefinition:
 
 func get_active_stop() -> SideStopDefinition:
 	return _active_stop_def if _active_stop_def else _pending_stop
-
-
-## Duck-typed alias — older callers still ask for the shop fork.
-func get_shop_fork_side() -> StringName:
-	return get_stop_fork_side()
-
-
-func is_stop_docked() -> bool:
-	return GameSession.phase == GameSession.RunPhase.STOP
-
-
-func is_shop_docked() -> bool:
-	return is_stop_docked()
 
 
 ## True from stop-fork choice until the van has left the bay — blocks wave combat.
@@ -305,10 +284,6 @@ func is_stop_visit_active() -> bool:
 	if _turn_state in [TurnState.PARKING, TurnState.LEAVING_STOP, TurnState.ELEVATING]:
 		return true
 	return GameSession.phase in [GameSession.RunPhase.PARKING, GameSession.RunPhase.STOP]
-
-
-func is_shop_visit_active() -> bool:
-	return is_stop_visit_active()
 
 
 func is_act_reveal_active() -> bool:
@@ -384,10 +359,6 @@ func _configure_initial_route() -> void:
 	)
 	_next_segment_progress = 0.0
 	_spawn_route_segments_until(segment_ahead_distance)
-
-
-func get_van_velocity() -> Vector3:
-	return _van_velocity
 
 
 func _physics_process(delta: float) -> void:

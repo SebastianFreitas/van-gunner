@@ -144,10 +144,6 @@ func get_allocated_vital_max_bonus(vital_id: StringName) -> float:
 	return _vital_bonus_from(allocated_ids, vital_id)
 
 
-func get_pending_vital_max_bonus(vital_id: StringName) -> float:
-	return _vital_bonus_from(pending_ids, vital_id)
-
-
 func set_master_volume(linear: float) -> void:
 	master_volume = clampf(linear, 0.0, 1.0)
 	_apply_bus_volume(BUS_MASTER, master_volume)

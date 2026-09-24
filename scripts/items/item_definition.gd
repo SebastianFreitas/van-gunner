@@ -38,10 +38,6 @@ func is_usable() -> bool:
 	return kind == ItemKind.TOOL
 
 
-func is_instant() -> bool:
-	return kind == ItemKind.MONEY or kind == ItemKind.CONSUMABLE
-
-
 func is_heal_consumable() -> bool:
 	if kind != ItemKind.CONSUMABLE or effects.is_empty():
 		return false

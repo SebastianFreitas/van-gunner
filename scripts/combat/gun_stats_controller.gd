@@ -23,10 +23,6 @@ func set_class_definition(def: ClassDefinition) -> void:
 	_rebuild()
 
 
-func get_class_definition() -> ClassDefinition:
-	return _class_def
-
-
 func add_modifier(modifier: StatModifier) -> void:
 	_modifiers.append(modifier)
 	_rebuild()

@@ -27,13 +27,6 @@ static func get_pool(pool_key: String) -> LootPool:
 	return load(path) as LootPool
 
 
-static func pick_from(pool_key: String) -> ItemDefinition:
-	var loot_pool := get_pool(pool_key)
-	if not loot_pool:
-		return null
-	return loot_pool.pick_item() as ItemDefinition
-
-
 static func pick_items_from(
 	pool_key: String,
 	count: int,

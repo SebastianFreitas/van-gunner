@@ -23,14 +23,6 @@ func bind(panel: Control) -> void:
 			_panel.boss_cards_picked.connect(_on_boss_cards_picked)
 
 
-func is_awaiting_reveal() -> bool:
-	return _awaiting_reveal
-
-
-func is_awaiting_boss_pick() -> bool:
-	return _awaiting_boss_pick
-
-
 func wait_for_reveal_resolution() -> void:
 	if _is_debug_speed_mode():
 		if GameSession.needs_act_reveal():
@@ -68,19 +60,6 @@ func begin_boss_pick_if_needed() -> bool:
 		return true
 	_start_boss_pick()
 	return true
-
-
-func force_reveal() -> void:
-	if _awaiting_reveal:
-		return
-	_start_reveal()
-
-
-func force_boss_pick() -> void:
-	if _awaiting_boss_pick:
-		return
-	GameSession.debug_prepare_boss_pick()
-	_start_boss_pick()
 
 
 func _start_reveal() -> void:

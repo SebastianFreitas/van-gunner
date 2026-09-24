@@ -18,7 +18,3 @@ func display_text() -> String:
 	if not detail.is_empty():
 		extra = "  %s" % detail
 	return "%s%s%s" % [label, price_text, extra]
-
-
-func line_text(index: int) -> String:
-	return "%d  %s" % [index + 1, display_text()]

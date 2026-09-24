@@ -118,16 +118,6 @@ func _spread_direction(base: Vector3, spread_degrees: float) -> Vector3:
 	return (axis + right * tan(yaw) + up * tan(pitch)).normalized()
 
 
-func set_ammo_state(current: int, reloading: bool = false) -> void:
-	_invalidate_reload_waits()
-	_current_ammo = maxi(current, 0)
-	_is_reloading = reloading
-	if not reloading:
-		_reload_ends_at_msec = 0
-	ammo_changed.emit(_current_ammo, _get_stats().mag_size)
-	reloading_changed.emit(_is_reloading)
-
-
 func _invalidate_reload_waits() -> void:
 	_reload_gen += 1
 

@@ -248,18 +248,6 @@ func _on_collected(player: Node3D) -> void:
 		item.collect(player)
 
 
-## Called after an ejected pickup is placed; gold cashes immediately.
-func _on_stashed(land_index: int = 0) -> void:
-	_bob_initialized = false
-	_base_y = position.y
-	if item and item.kind == ItemDefinition.ItemKind.MONEY:
-		_auto_collect_instant()
-		return
-	var angle := land_index * 2.3999632 + float(get_instance_id() % 97) * 0.04
-	_slide_velocity = Vector3(cos(angle), 0.0, sin(angle)) * 0.7
-	set_deferred("monitoring", true)
-
-
 func _auto_collect_instant() -> void:
 	if _used:
 		return

@@ -97,10 +97,6 @@ extends Resource
 @export var warehouse_rare_boon_chance := 0.05
 
 
-func get_base_dps() -> float:
-	return base_damage_per_shot * base_fire_rate
-
-
 func get_max_van_speed() -> float:
 	if act_target_van_speed.is_empty():
 		return base_van_speed

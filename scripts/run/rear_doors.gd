@@ -170,15 +170,6 @@ func is_open() -> bool:
 	return _left_open and _right_open
 
 
-func is_glass_intact(side: StringName) -> bool:
-	var glass := _left_glass if side == SIDE_LEFT else _right_glass
-	if glass == null:
-		return false
-	if glass.has_method("is_intact"):
-		return glass.is_intact()
-	return false
-
-
 ## True only when both leaves are open — full rear passage into the van.
 func is_passage_open() -> bool:
 	return is_open()

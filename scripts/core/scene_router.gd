@@ -31,10 +31,6 @@ func preload_van() -> void:
 	_van_packed = packed
 
 
-func is_van_ready() -> bool:
-	return _van_packed != null
-
-
 func go_to_van() -> void:
 	if _transitioning:
 		return

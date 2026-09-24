@@ -101,14 +101,6 @@ func reset_for_pool() -> void:
 	hide()
 
 
-func has_hit() -> bool:
-	return _has_hit
-
-
-func get_bounces_left() -> int:
-	return _bounces_left
-
-
 func _ready() -> void:
 	_bullet_mesh = get_node_or_null("BulletMesh") as MeshInstance3D
 	_collision_mask = collision_mask
@@ -230,21 +222,6 @@ func _apply_size(size: float) -> void:
 		(_bullet_mesh.mesh as SphereMesh).radius = visual_radius
 		(_bullet_mesh.mesh as SphereMesh).height = visual_radius * 2.0
 		_bullet_mesh.scale = Vector3.ONE
-
-
-func _ensure_trail_line() -> void:
-	if _trail_line and is_instance_valid(_trail_line):
-		if _trail_line.has_method("clear_points"):
-			_trail_line.call("clear_points")
-		return
-	_trail_line = get_node_or_null("TrailLine") as MeshInstance3D
-	if not _trail_line:
-		_trail_line = MeshInstance3D.new()
-		_trail_line.name = &"TrailLine"
-		_trail_line.set_script(preload("res://scripts/combat/bullet_trail.gd"))
-		add_child(_trail_line)
-	if _trail_line.has_method("clear_points"):
-		_trail_line.call("clear_points")
 
 
 func _detach_trail_line() -> void:

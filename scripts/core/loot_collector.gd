@@ -60,19 +60,6 @@ func try_eject() -> bool:
 	return true
 
 
-func deliver_item(
-	item: ItemDefinition,
-	world_position: Vector3,
-	container: Node,
-	enemy: Node = null
-) -> void:
-	if item == null:
-		return
-	var catches: Array[LootCatch] = []
-	catches.append(LootCatch.from_item(item))
-	deliver_catches(catches, world_position, container, enemy)
-
-
 func deliver_catches(
 	catches: Array[LootCatch],
 	world_position: Vector3,

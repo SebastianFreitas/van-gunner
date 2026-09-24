@@ -17,10 +17,6 @@ static func trait_add_active(traits: BoonTraits, key: StringName) -> bool:
 	return traits != null and not is_zero_approx(traits.get_add(key))
 
 
-static func trait_mult_active(traits: BoonTraits, key: StringName) -> bool:
-	return traits != null and not is_equal_approx(traits.get_mult(key), 1.0)
-
-
 func modify_outgoing_damage(_ctx: BoonBehaviorContext) -> void:
 	pass
 
@@ -67,8 +63,3 @@ func get_poisoned_damage_multiplier(_ctx: BoonBehaviorContext) -> float:
 
 func spawn_bonus_projectiles(_ctx: BoonBehaviorContext) -> void:
 	pass
-
-
-## Return true to skip default status application for this hit.
-func on_status_apply(_ctx: BoonBehaviorContext) -> bool:
-	return false

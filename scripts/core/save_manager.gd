@@ -77,14 +77,6 @@ func save_active_session() -> bool:
 	return true
 
 
-func delete_slot(slot: int) -> bool:
-	if SaveSandbox.enabled:
-		return false # Sandbox: never touch user://.
-	if not _valid_slot(slot) or not has_save(slot):
-		return false
-	return DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH % slot)) == OK
-
-
 func _read_slot_dict(slot: int) -> Dictionary:
 	if not has_save(slot):
 		return {}

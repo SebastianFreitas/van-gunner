@@ -33,36 +33,6 @@ func is_poisoned() -> bool:
 	return not _poison_stacks.is_empty()
 
 
-func get_poison_dps() -> float:
-	if not is_poisoned():
-		return 0.0
-	var dps := 0.0
-	for stack in _poison_stacks:
-		var poison := stack as PoisonStack
-		if poison.time_left > 0.001:
-			dps += poison.remaining / poison.time_left
-	return dps
-
-
-func get_poison_total_damage() -> float:
-	var total := 0.0
-	for stack in _poison_stacks:
-		total += (stack as PoisonStack).remaining
-	return total
-
-
-func get_poison_total_damage_for_dps(dps: float) -> float:
-	return dps * _poison_stack_duration()
-
-
-func is_chilled() -> bool:
-	return _cold_time_left > 0.0
-
-
-func apply_poison(dps: float, source: Node3D = null) -> void:
-	apply_poison_stack(dps * _poison_stack_duration(), source)
-
-
 ## Stacks run side by side; each one drains over the poison duration.
 func apply_poison_stack(total: float, _source: Node3D = null) -> void:
 	if total <= 0.0:

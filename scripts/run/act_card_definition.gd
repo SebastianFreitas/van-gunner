@@ -24,10 +24,3 @@ func is_danger() -> bool:
 
 func polarity_label() -> String:
 	return "DANGER" if is_danger() else "BLESSING"
-
-
-func short_summary() -> String:
-	var body := description.strip_edges()
-	if body.is_empty():
-		return display_name
-	return "%s\n%s" % [display_name, body]

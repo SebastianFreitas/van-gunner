@@ -22,12 +22,6 @@ static func ensure_initialized() -> void:
 	]
 
 
-static func register_handler(handler: BoonBehavior) -> void:
-	ensure_initialized()
-	if handler:
-		_handlers.append(handler)
-
-
 static func dispatch_modify_damage(ctx: BoonBehaviorContext) -> void:
 	ensure_initialized()
 	if not ctx or not ctx.traits:
@@ -116,16 +110,6 @@ static func dispatch_enemy_death(ctx: BoonBehaviorContext) -> void:
 	for handler in _handlers:
 		if handler.is_active(ctx.traits):
 			handler.on_enemy_death(ctx)
-
-
-static func dispatch_status_apply(ctx: BoonBehaviorContext) -> bool:
-	ensure_initialized()
-	if not ctx or not ctx.traits:
-		return false
-	for handler in _handlers:
-		if handler.is_active(ctx.traits) and handler.on_status_apply(ctx):
-			return true
-	return false
 
 
 static func dispatch_configure_status(ctx: BoonBehaviorContext) -> void:

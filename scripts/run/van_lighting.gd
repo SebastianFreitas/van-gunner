@@ -6,7 +6,6 @@ extends Node3D
 ## objects excluded from a light's cull mask still cast shadows for that light,
 ## so the outer shell blocks spill everywhere except real holes.
 
-const LAYER_WORLD := 1
 const LAYER_VAN_INTERIOR := 2
 
 @export var interior_path: NodePath = NodePath("../Interior")

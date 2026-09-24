@@ -46,14 +46,3 @@ func get_final_amount() -> float:
 
 func scale_amount(mult: float) -> void:
 	amount *= mult
-
-
-func duplicate_info() -> DamageInfo:
-	var copy := DamageInfo.new()
-	copy.amount = amount
-	copy.source = source
-	copy.is_headshot = is_headshot
-	copy.hit_position = hit_position
-	copy.explosion_radius = explosion_radius
-	copy.is_secondary = is_secondary
-	return copy

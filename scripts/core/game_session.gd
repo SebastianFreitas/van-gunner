@@ -212,10 +212,6 @@ func get_max_van_health() -> float:
 	return van_max_health
 
 
-func get_vital_max_share() -> float:
-	return van_max_health / float(VITAL_COUNT)
-
-
 func bind_vital(vital: Node) -> void:
 	if vital == null or not ("vital_id" in vital):
 		return
@@ -328,17 +324,6 @@ func repair_van_full() -> bool:
 			if node.repair(cap) > 0.001:
 				any = true
 	return any
-
-
-func heal_van(amount: float) -> void:
-	if amount <= 0.0 or phase == RunPhase.GAME_OVER:
-		return
-	var target := _most_damaged_vital()
-	if target and target.has_method("heal"):
-		target.heal(amount)
-		return
-	van_health = minf(van_max_health, van_health + amount)
-	van_health_changed.emit(van_health, van_max_health)
 
 
 func get_max_player_health() -> float:
@@ -467,15 +452,6 @@ func get_active_modifier_cards() -> Array[ActCardDefinition]:
 	return cards
 
 
-func get_active_modifier_card_ids() -> Array[StringName]:
-	if not boss_modifier_card_ids.is_empty():
-		return boss_modifier_card_ids.duplicate()
-	var ids: Array[StringName] = []
-	if active_street_card_id != &"":
-		ids.append(active_street_card_id)
-	return ids
-
-
 func commit_boss_picks(card_ids: Array[StringName]) -> void:
 	var picked: Array[StringName] = []
 	for card_id in card_ids:
@@ -573,10 +549,6 @@ func peek_route_cards() -> Array[ActCardDefinition]:
 
 func get_active_street_card() -> ActCardDefinition:
 	return ActCardRegistry.load_by_id(active_street_card_id)
-
-
-func get_pending_boon_card() -> ActCardDefinition:
-	return ActCardRegistry.load_by_id(pending_boon_card_id)
 
 
 func clear_pending_boon_card() -> void:
@@ -795,17 +767,6 @@ func _lowest_hp_living_vital() -> Node:
 			continue
 		if float(vital.health) < best_hp:
 			best_hp = float(vital.health)
-			best = vital
-	return best
-
-
-func _most_damaged_vital() -> Node:
-	var best: Node = null
-	var best_missing := 0.0
-	for vital in _vital_nodes():
-		var missing := float(vital.max_health) - float(vital.health)
-		if missing > best_missing:
-			best_missing = missing
 			best = vital
 	return best
 

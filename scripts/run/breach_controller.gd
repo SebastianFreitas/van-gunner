@@ -46,28 +46,6 @@ func pick_vital_near(from_global: Vector3, raider: Node = null) -> Node:
 	return best
 
 
-func get_bench_position() -> Vector3:
-	var vital := pick_vital_near(global_position)
-	if vital and vital.has_method("get_attack_marker"):
-		var marker: Node3D = vital.get_attack_marker()
-		if marker:
-			return marker.global_position
-	if bench_marker:
-		return bench_marker.global_position
-	return global_position
-
-
-func get_bench_basis() -> Basis:
-	var vital := pick_vital_near(global_position)
-	if vital and vital.has_method("get_attack_marker"):
-		var marker: Node3D = vital.get_attack_marker()
-		if marker:
-			return marker.global_basis
-	if bench_marker:
-		return bench_marker.global_basis
-	return global_basis
-
-
 ## Average EnemyContainer-local Z of rear-door Outside markers.
 ## Spawn line sits at this + GameBalance.SPAWN_DISTANCE.
 func get_rear_outside_reference_z() -> float:

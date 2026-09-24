@@ -108,19 +108,6 @@ func sync_platform_offset(offset_y: float) -> void:
 	_platform.position.y = offset_y
 
 
-## Tween the pad to `offset_y` (0 at the street, -DEPTH below). Does not move the van.
-func tween_platform_to(offset_y: float, duration: float) -> void:
-	if _platform == null:
-		return
-	if _ride_tween:
-		_ride_tween.kill()
-	_ride_tween = create_tween()
-	_ride_tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-	_ride_tween.set_trans(Tween.TRANS_CUBIC)
-	_ride_tween.set_ease(Tween.EASE_IN_OUT)
-	_ride_tween.tween_property(_platform, "position:y", offset_y, duration)
-
-
 func _mount_vestibule() -> void:
 	if _vestibule != null:
 		return

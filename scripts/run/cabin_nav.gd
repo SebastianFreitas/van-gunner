@@ -5,7 +5,6 @@ extends Node3D
 ## skip the bulkhead net and each other. Do not swap in NavigationAgent3D —
 ## EnemyContainer rides a PathFollow3D and world navmeshes drift.
 
-const GROUP := &"cabin_nav"
 const PASSAGE_SLOT := &"passage"
 const WAIT_LEFT := &"wait_left"
 const WAIT_RIGHT := &"wait_right"

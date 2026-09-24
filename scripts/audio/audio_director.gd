@@ -120,17 +120,6 @@ func play_at(id: StringName, emitter: Node3D, volume_offset_db: float = 0.0) -> 
 	_play_positional(cue, space, emitter.position, volume_offset_db)
 
 
-## Positional at an explicit point inside a known space (spawn markers,
-## EnemyContainer-local impact points).
-func play_in_space(
-	id: StringName, space: Node3D, local_position: Vector3, volume_offset_db: float = 0.0
-) -> void:
-	var cue := _claim(id)
-	if cue == null or not is_instance_valid(space):
-		return
-	_play_positional(cue, space, local_position, volume_offset_db)
-
-
 ## Crossfades. Call from a phase_changed handler; passing the stream already
 ## playing is a no-op, so TRAVELLING -> COMBAT -> TRAVELLING does not restart it.
 func play_music(stream: AudioStream, fade_seconds: float = MUSIC_FADE_SECONDS) -> void:

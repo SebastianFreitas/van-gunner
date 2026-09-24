@@ -46,14 +46,6 @@ func get_outside_position() -> Vector3:
 	return outside_marker.global_position
 
 
-func get_outside_basis() -> Basis:
-	return outside_marker.global_basis
-
-
-func get_entry_position() -> Vector3:
-	return entry_marker.global_position
-
-
 func is_passable() -> bool:
 	if is_breached:
 		return true
@@ -93,11 +85,6 @@ func is_passable() -> bool:
 
 func has_vacancy() -> bool:
 	return _cluster_occupant_count() < max_occupants
-
-
-func occupant_count() -> int:
-	_prune_occupants()
-	return _occupants.size()
 
 
 func claim(raider: Node) -> bool:

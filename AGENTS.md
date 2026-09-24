@@ -334,7 +334,6 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Bench overview | `scripts/ui/bench_screen.gd` |
 | Van schematic / skill tree | `scripts/ui/skill_tree_hud.gd` + `scripts/core/meta_progression.gd` + `resources/meta/tree/` |
 | Loot hopper / death popups | `scripts/core/loot_collector.gd` + `scripts/interactions/loot_machine.gd` |
-| Bench screenshot tool | `tools/bench_preview.tscn` |
 | Shop counter / stock | `scripts/run/shop_*.gd` |
 | NPC talk (hover + click) | `scripts/dialogue/npc_talk.gd` + `scripts/ui/dialogue_hud.gd` |
 | Pause menu (Esc) | `scripts/ui/pause_menu.gd` — settings, return to menu, quit |

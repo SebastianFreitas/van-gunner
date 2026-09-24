@@ -38,10 +38,6 @@ func get_slots() -> Array[UsableState]:
 	return _slots
 
 
-func get_active_index() -> int:
-	return _active_index
-
-
 func get_boons() -> Array[ItemDefinition]:
 	return _boons
 
@@ -100,21 +96,6 @@ func add_usable(item: ItemDefinition) -> void:
 		_active_index = 0
 	slots_changed.emit()
 	item_acquired.emit(item, state.charges, _slots.size() - 1)
-
-
-func select_slot(index: int) -> void:
-	if index < 0 or index >= _slots.size():
-		return
-	_active_index = index
-	slots_changed.emit()
-
-
-func try_use_active() -> bool:
-	if _slots.is_empty():
-		usable_activated.emit(null, false)
-		return false
-	_active_index = clampi(_active_index, 0, _slots.size() - 1)
-	return _try_use_state(_slots[_active_index])
 
 
 func try_use_slot(index: int) -> bool:

@@ -3,8 +3,6 @@ extends RefCounted
 
 const ENEMY_MASK := 4
 const WORLD_MASK := 1
-const EXPLOSION_PUSH_FORCE := 2.2
-const DELAYED_FIRE_SECONDS := 0.55
 
 
 static func find_damageable(node: Node) -> Node:
@@ -109,24 +107,3 @@ static func apply_explosion(
 			displacement_ctx.target = damageable
 			displacement_ctx.explosion_center = center
 			BoonBehaviorRegistry.dispatch_explosion_displacement(displacement_ctx)
-
-
-static func schedule_delayed_explosion(
-	tree: SceneTree,
-	center: Vector3,
-	radius: float,
-	info: DamageInfo,
-	exclude: Array[RID],
-	traits: BoonTraits,
-	delay_seconds: float = DELAYED_FIRE_SECONDS
-) -> void:
-	if not tree:
-		return
-	var captured_info := info.duplicate_info()
-	tree.create_timer(delay_seconds).timeout.connect(func() -> void:
-		if not tree.root:
-			return
-		var space_state := tree.root.get_world_3d().direct_space_state if tree.root.is_inside_tree() else null
-		if space_state:
-			apply_explosion(center, radius, captured_info, space_state, exclude, traits)
-	)

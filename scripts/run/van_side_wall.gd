@@ -179,59 +179,6 @@ func build_curved_shell_mesh(
 	return st.commit()
 
 
-## Thin curved pane (glass) — single sheet, no thickness returns.
-func build_curved_pane_mesh(
-	wall_sign: float,
-	y_min: float,
-	y_max: float,
-	z_min: float,
-	z_max: float,
-	x_ref: float,
-	y_ref: float,
-	z_ref: float,
-	x_shift: float = 0.0,
-	seg_y: int = 12,
-	seg_z: int = 10
-) -> ArrayMesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var half_span := span_z * 0.5
-	var verts: Array = []
-	var uvs: Array = []
-
-	for iy in range(seg_y + 1):
-		var row_v: Array = []
-		var row_uv: Array = []
-		var y := lerpf(y_min, y_max, float(iy) / float(seg_y))
-		var x_local := wall_sign * (_profile_x(y) - x_ref) + x_shift
-		for iz in range(seg_z + 1):
-			var z := lerpf(z_min, z_max, float(iz) / float(seg_z))
-			row_v.append(Vector3(x_local, y - y_ref, z - z_ref))
-			row_uv.append(Vector2((z + half_span) / span_z, y / wall_height))
-		verts.append(row_v)
-		uvs.append(row_uv)
-
-	for iy in range(seg_y):
-		for iz in range(seg_z):
-			var v00: Vector3 = verts[iy][iz]
-			var v10: Vector3 = verts[iy][iz + 1]
-			var v01: Vector3 = verts[iy + 1][iz]
-			var v11: Vector3 = verts[iy + 1][iz + 1]
-			var uv00: Vector2 = uvs[iy][iz]
-			var uv10: Vector2 = uvs[iy][iz + 1]
-			var uv01: Vector2 = uvs[iy + 1][iz]
-			var uv11: Vector2 = uvs[iy + 1][iz + 1]
-			# Double-sided so glass reads from cabin and exterior.
-			_add_tri(st, v00, uv00, v01, uv01, v10, uv10)
-			_add_tri(st, v10, uv10, v01, uv01, v11, uv11)
-			_add_tri(st, v00, uv00, v10, uv10, v01, uv01)
-			_add_tri(st, v10, uv10, v11, uv11, v01, uv01)
-
-	st.generate_normals()
-	st.generate_tangents()
-	return st.commit()
-
-
 ## Curved glass pane clipped to a rounded CSG-style polygon (Vector2(z_off, y_off)).
 func build_curved_pane_from_poly(
 	wall_sign: float,

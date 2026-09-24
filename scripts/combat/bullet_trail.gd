@@ -14,11 +14,6 @@ var _fade_alpha := 1.0
 var _base_color := DEFAULT_COLOR
 
 
-func set_trail_color(color: Color) -> void:
-	_base_color = color
-	_rebuild()
-
-
 func set_motion_frame(frame: Node3D) -> void:
 	_motion_frame = frame
 
