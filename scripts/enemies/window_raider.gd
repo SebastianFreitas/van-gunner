@@ -23,6 +23,9 @@ const _RETARGET_SECS := 0.5
 const _WAIT_TIMEOUT := 1.0
 const _BENCH_BIAS := 0.6
 const _PLAYER_BIAS := 0.4
+## Per-frame chase math and target-picking helpers. RefCounted, bound to this node.
+const _RaiderMotion := preload("res://scripts/enemies/window_raider_motion.gd")
+const _RaiderTargeting := preload("res://scripts/enemies/window_raider_targeting.gd")
 
 ## Derived world chase speed for this act. Closing = mob_world_speed - live van speed.
 var mob_world_speed := 0.0
@@ -53,11 +56,21 @@ var _move_use_van_relative := false
 var _move_arrived := true
 var _chase_player := false
 
+var _motion: _RaiderMotion
+var _targeting: _RaiderTargeting
+
 @onready var sprite: Sprite3D = $Sprite3D
 @onready var hitbox: Area3D = $Hitbox
 @onready var health_bar: EnemyHealthBar = $EnemyHealthBar
 @onready var loot_drop: LootDropComponent = get_node_or_null("LootDrop")
 @onready var status_effects: StatusEffectController = $StatusEffects
+
+
+func _init() -> void:
+	# begin_assault may be called by EncounterDirector right after instancing/add_child,
+	# before _ready runs — build the helpers as early as possible.
+	_motion = _RaiderMotion.new(self)
+	_targeting = _RaiderTargeting.new(self)
 
 
 func _ready() -> void:
@@ -76,12 +89,12 @@ func _physics_process(delta: float) -> void:
 	if not _active or is_defeated:
 		return
 	if _chase_player:
-		_physics_chase_player(delta)
+		_motion.physics_chase_player(delta)
 	elif (
 		(_move_has_local or (_move_marker and is_instance_valid(_move_marker)))
 		and not _move_arrived
 	):
-		_physics_chase_target(delta)
+		_motion.physics_chase_target(delta)
 	elif _attach_marker and is_instance_valid(_attach_marker):
 		_snap_to_marker(_attach_marker)
 
@@ -134,7 +147,7 @@ func retreat() -> void:
 	_active = false
 	_clear_motion()
 	_release_breach()
-	_release_nav()
+	_targeting.release_nav()
 	assault_phase = AssaultPhase.IDLE
 	assault_finished.emit()
 	var tween := create_tween()
@@ -164,13 +177,7 @@ func take_damage(amount) -> void:
 	if is_zero_approx(health):
 		_die()
 		return
-	_flash_hit()
-
-
-func _flash_hit() -> void:
-	sprite.modulate = Color(1.0, 0.32, 0.26, 1.0)
-	var tween := create_tween()
-	tween.tween_property(sprite, "modulate", _base_modulate, 0.12)
+	_targeting.flash_hit()
 
 
 func _die() -> void:
@@ -178,7 +185,7 @@ func _die() -> void:
 	_active = false
 	_clear_motion()
 	_release_breach()
-	_release_nav()
+	_targeting.release_nav()
 	health_bar.visible = false
 	hitbox.collision_layer = 0
 	if has_node("HeadHitbox"):
@@ -203,7 +210,7 @@ func _run_assault() -> void:
 	while _active and is_inside_tree() and not is_defeated:
 		if assigned_breach and is_instance_valid(assigned_breach) and assigned_breach.claim(self):
 			break
-		assigned_breach = _request_breach()
+		assigned_breach = _targeting.request_breach()
 		if assigned_breach and assigned_breach.claim(self):
 			break
 		await _wait_outside_for_breach()
@@ -237,7 +244,7 @@ func _breach_until_open() -> void:
 		if assigned_breach == null or assigned_breach.is_passable():
 			return
 		if not assigned_breach.claim(self):
-			var next_point := _request_breach()
+			var next_point := _targeting.request_breach()
 			if next_point and next_point != assigned_breach:
 				assigned_breach = next_point
 				assault_phase = AssaultPhase.APPROACH
@@ -248,7 +255,7 @@ func _breach_until_open() -> void:
 				_attach_marker = assigned_breach.outside_marker
 				assault_phase = AssaultPhase.BREACHING
 				continue
-		var wait_time := _next_attack_wait()
+		var wait_time := _targeting.next_attack_wait()
 		# Poll so an opened window/door lets them hop in without waiting a full smash.
 		var elapsed := 0.0
 		while elapsed < wait_time:
@@ -275,22 +282,22 @@ func _start_attack_loop() -> void:
 
 func _attack_loop() -> void:
 	while _active and is_inside_tree() and not is_defeated:
-		var wait_time := _next_attack_wait()
+		var wait_time := _targeting.next_attack_wait()
 		await get_tree().create_timer(wait_time).timeout
 		if not _active or is_defeated:
 			break
 		var outgoing := _outgoing_damage()
 		if assault_phase == AssaultPhase.ATTACKING_BENCH:
-			var vital := _living_assigned_vital()
+			var vital := _targeting.living_assigned_vital()
 			if vital == null:
-				vital = _pick_vital()
+				vital = _targeting.pick_vital()
 				_assigned_vital = vital
 			attack_landed.emit(outgoing)
 			if vital and vital.has_method("take_damage"):
 				vital.take_damage(outgoing)
 			else:
 				GameSession.damage_van(outgoing)
-		elif assault_phase == AssaultPhase.ATTACKING_PLAYER and _in_player_melee():
+		elif assault_phase == AssaultPhase.ATTACKING_PLAYER and _targeting.in_player_melee():
 			attack_landed.emit(outgoing)
 			GameSession.damage_player(outgoing)
 	_attack_loop_running = false
@@ -328,7 +335,7 @@ func _move_to_local(target_local: Vector3, speed: float, van_relative: bool = fa
 func _approach_breach(breach: BreachPoint, speed := 0.0, van_relative := true) -> void:
 	if breach == null or breach.outside_marker == null:
 		return
-	var nav := _cabin_nav()
+	var nav := _targeting.cabin_nav()
 	var pts: Array[Vector3] = []
 	if nav:
 		pts = nav.approach_waypoints(position, breach)
@@ -340,11 +347,11 @@ func _approach_breach(breach: BreachPoint, speed := 0.0, van_relative := true) -
 
 
 func _follow_path(points: Array[Vector3], speed: float, van_relative: bool) -> void:
-	var nav := _cabin_nav()
+	var nav := _targeting.cabin_nav()
 	for pt in points:
 		if not _active or is_defeated:
 			return
-		if _horizontal_xz(position, pt) <= 0.12:
+		if _targeting.horizontal_xz(position, pt) <= 0.12:
 			continue
 		if nav and nav.is_passage_point(pt):
 			var waited := 0.0
@@ -360,16 +367,16 @@ func _follow_path(points: Array[Vector3], speed: float, van_relative: bool) -> v
 
 
 func _wait_outside_for_breach() -> void:
-	var nav := _cabin_nav()
+	var nav := _targeting.cabin_nav()
 	if nav:
 		var wait_at := nav.try_claim_outside_wait(self)
-		if _horizontal_xz(position, wait_at) > 0.4:
+		if _targeting.horizontal_xz(position, wait_at) > 0.4:
 			var wait_path: Array[Vector3] = []
 			wait_path.append(wait_at)
 			await _follow_path(wait_path, 0.0, true)
 	var elapsed := 0.0
 	while elapsed < _WAIT_TIMEOUT and _active and not is_defeated:
-		var got := _request_breach()
+		var got := _targeting.request_breach()
 		if got:
 			assigned_breach = got
 			if nav:
@@ -381,55 +388,11 @@ func _wait_outside_for_breach() -> void:
 		nav.release_outside_wait(self)
 
 
-func _request_breach() -> BreachPoint:
-	var controller := _breach_controller()
-	if controller == null:
-		return null
-	return controller.assign_breach_point(self)
-
-
 func _current_van_speed() -> float:
 	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
 	if travel:
 		return travel.travel_speed
 	return MetaProgression.get_van_speed()
-
-
-func _physics_chase_target(delta: float) -> void:
-	var parent_3d := get_parent() as Node3D
-	if parent_3d == null:
-		_move_arrived = true
-		return
-	var target_local := _move_target_local
-	if _move_marker and is_instance_valid(_move_marker):
-		target_local = parent_3d.to_local(_move_marker.global_position)
-	var to_target := target_local - position
-	to_target.y = 0.0
-	var remaining := to_target.length()
-	var speed := _move_speed
-	if _move_use_van_relative:
-		# World chase vs live van speed. Boost → lower/negative closing → gain distance.
-		speed = mob_world_speed - _current_van_speed()
-		approach_speed = speed
-	speed = _apply_status_move_speed(speed)
-	if remaining <= 0.05:
-		if speed < 0.0:
-			# Van still pulling away — don't latch onto the marker yet.
-			return
-		position.x = target_local.x
-		position.z = target_local.z
-		if _move_marker and is_instance_valid(_move_marker):
-			global_transform.basis = _move_marker.global_transform.basis
-		_move_arrived = true
-		return
-	if is_zero_approx(remaining):
-		return
-	var direction := to_target / remaining
-	if speed > 0.0:
-		position += direction * minf(speed * delta, remaining)
-	elif speed < 0.0:
-		# Fall behind along the approach axis (ready for van-boost distance gains).
-		position -= direction * (-speed) * delta
 
 
 func _snap_to_marker(marker: Node3D) -> void:
@@ -449,33 +412,11 @@ func _clear_motion() -> void:
 	_chase_player = false
 
 
-func _physics_chase_player(delta: float) -> void:
-	var player := get_tree().get_first_node_in_group(&"player") as Node3D
-	var parent_3d := get_parent() as Node3D
-	if player == null or parent_3d == null:
-		_move_arrived = true
-		return
-	var target_local := parent_3d.to_local(player.global_position)
-	target_local.y = position.y
-	var to_target := target_local - position
-	to_target.y = 0.0
-	var remaining := to_target.length()
-	if remaining <= _MELEE_RANGE:
-		_move_arrived = true
-		return
-	_move_arrived = false
-	var speed := GameBalance.MOB_INTERIOR_SPEED
-	speed = _apply_status_move_speed(speed)
-	var step := minf(speed * delta, remaining - _MELEE_RANGE + 0.02)
-	if remaining > 0.001:
-		position += to_target / remaining * step
-
-
 func _run_interior_combat() -> void:
 	assault_phase = AssaultPhase.ATTACKING_BENCH
 	_start_attack_loop()
 	while _active and is_inside_tree() and not is_defeated:
-		if _wants_player_target():
+		if _targeting.wants_player_target():
 			await _pursue_player()
 		else:
 			await _pursue_vital()
@@ -490,8 +431,8 @@ func _run_interior_combat() -> void:
 
 
 func _pursue_player() -> void:
-	var player := _player()
-	var nav := _cabin_nav()
+	var player := _targeting.player()
+	var nav := _targeting.cabin_nav()
 	if player == null:
 		return
 	assault_phase = AssaultPhase.ATTACKING_PLAYER
@@ -505,46 +446,46 @@ func _pursue_player() -> void:
 			await _pursue_vital()
 			return
 		var dest: Vector3 = claim["local"]
-		await _follow_path(_path_to_dest(dest), GameBalance.MOB_INTERIOR_SPEED, false)
+		await _follow_path(_targeting.path_to_dest(dest), GameBalance.MOB_INTERIOR_SPEED, false)
 		return
 	_chase_player = true
 	_move_arrived = false
 
 
 func _pursue_vital() -> void:
-	var nav := _cabin_nav()
+	var nav := _targeting.cabin_nav()
 	if nav:
 		nav.release_melee(self)
 	assault_phase = AssaultPhase.ATTACKING_BENCH
 	_chase_player = false
-	var vital := _living_assigned_vital()
+	var vital := _targeting.living_assigned_vital()
 	if vital == null or (nav and not nav.is_vital_free(vital, self)):
-		vital = _pick_vital()
+		vital = _targeting.pick_vital()
 	if vital == null or (nav and not nav.claim_vital(vital, self)):
 		_assigned_vital = null
 		await _wait_at_staging()
 		return
 	_assigned_vital = vital
-	var marker := _vital_marker(vital)
+	var marker := _targeting.vital_marker(vital)
 	if marker == null:
 		return
-	var dest := _parent_local(marker)
-	if _horizontal_xz(position, dest) > 0.4:
+	var dest := _targeting.parent_local(marker)
+	if _targeting.horizontal_xz(position, dest) > 0.4:
 		await _follow_path(
-			_path_to_dest(dest), GameBalance.MOB_INTERIOR_SPEED, false
+			_targeting.path_to_dest(dest), GameBalance.MOB_INTERIOR_SPEED, false
 		)
 		if not _active or is_defeated:
 			return
-	if _horizontal_xz(position, dest) > 0.45:
+	if _targeting.horizontal_xz(position, dest) > 0.45:
 		return
 	_attach_marker = marker
 
 
 func _wait_at_staging() -> void:
-	var nav := _cabin_nav()
+	var nav := _targeting.cabin_nav()
 	if nav:
 		var dest := nav.staging_local(position)
-		if _horizontal_xz(position, dest) > 0.4:
+		if _targeting.horizontal_xz(position, dest) > 0.4:
 			await _move_to_local(dest, GameBalance.MOB_INTERIOR_SPEED, false)
 	var elapsed := 0.0
 	while elapsed < _WAIT_TIMEOUT and _active and not is_defeated:
@@ -552,84 +493,10 @@ func _wait_at_staging() -> void:
 		elapsed += 0.1
 
 
-func _path_to_dest(dest_local: Vector3) -> Array[Vector3]:
-	var nav := _cabin_nav()
-	if nav:
-		return nav.path_to(position, dest_local)
-	var pts: Array[Vector3] = []
-	pts.append(dest_local)
-	return pts
-
-
-func _parent_local(node: Node3D) -> Vector3:
-	var parent_3d := get_parent() as Node3D
-	if parent_3d == null or node == null:
-		return position
-	return parent_3d.to_local(node.global_position)
-
-
-func _wants_player_target() -> bool:
-	var player := _player()
-	if player == null:
-		return false
-	var marker := _vital_marker(_living_assigned_vital())
-	if marker == null:
-		marker = _vital_marker(_pick_vital())
-	if marker == null:
-		return true
-	var d_player := _horizontal_xz(global_position, player.global_position)
-	var d_vital := _horizontal_xz(global_position, marker.global_position)
-	return d_player * _BENCH_BIAS < d_vital * _PLAYER_BIAS
-
-
-func _in_player_melee() -> bool:
-	var player := _player()
-	if player == null:
-		return false
-	return _horizontal_xz(global_position, player.global_position) <= _MELEE_RANGE + 0.15
-
-
-func _player() -> Node3D:
-	return get_tree().get_first_node_in_group(&"player") as Node3D
-
-
-func _horizontal_xz(a: Vector3, b: Vector3) -> float:
-	return Vector2(a.x - b.x, a.z - b.z).length()
-
-
-func _pick_vital() -> Node:
-	var controller := _breach_controller()
-	if controller and controller.has_method("pick_vital_near"):
-		var picked: Node = controller.pick_vital_near(global_position, self)
-		if picked:
-			return picked
-	return null
-
-
-func _living_assigned_vital() -> Node:
-	if _assigned_vital and is_instance_valid(_assigned_vital):
-		if _assigned_vital.has_method("is_alive") and _assigned_vital.is_alive():
-			return _assigned_vital
-	return null
-
-
-func _vital_marker(vital: Node) -> Node3D:
-	if vital == null or not is_instance_valid(vital):
-		return null
-	if vital.has_method("get_attack_marker"):
-		return vital.get_attack_marker() as Node3D
-	return vital as Node3D
-
-
 func _apply_status_move_speed(speed: float) -> float:
 	if speed <= 0.0 or status_effects == null:
 		return speed
 	return speed * maxf(status_effects.get_move_speed_multiplier(), 0.0)
-
-
-func _next_attack_wait() -> float:
-	var speed_multiplier := status_effects.get_attack_speed_multiplier() if status_effects else 1.0
-	return attack_interval / maxf(speed_multiplier, 0.2)
 
 
 func _outgoing_damage() -> float:
@@ -644,18 +511,6 @@ func _release_breach() -> void:
 		assigned_breach.release(self)
 
 
-func _release_nav() -> void:
-	var nav := _cabin_nav()
-	if nav:
-		nav.release_all(self)
-
-
-func _cabin_nav() -> CabinNav:
-	if get_tree() == null:
-		return null
-	return get_tree().get_first_node_in_group(&"cabin_nav") as CabinNav
-
-
 func _breach_controller() -> BreachController:
 	return get_tree().get_first_node_in_group(&"breach_controller") as BreachController
 
@@ -663,4 +518,4 @@ func _breach_controller() -> BreachController:
 func _exit_tree() -> void:
 	_clear_motion()
 	_release_breach()
-	_release_nav()
+	_targeting.release_nav()
