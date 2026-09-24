@@ -64,6 +64,8 @@ func load_slot_data(slot: int) -> Dictionary:
 
 
 func save_active_session() -> bool:
+	if SaveSandbox.enabled:
+		return true # Sandbox: pretend success, never touch user://.
 	var slot: int = GameSession.selected_slot
 	if not _valid_slot(slot):
 		return false
@@ -76,6 +78,8 @@ func save_active_session() -> bool:
 
 
 func delete_slot(slot: int) -> bool:
+	if SaveSandbox.enabled:
+		return false # Sandbox: never touch user://.
 	if not _valid_slot(slot) or not has_save(slot):
 		return false
 	return DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH % slot)) == OK

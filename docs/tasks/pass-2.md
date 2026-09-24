@@ -20,7 +20,7 @@ Scripts: under 300 lines is the target, 400 is the hard cap. A script may stay o
 
 ## Steps
 
-- [ ] 1. Smoke test and fingerprint, built and passing on the untouched tree before anything else changes.
+- [x] 1. Smoke test and fingerprint, built and passing on the untouched tree before anything else changes.
   - `tools/smoke/` holds a scene and script that Godot runs headless as the main scene: `"$GODOT" --headless --path . res://tools/smoke/smoke_test.tscn`. A Python runner, `py -3 tools/smoke.py`, starts it with a 180 s timeout and fails on any output line containing `SCRIPT ERROR`, `Parse Error` or `ERROR:`, on a non-zero exit, or on the timeout. It prints the warning count.
   - It must never touch the player's files. Add one switch that stops `SaveManager` and `MetaProgression` from writing to `user://`; the smoke test turns it on before anything else runs. Prove it: the modification times of `user://save_slot_*.json` and `user://meta_progression.json` are the same before and after a run.
   - Drive the game the way a player does: start a new run the way the main menu's NEW does, wait in IDLE, equip each class through the class panel's code path, begin the run, spawn raiders with the debug console's `summon enemy`, fire the gun, open and close the bench and the class panel, let a REST offer resolve, then quit with exit code 0.

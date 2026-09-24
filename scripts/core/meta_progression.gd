@@ -190,6 +190,12 @@ func _apply_bus_volume(bus_name: StringName, linear: float) -> void:
 
 
 func load_profile() -> void:
+	# Sandbox runs start from a default profile so the player's schematic can't
+	# change the smoke fingerprint.
+	if SaveSandbox.enabled:
+		_ensure_origin()
+		_rebuild_speed_from_allocated()
+		return
 	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
 	if file == null:
 		_ensure_origin()
@@ -230,6 +236,8 @@ func load_profile() -> void:
 
 
 func save_profile() -> void:
+	if SaveSandbox.enabled:
+		return # Sandbox: never touch user://.
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
 		push_error("Could not write meta progression save.")

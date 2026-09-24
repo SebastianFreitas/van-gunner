@@ -1,0 +1,68 @@
+[class_stats]
+basic fire_rate=1.7500 damage_per_shot=1.5000 bullet_speed=100.0000 bullet_weight=0.3500 bullet_size=0.0450 reload_speed=3.0000 mag_size=8 aim_range=80.0000 explosion_radius=1.8000 max_bounces=1 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=1 pellet_spread_degrees=0.0000
+machinegun fire_rate=3.8500 damage_per_shot=0.6300 bullet_speed=90.0000 bullet_weight=0.3500 bullet_size=0.0400 reload_speed=4.2000 mag_size=30 aim_range=80.0000 explosion_radius=1.8000 max_bounces=1 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=1 pellet_spread_degrees=0.0000
+shotgun fire_rate=0.9625 damage_per_shot=4.6650 bullet_speed=70.0000 bullet_weight=0.3500 bullet_size=0.0400 reload_speed=3.8000 mag_size=2 aim_range=80.0000 explosion_radius=1.8000 max_bounces=1 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=8 pellet_spread_degrees=5.0000
+sniper fire_rate=0.6125 damage_per_shot=3.7050 bullet_speed=180.0000 bullet_weight=0.3500 bullet_size=0.0500 reload_speed=3.5000 mag_size=5 aim_range=80.0000 explosion_radius=1.8000 max_bounces=2 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=1 pellet_spread_degrees=0.0000
+[pools]
+general_boon max_hp_1 10.0000
+general_boon max_hp_2 5.0000
+general_boon max_hp_3 1.0000
+general_boon max_hp_heal 2.0000
+general_boon max_hp_phys 5.0000
+general_boon ricochet_stack 1.0000
+general_boon shoot_speed 1.0000
+general_boon chew_tobacco 1.0000
+general_boon ricochet_rounds 0.8000
+general_boon rubber_casings 0.6000
+general_boon explosive_rounds 5.0000
+general_boon poison_rounds 5.0000
+general_boon cold_rounds 5.0000
+goon heal_potion 2.0000
+goon lucky_chip 1.5000
+goon road_lighter 1.5000
+goon frag_grenade 1.5000
+goon adrenaline_stim 1.2000
+goon window_bar_kit 1.0000
+rest_tools frag_grenade 1.5000
+rest_tools adrenaline_stim 1.2000
+rest_tools window_bar_kit 1.0000
+shop heal_potion 2.0000
+shop road_lighter 1.8000
+shop frag_grenade 1.5000
+shop adrenaline_stim 1.2000
+shop window_bar_kit 1.0000
+van max_hp_1 10.0000
+van max_hp_2 5.0000
+van max_hp_3 1.0000
+van max_hp_heal 2.0000
+van max_hp_phys 5.0000
+van ricochet_stack 1.0000
+van shoot_speed 1.0000
+van chew_tobacco 1.0000
+van ricochet_rounds 0.8000
+van rubber_casings 0.6000
+van explosive_rounds 5.0000
+van poison_rounds 5.0000
+van cold_rounds 5.0000
+warehouse_rare double_damage 1.0000
+[act_deck]
+salvage_lane hairpin brass_road empty_pockets thick_hides slag_barrels
+[waves]
+step 1: 2 2 4 7
+step 2: 2 5
+step 3: 2 2 7
+step 4: 2 6
+step 5: 2 2 4 8
+step 6: 2 3 7
+[rest_offer]
+max_hp_1 adrenaline_stim max_hp_heal
+ingame basic fire_rate=1.7500 damage_per_shot=1.5000 bullet_speed=100.0000 bullet_weight=0.3500 bullet_size=0.0450 reload_speed=3.0000 mag_size=8 aim_range=80.0000 explosion_radius=1.8000 max_bounces=1 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=1 pellet_spread_degrees=0.0000
+ingame machinegun fire_rate=3.8500 damage_per_shot=0.6300 bullet_speed=90.0000 bullet_weight=0.3500 bullet_size=0.0400 reload_speed=4.2000 mag_size=30 aim_range=80.0000 explosion_radius=1.8000 max_bounces=1 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=1 pellet_spread_degrees=0.0000
+ingame shotgun fire_rate=0.9625 damage_per_shot=4.6650 bullet_speed=70.0000 bullet_weight=0.3500 bullet_size=0.0400 reload_speed=3.8000 mag_size=2 aim_range=80.0000 explosion_radius=1.8000 max_bounces=1 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=8 pellet_spread_degrees=5.0000
+ingame sniper fire_rate=0.6125 damage_per_shot=3.7050 bullet_speed=180.0000 bullet_weight=0.3500 bullet_size=0.0500 reload_speed=3.5000 mag_size=5 aim_range=80.0000 explosion_radius=1.8000 max_bounces=2 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=1 pellet_spread_degrees=0.0000
+[with_boons]
+boons basic fire_rate=1.7500 damage_per_shot=7.0000 bullet_speed=100.0000 bullet_weight=0.3500 bullet_size=0.0450 reload_speed=3.0000 mag_size=8 aim_range=80.0000 explosion_radius=1.8000 max_bounces=1 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=1 pellet_spread_degrees=0.0000
+boons machinegun fire_rate=3.8500 damage_per_shot=5.2600 bullet_speed=90.0000 bullet_weight=0.3500 bullet_size=0.0400 reload_speed=4.2000 mag_size=30 aim_range=80.0000 explosion_radius=1.8000 max_bounces=1 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=1 pellet_spread_degrees=0.0000
+boons shotgun fire_rate=0.9625 damage_per_shot=13.3300 bullet_speed=70.0000 bullet_weight=0.3500 bullet_size=0.0400 reload_speed=3.8000 mag_size=2 aim_range=80.0000 explosion_radius=1.8000 max_bounces=1 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=8 pellet_spread_degrees=5.0000
+boons sniper fire_rate=0.6125 damage_per_shot=11.4100 bullet_speed=180.0000 bullet_weight=0.3500 bullet_size=0.0500 reload_speed=3.5000 mag_size=5 aim_range=80.0000 explosion_radius=1.8000 max_bounces=2 bounce_speed_retention=0.6000 bounce_damage_retention=0.8000 pellets_per_shot=1 pellet_spread_degrees=0.0000
+player_max_health=50.0000 van_max_health=110.0000
