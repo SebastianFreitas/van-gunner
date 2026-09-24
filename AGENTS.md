@@ -318,7 +318,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Van raider pathing / occupancy | `scripts/run/cabin_nav.gd` + `window_raider.gd` |
 | Act boss (Wanjna the biker) | `scripts/run/biker_boss.gd` + `_spawn_boss` in `encounter_director.gd` |
 | Change road, turns, side-stop parking, statues | `scripts/run/travel_controller.gd` |
-| Change act deck / boss pick logic | `game_session.gd` + `scripts/run/act_deck_controller.gd` |
+| Change act deck / boss pick logic | `game_session.gd` + `scripts/acts/act_deck_controller.gd` |
 | Change the reveal / boss-pick UI | `scripts/ui/act_reveal_panel.gd` |
 | Add a boon | new `.tres` in `resources/items/boons/` + pool + maybe a `BoonBehavior` |
 | Add a street card | new `.tres` in `resources/acts/cards/` + maybe an `ActCardEffect` |

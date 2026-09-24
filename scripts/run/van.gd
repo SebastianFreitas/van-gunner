@@ -1,9 +1,9 @@
 extends Node3D
 
 const _ActRevealPanel := preload("res://scripts/ui/act_reveal_panel.gd")
-const _ActDeckController := preload("res://scripts/run/act_deck_controller.gd")
+const _ActDeckController := preload("res://scripts/acts/act_deck_controller.gd")
 const _BoonChoicePanel := preload("res://scripts/ui/boon_choice_panel.gd")
-const _BoonRewardController := preload("res://scripts/run/boon_reward_controller.gd")
+const _BoonRewardController := preload("res://scripts/acts/boon_reward_controller.gd")
 const _DialogueHud := preload("res://scripts/ui/dialogue_hud.gd")
 const _ClassPanel := preload("res://scripts/ui/class_panel.gd")
 ## Preload so van.tscn can type the bar without a class_name parse cycle.

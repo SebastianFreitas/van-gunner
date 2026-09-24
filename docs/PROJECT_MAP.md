@@ -36,6 +36,19 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Signals and enums
 
+**`scripts/acts/act_card_definition.gd`**
+
+- `enum Polarity { BLESSING = 0, DANGER = 1, }`
+
+**`scripts/acts/act_deck_controller.gd`**
+
+- `signal reveal_resolved`
+- `signal boss_pick_resolved`
+
+**`scripts/acts/boon_reward_controller.gd`**
+
+- `signal rest_resolved`
+
 **`scripts/classes/class_definition.gd`**
 
 - `enum Family { BASIC, SHOTGUN, MACHINEGUN, SNIPER }`
@@ -134,22 +147,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal item_acquired(item: ItemDefinition, charges: int, slot_index: int)`
 - `signal usable_activated(item: ItemDefinition, success: bool)`
 
-**`scripts/run/act_card_definition.gd`**
-
-- `enum Polarity { BLESSING = 0, DANGER = 1, }`
-
-**`scripts/run/act_deck_controller.gd`**
-
-- `signal reveal_resolved`
-- `signal boss_pick_resolved`
-
 **`scripts/run/biker_boss.gd`**
 
 - `enum BikePhase { IDLE, CHARGE, WINDUP, PEEL, WEAVE, ENTERING, BENCH }`
-
-**`scripts/run/boon_reward_controller.gd`**
-
-- `signal rest_resolved`
 
 **`scripts/run/breach_point.gd`**
 
@@ -268,6 +268,29 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `corridor_segment.gd` | — | 171 | Open a wall gap for a side-stop bay without showing the cosmetic side street. |
 | `corridor_t_junction.gd` | — | 64 | Fills sidewalk corners where stem / branch / optional through-road meet the |
 | `side_street_branch.gd` | — | 19 |  |
+
+### `scripts/acts/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `act_card_combat.gd` | `ActCardCombat` | 148 | Dispatcher for active street cards — mirrors BoonCombat for act cards. |
+| `act_card_definition.gd` | `ActCardDefinition` | 27 | Combat behavior lives in composable `effects`. Boss fights activate an Array of |
+| `act_card_effect.gd` | `ActCardEffect` | 45 | Base class for anything an active street card does while it is the road. |
+| `act_card_effect_context.gd` | `ActCardEffectContext` | 39 | Shared bag for street-card effect hooks. Effects mutate fields; ActCardCombat |
+| `act_card_registry.gd` | `ActCardRegistry` | 48 | Resolves act street-card definitions by id from resources/acts/cards/. |
+| `act_deck_controller.gd` | `ActDeckController` | 150 | Owns act-start tarot reveals and the act-end boss pick. |
+| `boon_reward_controller.gd` | `BoonRewardController` | 146 | During REST, grants a 3-choice boon for the street card committed at the last fork. |
+
+### `scripts/acts/effects/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `enemy_health_mult_effect.gd` | `EnemyHealthMultEffect` | 20 | Scales raider max/current health on spawn (dangers that make fights longer). |
+| `enemy_loot_bonus_effect.gd` | `EnemyLootBonusEffect` | 11 | Adds to the item drop chance roll on enemy death (0.1 = +10%). |
+| `enemy_speed_mult_effect.gd` | `EnemySpeedMultEffect` | 18 | Scales raider world chase speed on spawn (1.15 = 15% faster). |
+| `narrow_fork_effect.gd` | `NarrowForkEffect` | 12 | After this street, the next fork is a T — two face-up cards instead of three. |
+| `temp_boon_trait_effect.gd` | `TempBoonTraitEffect` | 18 | While this street is active, grants a boon trait via BoonTraits street overlay. |
+| `wave_count_mult_effect.gd` | `WaveCountMultEffect` | 19 | Bumps each wave's spawn count (danger roads). Multiplies then optionally adds. |
 
 ### `scripts/audio/`
 
@@ -414,14 +437,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `act_card_combat.gd` | `ActCardCombat` | 148 | Dispatcher for active street cards — mirrors BoonCombat for act cards. |
-| `act_card_definition.gd` | `ActCardDefinition` | 27 | Combat behavior lives in composable `effects`. Boss fights activate an Array of |
-| `act_card_effect.gd` | `ActCardEffect` | 45 | Base class for anything an active street card does while it is the road. |
-| `act_card_effect_context.gd` | `ActCardEffectContext` | 39 | Shared bag for street-card effect hooks. Effects mutate fields; ActCardCombat |
-| `act_card_registry.gd` | `ActCardRegistry` | 48 | Resolves act street-card definitions by id from resources/acts/cards/. |
-| `act_deck_controller.gd` | `ActDeckController` | 150 | Owns act-start tarot reveals and the act-end boss pick. |
 | `biker_boss.gd` | `BikerBoss` | 310 | Wanjna: hit-and-run biker. Fast charge, slow axe on a door, peel and weave. |
-| `boon_reward_controller.gd` | `BoonRewardController` | 146 | During REST, grants a 3-choice boon for the street card committed at the last fork. |
 | `breach_controller.gd` | `BreachController` | 277 | Assigns raid slots around the van and interior vital damage targets. |
 | `breach_point.gd` | `BreachPoint` | 365 | Outside attack slot that must be breached (or opened) before mobs can enter. |
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). Surrounding metal stays. |
@@ -468,17 +484,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `warehouse_laser.gd` | `WarehouseLaser` | 72 | Waist-high trip across the aisle. Jump over to stay quiet; walking through |
 | `warehouse_look.gd` | `WarehouseLook` | 143 | Shared palette / mesh helpers for the warehouse bay and its hide layouts. |
 | `window_raider.gd` | `WindowRaider` | 667 | Agile raiders can climb window bars; door mobs only smash doors. |
-
-### `scripts/run/effects/`
-
-| File | class_name | LOC | Summary |
-|---|---|---|---|
-| `enemy_health_mult_effect.gd` | `EnemyHealthMultEffect` | 20 | Scales raider max/current health on spawn (dangers that make fights longer). |
-| `enemy_loot_bonus_effect.gd` | `EnemyLootBonusEffect` | 11 | Adds to the item drop chance roll on enemy death (0.1 = +10%). |
-| `enemy_speed_mult_effect.gd` | `EnemySpeedMultEffect` | 18 | Scales raider world chase speed on spawn (1.15 = 15% faster). |
-| `narrow_fork_effect.gd` | `NarrowForkEffect` | 12 | After this street, the next fork is a T — two face-up cards instead of three. |
-| `temp_boon_trait_effect.gd` | `TempBoonTraitEffect` | 18 | While this street is active, grants a boon trait via BoonTraits street overlay. |
-| `wave_count_mult_effect.gd` | `WaveCountMultEffect` | 19 | Bumps each wave's spawn count (danger roads). Multiplies then optionally adds. |
 
 ### `scripts/ui/`
 

@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="ActCardDefinition" format=3]
 
-[ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/run/act_card_effect.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/run/effects/narrow_fork_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/acts/act_card_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/acts/act_card_effect.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/acts/effects/narrow_fork_effect.gd" id="3"]
 [ext_resource type="Texture2D" path="res://scenes/acts/cards/no_through.svg" id="4"]
 
 [sub_resource type="Resource" id="eff_narrow_fork"]
