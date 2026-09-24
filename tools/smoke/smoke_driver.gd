@@ -65,6 +65,8 @@ func _run() -> void:
 	if not await _fork_pass():
 		return
 
+	await _save_round_trip_pass()
+
 	_check_user_mtimes_unchanged(mtimes)
 	_write_fingerprint(lines)
 	_log("done")
@@ -420,6 +422,44 @@ func _mirror_rest_break_wait(travel: TravelController) -> void:
 	if rewards and rewards.has_method(&"wait_for_rest_resolution"):
 		await rewards.wait_for_rest_resolution()
 	await get_tree().create_timer(seconds).timeout
+
+
+## Exercises GameSession.to_save_data/load_from_data headless: saves the live
+## session, loads it straight back into the same session and checks nothing
+## drifted, the way CONTINUE would minus the actual file read.
+func _save_round_trip_pass() -> void:
+	var before: Dictionary = GameSession.to_save_data()
+	GameSession.load_from_data(GameSession.selected_slot, before)
+	await _frames(5)
+	var after: Dictionary = GameSession.to_save_data()
+
+	# load_from_data maps mid-street phases to TRAVELLING, so a phase that was
+	# mid-street at save time legitimately differs after the load.
+	var mid_street_phases := [
+		GameSession.RunPhase.COMBAT,
+		GameSession.RunPhase.ROUTE_CHOICE,
+		GameSession.RunPhase.REST,
+		GameSession.RunPhase.TURNING,
+		GameSession.RunPhase.PARKING,
+		GameSession.RunPhase.STOP,
+		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.BOSS_PICK,
+	]
+	if before.get("phase") in mid_street_phases:
+		_log("save round-trip: dropping phase key, %d was mid-street" % before["phase"])
+		before = before.duplicate()
+		after = after.duplicate()
+		before.erase("phase")
+		after.erase("phase")
+
+	var before_json := JSON.stringify(before, "", true)
+	var after_json := JSON.stringify(after, "", true)
+	if before_json != after_json:
+		_log(before_json)
+		_log(after_json)
+		_fail("save round-trip mismatch")
+		return
+	_log("save round-trip ok")
 
 
 func _phase_name() -> String:
