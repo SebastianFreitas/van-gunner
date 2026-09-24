@@ -38,6 +38,9 @@ const ACT_DANGER_COUNT := 3
 const BOSS_CARD_PICK_COUNT := 2
 ## Preload-as-type avoids autoload parse order issues with global class_name.
 const _SkillNodeDefinition := preload("res://scripts/meta/skill_node_definition.gd")
+const _SessionSave := preload("res://scripts/core/session_save.gd")
+const _SessionActDeck := preload("res://scripts/core/session_act_deck.gd")
+const _SessionVitals := preload("res://scripts/core/session_vitals.gd")
 
 var selected_slot := 0
 var run_seed := 0
@@ -103,72 +106,15 @@ func start_new(slot: int) -> void:
 	pending_vital_max = {}
 	boss_parts_granted_this_run = 0
 	MetaProgression.commit_pending()
-	_reset_vitals_in_tree()
-	_reset_act_deck()
+	_SessionVitals.reset_vitals_in_tree(self)
+	_SessionActDeck.reset_act_deck(self)
 	set_chill_mode(false)
 	set_phase(RunPhase.IDLE)
 	SaveManager.save_active_session()
 
 
 func load_from_data(slot: int, data: Dictionary) -> void:
-	selected_slot = slot
-	run_seed = int(data.get("run_seed", randi()))
-	route_step = int(data.get("route_step", 0))
-	wave_count = int(data.get("wave_count", 0))
-	last_direction = StringName(data.get("last_direction", "straight"))
-	van_max_health = clampf(
-		float(data.get("van_max_health", BASE_MAX_VAN_HEALTH)),
-		BASE_MAX_VAN_HEALTH,
-		9999.0
-	)
-	van_health = clampf(float(data.get("van_health", van_max_health)), 0.0, van_max_health)
-	player_max_health = clampf(
-		float(data.get("player_max_health", BASE_MAX_PLAYER_HEALTH)),
-		BASE_MAX_PLAYER_HEALTH,
-		9999.0
-	)
-	player_health = clampf(
-		float(data.get("player_health", player_max_health)), 0.0, player_max_health
-	)
-	coins = maxi(0, int(data.get("coins", 0)))
-	class_id = ClassCatalog.resolve_id(StringName(str(data.get("class_id", "basic"))))
-	run_act = maxi(0, int(data.get("run_act", 0)))
-	act_cards_total = maxi(0, int(data.get("act_cards_total", 0)))
-	pending_danger = bool(data.get("pending_danger", false))
-	pending_narrow_fork = bool(data.get("pending_narrow_fork", false))
-	active_street_card_id = StringName(str(data.get("active_street_card_id", "")))
-	pending_boon_card_id = StringName(str(data.get("pending_boon_card_id", "")))
-	act_cards = _cards_from_save(data.get("act_cards", []))
-	act_source_cards = _cards_from_save(data.get("act_source_cards", []))
-	boss_modifier_card_ids = _cards_from_save(data.get("boss_modifier_card_ids", []))
-	boss_cleared_for_act = bool(data.get("boss_cleared_for_act", false))
-	if act_source_cards.is_empty() and not act_cards.is_empty():
-		act_source_cards = act_cards.duplicate()
-	if act_cards_total <= 0 and not act_cards.is_empty():
-		act_cards_total = ACT_CARD_COUNT
-	set_chill_mode(false)
-	var stored_phase := int(data.get("phase", RunPhase.IDLE))
-	phase = (stored_phase as RunPhase) if stored_phase in RunPhase.values() else RunPhase.IDLE
-	if phase in [
-		RunPhase.COMBAT,
-		RunPhase.ROUTE_CHOICE,
-		RunPhase.REST,
-		RunPhase.TURNING,
-		RunPhase.PARKING,
-		RunPhase.STOP,
-		RunPhase.ACT_REVEAL,
-		RunPhase.BOSS_PICK,
-	]:
-		phase = RunPhase.TRAVELLING
-	_parse_vital_health(data)
-	boss_parts_granted_this_run = maxi(0, int(data.get("boss_parts_granted_this_run", 0)))
-	_apply_pending_to_tree()
-	van_health_changed.emit(van_health, van_max_health)
-	player_health_changed.emit(player_health, player_max_health)
-	wave_changed.emit(wave_count)
-	coins_changed.emit(coins)
-	phase_changed.emit(phase)
-	session_loaded.emit()
+	_SessionSave.load_from_data(self, slot, data)
 
 
 ## Equips a class for this run and remembers it for the next one. The class board
@@ -213,80 +159,23 @@ func get_max_van_health() -> float:
 
 
 func bind_vital(vital: Node) -> void:
-	if vital == null or not ("vital_id" in vital):
-		return
-	var key := String(vital.vital_id)
-	var share_max := _bind_max_for_vital(vital)
-	var share_cur := share_max
-	if pending_vital_health.has(key):
-		share_cur = float(pending_vital_health[key])
-	if vital.has_method("apply_saved"):
-		vital.apply_saved(share_cur, share_max)
-	sync_van_health_from_vitals()
+	_SessionVitals.bind_vital(self, vital)
 
 
 func sync_van_health_from_vitals() -> void:
-	var vitals := _vital_nodes()
-	if vitals.is_empty():
-		return
-	var cur := 0.0
-	var mx := 0.0
-	for vital in vitals:
-		cur += float(vital.health)
-		mx += float(vital.max_health)
-	van_health = cur
-	van_max_health = maxf(BASE_MAX_VAN_HEALTH, mx)
-	van_health_changed.emit(van_health, van_max_health)
-	if is_zero_approx(van_health) and phase != RunPhase.GAME_OVER:
-		set_phase(RunPhase.GAME_OVER)
+	_SessionVitals.sync_van_health_from_vitals(self)
 
 
 func apply_meta_vital_delta(node: _SkillNodeDefinition) -> void:
-	if node == null or phase == RunPhase.GAME_OVER:
-		return
-	var vitals := _vital_nodes()
-	if vitals.is_empty():
-		return
-	for vital in vitals:
-		var add := 0.0
-		for effect in node.effects:
-			if effect:
-				add += effect.vital_max_bonus(vital.vital_id)
-		if not is_zero_approx(add) and vital.has_method("add_max"):
-			vital.add_max(add)
-	sync_van_health_from_vitals()
+	_SessionVitals.apply_meta_vital_delta(self, node)
 
 
 func add_max_van_health(amount: float) -> void:
-	if is_zero_approx(amount):
-		return
-	van_max_health = maxf(BASE_MAX_VAN_HEALTH, van_max_health + amount)
-	var vitals := _vital_nodes()
-	if vitals.is_empty():
-		if amount > 0.0:
-			van_health += amount
-		else:
-			van_health = minf(van_health, van_max_health)
-		van_health_changed.emit(van_health, van_max_health)
-		return
-	var share := amount / float(vitals.size())
-	for vital in vitals:
-		if vital.has_method("add_max"):
-			vital.add_max(share)
-	sync_van_health_from_vitals()
+	_SessionVitals.add_max_van_health(self, amount)
 
 
 func damage_van(amount: float) -> void:
-	if amount <= 0.0 or phase == RunPhase.GAME_OVER:
-		return
-	var target := _lowest_hp_living_vital()
-	if target and target.has_method("take_damage"):
-		target.take_damage(amount)
-		return
-	van_health = maxf(0.0, van_health - amount)
-	van_health_changed.emit(van_health, van_max_health)
-	if is_zero_approx(van_health):
-		set_phase(RunPhase.GAME_OVER)
+	_SessionVitals.damage_van(self, amount)
 
 
 func is_van_at_full_health() -> bool:
@@ -294,36 +183,11 @@ func is_van_at_full_health() -> bool:
 
 
 func is_van_fully_repaired() -> bool:
-	if not is_van_at_full_health():
-		return false
-	var tree := get_tree()
-	if tree == null:
-		return true
-	for node in tree.get_nodes_in_group(&"breach_points"):
-		if node and node.has_method(&"is_at_full_health") and not node.is_at_full_health():
-			return false
-	return true
+	return _SessionVitals.is_van_fully_repaired(self)
 
 
 func repair_van_full() -> bool:
-	if phase == RunPhase.GAME_OVER:
-		return false
-	var any := false
-	for vital in _vital_nodes():
-		if not vital.has_method(&"heal"):
-			continue
-		var cap := float(vital.max_health) if "max_health" in vital else 0.0
-		if vital.heal(cap) > 0.001:
-			any = true
-	var tree := get_tree()
-	if tree:
-		for node in tree.get_nodes_in_group(&"breach_points"):
-			if node == null or not node.has_method(&"repair"):
-				continue
-			var cap := float(node.max_health) if "max_health" in node else 0.0
-			if node.repair(cap) > 0.001:
-				any = true
-	return any
+	return _SessionVitals.repair_van_full(self)
 
 
 func get_max_player_health() -> float:
@@ -383,7 +247,7 @@ func choose_route(direction: StringName) -> void:
 	route_step += 1
 	# Consume before commit so a freshly picked No Through Road still taxes the *next* fork.
 	pending_narrow_fork = false
-	_commit_route_card(direction, offer_count)
+	_SessionActDeck.commit_route_card(self, direction, offer_count)
 	route_chosen.emit(direction, route_step)
 	set_phase(RunPhase.TURNING)
 	SaveManager.save_active_session()
@@ -433,118 +297,40 @@ func is_boss_combat_queued() -> bool:
 
 
 func get_act_source_cards() -> Array[ActCardDefinition]:
-	return _resolve_card_ids(act_source_cards)
+	return _SessionActDeck.resolve_card_ids(self, act_source_cards)
 
 
 func get_boss_modifier_cards() -> Array[ActCardDefinition]:
-	return _resolve_card_ids(boss_modifier_card_ids)
+	return _SessionActDeck.resolve_card_ids(self, boss_modifier_card_ids)
 
 
 ## Street modifiers currently in force. Boss fights stack every picked card;
 ## normal streets still resolve as a single-entry list.
 func get_active_modifier_cards() -> Array[ActCardDefinition]:
-	if not boss_modifier_card_ids.is_empty():
-		return get_boss_modifier_cards()
-	var street := get_active_street_card()
-	var cards: Array[ActCardDefinition] = []
-	if street:
-		cards.append(street)
-	return cards
+	return _SessionActDeck.get_active_modifier_cards(self)
 
 
 func commit_boss_picks(card_ids: Array[StringName]) -> void:
-	var picked: Array[StringName] = []
-	for card_id in card_ids:
-		if card_id == &"":
-			continue
-		picked.append(card_id)
-		if picked.size() >= BOSS_CARD_PICK_COUNT:
-			break
-	if picked.is_empty():
-		picked = _debug_fallback_boss_picks()
-	ActCardCombat.clear()
-	active_street_card_id = &""
-	pending_boon_card_id = &""
-	pending_danger = false
-	boss_modifier_card_ids = picked
-	boss_cleared_for_act = false
-	ActCardCombat.activate_active_cards()
-	SaveManager.save_active_session()
+	_SessionActDeck.commit_boss_picks(self, card_ids)
 
 
 func complete_boss_encounter() -> void:
-	ActCardCombat.clear()
-	boss_modifier_card_ids.clear()
-	boss_cleared_for_act = true
-	active_street_card_id = &""
-	pending_danger = false
-	if boss_parts_granted_this_run < 3:
-		boss_parts_granted_this_run += 1
-		MetaProgression.add_rare_parts(1)
-	SaveManager.save_active_session()
+	_SessionActDeck.complete_boss_encounter(self)
 
 
 ## Debug: dump remaining streets and treat the current act as ready for the boss pick.
 func debug_prepare_boss_pick() -> void:
-	if act_source_cards.is_empty():
-		begin_new_act_deck()
-	act_cards.clear()
-	pending_boon_card_id = &""
-	pending_danger = false
-	pending_narrow_fork = false
-	boss_modifier_card_ids.clear()
-	boss_cleared_for_act = false
-	ActCardCombat.clear()
-	active_street_card_id = &""
-
-
-func _debug_fallback_boss_picks() -> Array[StringName]:
-	var picked: Array[StringName] = []
-	for card_id in act_source_cards:
-		if card_id == &"":
-			continue
-		picked.append(card_id)
-		if picked.size() >= BOSS_CARD_PICK_COUNT:
-			break
-	return picked
+	_SessionActDeck.debug_prepare_boss_pick(self)
 
 
 ## Builds a fresh 3-blessing / 3-danger deck, shuffles play order, returns display-order
 ## cards (also shuffled, independent of play order) for the reveal UI.
 func begin_new_act_deck() -> Array[ActCardDefinition]:
-	run_act += 1
-	pending_danger = false
-	pending_narrow_fork = false
-	ActCardCombat.clear()
-	active_street_card_id = &""
-	pending_boon_card_id = &""
-	boss_modifier_card_ids.clear()
-	boss_cleared_for_act = false
-	var deck_ids := _build_act_deck_ids()
-	var play_rng := _act_rng(0)
-	_shuffle_card_ids(deck_ids, play_rng)
-	act_cards = deck_ids
-	act_cards_total = act_cards.size()
-	var display_ids: Array[StringName] = act_cards.duplicate()
-	var display_rng := _act_rng(1)
-	_shuffle_card_ids(display_ids, display_rng)
-	act_source_cards = display_ids.duplicate()
-	return _resolve_card_ids(display_ids)
+	return _SessionActDeck.begin_new_act_deck(self)
 
 
 func peek_route_cards() -> Array[ActCardDefinition]:
-	## Face-up offers for the live fork. Pick one; the rest stay in the deck.
-	## With one card left, both T buttons show it.
-	var offers: Array[ActCardDefinition] = []
-	if act_cards.is_empty():
-		return offers
-	var count := get_fork_offer_count()
-	for i in count:
-		var idx := mini(i, act_cards.size() - 1)
-		var card := ActCardRegistry.load_by_id(act_cards[idx])
-		if card:
-			offers.append(card)
-	return offers
+	return _SessionActDeck.peek_route_cards(self)
 
 
 func get_active_street_card() -> ActCardDefinition:
@@ -566,246 +352,9 @@ func consume_pending_danger() -> bool:
 	return true
 
 
-func _commit_route_card(direction: StringName, offer_count: int) -> void:
-	if act_cards.is_empty():
-		ActCardCombat.clear()
-		active_street_card_id = &""
-		pending_boon_card_id = &""
-		pending_danger = false
-		return
-	var offer_index := 0
-	match direction:
-		&"straight":
-			if offer_count >= 3:
-				offer_index = 1
-		&"right":
-			offer_index = 1 if offer_count < 3 else 2
-	offer_index = mini(offer_index, act_cards.size() - 1)
-	var card_id := act_cards[offer_index]
-	act_cards.remove_at(offer_index)
-	ActCardCombat.clear()
-	active_street_card_id = card_id
-	pending_boon_card_id = card_id
-	var card := ActCardRegistry.load_by_id(card_id)
-	pending_danger = card != null and card.is_danger()
-	ActCardCombat.activate(card)
-
-
 func _build_act_deck_ids() -> Array[StringName]:
-	var deck: Array[StringName] = []
-	var blessings := ActCardRegistry.list_by_polarity(ActCardDefinition.Polarity.BLESSING)
-	var dangers := ActCardRegistry.list_by_polarity(ActCardDefinition.Polarity.DANGER)
-	var pick_rng := _act_rng(2)
-	for _i in ACT_BLESSING_COUNT:
-		deck.append(_pick_card_id(blessings, pick_rng, &"brass_road"))
-	for _i in ACT_DANGER_COUNT:
-		deck.append(_pick_card_id(dangers, pick_rng, &"hasty_pack"))
-	return deck
-
-
-func _pick_card_id(
-	pool: Array[ActCardDefinition],
-	rng: RandomNumberGenerator,
-	fallback_id: StringName
-) -> StringName:
-	if pool.is_empty():
-		return fallback_id
-	## Without replacement so a six-card act does not roll the same street twice
-	## while the pool still has unused ids.
-	var idx := rng.randi_range(0, pool.size() - 1)
-	var card: ActCardDefinition = pool[idx]
-	pool.remove_at(idx)
-	if card and card.id != &"":
-		return card.id
-	return fallback_id
-
-
-func _resolve_card_ids(ids: Array[StringName]) -> Array[ActCardDefinition]:
-	var cards: Array[ActCardDefinition] = []
-	for card_id in ids:
-		var card := ActCardRegistry.load_by_id(card_id)
-		if card:
-			cards.append(card)
-	return cards
-
-
-func _reset_act_deck() -> void:
-	run_act = 0
-	act_cards.clear()
-	act_cards_total = 0
-	act_source_cards.clear()
-	boss_modifier_card_ids.clear()
-	boss_cleared_for_act = false
-	ActCardCombat.clear()
-	active_street_card_id = &""
-	pending_boon_card_id = &""
-	pending_danger = false
-	pending_narrow_fork = false
-
-
-func _act_rng(channel: int) -> RandomNumberGenerator:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = hash([run_seed, run_act, channel])
-	return rng
-
-
-func _shuffle_card_ids(cards: Array[StringName], rng: RandomNumberGenerator) -> void:
-	for i in range(cards.size() - 1, 0, -1):
-		var j := rng.randi_range(0, i)
-		var tmp := cards[i]
-		cards[i] = cards[j]
-		cards[j] = tmp
-
-
-func _cards_from_save(raw) -> Array[StringName]:
-	var cards: Array[StringName] = []
-	if typeof(raw) != TYPE_ARRAY:
-		return cards
-	for entry in raw:
-		var card_id := StringName(str(entry))
-		## Migrate legacy type-only decks to placeholder resources.
-		if card_id == &"boon":
-			card_id = &"brass_road"
-		elif card_id == &"danger":
-			card_id = &"hasty_pack"
-		if card_id != &"":
-			cards.append(card_id)
-	return cards
-
-
-func _parse_vital_health(data: Dictionary) -> void:
-	pending_vital_health = {}
-	pending_vital_max = {}
-	var raw = data.get("vital_health", {})
-	if typeof(raw) == TYPE_DICTIONARY and not (raw as Dictionary).is_empty():
-		for key in raw:
-			pending_vital_health[str(key)] = float(raw[key])
-	else:
-		## Old slots stored a single hull number — split evenly across the four machines.
-		var share := float(data.get("van_health", van_health)) / float(VITAL_COUNT)
-		for vital_id in [&"bench", &"hopper", &"fuse_box", &"cab_relay"]:
-			pending_vital_health[String(vital_id)] = share
-	var raw_max = data.get("vital_max", {})
-	if typeof(raw_max) == TYPE_DICTIONARY:
-		for key in raw_max:
-			pending_vital_max[str(key)] = float(raw_max[key])
-
-
-func _bind_max_for_vital(vital: Node) -> float:
-	var key := String(vital.vital_id)
-	if pending_vital_max.has(key):
-		return maxf(0.1, float(pending_vital_max[key]))
-	var base := BASE_MAX_VAN_HEALTH / float(VITAL_COUNT)
-	var bonus := 0.0
-	if "vital_id" in vital:
-		bonus = MetaProgression.get_allocated_vital_max_bonus(vital.vital_id)
-	return maxf(0.1, base + bonus)
-
-
-func _apply_pending_to_tree() -> void:
-	var vitals := _vital_nodes()
-	if vitals.is_empty():
-		return
-	for vital in vitals:
-		var key := String(vital.vital_id)
-		var share_max := _bind_max_for_vital(vital)
-		var share_cur := share_max
-		if pending_vital_health.has(key):
-			share_cur = float(pending_vital_health[key])
-		if vital.has_method("apply_saved"):
-			vital.apply_saved(share_cur, share_max)
-	sync_van_health_from_vitals()
-
-
-func _reset_vitals_in_tree() -> void:
-	pending_vital_health = {}
-	pending_vital_max = {}
-	var vitals := _vital_nodes()
-	if vitals.is_empty():
-		return
-	for vital in vitals:
-		var share := _bind_max_for_vital(vital)
-		if vital.has_method("apply_saved"):
-			vital.apply_saved(share, share)
-	sync_van_health_from_vitals()
-
-
-func _vital_health_dict() -> Dictionary:
-	var stored := {}
-	for vital in _vital_nodes():
-		stored[String(vital.vital_id)] = float(vital.health)
-	if stored.is_empty():
-		return pending_vital_health.duplicate()
-	return stored
-
-
-func _vital_max_dict() -> Dictionary:
-	var stored := {}
-	for vital in _vital_nodes():
-		stored[String(vital.vital_id)] = float(vital.max_health)
-	if stored.is_empty():
-		return pending_vital_max.duplicate()
-	return stored
-
-
-func _vital_nodes() -> Array:
-	var tree := get_tree()
-	if tree == null:
-		return []
-	var result: Array = []
-	for node in tree.get_nodes_in_group(&"van_vitals"):
-		if node and "health" in node and "max_health" in node:
-			result.append(node)
-	return result
-
-
-func _lowest_hp_living_vital() -> Node:
-	var best: Node = null
-	var best_hp := INF
-	for vital in _vital_nodes():
-		if float(vital.health) <= 0.001:
-			continue
-		if float(vital.health) < best_hp:
-			best_hp = float(vital.health)
-			best = vital
-	return best
+	return _SessionActDeck.build_act_deck_ids(self)
 
 
 func to_save_data() -> Dictionary:
-	var card_strings: Array[String] = []
-	for card_id in act_cards:
-		card_strings.append(String(card_id))
-	var source_strings: Array[String] = []
-	for card_id in act_source_cards:
-		source_strings.append(String(card_id))
-	var boss_strings: Array[String] = []
-	for card_id in boss_modifier_card_ids:
-		boss_strings.append(String(card_id))
-	return {
-		"version": SaveManager.SAVE_VERSION,
-		"run_seed": run_seed,
-		"route_step": route_step,
-		"wave_count": wave_count,
-		"last_direction": String(last_direction),
-		"van_health": van_health,
-		"van_max_health": van_max_health,
-		"vital_health": _vital_health_dict(),
-		"vital_max": _vital_max_dict(),
-		"player_health": player_health,
-		"player_max_health": player_max_health,
-		"coins": coins,
-		"boss_parts_granted_this_run": boss_parts_granted_this_run,
-		"phase": phase,
-		"run_act": run_act,
-		"act_cards_total": act_cards_total,
-		"act_cards": card_strings,
-		"act_source_cards": source_strings,
-		"boss_modifier_card_ids": boss_strings,
-		"boss_cleared_for_act": boss_cleared_for_act,
-		"active_street_card_id": String(active_street_card_id),
-		"pending_boon_card_id": String(pending_boon_card_id),
-		"pending_danger": pending_danger,
-		"pending_narrow_fork": pending_narrow_fork,
-		"class_id": String(class_id),
-		"saved_at": Time.get_datetime_string_from_system(),
-	}
+	return _SessionSave.to_save_data(self)
