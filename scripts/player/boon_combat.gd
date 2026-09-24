@@ -3,9 +3,6 @@ extends RefCounted
 
 ## Thin dispatcher for boon combat logic. All behavior lives in BoonBehaviorRegistry handlers.
 
-const _HEAL_POTION := preload("res://resources/items/heal_potion.tres")
-const RICOCHET_COLD_COUNT := 2
-
 
 static func get_player_traits(tree: SceneTree) -> BoonTraits:
 	if not tree:
@@ -213,74 +210,6 @@ static func _resolve_projectile_parent(tree: SceneTree, shooter: CollisionObject
 			return node
 		node = node.get_parent()
 	return tree.current_scene if tree.current_scene else tree.root
-
-
-static func spawn_radial_cold_projectiles(
-	tree: SceneTree,
-	origin: Vector3,
-	count: int,
-	damage: float
-) -> void:
-	if not tree or count <= 0:
-		return
-	var player := tree.get_first_node_in_group(&"player")
-	var shooter := player as CollisionObject3D
-	var stats := GunStats.new()
-	stats.damage_type = DamageType.Type.COLD
-	stats.damage_per_shot = damage
-	stats.bullet_speed = 32.0
-	stats.aim_range = 40.0
-	stats.max_bounces = 0
-	for i in count:
-		var angle := TAU * float(i) / float(count)
-		var direction := Vector3(cos(angle), 0.15, sin(angle)).normalized()
-		spawn_projectile(tree, origin + Vector3(0.0, 1.0, 0.0), direction, stats, shooter)
-
-
-static func spawn_cold_projectiles_from_direction(
-	tree: SceneTree,
-	origin: Vector3,
-	base_direction: Vector3,
-	count: int,
-	damage: float,
-	spread_deg: float = 18.0
-) -> void:
-	if not tree or count <= 0:
-		return
-	var player := tree.get_first_node_in_group(&"player")
-	var shooter := player as CollisionObject3D
-	var stats := GunStats.new()
-	stats.damage_type = DamageType.Type.COLD
-	stats.damage_per_shot = damage
-	stats.bullet_speed = 32.0
-	stats.aim_range = 40.0
-	stats.max_bounces = 0
-	for i in count:
-		var spread := deg_to_rad(spread_deg * (float(i) - float(count - 1) * 0.5))
-		var direction := base_direction.rotated(Vector3.UP, spread).normalized()
-		spawn_projectile(tree, origin + Vector3(0.0, 1.0, 0.0), direction, stats, shooter)
-
-
-static func spawn_heal_pickup(world_position: Vector3, container: Node, enemy: Node = null) -> void:
-	LootCollector.deliver_item(_HEAL_POTION, world_position, container, enemy)
-
-
-static func find_poison_follow_target(tree: SceneTree, from: Vector3, max_range: float) -> Node3D:
-	if not tree:
-		return null
-	var best: Node3D = null
-	var best_dist := max_range
-	for enemy in tree.get_nodes_in_group(&"enemy"):
-		if not enemy is Node3D:
-			continue
-		var status := _get_status(enemy)
-		if not status or not status.is_poisoned():
-			continue
-		var dist := from.distance_to((enemy as Node3D).global_position)
-		if dist < best_dist:
-			best = enemy as Node3D
-			best_dist = dist
-	return best
 
 
 static func _get_status(target: Node) -> StatusEffectController:

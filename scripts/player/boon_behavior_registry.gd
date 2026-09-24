@@ -2,10 +2,9 @@ class_name BoonBehaviorRegistry
 extends RefCounted
 
 ## Dispatches combat events to registered boon behavior handlers.
-## Stat handlers run before flag handlers so damage math stays ordered.
+## Handlers run in registration order so damage math stays ordered.
 
 const _FlagHandlers := preload("res://scripts/player/boon_behavior_handlers.gd")
-const _StatHandlers := preload("res://scripts/player/boon_stat_handlers.gd")
 
 static var _handlers: Array[BoonBehavior] = []
 static var _initialized := false
@@ -16,36 +15,7 @@ static func ensure_initialized() -> void:
 		return
 	_initialized = true
 	_handlers = [
-		# Stat-based (order matters for damage pipeline)
-		_StatHandlers.FireDamageStatBehavior.new(),
-		_StatHandlers.ExtraPoisonToFireStatBehavior.new(),
-		_StatHandlers.FireToPhysStatBehavior.new(),
-		_StatHandlers.PhysDamageStatBehavior.new(),
-		_StatHandlers.PoisonedColdBonusStatBehavior.new(),
-		_StatHandlers.FrozenDamageMultStatBehavior.new(),
-		_StatHandlers.FireAreaMultStatBehavior.new(),
-		_StatHandlers.ColdFreezeStatBehavior.new(),
-		_StatHandlers.VampiricPoisonDeathStatBehavior.new(),
-		_StatHandlers.FrozenLootDeathStatBehavior.new(),
-		_StatHandlers.PoisonDurationStatBehavior.new(),
-		_StatHandlers.PoisonTickSpeedStatBehavior.new(),
-		_StatHandlers.PoisonedChillStatBehavior.new(),
-		_StatHandlers.PoisonedEnemyDamageStatBehavior.new(),
-		_StatHandlers.ColdProjectileStatBehavior.new(),
-		# Flag-based
-		_FlagHandlers.DoublePhysColdBehavior.new(),
-		_FlagHandlers.TripleCritPhysBehavior.new(),
-		_FlagHandlers.PhysToColdCritBehavior.new(),
 		_FlagHandlers.RicochetStackBehavior.new(),
-		_FlagHandlers.ColdShatteringRicochetBehavior.new(),
-		_FlagHandlers.PoisonFollowBehavior.new(),
-		_FlagHandlers.DelayedFireBehavior.new(),
-		_FlagHandlers.RicochetExplosiveBehavior.new(),
-		_FlagHandlers.ColdShatterBehavior.new(),
-		_FlagHandlers.PoisonExplosionsBehavior.new(),
-		_FlagHandlers.FireExplosionDisplacementBehavior.new(),
-		_FlagHandlers.InstantPoisonBehavior.new(),
-		_FlagHandlers.FireDeathBehavior.new(),
 	]
 
 

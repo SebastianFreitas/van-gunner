@@ -10,7 +10,6 @@ signal coins_changed(total: int)
 signal enemy_defeated(enemy: Node)
 signal session_loaded
 signal chill_mode_changed(enabled: bool)
-signal area_changed(area: ItemDefinition.BoonPool)
 signal class_changed(class_id: StringName)
 
 enum RunPhase {
@@ -53,7 +52,6 @@ var player_health := BASE_MAX_PLAYER_HEALTH
 var phase := RunPhase.IDLE
 var coins := 0
 var chill_mode := false
-var current_area: ItemDefinition.BoonPool = ItemDefinition.BoonPool.GENERAL
 ## Class for this run. Copied from the profile on NEW, restored on CONTINUE.
 var class_id: StringName = &"basic"
 ## Per-vital current HP (string id → float). Applied when VanVital nodes bind.
@@ -86,25 +84,6 @@ var boss_modifier_card_ids: Array[StringName] = []
 ## True after this act's boss is beaten (or skipped); blocks a second pick.
 var boss_cleared_for_act := false
 
-const _LEFT_AREA_CYCLE: Array[ItemDefinition.BoonPool] = [
-	ItemDefinition.BoonPool.FIRE,
-	ItemDefinition.BoonPool.COLD,
-	ItemDefinition.BoonPool.POISON,
-	ItemDefinition.BoonPool.PHYSICAL,
-]
-const _RIGHT_AREA_CYCLE: Array[ItemDefinition.BoonPool] = [
-	ItemDefinition.BoonPool.PHYSICAL,
-	ItemDefinition.BoonPool.POISON,
-	ItemDefinition.BoonPool.COLD,
-	ItemDefinition.BoonPool.FIRE,
-]
-const _STRAIGHT_AREA_CYCLE: Array[ItemDefinition.BoonPool] = [
-	ItemDefinition.BoonPool.PHYSICAL,
-	ItemDefinition.BoonPool.FIRE,
-	ItemDefinition.BoonPool.COLD,
-	ItemDefinition.BoonPool.POISON,
-]
-
 
 func start_new(slot: int) -> void:
 	selected_slot = slot
@@ -119,7 +98,6 @@ func start_new(slot: int) -> void:
 	player_health = BASE_MAX_PLAYER_HEALTH
 	LootCollector.clear()
 	coins = 0
-	current_area = ItemDefinition.BoonPool.GENERAL
 	class_id = ClassCatalog.resolve_id(MetaProgression.equipped_class_id)
 	pending_vital_health = {}
 	pending_vital_max = {}
@@ -154,7 +132,6 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 	)
 	coins = maxi(0, int(data.get("coins", 0)))
 	class_id = ClassCatalog.resolve_id(StringName(str(data.get("class_id", "basic"))))
-	current_area = _area_from_save(int(data.get("current_area", ItemDefinition.BoonPool.GENERAL)))
 	run_act = maxi(0, int(data.get("run_act", 0)))
 	act_cards_total = maxi(0, int(data.get("act_cards_total", 0)))
 	pending_danger = bool(data.get("pending_danger", false))
@@ -419,8 +396,6 @@ func choose_route(direction: StringName) -> void:
 		return
 	last_direction = direction
 	route_step += 1
-	current_area = _resolve_area_for_fork(direction, route_step)
-	area_changed.emit(current_area)
 	# Consume before commit so a freshly picked No Through Road still taxes the *next* fork.
 	pending_narrow_fork = false
 	_commit_route_card(direction, offer_count)
@@ -447,26 +422,6 @@ func get_route_directions() -> Array[StringName]:
 	if not uses_t_junction():
 		dirs.insert(1, &"straight")
 	return dirs
-
-
-func get_rest_area() -> ItemDefinition.BoonPool:
-	if route_step <= 0:
-		return ItemDefinition.BoonPool.GENERAL
-	return current_area
-
-
-func get_area_flavor_name(area: ItemDefinition.BoonPool = current_area) -> String:
-	match area:
-		ItemDefinition.BoonPool.FIRE:
-			return "FIRE"
-		ItemDefinition.BoonPool.COLD:
-			return "COLD"
-		ItemDefinition.BoonPool.POISON:
-			return "POISON"
-		ItemDefinition.BoonPool.PHYSICAL:
-			return "PHYSICAL"
-		_:
-			return "OPEN ROAD"
 
 
 func needs_act_reveal() -> bool:
@@ -670,7 +625,7 @@ func _build_act_deck_ids() -> Array[StringName]:
 	var dangers := ActCardRegistry.list_by_polarity(ActCardDefinition.Polarity.DANGER)
 	var pick_rng := _act_rng(2)
 	for _i in ACT_BLESSING_COUNT:
-		deck.append(_pick_card_id(blessings, pick_rng, &"cold_road"))
+		deck.append(_pick_card_id(blessings, pick_rng, &"brass_road"))
 	for _i in ACT_DANGER_COUNT:
 		deck.append(_pick_card_id(dangers, pick_rng, &"hasty_pack"))
 	return deck
@@ -730,21 +685,6 @@ func _shuffle_card_ids(cards: Array[StringName], rng: RandomNumberGenerator) -> 
 		cards[j] = tmp
 
 
-func _resolve_area_for_fork(direction: StringName, step: int) -> ItemDefinition.BoonPool:
-	var index := (step - 1) % 4
-	if direction == &"left":
-		return _LEFT_AREA_CYCLE[index]
-	if direction == &"straight":
-		return _STRAIGHT_AREA_CYCLE[index]
-	return _RIGHT_AREA_CYCLE[index]
-
-
-func _area_from_save(value: int) -> ItemDefinition.BoonPool:
-	if value in ItemDefinition.BoonPool.values():
-		return value as ItemDefinition.BoonPool
-	return ItemDefinition.BoonPool.GENERAL
-
-
 func _cards_from_save(raw) -> Array[StringName]:
 	var cards: Array[StringName] = []
 	if typeof(raw) != TYPE_ARRAY:
@@ -753,7 +693,7 @@ func _cards_from_save(raw) -> Array[StringName]:
 		var card_id := StringName(str(entry))
 		## Migrate legacy type-only decks to placeholder resources.
 		if card_id == &"boon":
-			card_id = &"cold_road"
+			card_id = &"brass_road"
 		elif card_id == &"danger":
 			card_id = &"hasty_pack"
 		if card_id != &"":
@@ -895,7 +835,6 @@ func to_save_data() -> Dictionary:
 		"coins": coins,
 		"boss_parts_granted_this_run": boss_parts_granted_this_run,
 		"phase": phase,
-		"current_area": int(current_area),
 		"run_act": run_act,
 		"act_cards_total": act_cards_total,
 		"act_cards": card_strings,

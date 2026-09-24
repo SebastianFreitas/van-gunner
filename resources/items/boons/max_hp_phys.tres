@@ -3,24 +3,30 @@
 [ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="item_definition"]
 [ext_resource type="Script" path="res://scripts/items/item_effect.gd" id="item_effect"]
 [ext_resource type="Texture2D" path="res://scenes/items/boons/max_hp_phys.svg" id="icon"]
+[ext_resource type="Script" path="res://scripts/items/effects/gun_stat_modifier_effect.gd" id="gun_stat_modifier"]
+[ext_resource type="Script" path="res://scripts/combat/stat_modifier.gd" id="stat_modifier"]
 [ext_resource type="Script" path="res://scripts/items/effects/max_health_effect.gd" id="max_health"]
-[ext_resource type="Script" path="res://scripts/items/effects/boon_trait_effect.gd" id="boon_trait"]
 
 [sub_resource type="Resource" id="eff_max_hp_phys_1"]
 script = ExtResource("max_health")
 bonus_health = 10
 
+[sub_resource type="Resource" id="mod_max_hp_phys_3"]
+script = ExtResource("stat_modifier")
+stat_name = &"damage_per_shot"
+mode = 0
+value = 1.0
+id = &"max_hp_phys_damage"
+
 [sub_resource type="Resource" id="eff_max_hp_phys_2"]
-script = ExtResource("boon_trait")
-trait_key = &"phys_damage_bonus"
-add_value = 10.0
+script = ExtResource("gun_stat_modifier")
+modifier = SubResource("mod_max_hp_phys_3")
 
 [resource]
 script = ExtResource("item_definition")
 id = &"max_hp_phys"
 display_name = "Brawler's Bulk"
-description = "Gain 10 Max Health and 10 physical damage"
+description = "Gain 10 Max Health and +1 damage"
 icon = ExtResource("icon")
 kind = 1
-boon_pool = 0
 effects = Array[ExtResource("item_effect")]([SubResource("eff_max_hp_phys_1"), SubResource("eff_max_hp_phys_2")])

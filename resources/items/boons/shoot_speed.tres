@@ -24,5 +24,4 @@ display_name = "Hair Trigger"
 description = "Gain 100% shot speed"
 icon = ExtResource("icon")
 kind = 1
-boon_pool = 0
 effects = Array[ExtResource("item_effect")]([SubResource("eff_shoot_speed_1")])

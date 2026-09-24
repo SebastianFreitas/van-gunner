@@ -177,17 +177,10 @@ static func _lines_for_trait_effect(trait_effect: BoonTraitEffect) -> PackedStri
 	elif not is_equal_approx(trait_effect.multiply_value, 1.0):
 		var percent := (trait_effect.multiply_value - 1.0) * 100.0
 		var sign_text := "+" if percent >= 0.0 else ""
-		if trait_effect.trait_key == BoonTraitKeys.FIRE_AREA_MULT and trait_effect.multiply_value < 1.0:
-			lines.append("%s x%s (%s%% area) — permanent" % [
-				label,
-				format_number(trait_effect.multiply_value),
-				format_number(trait_effect.multiply_value * 100.0),
-			])
-		else:
-			lines.append("%s x%s (%s%s%%) — permanent" % [
-				label,
-				format_number(trait_effect.multiply_value),
-				sign_text,
-				format_number(percent),
-			])
+		lines.append("%s x%s (%s%s%%) — permanent" % [
+			label,
+			format_number(trait_effect.multiply_value),
+			sign_text,
+			format_number(percent),
+		])
 	return lines

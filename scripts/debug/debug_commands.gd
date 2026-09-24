@@ -31,8 +31,6 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 		match parts[0]:
 			"give", "spawn":
 				matches = _filter_prefix(ItemRegistry.list_ids(), "")
-			"boonpool":
-				matches = _filter_prefix(_boon_pool_names(), "")
 			"summon":
 				matches = _filter_prefix(["enemy"], "")
 			"reardoor":
@@ -57,8 +55,6 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 		matches = _filter_prefix(ItemRegistry.list_ids(), partial)
 	elif parts[0] == "class":
 		matches = _filter_prefix(_class_id_strings(), partial)
-	elif parts[0] == "boonpool":
-		matches = _filter_prefix(_boon_pool_names(), partial)
 	elif parts[0] == "card":
 		matches = _filter_prefix(_card_id_strings(), partial)
 	elif parts[0] == "stop":
@@ -116,7 +112,6 @@ func _register_commands() -> void:
 		"coins": _cmd_coins,
 		"heal": _cmd_heal,
 		"phase": _cmd_phase,
-		"boonpool": _cmd_boonpool,
 		"list": _cmd_list,
 		"card": _cmd_card,
 		"stop": _cmd_stop,
@@ -146,7 +141,6 @@ func _cmd_help(_args: Array) -> String:
 		+ "  spawn <item_id> drop a pickup near the player\n"
 		+ "  coins <n>      add coins\n"
 		+ "  heal [amount]  heal the player\n"
-		+ "  boonpool <pool> roll a boon from general/fire/poison/cold/physical\n"
 		+ "  list boons [q]  browse boon ids (optional filter)\n"
 		+ "  list items [q]  browse all item ids\n"
 		+ "  list cards [q]  browse street card ids\n"
@@ -273,34 +267,6 @@ func _cmd_heal(args: Array) -> String:
 	var amount: float = float(args[0]) if not args.is_empty() else GameSession.get_max_player_health()
 	GameSession.heal_player(amount)
 	return "Player healed by %.0f." % amount
-
-
-func _cmd_boonpool(args: Array) -> String:
-	if args.is_empty():
-		return "Usage: boonpool <general|fire|poison|cold|physical>"
-	var pool_name: String = str(args[0]).to_lower()
-	var pool := ItemDefinition.BoonPool.GENERAL
-	match pool_name:
-		"general":
-			pool = ItemDefinition.BoonPool.GENERAL
-		"fire":
-			pool = ItemDefinition.BoonPool.FIRE
-		"poison":
-			pool = ItemDefinition.BoonPool.POISON
-		"cold":
-			pool = ItemDefinition.BoonPool.COLD
-		"physical":
-			pool = ItemDefinition.BoonPool.PHYSICAL
-		_:
-			return "Unknown pool: %s" % pool_name
-	var item := ItemPoolRegistry.pick_from_boon_pool(pool)
-	if not item:
-		return "Pool is empty."
-	var player := _find_player()
-	if not player:
-		return "Player not found."
-	item.collect(player)
-	return "Rolled %s from %s pool." % [item.display_name, pool_name]
 
 
 func _cmd_class(args: Array) -> String:
@@ -669,10 +635,6 @@ func _command_names() -> Array[String]:
 		names.append(String(key))
 	names.sort()
 	return names
-
-
-func _boon_pool_names() -> Array[String]:
-	return ["general", "fire", "poison", "cold", "physical"]
 
 
 func _filter_prefix(options: Array, partial: String) -> Array[String]:

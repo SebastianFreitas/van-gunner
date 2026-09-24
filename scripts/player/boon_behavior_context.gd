@@ -22,8 +22,5 @@ var loot_container: Node
 var fire_origin := Vector3.ZERO
 var fire_direction := Vector3.FORWARD
 var gun_stats: GunStats
-var poison_duration_bonus := 0.0
-var poison_tick_speed_mult := 1.0
-var poisoned_chill_bonus := 0.0
 var projectile_shooter: CollisionObject3D
 var inherited_velocity := Vector3.ZERO

@@ -17,5 +17,4 @@ display_name = "Cascading Rounds"
 description = "Ricochets get increasingly stronger"
 icon = ExtResource("icon")
 kind = 1
-boon_pool = 0
 effects = Array[ExtResource("item_effect")]([SubResource("eff_ricochet_stack_1")])

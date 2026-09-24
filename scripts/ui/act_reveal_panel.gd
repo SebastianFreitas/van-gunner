@@ -44,12 +44,12 @@ func _ready() -> void:
 	hide()
 
 
-func present(display_cards: Array[ActCardDefinition], act_number: int, area_flavor: String) -> void:
+func present(display_cards: Array[ActCardDefinition], act_number: int) -> void:
 	_mode = Mode.ACT_REVEAL
 	_begin_present(
 		display_cards,
 		"ACT %d — THE ROAD AHEAD" % act_number,
-		"Area: %s  ·  Order unknown" % area_flavor,
+		"Order unknown",
 		"Six streets. Modifiers shown. Sequence stays hidden. One boon each.",
 		true
 	)
@@ -62,15 +62,14 @@ func present(display_cards: Array[ActCardDefinition], act_number: int, area_flav
 func present_boss_pick(
 	display_cards: Array[ActCardDefinition],
 	pick_count: int,
-	act_number: int,
-	area_flavor: String
+	act_number: int
 ) -> void:
 	_mode = Mode.BOSS_PICK
 	_pick_count = maxi(1, pick_count)
 	_begin_present(
 		display_cards,
 		"ACT %d — THE JUDGE" % act_number,
-		"Area: %s  ·  %d streets stack on the boss" % [area_flavor, _pick_count],
+		"%d streets stack on the boss" % _pick_count,
 		"Same six streets. They flip down and shuffle. Pick %d." % _pick_count,
 		false
 	)

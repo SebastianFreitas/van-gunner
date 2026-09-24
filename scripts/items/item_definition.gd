@@ -16,21 +16,11 @@ enum ItemKind {
 	CONSUMABLE = 3,
 }
 
-enum BoonPool {
-	GENERAL,
-	FIRE,
-	POISON,
-	COLD,
-	PHYSICAL,
-}
-
 @export var id: StringName = &""
 @export var display_name := "Unknown Item"
 @export_multiline var description := ""
 @export var icon: Texture2D
 @export var kind: ItemKind = ItemKind.MONEY
-## Which boon reward pool this belongs to (only used when kind = BOON).
-@export var boon_pool: BoonPool = BoonPool.GENERAL
 ## Charge, cooldown, and recharge rules for TOOL items.
 @export var usable: ItemUsableConfig
 ## Overrides the pickup's default auto-grab radius when > 0.

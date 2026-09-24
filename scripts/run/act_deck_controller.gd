@@ -94,11 +94,7 @@ func _start_reveal() -> void:
 		_finish_reveal()
 		return
 	if _panel and _panel.has_method(&"present"):
-		_panel.present(
-			display,
-			GameSession.run_act,
-			GameSession.get_area_flavor_name()
-		)
+		_panel.present(display, GameSession.run_act)
 	else:
 		_finish_reveal()
 
@@ -118,8 +114,7 @@ func _start_boss_pick() -> void:
 		_panel.present_boss_pick(
 			display,
 			GameSession.BOSS_CARD_PICK_COUNT,
-			GameSession.run_act,
-			GameSession.get_area_flavor_name()
+			GameSession.run_act
 		)
 	else:
 		GameSession.commit_boss_picks([])

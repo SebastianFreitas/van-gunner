@@ -8,34 +8,13 @@ const _POOL_PATHS := {
 	## Alias of general_boon — mechanic / van-identity rolls use this key.
 	"van": "res://resources/items/pools/general_boon_pool.tres",
 	"general_boon": "res://resources/items/pools/general_boon_pool.tres",
-	"fire_boon": "res://resources/items/pools/fire_boon_pool.tres",
-	"poison_boon": "res://resources/items/pools/poison_boon_pool.tres",
-	"cold_boon": "res://resources/items/pools/cold_boon_pool.tres",
-	"physical_boon": "res://resources/items/pools/physical_boon_pool.tres",
 	"rest_tools": "res://resources/items/pools/rest_tools_pool.tres",
 	"shop": "res://resources/items/pools/shop_pool.tres",
 }
 
-const _ELEMENTAL_POOLS: Array[ItemDefinition.BoonPool] = [
-	ItemDefinition.BoonPool.FIRE,
-	ItemDefinition.BoonPool.POISON,
-	ItemDefinition.BoonPool.COLD,
-	ItemDefinition.BoonPool.PHYSICAL,
-]
-
-const _REST_PRIMARY_WEIGHT := 1.0
-const _REST_CROSS_POOL_WEIGHT := 0.14
-const _REST_GENERAL_WEIGHT := 0.18
-const _REST_TOOLS_WEIGHT := 0.22
-const _REST_START_TOOLS_WEIGHT := 0.35
-
-const _BOON_POOL_KEYS := {
-	ItemDefinition.BoonPool.GENERAL: "general_boon",
-	ItemDefinition.BoonPool.FIRE: "fire_boon",
-	ItemDefinition.BoonPool.POISON: "poison_boon",
-	ItemDefinition.BoonPool.COLD: "cold_boon",
-	ItemDefinition.BoonPool.PHYSICAL: "physical_boon",
-}
+## REST offers draw boons from the one boon pool, with tools as occasional spice.
+const _REST_BOON_WEIGHT := 1.0
+const _REST_TOOLS_WEIGHT := 0.35
 
 
 static func get_pool(pool_key: String) -> LootPool:
@@ -64,42 +43,13 @@ static func pick_items_from(
 	return loot_pool.pick_items(count, exclude_ids)
 
 
-static func get_boon_pool(pool: ItemDefinition.BoonPool) -> LootPool:
-	var key: String = _BOON_POOL_KEYS.get(pool, "general_boon")
-	return get_pool(key)
-
-
-static func pick_from_boon_pool(pool: ItemDefinition.BoonPool) -> ItemDefinition:
-	var key: String = _BOON_POOL_KEYS.get(pool, "general_boon")
-	return pick_from(key)
-
-
-## Binding-of-Isaac-style REST rewards: area-themed boons with cross-pool spice + tools.
-static func pick_rest_choices(
-	area: ItemDefinition.BoonPool,
-	count: int,
-	exclude_boon_ids: Array = []
-) -> Array[ItemDefinition]:
-	var weighted_pools: Array[Dictionary] = _rest_pool_weights(area)
+## REST rewards: boons the player does not own yet, plus the occasional tool.
+static func pick_rest_choices(count: int, exclude_boon_ids: Array = []) -> Array[ItemDefinition]:
+	var weighted_pools: Array[Dictionary] = [
+		{"key": "general_boon", "weight": _REST_BOON_WEIGHT},
+		{"key": "rest_tools", "weight": _REST_TOOLS_WEIGHT},
+	]
 	return _pick_unique_from_weighted_pools(weighted_pools, count, exclude_boon_ids)
-
-
-static func _rest_pool_weights(area: ItemDefinition.BoonPool) -> Array[Dictionary]:
-	var weighted: Array[Dictionary] = []
-	if area == ItemDefinition.BoonPool.GENERAL:
-		for pool in _ELEMENTAL_POOLS:
-			weighted.append({"key": _BOON_POOL_KEYS[pool], "weight": _REST_PRIMARY_WEIGHT})
-		weighted.append({"key": _BOON_POOL_KEYS[ItemDefinition.BoonPool.GENERAL], "weight": _REST_PRIMARY_WEIGHT})
-		weighted.append({"key": "rest_tools", "weight": _REST_START_TOOLS_WEIGHT})
-		return weighted
-	weighted.append({"key": _BOON_POOL_KEYS[area], "weight": _REST_PRIMARY_WEIGHT})
-	weighted.append({"key": _BOON_POOL_KEYS[ItemDefinition.BoonPool.GENERAL], "weight": _REST_GENERAL_WEIGHT})
-	for pool in _ELEMENTAL_POOLS:
-		if pool == area:
-			continue
-		weighted.append({"key": _BOON_POOL_KEYS[pool], "weight": _REST_CROSS_POOL_WEIGHT})
-	weighted.append({"key": "rest_tools", "weight": _REST_TOOLS_WEIGHT})
-	return weighted
 
 
 static func _pick_unique_from_weighted_pools(

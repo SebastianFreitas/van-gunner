@@ -36,8 +36,7 @@ func present_bonus_choices() -> void:
 		SaveManager.save_active_session()
 		return
 	var exclude := _owned_boon_ids()
-	var area := GameSession.get_rest_area()
-	var choices := ItemPoolRegistry.pick_rest_choices(area, CHOICE_COUNT, exclude)
+	var choices := ItemPoolRegistry.pick_rest_choices(CHOICE_COUNT, exclude)
 	if choices.is_empty():
 		return
 	if _panel and _panel.has_method(&"present"):
@@ -83,8 +82,7 @@ func _present_boon_choices() -> void:
 		_finish_resolution()
 		return
 	var exclude := _owned_boon_ids()
-	var area := GameSession.get_rest_area()
-	var choices := ItemPoolRegistry.pick_rest_choices(area, CHOICE_COUNT, exclude)
+	var choices := ItemPoolRegistry.pick_rest_choices(CHOICE_COUNT, exclude)
 	if choices.is_empty():
 		_finish_resolution()
 		return
@@ -113,8 +111,7 @@ func _auto_collect_one() -> void:
 	if not _player:
 		return
 	var exclude := _owned_boon_ids()
-	var area := GameSession.get_rest_area()
-	var choices := ItemPoolRegistry.pick_rest_choices(area, 1, exclude)
+	var choices := ItemPoolRegistry.pick_rest_choices(1, exclude)
 	if choices.is_empty():
 		return
 	var item: ItemDefinition = choices[0]

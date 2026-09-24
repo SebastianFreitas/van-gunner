@@ -2,19 +2,20 @@
 
 [ext_resource type="Script" path="res://scripts/run/act_card_definition.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/run/act_card_effect.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/run/effects/flat_damage_bonus_effect.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/run/effects/temp_boon_trait_effect.gd" id="3"]
 [ext_resource type="Texture2D" path="res://scenes/acts/cards/brass_road.svg" id="4"]
 
-[sub_resource type="Resource" id="eff_brass_flat"]
+[sub_resource type="Resource" id="eff_brass_damage"]
 script = ExtResource("3")
-damage_type = 0
-amount = 10.0
+trait_key = &"gun_damage_per_shot"
+add_value = 0.0
+multiply_value = 1.25
 
 [resource]
 script = ExtResource("1")
 id = &"brass_road"
 display_name = "Brass Road"
-description = "+10 physical damage dealt against enemies"
+description = "+25% damage while this street is active"
 polarity = 0
 icon = ExtResource("4")
-effects = Array[ExtResource("2")]([SubResource("eff_brass_flat")])
+effects = Array[ExtResource("2")]([SubResource("eff_brass_damage")])
