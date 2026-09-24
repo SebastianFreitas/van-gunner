@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bf13wxqioffji"]
 
-[ext_resource type="Script" path="res://scripts/run/road_floor.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/travel/road_floor.gd" id="1"]
 
 [node name="RoadFloor" type="Node3D"]
 script = ExtResource("1")

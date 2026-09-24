@@ -25,7 +25,7 @@ The main session directs exploration, designs the change, writes the spec, revie
 
 ## Token budget
 
-- Never read a whole script over 300 lines. Over 500 today: `scripts/run/travel_controller.gd` (1311), `scripts/run/van.gd` (1155), `scripts/run/van_side_wall.gd` (1110), `scripts/run/shop_counter_booth.gd` (1012), `scripts/core/game_session.gd` (910), `scripts/debug/debug_commands.gd` (754), `scripts/ui/bench_screen.gd` (719), `scripts/enemies/window_raider.gd` (680), `scripts/run/road_floor.gd` (608), `scripts/ui/act_reveal_panel.gd` (580), `scripts/run/side_doors.gd` (557). Grep `-n` for the function name, then Read with offset and limit. Function names don't drift; line numbers do.
+- Never read a whole script over 300 lines. Over 500 today: `scripts/travel/travel_controller.gd` (1311), `scripts/run/van.gd` (1155), `scripts/run/van_side_wall.gd` (1110), `scripts/run/shop_counter_booth.gd` (1012), `scripts/core/game_session.gd` (910), `scripts/debug/debug_commands.gd` (754), `scripts/ui/bench_screen.gd` (719), `scripts/enemies/window_raider.gd` (680), `scripts/travel/road_floor.gd` (608), `scripts/ui/act_reveal_panel.gd` (580), `scripts/run/side_doors.gd` (557). Grep `-n` for the function name, then Read with offset and limit. Function names don't drift; line numbers do.
 - `scenes/van/van.tscn` is 87 KB: grep for the node name and read about 40 lines around the hit.
 - Never open `*.png`, `*.wav`, `*.ogg`, `*.import`, `.godot/` or `__pycache__/`.
 

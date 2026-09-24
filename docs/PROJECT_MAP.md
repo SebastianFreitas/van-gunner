@@ -196,10 +196,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal closed`
 - `signal window_changed(window_id: StringName, is_open: bool)`
 
-**`scripts/run/travel_controller.gd`**
-
-- `enum TurnState { NONE, APPROACHING, TURNING, PARKING, LEAVING_STOP, ELEVATING, }`
-
 **`scripts/run/van_bulkhead.gd`**
 
 - `enum OpeningSide { LEFT, RIGHT }`
@@ -216,6 +212,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 **`scripts/run/warehouse_laser.gd`**
 
 - `signal sprung`
+
+**`scripts/travel/travel_controller.gd`**
+
+- `enum TurnState { NONE, APPROACHING, TURNING, PARKING, LEAVING_STOP, ELEVATING, }`
 
 **`scripts/ui/act_reveal_panel.gd`**
 
@@ -453,7 +453,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. No shop counter. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
 | `rear_doors.gd` | — | 400 | Truck-style rear double doors. |
-| `road_floor.gd` | `RoadFloor` | 609 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter |
 | `room_zone.gd` | `RoomZone` | 14 |  |
 | `shop_counter_booth.gd` | — | 1013 | Fortified metal shop counter — armored face, cash slot, eye-level grilled window. |
 | `shop_hatch_net.gd` | — | 125 | Cargo-net screen on the shop hatch — thin diamond mesh, not solid bars. |
@@ -467,7 +466,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
 | `stop_elevator.gd` | `StopElevator` | 355 | On-road lift that drops the van to the shared stop vestibule. Content |
 | `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
-| `travel_controller.gd` | `TravelController` | 1283 | Empty corridor tiles required between side-street openings (avoids a thin |
 | `van.gd` | — | 1163 | Preload so van.tscn can type the bar without a class_name parse cycle. |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
@@ -484,6 +482,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `warehouse_interior.gd` | — | 243 | Flared warehouse bay: shell, wrapped dressing, table + chest, one hide layout. |
 | `warehouse_laser.gd` | `WarehouseLaser` | 72 | Waist-high trip across the aisle. Jump over to stay quiet; walking through |
 | `warehouse_look.gd` | `WarehouseLook` | 143 | Shared palette / mesh helpers for the warehouse bay and its hide layouts. |
+
+### `scripts/travel/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `road_floor.gd` | `RoadFloor` | 609 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter |
+| `travel_controller.gd` | `TravelController` | 1283 | Empty corridor tiles required between side-street openings (avoids a thin |
 
 ### `scripts/ui/`
 

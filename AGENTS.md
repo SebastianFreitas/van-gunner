@@ -317,7 +317,7 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Change how encounters are sequenced | `scripts/enemies/encounter_director.gd` |
 | Van raider pathing / occupancy | `scripts/enemies/cabin_nav.gd` + `window_raider.gd` |
 | Act boss (Wanjna the biker) | `scripts/enemies/biker_boss.gd` + `_spawn_boss` in `encounter_director.gd` |
-| Change road, turns, side-stop parking, statues | `scripts/run/travel_controller.gd` |
+| Change road, turns, side-stop parking, statues | `scripts/travel/travel_controller.gd` |
 | Change act deck / boss pick logic | `game_session.gd` + `scripts/acts/act_deck_controller.gd` |
 | Change the reveal / boss-pick UI | `scripts/ui/act_reveal_panel.gd` |
 | Add a boon | new `.tres` in `resources/items/boons/` + pool + maybe a `BoonBehavior` |
