@@ -49,7 +49,7 @@ def generate_icons(boon_specs: list[dict]) -> None:
         if boon_id not in GLYPHS:
             raise KeyError(f"Missing glyph for boon: {boon_id}")
         out = ICON_DIR / f"{boon_id}.svg"
-        out.write_text(render_icon(boon_id), encoding="utf-8")
+        out.write_text(render_icon(boon_id), encoding="utf-8", newline="\n")
 
 
 if __name__ == "__main__":

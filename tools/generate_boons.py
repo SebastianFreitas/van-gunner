@@ -302,13 +302,13 @@ def main() -> None:
 
     for boon in BOONS:
         out = BOONS_DIR / f'{boon["id"]}.tres'
-        out.write_text(render_boon(boon, existing_uid(out)), encoding="utf-8")
+        out.write_text(render_boon(boon, existing_uid(out)), encoding="utf-8", newline="\n")
         print(f"Wrote {out.relative_to(ROOT)}")
 
     for pool_name, file_name in POOLS.items():
         pool_boons = [boon for boon in BOONS if boon.get("pool", "general") == pool_name]
         out = POOLS_DIR / file_name
-        out.write_text(render_pool(pool_boons, existing_uid(out)), encoding="utf-8")
+        out.write_text(render_pool(pool_boons, existing_uid(out)), encoding="utf-8", newline="\n")
         print(f"Wrote {out.relative_to(ROOT)} ({len(pool_boons)} boons)")
 
     prune_stale(set(ids))
