@@ -1,10 +1,9 @@
 class_name LootCatch
 extends RefCounted
 
-## One hopper / popup entry: either an ItemDefinition or a rolled weapon.
+## One hopper / popup entry wrapping a dropped ItemDefinition.
 
 var item: ItemDefinition
-var weapon: WeaponInstance
 
 
 static func from_item(dropped: ItemDefinition) -> LootCatch:
@@ -13,23 +12,13 @@ static func from_item(dropped: ItemDefinition) -> LootCatch:
 	return catch
 
 
-static func from_weapon(instance: WeaponInstance) -> LootCatch:
-	var catch := LootCatch.new()
-	catch.weapon = instance
-	return catch
-
-
 func get_icon() -> Texture2D:
 	if item and item.icon:
 		return item.icon
-	if weapon:
-		return WeaponPickup.placeholder_texture()
 	return null
 
 
 func get_modulate() -> Color:
-	if weapon:
-		return WeaponPickup._color_for_family(weapon)
 	return Color.WHITE
 
 

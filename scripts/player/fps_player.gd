@@ -19,7 +19,6 @@ const _JUMP_CLEARANCE := 1.0
 @onready var interaction_ray: RayCast3D = $Head/Camera3D/InteractionRay
 @onready var weapon: GunController = $Head/Camera3D/Weapon
 @onready var gun_stats: GunStatsController = $GunStats
-@onready var weapon_inventory: WeaponInventory = $WeaponInventory
 @onready var usables: UsablesController = $Usables
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
@@ -27,6 +26,8 @@ var _current_interactable: Interactable
 var _movement_reference: Node3D
 var _local_horizontal_velocity := Vector3.ZERO
 var _jump_queued := false
+## The equipped class; applied on ready and again whenever GameSession changes it.
+var current_class: ClassDefinition
 
 
 func _ready() -> void:
@@ -37,6 +38,8 @@ func _ready() -> void:
 	if not _movement_reference:
 		_movement_reference = get_parent_node_3d()
 	weapon.fired.connect(func(hit: bool) -> void: shot_fired.emit(hit))
+	GameSession.class_changed.connect(_on_class_changed)
+	apply_class(ClassCatalog.load_or_basic(GameSession.class_id))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -56,11 +59,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			get_viewport().set_input_as_handled()
 			return
-		if _can_swap_weapons() and mb.pressed:
-			if mb.button_index == MOUSE_BUTTON_WHEEL_UP:
-				weapon_inventory.cycle_active(-1)
-			elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				weapon_inventory.cycle_active(1)
 	elif event.is_action_pressed("interact"):
 		if _current_interactable:
 			_current_interactable.interact(self)
@@ -70,8 +68,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		_jump_queued = true
 	elif event.is_action_pressed("reload") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		weapon.try_reload()
-	elif event.is_action_pressed("use_usable") and _can_swap_weapons():
-		weapon_inventory.swap_active()
 	elif event.is_action_pressed("use_slot_1"):
 		if _try_dialogue_choice(0):
 			get_viewport().set_input_as_handled()
@@ -98,6 +94,16 @@ func get_look_interactable() -> Interactable:
 	return _current_interactable
 
 
+func apply_class(def: ClassDefinition) -> void:
+	current_class = def
+	gun_stats.set_class_definition(def)
+	weapon.apply_class(def)
+
+
+func _on_class_changed(class_id: StringName) -> void:
+	apply_class(ClassCatalog.load_or_basic(class_id))
+
+
 func _can_jump_outside_van() -> bool:
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return false
@@ -112,22 +118,10 @@ func _can_jump_outside_van() -> bool:
 	return containment.horizontal_clearance(global_position) > _JUMP_CLEARANCE
 
 
-func _can_swap_weapons() -> bool:
-	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-		return false
-	## Block while modal UI owns the mouse / pause overlays.
-	if get_tree().paused:
-		return false
-	return true
-
-
 func _ui_wants_free_cursor() -> bool:
 	var van := get_tree().get_first_node_in_group(&"van_run")
 	if van and van.has_method(&"has_modal_free_cursor"):
 		return bool(van.has_modal_free_cursor())
-	for node in get_tree().get_nodes_in_group(&"weapon_replace_prompt"):
-		if is_instance_valid(node):
-			return true
 	return false
 
 

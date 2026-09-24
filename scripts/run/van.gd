@@ -5,6 +5,7 @@ const _ActDeckController := preload("res://scripts/run/act_deck_controller.gd")
 const _BoonChoicePanel := preload("res://scripts/ui/boon_choice_panel.gd")
 const _BoonRewardController := preload("res://scripts/run/boon_reward_controller.gd")
 const _DialogueHud := preload("res://scripts/ui/dialogue_hud.gd")
+const _ClassPanel := preload("res://scripts/ui/class_panel.gd")
 ## Preload so van.tscn can type the bar without a class_name parse cycle.
 const _VanHealthBar := preload("res://scripts/ui/van_health_bar.gd")
 
@@ -55,6 +56,9 @@ const _ROUTE_INK := Color(0.08, 0.08, 0.07, 1.0)
 @onready var request_board = (
 	$TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard
 )
+@onready var class_board = (
+	$TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard
+)
 
 var _debug_console: Control
 var _act_reveal: Control
@@ -63,7 +67,7 @@ var _boon_choice: Control
 var _boon_rewards: Node
 var _dialogue_hud: Control
 var _driver_talk_open := false
-var _weapon_slots_hud: WeaponSlotsHud
+var _class_panel: Control
 var _ammo_reload_tween: Tween
 var _mouse_capture_gen := 0
 var _route_highlight: StringName = &"left"
@@ -93,9 +97,10 @@ func _ready() -> void:
 	weapon.reloading_changed.connect(_on_reloading_changed)
 	crafting_table.opened.connect(_open_bench)
 	bench_screen.closed.connect(_on_bench_closed)
-	bench_screen.bind(player, usables, player.gun_stats, weapon, player.weapon_inventory)
+	bench_screen.bind(player, usables, player.gun_stats, weapon)
 	request_board.opened.connect(_open_skill_tree)
 	skill_tree_hud.closed.connect(_on_skill_tree_closed)
+	class_board.opened.connect(_open_class_panel)
 	GameSession.phase_changed.connect(_on_phase_changed)
 	GameSession.van_health_changed.connect(_on_health_changed)
 	GameSession.player_health_changed.connect(_on_player_health_changed)
@@ -124,20 +129,17 @@ func _ready() -> void:
 	_boon_rewards.bind(player, _boon_choice)
 	_dialogue_hud = _DialogueHud.new()
 	$HUD.add_child(_dialogue_hud)
+	_class_panel = _ClassPanel.new()
+	$HUD.add_child(_class_panel)
+	_class_panel.closed.connect(_on_class_panel_closed)
 	driver_talk_panel.hide()
 	_refresh_driver_talk_options()
 	if driver_shout_hud:
 		driver_shout_hud.boost_pressed.connect(_on_hud_boost_pressed)
 		driver_shout_hud.slow_pressed.connect(_on_hud_slow_pressed)
-	_setup_weapon_slots_hud()
 	_bind_route_choice_buttons()
 	_bind_pause_menu()
 	_make_combat_hud_mouse_passthrough($HUD)
-	if player.weapon_inventory:
-		player.weapon_inventory.loadout_changed.connect(_on_weapon_loadout_changed)
-		player.weapon_inventory.active_weapon_changed.connect(
-			func(_i: int, _w) -> void: _on_weapon_loadout_changed()
-		)
 	set_process(false)
 
 
@@ -147,24 +149,6 @@ func _exit_tree() -> void:
 	var tree := get_tree()
 	if tree and tree.paused:
 		tree.paused = false
-
-
-func _setup_weapon_slots_hud() -> void:
-	_weapon_slots_hud = WeaponSlotsHud.new()
-	var top_left := $HUD/TopLeft as VBoxContainer
-	if top_left and reload_label:
-		top_left.add_child(_weapon_slots_hud)
-		top_left.move_child(_weapon_slots_hud, reload_label.get_index())
-	else:
-		$HUD.add_child(_weapon_slots_hud)
-	if player.weapon_inventory:
-		_weapon_slots_hud.bind(player.weapon_inventory)
-
-
-func _on_weapon_loadout_changed() -> void:
-	## Ammo label always; reload bar is owned by reloading_changed (don't kill its tween).
-	_on_ammo_changed(weapon.get_current_ammo(), weapon.get_mag_size())
-	reload_label.visible = weapon.is_reloading()
 
 
 func _process(_delta: float) -> void:
@@ -186,10 +170,8 @@ func _on_shot_fired(hit: bool) -> void:
 
 func _on_ammo_changed(current: int, max_ammo: int) -> void:
 	var name_prefix := "AMMO"
-	if player and player.weapon_inventory:
-		var active := player.weapon_inventory.get_active() as WeaponInstance
-		if active:
-			name_prefix = active.family_code()
+	if player and player.current_class:
+		name_prefix = player.current_class.family_code()
 	ammo_label.text = "%s  %d / %d" % [name_prefix, current, max_ammo]
 	## While reloading, the chamber bar tween owns ammo_bar — don't snap/kill it.
 	if weapon.is_reloading():
@@ -305,6 +287,10 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 			GameSession.RunPhase.BOSS_PICK,
 		]:
 			skill_tree_hud.close()
+		return
+	if _class_panel and _class_panel.visible:
+		if next_phase != GameSession.RunPhase.IDLE:
+			_class_panel.close()
 		return
 	_apply_phase_mouse_mode(next_phase)
 
@@ -658,13 +644,8 @@ func has_modal_free_cursor() -> bool:
 		return true
 	if game_over_panel and game_over_panel.visible:
 		return true
-	return _has_weapon_replace_prompt()
-
-
-func _has_weapon_replace_prompt() -> bool:
-	for node in get_tree().get_nodes_in_group(&"weapon_replace_prompt"):
-		if is_instance_valid(node):
-			return true
+	if _class_panel and _class_panel.visible:
+		return true
 	return false
 
 
@@ -691,7 +672,7 @@ func _try_open_pause() -> bool:
 		return false
 	if _debug_console and _debug_console.visible:
 		return false
-	if _has_weapon_replace_prompt():
+	if _class_panel and _class_panel.visible:
 		return false
 	$HUD.move_child(pause_menu, -1)
 	pause_menu.open()
@@ -721,6 +702,7 @@ func _is_interactive_hud(node: Node) -> bool:
 		or node == _dialogue_hud
 		or node == _act_reveal
 		or node == _boon_choice
+		or node == _class_panel
 	)
 
 
@@ -784,6 +766,8 @@ func _open_bench() -> void:
 		close_driver_talk()
 	if skill_tree_hud and skill_tree_hud.visible:
 		skill_tree_hud.close()
+	if _class_panel and _class_panel.visible:
+		_class_panel.close()
 	bench_screen.open()
 	refresh_mouse_mode()
 
@@ -797,6 +781,8 @@ func _open_skill_tree() -> void:
 		close_driver_talk()
 	if bench_screen.visible:
 		bench_screen.close()
+	if _class_panel and _class_panel.visible:
+		_class_panel.close()
 	skill_tree_hud.open()
 	refresh_mouse_mode()
 
@@ -805,11 +791,30 @@ func _on_skill_tree_closed() -> void:
 	refresh_mouse_mode()
 
 
+func _open_class_panel() -> void:
+	if GameSession.phase != GameSession.RunPhase.IDLE:
+		return
+	if _driver_talk_open:
+		close_driver_talk()
+	if bench_screen.visible:
+		bench_screen.close()
+	if skill_tree_hud and skill_tree_hud.visible:
+		skill_tree_hud.close()
+	_class_panel.open()
+	refresh_mouse_mode()
+
+
+func _on_class_panel_closed() -> void:
+	refresh_mouse_mode()
+
+
 func _on_debug_console_opened() -> void:
 	if bench_screen.visible:
 		bench_screen.close()
 	if skill_tree_hud and skill_tree_hud.visible:
 		skill_tree_hud.close()
+	if _class_panel and _class_panel.visible:
+		_class_panel.close()
 	if _driver_talk_open:
 		close_driver_talk()
 	refresh_mouse_mode()
@@ -1089,6 +1094,8 @@ func _driver_shout_keys_blocked() -> bool:
 	if _boon_choice and _boon_choice.visible:
 		return true
 	if game_over_panel and game_over_panel.visible:
+		return true
+	if _class_panel and _class_panel.visible:
 		return true
 	return false
 

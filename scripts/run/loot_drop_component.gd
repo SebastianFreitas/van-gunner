@@ -24,9 +24,6 @@ extends Node
 @export var coin_amount_min := 1
 @export var coin_amount_max := 3
 
-## Extra weapon drop chance when the owning enemy is elite.
-@export var treat_as_elite := false
-
 ## Random horizontal offset so simultaneous drops don't perfectly overlap.
 @export var scatter_radius := 0.55
 
@@ -52,25 +49,7 @@ func spawn_drops(world_position: Vector3, container: Node) -> void:
 		var coin := _rolled_coin_item()
 		if coin:
 			catches.append(LootCatch.from_item(coin))
-	var weapon := _rolled_weapon()
-	if weapon:
-		catches.append(LootCatch.from_weapon(weapon))
 	LootCollector.deliver_catches(catches, world_position, container, get_parent())
-
-
-func _rolled_weapon() -> WeaponInstance:
-	var chance := GameBalance.WEAPON_DROP_CHANCE_BASE
-	var elite := treat_as_elite
-	var host := get_parent()
-	if host != null and "is_elite" in host:
-		elite = bool(host.is_elite)
-	if elite:
-		chance += GameBalance.WEAPON_DROP_CHANCE_ELITE_BONUS
-	## Roll 1..100 as in the design doc.
-	if randi_range(1, 100) > chance:
-		return null
-	var level := maxi(GameSession.route_step, 1)
-	return WeaponGenerator.create_weapon(level)
 
 
 func _rolled_coin_item() -> ItemDefinition:

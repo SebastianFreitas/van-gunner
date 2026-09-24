@@ -11,6 +11,7 @@ signal enemy_defeated(enemy: Node)
 signal session_loaded
 signal chill_mode_changed(enabled: bool)
 signal area_changed(area: ItemDefinition.BoonPool)
+signal class_changed(class_id: StringName)
 
 enum RunPhase {
 	IDLE,
@@ -53,8 +54,8 @@ var phase := RunPhase.IDLE
 var coins := 0
 var chill_mode := false
 var current_area: ItemDefinition.BoonPool = ItemDefinition.BoonPool.GENERAL
-## Pending weapon inventory restore applied when the player boots after load.
-var pending_weapons_save = null
+## Class for this run. Copied from the profile on NEW, restored on CONTINUE.
+var class_id: StringName = &"basic"
 ## Per-vital current HP (string id → float). Applied when VanVital nodes bind.
 var pending_vital_health: Dictionary = {}
 ## Per-vital max HP from CONTINUE. Missing on new runs so meta bonuses apply.
@@ -119,7 +120,7 @@ func start_new(slot: int) -> void:
 	LootCollector.clear()
 	coins = 0
 	current_area = ItemDefinition.BoonPool.GENERAL
-	pending_weapons_save = null
+	class_id = ClassCatalog.resolve_id(MetaProgression.equipped_class_id)
 	pending_vital_health = {}
 	pending_vital_max = {}
 	boss_parts_granted_this_run = 0
@@ -152,6 +153,7 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 		float(data.get("player_health", player_max_health)), 0.0, player_max_health
 	)
 	coins = maxi(0, int(data.get("coins", 0)))
+	class_id = ClassCatalog.resolve_id(StringName(str(data.get("class_id", "basic"))))
 	current_area = _area_from_save(int(data.get("current_area", ItemDefinition.BoonPool.GENERAL)))
 	run_act = maxi(0, int(data.get("run_act", 0)))
 	act_cards_total = maxi(0, int(data.get("act_cards_total", 0)))
@@ -189,8 +191,16 @@ func load_from_data(slot: int, data: Dictionary) -> void:
 	wave_changed.emit(wave_count)
 	coins_changed.emit(coins)
 	phase_changed.emit(phase)
-	pending_weapons_save = data.get("weapons", null)
 	session_loaded.emit()
+
+
+## Equips a class for this run and remembers it for the next one. The class board
+## only offers this in IDLE; the debug console calls it from any phase.
+func equip_class(next_class_id: StringName) -> void:
+	class_id = ClassCatalog.resolve_id(next_class_id)
+	MetaProgression.set_equipped_class(class_id)
+	class_changed.emit(class_id)
+	SaveManager.save_active_session()
 
 
 func begin_run() -> void:
@@ -861,15 +871,6 @@ func _most_damaged_vital() -> Node:
 
 
 func to_save_data() -> Dictionary:
-	var weapons = null
-	var tree := get_tree()
-	if tree:
-		var player := tree.get_first_node_in_group(&"player")
-		if player:
-			## Untyped to avoid class_name cycle with WeaponInventory.
-			var inv = player.get_node_or_null("WeaponInventory")
-			if inv != null and inv.has_method("to_save_dict"):
-				weapons = inv.to_save_dict()
 	var card_strings: Array[String] = []
 	for card_id in act_cards:
 		card_strings.append(String(card_id))
@@ -905,6 +906,6 @@ func to_save_data() -> Dictionary:
 		"pending_boon_card_id": String(pending_boon_card_id),
 		"pending_danger": pending_danger,
 		"pending_narrow_fork": pending_narrow_fork,
-		"weapons": weapons,
+		"class_id": String(class_id),
 		"saved_at": Time.get_datetime_string_from_system(),
 	}

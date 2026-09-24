@@ -128,71 +128,8 @@ func set_ammo_state(current: int, reloading: bool = false) -> void:
 	reloading_changed.emit(_is_reloading)
 
 
-func apply_weapon_ammo_from_instance(instance: WeaponInstance) -> void:
-	## Drop any in-flight reload completion from the previous gun.
-	_invalidate_reload_waits()
-	if viewmodel:
-		viewmodel.snap_rest()
-	if instance == null:
-		_is_reloading = false
-		_reload_ends_at_msec = 0
-		_refill_magazine()
-		reloading_changed.emit(false)
-		return
-	var mag := _get_stats().mag_size
-	if instance.current_ammo < 0:
-		_current_ammo = mag
-	else:
-		_current_ammo = mini(instance.current_ammo, mag)
-
-	if instance.is_reloading:
-		if instance.reload_ends_at_msec > Time.get_ticks_msec():
-			_resume_reload(instance)
-			return
-		## Reload finished while this gun was holstered.
-		instance.is_reloading = false
-		instance.reload_ends_at_msec = 0
-		_current_ammo = mag
-		instance.current_ammo = mag
-
-	_is_reloading = false
-	_reload_ends_at_msec = 0
-	ammo_changed.emit(_current_ammo, mag)
-	reloading_changed.emit(false)
-
-
-func capture_ammo_to_instance(instance: WeaponInstance) -> void:
-	if instance == null:
-		return
-	instance.current_ammo = _current_ammo
-	instance.is_reloading = _is_reloading
-	if _is_reloading:
-		instance.reload_ends_at_msec = _reload_ends_at_msec
-	else:
-		instance.reload_ends_at_msec = 0
-
-
 func _invalidate_reload_waits() -> void:
 	_reload_gen += 1
-
-
-func _resume_reload(instance: WeaponInstance) -> void:
-	_is_reloading = true
-	_reload_ends_at_msec = instance.reload_ends_at_msec
-	instance.is_reloading = true
-	instance.reload_ends_at_msec = _reload_ends_at_msec
-	_reload_gen += 1
-	var token := _reload_gen
-	ammo_changed.emit(_current_ammo, _get_stats().mag_size)
-	reloading_changed.emit(true)
-	var remaining_ms := maxi(_reload_ends_at_msec - Time.get_ticks_msec(), 0)
-	var remaining_sec := remaining_ms / 1000.0
-	if viewmodel:
-		viewmodel.play_reload(remaining_sec)
-	await get_tree().create_timer(remaining_sec).timeout
-	if not _reload_wait_still_valid(token):
-		return
-	_complete_reload(instance)
 
 
 func _track_projectile_feedback(projectile: Projectile) -> void:
@@ -321,13 +258,6 @@ func _start_reload() -> void:
 	_is_reloading = true
 	var duration := stats.reload_speed
 	_reload_ends_at_msec = Time.get_ticks_msec() + roundi(duration * 1000.0)
-	var inst: WeaponInstance = null
-	if _stats_controller:
-		inst = _stats_controller.get_weapon_instance()
-		if inst:
-			inst.is_reloading = true
-			inst.reload_ends_at_msec = _reload_ends_at_msec
-			inst.current_ammo = _current_ammo
 	_reload_gen += 1
 	var token := _reload_gen
 	reloading_changed.emit(true)
@@ -336,24 +266,19 @@ func _start_reload() -> void:
 	await get_tree().create_timer(duration).timeout
 	if not _reload_wait_still_valid(token):
 		return
-	_complete_reload(inst)
+	_complete_reload()
 
 
 func _reload_wait_still_valid(token: int) -> bool:
 	return is_inside_tree() and token == _reload_gen
 
 
-func _complete_reload(instance: WeaponInstance) -> void:
+func _complete_reload() -> void:
 	_is_reloading = false
 	_reload_ends_at_msec = 0
-	if instance:
-		instance.is_reloading = false
-		instance.reload_ends_at_msec = 0
 	if viewmodel:
 		viewmodel.snap_rest()
 	_refill_magazine()
-	if instance:
-		instance.current_ammo = _current_ammo
 	reloading_changed.emit(false)
 
 
@@ -362,16 +287,19 @@ func _refill_magazine() -> void:
 	ammo_changed.emit(_current_ammo, _current_ammo)
 
 
-func apply_weapon_visual(instance: WeaponInstance) -> void:
-	var family := WeaponDefinition.Family.BASIC
-	if instance:
-		var def := instance.get_definition()
-		if def:
-			family = def.family
+## Class swap: drop any reload in flight, rebuild the arm cannon and start full.
+func apply_class(def: ClassDefinition) -> void:
+	_invalidate_reload_waits()
+	_is_reloading = false
+	_reload_ends_at_msec = 0
+	var family := def.family if def else ClassDefinition.Family.BASIC
 	if viewmodel:
+		viewmodel.snap_rest()
 		muzzle_offset = Vector3(0.0, 0.0, viewmodel.apply_family(family))
 	if muzzle_flash:
 		muzzle_flash.position = muzzle_offset
+	_refill_magazine()
+	reloading_changed.emit(false)
 
 
 func _on_stats_changed() -> void:

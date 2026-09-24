@@ -44,6 +44,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/skill_tree_hud.tscn" id="40"]
 [ext_resource type="Script" uid="uid://d8k2nv4cabinav" path="res://scripts/run/cabin_nav.gd" id="41"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="42"]
+[ext_resource type="PackedScene" path="res://scenes/van/class_board.tscn" id="43"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -1115,6 +1116,9 @@ prompt = "Cab relay"
 
 [node name="RequestBoard" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1411434472 instance=ExtResource("39")]
 transform = Transform3D(8.742278e-08, 0, -1, 0, 1, 0, 1, 0, 8.742278e-08, -1.62, 0.95, -4.552016)
+
+[node name="ClassBoard" parent="TravelPath/VanFollow/VanRig/Interior/Props" instance=ExtResource("43")]
+transform = Transform3D(8.742278e-08, 0, -1, 0, 1, 0, 1, 0, 8.742278e-08, 1.62, 0.95, -4.552016)
 
 [node name="RoomZones" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1307820521]
 

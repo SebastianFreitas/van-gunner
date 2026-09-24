@@ -40,11 +40,11 @@ var _coast_duration := 0.0
 func _ready() -> void:
 	_rest_rotation = _rig.rotation
 	if _family < 0:
-		apply_family(WeaponDefinition.Family.BASIC)
+		apply_family(ClassDefinition.Family.BASIC)
 	_apply()
 
 
-func apply_family(family: WeaponDefinition.Family) -> float:
+func apply_family(family: ClassDefinition.Family) -> float:
 	if family == _family and _rig.get_child_count() > 0:
 		return _muzzle_z
 	_family = family

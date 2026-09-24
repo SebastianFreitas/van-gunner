@@ -30,6 +30,9 @@ var pending_ids: Array[StringName] = []
 var master_volume := 0.7
 var music_volume := 1.0
 var sfx_volume := 1.0
+## Class picked at the board; persists across runs. Read with a default like the
+## volumes so old profiles keep their schematic (no SAVE_VERSION bump).
+var equipped_class_id: StringName = &"basic"
 
 
 func _ready() -> void:
@@ -163,6 +166,11 @@ func set_sfx_volume(linear: float) -> void:
 	save_profile()
 
 
+func set_equipped_class(class_id: StringName) -> void:
+	equipped_class_id = class_id if class_id != &"" else &"basic"
+	save_profile()
+
+
 func apply_audio_settings() -> void:
 	_apply_bus_volume(BUS_MASTER, master_volume)
 	_apply_bus_volume(BUS_MUSIC, music_volume)
@@ -198,6 +206,9 @@ func load_profile() -> void:
 	master_volume = clampf(float(data.get("master_volume", 0.7)), 0.0, 1.0)
 	music_volume = clampf(float(data.get("music_volume", 1.0)), 0.0, 1.0)
 	sfx_volume = clampf(float(data.get("sfx_volume", 1.0)), 0.0, 1.0)
+	equipped_class_id = StringName(str(data.get("equipped_class_id", "basic")))
+	if equipped_class_id == &"":
+		equipped_class_id = &"basic"
 	if file_version == 1:
 		var old_level := maxi(0, int(data.get("van_speed_level", 0)))
 		_migrate_v1_speed(old_level)
@@ -246,6 +257,7 @@ func _profile_dict() -> Dictionary:
 		"master_volume": master_volume,
 		"music_volume": music_volume,
 		"sfx_volume": sfx_volume,
+		"equipped_class_id": String(equipped_class_id),
 	}
 
 

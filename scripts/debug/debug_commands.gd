@@ -41,7 +41,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 				matches = _filter_prefix(["open", "close", "toggle"], "")
 			"list":
 				matches = _filter_prefix(
-					["boons", "items", "commands", "weapons", "cards", "stops", "sounds", "tree"], ""
+					["boons", "items", "commands", "classes", "cards", "stops", "sounds", "tree"], ""
 				)
 			"sound":
 				matches = _filter_prefix(_sound_id_strings(), "")
@@ -49,14 +49,14 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 				matches = _filter_prefix(_card_id_strings(), "")
 			"stop":
 				matches = _filter_prefix(_stop_force_tokens(), "")
-			"give_weapon":
-				matches = _filter_prefix(WeaponCatalog.list_definition_ids(), "")
+			"class":
+				matches = _filter_prefix(_class_id_strings(), "")
 			_:
 				matches = []
 	elif parts[0] == "give" or parts[0] == "spawn":
 		matches = _filter_prefix(ItemRegistry.list_ids(), partial)
-	elif parts[0] == "give_weapon":
-		matches = _filter_prefix(WeaponCatalog.list_definition_ids(), partial)
+	elif parts[0] == "class":
+		matches = _filter_prefix(_class_id_strings(), partial)
 	elif parts[0] == "boonpool":
 		matches = _filter_prefix(_boon_pool_names(), partial)
 	elif parts[0] == "card":
@@ -123,9 +123,7 @@ func _register_commands() -> void:
 		"boss": _cmd_boss,
 		"reardoor": _cmd_reardoor,
 		"sidedoor": _cmd_sidedoor,
-		"give_weapon": _cmd_give_weapon,
-		"give_random_weapon": _cmd_give_random_weapon,
-		"force_a1": _cmd_force_a1,
+		"class": _cmd_class,
 		"sound": _cmd_sound,
 		"parts": _cmd_parts,
 		"tree_reset": _cmd_tree_reset,
@@ -160,10 +158,8 @@ func _cmd_help(_args: Array) -> String:
 		+ "  phase          print current run phase\n"
 		+ "  reardoor [open|close|toggle]  swing the van rear doors\n"
 		+ "  sidedoor [open|close|toggle]  slide the van side doors\n"
-		+ "  give_weapon <id> [level]  equip generated gun (e.g. give_weapon shotgun)\n"
-		+ "  give_random_weapon [level]  equip a random generated gun\n"
-		+ "  force_a1         drop a random A1 gun near the player\n"
-		+ "  list weapons [q] browse weapon definition ids\n"
+		+ "  class [id]      print the class, or equip one in any phase (e.g. class sniper)\n"
+		+ "  list classes [q] browse class ids\n"
 		+ "  list sounds [q] browse SoundCue ids\n"
 		+ "  list tree [q]   browse skill-tree node ids\n"
 		+ "  sound <cue>     play a cue (audition without a run)\n"
@@ -307,67 +303,22 @@ func _cmd_boonpool(args: Array) -> String:
 	return "Rolled %s from %s pool." % [item.display_name, pool_name]
 
 
-func _cmd_give_weapon(args: Array) -> String:
+func _cmd_class(args: Array) -> String:
+	var current := ClassCatalog.load_or_basic(GameSession.class_id)
+	var current_name := current.display_name if current else String(GameSession.class_id)
 	if args.is_empty():
-		return "Usage: give_weapon <definition_id> [level]"
-	var def_id := StringName(str(args[0]))
-	if WeaponCatalog.load_definition(def_id) == null:
-		return "Unknown weapon: %s  (try list weapons)" % def_id
-	var level: int = int(args[1]) if args.size() > 1 else maxi(GameSession.route_step, 1)
-	var force_mods := 0 if def_id == &"basic" else -1
-	var inst := WeaponGenerator.create_weapon(level, def_id, force_mods)
-	return _deliver_weapon(inst)
-
-
-func _cmd_give_random_weapon(args: Array) -> String:
-	var level: int = int(args[0]) if not args.is_empty() else maxi(GameSession.route_step, 1)
-	var inst := WeaponGenerator.create_weapon(level)
-	return _deliver_weapon(inst)
-
-
-func _deliver_weapon(inst: WeaponInstance) -> String:
-	var player := _find_player()
-	if not player:
-		return "Player not found."
-	var inventory := player.get_node_or_null("WeaponInventory") as WeaponInventory
-	if inventory == null:
-		player.set_meta(&"debug_pending_weapon", inst)
-		return "Generated %s (uid %d, %d mods) — inventory not ready; stashed on player meta." % [
-			inst.display_name(), inst.uid, inst.mods.size()
-		]
-	var result := inventory.try_add(inst)
-	if result == WeaponInventory.AddResult.STORED:
-		return "Equipped %s (%d mods)." % [inst.display_name(), inst.mods.size()]
-	var old := inventory.replace_slot(inventory.active_index, inst)
-	var note := ""
-	if old:
-		note = " Replaced %s." % old.display_name()
-	return "Equipped %s (%d mods).%s" % [inst.display_name(), inst.mods.size(), note]
-
-
-func _cmd_force_a1(_args: Array) -> String:
-	var player := _find_player()
-	if not player:
-		return "Player not found."
-	var ids: Array[StringName] = [
-		&"basic_a1", &"shotgun_a1", &"machinegun_a1", &"sniper_a1",
-		&"basic_a1_fd", &"shotgun_a1_cd", &"machinegun_a1_pd", &"sniper_a1_fd",
-	]
-	var def_id: StringName = ids[randi() % ids.size()]
-	var level := maxi(GameSession.route_step, 1)
-	var inst := WeaponGenerator.create_weapon(level, def_id, -1)
-	var container: Node = player.get_parent()
-	WeaponPickup.spawn_at(
-		inst,
-		player.global_position + (-player.global_transform.basis.z) * 1.4 + Vector3(0, 0.5, 0),
-		container
-	)
-	return "Dropped %s (%d mods) nearby." % [inst.display_name(), inst.mods.size()]
+		return "Class: %s  (usage: class <id>, try list classes)" % current_name
+	var class_id := StringName(str(args[0]).to_lower())
+	var def := ClassCatalog.load_by_id(class_id)
+	if def == null:
+		return "Unknown class: %s  (try list classes)" % class_id
+	GameSession.equip_class(class_id)
+	return "Equipped %s." % def.display_name
 
 
 func _cmd_list(args: Array) -> String:
 	if args.is_empty():
-		return "Usage: list boons|items|commands|weapons|cards|stops|sounds|tree [filter]"
+		return "Usage: list boons|items|commands|classes|cards|stops|sounds|tree [filter]"
 	var kind: String = str(args[0]).to_lower()
 	var filter_text := " ".join(args.slice(1))
 	match kind:
@@ -383,8 +334,8 @@ func _cmd_list(args: Array) -> String:
 			)
 		"items":
 			return _format_item_list(ItemRegistry.list_entries(-1, filter_text), "items", filter_text)
-		"weapons":
-			return _format_weapon_list(filter_text)
+		"classes":
+			return _format_class_list(filter_text)
 		"cards":
 			return _format_card_list(filter_text)
 		"stops":
@@ -395,7 +346,7 @@ func _cmd_list(args: Array) -> String:
 			return _format_tree_list(filter_text)
 		_:
 			return (
-				"Unknown list target: %s  (try boons, items, commands, weapons, cards, stops, sounds, tree)"
+				"Unknown list target: %s  (try boons, items, commands, classes, cards, stops, sounds, tree)"
 				% kind
 			)
 
@@ -539,25 +490,30 @@ func _card_id_strings() -> Array[String]:
 	return out
 
 
-func _format_weapon_list(filter_text: String) -> String:
+func _format_class_list(filter_text: String) -> String:
 	var needle := filter_text.strip_edges().to_lower()
 	var lines: PackedStringArray = PackedStringArray()
-	var count := 0
-	for id in WeaponCatalog.list_definition_ids():
+	for def in ClassCatalog.list_all():
+		var id := String(def.id)
 		if not needle.is_empty() and not id.to_lower().contains(needle):
 			continue
-		var def := WeaponCatalog.load_definition(StringName(id))
-		var weapon_name := def.display_name if def else id
-		lines.append("  %s  —  %s" % [id, weapon_name])
-		count += 1
-	if count == 0:
+		var tag := "  (equipped)" if def.id == GameSession.class_id else ""
+		lines.append("  %s  —  %s%s" % [id, def.display_name, tag])
+	if lines.is_empty():
 		if filter_text.is_empty():
-			return "No weapons found."
-		return "No weapons match '%s'." % filter_text
-	var header := "%d weapons" % count
+			return "No classes found."
+		return "No classes match '%s'." % filter_text
+	var header := "%d classes" % lines.size()
 	if not filter_text.is_empty():
 		header += " matching '%s'" % filter_text
 	return header + ":\n" + "\n".join(lines)
+
+
+func _class_id_strings() -> Array[String]:
+	var out: Array[String] = []
+	for class_id in ClassCatalog.list_ids():
+		out.append(String(class_id))
+	return out
 
 
 func _cmd_sound(args: Array) -> String:

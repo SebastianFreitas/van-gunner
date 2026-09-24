@@ -12,15 +12,15 @@ static var _accent: StandardMaterial3D
 static var _bore: StandardMaterial3D
 
 
-static func build(parent: Node3D, family: WeaponDefinition.Family) -> float:
+static func build(parent: Node3D, family: ClassDefinition.Family) -> float:
 	_clear(parent)
 	var muzzle_z := REAR_Z
 	match family:
-		WeaponDefinition.Family.SHOTGUN:
+		ClassDefinition.Family.SHOTGUN:
 			muzzle_z = _build_shotgun(parent)
-		WeaponDefinition.Family.SNIPER:
+		ClassDefinition.Family.SNIPER:
 			muzzle_z = _build_sniper(parent)
-		WeaponDefinition.Family.MACHINEGUN:
+		ClassDefinition.Family.MACHINEGUN:
 			muzzle_z = _build_machinegun(parent)
 		_:
 			muzzle_z = _build_basic(parent)

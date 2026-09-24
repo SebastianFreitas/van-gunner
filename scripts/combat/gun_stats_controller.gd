@@ -8,7 +8,7 @@ signal stats_changed
 var _modifiers: Array[StatModifier] = []
 var _effective_stats: GunStats
 var _traits: BoonTraits
-var _weapon_instance: WeaponInstance
+var _class_def: ClassDefinition
 
 
 func _ready() -> void:
@@ -18,13 +18,13 @@ func _ready() -> void:
 	_rebuild()
 
 
-func set_weapon_instance(instance: WeaponInstance) -> void:
-	_weapon_instance = instance
+func set_class_definition(def: ClassDefinition) -> void:
+	_class_def = def
 	_rebuild()
 
 
-func get_weapon_instance() -> WeaponInstance:
-	return _weapon_instance
+func get_class_definition() -> ClassDefinition:
+	return _class_def
 
 
 func add_modifier(modifier: StatModifier) -> void:
@@ -43,11 +43,31 @@ func get_stats() -> GunStats:
 	return _effective_stats
 
 
+## GameBalance floor, then the class identity. Boons and stims come after, in
+## _rebuild. Static so the class panel can show base numbers without a player.
+static func build_class_stats(def: ClassDefinition) -> GunStats:
+	var stats := GunStats.new()
+	stats.damage_per_shot = GameBalance.BASE_DAMAGE_PER_SHOT * def.damage_mult
+	stats.fire_rate = GameBalance.BASE_FIRE_RATE * def.fire_rate_mult
+	stats.bullet_weight = 0.35
+	stats.aim_range = 80.0
+	stats.explosion_radius = 1.8
+	stats.bounce_speed_retention = 0.6
+	stats.bounce_damage_retention = 0.8
+	stats.bullet_speed = def.bullet_speed
+	stats.bullet_size = def.bullet_size
+	stats.max_bounces = def.max_bounces
+	stats.mag_size = def.base_mag_size
+	stats.reload_speed = def.base_reload_seconds
+	stats.pellets_per_shot = maxi(def.pellets_per_shot, 1)
+	stats.pellet_spread_degrees = maxf(def.pellet_spread_degrees, 0.0)
+	return stats
+
+
 func _rebuild() -> void:
 	var stats: GunStats
-	if _weapon_instance:
-		## Balance floor + definition identity + weapon mods, then boons/temp mods.
-		stats = WeaponStatsBuilder.build(_weapon_instance)
+	if _class_def:
+		stats = build_class_stats(_class_def)
 	else:
 		stats = base_stats.duplicate_stats() if base_stats else GunStats.new()
 		stats.fire_rate = GameBalance.BASE_FIRE_RATE

@@ -6,7 +6,6 @@ extends Node
 signal queue_changed
 
 const _PICKUP_SCENE := preload("res://scenes/items/pickup.tscn")
-const _WEAPON_PICKUP_SCENE := preload("res://scenes/items/weapon_pickup.tscn")
 const _PLAYER_OUTSIDE_EPS := 0.15
 const _POPUP_RISE := 0.85
 const _POPUP_SECS := 0.7
@@ -121,12 +120,7 @@ func absorb_world_pickup(pickup: Pickup) -> void:
 	if pickup == null or pickup._used:
 		return
 	var catch: LootCatch = null
-	if pickup is WeaponPickup:
-		var gun := pickup as WeaponPickup
-		if gun.weapon_instance:
-			catch = LootCatch.from_weapon(gun.weapon_instance)
-			gun.weapon_instance = null
-	elif pickup.item:
+	if pickup.item:
 		catch = LootCatch.from_item(pickup.item)
 	pickup._used = true
 	pickup.set_deferred("monitoring", false)
@@ -163,14 +157,6 @@ func _spawn_catch_in_world(
 		var angle := randf() * TAU
 		var radius := randf() * 0.4
 		offset += Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
-	if catch.weapon:
-		var pickup = _WEAPON_PICKUP_SCENE.instantiate()
-		if pickup.has_method("setup"):
-			pickup.call("setup", catch.weapon)
-		container.add_child(pickup)
-		if pickup is Node3D:
-			(pickup as Node3D).global_position = world_position + offset
-		return
 	if catch.item == null:
 		return
 	var item_pickup := _PICKUP_SCENE.instantiate() as Pickup
