@@ -10,6 +10,9 @@ extends Node3D
 ##   - Full footprint: span_x × span_z (default 18 × 20)
 ##   - Walls sit at x = ±span_x/2
 
+const RoadFloorDetails = preload("res://scripts/travel/road_floor_details.gd")
+const RoadFloorMaterials = preload("res://scripts/travel/road_floor_materials.gd")
+
 @export var span_x := 18.0
 @export var span_z := 20.0
 @export var road_surface_y := -0.2
@@ -108,10 +111,10 @@ func spawn_corner_return(
 	var ex := in_x + out
 	var ez := in_z + out
 
-	var walk_mat := sidewalk_material if sidewalk_material else _sidewalk_mat(
+	var walk_mat := sidewalk_material if sidewalk_material else RoadFloorMaterials.sidewalk_mat(
 		Vector2(maxf(0.5, in_x), maxf(0.5, in_z))
 	)
-	var curb_mat := curb_material if curb_material else _std(
+	var curb_mat := curb_material if curb_material else RoadFloorMaterials.std(
 		Color(0.3, 0.29, 0.265, 1.0), 0.9, 0.02
 	)
 
@@ -190,20 +193,20 @@ func _build() -> void:
 	var carriage_width := maxf(0.5, right_bound - left_bound)
 	var carriage_center := (left_bound + right_bound) * 0.5
 
-	var road_mat := road_material if road_material else _asphalt_mat(
+	var road_mat := road_material if road_material else RoadFloorMaterials.asphalt_mat(
 		Vector2(carriage_width, span_z)
 	)
-	var walk_mat := sidewalk_material if sidewalk_material else _sidewalk_mat(
+	var walk_mat := sidewalk_material if sidewalk_material else RoadFloorMaterials.sidewalk_mat(
 		Vector2(sidewalk_width, span_z)
 	)
-	var curb_mat := curb_material if curb_material else _std(
+	var curb_mat := curb_material if curb_material else RoadFloorMaterials.std(
 		Color(0.3, 0.29, 0.265, 1.0), 0.9, 0.02
 	)
-	var metal_mat := metal_material if metal_material else _std(
+	var metal_mat := metal_material if metal_material else RoadFloorMaterials.std(
 		Color(0.1, 0.105, 0.1, 1.0), 0.62, 0.72
 	)
-	var grate_mat := _std(Color(0.05, 0.055, 0.05, 1.0), 0.5, 0.8)
-	var dark_mat := _std(Color(0.04, 0.042, 0.038, 1.0), 0.96, 0.08)
+	var grate_mat := RoadFloorMaterials.std(Color(0.05, 0.055, 0.05, 1.0), 0.5, 0.8)
+	var dark_mat := RoadFloorMaterials.std(Color(0.04, 0.042, 0.038, 1.0), 0.96, 0.08)
 
 	# --- Primary slabs -------------------------------------------------------
 	_add_box_centered(
@@ -276,228 +279,11 @@ func _build() -> void:
 			false
 		)
 
-	_build_expansion_joints(carriage_width, carriage_center, dark_mat)
-	_build_drains(gutter_inner, grate_mat, metal_mat, dark_mat)
-	_build_manholes(carriage_width, carriage_center, metal_mat, dark_mat)
-	_build_sidewalk_dressing(half_x, sidewalk_top, metal_mat, curb_mat, dark_mat)
-
-
-func _build_expansion_joints(
-	carriage_width: float,
-	carriage_center: float,
-	dark_mat: Material
-) -> void:
-	# Shallow transverse grooves across the carriageway every ~5m.
-	var spacing := 5.0
-	var joint_w := carriage_width - 0.3
-	var joint_d := 0.06
-	var joint_h := 0.02
-	var z := -span_z * 0.5 + spacing
-	var i := 0
-	while z < span_z * 0.5 - 1.0:
-		_add_box_centered(
-			"ExpansionJoint_%d" % i,
-			Vector3(joint_w, joint_h, joint_d),
-			Vector3(carriage_center, road_surface_y - joint_h * 0.35, z),
-			dark_mat,
-			false
-		)
-		z += spacing
-		i += 1
-
-
-func _build_drains(
-	gutter_inner: float,
-	grate_mat: Material,
-	metal_mat: Material,
-	dark_mat: Material
-) -> void:
-	if not sidewalk_left and not sidewalk_right:
-		return
-	var rng := RandomNumberGenerator.new()
-	rng.seed = _seed_value(17)
-	var spacing := 5.0
-	var z := -span_z * 0.5 + 2.5
-	var i := 0
-	while z < span_z * 0.5 - 1.5:
-		for side: float in [-1.0, 1.0]:
-			if side < 0.0 and not sidewalk_left:
-				continue
-			if side > 0.0 and not sidewalk_right:
-				continue
-			var gx := side * (gutter_inner + gutter_width * 0.5)
-			# Frame
-			_add_box_centered(
-				"DrainFrame_%d_%s" % [i, "L" if side < 0.0 else "R"],
-				Vector3(gutter_width * 0.92, 0.03, 0.55),
-				Vector3(gx, road_surface_y - gutter_depth + 0.01, z),
-				metal_mat,
-				false
-			)
-			# Grate insert
-			_add_box_centered(
-				"DrainGrate_%d_%s" % [i, "L" if side < 0.0 else "R"],
-				Vector3(gutter_width * 0.7, 0.025, 0.42),
-				Vector3(gx, road_surface_y - gutter_depth + 0.018, z),
-				grate_mat,
-				false
-			)
-			# Slots as thin dark bars
-			for slot in range(4):
-				var sz := z - 0.15 + slot * 0.1
-				_add_box_centered(
-					"DrainSlot_%d_%s_%d" % [i, "L" if side < 0.0 else "R", slot],
-					Vector3(gutter_width * 0.55, 0.02, 0.035),
-					Vector3(gx, road_surface_y - gutter_depth + 0.028, sz),
-					dark_mat,
-					false
-				)
-		z += spacing + rng.randf_range(-0.4, 0.4)
-		i += 1
-
-
-func _build_manholes(
-	carriage_width: float,
-	carriage_center: float,
-	metal_mat: Material,
-	dark_mat: Material
-) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = _seed_value(41)
-	var count := maxi(1, int(span_z / 10.0))
-	var half_w := carriage_width * 0.5
-	for i in count:
-		var mx := carriage_center + rng.randf_range(-half_w * 0.55, half_w * 0.55)
-		# Bias away from exact center so van path stays clean-ish.
-		var lateral := mx - carriage_center
-		if absf(lateral) < 0.9:
-			mx = carriage_center + 1.2 * signf(lateral if lateral != 0.0 else 1.0)
-		var mz := rng.randf_range(-span_z * 0.4, span_z * 0.4)
-		var size := rng.randf_range(0.55, 0.72)
-		# Recess well
-		_add_box_centered(
-			"ManholeWell_%d" % i,
-			Vector3(size, 0.04, size),
-			Vector3(mx, road_surface_y - 0.015, mz),
-			dark_mat,
-			false
-		)
-		# Lid
-		_add_box_centered(
-			"ManholeLid_%d" % i,
-			Vector3(size * 0.92, 0.03, size * 0.92),
-			Vector3(mx, road_surface_y + 0.005, mz),
-			metal_mat,
-			false
-		)
-		# Cross ribs on lid
-		_add_box_centered(
-			"ManholeRibX_%d" % i,
-			Vector3(size * 0.8, 0.02, 0.05),
-			Vector3(mx, road_surface_y + 0.02, mz),
-			_std(Color(0.18, 0.185, 0.175, 1.0), 0.5, 0.7),
-			false
-		)
-		_add_box_centered(
-			"ManholeRibZ_%d" % i,
-			Vector3(0.05, 0.02, size * 0.8),
-			Vector3(mx, road_surface_y + 0.02, mz),
-			_std(Color(0.18, 0.185, 0.175, 1.0), 0.5, 0.7),
-			false
-		)
-
-
-func _build_sidewalk_dressing(
-	half_x: float,
-	sidewalk_top: float,
-	metal_mat: Material,
-	curb_mat: Material,
-	dark_mat: Material
-) -> void:
-	if not sidewalk_left and not sidewalk_right:
-		return
-	var rng := RandomNumberGenerator.new()
-	rng.seed = _seed_value(73)
-	var walk_inner := half_x - sidewalk_width
-	var walk_mid := half_x - sidewalk_width * 0.5
-	var half_z := span_z * 0.5
-	var z_min := -half_z + maxf(0.0, sidewalk_trim_z_neg) + 0.4
-	var z_max := half_z - maxf(0.0, sidewalk_trim_z_pos) - 0.4
-
-	# Utility boxes against the wall line, sparse.
-	var z := z_min + span_z * 0.1
-	var i := 0
-	while z < z_max - span_z * 0.05:
-		for side: float in [-1.0, 1.0]:
-			if side < 0.0 and not sidewalk_left:
-				continue
-			if side > 0.0 and not sidewalk_right:
-				continue
-			if rng.randf() > 0.55:
-				continue
-			var bx := side * (half_x - 0.35)
-			var bw := rng.randf_range(0.35, 0.55)
-			var bh := rng.randf_range(0.55, 0.85)
-			var bd := rng.randf_range(0.28, 0.4)
-			_add_box_centered(
-				"UtilityBox_%d_%s" % [i, "L" if side < 0.0 else "R"],
-				Vector3(bw, bh, bd),
-				Vector3(bx, sidewalk_top + bh * 0.5, z + rng.randf_range(-0.3, 0.3)),
-				metal_mat,
-				false
-			)
-		z += rng.randf_range(4.5, 7.0)
-		i += 1
-
-	# Short bollards near curb, sparse along each side.
-	z = z_min + span_z * 0.05
-	i = 0
-	while z < z_max:
-		for side: float in [-1.0, 1.0]:
-			if side < 0.0 and not sidewalk_left:
-				continue
-			if side > 0.0 and not sidewalk_right:
-				continue
-			if rng.randf() > 0.4:
-				continue
-			var bx := side * (walk_inner + 0.28)
-			var h := 0.55
-			_add_box_centered(
-				"Bollard_%d_%s" % [i, "L" if side < 0.0 else "R"],
-				Vector3(0.14, h, 0.14),
-				Vector3(bx, sidewalk_top + h * 0.5, z),
-				curb_mat,
-				false
-			)
-			_add_box_centered(
-				"BollardCap_%d_%s" % [i, "L" if side < 0.0 else "R"],
-				Vector3(0.16, 0.04, 0.16),
-				Vector3(bx, sidewalk_top + h + 0.02, z),
-				metal_mat,
-				false
-			)
-		z += rng.randf_range(5.5, 8.0)
-		i += 1
-
-	# Sidewalk slab seams (visual only).
-	var seam_spacing := 1.2
-	var sz := z_min + seam_spacing * 0.5
-	i = 0
-	while sz < z_max:
-		for side: float in [-1.0, 1.0]:
-			if side < 0.0 and not sidewalk_left:
-				continue
-			if side > 0.0 and not sidewalk_right:
-				continue
-			_add_box_centered(
-				"WalkSeam_%d_%s" % [i, "L" if side < 0.0 else "R"],
-				Vector3(sidewalk_width * 0.92, 0.015, 0.04),
-				Vector3(side * walk_mid, sidewalk_top + 0.004, sz),
-				dark_mat,
-				false
-			)
-		sz += seam_spacing
-		i += 1
+	var details := RoadFloorDetails.new(self)
+	details.build_expansion_joints(carriage_width, carriage_center, dark_mat)
+	details.build_drains(gutter_inner, grate_mat, metal_mat, dark_mat)
+	details.build_manholes(carriage_width, carriage_center, metal_mat, dark_mat)
+	details.build_sidewalk_dressing(half_x, sidewalk_top, metal_mat, curb_mat, dark_mat)
 
 
 func _add_box_centered(
@@ -576,33 +362,3 @@ func set_sidewalk_end_trims(trim_z_pos: float, trim_z_neg: float) -> void:
 	sidewalk_trim_z_pos = want_pos
 	sidewalk_trim_z_neg = want_neg
 	rebuild()
-
-
-func _asphalt_mat(_surface_size_m: Vector2) -> ShaderMaterial:
-	var shader := load("res://scenes/corridor/asphalt_surface.gdshader") as Shader
-	var mat := ShaderMaterial.new()
-	mat.shader = shader
-	mat.set_shader_parameter("washout", 0.32)
-	mat.set_shader_parameter("trash", 1.0)
-	mat.set_shader_parameter("roughness_value", 0.94)
-	return mat
-
-
-func _sidewalk_mat(surface_size_m: Vector2) -> ShaderMaterial:
-	var shader := load("res://scenes/corridor/sidewalk_surface.gdshader") as Shader
-	var mat := ShaderMaterial.new()
-	mat.shader = shader
-	mat.set_shader_parameter("surface_size_m", surface_size_m)
-	mat.set_shader_parameter("slab_spacing_m", 1.2)
-	mat.set_shader_parameter("washout", 0.5)
-	mat.set_shader_parameter("trash", 0.65)
-	mat.set_shader_parameter("roughness_value", 0.92)
-	return mat
-
-
-func _std(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mat.roughness = roughness
-	mat.metallic = metallic
-	return mat
