@@ -10,12 +10,8 @@ signal closed
 
 const _SkillNodeDefinition := preload("res://scripts/meta/skill_node_definition.gd")
 const _SkillTreeRegistry := preload("res://scripts/core/skill_tree_registry.gd")
+const SkillTreeNodes := preload("res://scripts/ui/skill_tree_nodes.gd")
 
-const ACCENT := Color(0.91, 0.78, 0.48, 1.0)
-const DIM := Color(0.45, 0.48, 0.47, 1.0)
-const PENDING := Color(0.86, 0.58, 0.28, 1.0)
-const LIVE := Color(0.52, 0.82, 0.62, 1.0)
-const LOCKED := Color(0.22, 0.24, 0.24, 1.0)
 const NODE_SIZE := 72.0
 const GRID := 96.0
 const TOOLTIP_OFFSET := Vector2(20, 18)
@@ -40,6 +36,7 @@ const HULL_LABEL_GRID := Vector2(0, 2.7)
 @onready var tooltip_kind: Label = %TooltipKind
 @onready var tooltip_body: Label = %TooltipBody
 
+var _nodes: SkillTreeNodes
 var _buttons: Dictionary = {} ## StringName → Button
 var _hovered: _SkillNodeDefinition = null
 var _lines: PackedVector2Array = PackedVector2Array()
@@ -51,6 +48,7 @@ var _pan_start_world_pos := Vector2.ZERO
 
 
 func _ready() -> void:
+	_nodes = SkillTreeNodes.new(self)
 	set_process(false)
 	tooltip.hide()
 	world.draw.connect(_on_world_draw)
@@ -166,7 +164,7 @@ func _rebuild() -> void:
 	_buttons.clear()
 	_lines = PackedVector2Array()
 	_refresh_header()
-	var bounds := _content_rect()
+	var bounds := _nodes.content_rect()
 	var shift := -bounds.position
 	world.size = bounds.size
 	for node in _SkillTreeRegistry.list_definitions():
@@ -178,12 +176,12 @@ func _rebuild() -> void:
 			if parent:
 				_lines.append(parent.layout_offset * GRID + shift)
 				_lines.append(pos)
-		var button := _make_node_button(node)
+		var button := _nodes.make_node_button(node)
 		button.position = pos - Vector2(NODE_SIZE, NODE_SIZE) * 0.5
 		world.add_child(button)
 		_buttons[node.id] = button
-	_add_branch_label("SPEED", SPEED_LABEL_GRID * GRID + shift)
-	_add_branch_label("HULL", HULL_LABEL_GRID * GRID + shift)
+	_nodes.add_branch_label("SPEED", SPEED_LABEL_GRID * GRID + shift)
+	_nodes.add_branch_label("HULL", HULL_LABEL_GRID * GRID + shift)
 	world.queue_redraw()
 	if _fit_after_rebuild:
 		_try_fit_view()
@@ -199,92 +197,6 @@ func _refresh_header() -> void:
 		hint_label.text = "Requests apply now — you have not started this run."
 	else:
 		hint_label.text = "Requests queue for the next run. Click a queued node to refund."
-
-
-func _add_branch_label(text: String, pos: Vector2) -> void:
-	var label := Label.new()
-	label.text = text
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.custom_minimum_size = BRANCH_LABEL_SIZE
-	label.size = BRANCH_LABEL_SIZE
-	label.add_theme_color_override(&"font_color", DIM)
-	label.add_theme_font_size_override(&"font_size", 18)
-	label.position = pos - BRANCH_LABEL_SIZE * 0.5
-	world.add_child(label)
-
-
-func _make_node_button(node: _SkillNodeDefinition) -> Button:
-	var button := Button.new()
-	button.custom_minimum_size = Vector2(NODE_SIZE, NODE_SIZE)
-	button.focus_mode = Control.FOCUS_NONE
-	button.tooltip_text = ""
-	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var state := _node_state(node)
-	button.disabled = state == &"locked" or state == &"stub"
-	_style_node_button(button, state)
-	if node.icon:
-		button.icon = node.icon
-		button.expand_icon = true
-		button.text = ""
-	else:
-		button.text = String(node.id).left(2).to_upper()
-	button.mouse_entered.connect(_on_node_hovered.bind(node))
-	button.mouse_exited.connect(_on_node_unhovered.bind(node))
-	button.pressed.connect(_on_node_pressed.bind(node))
-	return button
-
-
-func _node_state(node: _SkillNodeDefinition) -> StringName:
-	if MetaProgression.is_allocated(node.id):
-		return &"live"
-	if MetaProgression.is_pending(node.id):
-		return &"pending"
-	if node.is_stub():
-		return &"stub"
-	var check := MetaProgression.can_allocate(node.id)
-	if check.get("ok", false):
-		return &"open"
-	if check.get("reason", "") == "locked":
-		return &"locked"
-	return &"open"
-
-
-func _style_node_button(button: Button, state: StringName) -> void:
-	var border := DIM
-	var bg := Color(0.08, 0.09, 0.09, 1.0)
-	match state:
-		&"live":
-			border = LIVE
-			bg = Color(0.12, 0.18, 0.14, 1.0)
-		&"pending":
-			border = PENDING
-			bg = Color(0.18, 0.14, 0.08, 1.0)
-		&"open":
-			border = ACCENT
-			bg = Color(0.12, 0.14, 0.13, 1.0)
-		&"stub":
-			border = Color(0.55, 0.4, 0.7, 1.0)
-			bg = Color(0.1, 0.08, 0.12, 1.0)
-		&"locked":
-			border = LOCKED
-			bg = Color(0.06, 0.06, 0.06, 1.0)
-	var style := StyleBoxFlat.new()
-	style.bg_color = bg
-	style.border_color = border
-	style.set_border_width_all(3)
-	style.set_corner_radius_all(8)
-	style.content_margin_left = 8
-	style.content_margin_top = 8
-	style.content_margin_right = 8
-	style.content_margin_bottom = 8
-	button.add_theme_stylebox_override(&"normal", style)
-	button.add_theme_stylebox_override(&"disabled", style)
-	var hover := style.duplicate() as StyleBoxFlat
-	hover.bg_color = bg.lightened(0.08)
-	button.add_theme_stylebox_override(&"hover", hover)
-	button.add_theme_stylebox_override(&"pressed", hover)
 
 
 func _on_world_draw() -> void:
@@ -366,7 +278,7 @@ func _try_fit_view() -> void:
 
 
 func _fit_view() -> void:
-	var rect := _content_rect()
+	var rect := _nodes.content_rect()
 	if rect.size.x < 1.0 or rect.size.y < 1.0:
 		return
 	var view := canvas.size
@@ -383,33 +295,11 @@ func _fit_view() -> void:
 	world.position = view * 0.5 - rect.size * 0.5 * scale
 
 
-func _content_rect() -> Rect2:
-	var half := Vector2(NODE_SIZE, NODE_SIZE) * 0.5
-	var min_p := Vector2(INF, INF)
-	var max_p := Vector2(-INF, -INF)
-	var any := false
-	for node in _SkillTreeRegistry.list_definitions():
-		var pos := node.layout_offset * GRID
-		min_p = min_p.min(pos - half)
-		max_p = max_p.max(pos + half)
-		any = true
-	if not any:
-		return Rect2()
-	var label_half := BRANCH_LABEL_SIZE * 0.5
-	var speed_pos := SPEED_LABEL_GRID * GRID
-	min_p = min_p.min(speed_pos - label_half)
-	max_p = max_p.max(speed_pos + label_half)
-	var hull_pos := HULL_LABEL_GRID * GRID
-	min_p = min_p.min(hull_pos - label_half)
-	max_p = max_p.max(hull_pos + label_half)
-	return Rect2(min_p, max_p - min_p)
-
-
 func _on_node_hovered(node: _SkillNodeDefinition) -> void:
 	if _panning:
 		return
 	_hovered = node
-	_show_tooltip(node)
+	_nodes.show_tooltip(node)
 	set_process(true)
 
 
@@ -429,45 +319,6 @@ func _on_node_pressed(node: _SkillNodeDefinition) -> void:
 		MetaProgression.try_refund_pending(node.id)
 		return
 	MetaProgression.try_allocate(node.id)
-
-
-func _show_tooltip(node: _SkillNodeDefinition) -> void:
-	tooltip_title.text = node.display_name
-	var state := _node_state(node)
-	var kind := "LOCKED"
-	match state:
-		&"live":
-			kind = "ACTIVE"
-		&"pending":
-			kind = "QUEUED — NEXT RUN"
-			if GameSession.phase == GameSession.RunPhase.IDLE:
-				kind = "QUEUED — APPLIES NOW"
-		&"open":
-			if GameSession.phase == GameSession.RunPhase.IDLE:
-				kind = "REQUEST  ·  %d PART%s  ·  NOW" % [
-					node.cost,
-					"" if node.cost == 1 else "S",
-				]
-			else:
-				kind = "REQUEST  ·  %d PART%s  ·  NEXT RUN" % [
-					node.cost,
-					"" if node.cost == 1 else "S",
-				]
-		&"stub":
-			kind = "NOT WIRED YET"
-		&"locked":
-			var check := MetaProgression.can_allocate(node.id)
-			match str(check.get("reason", "locked")):
-				"cap":
-					kind = "CAP REACHED"
-				"insufficient_parts":
-					kind = "NEED %d RARE PARTS" % int(check.get("cost", node.cost))
-				_:
-					kind = "LOCKED"
-	tooltip_kind.text = kind
-	tooltip_body.text = node.effect_summary()
-	tooltip.show()
-	_position_tooltip()
 
 
 func _clear_tooltip() -> void:
