@@ -12,7 +12,7 @@ signal shot_fired(hit: bool)
 @export var jump_velocity := 6.0
 @export var movement_reference_path: NodePath
 
-const _REAR_DOOR_INTERACT_SCRIPT := preload("res://scripts/run/rear_door_interact.gd")
+const _REAR_DOOR_INTERACT_SCRIPT := preload("res://scripts/van/rear_door_interact.gd")
 const _JUMP_CLEARANCE := 1.0
 
 @onready var head: Node3D = $Head

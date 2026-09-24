@@ -168,38 +168,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal item_acquired(item: ItemDefinition, charges: int, slot_index: int)`
 - `signal usable_activated(item: ItemDefinition, success: bool)`
 
-**`scripts/run/breakable_glass.gd`**
-
-- `signal shattered`
-
-**`scripts/run/rear_doors.gd`**
-
-- `signal opened`
-- `signal closed`
-- `signal door_changed(side: StringName, is_open: bool)`
-- `signal glass_shattered(side: StringName)`
-
-**`scripts/run/side_doors.gd`**
-
-- `signal opened`
-- `signal closed`
-- `signal door_changed(side: StringName, is_open: bool)`
-- `signal passage_changed(side: StringName, is_passable: bool)`
-
-**`scripts/run/side_windows.gd`**
-
-- `signal opened`
-- `signal closed`
-- `signal window_changed(window_id: StringName, is_open: bool)`
-
-**`scripts/run/van_bulkhead.gd`**
-
-- `enum OpeningSide { LEFT, RIGHT }`
-
-**`scripts/run/van_vital.gd`**
-
-- `signal health_changed(current: float, maximum: float)`
-
 **`scripts/stops/side_stop_definition.gd`**
 
 - `enum Arrival { REAR_PARK = 0, ELEVATOR = 1, }`
@@ -255,6 +223,38 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 **`scripts/ui/skill_tree_hud.gd`**
 
 - `signal closed`
+
+**`scripts/van/breakable_glass.gd`**
+
+- `signal shattered`
+
+**`scripts/van/rear_doors.gd`**
+
+- `signal opened`
+- `signal closed`
+- `signal door_changed(side: StringName, is_open: bool)`
+- `signal glass_shattered(side: StringName)`
+
+**`scripts/van/side_doors.gd`**
+
+- `signal opened`
+- `signal closed`
+- `signal door_changed(side: StringName, is_open: bool)`
+- `signal passage_changed(side: StringName, is_passable: bool)`
+
+**`scripts/van/side_windows.gd`**
+
+- `signal opened`
+- `signal closed`
+- `signal window_changed(window_id: StringName, is_open: bool)`
+
+**`scripts/van/van_bulkhead.gd`**
+
+- `enum OpeningSide { LEFT, RIGHT }`
+
+**`scripts/van/van_vital.gd`**
+
+- `signal health_changed(current: float, maximum: float)`
 
 
 ## Script index
@@ -440,31 +440,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `usable_state.gd` | `UsableState` | 26 |  |
 | `usables_controller.gd` | `UsablesController` | 165 | Ids of the player's boons that cannot be taken again. Every offer (rest |
 
-### `scripts/run/`
-
-| File | class_name | LOC | Summary |
-|---|---|---|---|
-| `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). Surrounding metal stays. |
-| `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. Same local frame as IronCross: |
-| `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
-| `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
-| `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
-| `rear_doors.gd` | — | 400 | Truck-style rear double doors. |
-| `room_zone.gd` | `RoomZone` | 14 |  |
-| `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. Toggles that leaf only. |
-| `side_doors.gd` | — | 558 | Sliding cargo-style side doors. |
-| `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. Toggles that sash only. |
-| `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
-| `van.gd` | — | 1163 | Preload so van.tscn can type the bar without a class_name parse cycle. |
-| `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
-| `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
-| `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
-| `van_hull_mesh.gd` | `VanHullMesh` | 400 | XY end-cap slabs that follow VanSideWall's bow and VanCeiling's barrel vault. |
-| `van_lighting.gd` | `VanLighting` | 49 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) |
-| `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. Uses a dedicated physics |
-| `van_side_wall.gd` | `VanSideWall` | 1058 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, |
-| `van_vital.gd` | `VanVital` | 91 | One interior machine whose HP is a slice of van death hull. |
-
 ### `scripts/stops/`
 
 | File | class_name | LOC | Summary |
@@ -516,6 +491,31 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `skill_tree_hud.gd` | — | 487 | Van schematic overlay. Hover/click nodes; pending requests ghost until the |
 | `usable_slot.gd` | — | 42 |  |
 | `van_health_bar.gd` | `VanHealthBar` | 77 | Single hull line: left half = interior vitals (death HP), right half = doors. |
+
+### `scripts/van/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). Surrounding metal stays. |
+| `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. Same local frame as IronCross: |
+| `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
+| `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
+| `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
+| `rear_doors.gd` | — | 400 | Truck-style rear double doors. |
+| `room_zone.gd` | `RoomZone` | 14 |  |
+| `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. Toggles that leaf only. |
+| `side_doors.gd` | — | 558 | Sliding cargo-style side doors. |
+| `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. Toggles that sash only. |
+| `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
+| `van.gd` | — | 1163 | Preload so van.tscn can type the bar without a class_name parse cycle. |
+| `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
+| `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
+| `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
+| `van_hull_mesh.gd` | `VanHullMesh` | 400 | XY end-cap slabs that follow VanSideWall's bow and VanCeiling's barrel vault. |
+| `van_lighting.gd` | `VanLighting` | 49 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) |
+| `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. Uses a dedicated physics |
+| `van_side_wall.gd` | `VanSideWall` | 1058 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, |
+| `van_vital.gd` | `VanVital` | 91 | One interior machine whose HP is a slice of van death hull. |
 
 ### `tools/`
 

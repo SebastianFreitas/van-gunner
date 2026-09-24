@@ -3,9 +3,9 @@ extends ItemEffect
 
 ## Look-at weld: restore `repair_amount` on a machine, door, or window.
 
-const _REAR_DOOR_INTERACT := preload("res://scripts/run/rear_door_interact.gd")
-const _SIDE_DOOR_INTERACT := preload("res://scripts/run/side_door_interact.gd")
-const _SIDE_WINDOW_INTERACT := preload("res://scripts/run/side_window_interact.gd")
+const _REAR_DOOR_INTERACT := preload("res://scripts/van/rear_door_interact.gd")
+const _SIDE_DOOR_INTERACT := preload("res://scripts/van/side_door_interact.gd")
+const _SIDE_WINDOW_INTERACT := preload("res://scripts/van/side_window_interact.gd")
 
 @export var repair_amount := 50.0
 

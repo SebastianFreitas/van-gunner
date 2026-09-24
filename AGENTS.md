@@ -327,8 +327,8 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Class board / class panel | `scripts/interactions/class_board.gd` + `scripts/ui/class_panel.gd` + `GameSession.equip_class` |
 | Bullet boons (explosive / poison / cold) | `scripts/player/boon_behavior_handlers.gd`, `scripts/combat/damage_resolver.gd`, `status_effect_controller.gd`, `explosion_fx.gd` |
 | Add a sound | new `SoundCue` in `resources/audio/sound_bank.tres` — gameplay already emits |
-| Touch the van shell / doors / windows | `scripts/run/van_*.gd`, `side_*.gd`, `rear_doors.gd` |
-| Van hull / interior vitals | `scripts/run/van_vital.gd` + HUD `scripts/ui/van_health_bar.gd` |
+| Touch the van shell / doors / windows | `scripts/van/van_*.gd`, `side_*.gd`, `rear_doors.gd` |
+| Van hull / interior vitals | `scripts/van/van_vital.gd` + HUD `scripts/ui/van_health_bar.gd` |
 | Weld kit (look-at repair) | `scripts/items/effects/repair_window_bars_effect.gd` |
 | Yell at the driver (Shift GO / C EASY) | `travel_controller.gd` boost/slow + `scripts/ui/driver_shout_hud.gd` |
 | Bench overview | `scripts/ui/bench_screen.gd` |
