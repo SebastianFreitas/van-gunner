@@ -25,7 +25,7 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 FAILURE = re.compile(r"SCRIPT ERROR|Parse Error|ERROR:")
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
-TIMEOUT_SECONDS = 180
+TIMEOUT_SECONDS = 300
 
 FINGERPRINT = ROOT / "tools" / "smoke" / "fingerprint.txt"
 BASELINE = ROOT / "tools" / "smoke" / "fingerprint.baseline.txt"

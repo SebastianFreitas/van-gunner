@@ -6,9 +6,11 @@ extends Node
 ## user://, which tools/smoke.py diffs against a committed baseline. Runs only
 ## when SaveSandbox.enabled, so it never touches a real save on disk.
 
-const _WATCHDOG_SECONDS := 150.0
+const _WATCHDOG_SECONDS := 270.0
 
 var _watchdog: SceneTreeTimer
+## Direction chosen at the previous forced fork, so the next one picks differently.
+var _last_route_direction: StringName = &""
 
 
 func _ready() -> void:
@@ -59,6 +61,8 @@ func _run() -> void:
 	if not await _run_pass(van):
 		return
 	if not await _rest_offer_pass(van):
+		return
+	if not await _fork_pass():
 		return
 
 	_check_user_mtimes_unchanged(mtimes)
@@ -313,6 +317,115 @@ func _rest_offer_pass(van: Node) -> bool:
 	return true
 
 
+func _fork_pass() -> bool:
+	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+	if travel == null:
+		_fail("no travel_controller node found")
+		return false
+
+	_log(DebugCommands.run("speed"))
+
+	if not await _drive_side_stop(travel, "stop elevator shop", "elevator"):
+		return false
+	if not await _drive_side_stop(travel, "stop garage", "rear-park"):
+		return false
+
+	_log(DebugCommands.run("unspeed"))
+	_log(DebugCommands.run("chill"))
+	await _frames(5)
+	return true
+
+
+## Forces the given stop onto the next fork, drives through the fork, docks,
+## and leaves it again. `label` is only for log/fail messages.
+func _drive_side_stop(travel: TravelController, stop_command: String, label: String) -> bool:
+	_log(DebugCommands.run(stop_command))
+	if not await _force_route_choice(travel, 60.0):
+		_fail("timed out waiting for ROUTE_CHOICE (%s fork), phase=%s" % [label, _phase_name()])
+		return false
+	_log("phase %s" % _phase_name())
+
+	var dirs := GameSession.get_route_directions()
+	_log("route_directions=%s" % [dirs])
+	var direction: StringName = dirs[0]
+	if direction == _last_route_direction and dirs.size() > 1:
+		direction = dirs[1]
+	_last_route_direction = direction
+	GameSession.choose_route(direction)
+
+	if not await _wait_phase(GameSession.RunPhase.STOP, 60.0):
+		_fail("timed out waiting for STOP (%s docked), phase=%s" % [label, _phase_name()])
+		return false
+	_log("phase %s" % _phase_name())
+
+	await _frames(10)
+	travel.leave_stop()
+
+	if not await _wait_phase(GameSession.RunPhase.TRAVELLING, 60.0):
+		_fail("timed out waiting for TRAVELLING (left %s stop), phase=%s" % [label, _phase_name()])
+		return false
+	_log("phase %s" % _phase_name())
+	return true
+
+
+## Mirrors EncounterDirector._run_segment()'s post-combat REST -> ROUTE_CHOICE tail
+## (scripts/enemies/encounter_director.gd ~149-169). Chill mode is kept on for the
+## whole fork/stop drive so the director's own encounter loop never runs between
+## forks here, so nothing else would ever end a forced REST; the driver forces the
+## same REST phase and replays the same act-deck calls the director makes once a
+## rest break resolves, instead of waiting on a sequence nothing ever starts.
+func _force_route_choice(travel: TravelController, timeout_s: float) -> bool:
+	GameSession.set_phase(GameSession.RunPhase.REST)
+	await _mirror_rest_break_wait(travel)
+
+	var act_deck := get_tree().get_first_node_in_group(&"act_deck_controller") as ActDeckController
+	if GameSession.phase == GameSession.RunPhase.REST and GameSession.needs_boss_pick():
+		if act_deck and act_deck.has_method(&"begin_boss_pick_if_needed"):
+			act_deck.begin_boss_pick_if_needed()
+			if act_deck.has_method(&"wait_for_boss_pick_resolution"):
+				await act_deck.wait_for_boss_pick_resolution()
+		elif GameSession.needs_boss_pick():
+			GameSession.commit_boss_picks([])
+	if GameSession.phase in [
+		GameSession.RunPhase.REST,
+		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.BOSS_PICK,
+	] and GameSession.needs_act_reveal():
+		if act_deck and act_deck.has_method(&"begin_reveal_if_needed"):
+			act_deck.begin_reveal_if_needed()
+			if act_deck.has_method(&"wait_for_reveal_resolution"):
+				await act_deck.wait_for_reveal_resolution()
+		elif GameSession.needs_act_reveal():
+			GameSession.begin_new_act_deck()
+	if GameSession.phase in [
+		GameSession.RunPhase.REST,
+		GameSession.RunPhase.ACT_REVEAL,
+		GameSession.RunPhase.BOSS_PICK,
+	]:
+		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
+	return await _wait_phase(GameSession.RunPhase.ROUTE_CHOICE, timeout_s)
+
+
+## Mirrors EncounterDirector._wait_for_rest_break(): the boon resolves instantly
+## under debug speed mode, but the director still sits out the rest duration itself.
+func _mirror_rest_break_wait(travel: TravelController) -> void:
+	var director := get_tree().get_first_node_in_group(&"encounter_director") as EncounterDirector
+	var rest_duration := 20.0
+	if director:
+		rest_duration = director.rest_duration
+	var seconds := rest_duration
+	if travel and travel.has_method(&"scale_debug_wait"):
+		seconds = travel.scale_debug_wait(rest_duration)
+	var rewards := get_tree().get_first_node_in_group(&"boon_reward_controller")
+	if rewards and rewards.has_method(&"wait_for_rest_resolution"):
+		await rewards.wait_for_rest_resolution()
+	await get_tree().create_timer(seconds).timeout
+
+
+func _phase_name() -> String:
+	return GameSession.RunPhase.keys()[GameSession.phase]
+
+
 func _first_button(n: Node) -> Button:
 	if n == null:
 		return null
@@ -333,6 +446,26 @@ func _write_fingerprint(lines: PackedStringArray) -> void:
 
 
 ## --- Small awaitables and logging ---------------------------------------------
+
+
+func _wait_phase(target: GameSession.RunPhase, timeout_s: float) -> bool:
+	var elapsed := 0.0
+	while elapsed < timeout_s:
+		if GameSession.phase == target:
+			return true
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+	return false
+
+
+func _wait_until(cond: Callable, timeout_s: float) -> bool:
+	var elapsed := 0.0
+	while elapsed < timeout_s:
+		if cond.call():
+			return true
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+	return false
 
 
 func _frames(n: int) -> void:
