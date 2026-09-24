@@ -4,8 +4,8 @@ extends Resource
 ## One player class: a single gun with its base stats. Identity only — damage
 ## starts from GameBalance.BASE_DAMAGE_PER_SHOT * damage_mult and boons scale it.
 
-## Same members in the same order as the old WeaponDefinition.Family so
-## ArmCannonMesh keeps building its four meshes.
+## The gun families ArmCannonMesh switches on. Keep the members and their order:
+## the four meshes are picked by this enum.
 enum Family { BASIC, SHOTGUN, MACHINEGUN, SNIPER }
 
 @export var id: StringName = &""

@@ -366,6 +366,6 @@ def build():
 
 if __name__ == "__main__":
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w", encoding="utf8") as fh:
+    with open(OUT, "w", encoding="utf8", newline="\n") as fh:
         fh.write(build())
     print(f"wrote {os.path.relpath(OUT, ROOT)}")
