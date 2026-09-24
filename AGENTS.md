@@ -102,9 +102,9 @@ autoload creates a parse cycle in Godot. Same reason `GameBalance` does
 Cross-system lookups go through `get_tree().get_first_node_in_group(&"...")` plus
 `has_method(&"...")` duck typing, not typed references. `TravelController` and
 `ActDeckController` talk to each other this way specifically to avoid a
-`class_name` cycle, and `GameSession.to_save_data()` reaches the weapon inventory
-with an untyped `var inv = ...` for the same reason. Keep this pattern when you add
-a system that two others need. The current registry is in `PROJECT_MAP.md`.
+`class_name` cycle, and `van.gd` keeps the class panel and the schematic HUD
+untyped for the same reason. Keep this pattern when you add a system that two
+others need. The current registry is in `PROJECT_MAP.md`.
 
 ### Async sequences are guarded by a counter
 
@@ -124,7 +124,7 @@ Adding content should almost never mean writing code:
 | a boon or item | `resources/items/` (+ pool entry) | `ItemPoolRegistry`, `ItemRegistry` |
 | a street card | `resources/acts/cards/` | `ActCardRegistry` (scans the folder) |
 | a side stop | `resources/side_stops/` (+ content scene, `arrival`) | `SideStopRegistry` (scans the folder) |
-| a gun | `resources/weapons/definitions/` | `WeaponCatalog` |
+| a class | `resources/classes/` | `ClassCatalog` (scans the folder) |
 | an enemy | `resources/enemies/` (+ spawn pool) | `GameBalance.pick_spawn_enemy` |
 | a sound | `resources/audio/sound_bank.tres` (SoundCue) | `AudioDirector` |
 | a balance tweak | `resources/balance/game_balance.tres` | `GameBalance` facade |
@@ -138,40 +138,43 @@ branch inside an existing system.
 Order matters and is fixed:
 
 ```
-GameBalance floor
-  → WeaponDefinition identity (fire_rate_mult, mag, reload, pellets, element)
-  → WeaponMod % increases          (WeaponStatsBuilder)
-  → BoonTraits adds/mults          (GunStatsController._apply_traits)
-  → temporary StatModifiers        (stims)
+GameBalance floor (BASE_DAMAGE_PER_SHOT, BASE_FIRE_RATE)
+  → ClassDefinition identity   (damage_mult, fire_rate_mult, mag, reload, pellets, spread, speed, size, bounces)
+  → BoonTraits adds/mults      (GunStatsController._apply_traits: boons and street cards)
+  → temporary StatModifiers    (stims)
   → clamps
 ```
 
 `BoonTraits` holds two layers: permanent boon traits, and a replaceable **street
 overlay** set by the active act card(s). `set_street_overlay` replaces wholesale;
 boss fights merge several cards' overlays before applying (`ActCardCombat`).
+A bullet leaves the gun with the resulting `damage_per_shot` and is never scaled
+again; Explosive, Poison and Cold Rounds spend shares of that hit through their
+`BoonBehavior` handlers on the post-hit hook.
 
 ## 4. Hard invariants
 
 Breaking these is how the game stops being fun, so they're worth stating flatly.
 
-1. **No flat damage on weapons or weapon mods.** Guns define *feel*; boons define
-   the damage curve. Damage always starts from `GameBalance.BASE_DAMAGE_PER_SHOT`.
-2. **Max 4 mods per gun**, interior/exterior grades only, no duplicates of the same
-   `grade + mod_id`.
+1. **One damage number, no damage types.** A bullet's damage is
+   `GameBalance.BASE_DAMAGE_PER_SHOT * ClassDefinition.damage_mult`. Boons and street
+   cards scale it through the `gun_damage_per_shot` trait, applied once in
+   `GunStatsController`. Blasts and poison are shares of the hit that caused them
+   and are never scaled again.
+2. Retired.
 3. **Shotgun pellets split damage**, they don't multiply it. An 8-pellet shotgun is
    coverage, not ×8 DPS.
-4. **Elemental gun variants seed one damage channel.** Extra phys/fire/cold/poison
-   comes from mods, boons, and act cards — not a second identity on the gun.
-   Trail color is the largest channel. Any fire/explosive amount explodes and
-   does not ricochet (unless a boon says otherwise). Poison is a stacking DoT;
-   cold slows movement and attacks.
+4. **Fire, poison and cold are bullet boons, not damage types.** Explosive, Poison
+   and Cold Rounds each have one `BoonBehavior` handler. Secondary damage (blast
+   splash, poison ticks) never triggers them; a blast does apply poison and cold.
+   Explosive bullets detonate on first contact and do not ricochet.
 5. **"Reload Speed %" lowers duration:** `seconds / (1 + pct/100)`. Never add the
    percentage onto the seconds field.
-6. **Exactly 2 weapon slots**, swapped with scroll or Q. Never bind swapping to 1–4;
-   those are tool slots.
-7. **Crafting spends `GameSession.coins`.** Rare Parts (`MetaProgression.rare_parts`)
-   are a second wallet for the van schematic only — boss drops, 3 per run max.
-   Do not spend gold on meta tree nodes, and do not spend Rare Parts at the bench.
+6. **One gun per class.** The class is picked at the class board in IDLE and locked
+   for the rest of the run. Keys 1-4 are tool slots; Q is bound but unused.
+7. **Gold buys at shops and the mechanic.** Rare Parts (`MetaProgression.rare_parts`)
+   are a second wallet for the van schematic only: boss drops, 3 per run max. Never
+   spend gold on schematic nodes.
 8. **Van speed is tree-written.** `van_speed_level` still feeds the chase formula
    (`closing = mob_world_speed - live_van_speed`). Only allocated schematic nodes
    change it; pending requests wait until the next run (or apply in `IDLE`).
@@ -190,10 +193,6 @@ Breaking these is how the game stops being fun, so they're worth stating flatly.
     box, cab relay), not door/window smash HP. Heal consumables restore player
     HP only; the weld kit (look-at, +50) repairs a machine, door, or window.
     Max-HP boons still raise van hull (split across the vitals).
-
-The long-form reasoning behind all of this is in
-`docs/WEAPON_SYSTEM_VAN_GUNNER.md`, which is still an accurate description of the
-implemented system.
 
 ## 5. Code conventions
 
@@ -221,8 +220,8 @@ Each of these has already cost someone real debugging time:
 - **Pause menu.** Esc opens it and sets `get_tree().paused`. The overlay is
   `PROCESS_MODE_ALWAYS` so Resume still works. `SceneRouter` unpauses on every
   scene change — if you skip that, the main menu loads frozen. Don't open pause
-  on `GAME_OVER` (those buttons are pausable). Bench / schematic / console / weapon
-  replace still eat Esc first and close themselves.
+  on `GAME_OVER` (those buttons are pausable). Bench / schematic / class panel /
+  console still eat Esc first and close themselves.
 - **HUD eating clicks.** Any non-interactive HUD control must be
   `MOUSE_FILTER_IGNORE`, otherwise clicking through it uncaptures the mouse.
   `_make_combat_hud_mouse_passthrough()` handles this — add genuinely interactive
@@ -296,13 +295,8 @@ Each of these has already cost someone real debugging time:
 
 These look like bugs. They are not. The project owner set them on purpose.
 
-- **`segment_wave_min` / `segment_wave_max` are both `1`** in
-  `resources/balance/game_balance.tres`. The script default is 4–9. This is a
-  deliberate testing value that makes every street a single 2-enemy wave so the
-  run loop can be exercised quickly. A side effect is that
-  `act_wave_growth_per_step` and `act_last_wave_extra` never execute, because a
-  one-entry plan only ever hits the `is_first` branch of
-  `GameBalance.build_segment_wave_plan`. Leave all three alone.
+- **Wave counts in `game_balance.tres` are test values the owner changes freely.**
+  The working tree may hold an uncommitted edit to them.
 
 - **`GameBalance.get_act(route_step)` and `GameSession.run_act` disagree.**
   `get_act` is the old three-step pacing model (act 3 from route step 3 onward);
@@ -329,14 +323,15 @@ These look like bugs. They are not. The project owner set them on purpose.
 | Add a boon | new `.tres` in `resources/items/boons/` + pool + maybe a `BoonBehavior` |
 | Add a street card | new `.tres` in `resources/acts/cards/` + maybe an `ActCardEffect` |
 | Add a side stop | new `.tres` in `resources/side_stops/` + a content scene; set `arrival` to `REAR_PARK` or `ELEVATOR` |
-| Touch guns | `scripts/weapons/` + `scripts/combat/gun_*.gd` |
-| Damage types / DoT / blast | `scripts/combat/damage_*.gd`, `status_effect_controller.gd`, `explosion_fx.gd` |
+| Touch classes / the gun | `scripts/classes/` + `resources/classes/` + `scripts/combat/gun_*.gd` |
+| Class board / class panel | `scripts/interactions/class_board.gd` + `scripts/ui/class_panel.gd` + `GameSession.equip_class` |
+| Bullet boons (explosive / poison / cold) | `scripts/player/boon_behavior_handlers.gd`, `scripts/combat/damage_resolver.gd`, `status_effect_controller.gd`, `explosion_fx.gd` |
 | Add a sound | new `SoundCue` in `resources/audio/sound_bank.tres` — gameplay already emits |
 | Touch the van shell / doors / windows | `scripts/run/van_*.gd`, `side_*.gd`, `rear_doors.gd` |
 | Van hull / interior vitals | `scripts/run/van_vital.gd` + HUD `scripts/ui/van_health_bar.gd` |
 | Weld kit (look-at repair) | `scripts/items/effects/repair_window_bars_effect.gd` |
 | Yell at the driver (Shift GO / C EASY) | `travel_controller.gd` boost/slow + `scripts/ui/driver_shout_hud.gd` |
-| Bench / crafting UI | `scripts/ui/bench_screen.gd` |
+| Bench overview | `scripts/ui/bench_screen.gd` |
 | Van schematic / skill tree | `scripts/ui/skill_tree_hud.gd` + `scripts/core/meta_progression.gd` + `resources/meta/tree/` |
 | Loot hopper / death popups | `scripts/core/loot_collector.gd` + `scripts/interactions/loot_machine.gd` |
 | Bench screenshot tool | `tools/bench_preview.tscn` |
@@ -347,9 +342,10 @@ These look like bugs. They are not. The project owner set them on purpose.
 ## 9. Running and debugging
 
 - Open the project in Godot 4.7; main scene is `scenes/boot/boot.tscn`.
-- In-game console: **H**. `help` lists commands; `list commands|boons|items|weapons|cards|stops|sounds|tree`
+- In-game console: **H**. `help` lists commands; `list commands|boons|items|classes|cards|stops|sounds|tree`
   enumerates content. `stop <id>` forces that side stop on the next fork (use
   `stop rare_shop` or `stop elevator shop` to test the elevator). `sound <cue>` auditions a cue.
+  `class <id>` equips a class in any phase.
   `parts [n]` grants Rare Parts; `tree_reset` wipes the schematic back to origin.
 - `speed` enables a debug fast-forward that also auto-resolves reveals and boon
   picks — useful for reaching late acts quickly, but it *skips* the panels, so don't

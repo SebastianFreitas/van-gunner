@@ -277,19 +277,19 @@ def build():
         md_table(["Field", "Default"], [(f"`{k}`", f"`{v}`") for k, v in inherited])
     )
 
-    doc.append(section("Weapon definitions"))
+    doc.append(section("Classes (`resources/classes/`)"))
     doc.append(
         md_table(
-            ["id", "name", "fire_rate_mult", "pellets", "mag", "reload_s", "tickets"],
+            ["id", "name", "damage_mult", "fire_rate_mult", "pellets", "mag", "reload_s"],
             resource_table(
-                "resources/weapons/definitions",
+                "resources/classes",
                 [
                     "display_name",
+                    "damage_mult",
                     "fire_rate_mult",
                     "pellets_per_shot",
                     "base_mag_size",
                     "base_reload_seconds",
-                    "drop_tickets",
                 ],
             ),
         )
@@ -326,9 +326,9 @@ def build():
     doc.append(section("Boons"))
     doc.append(
         md_table(
-            ["id", "name", "pool", "description"],
+            ["id", "name", "repeatable", "description"],
             resource_table(
-                "resources/items/boons", ["display_name", "boon_pool", "description"]
+                "resources/items/boons", ["display_name", "repeatable", "description"]
             ),
         )
     )

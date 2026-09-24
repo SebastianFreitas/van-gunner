@@ -30,15 +30,15 @@
 
 ## Node groups
 
-Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`, `weapon_pickup`, `weapon_replace_prompt`
+Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`
 
-Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`, `weapon_replace_prompt`
+Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`
 
 ## Signals and enums
 
-**`scripts/combat/damage_type.gd`**
+**`scripts/classes/class_definition.gd`**
 
-- `enum Type { NORMAL, EXPLOSIVE, POISON, FIRE, LIGHTNING, COLD, }`
+- `enum Family { BASIC, SHOTGUN, MACHINEGUN, SNIPER }`
 
 **`scripts/combat/grenade.gd`**
 
@@ -77,7 +77,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal enemy_defeated(enemy: Node)`
 - `signal session_loaded`
 - `signal chill_mode_changed(enabled: bool)`
-- `signal area_changed(area: ItemDefinition.BoonPool)`
+- `signal class_changed(class_id: StringName)`
 - `enum RunPhase { IDLE, TRAVELLING, COMBAT, ROUTE_CHOICE, TURNING, GAME_OVER, REST, PARKING, STOP, ACT_REVEAL, BOSS_PICK, }`
 
 **`scripts/core/loot_collector.gd`**
@@ -90,6 +90,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal rare_parts_changed(total: int)`
 - `signal tree_changed`
 
+**`scripts/interactions/class_board.gd`**
+
+- `signal opened`
+
 **`scripts/interactions/crafting_table.gd`**
 
 - `signal opened`
@@ -101,7 +105,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 **`scripts/items/item_definition.gd`**
 
 - `enum ItemKind { MONEY = 0, BOON = 1, TOOL = 2, CONSUMABLE = 3, }`
-- `enum BoonPool { GENERAL, FIRE, POISON, COLD, PHYSICAL, }`
 
 **`scripts/items/item_usable_config.gd`**
 
@@ -228,6 +231,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `signal choice_made(item: ItemDefinition)`
 
+**`scripts/ui/class_panel.gd`**
+
+- `signal closed`
+
 **`scripts/ui/debug_console.gd`**
 
 - `signal opened`
@@ -249,32 +256,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `signal closed`
 
-**`scripts/ui/weapon_replace_prompt.gd`**
-
-- `signal resolved(replaced: bool)`
-
-**`scripts/weapons/weapon_definition.gd`**
-
-- `enum Family { BASIC, SHOTGUN, MACHINEGUN, SNIPER }`
-- `enum Tier { BASE, A1 }`
-- `enum Element { NONE, FIRE, COLD, POISON }`
-
-**`scripts/weapons/weapon_inventory.gd`**
-
-- `signal loadout_changed`
-- `signal active_weapon_changed(index: int, instance: WeaponInstance)`
-- `signal weapon_pickup_rejected(reason: String)`
-- `enum AddResult { STORED, REPLACED, REJECTED }`
-
-**`scripts/weapons/weapon_mod.gd`**
-
-- `enum Grade { INTERIOR, EXTERIOR }`
-- `enum Operator { INCREASED }`
-
 
 ## Script index
 
-168 GDScript files, 29945 lines.
+157 GDScript files, 27408 lines.
 
 ### `scenes/corridor/`
 
@@ -292,36 +277,42 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `sound_bank.gd` | `SoundBank` | 42 | Flat list of SoundCues, indexed by id once at load. |
 | `sound_cue.gd` | `SoundCue` | 41 | One addressable sound. Adding audio should mean adding a .tres, never a |
 
+### `scripts/classes/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `class_catalog.gd` | `ClassCatalog` | 68 | Resolves player classes by id from resources/classes/. Unknown ids fall back |
+| `class_definition.gd` | `ClassDefinition` | 42 | One player class: a single gun with its base stats. Identity only — damage |
+
 ### `scripts/combat/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `arm_cannon_mesh.gd` | `ArmCannonMesh` | 176 | Boxy Mega Man forearm cannons. Rear face stays at REAR_Z so length grows |
-| `bullet_trail.gd` | `BulletTrail` | 136 | When set, points are stored in this node's local space (usually VanRig) so the |
-| `bullet_visual.gd` | `BulletVisual` | 172 | Cosmetic bullet mesh + trail. Starts at the gun muzzle and flies on a frozen |
-| `damage_info.gd` | `DamageInfo` | 196 | Extra headshot multiplier from weapon Critical Damage % mods (1.0 = none). |
-| `damage_resolver.gd` | `DamageResolver` | 196 |  |
-| `damage_type.gd` | `DamageType` | 12 |  |
+| `bullet_trail.gd` | `BulletTrail` | 122 | The one trail colour now that bullets carry no damage type. |
+| `bullet_visual.gd` | `BulletVisual` | 161 | Cosmetic bullet mesh + trail. Starts at the gun muzzle and flies on a frozen |
+| `damage_info.gd` | `DamageInfo` | 60 | One hit: a single damage number plus where it landed. There are no damage |
+| `damage_resolver.gd` | `DamageResolver` | 133 | Splash is a share of the hit that caused it, with distance falloff. It is |
 | `explosion_fx.gd` | `ExplosionFx` | 304 | Pixel-art billboard blast. The ring's outer edge is the same sphere |
-| `grenade.gd` | `Grenade` | 156 | Hand-integrated ballistics instead of a RigidBody3D. |
-| `gun_controller.gd` | `GunController` | 404 | Hit/miss for the HUD once the first pellet resolves. Not a muzzle event. |
-| `gun_stats.gd` | `GunStats` | 61 | Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance. |
-| `gun_stats_controller.gd` | `GunStatsController` | 136 | Balance floor + definition identity + weapon mods, then boons/temp mods. |
+| `grenade.gd` | `Grenade` | 159 | Hand-integrated ballistics instead of a RigidBody3D. |
+| `gun_controller.gd` | `GunController` | 332 | Hit/miss for the HUD once the first pellet resolves. Not a muzzle event. |
+| `gun_stats.gd` | `GunStats` | 46 | Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance. |
+| `gun_stats_controller.gd` | `GunStatsController` | 156 | GameBalance floor, then the class identity. Boons and stims come after, in |
 | `gun_viewmodel.gd` | `GunViewmodel` | 222 | Viewmodel motion: quarter-roll per shot, tip-up accelerating spin on reload |
-| `projectile.gd` | `Projectile` | 377 | Distance the bullet is pushed off a surface after a bounce so the next sweep |
+| `projectile.gd` | `Projectile` | 342 | Distance the bullet is pushed off a surface after a bounce so the next sweep |
 | `projectile_pool.gd` | — | 82 | Reuses Projectile nodes to avoid instantiate/free churn during heavy fire. |
 | `stat_modifier.gd` | `StatModifier` | 13 |  |
-| `status_effect_controller.gd` | `StatusEffectController` | 263 |  |
+| `status_effect_controller.gd` | `StatusEffectController` | 158 | Poison stacks and the cold slow on one enemy. There is no burn and no freeze: |
 
 ### `scripts/core/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `game_balance.gd` | — | 295 | Runtime facade over the Inspector-editable GameBalanceData resource. |
+| `game_balance.gd` | — | 291 | Runtime facade over the Inspector-editable GameBalanceData resource. |
 | `game_balance_data.gd` | `GameBalanceData` | 153 | Inspector-editable balance sheet for encounter pacing and act scaling. |
-| `game_session.gd` | — | 911 | Interior machines that sum to van death HP. Equal share of van_max_health. |
-| `loot_collector.gd` | — | 253 | Hopper for street-kill loot. Floor drops stay walkable; REST vacuums |
-| `meta_progression.gd` | — | 328 | Preload-as-type: this autoload cannot name SkillNodeDefinition / the tree |
+| `game_session.gd` | — | 851 | Interior machines that sum to van death HP. Equal share of van_max_health. |
+| `loot_collector.gd` | — | 239 | Hopper for street-kill loot. Floor drops stay walkable; REST vacuums |
+| `meta_progression.gd` | — | 340 | Preload-as-type: this autoload cannot name SkillNodeDefinition / the tree |
 | `save_manager.gd` | — | 100 |  |
 | `scene_router.gd` | — | 77 | Sync load on the main thread. Threaded load of van.tscn fails cold with a |
 | `skill_tree_registry.gd` | — | 94 | Resolves skill-tree nodes from resources/meta/tree/. Not an autoload and |
@@ -330,7 +321,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `debug_commands.gd` | — | 755 | Parses and runs debug console commands. Add new commands in _register_commands(). |
+| `debug_commands.gd` | — | 673 | Parses and runs debug console commands. Add new commands in _register_commands(). |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. Default follows the build. |
 
 ### `scripts/dialogue/`
@@ -353,6 +344,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `cab_door.gd` | — | 185 | Decorative cab-facing door at the front partition. |
+| `class_board.gd` | — | 21 | Wall board where the run's class is picked. Only IDLE lets it change; for the |
 | `crafting_table.gd` | `CraftingTable` | 9 |  |
 | `interactable.gd` | `Interactable` | 13 |  |
 | `loot_machine.gd` | `LootMachine` | 31 | Left-wall hopper. Street-kill loot queues here; E on the cabinet ejects one item. |
@@ -362,14 +354,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `boon_trait_keys.gd` | `BoonTraitKeys` | 133 | StringName keys for passive boon traits stored on BoonTraits. |
-| `item_definition.gd` | `ItemDefinition` | 110 | Data-only description of a single item. |
-| `item_describer.gd` | `ItemDescriber` | 194 | Turns item resources into readable lines for UI. Effects only carry raw |
+| `boon_trait_keys.gd` | `BoonTraitKeys` | 62 | StringName keys for passive boon traits stored on BoonTraits. |
+| `item_definition.gd` | `ItemDefinition` | 102 | Data-only description of a single item. |
+| `item_describer.gd` | `ItemDescriber` | 183 | Turns item resources into readable lines for UI. Effects only carry raw |
 | `item_effect.gd` | `ItemEffect` | 20 | Base class for anything an item/boon does when it is collected. |
-| `item_pool_registry.gd` | `ItemPoolRegistry` | 156 | Loads loot pools by name. Pools are plain LootPool .tres files. |
+| `item_pool_registry.gd` | `ItemPoolRegistry` | 108 | Loads loot pools by name. Pools are plain LootPool .tres files. |
 | `item_registry.gd` | `ItemRegistry` | 63 | Resolves item definitions by id from the standard item directories. |
 | `item_usable_config.gd` | `ItemUsableConfig` | 24 | Runtime rules for tools and abilities held in the player's hotbar. |
-| `loot_catch.gd` | `LootCatch` | 44 | One hopper / popup entry: either an ItemDefinition or a rolled weapon. |
+| `loot_catch.gd` | `LootCatch` | 33 | One hopper / popup entry wrapping a dropped ItemDefinition. |
 | `loot_pool.gd` | `LootPool` | 62 | A weighted collection of items to roll drops from. |
 | `loot_pool_entry.gd` | `LootPoolEntry` | 8 | A single weighted slot inside a LootPool. |
 | `pickup.gd` | `Pickup` | 297 | Walk into a floor pickup to use it. Idle pickups bob, spin, and gently |
@@ -408,15 +400,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `boon_behavior.gd` | `BoonBehavior` | 75 | Base class for boon combat behaviors. |
-| `boon_behavior_context.gd` | `BoonBehaviorContext` | 30 | Shared payload passed to boon behavior handlers during combat events. |
-| `boon_behavior_handlers.gd` | — | 194 | Concrete boon behavior handlers. Each inner class maps one trait to combat logic. |
-| `boon_behavior_registry.gd` | `BoonBehaviorRegistry` | 185 | Dispatches combat events to registered boon behavior handlers. |
-| `boon_combat.gd` | `BoonCombat` | 291 | Thin dispatcher for boon combat logic. All behavior lives in BoonBehaviorRegistry handlers. |
-| `boon_stat_handlers.gd` | — | 220 | Stat-based boon behavior handlers (add/mult traits, no flags required). |
+| `boon_behavior_context.gd` | `BoonBehaviorContext` | 25 | Shared payload passed to boon behavior handlers during combat events. |
+| `boon_behavior_handlers.gd` | — | 79 | Concrete boon behavior handlers. Each inner class maps one trait to combat logic. |
+| `boon_behavior_registry.gd` | `BoonBehaviorRegistry` | 158 | Dispatches combat events to registered boon behavior handlers. |
+| `boon_combat.gd` | `BoonCombat` | 216 | Thin dispatcher for boon combat logic. All behavior lives in BoonBehaviorRegistry handlers. |
 | `boon_traits.gd` | `BoonTraits` | 75 | Stores passive boon modifiers that combat systems query at runtime. |
-| `fps_player.gd` | `FpsPlayer` | 278 | Click in the world after a HUD/UI click stole the cursor. |
+| `fps_player.gd` | `FpsPlayer` | 272 | The equipped class; applied on ready and again whenever GameSession changes it. |
 | `usable_state.gd` | `UsableState` | 26 |  |
-| `usables_controller.gd` | `UsablesController` | 168 |  |
+| `usables_controller.gd` | `UsablesController` | 184 | Ids of the player's boons that cannot be taken again. Every offer (rest |
 
 ### `scripts/run/`
 
@@ -427,11 +418,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `act_card_effect.gd` | `ActCardEffect` | 45 | Base class for anything an active street card does while it is the road. |
 | `act_card_effect_context.gd` | `ActCardEffectContext` | 39 | Shared bag for street-card effect hooks. Effects mutate fields; ActCardCombat |
 | `act_card_registry.gd` | `ActCardRegistry` | 48 | Resolves act street-card definitions by id from resources/acts/cards/. |
-| `act_deck_controller.gd` | `ActDeckController` | 176 | Owns act-start tarot reveals and the act-end boss pick. |
+| `act_deck_controller.gd` | `ActDeckController` | 171 | Owns act-start tarot reveals and the act-end boss pick. |
 | `biker_boss.gd` | `BikerBoss` | 310 | Wanjna: hit-and-run biker. Fast charge, slow axe on a door, peel and weave. |
-| `boon_reward_controller.gd` | `BoonRewardController` | 141 | During REST, grants a 3-choice boon for the street card committed at the last fork. |
+| `boon_reward_controller.gd` | `BoonRewardController` | 146 | During REST, grants a 3-choice boon for the street card committed at the last fork. |
 | `breach_controller.gd` | `BreachController` | 299 | Assigns raid slots around the van and interior vital damage targets. |
-| `breach_point.gd` | `BreachPoint` | 385 | Outside attack slot that must be breached (or opened) before mobs can enter. |
+| `breach_point.gd` | `BreachPoint` | 378 | Outside attack slot that must be breached (or opened) before mobs can enter. |
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). Surrounding metal stays. |
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. Same local frame as IronCross: |
 | `cabin_nav.gd` | `CabinNav` | 478 | Van-local waypoint graph + occupancy. Raiders stay Node3D; this is how they |
@@ -439,8 +430,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
 | `garage_lounge.gd` | — | 185 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
-| `loot_drop_component.gd` | `LootDropComponent` | 91 | Drop-in component that gives any enemy a chance to drop loot on death. |
-| `mechanic_talk.gd` | `MechanicTalk` | 146 | Mechanic bay keeper. Three buys: full van patch, a van-pool boon, a weld kit. |
+| `loot_drop_component.gd` | `LootDropComponent` | 70 | Drop-in component that gives any enemy a chance to drop loot on death. |
+| `mechanic_talk.gd` | `MechanicTalk` | 133 | Mechanic bay keeper. Three buys: full van patch, a van-pool boon, a weld kit. |
 | `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. No shop counter. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
 | `rear_doors.gd` | — | 409 | Truck-style rear double doors. |
@@ -449,7 +440,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `shop_counter_booth.gd` | — | 1013 | Fortified metal shop counter — armored face, cash slot, eye-level grilled window. |
 | `shop_hatch_net.gd` | — | 125 | Cargo-net screen on the shop hatch — thin diamond mesh, not solid bars. |
 | `shop_offer.gd` | `ShopOffer` | 108 | A single priced item sitting on the shop counter. Look + E to buy with gold. |
-| `shop_stock.gd` | — | 45 | Rolls 3 unique items from the shop pool and places them on the counter. |
+| `shop_stock.gd` | — | 30 | Rolls 3 unique items from the shop pool and places them on the counter. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. Toggles that leaf only. |
 | `side_doors.gd` | — | 558 | Sliding cargo-style side doors. |
 | `side_stop_definition.gd` | `SideStopDefinition` | 67 | A roadside stop on a fork road. Every offered street gets one, regardless |
@@ -459,7 +450,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `stop_elevator.gd` | `StopElevator` | 368 | On-road lift that drops the van to the shared stop vestibule. Content |
 | `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
 | `travel_controller.gd` | `TravelController` | 1312 | Empty corridor tiles required between side-street openings (avoids a thin |
-| `van.gd` | — | 1156 | Preload so van.tscn can type the bar without a class_name parse cycle. |
+| `van.gd` | — | 1163 | Preload so van.tscn can type the bar without a class_name parse cycle. |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -467,7 +458,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_lighting.gd` | `VanLighting` | 50 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) |
 | `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. Uses a dedicated physics |
 | `van_side_wall.gd` | `VanSideWall` | 1111 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, |
-| `van_vital.gd` | `VanVital` | 98 | One interior machine whose HP is a slice of van death hull. |
+| `van_vital.gd` | `VanVital` | 91 | One interior machine whose HP is a slice of van death hull. |
 | `warehouse_chest.gd` | `WarehouseChest` | 60 | Table-top crate. E opens a bonus 3-choice boon, then springs leftover hides. |
 | `warehouse_director.gd` | `WarehouseDirector` | 176 | Picks one hide layout per visit. Early triggers (shoot / walk / laser) or |
 | `warehouse_dummy.gd` | `WarehouseDummy` | 114 | Standing shootable raider for warehouse hides. Not in `&"enemy"` — street |
@@ -475,8 +466,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `warehouse_interior.gd` | — | 243 | Flared warehouse bay: shell, wrapped dressing, table + chest, one hide layout. |
 | `warehouse_laser.gd` | `WarehouseLaser` | 72 | Waist-high trip across the aisle. Jump over to stay quiet; walking through |
 | `warehouse_look.gd` | `WarehouseLook` | 143 | Shared palette / mesh helpers for the warehouse bay and its hide layouts. |
-| `weapon_shop_offer.gd` | `WeaponShopOffer` | 87 | Shop counter offer that sells a generated WeaponInstance for gold. |
-| `window_raider.gd` | `WindowRaider` | 681 | Agile raiders can climb window bars; door mobs only smash doors. |
+| `window_raider.gd` | `WindowRaider` | 667 | Agile raiders can climb window bars; door mobs only smash doors. |
 
 ### `scripts/run/effects/`
 
@@ -485,7 +475,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `enemy_health_mult_effect.gd` | `EnemyHealthMultEffect` | 20 | Scales raider max/current health on spawn (dangers that make fights longer). |
 | `enemy_loot_bonus_effect.gd` | `EnemyLootBonusEffect` | 11 | Adds to the item drop chance roll on enemy death (0.1 = +10%). |
 | `enemy_speed_mult_effect.gd` | `EnemySpeedMultEffect` | 18 | Scales raider world chase speed on spawn (1.15 = 15% faster). |
-| `flat_damage_bonus_effect.gd` | `FlatDamageBonusEffect` | 16 | Adds flat damage to outgoing hits of a given damage type while the card is active. |
 | `narrow_fork_effect.gd` | `NarrowForkEffect` | 12 | After this street, the next fork is a T — two face-up cards instead of three. |
 | `temp_boon_trait_effect.gd` | `TempBoonTraitEffect` | 18 | While this street is active, grants a boon trait via BoonTraits street overlay. |
 | `wave_count_mult_effect.gd` | `WaveCountMultEffect` | 19 | Bumps each wave's spawn count (danger roads). Multiplies then optionally adds. |
@@ -494,45 +483,30 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `act_reveal_panel.gd` | `ActRevealPanel` | 581 | Act-start overlay: flips street cards (name + modifiers) and waits. |
-| `bench_screen.gd` | `BenchScreen` | 720 | Bench overlay: stats + gold spending on the left, boons and tools on the right. |
+| `act_reveal_panel.gd` | `ActRevealPanel` | 580 | Act-start overlay: flips street cards (name + modifiers) and waits. |
+| `bench_screen.gd` | `BenchScreen` | 434 | Bench overlay: stats + gold spending on the left, boons and tools on the right. |
 | `boon_choice_panel.gd` | `BoonChoicePanel` | 160 | REST-break overlay: pick one of several offered boons. |
 | `boot.gd` | — | 17 | Defer van preload one frame so global class registration finishes. |
-| `combat_feedback.gd` | — | 40 |  |
-| `damage_number.gd` | `DamageNumber` | 54 |  |
+| `class_panel.gd` | — | 193 | Class picker overlay: one card per class, click to equip. The class board |
+| `combat_feedback.gd` | — | 35 |  |
+| `damage_number.gd` | `DamageNumber` | 37 |  |
 | `debug_console.gd` | `DebugConsole` | 259 | In-game debug terminal. H to open, Esc to close. |
 | `dialogue_hud.gd` | `DialogueHud` | 270 | Hover-to-highlight NPC talk, Slay-the-Spire style. Click picks; E walks away. |
 | `driver_shout_hud.gd` | `DriverShoutHud` | 109 | Always-on GO / EASY shouts. van.gd plays shout_start / shout_turbo / shout_slow / shout_resume. |
 | `enemy_health_bar.gd` | `EnemyHealthBar` | 59 |  |
-| `item_hud.gd` | — | 86 | Hotbar for tools and a row of collected boon icons. |
+| `item_hud.gd` | — | 88 | Hotbar for tools and a row of collected boon icons. |
 | `main_menu.gd` | — | 127 | Rejected files (old version, corrupt JSON) used to look like NEW RUN |
 | `pause_menu.gd` | `PauseMenu` | 93 | Esc overlay. PROCESS_MODE_ALWAYS so Resume/Esc still work while the tree is paused. |
 | `skill_tree_hud.gd` | — | 487 | Van schematic overlay. Hover/click nodes; pending requests ghost until the |
 | `usable_slot.gd` | — | 42 |  |
 | `van_health_bar.gd` | `VanHealthBar` | 77 | Single hull line: left half = interior vitals (death HP), right half = doors. |
-| `weapon_replace_prompt.gd` | `WeaponReplacePrompt` | 144 | Full inventory: pick a slot to replace, or Esc to cancel (gun stays in world). |
-| `weapon_slots_hud.gd` | `WeaponSlotsHud` | 59 | Two weapon slots near ammo — highlight active, dashed empty. |
-
-### `scripts/weapons/`
-
-| File | class_name | LOC | Summary |
-|---|---|---|---|
-| `weapon_catalog.gd` | `WeaponCatalog` | 51 | Loads WeaponDefinition resources from resources/weapons/definitions/. |
-| `weapon_definition.gd` | `WeaponDefinition` | 53 | Static gun archetype. Identity only — no flat damage (see WEAPON_SYSTEM_VAN_GUNNER.md). |
-| `weapon_generator.gd` | `WeaponGenerator` | 118 | Pure create/roll API for generated guns. No flat damage mods. |
-| `weapon_instance.gd` | `WeaponInstance` | 117 | Runtime generated gun: definition + mods + per-weapon ammo/reload state. |
-| `weapon_inventory.gd` | `WeaponInventory` | 237 | Exactly 2 weapon slots. Active gun drives GunStatsController + GunController. |
-| `weapon_mod.gd` | `WeaponMod` | 53 | One rolled gun mod. INCREASED % only — no flats (C1). |
-| `weapon_mod_catalog.gd` | `WeaponModCatalog` | 170 | Interior/exterior mod pools + roll weights. No SPECIAL grade. No flat damage. |
-| `weapon_pickup.gd` | `WeaponPickup` | 129 | World gun loot — walk to collect into WeaponInventory. |
-| `weapon_pricing.gd` | `WeaponPricing` | 41 | Gold prices for shop weapon offers (mega-expensive vs typical boons). |
-| `weapon_stats_builder.gd` | `WeaponStatsBuilder` | 85 | Builds seed GunStats from balance + weapon definition + weapon mods (no flats). |
 
 ### `tools/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `bench_preview.gd` | — | 53 |  |
+| `check_scripts.gd` | — | 45 | Headless load check. Loads every script, scene, resource and shader under res:// |
 
 ## Scenes
 
@@ -556,10 +530,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/enemies/biker_boss.tscn` | 2 |  |
 | `scenes/enemies/window_raider.tscn` | 9 | Node3D |
 | `scenes/items/pickup.tscn` | 3 | Area3D |
-| `scenes/items/weapon_pickup.tscn` | 3 | Area3D |
-| `scenes/player/player.tscn` | 14 | CharacterBody3D |
+| `scenes/player/player.tscn` | 13 | CharacterBody3D |
 | `scenes/shop/shop_offer.tscn` | 3 | StaticBody3D |
-| `scenes/shop/weapon_shop_offer.tscn` | 3 | StaticBody3D |
 | `scenes/ui/bench_screen.tscn` | 24 | Control |
 | `scenes/ui/damage_number.tscn` | 1 | Label |
 | `scenes/ui/debug_console.tscn` | 8 | Control |
@@ -570,10 +542,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/skill_tree_hud.tscn` | 19 | Control |
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
+| `scenes/van/class_board.tscn` | 4 | StaticBody3D |
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/loot_machine.tscn` | 9 | StaticBody3D |
 | `scenes/van/request_board.tscn` | 4 | StaticBody3D |
-| `scenes/van/van.tscn` | 311 | Node3D |
+| `scenes/van/van.tscn` | 312 | Node3D |
 | `scenes/van/vanSave.tscn` | 93 | Node3D |
 | `scenes/van/van_bulkhead.tscn` | 1 | StaticBody3D |
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |
@@ -594,8 +567,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|
 | `base_damage_per_shot` | `1.5` |
 | `base_fire_rate` | `1.75` |
-| `segment_wave_min` | `1` |
-| `segment_wave_max` | `1` |
+| `segment_wave_min` | `2` |
+| `segment_wave_max` | `4` |
 | `act_wave_base_count` | `PackedInt32Array(2, 2, 2)` |
 | `act_wave_growth_per_step` | `PackedInt32Array(1, 1, 1)` |
 | `act_last_wave_extra` | `PackedInt32Array(2, 2, 3)` |
@@ -603,10 +576,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `act_engagement_seconds` | `PackedFloat32Array(10, 8, 6)` |
 | `act_expected_upgrade_fraction` | `PackedFloat32Array(0.333333, 0.666667, 1)` |
 | `segment_spawn_pool` | `ExtResource("2")` |
-| `mob_interior_speed` | `1.6` |
 | `act_target_van_speed` | `PackedFloat32Array(8, 9, 10)` |
-| `mechanic_full_repair_cost` | `45` |
-| `mechanic_van_boon_cost` | `40` |
 
 **Still on script defaults (`game_balance_data.gd`):**
 
@@ -624,49 +594,33 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `rear_door_breach_hp` | `96.0` |
 | `window_breach_hp` | `50.0` |
 | `rear_window_glass_hp` | `1.0` |
+| `mob_interior_speed` | `1.6` |
 | `van_speed_max_level` | `4` |
 | `van_speed_upgrade_base_cost` | `50` |
-| `weapon_drop_chance_base` | `1` |
-| `weapon_drop_chance_elite_bonus` | `10` |
-| `weapon_craft_cost_mult` | `1.0` |
-| `weapon_shop_price_mult` | `1.0` |
-| `weapon_max_mods` | `4` |
+| `mechanic_full_repair_cost` | `45` |
+| `mechanic_van_boon_cost` | `40` |
+| `poison_duration` | `2.0` |
+| `poison_tick_interval` | `0.5` |
+| `cold_slow_duration` | `2.5` |
+| `warehouse_rare_boon_chance` | `0.05` |
 
-## Weapon definitions
+## Classes (`resources/classes/`)
 
-| id | name | fire_rate_mult | pellets | mag | reload_s | tickets |
+| id | name | damage_mult | fire_rate_mult | pellets | mag | reload_s |
 |---|---|---|---|---|---|---|
-| basic | Basic | 1.0 | 1 | 8 | 3 | 400 |
-| basic_a1 | Basic A1 | 0.85 | 1 | 10 | 2.4 | 25 |
-| basic_a1_cd | Basic A1 Cold | 0.85 | 1 | 10 | 2.4 | 55 |
-| basic_a1_fd | Basic A1 Fire | 0.85 | 1 | 10 | 2.4 | 55 |
-| basic_a1_pd | Basic A1 Poison | 0.85 | 1 | 10 | 2.4 | 55 |
-| machinegun | Machinegun | 2.2 | 1 | 30 | 4.2 | 250 |
-| machinegun_a1 | Machinegun A1 | 1.9 | 1 | 40 | 3.4 | 25 |
-| machinegun_a1_cd | Machinegun A1 Cold | 1.9 | 1 | 40 | 3.4 | 55 |
-| machinegun_a1_fd | Machinegun A1 Fire | 1.9 | 1 | 40 | 3.4 | 55 |
-| machinegun_a1_pd | Machinegun A1 Poison | 1.9 | 1 | 40 | 3.4 | 55 |
-| shotgun | Shotgun | 0.55 | 8 | 2 | 3.8 | 250 |
-| shotgun_a1 | Shotgun A1 | 0.65 | 10 | 4 | 3 | 25 |
-| shotgun_a1_cd | Shotgun A1 Cold | 0.65 | 10 | 4 | 3 | 55 |
-| shotgun_a1_fd | Shotgun A1 Fire | 0.65 | 10 | 4 | 3 | 55 |
-| shotgun_a1_pd | Shotgun A1 Poison | 0.65 | 10 | 4 | 3 | 55 |
-| sniper | Sniper | 0.35 | 1 | 5 | 3.5 | 250 |
-| sniper_a1 | Sniper A1 | 0.45 | 1 | 6 | 2.8 | 25 |
-| sniper_a1_cd | Sniper A1 Cold | 0.45 | 1 | 6 | 2.8 | 55 |
-| sniper_a1_fd | Sniper A1 Fire | 0.45 | 1 | 6 | 2.8 | 55 |
-| sniper_a1_pd | Sniper A1 Poison | 0.45 | 1 | 6 | 2.8 | 55 |
+| basic | Basic | 1.0 | 1.0 | 1 | 8 | 3.0 |
+| machinegun | Machinegun | 0.42 | 2.2 | 1 | 30 | 4.2 |
+| shotgun | Shotgun | 3.11 | 0.55 | 8 | 2 | 3.8 |
+| sniper | Sniper | 2.47 | 0.35 | 1 | 5 | 3.5 |
 
 ## Act street cards
 
 | id | name | polarity | description |
 |---|---|---|---|
-| brass_road | Brass Road | 0 | +10 physical damage dealt against enemies |
-| cold_road | Cold Road | 0 | +10 cold damage dealt against enemies |
+| brass_road | Brass Road | 0 | +25% damage while this street is active |
 | empty_pockets | Empty Pockets | 1 | -25% item drops |
 | hairpin | Hairpin | 0 | +100% fire rate while this street is active |
 | hasty_pack | Hasty Pack | 1 | Enemies move 15% faster. +10% item drops. |
-| icebox | Icebox | 0 | +3% chance cold damage freezes the enemy |
 | no_through | No Through Road | 1 | Next fork is a T — two streets instead of three |
 | salvage_lane | Salvage Lane | 0 | +15% item drops |
 | slag_barrels | Slag Barrels | 1 | Fire rate x0.75 while this street is active |
@@ -694,55 +648,22 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Boons
 
-| id | name | pool | description |
+| id | name | repeatable | description |
 |---|---|---|---|
-| added_cold_projectile | Twin Frost | 3 | Shoot an additional cold projectile |
-| chance_freeze_1 | Frost Touch | 3 | +1% chance cold damage freezes the enemy |
-| chance_freeze_2 | Deep Freeze | 3 | +2% chance cold damage freezes the enemy |
-| chew_tobacco | Chew Tobacco |  | Permanent grit. +2 physical damage for the rest of the run. |
-| cold_shatter | Ice Burst | 3 | Enemies that die from cold damage shatter into cold projectiles |
-| cold_shattering_ricochet | Shattering Ricochet | 3 | Ricochets shatter into extra cold projectiles |
-| delayed_fire | Delayed Detonation | 1 | Delayed Explosion |
-| double_fire | Focused Inferno | 1 | Fire explodes in 90% smaller area — fire damage doubled |
-| double_phys_cold | Icebreaker | 4 | All physical damage against frozen enemies is doubled |
-| extra_poison_to_fire | Toxic Fuel | 1 | Gain 25% of poison damage as fire damage |
-| fire_death | Funeral Pyre | 1 | Enemies explode on death into a fire explosion |
-| fire_greed | Pyromaniac's Bargain | 1 | Lose 20 max hp — Deal +10 fire damage |
-| fire_to_phys_100 | Ashen Brass | 4 | Convert 100% of fire damage into physical damage |
-| fire_to_phys_50 | Smoldering Brass | 4 | Convert 50% of fire damage into physical damage |
-| frozen_damage | Shatter Strike | 3 | Deal 50% more damage against frozen targets |
-| increased_fire_area | Blast Radius I | 1 | Fire damage explodes in a 20% larger area |
-| increased_fire_area_2 | Blast Radius II | 1 | Fire damage explodes in a 50% larger area |
-| increased_fire_area_3 | Blast Radius III | 1 | Fire damage explodes in a 100% larger area |
-| instant_poison | Instant Toxin | 2 | Deal all poison damage instantly — deal half poison damage |
-| longer_freeze | Permafrost | 3 | Freeze condition lasts one second longer |
-| max_hp_1 | Thick Skin | 0 | Gain 10 Max Health |
-| max_hp_2 | Iron Constitution | 0 | Gain 20 Max Health |
-| max_hp_3 | Titan's Heart | 0 | Gain 60 Max Health |
-| max_hp_heal | Second Wind | 0 | Gain 40 Max Health and heal fully |
-| max_hp_phys | Brawler's Bulk | 0 | Gain 10 Max Health and 10 physical damage |
-| more_frozen_loot | Frozen Fortune | 3 | Enemies killed while chilled or frozen drop extra loot |
-| more_phys_10 | Heavy Rounds I | 4 | Gain +10 physical damage |
-| more_phys_25 | Heavy Rounds II | 4 | Gain +25 physical damage |
-| more_phys_50 | Heavy Rounds III | 4 | Gain +50 physical damage |
-| phys_to_cold_crit | Cryo Crit | 3 | Physical damage converted to cold on critical hits |
-| poison_duration | Lingering Venom | 2 | Poison lasts 5 more seconds |
-| poison_explosions | Toxic Shrapnel | 2 | Fire explosions also deal poison damage |
-| poison_follow | Seeking Venom | 2 | Ricochets bounce into close poisoned enemies |
-| poisoned_chill | Toxic Chill | 3 | Poisoned enemies are more affected by chill |
-| poisoned_cold | Cryo-Venom | 2 | Chilled enemies take 30% more poison damage |
-| pull_fire | Vacuum Blast | 1 | Fire explosions pull instead of pushing |
-| push_force_fire | Concussive Blast | 1 | Fire explosions gain more push back force |
-| reduced_speed_more_phys | Slugs | 4 | 50% reduced bullet speed — gain +50 physical damage |
-| ricochet_explosive | Incendiary Ricochet | 1 | Fire damage does not destroy the bullet on impact |
+| chew_tobacco | Chew Tobacco |  | Permanent grit. +1 damage for the rest of the run. |
+| cold_rounds | Cold Rounds |  | Bullets slow enemies. |
+| double_damage | Double Damage |  | Deal 2x damage. |
+| explosive_rounds | Explosive Rounds |  | Bullets explode on impact. |
+| max_hp_1 | Thick Skin | true | Gain 10 Max Health |
+| max_hp_2 | Iron Constitution | true | Gain 20 Max Health |
+| max_hp_3 | Titan's Heart | true | Gain 60 Max Health |
+| max_hp_heal | Second Wind | true | Gain 40 Max Health and heal fully |
+| max_hp_phys | Brawler's Bulk |  | Gain 10 Max Health and +1 damage |
+| poison_rounds | Poison Rounds |  | Bullets poison enemies. |
 | ricochet_rounds | Ricochet Rounds |  | Hardened slugs that skip off steel. Bullets bounce 2 extra times. |
-| ricochet_stack | Cascading Rounds | 0 | Ricochets get increasingly stronger |
+| ricochet_stack | Cascading Rounds |  | Ricochets get increasingly stronger |
 | rubber_casings | Rubber Casings |  | Springy casings. One extra bounce, and ricochets keep far more speed. |
-| shoot_speed | Hair Trigger | 0 | Gain 100% shot speed |
-| triple_crit_phys | Deadeye | 4 | Critical hits deal 3× physical damage |
-| twice_fast_poison | Accelerant Toxin | 2 | Poison deals damage twice as fast |
-| vampiric_poison | Leeching Toxin | 2 | Enemies who die from poison have +5% chance to drop healing packs |
-| weaker_poison | Neurotoxin | 2 | Poisoned enemies deal 25% less damage |
+| shoot_speed | Hair Trigger |  | Gain 100% shot speed |
 
 ## Items (non-boon)
 
@@ -758,7 +679,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Loot pools
 
-`cold_boon_pool`, `fire_boon_pool`, `general_boon_pool`, `goon_pool`, `physical_boon_pool`, `poison_boon_pool`, `rest_tools_pool`, `shop_pool`
+`general_boon_pool`, `goon_pool`, `rest_tools_pool`, `shop_pool`, `warehouse_rare_boon_pool`
 
 ## Sound cues (`resources/audio/sound_bank.tres`)
 
@@ -788,37 +709,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | Constant | StringName |
 |---|---|
-| `FIRE_DAMAGE_BONUS` | `fire_damage_bonus` |
-| `FIRE_AREA_MULT` | `fire_area_mult` |
-| `FIRE_DAMAGE_MULT` | `fire_damage_mult` |
-| `RICOCHET_EXPLOSIVE` | `ricochet_explosive` |
-| `DELAYED_FIRE` | `delayed_fire` |
-| `FIRE_PUSH_MULT` | `fire_push_mult` |
-| `FIRE_PULL` | `fire_pull` |
-| `EXTRA_POISON_TO_FIRE` | `extra_poison_to_fire` |
-| `FIRE_DEATH` | `fire_death` |
-| `POISON_TICK_SPEED_MULT` | `poison_tick_speed_mult` |
-| `POISON_DURATION_BONUS` | `poison_duration_bonus` |
-| `POISON_FOLLOW` | `poison_follow` |
-| `POISONED_ENEMY_DAMAGE_REDUCTION` | `poisoned_enemy_damage_reduction` |
-| `POISONED_COLD_BONUS` | `poisoned_cold_bonus` |
-| `VAMPIRIC_POISON_CHANCE` | `vampiric_poison_chance` |
-| `INSTANT_POISON` | `instant_poison` |
-| `POISON_EXPLOSIONS` | `poison_explosions` |
-| `FREEZE_CHANCE` | `freeze_chance` |
-| `FREEZE_DURATION_BONUS` | `freeze_duration_bonus` |
-| `PHYS_TO_COLD_ON_CRIT` | `phys_to_cold_on_crit` |
-| `FROZEN_DAMAGE_MULT` | `frozen_damage_mult` |
-| `COLD_PROJECTILE_COUNT` | `cold_projectile_count` |
-| `COLD_SHATTERING_RICOCHET` | `cold_shattering_ricochet` |
-| `COLD_SHATTER` | `cold_shatter` |
-| `POISONED_CHILL_BONUS` | `poisoned_chill_bonus` |
-| `PHYS_DAMAGE_BONUS` | `phys_damage_bonus` |
-| `DOUBLE_PHYS_COLD` | `double_phys_cold` |
-| `TRIPLE_CRIT_PHYS` | `triple_crit_phys` |
-| `FIRE_TO_PHYS_RATIO` | `fire_to_phys_ratio` |
 | `RICOCHET_STACK_POWER` | `ricochet_stack_power` |
-| `FROZEN_LOOT_BONUS` | `frozen_loot_bonus` |
+| `EXPLOSIVE_ROUNDS` | `explosive_rounds` |
+| `POISON_ROUNDS` | `poison_rounds` |
+| `COLD_ROUNDS` | `cold_rounds` |
 | `GUN_FIRE_RATE` | `gun_fire_rate` |
 | `GUN_DAMAGE_PER_SHOT` | `gun_damage_per_shot` |
 | `GUN_BULLET_SPEED` | `gun_bullet_speed` |
@@ -834,4 +728,4 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `boonpool`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `give_weapon`, `give_random_weapon`, `force_a1`, `sound`, `parts`, `tree_reset`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `class`, `sound`, `parts`, `tree_reset`
