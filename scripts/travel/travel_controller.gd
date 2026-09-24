@@ -32,6 +32,9 @@ const _ELEVATOR_RIDE_SECONDS := 3.2
 const _ELEVATOR_DEPTH := 16.0
 const _DOOR_OPEN_DURATION := 1.4
 const _StopElevator := preload("res://scripts/stops/stop_elevator.gd")
+const _TravelWorld := preload("res://scripts/travel/travel_world.gd")
+const _TravelRoutes := preload("res://scripts/travel/travel_routes.gd")
+const _TravelStops := preload("res://scripts/travel/travel_stops.gd")
 
 ## Overwritten in _ready from MetaProgression → GameBalance van speed curve.
 ## Live value includes temporary driver boosts (raiders read this every frame).
@@ -119,6 +122,10 @@ var _act_reveal_pending := false
 ## and a stop can attach to the previous street.
 var _route_gen := 0
 
+var _world: _TravelWorld
+var _routes: _TravelRoutes
+var _stops: _TravelStops
+
 @onready var corridor_root: Node3D = $"../../ExteriorCorridor"
 @onready var travel_path: Path3D = $"../../TravelPath"
 @onready var van_follow: PathFollow3D = $"../../TravelPath/VanFollow"
@@ -126,6 +133,9 @@ var _route_gen := 0
 
 
 func _ready() -> void:
+	_world = _TravelWorld.new(self)
+	_routes = _TravelRoutes.new(self)
+	_stops = _TravelStops.new(self)
 	process_physics_priority = -100
 	add_to_group(&"travel_controller")
 	_rng = RandomNumberGenerator.new()
@@ -133,9 +143,9 @@ func _ready() -> void:
 	if act_statue_scene == null:
 		act_statue_scene = load("res://scenes/corridor/act_statue.tscn") as PackedScene
 	_apply_meta_travel_speed()
-	_configure_initial_route()
+	_world.configure_initial_route()
 	GameSession.phase_changed.connect(_on_phase_changed)
-	GameSession.route_chosen.connect(_on_route_chosen)
+	GameSession.route_chosen.connect(_routes.on_route_chosen)
 	MetaProgression.van_speed_changed.connect(_on_van_speed_changed)
 	if GameSession.phase == GameSession.RunPhase.TRAVELLING:
 		_maybe_start_intro()
@@ -298,12 +308,12 @@ func is_act_reveal_active() -> bool:
 ## Place a roadside statue and hold the van for the act tarot reveal.
 func begin_act_statue_stop() -> void:
 	_act_reveal_pending = true
-	_spawn_act_statue()
+	_world.spawn_act_statue()
 
 
 func end_act_statue_stop() -> void:
 	_act_reveal_pending = false
-	_clear_act_statue()
+	_world.clear_act_statue()
 
 
 func force_next_stop(stop_id: StringName) -> bool:
@@ -323,7 +333,7 @@ func leave_stop() -> void:
 	if _turn_state == TurnState.ELEVATING:
 		return
 	if not is_instance_valid(_active_stop):
-		_clear_stop_state()
+		_stops.clear_stop_state()
 		GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
 		return
 	var van := get_node("../..")
@@ -331,41 +341,21 @@ func leave_stop() -> void:
 		van.seal_van_after_stop()
 	elif van and van.has_method(&"seal_van_after_shop"):
 		van.seal_van_after_shop()
-	if _is_elevator_stop():
+	if _stops.is_elevator_stop():
 		_begin_elevator_ascent()
 		return
-	_build_leave_stop_route()
+	_routes.build_leave_stop_route()
 
 
 func leave_shop() -> void:
 	leave_stop()
 
 
-func _configure_initial_route() -> void:
-	_begin_new_route()
-	var curve := Curve3D.new()
-	curve.bake_interval = 0.5
-	curve.add_point(Vector3.ZERO)
-	curve.add_point(Vector3(0.0, 0.0, -route_length))
-	travel_path.curve = curve
-	van_follow.progress = 0.0
-	van_rig.transform = Transform3D.IDENTITY
-
-	_spawn_world_segment(
-		Transform3D(
-			travel_path.global_basis,
-			travel_path.global_position + travel_path.global_basis * Vector3(0.0, 0.0, segment_length)
-		)
-	)
-	_next_segment_progress = 0.0
-	_spawn_route_segments_until(segment_ahead_distance)
-
-
 func _physics_process(delta: float) -> void:
 	_tick_speed_orders(delta)
 	if _turn_state == TurnState.ELEVATING:
-		_sync_elevator_platform()
-		_keep_player_on_van_rig()
+		_stops.sync_elevator_platform()
+		_stops.keep_player_on_van_rig()
 	if not _should_scroll():
 		_van_velocity = Vector3.ZERO
 		return
@@ -388,10 +378,10 @@ func _physics_process(delta: float) -> void:
 		_van_velocity = (van_follow.global_position - previous_position) / delta
 	else:
 		_van_velocity = Vector3.ZERO
-	_spawn_segments_ahead()
-	_maybe_begin_stop_park()
+	_world.spawn_segments_ahead()
+	_routes.maybe_begin_stop_park()
 	_update_turn()
-	_prune_world()
+	_world.prune_world()
 
 
 func _tick_speed_orders(delta: float) -> void:
@@ -436,212 +426,6 @@ func _maybe_auto_choose_route(delta: float) -> void:
 	GameSession.choose_route(direction)
 
 
-func _spawn_segments_ahead() -> void:
-	if _segment_spawning_paused:
-		return
-	_spawn_route_segments_until(van_follow.progress + segment_ahead_distance)
-
-
-func _spawn_route_segments_until(target_progress: float) -> void:
-	var route_end := travel_path.curve.get_baked_length()
-	while _next_segment_progress <= target_progress and _next_segment_progress < route_end:
-		_spawn_world_segment(
-			_sample_route_transform(_next_segment_progress),
-			_next_segment_progress
-		)
-		_next_segment_progress += segment_length
-
-
-func _spawn_world_segment(world_transform: Transform3D, route_progress: float = NAN) -> Node3D:
-	var segment := segment_scene.instantiate() as Node3D
-	corridor_root.add_child(segment)
-	segment.global_transform = world_transform
-	if is_finite(route_progress):
-		segment.set_meta(&"route_progress", route_progress)
-		segment.set_meta(&"route_gen", _route_gen)
-	if segment.has_method(&"apply_variant"):
-		segment.apply_variant(_pick_segment_variant())
-	if segment.has_method(&"apply_side_streets"):
-		var side_streets := _pick_side_streets()
-		segment.apply_side_streets(side_streets.x != 0, side_streets.y != 0)
-	_world_pieces.append(segment)
-	_segment_index += 1
-	return segment
-
-
-## First / second / … corridor tile still ahead of the van on the spawn lattice.
-func _upcoming_corridor_progress(tiles_ahead: int) -> float:
-	var progresses: Array[float] = []
-	var ahead_of := van_follow.progress + 1.0
-	for piece in _world_pieces:
-		if not _is_live_route_tile(piece):
-			continue
-		var tile_progress := float(piece.get_meta(&"route_progress"))
-		if tile_progress >= ahead_of:
-			progresses.append(tile_progress)
-	progresses.sort()
-	var index := maxi(tiles_ahead, 1) - 1
-	if index < progresses.size():
-		return progresses[index]
-	if progresses.is_empty():
-		return _next_segment_progress + segment_length * float(index)
-	return progresses[progresses.size() - 1] + segment_length * float(
-		index - progresses.size() + 1
-	)
-
-
-func _corridor_segment_near_progress(route_progress: float) -> Node3D:
-	var best: Node3D
-	var best_dist := INF
-	for piece in _world_pieces:
-		if not _is_live_route_tile(piece):
-			continue
-		var dist := absf(float(piece.get_meta(&"route_progress")) - route_progress)
-		if dist < best_dist:
-			best_dist = dist
-			best = piece
-	if best == null or best_dist > segment_length * 0.51:
-		return null
-	return best
-
-
-func _is_live_route_tile(piece: Node3D) -> bool:
-	if not is_instance_valid(piece) or not piece.has_meta(&"route_progress"):
-		return false
-	if int(piece.get_meta(&"route_gen", -1)) != _route_gen:
-		return false
-	var tile_progress := float(piece.get_meta(&"route_progress"))
-	var sampled := _sample_route_transform(tile_progress)
-	var slop := segment_length * 0.51
-	return piece.global_position.distance_squared_to(sampled.origin) <= slop * slop
-
-
-func _begin_new_route() -> void:
-	_route_gen += 1
-
-
-func _attach_stop_on_upcoming_segment(tiles_ahead: int) -> void:
-	if _pending_stop == null or _pending_stop.scene == null or is_instance_valid(_active_stop):
-		return
-	if _stop_bay_side != &"left" and _stop_bay_side != &"right":
-		_stop_bay_side = &"right" if _rng.randi() % 2 == 0 else &"left"
-
-	var host_progress := _upcoming_corridor_progress(tiles_ahead)
-	_spawn_route_segments_until(host_progress)
-	var host_segment := _corridor_segment_near_progress(host_progress)
-	if host_segment == null:
-		# Lattice skipped this slot (straight-through used to leave a 10m void).
-		host_segment = _spawn_world_segment(
-			_sample_route_transform(host_progress),
-			host_progress
-		)
-		_next_segment_progress = maxf(_next_segment_progress, host_progress + segment_length)
-
-	if _pending_stop.uses_elevator():
-		_place_elevator_stop(host_segment, host_progress)
-	else:
-		_place_bay_stop(host_segment, host_progress)
-
-
-func _place_bay_stop(host_segment: Node3D, host_progress: float) -> void:
-	# Drop any decorative side street on this tile first — a leftover branch
-	# next to the vestibule is what made reverse-park look like "another street".
-	if host_segment.has_method(&"apply_side_streets"):
-		host_segment.apply_side_streets(false, false)
-	if host_segment.has_method(&"open_bay"):
-		host_segment.open_bay(_stop_bay_side)
-	elif host_segment.has_method(&"open_shop_bay"):
-		host_segment.open_shop_bay(_stop_bay_side)
-
-	if not _spawn_stop_host():
-		return
-	var side := 1.0 if _stop_bay_side == &"right" else -1.0
-	var yaw := 0.0 if _stop_bay_side == &"right" else PI
-	var local := Transform3D(Basis.from_euler(Vector3(0.0, yaw, 0.0)), Vector3(side * 9.0, 0.0, 0.0))
-	_active_stop.global_transform = host_segment.global_transform * local
-	_finish_stop_attach(host_progress)
-
-
-func _place_elevator_stop(host_segment: Node3D, host_progress: float) -> void:
-	if not _spawn_stop_host():
-		return
-	# Sit on the travel sample, not the tile mesh — the van stops on the path.
-	_active_stop.global_transform = _sample_route_transform(host_progress)
-	if _active_stop.has_method(&"bind_host_segment"):
-		_active_stop.bind_host_segment(host_segment)
-	_finish_stop_attach(host_progress)
-
-
-func _spawn_stop_host() -> bool:
-	_active_stop = _instantiate_stop_host(_pending_stop)
-	if _active_stop == null:
-		push_error("Side stop '%s' scene failed to instantiate." % String(_pending_stop.id))
-		return false
-	_active_stop_def = _pending_stop
-	corridor_root.add_child(_active_stop)
-	return true
-
-
-func _finish_stop_attach(host_progress: float) -> void:
-	if _active_stop.has_method(&"mount_content"):
-		_active_stop.mount_content(_pending_stop.scene)
-	_world_pieces.append(_active_stop)
-	_stop_align_progress = host_progress
-	_stop_pending = false
-	_stop_attach_segment_index = -1
-
-
-func _pick_segment_variant() -> int:
-	if _neighborhood_remaining <= 0:
-		_neighborhood_variant = _rng.randi() % SEGMENT_VARIANT_COUNT
-		if (
-			_last_neighborhood_variant >= 0
-			and _neighborhood_variant == _last_neighborhood_variant
-		):
-			_neighborhood_variant = (_neighborhood_variant + 1) % SEGMENT_VARIANT_COUNT
-		_neighborhood_remaining = _rng.randi_range(
-			NEIGHBORHOOD_MIN_LENGTH,
-			NEIGHBORHOOD_MAX_LENGTH
-		)
-		_last_neighborhood_variant = _neighborhood_variant
-	_neighborhood_remaining -= 1
-	return _neighborhood_variant
-
-
-func _pick_side_streets() -> Vector2i:
-	if _segment_index < SIDE_STREET_START_SEGMENT:
-		return Vector2i.ZERO
-
-	if _side_street_cooldown > 0:
-		_side_street_cooldown -= 1
-		return Vector2i.ZERO
-
-	if _rng.randf() >= SIDE_STREET_CHANCE:
-		return Vector2i.ZERO
-
-	var left := false
-	var right := false
-	match _rng.randi_range(0, 2):
-		0:
-			left = true
-		1:
-			right = true
-		2:
-			left = true
-			right = true
-
-	_side_street_cooldown = SIDE_STREET_GAP
-	return Vector2i(int(left), int(right))
-
-
-func _sample_route_transform(progress: float) -> Transform3D:
-	return travel_path.global_transform * travel_path.curve.sample_baked_with_rotation(
-		progress,
-		true,
-		true
-	)
-
-
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 	if next_phase in [
 		GameSession.RunPhase.IDLE,
@@ -658,32 +442,8 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		_maybe_start_intro()
 		_maybe_resume_act_flow()
 	elif next_phase == GameSession.RunPhase.ROUTE_CHOICE:
-		_prepare_stop_fork()
-		_spawn_approaching_junction()
-
-
-func _prepare_stop_fork() -> void:
-	# Cards are street modifiers. Every offered road still gets a building.
-	_fork_stops.clear()
-	_fork_stop = null
-	_stop_fork_side = &""
-	var used: Array[StringName] = []
-	if _last_stop_id != &"":
-		used.append(_last_stop_id)
-	var forced := _forced_next_stop
-	_forced_next_stop = null
-	for direction in GameSession.get_route_directions():
-		var stop: SideStopDefinition = forced
-		if stop == null or stop.scene == null:
-			stop = SideStopRegistry.pick(_rng, used)
-		if stop == null or stop.scene == null:
-			continue
-		_fork_stops[direction] = stop
-		if stop.id not in used:
-			used.append(stop.id)
-		if _fork_stop == null:
-			_fork_stop = stop
-			_stop_fork_side = direction
+		_stops.prepare_stop_fork()
+		_world.spawn_approaching_junction()
 
 
 func _maybe_start_intro() -> void:
@@ -770,303 +530,16 @@ func _run_intro(id: int) -> void:
 		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
 
 
-func _aligned_special_progress() -> float:
-	var target_progress := van_follow.progress + junction_distance
-	var first_aligned_progress := (
-		_next_segment_progress
-		- segment_length
-		+ junction_incoming_length
-		+ segment_length * 0.5
-	)
-	var alignment_steps := maxi(
-		0,
-		ceili((target_progress - first_aligned_progress) / segment_length)
-	)
-	return first_aligned_progress + alignment_steps * segment_length
-
-
-func _spawn_special_ahead(scene: PackedScene) -> void:
-	if scene == null or is_instance_valid(_active_junction) or _turn_state != TurnState.NONE:
-		return
-	_turn_state = TurnState.APPROACHING
-	_turn_direction = &""
-
-	var special_progress := _aligned_special_progress()
-	var final_approach_segment := (
-		special_progress - junction_incoming_length - segment_length * 0.5
-	)
-	_spawn_route_segments_until(final_approach_segment)
-	_segment_spawning_paused = true
-
-	_active_junction = scene.instantiate() as Node3D
-	corridor_root.add_child(_active_junction)
-	_active_junction.global_transform = _sample_route_transform(special_progress)
-	_world_pieces.append(_active_junction)
-	_approach_stop_progress = special_progress - turn_radius
-
-
-func _spawn_approaching_junction() -> void:
-	var scene := t_junction_scene if GameSession.uses_t_junction() else crossroads_scene
-	if scene == null:
-		scene = t_junction_scene
-	_spawn_special_ahead(scene)
-
-
-func _on_route_chosen(direction: StringName, _step: int) -> void:
-	if _turn_state != TurnState.APPROACHING or not is_instance_valid(_active_junction):
-		return
-	_turn_direction = direction
-	# Choosing a road with no building abandons any unfinished visit from a prior pick.
-	var chosen_stop := get_fork_stop_for(direction)
-	if chosen_stop != null and chosen_stop.scene != null:
-		_stop_pending = true
-		_pending_stop = chosen_stop
-		_last_stop_id = chosen_stop.id
-		_stop_bay_side = &"left" if _rng.randi() % 2 == 0 else &"right"
-	else:
-		if not is_instance_valid(_active_stop):
-			_stop_pending = false
-			_pending_stop = null
-			_stop_bay_side = &""
-			_stop_attach_segment_index = -1
-			_stop_align_progress = INF
-	_build_turn_route()
-
-
 func _update_turn() -> void:
 	if _turn_state == TurnState.TURNING:
 		if van_follow.progress >= _turn_end_progress:
-			_finish_turn()
+			_routes.finish_turn()
 	elif _turn_state == TurnState.PARKING:
 		if van_follow.progress <= 0.05:
-			_finish_park()
+			_routes.finish_park()
 	elif _turn_state == TurnState.LEAVING_STOP:
 		if van_follow.progress >= _turn_end_progress:
-			_finish_leave_stop()
-
-
-func _build_turn_route() -> void:
-	if _turn_direction == &"straight":
-		_build_straight_route()
-		return
-	var van_transform := van_rig.global_transform
-	var junction_local := van_transform.affine_inverse() * _active_junction.global_position
-	var straight_length := maxf(0.0, -junction_local.z - turn_radius)
-	var side := -1.0 if _turn_direction == &"left" else 1.0
-	var handle := turn_radius * QUARTER_CIRCLE_HANDLE
-	var turn_start := Vector3(0.0, 0.0, -straight_length)
-	var turn_end := Vector3(side * turn_radius, 0.0, -straight_length - turn_radius)
-	var route_end := turn_end + Vector3(side * route_length, 0.0, 0.0)
-
-	var curve := Curve3D.new()
-	curve.bake_interval = 0.25
-	curve.add_point(Vector3.ZERO)
-	curve.add_point(turn_start, Vector3.ZERO, Vector3(0.0, 0.0, -handle))
-	curve.add_point(
-		turn_end,
-		Vector3(-side * handle, 0.0, 0.0),
-		Vector3(side * segment_length * 0.25, 0.0, 0.0)
-	)
-	curve.add_point(
-		route_end,
-		Vector3(-side * segment_length * 0.25, 0.0, 0.0)
-	)
-
-	_begin_new_route()
-	travel_path.curve = curve
-	travel_path.global_transform = van_transform
-	van_follow.progress = 0.0
-	van_rig.transform = Transform3D.IDENTITY
-
-	_turn_state = TurnState.TURNING
-	_approach_stop_progress = INF
-	_turn_end_progress = curve.get_closest_offset(turn_end)
-	_next_segment_progress = _turn_end_progress + segment_length
-	_spawn_route_segments_until(_turn_end_progress + segment_ahead_distance)
-
-
-func _build_straight_route() -> void:
-	# Stay on the live -Z curve. `through` already ends at the outgoing mouth
-	# (~20m past the junction); a full extra tile here left a 10m void.
-	var van_transform := van_rig.global_transform
-	var junction_local := van_transform.affine_inverse() * _active_junction.global_position
-	var through := maxf(segment_length, -junction_local.z + 20.0)
-	_turn_state = TurnState.TURNING
-	_approach_stop_progress = INF
-	_turn_end_progress = van_follow.progress + through
-	_next_segment_progress = _turn_end_progress + segment_length * 0.5
-
-
-func _finish_turn() -> void:
-	_turn_state = TurnState.NONE
-	_turn_direction = &""
-	_active_junction = null
-	_turn_end_progress = INF
-	_segment_spawning_paused = false
-	if _stop_pending and not is_instance_valid(_active_stop):
-		_attach_stop_on_upcoming_segment(
-			_rng.randi_range(STOP_SPAWN_MIN_SEGMENTS_AHEAD, STOP_SPAWN_MAX_SEGMENTS_AHEAD)
-		)
-	_spawn_segments_ahead()
-	GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
-
-
-func _maybe_begin_stop_park() -> void:
-	if _turn_state != TurnState.NONE:
-		return
-	if not is_instance_valid(_active_stop):
-		return
-	if _stop_align_progress >= INF:
-		return
-	# Park while the road is still scrolling (combat used to skip this and blow past).
-	if GameSession.phase not in [
-		GameSession.RunPhase.TRAVELLING,
-		GameSession.RunPhase.COMBAT,
-		GameSession.RunPhase.REST,
-	]:
-		return
-	if _is_elevator_stop():
-		if van_follow.progress < _stop_align_progress:
-			return
-		_begin_elevator_descent()
-		return
-	# Need room for a T-junction quarter-circle plus a short reverse straight.
-	if van_follow.progress < (
-		_stop_align_progress + STOP_PARK_TURN_RADIUS + STOP_PARK_REVERSE_STRAIGHT
-	):
-		return
-	_build_park_route()
-
-
-func _stop_mouth_world() -> Vector3:
-	var exit_pt := _active_stop.get_node_or_null("ExitPoint") as Marker3D
-	if exit_pt:
-		return exit_pt.global_position
-	return _active_stop.to_global(Vector3(1.5, 0.0, 0.0))
-
-
-func _stop_corridor_at_mouth(mouth_world: Vector3) -> Vector3:
-	# Project the mouth onto the corridor centerline (bay sits STOP_CORRIDOR_LATERAL out).
-	var into_bay := _active_stop.global_transform.basis.x.normalized()
-	var corridor_ref := _active_stop.global_position - into_bay * STOP_CORRIDOR_LATERAL
-	return mouth_world - into_bay * into_bay.dot(mouth_world - corridor_ref)
-
-
-func _flatten_local(van_inv: Transform3D, world_pos: Vector3) -> Vector3:
-	var local := van_inv * world_pos
-	local.y = 0.0
-	return local
-
-
-func _build_park_route() -> void:
-	if not is_instance_valid(_active_stop):
-		return
-	var dock := _active_stop.get_node_or_null("DockPoint") as Marker3D
-	if dock == null:
-		return
-
-	# Same C as _build_turn_route, mirrored onto +Z (bay is behind after overshoot),
-	# then stored dock→van and driven with progress counting down so the nose stays
-	# road-facing. Handles are the T-turn controls transferred (not flipped) so the
-	# arc stays a C — flipping them was what made the serpent S.
-	var van_transform := van_rig.global_transform
-	var van_inv := van_transform.affine_inverse()
-	var park_radius := STOP_PARK_TURN_RADIUS
-	var handle := park_radius * QUARTER_CIRCLE_HANDLE
-	var dock_local := _flatten_local(van_inv, dock.global_position)
-	# Aim at the real bay, not the fork's remembered left/right — after a turn
-	# those can disagree with van-local +X.
-	var side := signf(dock_local.x)
-	if is_zero_approx(side):
-		side = 1.0 if _stop_bay_side == &"right" else -1.0
-	_stop_bay_side = &"right" if side > 0.0 else &"left"
-
-	var mouth_z := _flatten_local(van_inv, _stop_corridor_at_mouth(_stop_mouth_world())).z
-	mouth_z = maxf(mouth_z, park_radius + STOP_PARK_REVERSE_STRAIGHT)
-	# Real dock lateral. Do not clamp outward — that shoved the van 1–2 m past
-	# the marker and into the roll-up.
-	var dock_lat := maxf(absf(dock_local.x), park_radius)
-
-	var straight_length := mouth_z - park_radius
-	var turn_start := Vector3(0.0, 0.0, straight_length)
-	var turn_end := Vector3(side * park_radius, 0.0, straight_length + park_radius)
-	var dock_pos := Vector3(side * dock_lat, 0.0, mouth_z)
-	var bay_out := dock_lat - park_radius
-
-	# Forward T into the bay would be: van → turn_start → turn_end → dock with
-	#   turn_start.out = (0,0,handle), turn_end.in = (-side*handle, 0, 0)
-	# Reversed path keeps those same control points on the shared segments.
-	var curve := Curve3D.new()
-	curve.bake_interval = 0.25
-	curve.add_point(dock_pos, Vector3.ZERO, Vector3(-side * bay_out * 0.25, 0.0, 0.0))
-	curve.add_point(
-		turn_end,
-		Vector3(side * bay_out * 0.25, 0.0, 0.0),
-		Vector3(-side * handle, 0.0, 0.0)
-	)
-	curve.add_point(
-		turn_start,
-		Vector3(0.0, 0.0, handle),
-		Vector3.ZERO
-	)
-	curve.add_point(Vector3.ZERO)
-
-	_begin_new_route()
-	travel_path.curve = curve
-	travel_path.global_transform = van_transform
-	van_follow.progress = curve.get_baked_length()
-	van_rig.transform = Transform3D.IDENTITY
-
-	_park_reversing = true
-	_turn_state = TurnState.PARKING
-	_turn_end_progress = 0.0
-	_stop_align_progress = INF
-	_segment_spawning_paused = true
-	_refresh_travel_speed()
-	GameSession.set_phase(GameSession.RunPhase.PARKING)
-
-
-func _finish_park() -> void:
-	_park_reversing = false
-	_turn_state = TurnState.NONE
-	_turn_end_progress = INF
-	van_follow.progress = 0.0
-	_refresh_travel_speed()
-	# Open after the reverse-park finishes so the gate stays shut while docking.
-	if is_instance_valid(_active_stop) and _active_stop.has_method(&"open_door"):
-		_active_stop.open_door()
-	GameSession.set_phase(GameSession.RunPhase.STOP)
-
-
-func _instantiate_stop_host(def: SideStopDefinition) -> Node3D:
-	if def != null and def.uses_elevator():
-		if stop_elevator_scene:
-			var elevator := stop_elevator_scene.instantiate() as Node3D
-			if elevator:
-				return elevator
-		return _StopElevator.new() as Node3D
-	if stop_vestibule_scene:
-		var vestibule := stop_vestibule_scene.instantiate() as Node3D
-		if vestibule:
-			return vestibule
-	return def.scene.instantiate() as Node3D
-
-
-func _is_elevator_stop() -> bool:
-	return _active_stop_def != null and _active_stop_def.uses_elevator()
-
-
-func _elevator_ride_seconds() -> float:
-	var seconds := _ELEVATOR_RIDE_SECONDS
-	if is_instance_valid(_active_stop) and _active_stop.has_method(&"ride_seconds"):
-		seconds = float(_active_stop.ride_seconds())
-	return scale_debug_wait(seconds)
-
-
-func _elevator_depth() -> float:
-	if is_instance_valid(_active_stop) and _active_stop.has_method(&"depth"):
-		return float(_active_stop.depth())
-	return _ELEVATOR_DEPTH
+			_routes.finish_leave_stop()
 
 
 func _begin_elevator_descent() -> void:
@@ -1082,7 +555,7 @@ func _begin_elevator_descent() -> void:
 	if is_instance_valid(_active_stop) and _active_stop.has_method(&"open_shaft"):
 		_active_stop.open_shaft(corridor_root, van_rig.global_position)
 	_sequence_id += 1
-	_run_elevator_ride(_sequence_id, -_elevator_depth(), true)
+	_run_elevator_ride(_sequence_id, -_stops.elevator_depth(), true)
 
 
 func _begin_elevator_ascent() -> void:
@@ -1098,32 +571,12 @@ func _begin_elevator_ascent() -> void:
 	_run_elevator_ride(_sequence_id, 0.0, false)
 
 
-func _sync_elevator_platform() -> void:
-	if not is_instance_valid(_active_stop):
-		return
-	if _active_stop.has_method(&"sync_platform_offset"):
-		_active_stop.sync_platform_offset(van_follow.v_offset)
-
-
-func _keep_player_on_van_rig() -> void:
-	# CharacterBody3D physics is global. Street-height floors inflate local Y
-	# as PathFollow.v_offset drops the van; snap back onto the rig.
-	if van_rig == null:
-		return
-	var player := van_rig.get_node_or_null("Player") as CharacterBody3D
-	if player == null:
-		return
-	player.position.y = 0.0
-	player.velocity.y = 0.0
-	player.floor_snap_length = 0.0
-
-
 func _run_elevator_ride(id: int, target_offset: float, opening: bool) -> void:
 	if not opening:
 		await get_tree().create_timer(scale_debug_wait(_DOOR_OPEN_DURATION)).timeout
 		if id != _sequence_id:
 			return
-	var duration := _elevator_ride_seconds()
+	var duration := _stops.elevator_ride_seconds()
 	var tween := create_tween()
 	tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tween.set_trans(Tween.TRANS_CUBIC)
@@ -1133,142 +586,9 @@ func _run_elevator_ride(id: int, target_offset: float, opening: bool) -> void:
 	if id != _sequence_id:
 		return
 	if opening:
-		_finish_elevator_descent()
+		_stops.finish_elevator_descent()
 	else:
-		_finish_elevator_ascent()
-
-
-func _finish_elevator_descent() -> void:
-	_turn_state = TurnState.NONE
-	process_physics_priority = -100
-	_restore_player_floor_snap()
-	_refresh_travel_speed()
-	if is_instance_valid(_active_stop) and _active_stop.has_method(&"set_docked"):
-		_active_stop.set_docked(true)
-	if is_instance_valid(_active_stop) and _active_stop.has_method(&"open_door"):
-		_active_stop.open_door()
-	GameSession.set_phase(GameSession.RunPhase.STOP)
-
-
-func _finish_elevator_ascent() -> void:
-	van_follow.v_offset = 0.0
-	van_rig.transform = Transform3D.IDENTITY
-	_turn_state = TurnState.NONE
-	process_physics_priority = -100
-	_restore_player_floor_snap()
-	_segment_spawning_paused = false
-	_refresh_travel_speed()
-	if is_instance_valid(_active_stop) and _active_stop.has_method(&"restore_road"):
-		_active_stop.restore_road()
-	if is_instance_valid(_active_stop):
-		_world_pieces.erase(_active_stop)
-		_active_stop.queue_free()
-	_clear_stop_state()
-	_spawn_segments_ahead()
-	GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
-
-
-func _build_leave_stop_route() -> void:
-	# Mirror the reverse-park: same curve, forward progress (dock → corridor mouth).
-	_park_reversing = false
-	if is_instance_valid(_active_stop) and _active_stop.has_method(&"close_door"):
-		_active_stop.close_door()
-
-	var curve := travel_path.curve
-	if curve == null or curve.point_count < 2:
-		_clear_stop_state()
-		GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
-		return
-
-	var corridor_join := curve.get_closest_offset(Vector3.ZERO)
-	var last_pos := curve.get_point_position(curve.point_count - 1)
-	if last_pos.is_equal_approx(Vector3.ZERO):
-		curve.add_point(Vector3(0.0, 0.0, -route_length))
-
-	_begin_new_route()
-	van_follow.progress = 0.0
-	van_rig.transform = Transform3D.IDENTITY
-
-	_turn_state = TurnState.LEAVING_STOP
-	_turn_end_progress = corridor_join
-	_next_segment_progress = corridor_join + segment_length
-	_segment_spawning_paused = false
-	_refresh_travel_speed()
-	_spawn_route_segments_until(corridor_join + segment_ahead_distance)
-
-
-func _finish_leave_stop() -> void:
-	_turn_state = TurnState.NONE
-	_turn_end_progress = INF
-	_clear_stop_state()
-	_segment_spawning_paused = false
-	_refresh_travel_speed()
-	_spawn_segments_ahead()
-	GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
-
-
-func _restore_player_floor_snap() -> void:
-	if van_rig == null:
-		return
-	var player := van_rig.get_node_or_null("Player") as CharacterBody3D
-	if player:
-		player.floor_snap_length = 0.2
-
-
-func _clear_stop_state() -> void:
-	process_physics_priority = -100
-	_restore_player_floor_snap()
-	if is_instance_valid(van_follow):
-		van_follow.v_offset = 0.0
-	_active_stop = null
-	_active_stop_def = null
-	_pending_stop = null
-	_fork_stop = null
-	_fork_stops.clear()
-	_stop_pending = false
-	_stop_attach_segment_index = -1
-	_stop_bay_side = &""
-	_stop_align_progress = INF
-	_stop_fork_side = &""
-	_park_reversing = false
-
-
-func _spawn_act_statue() -> void:
-	_clear_act_statue()
-	if act_statue_scene == null or not is_instance_valid(van_rig):
-		return
-	_active_statue = act_statue_scene.instantiate() as Node3D
-	if _active_statue == null:
-		return
-	corridor_root.add_child(_active_statue)
-	# Roadside placeholder just ahead and to the right of the van.
-	var offset := van_rig.global_transform.basis * Vector3(4.5, 0.0, -8.0)
-	_active_statue.global_position = van_rig.global_position + offset
-	_active_statue.global_basis = van_rig.global_basis
-	_world_pieces.append(_active_statue)
-
-
-func _clear_act_statue() -> void:
-	if is_instance_valid(_active_statue):
-		_world_pieces.erase(_active_statue)
-		_active_statue.queue_free()
-	_active_statue = null
-
-
-func _prune_world() -> void:
-	if _turn_state != TurnState.NONE:
-		return
-	for index in range(_world_pieces.size() - 1, -1, -1):
-		var piece := _world_pieces[index]
-		if not is_instance_valid(piece):
-			_world_pieces.remove_at(index)
-			continue
-		if piece == _active_stop or piece == _active_statue:
-			continue
-		if piece.global_position.distance_to(van_rig.global_position) <= world_cull_distance:
-			continue
-		piece.queue_free()
-		_world_pieces.remove_at(index)
+		_stops.finish_elevator_ascent()
 
 
 func _exit_tree() -> void:
