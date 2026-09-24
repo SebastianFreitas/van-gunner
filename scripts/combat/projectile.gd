@@ -162,9 +162,12 @@ func _sweep_for_hit(from: Vector3, to: Vector3) -> Dictionary:
 	return result
 
 
-## Bullets only bounce off scenery.
+## Bullets only bounce off scenery. Explosive Rounds detonate on first contact instead.
 func _can_ricochet_off(collider: Node) -> bool:
 	if _bounces_left <= 0 or collider == null:
+		return false
+	var traits: BoonTraits = BoonCombat.get_player_traits(get_tree())
+	if traits and traits.get_add(BoonTraitKeys.EXPLOSIVE_ROUNDS) > 0.0:
 		return false
 	return DamageResolver.find_damageable(collider) == null
 
@@ -318,7 +321,7 @@ func _resolve_hit(collider: Node) -> void:
 		damage_info.explosion_radius = explosion_radius
 		DamageResolver.apply_hit(damage_info, collider)
 		if traits:
-			BoonCombat.apply_post_hit(damage_info, collider, traits)
+			BoonCombat.apply_post_hit(damage_info, collider, traits, self)
 		hit_target.emit(collider)
 		AudioDirector.play_at(&"bullet_impact", self)
 	var keep_alive := BoonCombat.should_keep_alive_after_hit(traits, damage_info, self)

@@ -166,6 +166,22 @@ var MECHANIC_VAN_BOON_COST: int:
 	get:
 		return data.mechanic_van_boon_cost
 
+var POISON_DURATION: float:
+	get:
+		return data.poison_duration
+
+var POISON_TICK_INTERVAL: float:
+	get:
+		return data.poison_tick_interval
+
+var COLD_SLOW_DURATION: float:
+	get:
+		return data.cold_slow_duration
+
+var WAREHOUSE_RARE_BOON_CHANCE: float:
+	get:
+		return data.warehouse_rare_boon_chance
+
 
 # --- Helpers -----------------------------------------------------------------
 

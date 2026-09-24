@@ -85,6 +85,17 @@ extends Resource
 ## Random roll from the van (general) boon pool.
 @export var mechanic_van_boon_cost := 40
 
+@export_group("Bullet boons")
+## Poison Rounds: a stack drains over this many seconds, dealt in ticks.
+@export var poison_duration := 2.0
+@export var poison_tick_interval := 0.5
+## Cold Rounds: how long one hit slows movement and attacks.
+@export var cold_slow_duration := 2.5
+
+@export_group("Warehouse")
+## Chance the chest's bonus pick swaps one card for the rare pool (Double Damage).
+@export var warehouse_rare_boon_chance := 0.05
+
 
 func get_base_dps() -> float:
 	return base_damage_per_shot * base_fire_rate

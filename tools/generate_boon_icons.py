@@ -25,6 +25,14 @@ GLYPHS: dict[str, str] = {
     "chew_tobacco": '<ellipse cx="64" cy="70" rx="22" ry="14" fill="{inner}"/><path d="M52 58 q12 -18 24 0" stroke="{accent}" stroke-width="8" fill="none" stroke-linecap="round"/>',
     "ricochet_rounds": '<path d="M22 34 L68 76 L106 40" fill="none" stroke="{accent}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 96 L104 96" fill="none" stroke="{inner}" stroke-width="8" stroke-linecap="round"/><circle cx="68" cy="76" r="11" fill="{stroke}"/><circle cx="22" cy="34" r="7" fill="{accent}"/><circle cx="106" cy="40" r="7" fill="{accent}"/>',
     "rubber_casings": '<path d="M24 92 Q42 36 64 80 Q86 34 104 92" fill="none" stroke="{accent}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><rect x="26" y="94" width="76" height="10" rx="5" fill="{inner}"/><circle cx="64" cy="80" r="10" fill="{inner}" stroke="{stroke}" stroke-width="5"/>',
+
+    # Bullet boons
+    "explosive_rounds": '<circle cx="64" cy="64" r="14" fill="{accent}"/><path d="M64 26 v14 M64 88 v14 M26 64 h14 M88 64 h14 M37 37 l10 10 M81 81 l10 10 M91 37 l-10 10 M47 81 l-10 10" stroke="{stroke}" stroke-width="6" stroke-linecap="round"/>',
+    "poison_rounds": '<path d="M64 30 C56 44 46 50 46 62 C46 76 54 88 64 92 C74 88 82 76 82 62 C82 50 72 44 64 30 Z" fill="{inner}"/><path d="M56 68 h16 M64 60 v16" stroke="{accent}" stroke-width="5" stroke-linecap="round"/>',
+    "cold_rounds": '<path d="M64 26 v76 M31 45 l66 38 M31 83 l66 -38" stroke="{stroke}" stroke-width="5" stroke-linecap="round"/><circle cx="64" cy="64" r="9" fill="{accent}"/>',
+
+    # Warehouse chest only
+    "double_damage": '<path d="M38 46 l14 18 l-14 18 M60 46 l14 18 l-14 18" fill="none" stroke="{accent}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><rect x="82" y="44" width="10" height="40" rx="4" fill="{stroke}"/>',
 }
 
 

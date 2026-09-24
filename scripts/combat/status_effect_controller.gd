@@ -2,11 +2,7 @@ class_name StatusEffectController
 extends Node
 
 ## Poison stacks and the cold slow on one enemy. There is no burn and no freeze:
-## fire is a blast and cold only slows.
-
-@export var poison_tick_interval := 0.5
-@export var base_poison_duration := 2.0
-@export var base_cold_duration := 2.5
+## fire is a blast and cold only slows. Durations and the tick live in GameBalance.
 
 class PoisonStack:
 	var remaining := 0.0
@@ -99,7 +95,7 @@ func get_outgoing_damage_multiplier() -> float:
 
 
 func _poison_stack_duration() -> float:
-	return base_poison_duration
+	return GameBalance.POISON_DURATION
 
 
 func _process(delta: float) -> void:
@@ -130,7 +126,7 @@ func _tick_poison(delta: float) -> void:
 		else:
 			i += 1
 	_poison_tick_timer += delta
-	if _poison_tick_timer >= poison_tick_interval or _poison_stacks.is_empty():
+	if _poison_tick_timer >= GameBalance.POISON_TICK_INTERVAL or _poison_stacks.is_empty():
 		_poison_tick_timer = 0.0
 		_flush_poison_pending()
 

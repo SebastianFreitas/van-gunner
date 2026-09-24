@@ -98,6 +98,7 @@ static func apply_explosion(
 			splash_ctx.traits = traits
 			splash_ctx.damage_info = splash
 			splash_ctx.target = damageable
+			splash_ctx.status = find_status(damageable)
 			BoonBehaviorRegistry.dispatch_explosion_splash(splash_ctx)
 		if damageable is Node3D:
 			splash.hit_position = (damageable as Node3D).global_position + Vector3(0, 1.2, 0)

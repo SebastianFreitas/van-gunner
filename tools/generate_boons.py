@@ -21,6 +21,7 @@ ICON_DIR = ROOT / "scenes" / "items" / "boons"
 # rewritten on each run, so a pool with no boons is written empty.
 POOLS = {
     "general": "general_boon_pool.tres",
+    "warehouse_rare": "warehouse_rare_boon_pool.tres",
 }
 
 # effect dict types:
@@ -36,13 +37,13 @@ POOLS = {
 
 BOONS = [
     # --- Life ---
-    {"id": "max_hp_1", "weight": 10, "name": "Thick Skin", "desc": "Gain 10 Max Health",
+    {"id": "max_hp_1", "repeatable": True, "weight": 10, "name": "Thick Skin", "desc": "Gain 10 Max Health",
      "effects": [{"type": "max_health", "amount": 10}]},
-    {"id": "max_hp_2", "weight": 5, "name": "Iron Constitution", "desc": "Gain 20 Max Health",
+    {"id": "max_hp_2", "repeatable": True, "weight": 5, "name": "Iron Constitution", "desc": "Gain 20 Max Health",
      "effects": [{"type": "max_health", "amount": 20}]},
-    {"id": "max_hp_3", "weight": 1, "name": "Titan's Heart", "desc": "Gain 60 Max Health",
+    {"id": "max_hp_3", "repeatable": True, "weight": 1, "name": "Titan's Heart", "desc": "Gain 60 Max Health",
      "effects": [{"type": "max_health", "amount": 60}]},
-    {"id": "max_hp_heal", "weight": 2, "name": "Second Wind", "desc": "Gain 40 Max Health and heal fully",
+    {"id": "max_hp_heal", "repeatable": True, "weight": 2, "name": "Second Wind", "desc": "Gain 40 Max Health and heal fully",
      "effects": [{"type": "max_health", "amount": 40}, {"type": "full_heal"}]},
     {"id": "max_hp_phys", "weight": 5, "name": "Brawler's Bulk", "desc": "Gain 10 Max Health and +1 damage",
      "effects": [
@@ -64,6 +65,18 @@ BOONS = [
          {"type": "gun_stat", "stat": "max_bounces", "value": 1.0, "id": "rubber_casings_bounces"},
          {"type": "gun_stat", "stat": "bounce_speed_retention", "value": 1.35, "mode": "multiply", "id": "rubber_casings_retention"},
      ]},
+
+    # --- Bullet boons: the add value is the share of the hit ---
+    {"id": "explosive_rounds", "weight": 5, "name": "Explosive Rounds", "desc": "Bullets explode on impact.",
+     "effects": [{"type": "trait_add", "key": "explosive_rounds", "value": 0.5}]},
+    {"id": "poison_rounds", "weight": 5, "name": "Poison Rounds", "desc": "Bullets poison enemies.",
+     "effects": [{"type": "trait_add", "key": "poison_rounds", "value": 1.0}]},
+    {"id": "cold_rounds", "weight": 5, "name": "Cold Rounds", "desc": "Bullets slow enemies.",
+     "effects": [{"type": "trait_add", "key": "cold_rounds", "value": 0.45}]},
+
+    # --- Warehouse chest only ---
+    {"id": "double_damage", "pool": "warehouse_rare", "weight": 1, "name": "Double Damage", "desc": "Deal 2x damage.",
+     "effects": [{"type": "gun_stat", "stat": "damage_per_shot", "value": 2.0, "mode": "multiply", "id": "double_damage"}]},
 ]
 
 SCRIPT_PATHS = {

@@ -29,6 +29,8 @@ enum ItemKind {
 @export var shot_hit_radius := 0.0
 ## Gold cost when sold in a shop. 0 means not priced for sale.
 @export var shop_price := 0
+## BOON only: may be offered and taken again in the same run.
+@export var repeatable := false
 @export var effects: Array[ItemEffect] = []
 
 
@@ -63,7 +65,7 @@ func can_collect(player: Node3D) -> bool:
 			return true
 		ItemKind.BOON:
 			var controller := player.get_node_or_null("Usables") as UsablesController
-			return controller == null or not controller.has_boon(self)
+			return controller == null or repeatable or not controller.has_boon(self)
 		ItemKind.TOOL:
 			return true
 	return false

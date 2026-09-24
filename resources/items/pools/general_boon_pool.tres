@@ -12,6 +12,9 @@
 [ext_resource type="Resource" path="res://resources/items/boons/chew_tobacco.tres" id="item_7"]
 [ext_resource type="Resource" path="res://resources/items/boons/ricochet_rounds.tres" id="item_8"]
 [ext_resource type="Resource" path="res://resources/items/boons/rubber_casings.tres" id="item_9"]
+[ext_resource type="Resource" path="res://resources/items/boons/explosive_rounds.tres" id="item_10"]
+[ext_resource type="Resource" path="res://resources/items/boons/poison_rounds.tres" id="item_11"]
+[ext_resource type="Resource" path="res://resources/items/boons/cold_rounds.tres" id="item_12"]
 
 [sub_resource type="Resource" id="entry_0"]
 script = ExtResource("loot_pool_entry")
@@ -63,6 +66,21 @@ script = ExtResource("loot_pool_entry")
 item = ExtResource("item_9")
 weight = 0.6
 
+[sub_resource type="Resource" id="entry_10"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_10")
+weight = 5
+
+[sub_resource type="Resource" id="entry_11"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_11")
+weight = 5
+
+[sub_resource type="Resource" id="entry_12"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_12")
+weight = 5
+
 [resource]
 script = ExtResource("loot_pool")
-entries = Array[ExtResource("loot_pool_entry")]([SubResource("entry_0"), SubResource("entry_1"), SubResource("entry_2"), SubResource("entry_3"), SubResource("entry_4"), SubResource("entry_5"), SubResource("entry_6"), SubResource("entry_7"), SubResource("entry_8"), SubResource("entry_9")])
+entries = Array[ExtResource("loot_pool_entry")]([SubResource("entry_0"), SubResource("entry_1"), SubResource("entry_2"), SubResource("entry_3"), SubResource("entry_4"), SubResource("entry_5"), SubResource("entry_6"), SubResource("entry_7"), SubResource("entry_8"), SubResource("entry_9"), SubResource("entry_10"), SubResource("entry_11"), SubResource("entry_12")])

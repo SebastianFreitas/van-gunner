@@ -72,9 +72,11 @@ func _refresh_boons() -> void:
 		child.queue_free()
 	if not _controller:
 		return
+	var shown: Dictionary = {}
 	for boon in _controller.get_boons():
-		if not boon or not boon.icon:
+		if not boon or not boon.icon or shown.has(boon.id):
 			continue
+		shown[boon.id] = true
 		var icon := TextureRect.new()
 		icon.custom_minimum_size = Vector2(34, 34)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE

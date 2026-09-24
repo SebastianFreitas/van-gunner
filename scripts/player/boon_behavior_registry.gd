@@ -16,6 +16,9 @@ static func ensure_initialized() -> void:
 	_initialized = true
 	_handlers = [
 		_FlagHandlers.RicochetStackBehavior.new(),
+		_FlagHandlers.ExplosiveRoundsBehavior.new(),
+		_FlagHandlers.PoisonRoundsBehavior.new(),
+		_FlagHandlers.ColdRoundsBehavior.new(),
 	]
 
 

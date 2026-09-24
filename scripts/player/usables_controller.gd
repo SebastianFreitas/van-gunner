@@ -55,8 +55,24 @@ func has_boon(item: ItemDefinition) -> bool:
 	return false
 
 
+## Ids of the player's boons that cannot be taken again. Every offer (rest
+## reward, warehouse chest, mechanic) excludes these; repeatable boons stay in.
+static func owned_boon_exclusions(player: Node) -> Array:
+	var ids: Array = []
+	if player == null:
+		return ids
+	var controller := player.get_node_or_null("Usables") as UsablesController
+	if controller == null:
+		return ids
+	for boon in controller.get_boons():
+		if boon and not boon.repeatable and not ids.has(boon.id):
+			ids.append(boon.id)
+	return ids
+
+
+## A repeatable boon is listed once per take so its effects stack.
 func register_boon(item: ItemDefinition) -> void:
-	if not item or has_boon(item):
+	if not item or (has_boon(item) and not item.repeatable):
 		return
 	_boons.append(item)
 	boons_changed.emit()

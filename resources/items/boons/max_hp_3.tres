@@ -16,4 +16,5 @@ display_name = "Titan's Heart"
 description = "Gain 60 Max Health"
 icon = ExtResource("icon")
 kind = 1
+repeatable = true
 effects = Array[ExtResource("item_effect")]([SubResource("eff_max_hp_3_1")])

@@ -6,6 +6,12 @@ extends RefCounted
 # General combat
 const RICOCHET_STACK_POWER := &"ricochet_stack_power"
 
+# Bullet boons. The add value is the share of the hit each bullet turns into a
+# blast, a poison stack or a slow; the owner tunes it on the boon's .tres.
+const EXPLOSIVE_ROUNDS := &"explosive_rounds"
+const POISON_ROUNDS := &"poison_rounds"
+const COLD_ROUNDS := &"cold_rounds"
+
 # Gun stats (stored on BoonTraits, applied by GunStatsController)
 const GUN_FIRE_RATE := &"gun_fire_rate"
 const GUN_DAMAGE_PER_SHOT := &"gun_damage_per_shot"
@@ -29,6 +35,10 @@ static func all_trait_labels() -> Dictionary:
 	return {
 		# General combat
 		RICOCHET_STACK_POWER: "Stacking ricochet damage",
+		# Bullet boons
+		EXPLOSIVE_ROUNDS: "Blast share of the hit",
+		POISON_ROUNDS: "Poison share of the hit",
+		COLD_ROUNDS: "Slow strength",
 		# Gun stats
 		GUN_FIRE_RATE: "Fire rate",
 		GUN_DAMAGE_PER_SHOT: "Damage per shot",

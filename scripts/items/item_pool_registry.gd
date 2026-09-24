@@ -8,6 +8,8 @@ const _POOL_PATHS := {
 	## Alias of general_boon — mechanic / van-identity rolls use this key.
 	"van": "res://resources/items/pools/general_boon_pool.tres",
 	"general_boon": "res://resources/items/pools/general_boon_pool.tres",
+	## Warehouse chest bonus pick only (Double Damage). Rests and the mechanic never read it.
+	"warehouse_rare": "res://resources/items/pools/warehouse_rare_boon_pool.tres",
 	"rest_tools": "res://resources/items/pools/rest_tools_pool.tres",
 	"shop": "res://resources/items/pools/shop_pool.tres",
 }

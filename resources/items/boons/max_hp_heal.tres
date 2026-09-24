@@ -20,4 +20,5 @@ display_name = "Second Wind"
 description = "Gain 40 Max Health and heal fully"
 icon = ExtResource("icon")
 kind = 1
+repeatable = true
 effects = Array[ExtResource("item_effect")]([SubResource("eff_max_hp_heal_1"), SubResource("eff_max_hp_heal_2")])

@@ -106,7 +106,7 @@ New §4 items:
 - [x] 1. Classes replace weapons: items 1-13 and 35, plus the weapon and class parts of 36.
 - [x] 2. Old boons out: items 24, 25, 27, 31, 32 and 33, and `boonpool` from 36. Update both generators for the removals and re-run them.
 - [x] 3. One damage number: items 14, 15, 16 and 34.
-- [ ] 4. Bullet boons and the new pools: items 17-23, 26, 28, 29 and 30. Update both generators and re-run them, then run the headless check so Godot imports the new icons, and commit each new `.svg` with its `.svg.import`.
+- [x] 4. Bullet boons and the new pools: items 17-23, 26, 28, 29 and 30. Update both generators and re-run them, then run the headless check so Godot imports the new icons, and commit each new `.svg` with its `.svg.import`.
 - [ ] 5. `gen_context.py` and PROJECT_MAP (39), then AGENTS.md (40).
 - [ ] 6. Final sweep. `git grep` finds nothing for `DamageType`, `damage_type`, `WeaponInventory`, `WeaponInstance`, `WeaponDefinition`, `WeaponMod`, `WeaponCatalog`, `current_area`, `BoonPool`, `boon_pool`, `phys_damage_bonus`, `is_dot_tick`, `try_apply_freeze`, `freeze_chance`, `fire_damage`, `cold_damage` or `poison_damage`. The headless check shows nothing beyond the step-0 baseline. Delete this file in the final commit.
 

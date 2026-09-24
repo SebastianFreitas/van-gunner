@@ -122,20 +122,7 @@ func _roll_van_boon(actor: Node3D) -> ItemDefinition:
 	var pool := ItemPoolRegistry.get_pool(_VAN_POOL_KEY)
 	if pool == null:
 		return null
-	return pool.pick_item(_owned_boon_ids(actor))
-
-
-func _owned_boon_ids(actor: Node3D) -> Array:
-	var ids: Array = []
-	if actor == null:
-		return ids
-	var controller := actor.get_node_or_null("Usables") as UsablesController
-	if controller == null:
-		return ids
-	for boon in controller.get_boons():
-		if boon:
-			ids.append(boon.id)
-	return ids
+	return pool.pick_item(UsablesController.owned_boon_exclusions(actor))
 
 
 func _weld_kit_price() -> int:

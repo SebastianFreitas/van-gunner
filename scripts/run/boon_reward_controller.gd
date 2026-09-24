@@ -35,8 +35,9 @@ func present_bonus_choices() -> void:
 		_auto_collect_one()
 		SaveManager.save_active_session()
 		return
-	var exclude := _owned_boon_ids()
+	var exclude := UsablesController.owned_boon_exclusions(_player)
 	var choices := ItemPoolRegistry.pick_rest_choices(CHOICE_COUNT, exclude)
+	_maybe_offer_rare(choices, exclude)
 	if choices.is_empty():
 		return
 	if _panel and _panel.has_method(&"present"):
@@ -44,6 +45,24 @@ func present_bonus_choices() -> void:
 	else:
 		choices[0].collect(_player)
 		SaveManager.save_active_session()
+
+
+## Warehouse chest only: with a small chance one card comes from the rare pool
+## (Double Damage) unless the player already owns it. Rests and the mechanic
+## never read that pool.
+func _maybe_offer_rare(choices: Array[ItemDefinition], exclude: Array) -> void:
+	if randf() > GameBalance.WAREHOUSE_RARE_BOON_CHANCE:
+		return
+	var pool := ItemPoolRegistry.get_pool("warehouse_rare")
+	if pool == null:
+		return
+	var rare := pool.pick_item(exclude)
+	if rare == null:
+		return
+	if choices.is_empty():
+		choices.append(rare)
+	else:
+		choices[randi() % choices.size()] = rare
 
 
 func wait_for_rest_resolution() -> void:
@@ -81,7 +100,7 @@ func _present_boon_choices() -> void:
 	if not _player:
 		_finish_resolution()
 		return
-	var exclude := _owned_boon_ids()
+	var exclude := UsablesController.owned_boon_exclusions(_player)
 	var choices := ItemPoolRegistry.pick_rest_choices(CHOICE_COUNT, exclude)
 	if choices.is_empty():
 		_finish_resolution()
@@ -110,23 +129,12 @@ func _finish_resolution() -> void:
 func _auto_collect_one() -> void:
 	if not _player:
 		return
-	var exclude := _owned_boon_ids()
+	var exclude := UsablesController.owned_boon_exclusions(_player)
 	var choices := ItemPoolRegistry.pick_rest_choices(1, exclude)
 	if choices.is_empty():
 		return
 	var item: ItemDefinition = choices[0]
 	item.collect(_player)
-
-
-func _owned_boon_ids() -> Array:
-	var ids: Array = []
-	var controller := _player.get_node_or_null("Usables") as UsablesController
-	if not controller:
-		return ids
-	for boon in controller.get_boons():
-		if boon:
-			ids.append(boon.id)
-	return ids
 
 
 func _is_debug_speed_mode() -> bool:

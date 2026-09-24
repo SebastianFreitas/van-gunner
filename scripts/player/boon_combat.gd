@@ -39,10 +39,25 @@ static func modify_explosion_radius(base_radius: float, info: DamageInfo, traits
 	return ctx.explosion_radius
 
 
-static func apply_post_hit(info: DamageInfo, target: Node, traits: BoonTraits) -> void:
+## Bullet hooks (Explosive / Poison / Cold Rounds). The projectile gives blasts
+## their world and the shooter to exclude; secondary hits never come through here.
+static func apply_post_hit(
+	info: DamageInfo,
+	target: Node,
+	traits: BoonTraits,
+	projectile: Projectile = null
+) -> void:
 	if not traits:
 		return
 	var ctx := _make_damage_ctx(info, traits, target)
+	if info:
+		ctx.explosion_center = info.hit_position
+	if projectile:
+		ctx.projectile = projectile
+		ctx.tree = projectile.get_tree()
+		ctx.space_state = projectile.get_world_3d().direct_space_state
+		if projectile.owner_rid.is_valid():
+			ctx.exclude.append(projectile.owner_rid)
 	BoonBehaviorRegistry.dispatch_post_hit(ctx)
 
 

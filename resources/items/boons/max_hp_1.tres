@@ -16,4 +16,5 @@ display_name = "Thick Skin"
 description = "Gain 10 Max Health"
 icon = ExtResource("icon")
 kind = 1
+repeatable = true
 effects = Array[ExtResource("item_effect")]([SubResource("eff_max_hp_1_1")])

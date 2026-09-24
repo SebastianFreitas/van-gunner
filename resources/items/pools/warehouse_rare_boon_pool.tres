@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="LootPool" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/loot_pool.gd" id="loot_pool"]
+[ext_resource type="Script" path="res://scripts/items/loot_pool_entry.gd" id="loot_pool_entry"]
+[ext_resource type="Resource" path="res://resources/items/boons/double_damage.tres" id="item_0"]
+
+[sub_resource type="Resource" id="entry_0"]
+script = ExtResource("loot_pool_entry")
+item = ExtResource("item_0")
+weight = 1
+
+[resource]
+script = ExtResource("loot_pool")
+entries = Array[ExtResource("loot_pool_entry")]([SubResource("entry_0")])
