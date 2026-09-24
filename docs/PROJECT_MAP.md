@@ -103,6 +103,27 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal rare_parts_changed(total: int)`
 - `signal tree_changed`
 
+**`scripts/enemies/biker_boss.gd`**
+
+- `enum BikePhase { IDLE, CHARGE, WINDUP, PEEL, WEAVE, ENTERING, BENCH }`
+
+**`scripts/enemies/breach_point.gd`**
+
+- `signal breached`
+- `signal health_changed(current: float, maximum: float)`
+- `enum Kind { REAR_DOOR, SIDE_DOOR, WINDOW, SIDE_DOOR_WINDOW }`
+
+**`scripts/enemies/cabin_nav.gd`**
+
+- `enum Room { BACK, CABIN }`
+
+**`scripts/enemies/window_raider.gd`**
+
+- `signal attack_landed(amount: float)`
+- `signal defeated`
+- `signal assault_finished`
+- `enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH, ATTACKING_PLAYER }`
+
 **`scripts/interactions/class_board.gd`**
 
 - `signal opened`
@@ -147,23 +168,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal item_acquired(item: ItemDefinition, charges: int, slot_index: int)`
 - `signal usable_activated(item: ItemDefinition, success: bool)`
 
-**`scripts/run/biker_boss.gd`**
-
-- `enum BikePhase { IDLE, CHARGE, WINDUP, PEEL, WEAVE, ENTERING, BENCH }`
-
-**`scripts/run/breach_point.gd`**
-
-- `signal breached`
-- `signal health_changed(current: float, maximum: float)`
-- `enum Kind { REAR_DOOR, SIDE_DOOR, WINDOW, SIDE_DOOR_WINDOW }`
-
 **`scripts/run/breakable_glass.gd`**
 
 - `signal shattered`
-
-**`scripts/run/cabin_nav.gd`**
-
-- `enum Room { BACK, CABIN }`
 
 **`scripts/run/rear_doors.gd`**
 
@@ -209,13 +216,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 **`scripts/run/warehouse_laser.gd`**
 
 - `signal sprung`
-
-**`scripts/run/window_raider.gd`**
-
-- `signal attack_landed(amount: float)`
-- `signal defeated`
-- `signal assault_finished`
-- `enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH, ATTACKING_PLAYER }`
 
 **`scripts/ui/act_reveal_panel.gd`**
 
@@ -359,9 +359,16 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
+| `biker_boss.gd` | `BikerBoss` | 310 | Wanjna: hit-and-run biker. Fast charge, slow axe on a door, peel and weave. |
+| `breach_controller.gd` | `BreachController` | 277 | Assigns raid slots around the van and interior vital damage targets. |
+| `breach_point.gd` | `BreachPoint` | 365 | Outside attack slot that must be breached (or opened) before mobs can enter. |
+| `cabin_nav.gd` | `CabinNav` | 477 | Van-local waypoint graph + occupancy. Raiders stay Node3D; this is how they |
+| `encounter_director.gd` | `EncounterDirector` | 411 | Soft cap: after this, surviving raiders of the current wave retreat. |
 | `enemy_definition.gd` | `EnemyDefinition` | 14 | Data-only description of a spawnable enemy type. |
 | `enemy_spawn_pool.gd` | `EnemySpawnPool` | 48 | A weighted collection of enemies to roll spawns from. |
 | `enemy_spawn_pool_entry.gd` | `EnemySpawnPoolEntry` | 8 | A single weighted slot inside an EnemySpawnPool. |
+| `loot_drop_component.gd` | `LootDropComponent` | 62 | Drop-in component that gives any enemy a chance to drop loot on death. |
+| `window_raider.gd` | `WindowRaider` | 667 | Agile raiders can climb window bars; door mobs only smash doors. |
 
 ### `scripts/interactions/`
 
@@ -437,17 +444,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `biker_boss.gd` | `BikerBoss` | 310 | Wanjna: hit-and-run biker. Fast charge, slow axe on a door, peel and weave. |
-| `breach_controller.gd` | `BreachController` | 277 | Assigns raid slots around the van and interior vital damage targets. |
-| `breach_point.gd` | `BreachPoint` | 365 | Outside attack slot that must be breached (or opened) before mobs can enter. |
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). Surrounding metal stays. |
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. Same local frame as IronCross: |
-| `cabin_nav.gd` | `CabinNav` | 477 | Van-local waypoint graph + occupancy. Raiders stay Node3D; this is how they |
-| `encounter_director.gd` | `EncounterDirector` | 411 | Soft cap: after this, surviving raiders of the current wave retreat. |
 | `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
 | `garage_lounge.gd` | — | 185 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
-| `loot_drop_component.gd` | `LootDropComponent` | 62 | Drop-in component that gives any enemy a chance to drop loot on death. |
 | `mechanic_talk.gd` | `MechanicTalk` | 133 | Mechanic bay keeper. Three buys: full van patch, a van-pool boon, a weld kit. |
 | `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. No shop counter. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
@@ -483,7 +484,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `warehouse_interior.gd` | — | 243 | Flared warehouse bay: shell, wrapped dressing, table + chest, one hide layout. |
 | `warehouse_laser.gd` | `WarehouseLaser` | 72 | Waist-high trip across the aisle. Jump over to stay quiet; walking through |
 | `warehouse_look.gd` | `WarehouseLook` | 143 | Shared palette / mesh helpers for the warehouse bay and its hide layouts. |
-| `window_raider.gd` | `WindowRaider` | 667 | Agile raiders can climb window bars; door mobs only smash doors. |
 
 ### `scripts/ui/`
 

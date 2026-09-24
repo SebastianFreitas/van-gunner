@@ -314,9 +314,9 @@ These look like bugs. They are not. The project owner set them on purpose.
 |---|---|
 | Change run pacing / phases | `scripts/core/game_session.gd` |
 | Change wave sizes, enemy speed, spawn geometry | `resources/balance/game_balance.tres` |
-| Change how encounters are sequenced | `scripts/run/encounter_director.gd` |
-| Van raider pathing / occupancy | `scripts/run/cabin_nav.gd` + `window_raider.gd` |
-| Act boss (Wanjna the biker) | `scripts/run/biker_boss.gd` + `_spawn_boss` in `encounter_director.gd` |
+| Change how encounters are sequenced | `scripts/enemies/encounter_director.gd` |
+| Van raider pathing / occupancy | `scripts/enemies/cabin_nav.gd` + `window_raider.gd` |
+| Act boss (Wanjna the biker) | `scripts/enemies/biker_boss.gd` + `_spawn_boss` in `encounter_director.gd` |
 | Change road, turns, side-stop parking, statues | `scripts/run/travel_controller.gd` |
 | Change act deck / boss pick logic | `game_session.gd` + `scripts/acts/act_deck_controller.gd` |
 | Change the reveal / boss-pick UI | `scripts/ui/act_reveal_panel.gd` |
