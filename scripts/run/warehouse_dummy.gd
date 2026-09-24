@@ -35,7 +35,7 @@ func take_damage(amount = null) -> void:
 	if amount is DamageInfo:
 		info = amount
 	else:
-		info = DamageInfo.create(float(amount) if amount != null else 1.0, DamageType.Type.NORMAL)
+		info = DamageInfo.create(float(amount) if amount != null else 1.0)
 	var damage_amount := info.get_final_amount()
 	if damage_amount <= 0.0:
 		return
@@ -43,7 +43,7 @@ func take_damage(amount = null) -> void:
 	var popup_pos := info.hit_position
 	if popup_pos == Vector3.ZERO:
 		popup_pos = global_position + Vector3(0.0, 1.35, 0.0)
-	CombatFeedback.show_damage(popup_pos, damage_amount, info.is_headshot, info.damage_type)
+	CombatFeedback.show_damage(popup_pos, damage_amount, info.is_headshot)
 	if is_zero_approx(health):
 		_die()
 		return

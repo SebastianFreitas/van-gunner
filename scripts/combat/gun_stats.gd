@@ -10,7 +10,6 @@ extends Resource
 @export var reload_speed := 3.0
 @export var mag_size := 12
 @export var aim_range := 80.0
-@export var damage_type: DamageType.Type = DamageType.Type.NORMAL
 @export var explosion_radius := 1.8
 
 @export_group("Ricochet")
@@ -21,18 +20,10 @@ extends Resource
 ## Share of damage a bullet keeps after each bounce.
 @export_range(0.0, 1.0, 0.01) var bounce_damage_retention := 0.8
 
-@export_group("Weapon identity")
+@export_group("Class identity")
 ## Shotgun-style multi-projectile. Damage is split across pellets in GunController.
 @export var pellets_per_shot := 1
 @export var pellet_spread_degrees := 0.0
-
-@export_group("Weapon mod damage %")
-## Applied in DamageInfo — never as flat damage_per_shot.
-@export var phys_damage_increased_pct := 0.0
-@export var crit_damage_increased_pct := 0.0
-@export var fire_damage_increased_pct := 0.0
-@export var cold_damage_increased_pct := 0.0
-@export var poison_damage_increased_pct := 0.0
 
 
 func duplicate_stats() -> GunStats:
@@ -45,16 +36,10 @@ func duplicate_stats() -> GunStats:
 	copy.reload_speed = reload_speed
 	copy.mag_size = mag_size
 	copy.aim_range = aim_range
-	copy.damage_type = damage_type
 	copy.explosion_radius = explosion_radius
 	copy.max_bounces = max_bounces
 	copy.bounce_speed_retention = bounce_speed_retention
 	copy.bounce_damage_retention = bounce_damage_retention
 	copy.pellets_per_shot = pellets_per_shot
 	copy.pellet_spread_degrees = pellet_spread_degrees
-	copy.phys_damage_increased_pct = phys_damage_increased_pct
-	copy.crit_damage_increased_pct = crit_damage_increased_pct
-	copy.fire_damage_increased_pct = fire_damage_increased_pct
-	copy.cold_damage_increased_pct = cold_damage_increased_pct
-	copy.poison_damage_increased_pct = poison_damage_increased_pct
 	return copy

@@ -12,12 +12,7 @@ func _ready() -> void:
 	add_child(_layer)
 
 
-func show_damage(
-	world_position: Vector3,
-	amount: float,
-	is_headshot: bool,
-	damage_type: DamageType.Type
-) -> void:
+func show_damage(world_position: Vector3, amount: float, is_headshot: bool) -> void:
 	if amount <= 0.0 or _layer == null:
 		return
 	var camera := get_viewport().get_camera_3d()
@@ -30,7 +25,7 @@ func show_damage(
 	_layer.add_child(popup)
 	var screen_pos := camera.unproject_position(world_position)
 	popup.position = screen_pos + Vector2(randf_range(-14.0, 14.0), randf_range(-8.0, 4.0))
-	popup.setup(amount, is_headshot, damage_type)
+	popup.setup(amount, is_headshot)
 
 
 func _exit_tree() -> void:

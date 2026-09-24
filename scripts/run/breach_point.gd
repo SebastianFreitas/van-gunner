@@ -118,10 +118,8 @@ func take_damage(amount) -> void:
 	if is_passable():
 		return
 	var dmg := 0.0
-	var dtype := DamageType.Type.NORMAL
 	if amount is DamageInfo:
 		dmg = (amount as DamageInfo).get_final_amount()
-		dtype = (amount as DamageInfo).damage_type
 	else:
 		dmg = float(amount)
 	if dmg <= 0.0:
@@ -130,12 +128,7 @@ func take_damage(amount) -> void:
 	_shatter_window_glass_if_needed()
 	health = maxf(0.0, health - dmg)
 	health_changed.emit(health, max_health)
-	CombatFeedback.show_damage(
-		get_outside_position() + Vector3(0, 0.6, 0),
-		dmg,
-		false,
-		dtype
-	)
+	CombatFeedback.show_damage(get_outside_position() + Vector3(0, 0.6, 0), dmg, false)
 	if is_zero_approx(health):
 		_mark_breached()
 

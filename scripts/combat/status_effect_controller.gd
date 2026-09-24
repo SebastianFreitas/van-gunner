@@ -139,13 +139,10 @@ func _flush_poison_pending() -> void:
 	if _poison_pending <= 0.001 or _owner == null or not _owner.has_method("take_damage"):
 		_poison_pending = 0.0
 		return
-	var info := DamageInfo.create(_poison_pending, DamageType.Type.POISON)
-	info.is_dot_tick = true
+	## Ticks are shares of the hit that poisoned the enemy; nothing scales them again.
+	var info := DamageInfo.create(_poison_pending)
+	info.is_secondary = true
 	info.hit_position = _owner.global_position + Vector3(0, 1.2, 0)
-	var traits := _find_attacker_traits()
-	if traits:
-		BoonCombat.modify_outgoing_damage(info, traits, _owner)
-	ActCardCombat.modify_outgoing_damage(info, _owner)
 	_owner.take_damage(info)
 	_poison_pending = 0.0
 

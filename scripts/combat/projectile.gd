@@ -74,7 +74,7 @@ func setup(
 	if visual_origin is Vector3:
 		cosmetic_origin = visual_origin as Vector3
 	_visual_origin = cosmetic_origin
-	_spawn_visual(_visual_origin, info, stats, aim_point, inherited_velocity, aim_dir)
+	_spawn_visual(_visual_origin, stats, aim_point, inherited_velocity, aim_dir)
 	_hide_self_visuals()
 	show()
 
@@ -162,11 +162,9 @@ func _sweep_for_hit(from: Vector3, to: Vector3) -> Dictionary:
 	return result
 
 
-## Bullets only bounce off scenery. Fire/explosive shots detonate on first contact.
+## Bullets only bounce off scenery.
 func _can_ricochet_off(collider: Node) -> bool:
 	if _bounces_left <= 0 or collider == null:
-		return false
-	if damage_info and damage_info.has_explosive():
 		return false
 	return DamageResolver.find_damageable(collider) == null
 
@@ -181,7 +179,7 @@ func _ricochet(point: Vector3, normal: Vector3) -> void:
 	var exit := point + safe_normal * (_radius + SURFACE_OFFSET)
 	global_position = exit
 	if damage_info:
-		damage_info.scale_channels(bounce_damage_retention)
+		damage_info.scale_amount(bounce_damage_retention)
 		var traits: BoonTraits = BoonCombat.get_player_traits(get_tree())
 		if traits:
 			velocity = BoonCombat.dispatch_ricochet(self, traits, _bounce_count, velocity)
@@ -231,16 +229,6 @@ func _apply_size(size: float) -> void:
 		_bullet_mesh.scale = Vector3.ONE
 
 
-func _apply_trail_color(info: DamageInfo) -> void:
-	if not _trail_line:
-		return
-	var dmg_type := DamageType.Type.NORMAL
-	if info:
-		dmg_type = info.dominant_type()
-	if _trail_line.has_method("set_trail_color"):
-		_trail_line.call("set_trail_color", BulletTrail.color_for_damage_type(dmg_type))
-
-
 func _ensure_trail_line() -> void:
 	if _trail_line and is_instance_valid(_trail_line):
 		if _trail_line.has_method("clear_points"):
@@ -279,7 +267,6 @@ func _sync_visual() -> void:
 
 func _spawn_visual(
 	origin: Vector3,
-	info: DamageInfo,
 	stats: GunStats,
 	aim_point = null,
 	inherited_velocity: Vector3 = Vector3.ZERO,
@@ -299,7 +286,7 @@ func _spawn_visual(
 	_visual = BulletVisual.new()
 	parent.add_child(_visual)
 	var motion_frame := parent as Node3D
-	_visual.setup(origin, visual_velocity, gravity_scale, info, stats, global_position, motion_frame)
+	_visual.setup(origin, visual_velocity, gravity_scale, stats, global_position, motion_frame)
 
 
 func _clear_visual() -> void:
@@ -324,39 +311,14 @@ func _resolve_hit(collider: Node) -> void:
 	if damage_info:
 		damage_info.hit_position = global_position
 		damage_info.is_headshot = DamageResolver.is_headshot(collider, damage_info.hit_position)
-		if traits:
-			BoonCombat.modify_outgoing_damage(damage_info, traits, collider)
-			explosion_radius = BoonCombat.modify_explosion_radius(explosion_radius, damage_info, traits)
-		ActCardCombat.modify_outgoing_damage(damage_info, collider)
 	_has_hit = true
 	if damage_info:
+		## The damage was scaled once when the bullet left the gun; the hit only
+		## decides headshot and where it landed.
 		damage_info.explosion_radius = explosion_radius
-		DamageResolver.apply_direct_channels(damage_info, collider, traits)
+		DamageResolver.apply_hit(damage_info, collider)
 		if traits:
 			BoonCombat.apply_post_hit(damage_info, collider, traits)
-		if damage_info.has_explosive():
-			var space_state := get_world_3d().direct_space_state
-			var exclude: Array[RID] = []
-			if owner_rid.is_valid():
-				exclude.append(owner_rid)
-			if BoonCombat.should_delay_fire(traits, damage_info):
-				DamageResolver.schedule_delayed_explosion(
-					get_tree(),
-					global_position,
-					explosion_radius,
-					damage_info,
-					exclude,
-					traits
-				)
-			else:
-				DamageResolver.apply_explosion(
-					global_position,
-					explosion_radius,
-					damage_info,
-					space_state,
-					exclude,
-					traits
-				)
 		hit_target.emit(collider)
 		AudioDirector.play_at(&"bullet_impact", self)
 	var keep_alive := BoonCombat.should_keep_alive_after_hit(traits, damage_info, self)

@@ -36,7 +36,6 @@ var is_boss := false
 var assault_phase: AssaultPhase = AssaultPhase.IDLE
 var assigned_breach: BreachPoint
 var _assigned_vital: Node
-var _last_damage_type: DamageType.Type = DamageType.Type.NORMAL
 var _attack_loop_running := false
 ## Rest color after hit flash.
 var _base_modulate := Color.WHITE
@@ -150,11 +149,10 @@ func take_damage(amount) -> void:
 	if amount is DamageInfo:
 		info = amount
 	else:
-		info = DamageInfo.create(float(amount), DamageType.Type.NORMAL)
+		info = DamageInfo.create(float(amount))
 	var damage_amount := info.get_final_amount()
 	if damage_amount <= 0.0:
 		return
-	_last_damage_type = info.damage_type
 	if status_effects:
 		damage_amount *= status_effects.get_outgoing_damage_multiplier()
 	health = maxf(0.0, health - damage_amount)
@@ -162,27 +160,15 @@ func take_damage(amount) -> void:
 	var popup_pos := info.hit_position
 	if popup_pos == Vector3.ZERO:
 		popup_pos = global_position + Vector3(0, 1.35, 0)
-	CombatFeedback.show_damage(popup_pos, damage_amount, info.is_headshot, info.damage_type)
+	CombatFeedback.show_damage(popup_pos, damage_amount, info.is_headshot)
 	if is_zero_approx(health):
 		_die()
 		return
-	_flash_hit(info.damage_type)
+	_flash_hit()
 
 
-func _flash_hit(damage_type: DamageType.Type) -> void:
-	var flash_color := Color(1.0, 0.32, 0.26, 1.0)
-	match damage_type:
-		DamageType.Type.POISON:
-			flash_color = Color(0.45, 0.95, 0.35, 1.0)
-		DamageType.Type.FIRE:
-			flash_color = Color(1.0, 0.45, 0.12, 1.0)
-		DamageType.Type.COLD:
-			flash_color = Color(0.55, 0.82, 1.0, 1.0)
-		DamageType.Type.LIGHTNING:
-			flash_color = Color(0.85, 0.75, 1.0, 1.0)
-		DamageType.Type.EXPLOSIVE:
-			flash_color = Color(1.0, 0.55, 0.2, 1.0)
-	sprite.modulate = flash_color
+func _flash_hit() -> void:
+	sprite.modulate = Color(1.0, 0.32, 0.26, 1.0)
 	var tween := create_tween()
 	tween.tween_property(sprite, "modulate", _base_modulate, 0.12)
 
@@ -197,7 +183,7 @@ func _die() -> void:
 	hitbox.collision_layer = 0
 	if has_node("HeadHitbox"):
 		$HeadHitbox.collision_layer = 0
-	BoonCombat.apply_on_enemy_death(self, _last_damage_type)
+	BoonCombat.apply_on_enemy_death(self)
 	if loot_drop:
 		loot_drop.spawn_drops(global_position, get_parent())
 	assault_phase = AssaultPhase.IDLE

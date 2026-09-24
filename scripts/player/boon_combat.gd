@@ -25,25 +25,7 @@ static func modify_outgoing_damage(info: DamageInfo, traits: BoonTraits, target:
 		return 0.0
 	var ctx := _make_damage_ctx(info, traits, target)
 	BoonBehaviorRegistry.dispatch_modify_damage(ctx)
-	if ctx.bonus_phys > 0.0:
-		info.add_channel(DamageType.Type.NORMAL, ctx.bonus_phys)
 	return 0.0
-
-
-static func apply_bonus_physical_hit(
-	amount: float,
-	base_info: DamageInfo,
-	target: Node,
-	traits: BoonTraits
-) -> void:
-	if amount <= 0.0 or not base_info:
-		return
-	var phys := DamageInfo.create(amount, DamageType.Type.NORMAL, base_info.source)
-	phys.hit_position = base_info.hit_position
-	phys.is_headshot = base_info.is_headshot
-	if traits:
-		modify_outgoing_damage(phys, traits, target)
-	DamageResolver.apply_hit(phys, target)
 
 
 static func modify_explosion_radius(base_radius: float, info: DamageInfo, traits: BoonTraits) -> float:
@@ -78,7 +60,7 @@ static func refresh_all_enemy_status_effects(tree: SceneTree) -> void:
 		configure_enemy_status_effects(enemy, tree)
 
 
-static func apply_on_enemy_death(enemy: Node, last_damage_type: DamageType.Type) -> void:
+static func apply_on_enemy_death(enemy: Node) -> void:
 	if not enemy or not enemy.is_inside_tree():
 		return
 	var tree := enemy.get_tree()
@@ -92,7 +74,6 @@ static func apply_on_enemy_death(enemy: Node, last_damage_type: DamageType.Type)
 	ctx.status = _get_status(enemy)
 	ctx.explosion_center = enemy.global_position if enemy is Node3D else Vector3.ZERO
 	ctx.loot_container = enemy.get_parent()
-	ctx.last_damage_type = last_damage_type
 	ctx.space_state = enemy.get_world_3d().direct_space_state if enemy is Node3D else null
 	BoonBehaviorRegistry.dispatch_enemy_death(ctx)
 

@@ -24,7 +24,6 @@ func setup(
 	origin: Vector3,
 	velocity: Vector3,
 	gravity_scale: float,
-	info: DamageInfo,
 	stats: GunStats,
 	logical_origin := origin,
 	motion_frame: Node3D = null
@@ -40,7 +39,7 @@ func setup(
 	set_physics_process(not _follow_logical)
 	_ensure_nodes()
 	_apply_size(stats.bullet_size)
-	_apply_trail_color(info)
+	_tint_mesh(BulletTrail.DEFAULT_COLOR)
 	if _trail_line and _trail_line.has_method("clear_points"):
 		_trail_line.call("clear_points")
 	if _trail_line and _trail_line.has_method("set_motion_frame"):
@@ -151,16 +150,6 @@ func _apply_size(size: float) -> void:
 		var visual_radius := size * BULLET_VISUAL_SCALE
 		(_bullet_mesh.mesh as SphereMesh).radius = visual_radius
 		(_bullet_mesh.mesh as SphereMesh).height = visual_radius * 2.0
-
-
-func _apply_trail_color(info: DamageInfo) -> void:
-	var dmg_type := DamageType.Type.NORMAL
-	if info:
-		dmg_type = info.dominant_type()
-	var color := BulletTrail.color_for_damage_type(dmg_type)
-	if _trail_line and _trail_line.has_method("set_trail_color"):
-		_trail_line.call("set_trail_color", color)
-	_tint_mesh(color)
 
 
 func _orient_to_velocity() -> void:

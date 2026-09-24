@@ -8,4 +8,4 @@ class RicochetStackBehavior extends BoonBehavior:
 
 	func on_ricochet(ctx: BoonBehaviorContext) -> void:
 		if ctx.damage_info:
-			ctx.damage_info.scale_channels(1.0 + float(ctx.bounce_count) * 0.15)
+			ctx.damage_info.scale_amount(1.0 + float(ctx.bounce_count) * 0.15)

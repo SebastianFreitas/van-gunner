@@ -3,29 +3,15 @@ extends MeshInstance3D
 
 const MAX_POINTS := 28
 const FADE_SECONDS := 0.45
+## The one trail colour now that bullets carry no damage type.
+const DEFAULT_COLOR := Color(1.0, 0.86, 0.28, 1.0)
 
 ## When set, points are stored in this node's local space (usually VanRig) so the
 ## trail rides with the van instead of drifting backward in world space.
 var _motion_frame: Node3D
 var _points: PackedVector3Array = PackedVector3Array()
 var _fade_alpha := 1.0
-var _base_color := Color(1.0, 0.86, 0.28, 1.0)
-
-
-static func color_for_damage_type(type: DamageType.Type) -> Color:
-	match type:
-		DamageType.Type.POISON:
-			return Color(0.45, 0.95, 0.35, 1.0)
-		DamageType.Type.FIRE:
-			return Color(1.0, 0.28, 0.12, 1.0)
-		DamageType.Type.COLD:
-			return Color(0.55, 0.82, 1.0, 1.0)
-		DamageType.Type.LIGHTNING:
-			return Color(0.82, 0.72, 1.0, 1.0)
-		DamageType.Type.EXPLOSIVE:
-			return Color(1.0, 0.55, 0.22, 1.0)
-		_:
-			return Color(1.0, 0.86, 0.28, 1.0)
+var _base_color := DEFAULT_COLOR
 
 
 func set_trail_color(color: Color) -> void:

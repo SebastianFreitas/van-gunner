@@ -12,11 +12,9 @@ var projectile: Projectile
 var bounce_count := 0
 var explosion_center := Vector3.ZERO
 var explosion_radius := 0.0
-var last_damage_type: DamageType.Type = DamageType.Type.NORMAL
 var space_state: PhysicsDirectSpaceState3D
 var exclude: Array[RID] = []
 var velocity: Vector3 = Vector3.ZERO
-var bonus_phys := 0.0
 var enemy: Node
 var loot_container: Node
 var fire_origin := Vector3.ZERO

@@ -41,10 +41,6 @@ static func trait_label(trait_key: StringName) -> String:
 	return BoonTraitKeys.all_trait_labels().get(trait_key, String(trait_key).capitalize())
 
 
-static func damage_type_name(type: DamageType.Type) -> String:
-	return String(DamageType.Type.keys()[type]).capitalize()
-
-
 ## One line per effect, e.g. "Damage +1" or "Repairs 20 van hull".
 static func effect_lines(item: ItemDefinition) -> PackedStringArray:
 	var lines := PackedStringArray()

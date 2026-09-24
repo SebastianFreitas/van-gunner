@@ -5,8 +5,6 @@ const ENEMY_MASK := 4
 const WORLD_MASK := 1
 const EXPLOSION_PUSH_FORCE := 2.2
 const DELAYED_FIRE_SECONDS := 0.55
-const COLD_SLOW_STRENGTH := 0.45
-const COLD_SLOW_DURATION := 2.5
 
 
 static func find_damageable(node: Node) -> Node:
@@ -46,25 +44,9 @@ static func apply_hit(info: DamageInfo, target: Node) -> void:
 	damageable.take_damage(info)
 
 
-static func apply_direct_channels(info: DamageInfo, target: Node, traits: BoonTraits = null) -> void:
-	var damageable := find_damageable(target)
-	if not damageable or not info:
-		return
-	_deliver_channel(info, DamageType.Type.NORMAL, damageable)
-	_deliver_channel(info, DamageType.Type.LIGHTNING, damageable)
-	_deliver_channel(info, DamageType.Type.COLD, damageable)
-	_apply_poison_channel(info, damageable, traits)
-	apply_cold_status(info, damageable)
-
-
-static func apply_cold_status(info: DamageInfo, target: Node) -> void:
-	if not info or info.get_final_channel(DamageType.Type.COLD) <= 0.0:
-		return
-	var controller := find_status(target)
-	if controller:
-		controller.apply_cold(COLD_SLOW_STRENGTH, COLD_SLOW_DURATION)
-
-
+## Splash is a share of the hit that caused it, with distance falloff. It is
+## secondary damage: never scaled again, and handlers only see it through the
+## splash hook, never the bullet hooks.
 static func apply_explosion(
 	center: Vector3,
 	radius: float,
@@ -76,15 +58,9 @@ static func apply_explosion(
 	ExplosionFx.spawn(center, radius)
 	if not space_state or radius <= 0.0 or not info:
 		return
-	var blast_base := info.get_final_blast_amount()
-	if blast_base <= 0.0:
-		blast_base = info.get_final_amount()
+	var blast_base := info.get_final_amount()
 	if blast_base <= 0.0:
 		return
-	var blast_type := DamageType.Type.FIRE
-	if info.get_channel(DamageType.Type.EXPLOSIVE) >= info.get_channel(DamageType.Type.FIRE):
-		if info.has_channel(DamageType.Type.EXPLOSIVE):
-			blast_type = DamageType.Type.EXPLOSIVE
 	var shape := SphereShape3D.new()
 	shape.radius = radius
 	var params := PhysicsShapeQueryParameters3D.new()
@@ -113,21 +89,20 @@ static func apply_explosion(
 		var falloff := 1.0 - clampf(distance / radius, 0.0, 1.0)
 		if falloff <= 0.0:
 			continue
-		var splash := DamageInfo.create(blast_base * falloff, blast_type, info.source)
+		var splash := DamageInfo.create(blast_base * falloff, info.source)
 		splash.hit_position = center
 		splash.explosion_radius = radius
-		splash.is_headshot = false
+		splash.is_secondary = true
 		if traits:
 			var splash_ctx := BoonBehaviorContext.new()
 			splash_ctx.traits = traits
 			splash_ctx.damage_info = splash
 			splash_ctx.target = damageable
 			BoonBehaviorRegistry.dispatch_explosion_splash(splash_ctx)
-		ActCardCombat.modify_outgoing_damage(splash, damageable)
 		if damageable is Node3D:
 			splash.hit_position = (damageable as Node3D).global_position + Vector3(0, 1.2, 0)
 		damageable.take_damage(splash)
-		if traits and info.has_explosive():
+		if traits:
 			var displacement_ctx := BoonBehaviorContext.new()
 			displacement_ctx.traits = traits
 			displacement_ctx.target = damageable
@@ -154,42 +129,3 @@ static func schedule_delayed_explosion(
 		if space_state:
 			apply_explosion(center, radius, captured_info, space_state, exclude, traits)
 	)
-
-
-static func apply_status_from_hit(info: DamageInfo, target: Node, traits: BoonTraits = null) -> void:
-	_apply_poison_channel(info, find_damageable(target), traits)
-	apply_cold_status(info, target)
-
-
-static func _apply_poison_channel(info: DamageInfo, damageable: Node, traits: BoonTraits) -> void:
-	if not info or not damageable or info.is_dot_tick:
-		return
-	var poison := info.get_final_channel(DamageType.Type.POISON)
-	if poison <= 0.0:
-		return
-	var controller := damageable.get_node_or_null("StatusEffects") as StatusEffectController
-	if not controller:
-		_deliver_channel(info, DamageType.Type.POISON, damageable)
-		return
-	if traits:
-		var status_ctx := BoonBehaviorContext.new()
-		status_ctx.traits = traits
-		status_ctx.damage_info = info
-		status_ctx.target = damageable
-		status_ctx.status = controller
-		if BoonBehaviorRegistry.dispatch_status_apply(status_ctx):
-			return
-	controller.apply_poison_stack(poison, info.source)
-
-
-static func _deliver_channel(info: DamageInfo, type: DamageType.Type, damageable: Node) -> void:
-	var value := info.get_final_channel(type)
-	if value <= 0.0:
-		return
-	var channel := info.for_channel(type)
-	channel.is_headshot = info.is_headshot
-	channel.headshot_bonus_mult = info.headshot_bonus_mult
-	channel.hit_position = info.hit_position
-	channel.source = info.source
-	channel.is_dot_tick = info.is_dot_tick
-	damageable.take_damage(channel)

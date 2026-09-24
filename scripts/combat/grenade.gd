@@ -138,13 +138,16 @@ func _explode() -> void:
 		return
 	_armed = false
 	var center := global_position
-	var info := DamageInfo.create(_explosion_damage, DamageType.Type.FIRE)
+	## The blast starts from the grenade's own damage times the damage multiplier
+	## trait, once, at detonation. Flat adds and bullet boons never touch grenades.
+	var damage := _explosion_damage
 	var traits := BoonCombat.get_player_traits(get_tree())
-	BoonCombat.modify_outgoing_damage(info, traits, null)
-	var radius := BoonCombat.modify_explosion_radius(_explosion_radius, info, traits)
-	info.explosion_radius = radius
+	if traits:
+		damage *= traits.get_mult(BoonTraitKeys.GUN_DAMAGE_PER_SHOT)
+	var info := DamageInfo.create(damage)
+	info.explosion_radius = _explosion_radius
 	var space_state := get_world_3d().direct_space_state
-	DamageResolver.apply_explosion(center, radius, info, space_state, [], traits)
+	DamageResolver.apply_explosion(center, _explosion_radius, info, space_state, [], null)
 	exploded.emit(center)
 	queue_free()
 

@@ -54,10 +54,8 @@ func take_damage(amount) -> void:
 	if not is_alive() or GameSession.phase == GameSession.RunPhase.GAME_OVER:
 		return
 	var dmg := 0.0
-	var dtype := DamageType.Type.NORMAL
 	if amount is DamageInfo:
 		dmg = (amount as DamageInfo).get_final_amount()
-		dtype = (amount as DamageInfo).damage_type
 	else:
 		dmg = float(amount)
 	if dmg <= 0.0:
@@ -65,12 +63,7 @@ func take_damage(amount) -> void:
 	health = maxf(0.0, health - dmg)
 	health_changed.emit(health, max_health)
 	var pos := get_attack_marker().global_position
-	CombatFeedback.show_damage(
-		pos + Vector3(0, 0.6, 0),
-		dmg,
-		false,
-		dtype
-	)
+	CombatFeedback.show_damage(pos + Vector3(0, 0.6, 0), dmg, false)
 	GameSession.sync_van_health_from_vitals()
 
 
