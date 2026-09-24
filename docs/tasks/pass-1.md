@@ -102,7 +102,7 @@ New §4 items:
 
 ## Steps
 
-- [ ] 0. Baseline. Commit the untracked `CLAUDE.md`, `.claude/agents/` and this file as they are. Then prove the headless check: add `tools/_probe.gd` with `class_name ProbeCheck` and a deliberate syntax error, run the check from CLAUDE.md, and confirm it reports the error. Delete the probe and any `.uid` Godot created for it. If the check misses the error, find a command that catches it and write it into CLAUDE.md before continuing. Run the check on the untouched tree and write down any errors it already reports; those are the baseline, not regressions.
+- [x] 0. Baseline. Commit the untracked `CLAUDE.md`, `.claude/agents/` and this file as they are. Then prove the headless check: add `tools/_probe.gd` with `class_name ProbeCheck` and a deliberate syntax error, run the check from CLAUDE.md, and confirm it reports the error. Delete the probe and any `.uid` Godot created for it. If the check misses the error, find a command that catches it and write it into CLAUDE.md before continuing. Run the check on the untouched tree and write down any errors it already reports; those are the baseline, not regressions.
 - [ ] 1. Classes replace weapons: items 1-13 and 35, plus the weapon and class parts of 36.
 - [ ] 2. Old boons out: items 24, 25, 27, 31, 32 and 33, and `boonpool` from 36. Update both generators for the removals and re-run them.
 - [ ] 3. One damage number: items 14, 15, 16 and 34.
