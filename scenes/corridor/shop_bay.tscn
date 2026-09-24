@@ -1,10 +1,10 @@
 [gd_scene load_steps=22 format=3]
 
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1"]
-[ext_resource type="Script" path="res://scripts/run/shop_hatch_net.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/run/shop_counter_booth.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/stops/shop_hatch_net.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/stops/shop_counter_booth.gd" id="3"]
 [ext_resource type="Texture2D" path="res://scenes/shop/vendor.png" id="4"]
-[ext_resource type="Script" path="res://scripts/run/shop_stock.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/stops/shop_stock.gd" id="5"]
 
 [sub_resource type="ShaderMaterial" id="FloorMaterial"]
 render_priority = 0

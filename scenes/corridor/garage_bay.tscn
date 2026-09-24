@@ -1,7 +1,7 @@
 [gd_scene load_steps=14 format=3]
 
 [ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="1"]
-[ext_resource type="Script" path="res://scripts/run/garage_lounge.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/stops/garage_lounge.gd" id="2"]
 
 [sub_resource type="ShaderMaterial" id="FloorMaterial"]
 render_priority = 0

@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="SideStopDefinition" format=3]
 
-[ext_resource type="Script" path="res://scripts/run/side_stop_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/stops/side_stop_definition.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/corridor/warehouse_bay.tscn" id="2"]
 
 [resource]

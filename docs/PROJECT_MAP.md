@@ -186,10 +186,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal door_changed(side: StringName, is_open: bool)`
 - `signal passage_changed(side: StringName, is_passable: bool)`
 
-**`scripts/run/side_stop_definition.gd`**
-
-- `enum Arrival { REAR_PARK = 0, ELEVATOR = 1, }`
-
 **`scripts/run/side_windows.gd`**
 
 - `signal opened`
@@ -204,12 +200,16 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `signal health_changed(current: float, maximum: float)`
 
-**`scripts/run/warehouse_hide.gd`**
+**`scripts/stops/side_stop_definition.gd`**
+
+- `enum Arrival { REAR_PARK = 0, ELEVATOR = 1, }`
+
+**`scripts/stops/warehouse_hide.gd`**
 
 - `signal triggered`
 - `enum Reveal { BURST, FALL, PEEL }`
 
-**`scripts/run/warehouse_laser.gd`**
+**`scripts/stops/warehouse_laser.gd`**
 
 - `signal sprung`
 
@@ -447,25 +447,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). Surrounding metal stays. |
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. Same local frame as IronCross: |
 | `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
-| `garage_lounge.gd` | — | 185 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
-| `mechanic_talk.gd` | `MechanicTalk` | 133 | Mechanic bay keeper. Three buys: full van patch, a van-pool boon, a weld kit. |
-| `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. No shop counter. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
 | `rear_doors.gd` | — | 400 | Truck-style rear double doors. |
 | `room_zone.gd` | `RoomZone` | 14 |  |
-| `shop_counter_booth.gd` | — | 1013 | Fortified metal shop counter — armored face, cash slot, eye-level grilled window. |
-| `shop_hatch_net.gd` | — | 125 | Cargo-net screen on the shop hatch — thin diamond mesh, not solid bars. |
-| `shop_offer.gd` | `ShopOffer` | 108 | A single priced item sitting on the shop counter. Look + E to buy with gold. |
-| `shop_stock.gd` | — | 30 | Rolls 3 unique items from the shop pool and places them on the counter. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. Toggles that leaf only. |
 | `side_doors.gd` | — | 558 | Sliding cargo-style side doors. |
-| `side_stop_definition.gd` | `SideStopDefinition` | 67 | A roadside stop on a fork road. Every offered street gets one, regardless |
-| `side_stop_registry.gd` | `SideStopRegistry` | 113 | Resolves side-stop definitions by id from resources/side_stops/. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. Toggles that sash only. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
-| `stop_elevator.gd` | `StopElevator` | 355 | On-road lift that drops the van to the shared stop vestibule. Content |
-| `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
 | `van.gd` | — | 1163 | Preload so van.tscn can type the bar without a class_name parse cycle. |
 | `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
@@ -475,6 +464,22 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. Uses a dedicated physics |
 | `van_side_wall.gd` | `VanSideWall` | 1058 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, |
 | `van_vital.gd` | `VanVital` | 91 | One interior machine whose HP is a slice of van death hull. |
+
+### `scripts/stops/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `garage_lounge.gd` | — | 185 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
+| `mechanic_talk.gd` | `MechanicTalk` | 133 | Mechanic bay keeper. Three buys: full van patch, a van-pool boon, a weld kit. |
+| `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. No shop counter. |
+| `shop_counter_booth.gd` | — | 1013 | Fortified metal shop counter — armored face, cash slot, eye-level grilled window. |
+| `shop_hatch_net.gd` | — | 125 | Cargo-net screen on the shop hatch — thin diamond mesh, not solid bars. |
+| `shop_offer.gd` | `ShopOffer` | 108 | A single priced item sitting on the shop counter. Look + E to buy with gold. |
+| `shop_stock.gd` | — | 30 | Rolls 3 unique items from the shop pool and places them on the counter. |
+| `side_stop_definition.gd` | `SideStopDefinition` | 67 | A roadside stop on a fork road. Every offered street gets one, regardless |
+| `side_stop_registry.gd` | `SideStopRegistry` | 113 | Resolves side-stop definitions by id from resources/side_stops/. |
+| `stop_elevator.gd` | `StopElevator` | 355 | On-road lift that drops the van to the shared stop vestibule. Content |
+| `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
 | `warehouse_chest.gd` | `WarehouseChest` | 60 | Table-top crate. E opens a bonus 3-choice boon, then springs leftover hides. |
 | `warehouse_director.gd` | `WarehouseDirector` | 176 | Picks one hide layout per visit. Early triggers (shoot / walk / laser) or |
 | `warehouse_dummy.gd` | `WarehouseDummy` | 114 | Standing shootable raider for warehouse hides. Not in `&"enemy"` — street |

@@ -31,7 +31,7 @@ const STOP_PARK_TURN_RADIUS := 6.0
 const _ELEVATOR_RIDE_SECONDS := 3.2
 const _ELEVATOR_DEPTH := 16.0
 const _DOOR_OPEN_DURATION := 1.4
-const _StopElevator := preload("res://scripts/run/stop_elevator.gd")
+const _StopElevator := preload("res://scripts/stops/stop_elevator.gd")
 
 ## Overwritten in _ready from MetaProgression → GameBalance van speed curve.
 ## Live value includes temporary driver boosts (raiders read this every frame).
