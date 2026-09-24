@@ -7,10 +7,14 @@ extends Node
 ## when SaveSandbox.enabled, so it never touches a real save on disk.
 
 const _WATCHDOG_SECONDS := 270.0
+const _Fingerprint := preload("res://tools/smoke/smoke_fingerprint.gd")
+const _Route := preload("res://tools/smoke/smoke_route.gd")
 
 var _watchdog: SceneTreeTimer
 ## Direction chosen at the previous forced fork, so the next one picks differently.
 var _last_route_direction: StringName = &""
+## Route helper for the fork/side-stop pass; held so it lives through the awaits.
+var _route: RefCounted
 
 
 func _ready() -> void:
@@ -31,11 +35,11 @@ func _run() -> void:
 
 	var lines := PackedStringArray()
 	seed(12345)
-	_fingerprint_class_stats(lines)
-	_fingerprint_pools(lines)
-	_fingerprint_act_deck(lines)
-	_fingerprint_waves(lines)
-	_fingerprint_rest_offer(lines)
+	_Fingerprint.fingerprint_class_stats(lines)
+	_Fingerprint.fingerprint_pools(lines)
+	_Fingerprint.fingerprint_act_deck(lines)
+	_Fingerprint.fingerprint_waves(lines)
+	_Fingerprint.fingerprint_rest_offer(lines)
 
 	# Save slots are 1-based; slot 0 would be an out-of-range no-op.
 	GameSession.start_new(1)
@@ -62,13 +66,14 @@ func _run() -> void:
 		return
 	if not await _rest_offer_pass(van):
 		return
-	if not await _fork_pass():
+	_route = _Route.new(self)
+	if not await _route.fork_pass():
 		return
 
 	await _save_round_trip_pass()
 
 	_check_user_mtimes_unchanged(mtimes)
-	_write_fingerprint(lines)
+	_Fingerprint.write_fingerprint(lines)
 	_log("done")
 	get_tree().quit(0)
 
@@ -109,87 +114,6 @@ func _wait_for_van_ready() -> bool:
 	return false
 
 
-## --- Fingerprint sections -----------------------------------------------------
-
-
-func _stats_line(label: String, s: GunStats) -> String:
-	var parts := PackedStringArray([label])
-	parts.append("fire_rate=%.4f" % s.fire_rate)
-	parts.append("damage_per_shot=%.4f" % s.damage_per_shot)
-	parts.append("bullet_speed=%.4f" % s.bullet_speed)
-	parts.append("bullet_weight=%.4f" % s.bullet_weight)
-	parts.append("bullet_size=%.4f" % s.bullet_size)
-	parts.append("reload_speed=%.4f" % s.reload_speed)
-	parts.append("mag_size=%d" % s.mag_size)
-	parts.append("aim_range=%.4f" % s.aim_range)
-	parts.append("explosion_radius=%.4f" % s.explosion_radius)
-	parts.append("max_bounces=%d" % s.max_bounces)
-	parts.append("bounce_speed_retention=%.4f" % s.bounce_speed_retention)
-	parts.append("bounce_damage_retention=%.4f" % s.bounce_damage_retention)
-	parts.append("pellets_per_shot=%d" % s.pellets_per_shot)
-	parts.append("pellet_spread_degrees=%.4f" % s.pellet_spread_degrees)
-	return " ".join(parts)
-
-
-func _fingerprint_class_stats(lines: PackedStringArray) -> void:
-	lines.append("[class_stats]")
-	var ids := ClassCatalog.list_ids()
-	var sorted_ids: Array[String] = []
-	for id in ids:
-		sorted_ids.append(String(id))
-	sorted_ids.sort()
-	for id_str in sorted_ids:
-		var id := StringName(id_str)
-		var stats := GunStatsController.build_class_stats(ClassCatalog.load_by_id(id))
-		lines.append(_stats_line(id_str, stats))
-
-
-func _fingerprint_pools(lines: PackedStringArray) -> void:
-	lines.append("[pools]")
-	var keys := ItemPoolRegistry._POOL_PATHS.keys()
-	keys.sort()
-	for key in keys:
-		var pool: LootPool = ItemPoolRegistry.get_pool(key)
-		if pool == null:
-			lines.append("%s <missing>" % key)
-			continue
-		for entry in pool.entries:
-			lines.append("%s %s %.4f" % [key, entry.item.id, entry.weight])
-
-
-func _fingerprint_act_deck(lines: PackedStringArray) -> void:
-	lines.append("[act_deck]")
-	GameSession.run_seed = 12345
-	GameSession.run_act = 1
-	var deck_ids := GameSession._build_act_deck_ids()
-	var id_strings := PackedStringArray()
-	for id in deck_ids:
-		id_strings.append(String(id))
-	lines.append(" ".join(id_strings))
-
-
-func _fingerprint_waves(lines: PackedStringArray) -> void:
-	lines.append("[waves]")
-	for route_step in range(1, 7):
-		var plan := GameBalance.build_segment_wave_plan(route_step)
-		var plan_strings := PackedStringArray()
-		for value in plan:
-			plan_strings.append(str(value))
-		lines.append("step %d: %s" % [route_step, " ".join(plan_strings)])
-
-
-func _fingerprint_rest_offer(lines: PackedStringArray) -> void:
-	lines.append("[rest_offer]")
-	seed(12345)
-	var choices := ItemPoolRegistry.pick_rest_choices(
-		3, [&"chew_tobacco", &"explosive_rounds"]
-	)
-	var id_strings := PackedStringArray()
-	for item in choices:
-		id_strings.append(String(item.id))
-	lines.append(" ".join(id_strings))
-
-
 ## --- Playthrough passes --------------------------------------------------------
 
 
@@ -206,7 +130,7 @@ func _class_panel_pass(van: Node, gun_stats: GunStatsController, lines: PackedSt
 		if GameSession.class_id != id:
 			_fail("expected class_id %s after pressing its card, got %s" % [id, GameSession.class_id])
 			return false
-		lines.append(_stats_line("ingame " + String(id), gun_stats.get_stats()))
+		lines.append(_Fingerprint.stats_line("ingame " + String(id), gun_stats.get_stats()))
 	panel.close()
 	await _frames(2)
 	return true
@@ -227,7 +151,7 @@ func _boons_pass(van: Node, gun_stats: GunStatsController, lines: PackedStringAr
 	for id in ids:
 		panel._on_card_pressed(id)
 		await _frames(3)
-		lines.append(_stats_line("boons " + String(id), gun_stats.get_stats()))
+		lines.append(_Fingerprint.stats_line("boons " + String(id), gun_stats.get_stats()))
 	lines.append(
 		"player_max_health=%.4f van_max_health=%.4f" % [
 			GameSession.get_max_player_health(), GameSession.get_max_van_health()
@@ -319,111 +243,6 @@ func _rest_offer_pass(van: Node) -> bool:
 	return true
 
 
-func _fork_pass() -> bool:
-	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
-	if travel == null:
-		_fail("no travel_controller node found")
-		return false
-
-	_log(DebugCommands.run("speed"))
-
-	if not await _drive_side_stop(travel, "stop elevator shop", "elevator"):
-		return false
-	if not await _drive_side_stop(travel, "stop garage", "rear-park"):
-		return false
-
-	_log(DebugCommands.run("unspeed"))
-	_log(DebugCommands.run("chill"))
-	await _frames(5)
-	return true
-
-
-## Forces the given stop onto the next fork, drives through the fork, docks,
-## and leaves it again. `label` is only for log/fail messages.
-func _drive_side_stop(travel: TravelController, stop_command: String, label: String) -> bool:
-	_log(DebugCommands.run(stop_command))
-	if not await _force_route_choice(travel, 60.0):
-		_fail("timed out waiting for ROUTE_CHOICE (%s fork), phase=%s" % [label, _phase_name()])
-		return false
-	_log("phase %s" % _phase_name())
-
-	var dirs := GameSession.get_route_directions()
-	_log("route_directions=%s" % [dirs])
-	var direction: StringName = dirs[0]
-	if direction == _last_route_direction and dirs.size() > 1:
-		direction = dirs[1]
-	_last_route_direction = direction
-	GameSession.choose_route(direction)
-
-	if not await _wait_phase(GameSession.RunPhase.STOP, 60.0):
-		_fail("timed out waiting for STOP (%s docked), phase=%s" % [label, _phase_name()])
-		return false
-	_log("phase %s" % _phase_name())
-
-	await _frames(10)
-	travel.leave_stop()
-
-	if not await _wait_phase(GameSession.RunPhase.TRAVELLING, 60.0):
-		_fail("timed out waiting for TRAVELLING (left %s stop), phase=%s" % [label, _phase_name()])
-		return false
-	_log("phase %s" % _phase_name())
-	return true
-
-
-## Mirrors EncounterDirector._run_segment()'s post-combat REST -> ROUTE_CHOICE tail
-## (scripts/enemies/encounter_director.gd ~149-169). Chill mode is kept on for the
-## whole fork/stop drive so the director's own encounter loop never runs between
-## forks here, so nothing else would ever end a forced REST; the driver forces the
-## same REST phase and replays the same act-deck calls the director makes once a
-## rest break resolves, instead of waiting on a sequence nothing ever starts.
-func _force_route_choice(travel: TravelController, timeout_s: float) -> bool:
-	GameSession.set_phase(GameSession.RunPhase.REST)
-	await _mirror_rest_break_wait(travel)
-
-	var act_deck := get_tree().get_first_node_in_group(&"act_deck_controller") as ActDeckController
-	if GameSession.phase == GameSession.RunPhase.REST and GameSession.needs_boss_pick():
-		if act_deck and act_deck.has_method(&"begin_boss_pick_if_needed"):
-			act_deck.begin_boss_pick_if_needed()
-			if act_deck.has_method(&"wait_for_boss_pick_resolution"):
-				await act_deck.wait_for_boss_pick_resolution()
-		elif GameSession.needs_boss_pick():
-			GameSession.commit_boss_picks([])
-	if GameSession.phase in [
-		GameSession.RunPhase.REST,
-		GameSession.RunPhase.ACT_REVEAL,
-		GameSession.RunPhase.BOSS_PICK,
-	] and GameSession.needs_act_reveal():
-		if act_deck and act_deck.has_method(&"begin_reveal_if_needed"):
-			act_deck.begin_reveal_if_needed()
-			if act_deck.has_method(&"wait_for_reveal_resolution"):
-				await act_deck.wait_for_reveal_resolution()
-		elif GameSession.needs_act_reveal():
-			GameSession.begin_new_act_deck()
-	if GameSession.phase in [
-		GameSession.RunPhase.REST,
-		GameSession.RunPhase.ACT_REVEAL,
-		GameSession.RunPhase.BOSS_PICK,
-	]:
-		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
-	return await _wait_phase(GameSession.RunPhase.ROUTE_CHOICE, timeout_s)
-
-
-## Mirrors EncounterDirector._wait_for_rest_break(): the boon resolves instantly
-## under debug speed mode, but the director still sits out the rest duration itself.
-func _mirror_rest_break_wait(travel: TravelController) -> void:
-	var director := get_tree().get_first_node_in_group(&"encounter_director") as EncounterDirector
-	var rest_duration := 20.0
-	if director:
-		rest_duration = director.rest_duration
-	var seconds := rest_duration
-	if travel and travel.has_method(&"scale_debug_wait"):
-		seconds = travel.scale_debug_wait(rest_duration)
-	var rewards := get_tree().get_first_node_in_group(&"boon_reward_controller")
-	if rewards and rewards.has_method(&"wait_for_rest_resolution"):
-		await rewards.wait_for_rest_resolution()
-	await get_tree().create_timer(seconds).timeout
-
-
 ## Exercises GameSession.to_save_data/load_from_data headless: saves the live
 ## session, loads it straight back into the same session and checks nothing
 ## drifted, the way CONTINUE would minus the actual file read.
@@ -476,13 +295,6 @@ func _first_button(n: Node) -> Button:
 		if found:
 			return found
 	return null
-
-
-func _write_fingerprint(lines: PackedStringArray) -> void:
-	var path := ProjectSettings.globalize_path("res://tools/smoke/fingerprint.txt")
-	var file := FileAccess.open(path, FileAccess.WRITE)
-	file.store_string("\n".join(lines) + "\n")
-	file.close()
 
 
 ## --- Small awaitables and logging ---------------------------------------------
