@@ -1,6 +1,8 @@
 class_name EncounterDirector
 extends Node
 
+const _EncounterSpawner := preload("res://scripts/enemies/encounter_spawner.gd")
+
 @export var travel_before_encounter := 2.5
 ## Soft cap: after this, surviving raiders of the current wave retreat.
 @export var combat_duration := 18.0
@@ -16,6 +18,11 @@ extends Node
 
 var _sequence_id := 0
 var _running := false
+var _spawner: RefCounted
+
+
+func _init() -> void:
+	_spawner = _EncounterSpawner.new(self)
 
 
 func _ready() -> void:
@@ -62,7 +69,7 @@ func _on_chill_mode_changed(enabled: bool) -> void:
 func _cancel_encounters() -> void:
 	_sequence_id += 1
 	_running = false
-	_despawn_all_enemies()
+	_spawner.despawn_all_enemies()
 	# Chill aborts the async segment; without this, phase stays COMBAT/REST and
 	# unchill never re-enters the TRAVELLING encounter loop.
 	if GameSession.phase in [GameSession.RunPhase.COMBAT, GameSession.RunPhase.REST]:
@@ -70,7 +77,7 @@ func _cancel_encounters() -> void:
 
 
 func spawn_debug_raider() -> String:
-	var raider := _spawn_raider(0, 1)
+	var raider: WindowRaider = _spawner.spawn_raider(0, 1)
 	if raider == null:
 		return "Failed to spawn raider."
 	var breach := String(raider.assigned_breach.point_id) if raider.assigned_breach else "free"
@@ -87,7 +94,7 @@ func spawn_agile_raider() -> WindowRaider:
 	if not is_inside_tree() or enemy_container == null:
 		return null
 	const _AGILE := preload("res://resources/enemies/agile_raider.tres")
-	return _spawn_from_definition(_AGILE, 0, 1)
+	return _spawner.spawn_from_definition(_AGILE, 0, 1)
 
 
 func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
@@ -104,7 +111,7 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 func _cancel_encounters_keep_phase() -> void:
 	_sequence_id += 1
 	_running = false
-	_despawn_all_enemies()
+	_spawner.despawn_all_enemies()
 
 
 func _schedule_encounter() -> void:
@@ -127,7 +134,7 @@ func _run_segment(id: int) -> void:
 	var plan := GameBalance.build_segment_wave_plan(GameSession.route_step)
 	plan = ActCardCombat.modify_wave_plan(plan)
 	if danger:
-		plan = _apply_danger_bump(plan)
+		plan = _spawner.apply_danger_bump(plan)
 	for wave_i in plan.size():
 		if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
 			_running = false
@@ -170,7 +177,7 @@ func _run_segment(id: int) -> void:
 
 
 func _run_boss_segment(id: int) -> void:
-	var boss := _spawn_boss()
+	var boss: WindowRaider = _spawner.spawn_boss()
 	if boss == null:
 		await _finish_boss_segment(id)
 		return
@@ -184,11 +191,11 @@ func _run_boss_segment(id: int) -> void:
 		await get_tree().process_frame
 
 	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
-		_despawn_all_enemies()
+		_spawner.despawn_all_enemies()
 		_running = false
 		return
 
-	_retreat_non_boss_enemies()
+	_spawner.retreat_non_boss_enemies()
 	GameSession.complete_wave()
 	await _finish_boss_segment(id)
 
@@ -210,23 +217,6 @@ func _finish_boss_segment(id: int) -> void:
 		GameSession.set_phase(GameSession.RunPhase.ROUTE_CHOICE)
 
 
-func _spawn_boss() -> WindowRaider:
-	const _SCENE := preload("res://scenes/enemies/biker_boss.tscn")
-	var boss := _SCENE.instantiate() as WindowRaider
-	if boss == null:
-		return null
-	enemy_container.add_child(boss)
-	var ref_z := breach_controller.get_rear_outside_reference_z()
-	var local_pos := Vector3(0.0, rear_spawn.position.y, ref_z + GameBalance.SPAWN_DISTANCE)
-	boss.transform = Transform3D(rear_spawn.transform.basis, local_pos)
-	var world_speed := GameBalance.get_mob_world_speed(GameSession.route_step)
-	boss.begin_assault(null, world_speed)
-	ActCardCombat.configure_enemy(boss)
-	if boss.health_bar and boss.health_bar.has_method(&"update_ratio") and boss.max_health > 0.0:
-		boss.health_bar.update_ratio(boss.health / boss.max_health)
-	return boss
-
-
 func _run_wave(id: int, count: int) -> void:
 	var raiders: Array[WindowRaider] = []
 	for slot in count:
@@ -235,7 +225,7 @@ func _run_wave(id: int, count: int) -> void:
 			await get_tree().create_timer(_scale_wait(delay)).timeout
 			if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
 				return
-		var raider := _spawn_raider(slot, count)
+		var raider: WindowRaider = _spawner.spawn_raider(slot, count)
 		if raider:
 			raiders.append(raider)
 
@@ -244,16 +234,16 @@ func _run_wave(id: int, count: int) -> void:
 
 	# Approach is unpaid — wave can end early if the pack dies on the way.
 	while (
-		_any_approaching(raiders)
+		_spawner.any_approaching(raiders)
 		and GameSession.phase != GameSession.RunPhase.GAME_OVER
 		and id == _sequence_id
 	):
 		await get_tree().process_frame
 
 	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
-		_despawn_raiders(raiders)
+		_spawner.despawn_raiders(raiders)
 		return
-	if not _any_alive(raiders):
+	if not _spawner.any_alive(raiders):
 		return
 
 	var elapsed := 0.0
@@ -261,7 +251,7 @@ func _run_wave(id: int, count: int) -> void:
 	var time_scale := _get_debug_time_scale()
 	while (
 		elapsed < timeout
-		and _any_alive(raiders)
+		and _spawner.any_alive(raiders)
 		and GameSession.phase != GameSession.RunPhase.GAME_OVER
 		and id == _sequence_id
 	):
@@ -269,88 +259,12 @@ func _run_wave(id: int, count: int) -> void:
 		await get_tree().process_frame
 
 	if id != _sequence_id or GameSession.phase == GameSession.RunPhase.GAME_OVER:
-		_despawn_raiders(raiders)
+		_spawner.despawn_raiders(raiders)
 		return
 
 	for raider in raiders:
 		if is_instance_valid(raider) and not raider.is_defeated:
 			raider.retreat()
-
-
-func _spawn_raider(slot: int, count: int) -> WindowRaider:
-	return _spawn_from_definition(GameBalance.pick_spawn_enemy(), slot, count)
-
-
-func _spawn_from_definition(enemy_def: EnemyDefinition, slot: int, count: int) -> WindowRaider:
-	if enemy_def == null or enemy_def.scene == null:
-		return null
-	var raider := enemy_def.scene.instantiate() as WindowRaider
-	if raider == null:
-		return null
-	raider.is_agile = enemy_def.is_agile
-	enemy_container.add_child(raider)
-	# Place on the balance spawn line in EnemyContainer space (+Z = behind van).
-	# Mob world speed is derived so that at the expected upgraded van speed,
-	# rear-door paths take act_engagement_seconds. Live closing tracks travel_speed.
-	var ref_z := breach_controller.get_rear_outside_reference_z()
-	var jitter := GameBalance.spawn_offset_for_slot(slot, count)
-	var local_pos := Vector3(
-		jitter.x,
-		rear_spawn.position.y,
-		ref_z + GameBalance.SPAWN_DISTANCE + jitter.z
-	)
-	raider.transform = Transform3D(rear_spawn.transform.basis, local_pos)
-	var world_speed := GameBalance.get_mob_world_speed(GameSession.route_step)
-	var breach := breach_controller.assign_breach_point(raider)
-	raider.begin_assault(breach, world_speed)
-	ActCardCombat.configure_enemy(raider)
-	return raider
-
-
-func _any_alive(raiders: Array[WindowRaider]) -> bool:
-	for raider in raiders:
-		if is_instance_valid(raider) and not raider.is_defeated:
-			return true
-	return false
-
-
-func _any_approaching(raiders: Array[WindowRaider]) -> bool:
-	for raider in raiders:
-		if (
-			is_instance_valid(raider)
-			and not raider.is_defeated
-			and raider.assault_phase == WindowRaider.AssaultPhase.APPROACH
-		):
-			return true
-	return false
-
-
-func _despawn_raiders(raiders: Array[WindowRaider]) -> void:
-	for raider in raiders:
-		if is_instance_valid(raider):
-			raider.queue_free()
-
-
-func _despawn_all_enemies() -> void:
-	if not is_inside_tree():
-		return
-	for node in get_tree().get_nodes_in_group(&"enemy"):
-		if is_instance_valid(node):
-			node.queue_free()
-
-
-func _retreat_non_boss_enemies() -> void:
-	if not is_inside_tree():
-		return
-	for node in get_tree().get_nodes_in_group(&"enemy"):
-		if not is_instance_valid(node):
-			continue
-		if bool(node.get("is_boss")) or bool(node.get("is_defeated")):
-			continue
-		if node.has_method(&"retreat"):
-			node.retreat()
-		else:
-			node.queue_free()
 
 
 func _wait_for_rest_break(min_seconds: float) -> void:
@@ -383,13 +297,6 @@ func _wait_for_act_reveal() -> void:
 		act_deck.begin_reveal_if_needed()
 	if act_deck.has_method(&"wait_for_reveal_resolution"):
 		await act_deck.wait_for_reveal_resolution()
-
-
-func _apply_danger_bump(plan: Array[int]) -> Array[int]:
-	var bumped: Array[int] = []
-	for count in plan:
-		bumped.append(maxi(1, ceili(float(count) * 1.35) + 1))
-	return bumped
 
 
 func _find_travel_controller() -> Node:
