@@ -10,6 +10,9 @@ const WAIT_LEFT := &"wait_left"
 const WAIT_RIGHT := &"wait_right"
 const WAIT_MID := &"wait_mid"
 
+## A* pathfinding and slot geometry over the waypoint graph. RefCounted, bound to this node.
+const _CabinNavPaths := preload("res://scripts/enemies/cabin_nav_paths.gd")
+
 enum Room { BACK, CABIN }
 
 ## Bulkhead face in EnemyContainer space. Rear cargo is past this plus a small slop.
@@ -30,6 +33,12 @@ enum Room { BACK, CABIN }
 var _nodes: Dictionary = {}
 var _occupants: Dictionary = {}
 
+var _paths: _CabinNavPaths
+
+
+func _init() -> void:
+	_paths = _CabinNavPaths.new(self)
+
 
 func _ready() -> void:
 	add_to_group(&"cabin_nav")
@@ -39,24 +48,24 @@ func _ready() -> void:
 func path_to(from_local: Vector3, to_local: Vector3) -> Array[Vector3]:
 	_ensure_graph()
 	if _nodes.is_empty():
-		return _single_path(from_local, to_local)
-	var start_id := _nearest_id(from_local)
-	var goal_id := _nearest_id(to_local)
-	var ids := _astar(start_id, goal_id)
+		return _paths.single_path(from_local, to_local)
+	var start_id := _paths.nearest_id(from_local)
+	var goal_id := _paths.nearest_id(to_local)
+	var ids := _paths.astar(start_id, goal_id)
 	var pts: Array[Vector3] = []
 	for id in ids:
-		pts.append(_node_pos(id))
+		pts.append(_paths.node_pos(id))
 	pts.append(to_local)
-	return _compress(from_local, pts)
+	return _paths.compress(from_local, pts)
 
 
 func approach_waypoints(from_local: Vector3, breach: BreachPoint) -> Array[Vector3]:
 	if breach == null or breach.outside_marker == null:
 		return []
-	var dest := _to_space(breach.outside_marker)
+	var dest := _paths.to_space(breach.outside_marker)
 	dest.y = from_local.y
-	if _is_rear_face(breach):
-		return _single_path(from_local, dest)
+	if _paths.is_rear_face(breach):
+		return _paths.single_path(from_local, dest)
 	var side := 1.0 if dest.x >= 0.0 else -1.0
 	var corner := (
 		rear_corner_right.position if side > 0.0 else rear_corner_left.position
@@ -67,7 +76,7 @@ func approach_waypoints(from_local: Vector3, breach: BreachPoint) -> Array[Vecto
 	pts.append(corner)
 	pts.append(along)
 	pts.append(dest)
-	return _compress(from_local, pts)
+	return _paths.compress(from_local, pts)
 
 
 func staging_local(from_local: Vector3) -> Vector3:
@@ -101,9 +110,9 @@ func release_passage(raider: Node) -> void:
 
 
 func try_claim_outside_wait(raider: Node) -> Vector3:
-	var left := _wait_pos(WAIT_LEFT)
-	var right := _wait_pos(WAIT_RIGHT)
-	var mid := _wait_pos(WAIT_MID)
+	var left := _paths.wait_pos(WAIT_LEFT)
+	var right := _paths.wait_pos(WAIT_RIGHT)
+	var mid := _paths.wait_pos(WAIT_MID)
 	var order: Array[StringName] = [WAIT_MID, WAIT_LEFT, WAIT_RIGHT]
 	var space := _space()
 	if space and raider is Node3D:
@@ -134,7 +143,7 @@ func release_outside_wait(raider: Node) -> void:
 func claim_vital(vital: Node, raider: Node) -> bool:
 	if vital == null:
 		return false
-	return _claim(_vital_slot(vital), raider, 1)
+	return _claim(_paths.vital_slot(vital), raider, 1)
 
 
 func release_vital(raider: Node) -> void:
@@ -147,7 +156,7 @@ func release_vital(raider: Node) -> void:
 func is_vital_free(vital: Node, raider: Node) -> bool:
 	if vital == null:
 		return false
-	return _has_vacancy(_vital_slot(vital), raider, 1)
+	return _has_vacancy(_paths.vital_slot(vital), raider, 1)
 
 
 func pick_free_vital_near(from_global: Vector3, raider: Node = null) -> Node:
@@ -180,20 +189,20 @@ func pick_free_vital_near(from_global: Vector3, raider: Node = null) -> Node:
 func try_claim_melee(raider: Node, player: Node3D) -> Dictionary:
 	if player == null:
 		return {"ok": false, "local": Vector3.ZERO}
-	var pts := _melee_points(player)
+	var pts := _paths.melee_points(player)
 	for i in pts.size():
-		var id := _melee_id(i)
+		var id := _paths.melee_id(i)
 		if _holds(id, raider):
 			return {"ok": true, "local": pts[i]}
 	for i in pts.size():
-		if _claim(_melee_id(i), raider, 1):
+		if _claim(_paths.melee_id(i), raider, 1):
 			return {"ok": true, "local": pts[i]}
 	return {"ok": false, "local": Vector3.ZERO}
 
 
 func release_melee(raider: Node) -> void:
 	for i in melee_slot_count:
-		_release_slot(_melee_id(i), raider)
+		_release_slot(_paths.melee_id(i), raider)
 
 
 func release_all(raider: Node) -> void:
@@ -208,9 +217,9 @@ func _ensure_graph() -> void:
 
 func _rebuild() -> void:
 	_nodes.clear()
-	_add_node(&"back_staging", _marker_pos(back_staging))
-	_add_node(&"cabin_staging", _marker_pos(cabin_staging))
-	_add_node(&"passage", _marker_pos(passage_marker))
+	_add_node(&"back_staging", _paths.marker_pos(back_staging))
+	_add_node(&"cabin_staging", _paths.marker_pos(cabin_staging))
+	_add_node(&"passage", _paths.marker_pos(passage_marker))
 	_link(&"back_staging", &"passage")
 	_link(&"passage", &"cabin_staging")
 
@@ -221,7 +230,7 @@ func _rebuild() -> void:
 			var breach := node as BreachPoint
 			if breach.entry_marker == null:
 				continue
-			var pos := _to_space(breach.entry_marker)
+			var pos := _paths.to_space(breach.entry_marker)
 			var id := breach.point_id
 			if id == &"":
 				id = StringName(breach.name)
@@ -240,8 +249,8 @@ func _rebuild() -> void:
 			)
 			if marker == null:
 				continue
-			var pos := _to_space(marker)
-			var id := _vital_slot(vital)
+			var pos := _paths.to_space(marker)
+			var id := _paths.vital_slot(vital)
 			_add_node(id, pos)
 			var staging := (
 				&"back_staging" if room_of(pos) == Room.BACK else &"cabin_staging"
@@ -267,159 +276,6 @@ func _link(a: StringName, b: StringName) -> void:
 		na.append(b)
 	if not nb.has(a):
 		nb.append(a)
-
-
-func _astar(start_id: StringName, goal_id: StringName) -> Array[StringName]:
-	var empty: Array[StringName] = []
-	if start_id == &"" or goal_id == &"":
-		return empty
-	if start_id == goal_id:
-		return [start_id]
-	if not _nodes.has(start_id) or not _nodes.has(goal_id):
-		return empty
-	var open: Array[StringName] = [start_id]
-	var came := {}
-	var gscore := {start_id: 0.0}
-	var closed := {}
-	while not open.is_empty():
-		var current := _lowest_f(open, gscore, goal_id)
-		if current == goal_id:
-			return _reconstruct(came, current)
-		open.erase(current)
-		closed[current] = true
-		var neighbors: Array = _nodes[current]["neighbors"]
-		for nb in neighbors:
-			var nid := nb as StringName
-			if closed.has(nid):
-				continue
-			var tentative := float(gscore[current]) + _dist(current, nid)
-			if not gscore.has(nid) or tentative < float(gscore[nid]):
-				came[nid] = current
-				gscore[nid] = tentative
-				if nid not in open:
-					open.append(nid)
-	return [start_id]
-
-
-func _lowest_f(open: Array[StringName], gscore: Dictionary, goal_id: StringName) -> StringName:
-	var best := open[0]
-	var best_f := float(gscore[best]) + _dist(best, goal_id)
-	for i in range(1, open.size()):
-		var id := open[i]
-		var f := float(gscore[id]) + _dist(id, goal_id)
-		if f < best_f:
-			best_f = f
-			best = id
-	return best
-
-
-func _reconstruct(came: Dictionary, current: StringName) -> Array[StringName]:
-	var path: Array[StringName] = [current]
-	while came.has(current):
-		current = came[current]
-		path.push_front(current)
-	return path
-
-
-func _nearest_id(local: Vector3) -> StringName:
-	var best := &""
-	var best_d := INF
-	for key in _nodes.keys():
-		var id := key as StringName
-		var d := _xz(_node_pos(id), local)
-		if d < best_d:
-			best_d = d
-			best = id
-	return best
-
-
-func _node_pos(id: StringName) -> Vector3:
-	if not _nodes.has(id):
-		return Vector3.ZERO
-	return _nodes[id]["pos"] as Vector3
-
-
-func _dist(a: StringName, b: StringName) -> float:
-	return _xz(_node_pos(a), _node_pos(b))
-
-
-func _xz(a: Vector3, b: Vector3) -> float:
-	return Vector2(a.x - b.x, a.z - b.z).length()
-
-
-func _compress(from_local: Vector3, pts: Array[Vector3]) -> Array[Vector3]:
-	var out: Array[Vector3] = []
-	var prev := from_local
-	for p in pts:
-		var a := Vector3(p.x, from_local.y, p.z)
-		if _xz(prev, a) > 0.18:
-			out.append(a)
-			prev = a
-	return out
-
-
-func _single_path(from_local: Vector3, dest: Vector3) -> Array[Vector3]:
-	var pts: Array[Vector3] = []
-	pts.append(dest)
-	return _compress(from_local, pts)
-
-
-func _is_rear_face(breach: BreachPoint) -> bool:
-	if breach == null or breach.outside_marker == null:
-		return true
-	return _to_space(breach.outside_marker).z >= rear_face_z
-
-
-func _to_space(node: Node3D) -> Vector3:
-	var space := _space()
-	if space == null or node == null:
-		return node.global_position if node else Vector3.ZERO
-	return space.to_local(node.global_position)
-
-
-func _marker_pos(marker: Marker3D) -> Vector3:
-	if marker == null:
-		return Vector3.ZERO
-	return marker.position
-
-
-func _wait_pos(id: StringName) -> Vector3:
-	match id:
-		WAIT_LEFT:
-			return _marker_pos(rear_corner_left)
-		WAIT_RIGHT:
-			return _marker_pos(rear_corner_right)
-		_:
-			return Vector3(0.0, raider_height, 8.0)
-
-
-func _melee_points(player: Node3D) -> Array[Vector3]:
-	var pl := _to_space(player)
-	pl.y = raider_height
-	var room := room_of(pl)
-	var result: Array[Vector3] = []
-	for i in melee_slot_count:
-		var ang := TAU * float(i) / float(melee_slot_count) + 0.4
-		var p := pl + Vector3(cos(ang), 0.0, sin(ang)) * melee_range
-		p.y = raider_height
-		if room_of(p) != room:
-			p = pl + Vector3(cos(ang), 0.0, sin(ang)) * (melee_range * 0.45)
-			p.y = raider_height
-		result.append(p)
-	return result
-
-
-func _melee_id(index: int) -> StringName:
-	return StringName("melee_%d" % index)
-
-
-func _vital_slot(vital: Node) -> StringName:
-	var key := &"vital"
-	if vital and "vital_id" in vital and vital.vital_id != &"":
-		key = vital.vital_id
-	elif vital:
-		key = StringName(vital.name)
-	return StringName("vital_%s" % String(key))
 
 
 func _claim(slot: StringName, raider: Node, capacity: int) -> bool:
