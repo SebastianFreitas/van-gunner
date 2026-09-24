@@ -14,17 +14,14 @@ signal boss_cards_picked(card_ids: Array)
 
 enum Mode { ACT_REVEAL, BOSS_PICK }
 
-const ACCENT := Color(0.86, 0.74, 0.46, 1.0)
-const MUTED := Color(0.42, 0.40, 0.36, 1.0)
-const BLESSING_COLOR := Color(0.52, 0.70, 0.88, 1.0)
-const DANGER_COLOR := Color(0.84, 0.30, 0.24, 1.0)
-const INK := Color(0.08, 0.08, 0.07, 0.96)
-const CARD_BACK := Color(0.07, 0.07, 0.06, 1.0)
 const FLIP_DELAY := 0.35
 const SHUFFLE_DURATION := 0.55
 const BOSS_HOLD_FACE_UP := 0.7
 const REDEAL_DURATION := 0.4
 
+const ActRevealCards := preload("res://scripts/ui/act_reveal_cards.gd")
+
+var _cards: ActRevealCards
 var _present_id := 0
 var _mode := Mode.ACT_REVEAL
 var _continue_btn: Button
@@ -39,6 +36,7 @@ var _card_gui_connected: Array[bool] = []
 
 
 func _ready() -> void:
+	_cards = ActRevealCards.new(self)
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	hide()
@@ -87,80 +85,7 @@ func _begin_present(
 	hint_text: String,
 	show_continue: bool
 ) -> void:
-	_clear()
-	if display_cards.is_empty():
-		hide()
-		return
-
-	_present_id += 1
-
-	var backdrop := ColorRect.new()
-	backdrop.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	backdrop.color = Color(0.02, 0.02, 0.02, 0.84)
-	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(backdrop)
-
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	add_child(center)
-
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override(&"separation", 18)
-	center.add_child(stack)
-
-	var title := Label.new()
-	title.text = title_text
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_color_override(&"font_color", ACCENT)
-	title.add_theme_font_size_override(&"font_size", 24)
-	stack.add_child(title)
-
-	var flavor := Label.new()
-	flavor.text = flavor_text
-	flavor.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	flavor.add_theme_color_override(&"font_color", MUTED)
-	stack.add_child(flavor)
-
-	_hint_label = Label.new()
-	_hint_label.text = hint_text
-	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint_label.add_theme_color_override(&"font_color", MUTED)
-	_hint_label.add_theme_font_size_override(&"font_size", 12)
-	stack.add_child(_hint_label)
-
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override(&"separation", 12)
-	stack.add_child(row)
-
-	_card_panels.clear()
-	_card_labels.clear()
-	_card_gui_connected.clear()
-	for i in display_cards.size():
-		var panel := _make_card_back()
-		row.add_child(panel)
-		_card_panels.append(panel)
-		_card_gui_connected.append(false)
-		var index := i
-		panel.gui_input.connect(func(event: InputEvent) -> void: _on_card_gui_input(index, event))
-		_card_gui_connected[i] = true
-
-	_continue_btn = Button.new()
-	_continue_btn.text = "CONTINUE"
-	_continue_btn.custom_minimum_size = Vector2(196, 42)
-	_continue_btn.disabled = true
-	_continue_btn.focus_mode = Control.FOCUS_NONE
-	_continue_btn.pressed.connect(_on_continue_pressed)
-	_style_continue_button(_continue_btn)
-	var btn_wrap := CenterContainer.new()
-	btn_wrap.add_child(_continue_btn)
-	stack.add_child(btn_wrap)
-	if not show_continue:
-		_continue_btn.hide()
-		btn_wrap.hide()
-
-	show()
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_cards.build_present(display_cards, title_text, flavor_text, hint_text, show_continue)
 
 
 func dismiss() -> void:
@@ -185,7 +110,7 @@ func _run_reveal(display_cards: Array[ActCardDefinition], present_id: int) -> vo
 		await get_tree().create_timer(FLIP_DELAY).timeout
 		if present_id != _present_id:
 			return
-		_flip_card(i, display_cards[i])
+		_cards.flip_card(i, display_cards[i])
 
 	if present_id != _present_id:
 		return
@@ -200,7 +125,7 @@ func _run_boss_pick(display_cards: Array[ActCardDefinition], present_id: int) ->
 		await get_tree().create_timer(FLIP_DELAY).timeout
 		if present_id != _present_id:
 			return
-		_flip_card(i, display_cards[i])
+		_cards.flip_card(i, display_cards[i])
 
 	if present_id != _present_id:
 		return
@@ -214,93 +139,13 @@ func _run_boss_pick(display_cards: Array[ActCardDefinition], present_id: int) ->
 	if present_id != _present_id:
 		return
 
-	_shuffle_pick_order()
+	_cards.shuffle_pick_order()
 	if _hint_label:
 		_hint_label.text = "Pick %d face-down streets. Both apply to the boss." % _pick_count
 	_selectable = true
 	for panel in _card_panels:
 		panel.mouse_filter = Control.MOUSE_FILTER_STOP
 		panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-
-
-func _shuffle_pick_order() -> void:
-	if _shuffled_cards.size() <= 1:
-		return
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
-	for i in range(_shuffled_cards.size() - 1, 0, -1):
-		var j := rng.randi_range(0, i)
-		var tmp := _shuffled_cards[i]
-		_shuffled_cards[i] = _shuffled_cards[j]
-		_shuffled_cards[j] = tmp
-
-
-func _flip_card(index: int, card: ActCardDefinition) -> void:
-	if index < 0 or index >= _card_panels.size() or card == null:
-		return
-	var panel := _card_panels[index]
-	for child in panel.get_children():
-		panel.remove_child(child)
-		child.queue_free()
-
-	var accent := DANGER_COLOR if card.is_danger() else BLESSING_COLOR
-	panel.add_theme_stylebox_override(&"panel", _ink_plate(accent))
-
-	var stack := VBoxContainer.new()
-	stack.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	stack.alignment = BoxContainer.ALIGNMENT_CENTER
-	stack.add_theme_constant_override(&"separation", 5)
-	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(stack)
-
-	var polarity := Label.new()
-	polarity.text = card.polarity_label()
-	polarity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	polarity.add_theme_color_override(&"font_color", accent)
-	polarity.add_theme_font_size_override(&"font_size", 11)
-	stack.add_child(polarity)
-
-	if card.icon:
-		var icon := TextureRect.new()
-		icon.texture = card.icon
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.custom_minimum_size = Vector2(48, 48)
-		icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		icon.modulate = Color(0.62, 0.60, 0.56, 1.0)
-		stack.add_child(icon)
-
-	var name_label := Label.new()
-	name_label.text = card.display_name
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	name_label.add_theme_color_override(&"font_color", ACCENT)
-	name_label.add_theme_font_size_override(&"font_size", 13)
-	stack.add_child(name_label)
-
-	var rule := ColorRect.new()
-	rule.color = Color(ACCENT, 0.35)
-	rule.custom_minimum_size = Vector2(36, 1)
-	rule.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	stack.add_child(rule)
-
-	var body := Label.new()
-	body.text = card.description.strip_edges()
-	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.add_theme_color_override(&"font_color", MUTED)
-	body.add_theme_font_size_override(&"font_size", 10)
-	body.custom_minimum_size = Vector2(100, 0)
-	stack.add_child(body)
-
-	_add_corner_ticks(panel, Color(ACCENT, 0.45))
-	_ignore_mouse_tree(stack)
-
-	_card_labels.append(name_label)
-
-	panel.scale = Vector2(0.85, 1.0)
-	var tween := create_tween()
-	tween.tween_property(panel, "scale", Vector2.ONE, 0.12)
 
 
 func _play_shuffle(present_id: int, redeal: bool = false) -> void:
@@ -332,7 +177,7 @@ func _play_shuffle(present_id: int, redeal: bool = false) -> void:
 		if present_id != _present_id:
 			return
 		var panel := _card_panels[i]
-		_show_card_back(panel)
+		_cards.show_card_back(panel)
 		panel.reparent(pile_host)
 		panel.size = start_sizes[i]
 		panel.global_position = start_globals[i]
@@ -396,125 +241,6 @@ func _play_shuffle(present_id: int, redeal: bool = false) -> void:
 		panel.modulate.a = 1.0
 
 
-func _ignore_mouse_tree(node: Control) -> void:
-	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	for child in node.get_children():
-		if child is Control:
-			_ignore_mouse_tree(child)
-
-
-func _make_card_back() -> PanelContainer:
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(118, 196)
-	panel.pivot_offset = Vector2(59, 98)
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	_show_card_back(panel, ACCENT)
-	return panel
-
-
-func _show_card_back(panel: PanelContainer, border_color: Color = MUTED) -> void:
-	for child in panel.get_children():
-		panel.remove_child(child)
-		child.queue_free()
-	var q := Label.new()
-	q.text = "?"
-	q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	q.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	q.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	q.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	q.add_theme_color_override(&"font_color", Color(MUTED, 0.55))
-	q.add_theme_font_size_override(&"font_size", 28)
-	panel.add_child(q)
-	panel.add_theme_stylebox_override(&"panel", _ink_plate(border_color, false))
-	_add_corner_ticks(panel, Color(border_color, 0.28))
-
-
-func _ink_plate(accent: Color, stripe: bool = true) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = INK
-	style.set_corner_radius_all(0)
-	style.set_border_width_all(0)
-	if stripe:
-		style.border_width_left = 3
-		style.border_color = accent
-	style.shadow_color = Color(0, 0, 0, 0.62)
-	style.shadow_size = 10
-	style.shadow_offset = Vector2(0, 4)
-	style.content_margin_left = 12 if stripe else 10
-	style.content_margin_right = 10
-	style.content_margin_top = 10
-	style.content_margin_bottom = 10
-	return style
-
-
-func _add_corner_ticks(host: Control, color: Color) -> void:
-	var overlay := Control.new()
-	overlay.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	host.add_child(overlay)
-	var len := 12.0
-	var thick := 1.0
-	_place_tick(overlay, Vector2(6, 6), Vector2(len, thick), color)
-	_place_tick(overlay, Vector2(6, 6), Vector2(thick, len), color)
-	_place_tick(overlay, Vector2(-6 - len, 6), Vector2(len, thick), color, true, false)
-	_place_tick(overlay, Vector2(-6 - thick, 6), Vector2(thick, len), color, true, false)
-	_place_tick(overlay, Vector2(6, -6 - thick), Vector2(len, thick), color, false, true)
-	_place_tick(overlay, Vector2(6, -6 - len), Vector2(thick, len), color, false, true)
-	_place_tick(overlay, Vector2(-6 - len, -6 - thick), Vector2(len, thick), color, true, true)
-	_place_tick(overlay, Vector2(-6 - thick, -6 - len), Vector2(thick, len), color, true, true)
-
-
-func _place_tick(
-	overlay: Control,
-	offset: Vector2,
-	size: Vector2,
-	color: Color,
-	from_right: bool = false,
-	from_bottom: bool = false
-) -> void:
-	var tick := ColorRect.new()
-	tick.color = color
-	tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tick.anchor_left = 1.0 if from_right else 0.0
-	tick.anchor_right = 1.0 if from_right else 0.0
-	tick.anchor_top = 1.0 if from_bottom else 0.0
-	tick.anchor_bottom = 1.0 if from_bottom else 0.0
-	tick.offset_left = offset.x
-	tick.offset_top = offset.y
-	tick.offset_right = offset.x + size.x
-	tick.offset_bottom = offset.y + size.y
-	overlay.add_child(tick)
-
-
-func _style_continue_button(button: Button) -> void:
-	var idle := StyleBoxFlat.new()
-	idle.bg_color = CARD_BACK
-	idle.set_corner_radius_all(0)
-	idle.set_border_width_all(0)
-	idle.border_width_top = 2
-	idle.border_color = ACCENT
-	idle.content_margin_left = 18
-	idle.content_margin_right = 18
-	idle.content_margin_top = 10
-	idle.content_margin_bottom = 10
-	var hover := idle.duplicate()
-	hover.bg_color = Color(0.12, 0.11, 0.09, 1.0)
-	var pressed := idle.duplicate()
-	pressed.bg_color = Color(0.05, 0.05, 0.04, 1.0)
-	var disabled := idle.duplicate()
-	disabled.border_color = Color(ACCENT, 0.22)
-	disabled.bg_color = Color(0.06, 0.06, 0.05, 1.0)
-	button.add_theme_stylebox_override(&"normal", idle)
-	button.add_theme_stylebox_override(&"hover", hover)
-	button.add_theme_stylebox_override(&"pressed", pressed)
-	button.add_theme_stylebox_override(&"disabled", disabled)
-	button.add_theme_stylebox_override(&"focus", idle)
-	button.add_theme_color_override(&"font_color", ACCENT)
-	button.add_theme_color_override(&"font_hover_color", ACCENT.lightened(0.12))
-	button.add_theme_color_override(&"font_pressed_color", ACCENT.darkened(0.1))
-	button.add_theme_color_override(&"font_disabled_color", Color(MUTED, 0.55))
-
-
 func _on_card_gui_input(index: int, event: InputEvent) -> void:
 	if not _selectable or _mode != Mode.BOSS_PICK:
 		return
@@ -534,7 +260,7 @@ func _try_pick_card(index: int) -> void:
 	if index in _picked_indices:
 		return
 	_picked_indices.append(index)
-	_flip_card(index, _shuffled_cards[index])
+	_cards.flip_card(index, _shuffled_cards[index])
 	var remaining := _pick_count - _picked_indices.size()
 	if _hint_label:
 		if remaining > 0:
