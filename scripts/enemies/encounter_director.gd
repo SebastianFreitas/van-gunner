@@ -1,5 +1,6 @@
 class_name EncounterDirector
 extends Node
+## Drives the travel/combat/rest cycle and owns the external spawn API for a run.
 
 const _EncounterSpawner := preload("res://scripts/enemies/encounter_spawner.gd")
 

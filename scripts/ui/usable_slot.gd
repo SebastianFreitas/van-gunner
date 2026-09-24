@@ -1,4 +1,5 @@
 extends PanelContainer
+## One usable-item slot in the HUD: icon, charge count and cooldown bar.
 
 @onready var icon_rect: TextureRect = %Icon
 @onready var charges_label: Label = %Charges

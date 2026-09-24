@@ -1,4 +1,5 @@
 extends Node3D
+## A single corridor tile: wall variants, road floor, and side-street bay openings.
 
 const VARIANT_COUNT := 4
 const SIDE_STREET_CORNER_INSET := 0.85

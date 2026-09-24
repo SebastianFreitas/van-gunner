@@ -1,5 +1,5 @@
-## Concrete boon behavior handlers. Each inner class maps one trait to combat logic.
 extends RefCounted
+## Concrete boon behavior handlers. Each inner class maps one trait to combat logic.
 
 
 class RicochetStackBehavior extends BoonBehavior:

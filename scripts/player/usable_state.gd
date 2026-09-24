@@ -1,5 +1,6 @@
 class_name UsableState
 extends RefCounted
+## Runtime state for one equipped usable item: charges and cooldown remaining.
 
 var definition: ItemDefinition
 var charges: int = 0

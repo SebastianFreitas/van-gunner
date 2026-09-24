@@ -1,4 +1,5 @@
 extends Node
+## Spawns floating damage numbers over hit targets in a dedicated canvas layer.
 
 const DAMAGE_NUMBER_SCENE := preload("res://scenes/ui/damage_number.tscn")
 

@@ -1,4 +1,5 @@
 extends Control
+## The main menu screen: save slot selection, settings panel and starting a run.
 
 @onready var slots: VBoxContainer = %Slots
 @onready var settings_panel: PanelContainer = %SettingsPanel

@@ -1,4 +1,5 @@
 extends Node3D
+## A side-street branch tile; mirrors its children when attached on the right side.
 
 @export var mirror_x := false
 

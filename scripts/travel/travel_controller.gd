@@ -1,5 +1,6 @@
 class_name TravelController
 extends Node
+## Drives the van's travel state machine: approach, turn, park and leave each stop.
 
 enum TurnState {
 	NONE,

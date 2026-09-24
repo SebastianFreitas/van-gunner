@@ -1,5 +1,6 @@
 class_name FpsPlayer
 extends CharacterBody3D
+## The first-person player controller: movement, interaction and shooting input.
 
 signal interaction_prompt_changed(text: String)
 signal shot_fired(hit: bool)

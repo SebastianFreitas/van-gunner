@@ -1,4 +1,5 @@
 extends Node
+## Autoload: persists van speed level, rare parts and the meta skill tree across runs.
 
 signal van_speed_changed(level: int, speed: float)
 signal rare_parts_changed(total: int)

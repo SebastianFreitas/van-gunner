@@ -1,4 +1,5 @@
 extends Node
+## Autoload: reads and writes save slot JSON files on disk.
 
 const SLOT_COUNT := 3
 const SAVE_VERSION := 6

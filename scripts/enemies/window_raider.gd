@@ -1,5 +1,6 @@
 class_name WindowRaider
 extends Node3D
+## A raider enemy: approaches, breaches a window or door, then attacks the bench or player.
 
 signal attack_landed(amount: float)
 signal defeated

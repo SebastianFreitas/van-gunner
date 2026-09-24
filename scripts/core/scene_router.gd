@@ -1,4 +1,5 @@
 extends Node
+## Autoload: switches between the main menu and van scenes, preloading the van ahead of time.
 
 const MAIN_MENU := "res://scenes/ui/main_menu.tscn"
 const VAN := "res://scenes/van/van.tscn"

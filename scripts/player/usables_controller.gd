@@ -1,5 +1,6 @@
 class_name UsablesController
 extends Node
+## Owns the player's usable item slots and boon inventory for the run.
 
 signal slots_changed
 signal boons_changed

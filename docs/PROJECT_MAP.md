@@ -1,6 +1,6 @@
 # PROJECT_MAP — van-gunner
-> **Generated file. Do not hand-edit.** Regenerate with `python3 tools/gen_context.py`.
-> Design intent, invariants and gotchas live in `AGENTS.md`, which *is* hand-written.
+> **Generated file. Do not hand-edit.** Regenerate with `py -3 tools/gen_context.py`.
+> Design intent, invariants and gotchas live in `CLAUDE.md` (workflow, summary, always-on invariants) and `.claude/rules/` (per-area design notes and pitfalls, loaded by path).
 
 ## Project settings
 
@@ -259,24 +259,24 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-159 GDScript files, 27202 lines.
+194 GDScript files, 28096 lines.
 
 ### `scenes/corridor/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `corridor_segment.gd` | — | 171 | Open a wall gap for a side-stop bay without showing the cosmetic side street. |
-| `corridor_t_junction.gd` | — | 64 | Fills sidewalk corners where stem / branch / optional through-road meet the |
-| `side_street_branch.gd` | — | 19 |  |
+| `corridor_segment.gd` | — | 172 | A single corridor tile: wall variants, road floor, and side-street bay openings. |
+| `corridor_t_junction.gd` | — | 64 | Fills sidewalk corners where stem / branch / optional through-road meet the open junction slab. |
+| `side_street_branch.gd` | — | 20 | A side-street branch tile; mirrors its children when attached on the right side. |
 
 ### `scripts/acts/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `act_card_combat.gd` | `ActCardCombat` | 148 | Dispatcher for active street cards — mirrors BoonCombat for act cards. |
-| `act_card_definition.gd` | `ActCardDefinition` | 27 | Combat behavior lives in composable `effects`. Boss fights activate an Array of |
+| `act_card_definition.gd` | `ActCardDefinition` | 27 | Combat behavior lives in composable `effects`. |
 | `act_card_effect.gd` | `ActCardEffect` | 45 | Base class for anything an active street card does while it is the road. |
-| `act_card_effect_context.gd` | `ActCardEffectContext` | 39 | Shared bag for street-card effect hooks. Effects mutate fields; ActCardCombat |
+| `act_card_effect_context.gd` | `ActCardEffectContext` | 39 | Shared bag for street-card effect hooks. |
 | `act_card_registry.gd` | `ActCardRegistry` | 48 | Resolves act street-card definitions by id from resources/acts/cards/. |
 | `act_deck_controller.gd` | `ActDeckController` | 150 | Owns act-start tarot reveals and the act-end boss pick. |
 | `boon_reward_controller.gd` | `BoonRewardController` | 146 | During REST, grants a 3-choice boon for the street card committed at the last fork. |
@@ -290,42 +290,42 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `enemy_speed_mult_effect.gd` | `EnemySpeedMultEffect` | 18 | Scales raider world chase speed on spawn (1.15 = 15% faster). |
 | `narrow_fork_effect.gd` | `NarrowForkEffect` | 12 | After this street, the next fork is a T — two face-up cards instead of three. |
 | `temp_boon_trait_effect.gd` | `TempBoonTraitEffect` | 18 | While this street is active, grants a boon trait via BoonTraits street overlay. |
-| `wave_count_mult_effect.gd` | `WaveCountMultEffect` | 19 | Bumps each wave's spawn count (danger roads). Multiplies then optionally adds. |
+| `wave_count_mult_effect.gd` | `WaveCountMultEffect` | 19 | Bumps each wave's spawn count (danger roads). |
 
 ### `scripts/audio/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `audio_director.gd` | — | 368 | Central sound playback. Gameplay code says *what happened* (`&"gun_fire"`), |
+| `audio_director.gd` | — | 368 | Central sound playback. |
 | `sound_bank.gd` | `SoundBank` | 42 | Flat list of SoundCues, indexed by id once at load. |
-| `sound_cue.gd` | `SoundCue` | 41 | One addressable sound. Adding audio should mean adding a .tres, never a |
+| `sound_cue.gd` | `SoundCue` | 41 | One addressable sound. |
 
 ### `scripts/classes/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `class_catalog.gd` | `ClassCatalog` | 68 | Resolves player classes by id from resources/classes/. Unknown ids fall back |
-| `class_definition.gd` | `ClassDefinition` | 42 | One player class: a single gun with its base stats. Identity only — damage |
+| `class_catalog.gd` | `ClassCatalog` | 68 | Resolves player classes by id from resources/classes/. |
+| `class_definition.gd` | `ClassDefinition` | 42 | One player class: a single gun with its base stats. |
 
 ### `scripts/combat/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `arm_cannon_mesh.gd` | `ArmCannonMesh` | 176 | Boxy Mega Man forearm cannons. Rear face stays at REAR_Z so length grows |
-| `bullet_trail.gd` | `BulletTrail` | 117 | The one trail colour now that bullets carry no damage type. |
-| `bullet_visual.gd` | `BulletVisual` | 161 | Cosmetic bullet mesh + trail. Starts at the gun muzzle and flies on a frozen |
-| `damage_info.gd` | `DamageInfo` | 49 | One hit: a single damage number plus where it landed. There are no damage |
-| `damage_resolver.gd` | `DamageResolver` | 110 | Splash is a share of the hit that caused it, with distance falloff. It is |
-| `explosion_fx.gd` | `ExplosionFx` | 304 | Pixel-art billboard blast. The ring's outer edge is the same sphere |
+| `arm_cannon_mesh.gd` | `ArmCannonMesh` | 176 | Boxy Mega Man forearm cannons. |
+| `bullet_trail.gd` | `BulletTrail` | 118 | Draws and fades the trail mesh a bullet leaves behind as it travels. |
+| `bullet_visual.gd` | `BulletVisual` | 161 | Cosmetic bullet mesh + trail. |
+| `damage_info.gd` | `DamageInfo` | 49 | One hit: a single damage number plus where it landed. |
+| `damage_resolver.gd` | `DamageResolver` | 111 | Static helpers that apply bullet hits and explosions to damageable nodes, with headshot checks. |
+| `explosion_fx.gd` | `ExplosionFx` | 304 | Pixel-art billboard blast. |
 | `grenade.gd` | `Grenade` | 159 | Hand-integrated ballistics instead of a RigidBody3D. |
-| `gun_controller.gd` | `GunController` | 322 | Hit/miss for the HUD once the first pellet resolves. Not a muzzle event. |
+| `gun_controller.gd` | `GunController` | 322 | Hit/miss for the HUD once the first pellet resolves. |
 | `gun_stats.gd` | `GunStats` | 46 | Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance. |
-| `gun_stats_controller.gd` | `GunStatsController` | 152 | GameBalance floor, then the class identity. Boons and stims come after, in |
-| `gun_viewmodel.gd` | `GunViewmodel` | 222 | Viewmodel motion: quarter-roll per shot, tip-up accelerating spin on reload |
-| `projectile.gd` | `Projectile` | 319 | Distance the bullet is pushed off a surface after a bounce so the next sweep |
+| `gun_stats_controller.gd` | `GunStatsController` | 153 | Rebuilds a gun's effective stats from its base stats, class and modifiers. |
+| `gun_viewmodel.gd` | `GunViewmodel` | 222 | Viewmodel motion: quarter-roll per shot, tip-up accelerating spin on reload with a coast / settle finish so the mag change doesn't hard-cut. |
+| `projectile.gd` | `Projectile` | 320 | A bullet: flies, ricochets off scenery and resolves damage on hit. |
 | `projectile_pool.gd` | — | 82 | Reuses Projectile nodes to avoid instantiate/free churn during heavy fire. |
-| `stat_modifier.gd` | `StatModifier` | 13 |  |
-| `status_effect_controller.gd` | `StatusEffectController` | 128 | Poison stacks and the cold slow on one enemy. There is no burn and no freeze: |
+| `stat_modifier.gd` | `StatModifier` | 14 | A single additive or multiplicative modifier applied to a named gun stat. |
+| `status_effect_controller.gd` | `StatusEffectController` | 128 | Poison stacks and the cold slow on one enemy. |
 
 ### `scripts/core/`
 
@@ -333,53 +333,66 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `game_balance.gd` | — | 188 | Runtime facade over the Inspector-editable GameBalanceData resource. |
 | `game_balance_data.gd` | `GameBalanceData` | 149 | Inspector-editable balance sheet for encounter pacing and act scaling. |
-| `game_session.gd` | — | 812 | Interior machines that sum to van death HP. Equal share of van_max_health. |
-| `loot_collector.gd` | — | 226 | Hopper for street-kill loot. Floor drops stay walkable; REST vacuums |
-| `meta_progression.gd` | — | 344 | Preload-as-type: this autoload cannot name SkillNodeDefinition / the tree |
-| `save_manager.gd` | — | 96 |  |
+| `game_session.gd` | — | 362 | Autoload: tracks run phase, van/player health, route and wave state for the current run. |
+| `loot_collector.gd` | — | 226 | Hopper for street-kill loot. |
+| `meta_progression.gd` | — | 345 | Autoload: persists van speed level, rare parts and the meta skill tree across runs. |
+| `save_manager.gd` | — | 97 | Autoload: reads and writes save slot JSON files on disk. |
 | `save_sandbox.gd` | `SaveSandbox` | 8 | Test switch: when on, SaveManager and MetaProgression never touch user://. |
-| `scene_router.gd` | — | 73 | Sync load on the main thread. Threaded load of van.tscn fails cold with a |
-| `skill_tree_registry.gd` | — | 94 | Resolves skill-tree nodes from resources/meta/tree/. Not an autoload and |
+| `scene_router.gd` | — | 74 | Autoload: switches between the main menu and van scenes, preloading the van ahead of time. |
+| `session_act_deck.gd` | — | 203 | Act deck logic for GameSession. |
+| `session_save.gd` | — | 163 | Save serialization for GameSession. |
+| `session_vitals.gd` | — | 177 | Vital bookkeeping for GameSession. |
+| `skill_tree_registry.gd` | — | 94 | Resolves skill-tree nodes from resources/meta/tree/. |
 
 ### `scripts/debug/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `debug_commands.gd` | — | 673 | Parses and runs debug console commands. Add new commands in _register_commands(). |
-| `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. Default follows the build. |
+| `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
+| `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
+| `debug_commands.gd` | — | 220 | Parses and runs debug console commands. |
+| `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
+| `debug_item_commands.gd` | — | 70 | Debug console commands: items. |
+| `debug_meta_commands.gd` | — | 55 | Debug console commands: meta. |
+| `debug_run_flow_commands.gd` | — | 54 | Debug console commands: run flow. |
+| `debug_van_commands.gd` | — | 50 | Debug console commands: van. |
 
 ### `scripts/dialogue/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `dialogue_choice.gd` | `DialogueChoice` | 21 | One option in an NPC talk. Built in code; the HUD just renders it. |
-| `npc_talk.gd` | `NpcTalk` | 116 | Look + E opens talk. Hover + click picks; E or walking off closes. |
+| `dialogue_choice.gd` | `DialogueChoice` | 21 | One option in an NPC talk. |
+| `npc_talk.gd` | `NpcTalk` | 116 | Look + E opens talk. |
 
 ### `scripts/enemies/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `biker_boss.gd` | `BikerBoss` | 310 | Wanjna: hit-and-run biker. Fast charge, slow axe on a door, peel and weave. |
+| `biker_boss.gd` | `BikerBoss` | 310 | Wanjna: hit-and-run biker. |
 | `breach_controller.gd` | `BreachController` | 277 | Assigns raid slots around the van and interior vital damage targets. |
 | `breach_point.gd` | `BreachPoint` | 365 | Outside attack slot that must be breached (or opened) before mobs can enter. |
-| `cabin_nav.gd` | `CabinNav` | 477 | Van-local waypoint graph + occupancy. Raiders stay Node3D; this is how they |
-| `encounter_director.gd` | `EncounterDirector` | 411 | Soft cap: after this, surviving raiders of the current wave retreat. |
+| `cabin_nav.gd` | `CabinNav` | 333 | Van-local waypoint graph + occupancy. |
+| `cabin_nav_paths.gd` | — | 163 | A* pathfinding and slot geometry over CabinNav's waypoint graph. |
+| `encounter_director.gd` | `EncounterDirector` | 319 | Drives the travel/combat/rest cycle and owns the external spawn API for a run. |
+| `encounter_spawner.gd` | — | 110 | Spawns bosses/raiders for EncounterDirector and answers alive/approaching queries. |
 | `enemy_definition.gd` | `EnemyDefinition` | 14 | Data-only description of a spawnable enemy type. |
 | `enemy_spawn_pool.gd` | `EnemySpawnPool` | 48 | A weighted collection of enemies to roll spawns from. |
 | `enemy_spawn_pool_entry.gd` | `EnemySpawnPoolEntry` | 8 | A single weighted slot inside an EnemySpawnPool. |
 | `loot_drop_component.gd` | `LootDropComponent` | 62 | Drop-in component that gives any enemy a chance to drop loot on death. |
-| `window_raider.gd` | `WindowRaider` | 667 | Agile raiders can climb window bars; door mobs only smash doors. |
+| `window_raider.gd` | `WindowRaider` | 523 | A raider enemy: approaches, breaches a window or door, then attacks the bench or player. |
+| `window_raider_motion.gd` | — | 69 | Per-frame chase math for WindowRaider. |
+| `window_raider_targeting.gd` | — | 112 | Target picking, cabin/breach queries and status math for WindowRaider. |
 
 ### `scripts/interactions/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `cab_door.gd` | — | 185 | Decorative cab-facing door at the front partition. |
-| `class_board.gd` | — | 21 | Wall board where the run's class is picked. Only IDLE lets it change; for the |
-| `crafting_table.gd` | `CraftingTable` | 9 |  |
-| `interactable.gd` | `Interactable` | 13 |  |
-| `loot_machine.gd` | `LootMachine` | 31 | Left-wall hopper. Street-kill loot queues here; E on the cabinet ejects one item. |
-| `request_board.gd` | — | 8 |  |
+| `class_board.gd` | — | 21 | Wall board where the run's class is picked. |
+| `crafting_table.gd` | `CraftingTable` | 10 | Interactable crafting table in the van; E opens the bench screen. |
+| `interactable.gd` | `Interactable` | 14 | Base class for world objects the player can interact with. |
+| `loot_machine.gd` | `LootMachine` | 31 | Left-wall hopper. |
+| `request_board.gd` | — | 9 | Interactable request board in the van; E opens the van schematic (skill tree HUD). |
 
 ### `scripts/items/`
 
@@ -387,15 +400,15 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `boon_trait_keys.gd` | `BoonTraitKeys` | 62 | StringName keys for passive boon traits stored on BoonTraits. |
 | `item_definition.gd` | `ItemDefinition` | 98 | Data-only description of a single item. |
-| `item_describer.gd` | `ItemDescriber` | 183 | Turns item resources into readable lines for UI. Effects only carry raw |
+| `item_describer.gd` | `ItemDescriber` | 183 | Turns item resources into readable lines for UI. |
 | `item_effect.gd` | `ItemEffect` | 20 | Base class for anything an item/boon does when it is collected. |
-| `item_pool_registry.gd` | `ItemPoolRegistry` | 101 | Loads loot pools by name. Pools are plain LootPool .tres files. |
+| `item_pool_registry.gd` | `ItemPoolRegistry` | 101 | Loads loot pools by name. |
 | `item_registry.gd` | `ItemRegistry` | 63 | Resolves item definitions by id from the standard item directories. |
 | `item_usable_config.gd` | `ItemUsableConfig` | 24 | Runtime rules for tools and abilities held in the player's hotbar. |
 | `loot_catch.gd` | `LootCatch` | 33 | One hopper / popup entry wrapping a dropped ItemDefinition. |
 | `loot_pool.gd` | `LootPool` | 62 | A weighted collection of items to roll drops from. |
 | `loot_pool_entry.gd` | `LootPoolEntry` | 8 | A single weighted slot inside a LootPool. |
-| `pickup.gd` | `Pickup` | 285 | Walk into a floor pickup to use it. Idle pickups bob, spin, and gently |
+| `pickup.gd` | `Pickup` | 285 | Walk into a floor pickup to use it. |
 
 ### `scripts/items/effects/`
 
@@ -416,15 +429,15 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `skill_node_definition.gd` | `SkillNodeDefinition` | 47 | One cell on the van schematic. Gameplay lives in `effects`; layout is grid |
-| `skill_node_effect.gd` | `SkillNodeEffect` | 21 | One gameplay hook on a meta skill-tree node. Nodes hold an Array of these — |
+| `skill_node_definition.gd` | `SkillNodeDefinition` | 47 | One cell on the van schematic. |
+| `skill_node_effect.gd` | `SkillNodeEffect` | 21 | One gameplay hook on a meta skill-tree node. |
 
 ### `scripts/meta/effects/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `van_speed_level_effect.gd` | `VanSpeedLevelEffect` | 19 | Feeds the existing MetaProgression.van_speed_level curve. Do not invent a |
-| `vital_max_health_effect.gd` | `VitalMaxHealthEffect` | 40 | Raises interior-machine max HP. Empty vital_id applies `amount` to each of |
+| `van_speed_level_effect.gd` | `VanSpeedLevelEffect` | 19 | Feeds the existing MetaProgression.van_speed_level curve. |
+| `vital_max_health_effect.gd` | `VitalMaxHealthEffect` | 40 | Raises interior-machine max HP. |
 
 ### `scripts/player/`
 
@@ -432,103 +445,125 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `boon_behavior.gd` | `BoonBehavior` | 66 | Base class for boon combat behaviors. |
 | `boon_behavior_context.gd` | `BoonBehaviorContext` | 25 | Shared payload passed to boon behavior handlers during combat events. |
-| `boon_behavior_handlers.gd` | — | 79 | Concrete boon behavior handlers. Each inner class maps one trait to combat logic. |
+| `boon_behavior_handlers.gd` | — | 79 | Concrete boon behavior handlers. |
 | `boon_behavior_registry.gd` | `BoonBehaviorRegistry` | 142 | Dispatches combat events to registered boon behavior handlers. |
-| `boon_combat.gd` | `BoonCombat` | 216 | Thin dispatcher for boon combat logic. All behavior lives in BoonBehaviorRegistry handlers. |
+| `boon_combat.gd` | `BoonCombat` | 216 | Thin dispatcher for boon combat logic. |
 | `boon_traits.gd` | `BoonTraits` | 75 | Stores passive boon modifiers that combat systems query at runtime. |
-| `fps_player.gd` | `FpsPlayer` | 272 | The equipped class; applied on ready and again whenever GameSession changes it. |
-| `usable_state.gd` | `UsableState` | 26 |  |
-| `usables_controller.gd` | `UsablesController` | 165 | Ids of the player's boons that cannot be taken again. Every offer (rest |
+| `fps_player.gd` | `FpsPlayer` | 273 | The first-person player controller: movement, interaction and shooting input. |
+| `usable_state.gd` | `UsableState` | 27 | Runtime state for one equipped usable item: charges and cooldown remaining. |
+| `usables_controller.gd` | `UsablesController` | 166 | Owns the player's usable item slots and boon inventory for the run. |
 
 ### `scripts/stops/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `garage_lounge.gd` | — | 185 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
-| `mechanic_talk.gd` | `MechanicTalk` | 133 | Mechanic bay keeper. Three buys: full van patch, a van-pool boon, a weld kit. |
-| `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. No shop counter. |
-| `shop_counter_booth.gd` | — | 1013 | Fortified metal shop counter — armored face, cash slot, eye-level grilled window. |
+| `mechanic_talk.gd` | `MechanicTalk` | 133 | Mechanic bay keeper. |
+| `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. |
+| `shop_booth_flyers.gd` | — | 369 | Randomly placed sticker/flyer stickers on the shop booth face, plus their pixel-art textures. |
+| `shop_booth_frame.gd` | — | 219 | Counter deck, pillars, wall panels and window/transaction openings for the shop booth. |
+| `shop_booth_materials.gd` | — | 77 | Material factories for the shop counter booth — each call returns a fresh instance. |
+| `shop_booth_trim.gd` | — | 231 | Armor plating, viewing grill, window brow, lamp visuals and shop sign for the shop booth. |
+| `shop_counter_booth.gd` | — | 164 | Fortified metal shop counter — armored face, cash slot, eye-level grilled window. |
 | `shop_hatch_net.gd` | — | 125 | Cargo-net screen on the shop hatch — thin diamond mesh, not solid bars. |
-| `shop_offer.gd` | `ShopOffer` | 108 | A single priced item sitting on the shop counter. Look + E to buy with gold. |
+| `shop_offer.gd` | `ShopOffer` | 108 | A single priced item sitting on the shop counter. |
 | `shop_stock.gd` | — | 30 | Rolls 3 unique items from the shop pool and places them on the counter. |
-| `side_stop_definition.gd` | `SideStopDefinition` | 67 | A roadside stop on a fork road. Every offered street gets one, regardless |
+| `side_stop_definition.gd` | `SideStopDefinition` | 67 | A roadside stop on a fork road. |
 | `side_stop_registry.gd` | `SideStopRegistry` | 113 | Resolves side-stop definitions by id from resources/side_stops/. |
-| `stop_elevator.gd` | `StopElevator` | 355 | On-road lift that drops the van to the shared stop vestibule. Content |
-| `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. Content (shop, garage, mechanic, |
-| `warehouse_chest.gd` | `WarehouseChest` | 60 | Table-top crate. E opens a bonus 3-choice boon, then springs leftover hides. |
-| `warehouse_director.gd` | `WarehouseDirector` | 176 | Picks one hide layout per visit. Early triggers (shoot / walk / laser) or |
-| `warehouse_dummy.gd` | `WarehouseDummy` | 114 | Standing shootable raider for warehouse hides. Not in `&"enemy"` — street |
-| `warehouse_hide.gd` | `WarehouseHide` | 149 | One ambush pocket. `trigger()` is idempotent — shooting, walking a volume, |
+| `stop_elevator.gd` | `StopElevator` | 355 | On-road lift that drops the van to the shared stop vestibule. |
+| `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. |
+| `warehouse_chest.gd` | `WarehouseChest` | 60 | Table-top crate. |
+| `warehouse_director.gd` | `WarehouseDirector` | 176 | Picks one hide layout per visit. |
+| `warehouse_dummy.gd` | `WarehouseDummy` | 114 | Standing shootable raider for warehouse hides. |
+| `warehouse_hide.gd` | `WarehouseHide` | 149 | One ambush pocket. |
 | `warehouse_interior.gd` | — | 243 | Flared warehouse bay: shell, wrapped dressing, table + chest, one hide layout. |
-| `warehouse_laser.gd` | `WarehouseLaser` | 72 | Waist-high trip across the aisle. Jump over to stay quiet; walking through |
+| `warehouse_laser.gd` | `WarehouseLaser` | 72 | Waist-high trip across the aisle. |
 | `warehouse_look.gd` | `WarehouseLook` | 143 | Shared palette / mesh helpers for the warehouse bay and its hide layouts. |
 
 ### `scripts/travel/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `road_floor.gd` | `RoadFloor` | 609 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter |
-| `travel_controller.gd` | `TravelController` | 1283 | Empty corridor tiles required between side-street openings (avoids a thin |
+| `road_floor.gd` | `RoadFloor` | 365 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
+| `road_floor_details.gd` | — | 232 | Street furniture/detail builders for RoadFloor: expansion joints, drains, manholes and sidewalk dressing. |
+| `road_floor_materials.gd` | — | 35 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
+| `travel_controller.gd` | `TravelController` | 604 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
+| `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
+| `travel_stops.gd` | — | 214 | Owns the stop fork, side-stop placement, elevator pad ride and stop-state cleanup. |
+| `travel_world.gd` | — | 247 | Owns corridor tile spawning/pruning, side streets, neighborhood variants and act statues. |
 
 ### `scripts/ui/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `act_reveal_panel.gd` | `ActRevealPanel` | 580 | Act-start overlay: flips street cards (name + modifiers) and waits. |
-| `bench_screen.gd` | `BenchScreen` | 434 | Bench overlay: stats + gold spending on the left, boons and tools on the right. |
+| `act_reveal_cards.gd` | — | 303 | Builds the reveal chrome (backdrop, title, card row) and the per-card visuals for ActRevealPanel: card backs, flipped faces and the continue button's stylebox. |
+| `act_reveal_panel.gd` | `ActRevealPanel` | 306 | Act-start overlay: flips street cards (name + modifiers) and waits. |
+| `bench_items_grid.gd` | — | 204 | Builds the boons/tools item grid cells and their hover tooltips for BenchScreen. |
+| `bench_screen.gd` | `BenchScreen` | 247 | Bench overlay: stats + gold spending on the left, boons and tools on the right. |
 | `boon_choice_panel.gd` | `BoonChoicePanel` | 160 | REST-break overlay: pick one of several offered boons. |
-| `boot.gd` | — | 17 | Defer van preload one frame so global class registration finishes. |
-| `class_panel.gd` | — | 193 | Class picker overlay: one card per class, click to equip. The class board |
-| `combat_feedback.gd` | — | 35 |  |
-| `damage_number.gd` | `DamageNumber` | 37 |  |
-| `debug_console.gd` | `DebugConsole` | 259 | In-game debug terminal. H to open, Esc to close. |
-| `dialogue_hud.gd` | `DialogueHud` | 270 | Hover-to-highlight NPC talk, Slay-the-Spire style. Click picks; E walks away. |
-| `driver_shout_hud.gd` | `DriverShoutHud` | 109 | Always-on GO / EASY shouts. van.gd plays shout_start / shout_turbo / shout_slow / shout_resume. |
-| `enemy_health_bar.gd` | `EnemyHealthBar` | 59 |  |
+| `boot.gd` | — | 18 | Boot splash screen; preloads the van scene before handing off to the main menu. |
+| `class_panel.gd` | — | 193 | Class picker overlay: one card per class, click to equip. |
+| `combat_feedback.gd` | — | 36 | Spawns floating damage numbers over hit targets in a dedicated canvas layer. |
+| `damage_number.gd` | `DamageNumber` | 38 | A floating label showing one damage hit, styled differently for headshots. |
+| `debug_console.gd` | `DebugConsole` | 259 | In-game debug terminal. |
+| `dialogue_hud.gd` | `DialogueHud` | 270 | Hover-to-highlight NPC talk, Slay-the-Spire style. |
+| `driver_shout_hud.gd` | `DriverShoutHud` | 109 | Always-on GO / EASY shouts. |
+| `enemy_health_bar.gd` | `EnemyHealthBar` | 60 | A billboard health bar shown above an enemy while it is damaged. |
 | `item_hud.gd` | — | 88 | Hotbar for tools and a row of collected boon icons. |
-| `main_menu.gd` | — | 127 | Rejected files (old version, corrupt JSON) used to look like NEW RUN |
-| `pause_menu.gd` | `PauseMenu` | 93 | Esc overlay. PROCESS_MODE_ALWAYS so Resume/Esc still work while the tree is paused. |
-| `skill_tree_hud.gd` | — | 487 | Van schematic overlay. Hover/click nodes; pending requests ghost until the |
-| `usable_slot.gd` | — | 42 |  |
+| `main_menu.gd` | — | 128 | The main menu screen: save slot selection, settings panel and starting a run. |
+| `pause_menu.gd` | `PauseMenu` | 93 | Esc overlay. |
+| `skill_tree_hud.gd` | — | 338 | Van schematic overlay. |
+| `skill_tree_nodes.gd` | — | 167 | Builds skill tree node buttons and branch labels, tracks each node's unlock/allocation state and fills the hover tooltip's text. |
+| `usable_slot.gd` | — | 43 | One usable-item slot in the HUD: icon, charge count and cooldown bar. |
 | `van_health_bar.gd` | `VanHealthBar` | 77 | Single hull line: left half = interior vitals (death HP), right half = doors. |
 
 ### `scripts/van/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). Surrounding metal stays. |
-| `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. Same local frame as IronCross: |
+| `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). |
+| `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. |
 | `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
-| `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. Local XY is the glass face; +Z is outward. |
-| `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. Toggles that leaf only. |
+| `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. |
+| `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
 | `rear_doors.gd` | — | 400 | Truck-style rear double doors. |
-| `room_zone.gd` | `RoomZone` | 14 |  |
-| `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. Toggles that leaf only. |
-| `side_doors.gd` | — | 558 | Sliding cargo-style side doors. |
-| `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. Toggles that sash only. |
+| `room_zone.gd` | `RoomZone` | 15 | Marks a van interior zone; tells GameSession which room the player is in. |
+| `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. |
+| `side_door_leaf.gd` | — | 285 | Builds the side door leaf meshes (body, trim, frames, latch) onto SideDoors nodes. |
+| `side_doors.gd` | — | 292 | Sliding cargo-style side doors. |
+| `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
-| `van.gd` | — | 1163 | Preload so van.tscn can type the bar without a class_name parse cycle. |
-| `van_bulkhead.gd` | `VanBulkhead` | 410 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
+| `van.gd` | — | 391 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
+| `van_bulkhead.gd` | `VanBulkhead` | 202 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
+| `van_bulkhead_mesh.gd` | — | 225 | Builds the bulkhead's frame posts, headers, panels and diagonal mesh netting. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
+| `van_driver_talk.gd` | — | 158 | The driver-talk panel: open/close, option refresh, and boost/slow shout handling. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
+| `van_hud.gd` | — | 183 | Combat HUD readouts: ammo, health, waves, prompts, item toasts, stop toasts. |
 | `van_hull_mesh.gd` | `VanHullMesh` | 400 | XY end-cap slabs that follow VanSideWall's bow and VanCeiling's barrel vault. |
-| `van_lighting.gd` | `VanLighting` | 49 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) |
-| `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. Uses a dedicated physics |
-| `van_side_wall.gd` | `VanSideWall` | 1058 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, |
+| `van_lighting.gd` | `VanLighting` | 49 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) lights the corridor through openings without washing the cabin. |
+| `van_overlays.gd` | — | 238 | Modal overlays: bench, skill tree, class panel, debug console, pause menu, mouse passthrough. |
+| `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. |
+| `van_route_choice.gd` | — | 287 | Builds and refreshes the ROUTE_CHOICE panel: card art, stop labels, highlight state. |
+| `van_side_wall.gd` | `VanSideWall` | 378 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
+| `van_side_wall_panel.gd` | — | 389 | This wall's own side panel mesh: openings, reveals, returns, and the cut queries that decide which cells are punched for the side doors and windows. |
+| `van_side_wall_shell.gd` | — | 401 | Generic curved-shell / pane / frame-ring mesh builders for VanSideWall: the low-level lofting onto the cargo profile, shared by side walls, doors and windows. |
 | `van_vital.gd` | `VanVital` | 91 | One interior machine whose HP is a slice of van death hull. |
 
 ### `tools/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `check_scripts.gd` | — | 45 | Headless load check. Loads every script, scene, resource and shader under res:// |
+| `check_scripts.gd` | — | 45 | Headless load check. |
 
 ### `tools/smoke/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `smoke_driver.gd` | — | 354 | Drives a full headless playthrough of one van run to prove the game boots, |
-| `smoke_test.gd` | — | 13 | Headless smoke test entry scene. Spawns the driver under the root because |
+| `smoke_driver.gd` | — | 339 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
+| `smoke_fingerprint.gd` | — | 92 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
+| `smoke_route.gd` | — | 122 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
+| `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 
 ## Scenes
 

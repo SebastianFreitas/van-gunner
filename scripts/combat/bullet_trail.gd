@@ -1,5 +1,6 @@
 class_name BulletTrail
 extends MeshInstance3D
+## Draws and fades the trail mesh a bullet leaves behind as it travels.
 
 const MAX_POINTS := 28
 const FADE_SECONDS := 0.45

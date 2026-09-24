@@ -1,5 +1,6 @@
 class_name DamageNumber
 extends Label
+## A floating label showing one damage hit, styled differently for headshots.
 
 const HEADSHOT_COLOR := Color(1.0, 0.86, 0.28, 1.0)
 const NORMAL_COLOR := Color(0.95, 0.92, 0.82, 1.0)

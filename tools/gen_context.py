@@ -7,7 +7,9 @@ Run from the project root:
 
 Everything in PROJECT_MAP.md is derived from files on disk, so re-running this
 after a refactor is the whole maintenance story. Hand-written context that the
-generator cannot infer (design intent, invariants, gotchas) lives in AGENTS.md.
+generator cannot infer lives in CLAUDE.md (workflow, summary, always-on
+invariants) and `.claude/rules/` (per-area design notes and pitfalls, loaded
+by path).
 """
 
 from __future__ import annotations
@@ -67,14 +69,30 @@ def script_index():
         txt = read(rel)
         lines = txt.count("\n") + 1
         cls = re.search(r"^class_name\s+(\w+)", txt, re.M)
-        # First `##` block after the class/extends header is the summary.
+        # The class doc comment is the first `##` block that follows `extends`
+        # (and `class_name`, if that comes after `extends`). No fallback to
+        # other `##` lines further down the file.
         doc = ""
-        for line in txt.splitlines():
-            s = line.strip()
-            if s.startswith("##"):
-                doc = s.lstrip("#").strip()
-                if doc:
-                    break
+        lines_iter = txt.splitlines()
+        i = 0
+        while i < len(lines_iter) and not lines_iter[i].strip().startswith("extends "):
+            i += 1
+        if i < len(lines_iter):
+            i += 1
+            if i < len(lines_iter) and lines_iter[i].strip().startswith("class_name "):
+                i += 1
+            while i < len(lines_iter) and lines_iter[i].strip() == "":
+                i += 1
+            doc_lines = []
+            while i < len(lines_iter) and lines_iter[i].strip().startswith("##"):
+                doc_lines.append(lines_iter[i].strip().lstrip("#").strip())
+                i += 1
+            if doc_lines:
+                doc = " ".join(doc_lines)
+                m = re.search(r"^(.*?\. )", doc)
+                doc = m.group(1).strip() if m else doc
+                if len(doc) > 160:
+                    doc = doc[:159].rstrip() + "…"
         folder = os.path.dirname(rel) or "."
         rows[folder].append((rel, cls.group(1) if cls else "", lines, doc))
     return rows
@@ -211,9 +229,10 @@ def build():
     doc.append("# PROJECT_MAP — van-gunner\n")
     doc.append(
         "> **Generated file. Do not hand-edit.** Regenerate with "
-        "`python3 tools/gen_context.py`.\n"
-        "> Design intent, invariants and gotchas live in `AGENTS.md`, which *is* "
-        "hand-written.\n"
+        "`py -3 tools/gen_context.py`.\n"
+        "> Design intent, invariants and gotchas live in `CLAUDE.md` (workflow, "
+        "summary, always-on invariants) and `.claude/rules/` (per-area design "
+        "notes and pitfalls, loaded by path).\n"
     )
 
     doc.append(section("Project settings"))

@@ -1,5 +1,6 @@
 class_name GunStatsController
 extends Node
+## Rebuilds a gun's effective stats from its base stats, class and modifiers.
 
 signal stats_changed
 

@@ -1,5 +1,6 @@
 class_name Projectile
 extends Area3D
+## A bullet: flies, ricochets off scenery and resolves damage on hit.
 
 signal hit_target(target: Node)
 signal ricocheted(position: Vector3, normal: Vector3)

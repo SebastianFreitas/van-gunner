@@ -1,4 +1,5 @@
 extends Node3D
+## Van root script: wires up the van's HUD, overlays, act deck and route choices.
 
 const _ActRevealPanel := preload("res://scripts/ui/act_reveal_panel.gd")
 const _ActDeckController := preload("res://scripts/acts/act_deck_controller.gd")

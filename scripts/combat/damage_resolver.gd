@@ -1,5 +1,6 @@
 class_name DamageResolver
 extends RefCounted
+## Static helpers that apply bullet hits and explosions to damageable nodes, with headshot checks.
 
 const ENEMY_MASK := 4
 const WORLD_MASK := 1

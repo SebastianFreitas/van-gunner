@@ -1,4 +1,5 @@
 extends Control
+## Boot splash screen; preloads the van scene before handing off to the main menu.
 
 @export var minimum_display_time := 0.75
 

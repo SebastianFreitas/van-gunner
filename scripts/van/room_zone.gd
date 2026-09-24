@@ -1,5 +1,6 @@
 class_name RoomZone
 extends Area3D
+## Marks a van interior zone; tells GameSession which room the player is in.
 
 @export var room_id: StringName = &"center"
 

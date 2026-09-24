@@ -1,5 +1,6 @@
 class_name StatModifier
 extends Resource
+## A single additive or multiplicative modifier applied to a named gun stat.
 
 enum Mode {
 	ADD,

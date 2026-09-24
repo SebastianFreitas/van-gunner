@@ -1,5 +1,6 @@
 class_name Interactable
 extends StaticBody3D
+## Base class for world objects the player can interact with.
 
 @export var prompt := "Interact"
 

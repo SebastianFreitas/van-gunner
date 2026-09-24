@@ -1,4 +1,5 @@
 extends Node
+## Autoload: tracks run phase, van/player health, route and wave state for the current run.
 
 signal phase_changed(phase: RunPhase)
 signal van_health_changed(current: float, maximum: float)

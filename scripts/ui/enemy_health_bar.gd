@@ -1,5 +1,6 @@
 class_name EnemyHealthBar
 extends Node3D
+## A billboard health bar shown above an enemy while it is damaged.
 
 const BAR_WIDTH := 120
 const BAR_HEIGHT := 14
