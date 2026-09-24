@@ -2,11 +2,21 @@ extends Node
 
 ## Parses and runs debug console commands. Add new commands in _register_commands().
 
-const _PICKUP_SCENE := preload("res://scenes/items/pickup.tscn")
-const _SoundCue := preload("res://scripts/audio/sound_cue.gd")
-const _SkillTreeRegistry := preload("res://scripts/core/skill_tree_registry.gd")
+const _DebugCatalog := preload("res://scripts/debug/debug_catalog.gd")
+const _RunFlowCommands := preload("res://scripts/debug/debug_run_flow_commands.gd")
+const _ItemCommands := preload("res://scripts/debug/debug_item_commands.gd")
+const _ActCommands := preload("res://scripts/debug/debug_act_commands.gd")
+const _VanCommands := preload("res://scripts/debug/debug_van_commands.gd")
+const _MetaCommands := preload("res://scripts/debug/debug_meta_commands.gd")
 
 var _commands: Dictionary = {}
+
+var _run_flow: RefCounted
+var _items: RefCounted
+var _acts: RefCounted
+var _van: RefCounted
+var _meta: RefCounted
+var _catalog: RefCounted
 
 
 func _ready() -> void:
@@ -42,26 +52,26 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 					["boons", "items", "commands", "classes", "cards", "stops", "sounds", "tree"], ""
 				)
 			"sound":
-				matches = _filter_prefix(_sound_id_strings(), "")
+				matches = _filter_prefix(_DebugCatalog.sound_id_strings(), "")
 			"card":
-				matches = _filter_prefix(_card_id_strings(), "")
+				matches = _filter_prefix(_DebugCatalog.card_id_strings(), "")
 			"stop":
-				matches = _filter_prefix(_stop_force_tokens(), "")
+				matches = _filter_prefix(_DebugCatalog.stop_force_tokens(), "")
 			"class":
-				matches = _filter_prefix(_class_id_strings(), "")
+				matches = _filter_prefix(_DebugCatalog.class_id_strings(), "")
 			_:
 				matches = []
 	elif parts[0] == "give" or parts[0] == "spawn":
 		matches = _filter_prefix(ItemRegistry.list_ids(), partial)
 	elif parts[0] == "class":
-		matches = _filter_prefix(_class_id_strings(), partial)
+		matches = _filter_prefix(_DebugCatalog.class_id_strings(), partial)
 	elif parts[0] == "card":
-		matches = _filter_prefix(_card_id_strings(), partial)
+		matches = _filter_prefix(_DebugCatalog.card_id_strings(), partial)
 	elif parts[0] == "stop":
 		if parts.size() >= 2 and SideStopRegistry.arrival_from_label(str(parts[1])) >= 0:
-			matches = _filter_prefix(_stop_id_strings(), partial)
+			matches = _filter_prefix(_DebugCatalog.stop_id_strings(), partial)
 		else:
-			matches = _filter_prefix(_stop_force_tokens(), partial)
+			matches = _filter_prefix(_DebugCatalog.stop_force_tokens(), partial)
 	elif parts[0] == "summon":
 		matches = _filter_prefix(["enemy"], partial)
 	elif parts[0] == "reardoor":
@@ -73,7 +83,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 			["boons", "items", "commands", "weapons", "cards", "stops", "sounds", "tree"], partial
 		)
 	elif parts[0] == "sound":
-		matches = _filter_prefix(_sound_id_strings(), partial)
+		matches = _filter_prefix(_DebugCatalog.sound_id_strings(), partial)
 	else:
 		matches = []
 
@@ -100,28 +110,34 @@ func run(line: String) -> String:
 
 
 func _register_commands() -> void:
+	_run_flow = _RunFlowCommands.new(self)
+	_items = _ItemCommands.new(self)
+	_acts = _ActCommands.new(self)
+	_van = _VanCommands.new(self)
+	_meta = _MetaCommands.new(self)
+	_catalog = _DebugCatalog.new(self)
 	_commands = {
 		"help": _cmd_help,
-		"chill": _cmd_chill,
-		"unchill": _cmd_unchill,
-		"speed": _cmd_speed,
-		"unspeed": _cmd_unspeed,
-		"summon": _cmd_summon,
-		"give": _cmd_give,
-		"spawn": _cmd_spawn,
-		"coins": _cmd_coins,
-		"heal": _cmd_heal,
-		"phase": _cmd_phase,
-		"list": _cmd_list,
-		"card": _cmd_card,
-		"stop": _cmd_stop,
-		"boss": _cmd_boss,
-		"reardoor": _cmd_reardoor,
-		"sidedoor": _cmd_sidedoor,
-		"class": _cmd_class,
-		"sound": _cmd_sound,
-		"parts": _cmd_parts,
-		"tree_reset": _cmd_tree_reset,
+		"chill": _run_flow.cmd_chill,
+		"unchill": _run_flow.cmd_unchill,
+		"speed": _run_flow.cmd_speed,
+		"unspeed": _run_flow.cmd_unspeed,
+		"summon": _items.cmd_summon,
+		"give": _items.cmd_give,
+		"spawn": _items.cmd_spawn,
+		"coins": _items.cmd_coins,
+		"heal": _items.cmd_heal,
+		"phase": _run_flow.cmd_phase,
+		"list": _catalog.cmd_list,
+		"card": _acts.cmd_card,
+		"stop": _acts.cmd_stop,
+		"boss": _acts.cmd_boss,
+		"reardoor": _van.cmd_reardoor,
+		"sidedoor": _van.cmd_sidedoor,
+		"class": _meta.cmd_class,
+		"sound": _meta.cmd_sound,
+		"parts": _meta.cmd_parts,
+		"tree_reset": _meta.cmd_tree_reset,
 	}
 
 
@@ -163,460 +179,6 @@ func _cmd_help(_args: Array) -> String:
 	) % ", ".join(names)
 
 
-func _cmd_chill(_args: Array) -> String:
-	GameSession.set_chill_mode(true)
-	return "Chill mode ON — encounters paused, van keeps moving."
-
-
-func _cmd_unchill(_args: Array) -> String:
-	GameSession.set_chill_mode(false)
-	return "Chill mode OFF — run resumes."
-
-
-func _cmd_speed(_args: Array) -> String:
-	var travel := _find_travel_controller()
-	if not travel:
-		return "TravelController not found — are you in the van scene?"
-	travel.set_debug_speed_mode(true)
-	var started := false
-	if GameSession.phase == GameSession.RunPhase.IDLE:
-		GameSession.begin_run()
-		started = true
-	var msg := (
-		"Speed mode ON — %.1fx travel, timers compressed, intro skipped."
-		% travel.debug_speed_multiplier
-	)
-	if started:
-		msg += " Run auto-started."
-	return msg
-
-
-func _cmd_unspeed(_args: Array) -> String:
-	var travel := _find_travel_controller()
-	if not travel:
-		return "TravelController not found — are you in the van scene?"
-	travel.set_debug_speed_mode(false)
-	return "Speed mode OFF — back to normal travel speed (%.1f u/s)." % travel.travel_speed
-
-
-func _cmd_summon(args: Array) -> String:
-	var kind: String = str(args[0]).to_lower() if not args.is_empty() else "enemy"
-	if kind != "enemy":
-		return "Usage: summon enemy"
-	var director := _find_encounter_director()
-	if not director:
-		return "EncounterDirector not found — are you in the van scene?"
-	return director.spawn_debug_raider()
-
-
-func _cmd_give(args: Array) -> String:
-	if args.is_empty():
-		return "Usage: give <item_id>  (e.g. give chew_tobacco)"
-	var item_id: String = str(args[0])
-	var item := _load_item(item_id)
-	if not item:
-		return "Unknown item: %s" % item_id
-	var player := _find_player()
-	if not player:
-		return "Player not found."
-	item.collect(player)
-	return "Gave %s." % item.display_name
-
-
-func _cmd_spawn(args: Array) -> String:
-	if args.is_empty():
-		return "Usage: spawn <item_id>"
-	var item_id: String = str(args[0])
-	var item := _load_item(item_id)
-	if not item:
-		return "Unknown item: %s" % item_id
-	var player := _find_player()
-	if not player:
-		return "Player not found."
-	var pickup := _PICKUP_SCENE.instantiate() as Pickup
-	pickup.item = item
-	player.get_parent().add_child(pickup)
-	var forward := -player.global_transform.basis.z
-	pickup.global_position = player.global_position + forward * 1.2 + Vector3(0.0, 0.5, 0.0)
-	return "Spawned %s pickup." % item.display_name
-
-
-func _cmd_coins(args: Array) -> String:
-	var amount: int = int(args[0]) if not args.is_empty() else 10
-	GameSession.add_coins(amount)
-	return "Added %d coins (total %d)." % [amount, GameSession.coins]
-
-
-func _cmd_parts(args: Array) -> String:
-	var amount: int = int(args[0]) if not args.is_empty() else 1
-	if amount <= 0:
-		return "Usage: parts [n]  (n > 0)"
-	MetaProgression.add_rare_parts(amount)
-	return "Added %d Rare Parts (total %d)." % [amount, MetaProgression.rare_parts]
-
-
-func _cmd_tree_reset(_args: Array) -> String:
-	MetaProgression.debug_reset_tree()
-	return "Schematic reset to origin. Speed level %d. Rare Parts %d." % [
-		MetaProgression.van_speed_level,
-		MetaProgression.rare_parts,
-	]
-
-
-func _cmd_heal(args: Array) -> String:
-	var amount: float = float(args[0]) if not args.is_empty() else GameSession.get_max_player_health()
-	GameSession.heal_player(amount)
-	return "Player healed by %.0f." % amount
-
-
-func _cmd_class(args: Array) -> String:
-	var current := ClassCatalog.load_or_basic(GameSession.class_id)
-	var current_name := current.display_name if current else String(GameSession.class_id)
-	if args.is_empty():
-		return "Class: %s  (usage: class <id>, try list classes)" % current_name
-	var class_id := StringName(str(args[0]).to_lower())
-	var def := ClassCatalog.load_by_id(class_id)
-	if def == null:
-		return "Unknown class: %s  (try list classes)" % class_id
-	GameSession.equip_class(class_id)
-	return "Equipped %s." % def.display_name
-
-
-func _cmd_list(args: Array) -> String:
-	if args.is_empty():
-		return "Usage: list boons|items|commands|classes|cards|stops|sounds|tree [filter]"
-	var kind: String = str(args[0]).to_lower()
-	var filter_text := " ".join(args.slice(1))
-	match kind:
-		"commands":
-			var lines: PackedStringArray = PackedStringArray()
-			lines.append(_cmd_help([]))
-			return "\n".join(lines)
-		"boons":
-			return _format_item_list(
-				ItemRegistry.list_entries(ItemDefinition.ItemKind.BOON, filter_text),
-				"boons",
-				filter_text
-			)
-		"items":
-			return _format_item_list(ItemRegistry.list_entries(-1, filter_text), "items", filter_text)
-		"classes":
-			return _format_class_list(filter_text)
-		"cards":
-			return _format_card_list(filter_text)
-		"stops":
-			return _format_stop_list(filter_text)
-		"sounds":
-			return _format_sound_list(filter_text)
-		"tree":
-			return _format_tree_list(filter_text)
-		_:
-			return (
-				"Unknown list target: %s  (try boons, items, commands, classes, cards, stops, sounds, tree)"
-				% kind
-			)
-
-
-func _cmd_card(args: Array) -> String:
-	if args.is_empty():
-		var cards := GameSession.get_active_modifier_cards()
-		if cards.is_empty():
-			return "No active street cards."
-		var lines: PackedStringArray = PackedStringArray()
-		for card in cards:
-			lines.append("%s (%s) — %s" % [
-				card.id,
-				card.polarity_label(),
-				card.description.strip_edges(),
-			])
-		return "active (%d):\n%s" % [cards.size(), "\n".join(lines)]
-	var card_id := StringName(str(args[0]))
-	var card := ActCardRegistry.load_by_id(card_id)
-	if card == null:
-		return "Unknown card: %s" % card_id
-	ActCardCombat.clear()
-	GameSession.boss_modifier_card_ids.clear()
-	GameSession.active_street_card_id = card_id
-	GameSession.pending_danger = card.is_danger()
-	ActCardCombat.activate(card)
-	return "Forced street card: %s (%s)" % [card.display_name, card.polarity_label()]
-
-
-func _cmd_stop(args: Array) -> String:
-	if args.is_empty():
-		return "Usage: stop <id> | stop <arrival> <content>  (see list stops)"
-	var stop: SideStopDefinition
-	if args.size() >= 2:
-		var arrival := SideStopRegistry.arrival_from_label(str(args[0]))
-		if arrival < 0:
-			return "Unknown arrival '%s' — use rear_park or elevator." % str(args[0])
-		var content_id := StringName(str(args[1]))
-		stop = SideStopRegistry.compose(content_id, arrival as SideStopDefinition.Arrival)
-		if stop == null:
-			return "Unknown content stop: %s" % content_id
-	else:
-		var stop_id := StringName(str(args[0]))
-		stop = SideStopRegistry.load_by_id(stop_id)
-		if stop == null or stop.scene == null:
-			return "Unknown stop: %s" % stop_id
-	var travel := _find_travel_controller()
-	if travel == null:
-		return "TravelController not found — are you in the van scene?"
-	if travel.has_method(&"force_stop_def"):
-		if not travel.force_stop_def(stop):
-			return "Could not queue stop: %s" % String(stop.id)
-	elif travel.has_method(&"force_next_stop"):
-		if not travel.force_next_stop(stop.id):
-			return "Could not queue stop: %s" % String(stop.id)
-	else:
-		return "TravelController not found — are you in the van scene?"
-	return "Next fork: %s [%s] on every road." % [stop.fork_label(), stop.arrival_label()]
-
-
-func _cmd_boss(_args: Array) -> String:
-	var deck := get_tree().get_first_node_in_group(&"act_deck_controller")
-	GameSession.debug_prepare_boss_pick()
-	if deck and deck.has_method(&"begin_boss_pick_if_needed"):
-		deck.begin_boss_pick_if_needed()
-		return "Boss pick started — six streets, pick two."
-	GameSession.commit_boss_picks([])
-	GameSession.set_phase(GameSession.RunPhase.TRAVELLING)
-	return "Boss pick skipped UI; stacked fallback cards and queued the fight."
-
-
-func _format_card_list(filter_text: String) -> String:
-	var needle := filter_text.strip_edges().to_lower()
-	var lines: PackedStringArray = PackedStringArray()
-	var count := 0
-	for card_id in ActCardRegistry.list_ids():
-		var card := ActCardRegistry.load_by_id(card_id)
-		if card == null:
-			continue
-		var hay := ("%s %s %s" % [card.id, card.display_name, card.description]).to_lower()
-		if not needle.is_empty() and not hay.contains(needle):
-			continue
-		lines.append(
-			"  %s  —  [%s] %s — %s"
-			% [card.id, card.polarity_label(), card.display_name, card.description.strip_edges()]
-		)
-		count += 1
-	if count == 0:
-		if filter_text.is_empty():
-			return "No street cards found."
-		return "No street cards match '%s'." % filter_text
-	var header := "%d street cards" % count
-	if not filter_text.is_empty():
-		header += " matching '%s'" % filter_text
-	return header + ":\n" + "\n".join(lines)
-
-
-func _format_stop_list(filter_text: String) -> String:
-	var needle := filter_text.strip_edges().to_lower()
-	var lines: PackedStringArray = PackedStringArray()
-	var count := 0
-	for stop_id in SideStopRegistry.list_ids():
-		var stop := SideStopRegistry.load_by_id(stop_id)
-		if stop == null:
-			continue
-		var hay := ("%s %s %s" % [stop.id, stop.display_name, stop.short_label]).to_lower()
-		if not needle.is_empty() and not hay.contains(needle):
-			continue
-		lines.append(
-			"  %s  —  %s [%s, w=%.2f]"
-			% [stop.id, stop.fork_label(), stop.arrival_label(), stop.spawn_weight]
-		)
-		count += 1
-	if count == 0:
-		if filter_text.is_empty():
-			return "No side stops found."
-		return "No side stops match '%s'." % filter_text
-	var header := "%d side stops" % count
-	if not filter_text.is_empty():
-		header += " matching '%s'" % filter_text
-	return header + ":\n" + "\n".join(lines)
-
-
-func _stop_id_strings() -> Array[String]:
-	var out: Array[String] = []
-	for stop_id in SideStopRegistry.list_ids():
-		out.append(String(stop_id))
-	return out
-
-
-func _stop_force_tokens() -> Array[String]:
-	var out: Array[String] = ["rear_park", "elevator"]
-	out.append_array(_stop_id_strings())
-	return out
-
-
-func _card_id_strings() -> Array[String]:
-	var out: Array[String] = []
-	for card_id in ActCardRegistry.list_ids():
-		out.append(String(card_id))
-	return out
-
-
-func _format_class_list(filter_text: String) -> String:
-	var needle := filter_text.strip_edges().to_lower()
-	var lines: PackedStringArray = PackedStringArray()
-	for def in ClassCatalog.list_all():
-		var id := String(def.id)
-		if not needle.is_empty() and not id.to_lower().contains(needle):
-			continue
-		var tag := "  (equipped)" if def.id == GameSession.class_id else ""
-		lines.append("  %s  —  %s%s" % [id, def.display_name, tag])
-	if lines.is_empty():
-		if filter_text.is_empty():
-			return "No classes found."
-		return "No classes match '%s'." % filter_text
-	var header := "%d classes" % lines.size()
-	if not filter_text.is_empty():
-		header += " matching '%s'" % filter_text
-	return header + ":\n" + "\n".join(lines)
-
-
-func _class_id_strings() -> Array[String]:
-	var out: Array[String] = []
-	for class_id in ClassCatalog.list_ids():
-		out.append(String(class_id))
-	return out
-
-
-func _cmd_sound(args: Array) -> String:
-	if args.is_empty():
-		return "Usage: sound <cue_id>  (try list sounds)"
-	var cue_id := StringName(str(args[0]))
-	if AudioDirector.bank == null or not AudioDirector.bank.has_cue(cue_id):
-		return "Unknown cue: %s  (try list sounds)" % cue_id
-	var cue := AudioDirector.bank.get_cue(cue_id) as _SoundCue
-	if cue == null or cue.stream == null:
-		return "Cue %s has no stream yet — drop a .wav / .ogg on the SoundCue." % cue_id
-	# Always the non-positional path so you can hear it from the console.
-	AudioDirector.play(cue_id)
-	return "Playing %s." % cue_id
-
-
-func _format_sound_list(filter_text: String) -> String:
-	var needle := filter_text.strip_edges().to_lower()
-	var lines: PackedStringArray = PackedStringArray()
-	var count := 0
-	for cue_id in _sound_id_strings():
-		if not needle.is_empty() and not cue_id.to_lower().contains(needle):
-			continue
-		var cue := AudioDirector.bank.get_cue(StringName(cue_id)) as _SoundCue
-		var stream_note := "ready" if cue and cue.stream else "no stream"
-		var where := "3D" if cue and cue.positional else "2D"
-		var interval: float = cue.min_interval if cue else 0.0
-		lines.append("  %s  —  %s %s  min=%.3f" % [cue_id, where, stream_note, interval])
-		count += 1
-	if count == 0:
-		if filter_text.is_empty():
-			return "No sounds found."
-		return "No sounds match '%s'." % filter_text
-	var header := "%d sounds" % count
-	if not filter_text.is_empty():
-		header += " matching '%s'" % filter_text
-	return header + ":\n" + "\n".join(lines)
-
-
-func _format_tree_list(filter_text: String) -> String:
-	var needle := filter_text.strip_edges().to_lower()
-	var lines: PackedStringArray = PackedStringArray()
-	var count := 0
-	for node in _SkillTreeRegistry.list_definitions():
-		var hay := ("%s %s %s" % [node.id, node.display_name, node.description]).to_lower()
-		if not needle.is_empty() and not hay.contains(needle):
-			continue
-		var mark := "locked"
-		if MetaProgression.is_allocated(node.id):
-			mark = "live"
-		elif MetaProgression.is_pending(node.id):
-			mark = "queued"
-		elif node.is_stub():
-			mark = "stub"
-		lines.append("  %s  —  [%s] %s — %s" % [
-			node.id,
-			mark,
-			node.display_name,
-			node.description.strip_edges(),
-		])
-		count += 1
-	if count == 0:
-		if filter_text.is_empty():
-			return "No skill-tree nodes found."
-		return "No skill-tree nodes match '%s'." % filter_text
-	var header := "%d tree nodes  ·  %d live+queued / %d cap  ·  %d parts" % [
-		count,
-		MetaProgression.allocation_count(),
-		_SkillTreeRegistry.MAX_ALLOCATED,
-		MetaProgression.rare_parts,
-	]
-	if not filter_text.is_empty():
-		header += " matching '%s'" % filter_text
-	return header + ":\n" + "\n".join(lines)
-
-
-func _sound_id_strings() -> Array[String]:
-	var out: Array[String] = []
-	if AudioDirector.bank == null:
-		return out
-	for cue_id in AudioDirector.bank.list_ids():
-		out.append(String(cue_id))
-	return out
-
-
-func _cmd_phase(_args: Array) -> String:
-	var phase_name: String = GameSession.RunPhase.keys()[GameSession.phase]
-	return (
-		"phase=%s  chill=%s  wave=%d  route_step=%d"
-		% [phase_name, GameSession.chill_mode, GameSession.wave_count, GameSession.route_step]
-	)
-
-
-func _cmd_reardoor(args: Array) -> String:
-	var doors := get_tree().get_first_node_in_group(&"rear_doors")
-	if doors == null or not doors.has_method("toggle"):
-		return "Rear doors not found."
-	var action: String = str(args[0]).to_lower() if not args.is_empty() else "toggle"
-	match action:
-		"open":
-			doors.open()
-			return "Rear doors opening."
-		"close":
-			doors.close()
-			return "Rear doors closing."
-		"toggle":
-			var was_open: bool = doors.is_open()
-			doors.toggle()
-			return "Rear doors %s." % ("closing" if was_open else "opening")
-		_:
-			return "Usage: reardoor [open|close|toggle]"
-
-
-func _cmd_sidedoor(args: Array) -> String:
-	var doors := get_tree().get_first_node_in_group(&"side_doors")
-	if doors == null or not doors.has_method("toggle"):
-		return "Side doors not found."
-	var action: String = str(args[0]).to_lower() if not args.is_empty() else "toggle"
-	match action:
-		"open":
-			doors.open()
-			return "Side doors opening."
-		"close":
-			doors.close()
-			return "Side doors closing."
-		"toggle":
-			var was_open: bool = doors.is_open()
-			doors.toggle()
-			return "Side doors %s." % ("closing" if was_open else "opening")
-		_:
-			return "Usage: sidedoor [open|close|toggle]"
-
-
-func _load_item(item_id: String) -> ItemDefinition:
-	return ItemRegistry.load_by_id(item_id)
-
-
 func _find_player() -> Node3D:
 	return get_tree().get_first_node_in_group(&"player") as Node3D
 
@@ -655,18 +217,3 @@ func _should_add_space_after(parts: Array, _ends_with_space: bool) -> bool:
 	if parts[0] == "list" and parts.size() == 2:
 		return true
 	return false
-
-
-func _format_item_list(entries: Array[Dictionary], label: String, filter_text: String) -> String:
-	if entries.is_empty():
-		if filter_text.is_empty():
-			return "No %s found." % label
-		return "No %s match '%s'." % [label, filter_text]
-	var lines: PackedStringArray = PackedStringArray()
-	var header := "%d %s" % [entries.size(), label]
-	if not filter_text.is_empty():
-		header += " matching '%s'" % filter_text
-	lines.append(header + ":")
-	for entry in entries:
-		lines.append("  %s  —  %s" % [entry.id, entry.name])
-	return "\n".join(lines)
