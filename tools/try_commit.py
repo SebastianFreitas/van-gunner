@@ -3,7 +3,9 @@
 Called by tools/try.py (`--commit`, or typing `commit` at its prompt).
 
 1. Refuse unless the main checkout is on main, has no merge, rebase or
-   cherry-pick in progress, and isn't behind origin/main.
+   cherry-pick in progress, and isn't behind origin/main; and refuse before
+   any verification when the owner's uncommitted edits touch files the
+   branch changes.
 2. Build the squash without touching the main checkout's files:
    `git merge-tree --write-tree` of main and the branch, then
    `git commit-tree` on main. Conflicts stop here, except a conflict
@@ -152,6 +154,27 @@ def squash_tree(ref: str) -> str:
     return tree
 
 
+def dirty_overlap(tree: str) -> list[str]:
+    """Uncommitted or untracked paths in the main checkout that the squash would
+    change: git would refuse the fast-forward over them after the whole
+    verification, so land() checks first."""
+    changed = set(line for line in git("diff", "--name-only", "main", tree).splitlines() if line)
+
+    status = git_run("status", "--porcelain", "--untracked-files=all").stdout
+    dirty: set[str] = set()
+    for line in status.splitlines():
+        if not line:
+            continue
+        path = line[3:]
+        if " -> " in path:
+            for side in path.split(" -> "):
+                dirty.add(side.strip('"'))
+        else:
+            dirty.add(path.strip('"'))
+
+    return sorted(changed & dirty)
+
+
 def squash_message(branch: str, base: str, ref: str) -> tuple[str, str]:
     commits = git("rev-list", "--reverse", "--no-merges", f"{base}..{ref}").splitlines()
     if len(commits) == 1:
@@ -253,6 +276,14 @@ def land(branch: str, ref: str, smoke: bool) -> int:
     if tree == git("rev-parse", "main^{tree}"):
         print(f"{branch} adds nothing that main lacks (its changes are already on main). Nothing to commit.")
         return 0
+
+    overlap = dirty_overlap(tree)
+    if overlap:
+        print("You have uncommitted edits to files this branch changes, nothing changed:")
+        for path in overlap:
+            print("  " + path)
+        print("Commit or discard them in GitHub Desktop, then run this again.")
+        return 1
 
     subject, msg = squash_message(branch, base, ref)
     sha = git("commit-tree", tree, "-p", main_sha, "-F", "-", stdin=msg)

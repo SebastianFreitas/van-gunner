@@ -250,7 +250,11 @@ def main() -> int:
     while True:
         try:
             ans = input("> ")
-        except (EOFError, KeyboardInterrupt):
+        except EOFError:
+            # Nothing to read from (stdin at NUL reports isatty() on Windows): let the game run to its end.
+            game.wait()
+            return 0
+        except KeyboardInterrupt:
             ans = ""
         ans = ans.strip().lower()
         if ans == "commit" and landable:
