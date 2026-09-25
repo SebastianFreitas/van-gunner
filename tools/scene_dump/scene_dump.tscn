@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://ca0kia44ddbhs"]
+
+[ext_resource type="Script" path="res://tools/scene_dump/scene_dump.gd" id="1"]
+
+[node name="SceneDump" type="Node"]
+script = ExtResource("1")

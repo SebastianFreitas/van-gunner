@@ -23,3 +23,6 @@ mono_crash.*.json
 
 # Smoke test output; the committed baseline lives in fingerprint.baseline.txt
 tools/smoke/fingerprint.txt
+
+# Scene dump output; the committed baseline lives in van.baseline.txt
+tools/scene_dump/van.txt
