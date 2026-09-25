@@ -117,11 +117,16 @@ static func _build_awnings(
 		var size := Vector3(1.0, 0.1, unit_w - 1.4)
 		var center := Vector3(_out_x(xf, ss, 0.5), _BASE_Y + 3.55, z)
 		var rot := Vector3(0.0, 0.0, ss * deg_to_rad(15.0))
-		var mi := _FacadeMeshKit.add_box_node(host, "Awning%d" % i, size, center, rot, material, false, ko)
-		if mi == null:
-			continue
 		var valance_size := Vector3(0.04, 0.3, unit_w - 1.4)
 		var valance_center := Vector3(xf - ss * 1.0, _BASE_Y + 3.3, z)
+		# The valance hangs off the awning's outer (street-facing) edge, farther out than the
+		# canopy box add_box_node itself gates: gate the pitched canopy's conservative footprint
+		# AND the valance together, or a valance alone can clear the lane while the canopy passes.
+		var pitched := _FacadeKeepOut.box_aabb(center, Vector3(1.0, 1.0, unit_w - 1.4))
+		var extent := pitched.merge(_FacadeKeepOut.box_aabb(valance_center, valance_size))
+		if not ko.allows(extent):
+			continue
+		_FacadeMeshKit.add_box_node(host, "Awning%d" % i, size, center, rot, material, false, ko)
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
 		_FacadeMeshKit.add_box_ungated(st, valance_center, valance_size)

@@ -8,6 +8,7 @@ const _ItemCommands := preload("res://scripts/debug/debug_item_commands.gd")
 const _ActCommands := preload("res://scripts/debug/debug_act_commands.gd")
 const _VanCommands := preload("res://scripts/debug/debug_van_commands.gd")
 const _MetaCommands := preload("res://scripts/debug/debug_meta_commands.gd")
+const _FacadeCommands := preload("res://scripts/debug/debug_facade_commands.gd")
 
 var _commands: Dictionary = {}
 
@@ -17,6 +18,7 @@ var _acts: RefCounted
 var _van: RefCounted
 var _meta: RefCounted
 var _catalog: RefCounted
+var _facade: RefCounted
 
 
 func _ready() -> void:
@@ -59,6 +61,8 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 				matches = _filter_prefix(_DebugCatalog.stop_force_tokens(), "")
 			"class":
 				matches = _filter_prefix(_DebugCatalog.class_id_strings(), "")
+			"facade":
+				matches = _filter_prefix(_facade.sub_commands(), "")
 			_:
 				matches = []
 	elif parts[0] == "give" or parts[0] == "spawn":
@@ -84,6 +88,8 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 		)
 	elif parts[0] == "sound":
 		matches = _filter_prefix(_DebugCatalog.sound_id_strings(), partial)
+	elif parts[0] == "facade":
+		matches = _filter_prefix(_facade.sub_commands(), partial)
 	else:
 		matches = []
 
@@ -116,6 +122,7 @@ func _register_commands() -> void:
 	_van = _VanCommands.new(self)
 	_meta = _MetaCommands.new(self)
 	_catalog = _DebugCatalog.new(self)
+	_facade = _FacadeCommands.new(self)
 	_commands = {
 		"help": _cmd_help,
 		"chill": _run_flow.cmd_chill,
@@ -138,6 +145,7 @@ func _register_commands() -> void:
 		"sound": _meta.cmd_sound,
 		"parts": _meta.cmd_parts,
 		"tree_reset": _meta.cmd_tree_reset,
+		"facade": _facade.cmd_facade,
 	}
 
 
@@ -175,6 +183,7 @@ func _cmd_help(_args: Array) -> String:
 		+ "  sound <cue>     play a cue (audition without a run)\n"
 		+ "  parts [n]       add Rare Parts (meta schematic currency)\n"
 		+ "  tree_reset      wipe the schematic back to origin (keeps parts)\n"
+		+ "  facade [sub]    street facade debug (try facade help)\n"
 		+ "  Tab            autocomplete command or item id"
 	) % ", ".join(names)
 

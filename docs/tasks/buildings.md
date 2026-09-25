@@ -389,6 +389,6 @@ it"; `py -3 tools/gen_context.py`; delete this task file and `docs/tasks/buildin
 - [x] 11. Junction facades (`corridor_t_junction.gd`, both junction scenes lose their wall meshes)
   and side-street facades (`side_street_branch.tscn/.gd`, far-end building) via
   `facade_spans.gd` (a host node maps the tile body builder's frame onto any wall plane).
-- [ ] 12. Debug `facade` commands.
+- [x] 12. Debug `facade` commands (`debug_facade_commands.gd`, `facade_audit.gd`, `facade stress 1` in the smoke; `spec_12_notes.md`); the stress found and fixed the ribs merged mesh and the ungated awning valance.
 - [ ] 13. Docs: `.claude/rules/travel-and-stops.md` facade section (keep-out, seeding, budgets),
   CLAUDE.md table row + token-budget list, `py -3 tools/gen_context.py`; delete this file.

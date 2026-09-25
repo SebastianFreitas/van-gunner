@@ -7,6 +7,9 @@ const _FacadeRegistry := preload("res://scripts/travel/facades/facade_registry.g
 
 const RARE_CHANCE := 0.07
 
+## Debug: when set, roll() returns this piece on every eligible tile instead of rolling.
+static var forced_id := &""
+
 
 ## `{}` unless `allow_rare` and the chance roll hits; the RNG is only drawn from when allowed, so
 ## the tile RNG stream is otherwise untouched. `openings` mirrors the tile's Opening enum per
@@ -14,6 +17,8 @@ const RARE_CHANCE := 0.07
 static func roll(
 	rng: RandomNumberGenerator, district: FacadeDistrict, allow_rare: bool, openings: Array[int]
 ) -> Dictionary:
+	if forced_id != &"":
+		return _forced(openings)
 	if not allow_rare or rng.randf() >= RARE_CHANCE:
 		return {}
 	var left_open := openings[0] == 0
@@ -42,6 +47,23 @@ static func roll(
 ## The piece with that id, or null; for the debug console later.
 static func debug_force(id: StringName) -> FacadeSetPiece:
 	return _FacadeRegistry.set_piece(id)
+
+
+## `forced_id`'s piece for these openings, respecting span/side eligibility only; ignores
+## `allow_rare`, the chance and the piece's `districts` so a forced piece covers every district.
+static func _forced(openings: Array[int]) -> Dictionary:
+	var piece := _FacadeRegistry.set_piece(forced_id)
+	if piece == null:
+		return {}
+	var left_open := openings[0] == 0
+	var right_open := openings[1] == 0
+	if piece.span:
+		if not (left_open and right_open):
+			return {}
+		return {&"piece": piece, &"side_idx": -1}
+	if not (left_open or right_open):
+		return {}
+	return {&"piece": piece, &"side_idx": 0 if left_open else 1}
 
 
 static func _weighted_pick(

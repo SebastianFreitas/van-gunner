@@ -108,24 +108,38 @@ static func _build_truss(host: Node3D, keep_out: RefCounted) -> void:
 
 ## Three portal frames: ground-standing posts outside the lane's x-range plus a beam across the
 ## top. Posts on the left need their own keep-out; the passed-in one only covers the right side.
+## Three separate meshes (right posts, left posts, beams): a merged mesh's AABB would span both
+## the ground-level posts and the full-width beam at once, straddling the lane even though no
+## single box in it does.
 static func _build_ribs(host: Node3D, keep_out: RefCounted) -> void:
 	var concrete := _FacadeMaterials.concrete_material()
 	var left_keep_out := _FacadeKeepOut.new(-1.0, 0)
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var added := false
+	var right_st := SurfaceTool.new()
+	right_st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var right_added := false
+	var left_st := SurfaceTool.new()
+	left_st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var left_added := false
+	var beam_st := SurfaceTool.new()
+	beam_st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var beam_added := false
 	for z: float in [-7.0, 0.0, 7.0]:
-		added = (
-			_FacadeMeshKit.add_box(st, Vector3(8.3, 6.0, z), Vector3(0.5, 12.0, 0.5), keep_out)
-			or added
+		right_added = (
+			_FacadeMeshKit.add_box(right_st, Vector3(8.3, 6.0, z), Vector3(0.5, 12.0, 0.5), keep_out)
+			or right_added
 		)
 		var left_post := Vector3(-8.3, 6.0, z)
-		added = (
-			_FacadeMeshKit.add_box(st, left_post, Vector3(0.5, 12.0, 0.5), left_keep_out) or added
+		left_added = (
+			_FacadeMeshKit.add_box(left_st, left_post, Vector3(0.5, 12.0, 0.5), left_keep_out)
+			or left_added
 		)
-		added = (
-			_FacadeMeshKit.add_box(st, Vector3(0.0, 12.0, z), Vector3(18.0, 0.5, 0.55), keep_out)
-			or added
+		beam_added = (
+			_FacadeMeshKit.add_box(beam_st, Vector3(0.0, 12.0, z), Vector3(18.0, 0.5, 0.55), keep_out)
+			or beam_added
 		)
-	if added:
-		_FacadeMeshKit.commit(host, st, "OverheadRibs", concrete, true)
+	if right_added:
+		_FacadeMeshKit.commit(host, right_st, "OverheadRibPostsRight", concrete, true)
+	if left_added:
+		_FacadeMeshKit.commit(host, left_st, "OverheadRibPostsLeft", concrete, true)
+	if beam_added:
+		_FacadeMeshKit.commit(host, beam_st, "OverheadRibBeams", concrete, true)

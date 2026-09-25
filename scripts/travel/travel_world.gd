@@ -128,6 +128,8 @@ func begin_new_route() -> void:
 
 
 func pick_district() -> int:
+	if tc.has_meta(&"debug_district"):
+		return int(tc.get_meta(&"debug_district"))
 	if tc._neighborhood_remaining <= 0:
 		tc._neighborhood_variant = tc._rng.randi() % tc.DISTRICT_COUNT
 		if (
