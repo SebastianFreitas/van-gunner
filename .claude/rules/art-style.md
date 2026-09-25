@@ -2,19 +2,115 @@
 paths:
   - "scenes/**/*.tscn"
   - "scenes/**/*.gdshader"
+  - "scenes/**/*.gdshaderinc"
   - "resources/facades/**"
   - "resources/items/**"
   - "scripts/travel/facades/**"
+  - "scripts/stops/**"
   - "tools/generate_boon_icons.py"
 ---
 
 # Art style
 
-Owner's direction (2026-09-25): two styles, one look. The 3D world is
-low-poly and stylised; everything that is a character or a thing you pick
-up is pixel art. Nothing realistic, no gradients, hard shadows. None of the
-current art is final, but every new or changed asset follows this file, so
-the game converges instead of drifting.
+Owner's direction (2026-09-25): two styles, one dark look. The 3D world is
+low-poly geometry skinned with procedural grime shaders, built the way the
+road is built. Everything that is a character or a thing you pick up is
+pixel art. The game is night-dark. None of the current art is final, but
+every new or changed asset follows this file, so the game converges
+instead of drifting.
+
+References the owner signed off on: the road
+(`scenes/corridor/asphalt_surface.gdshader`, with `sidewalk_surface`) and
+the van interior (`scenes/van/van_*.gdshader`) for 3D; the shopkeeper
+(`scenes/shop/vendor.png`) for pixel art. When this file and a reference
+disagree, the reference wins and this file gets fixed.
+
+## Mood: dark
+
+It is always night. The world is near black; light comes only from things
+you can point at: street lamps, lit windows, signs, fire, the van's own
+lights, muzzle flash. Away from a source a surface falls to near-black
+within about 20 m, and the fog takes everything by 56 m.
+
+- **Environment baseline** (`IndustrialEnvironment` in `scenes/van/van.tscn`):
+  background (0.018, 0.024, 0.025), ambient (0.24, 0.29, 0.29) at energy
+  0.24, depth fog 20..56 m in (0.008, 0.012, 0.011), glow threshold 1.1.
+  Never raise ambient or fog-begin to make something readable: add a light
+  that belongs there (a lamp, a lit doorway, a sign).
+- **Albedo budget** (linear RGB luminance, the road's range): large surfaces
+  0.02..0.25; wear, trims and highlights up to 0.40; small bright litter
+  (paper) up to 0.45. Nothing non-emissive above 0.5.
+- **Colour:** the world is desaturated warm grey, soot brown and oxide
+  green-grey. Saturated colour belongs to light sources (sodium amber,
+  tungsten, sick fluorescent green, neon red and cyan), to danger (raiders,
+  blood, fire) and to things the player can use (the red button, pickups,
+  shop wares).
+- **Emission budget:** light sources you look at directly (lamp heads, signs,
+  neon, fire, marquee bulbs, muzzle flash) may cross the glow threshold and
+  bloom. Lit windows stay under it: they read as a warm dim glow, never a
+  white or blue-white pane. At most about a third of a facade's windows are
+  lit, fewer in derelict districts.
+- **Light pools:** street and stop lights are pools with dark gaps between
+  them. Shadows stay crisp (shadow blur and light angular distance at or
+  near 0). No SSAO, no GI.
+- **Screen check:** `tools/shot_stats.py` (added by the art-pass plan) gives
+  each `--shots` PNG its mean luminance, its 95th percentile and its
+  clipped-pixel share. The targets live in the table below once step 1 of
+  the art pass calibrates them; a visible change that moves a shot past
+  its target is a regression.
+
+| Shot | Mean luma max | Clipped max |
+|---|---|---|
+| (calibrated in art-pass step 1) | | |
+
+## Procedural 3D (street, facades, stops, props, van)
+
+Geometry:
+
+- Low-poly: primitives and `SurfaceTool` quads with hard edges. No imported
+  realistic models, no subdivided or sculpted surfaces.
+- No bitmap textures on 3D surfaces (no photos, no painted PNGs, no
+  `NoiseTexture2D`). All surface detail comes from the shader.
+
+Surfaces, in the road's recipe:
+
+- **Patterns are laid out in metres**: world XZ for the ground (as the
+  asphalt does), metre UVs for walls (as `facade_body.gd` emits them), or a
+  `surface_size_m` uniform when the mesh UV is 0..1 per face (as the
+  sidewalk does). The same detail must be the same size on every box.
+- **Layered grime**: a dark base tone, then grit or grain, wear where things
+  rub, stains and oil, cracks, edge dirt where surfaces meet, and sparse
+  litter or damage, each layer from hash, value noise, fbm or the Voronoi
+  `crack_field`, mixed in that order. Noise, fbm and `smoothstep` edges are
+  the style; they are not a problem to remove.
+- **Big shapes read first**: seams, panels, courses, windows and slabs are
+  the structure; grime breaks them up and never hides them.
+- **Lighting model**: `diffuse_burley`, `specular_schlick_ggx`, roughness
+  0.78..0.95 on base surfaces (wet oil and polished tyre lanes may drop to
+  about 0.3 locally), metallic 0..0.3 (oil, cans, bolts). A shader may
+  perturb `NORMAL_MAP` from the same grime values (the road does). No
+  mirror sheen and no metallic above 0.3 on anything.
+- **No shimmer**: a repeating pattern finer than about 0.25 m (brick
+  courses, corrugation, mullions, ribs, grain) fades to its average colour
+  with `fwidth` before it gets smaller than a couple of screen pixels, so
+  walls never moiré at distance.
+- **One noise library**: world shaders include the shared grime include
+  (the art pass extracts it from the asphalt) instead of pasting their own
+  `hash21`, `noise21`, `fbm` and `crack_field`.
+- **Small props** (under about 1 m, or anything built by `prop_material()`)
+  may use a flat `StandardMaterial3D` colour, inside the albedo budget,
+  roughness 0.7 or more, metallic 0.3 or less.
+
+The van: the owner likes it as it is. Its shaders are a reference, not a
+migration target; change the van only to fix a break of the dark budget,
+and say so in the report.
+
+Off-style today, to migrate (don't extend): `facade_surface.gdshader`'s lit
+windows (emission 2.2 blows past the glow threshold into white panes) and
+its fine patterns (moiré on distant walls); `industrial_surface.gdshader`
+(a 26-line seam grid with none of the grime layers, on every bay wall);
+the shop booth's metals (metallic 0.78 to 0.92 in
+`shop_booth_materials.gd`); bay materials with metallic 0.5 to 0.72.
 
 ## Pixel art (NPCs, raiders, bosses, items, pickups, wares, icons)
 
@@ -39,44 +135,24 @@ target; its grid is not (it is upscaled about 3.2x off any exact grid).
 - An outline, if any, is a hard one-art-pixel line.
 - Display: `texture_filter = 0` (nearest), no mipmaps, `alpha_cut = 1`
   (discard), unshaded (the art carries its own shading), billboard for
-  characters and pickups.
+  characters and pickups. Sprites are unshaded on purpose: in a dark world
+  they are what the eye finds first.
 
 Off-style today, to redraw to this rule (not to copy from): the mechanic,
 door raider, agile raider and Wanjna PNGs (painted, 10,000+ colours,
 soft red outline), every world sprite's `pixel_size` (0.006 NPCs, 0.005
 pickups), the shopkeeper's linear filtering, the boss's 1.5x node scale,
 and the boon icons (`tools/generate_boon_icons.py` draws anti-aliased
-128 px SVG strokes with round caps).
-
-## Low-poly 3D (van, street, facades, stops, props)
-
-- Built from primitives or simple meshes with hard edges (flat normals).
-  No imported realistic models, photo textures, normal maps or subdivided
-  surfaces.
-- Materials: a flat albedo colour per surface, `diffuse_mode` toon,
-  `specular_mode` toon or disabled, `metallic = 0`, high roughness. No
-  reflective sheen.
-- Surface detail is flat-colour shapes (panels, stripes, boards, window
-  frames, a stain as one flat blob), not noise. In shaders, colour changes
-  with `step` or `floor` bands, never `smoothstep` blends, fbm noise or
-  hash grime.
-- Lights cast crisp shadows: shadow blur and light angular distance kept
-  at 0 or near it. No SSAO.
-- The only soft things: distance fog (the street fading into the dark) and
-  glow on things that emit light (lamps, muzzle flash, lit windows).
-
-Off-style today, to migrate (don't extend): `industrial_surface.gdshader`,
-`facade_surface.gdshader` and `asphalt_surface.gdshader` all build their
-look from fbm noise, hash grime and `smoothstep` gradients, and the bay
-materials use `metallic` 0.5 to 0.72. A change to one of them moves it
-toward this file; nobody adds more noise or grime.
+128 px SVG strokes with round caps). The pixel-art pass is a later task.
 
 ## Checking it
 
-- Anything visible gets `tools/smoke.py --shots`; compare the PNGs with
-  the shopkeeper and with this file before reporting.
+- Anything visible gets `tools/smoke.py --shots`; Read the PNGs, run
+  `tools/shot_stats.py` on the folder once it exists, and compare with the
+  references and with this file before reporting.
 - A new sprite: check it with `py -3 -c` and PIL before wiring it in
   (colour count, alpha levels only 0 and 255, size matches its canvas).
 - The implementer never sees this file: copy the rules that apply into
-  the spec's Rules section, including the exact `pixel_size`,
-  `texture_filter` and `alpha_cut` values.
+  the spec's Rules section, with the exact numbers (albedo budget,
+  roughness and metallic ranges, emission rule, `pixel_size`,
+  `texture_filter`, `alpha_cut`).

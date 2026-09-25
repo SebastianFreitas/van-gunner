@@ -65,7 +65,7 @@ The main session explores through `Explore`, designs the change, writes the spec
 12. `GameBalance.get_act` vs `GameSession.run_act` is an open design question the owner holds: don't unify them. Wave counts in `game_balance.tres` are owner test values.
 13. `SaveSandbox` is the only test hook in game code.
 14. Nothing the facade system places may enter a stop-bay mouth, the reverse-park approach or the raider lane: every placement passes `FacadeKeepOut.allows`, bodies are gated by construction, and the smoke test asserts it (`facade stress 1` before the first fork, `bay mouth clear:` after the garage docks).
-15. Two art styles, one look: low-poly flat-shaded 3D and pixel-art sprites (NPCs, enemies, items, icons), both with hard shadows and no gradients or realism. Read `.claude/rules/art-style.md` before any change someone can see, and copy its values into the spec.
+15. Two art styles, one dark look: low-poly 3D skinned with procedural grime shaders in the road's recipe (the road and the van are the references), and flat pixel-art sprites (NPCs, enemies, items, icons); it is always night and light comes only from sources you can point at. Read `.claude/rules/art-style.md` before any change someone can see, and copy its values into the spec.
 
 ## Where things are
 
