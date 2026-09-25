@@ -20,7 +20,7 @@ No `MODE:` line in context means the hook didn't run: `CLAUDE_CODE_REMOTE=true` 
 
 The owner sends one prompt and comes back to a finished, verified change plus two commands: **Try** (play it) and **Commit** (land it as one commit on local `main`; the owner pushes with GitHub Desktop). Never stop at "ready to commit": a reply that only says "go" costs a whole extra turn.
 
-1. **Explore** through the `Explore` subagent. Ask the owner only when the answer changes what you build.
+1. **Explore** through the `Explore` subagent. Ask the owner only when the answer changes what you build, always with the `AskUserQuestion` tool (never a plain-text question), then keep working in the same turn once they answer. A turn ends early only when something went really wrong, never just to ask.
 2. **Read the rules** for every area you will touch (see Domain rules).
 3. **Spec:** one per implementer call (see Spec format). A step with more than about three deliverables becomes several specs.
 4. **Implement** with the `implementer` subagent.
@@ -30,7 +30,7 @@ The owner sends one prompt and comes back to a finished, verified change plus tw
 8. **Report:** end the turn with exactly this and nothing after it:
    1. **Name:** the feature in plain words, then the branch (and the PR in cloud).
    2. **How it looks:** for a visible change, one or two PNGs from `tools/smoke.py --shots`, sent with SendUserFile and never committed; otherwise one line saying why there is none.
-   3. **Try:** one `bash` block, one command, from your mode file, plus one line saying what to do in the game to see the change (which class, which fork, or which debug console command; `H` opens the console).
+   3. **Try:** one `bash` block, one command, from your mode file, plus one line saying what to do in the game to see the change as exact steps a new player can follow (name the class and where to pick it, which fork, or the exact debug console command; `H` opens the console); never "any class" or "any fork".
    4. **Commit:** one `bash` block, one command, from your mode file (shared mode: the one line it gives).
    5. **Look at:** at most three bullets, plus anything left open.
 
