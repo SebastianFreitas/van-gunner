@@ -20,6 +20,9 @@ when the session started) is refused too, so a session can't sweep up
 another session's edits by path even when it avoids the blanket patterns
 below.
 
+Every rule below matches against the command with the inside of quoted
+strings masked, so a commit message or search string never trips a rule.
+
 Never blocks on its own failure: any error exits 0.
 """
 import fnmatch
@@ -29,6 +32,16 @@ import re
 import shlex
 import subprocess
 import sys
+
+QUOTED = re.compile(r'"[^"]*"|\'[^\']*\'')
+
+
+def mask_quotes(cmd: str) -> str:
+    """The command with the inside of every quoted string replaced by x's of the
+    same length, so rules never match message or search text and match
+    positions still line up with the original command."""
+    return QUOTED.sub(lambda m: m.group(0)[0] + "x" * (len(m.group(0)) - 2) + m.group(0)[-1], cmd)
+
 
 BLOCK = [
     (r"\bgit\s+add\b[^|;&\n]*(\s-A\b|\s--all\b|\s-u\b|\s--update\b|\s\.(\s|$)|\s\*)",
@@ -54,10 +67,23 @@ BRANCH_DELETE_RE = re.compile(
     r"\bgit\b[^|;&\n]*\s(branch\s+(-d|-D|--delete)\b|push\s+\S+\s+--delete\b)")
 WORKTREE_REMOVE_RE = re.compile(r"\bgit\s+worktree\s+remove\b")
 PUSH_RE = re.compile(r"\bgit\b[^|;&\n]*\spush\b")
-MAIN_RE = re.compile(r"\b(main|master)\b", re.IGNORECASE)
 MERGE_RE = re.compile(r"\bgit\b[^|;&\n]*\smerge\b")
 MERGE_BASE_RE = re.compile(r"\bmerge-base\b")
 CHECKOUT_RE = re.compile(r"\bgit\b[^|;&\n]*\s(checkout|switch)\b")
+
+TARGET_RE = re.compile(r"^\+?(?:[^:\s]*:)?(?:refs/heads/)?(?:main|master)$")
+
+
+def pushes_main(bare: str, m: re.Match) -> bool:
+    """True when the push names main or master as a target (main, HEAD:main,
+    +main, refs/heads/main), not merely a branch whose name contains main."""
+    tail = re.split(r"[|;&\n]", bare[m.end():], maxsplit=1)[0]
+    for tok in tail.split():
+        if tok.startswith("-"):
+            continue
+        if TARGET_RE.match(tok):
+            return True
+    return False
 
 
 PATH_RE = r'"([^"]+)"|\'([^\']+)\'|([^\s;&|]+)'
@@ -170,8 +196,9 @@ def main():
     cmd = (d.get("tool_input") or {}).get("command") or ""
     if "git" not in cmd and "gh" not in cmd:
         return
+    bare = mask_quotes(cmd)
     for pat, why in BLOCK:
-        if re.search(pat, cmd):
+        if re.search(pat, bare):
             sys.stderr.write(
                 f"Blocked by .claude/hooks/git-guard.py: {why}. Another "
                 "session may have uncommitted edits in this tree. Stage your "
@@ -190,32 +217,33 @@ def main():
             "ask them to run it themselves.\n")
         sys.exit(2)
 
-    if GH_MERGE_RE.search(cmd):
+    if GH_MERGE_RE.search(bare):
         deny("only the owner merges")
 
-    if BRANCH_DELETE_RE.search(cmd):
+    if BRANCH_DELETE_RE.search(bare):
         deny("the owner deletes branches")
 
-    if WORKTREE_REMOVE_RE.search(cmd):
+    if WORKTREE_REMOVE_RE.search(bare):
         deny("the owner removes worktrees (archiving a session in the app does it)")
 
-    if PUSH_RE.search(cmd):
+    m = PUSH_RE.search(bare)
+    if m:
         remote_ok = (os.environ.get("CLAUDE_CODE_REMOTE") == "true"
-                     and not MAIN_RE.search(cmd))
+                     and not pushes_main(bare, m))
         if not remote_ok:
             deny("only the owner pushes (GitHub Desktop)")
 
-    if (MERGE_RE.search(cmd) and not MERGE_BASE_RE.search(cmd)
-            and "--abort" not in cmd):
+    if (MERGE_RE.search(bare) and not MERGE_BASE_RE.search(bare)
+            and "--abort" not in bare):
         cwd = d.get("cwd") or os.getcwd()
-        m = MERGE_RE.search(cmd)
+        m = MERGE_RE.search(bare)
         mcwd = command_cwd(cmd, cwd, m)
         if not os.path.isdir(mcwd):
             mcwd = cwd
         if git("branch", "--show-current", cwd=mcwd) == "main":
             deny("never merge into main; tools/try.py --commit lands branches")
 
-    m = CHECKOUT_RE.search(cmd)
+    m = CHECKOUT_RE.search(bare)
     if m:
         cwd = d.get("cwd") or os.getcwd()
         wd = command_cwd(cmd, cwd, m)
@@ -232,7 +260,7 @@ def main():
 
     # The note is computed before the command runs, so skip it when the
     # command stages files itself (the list would be stale).
-    if re.search(r"\bgit\s+commit\b", cmd) and not re.search(r"\bgit\s+add\b", cmd):
+    if re.search(r"\bgit\s+commit\b", bare) and not re.search(r"\bgit\s+add\b", bare):
         unstaged = git("diff", "--name-only")
         untracked = git("ls-files", "--others", "--exclude-standard")
         left = [l for l in (unstaged + "\n" + untracked).splitlines() if l]

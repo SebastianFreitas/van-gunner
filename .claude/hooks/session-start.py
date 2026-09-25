@@ -5,8 +5,8 @@
    shares, so each session loads one mode's rules instead of all three.
 2. On a fresh start or /clear: the branch, and the paths already
    uncommitted (made by another session, never by this one).
-3. On a fresh start or /clear: the handoff left by the previous context
-   (.claude/handoff.md), if any.
+3. On a fresh start, /clear or compaction: the handoff left by the
+   previous context (.claude/handoff.md), if any.
 4. In shared mode on a fresh start or /clear: the uncommitted paths are
    also written to `<session dir>/foreign-paths.json`, which git-guard
    reads to refuse staging them.
@@ -16,8 +16,9 @@
    if any exist.
 
 SessionStart also fires after compaction ("compact") and on resume; the
-mode rules are printed again then (compaction drops them), but not the
-dirty-path list, which by then holds this session's own edits.
+mode rules and the handoff are printed again then (compaction drops
+them), but not the dirty-path list, which by then holds this session's
+own edits.
 
 Plain stdout on SessionStart is added to the session's context.
 Never fails the hook: any error exits 0.
@@ -151,6 +152,7 @@ def main():
     lines.append("")
 
     hand_at = None
+    raw = ""
     if source in ("startup", "clear"):
         dirty = git("status", "--short")
         if dirty and mode == "shared":
@@ -170,6 +172,7 @@ def main():
             if mode == "shared":
                 write_foreign_paths(d.get("transcript_path"), [])
 
+    if source in ("startup", "clear", "compact"):
         hand = os.path.join(root, ".claude", "handoff.md")
         if os.path.exists(hand):
             with open(hand, encoding="utf-8", errors="ignore") as f:

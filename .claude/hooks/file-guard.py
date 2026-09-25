@@ -15,8 +15,9 @@ token and ownership rules that CLAUDE.md already states in prose.
   run or silently drifts from what reads it.
 - In the main session (no agent_id), source files are the implementer
   subagent's job, built from a spec (CLAUDE.md Main session role); the main
-  session itself may still make a single-line Edit. The Fable model is
-  exempt: it plans, it doesn't implement.
+  session itself may still make a single-line Edit. A Fable session
+  implements directly (CLAUDE.md Main session role), so this rule skips
+  it; the model is read from the transcript's tail.
 - A Write or (Multi)Edit that changes an id=, unique_id= or uid:// value on
   an existing .tscn/.tres header line is refused for every caller: those
   values are referenced by id elsewhere in the file and by other files, and
@@ -120,8 +121,7 @@ def generated_reason(rel: str) -> str:
     if (fnmatch.fnmatchcase(rel, "*.import") or fnmatch.fnmatchcase(rel, "*.uid")
             or ".godot" in rel.split("/")):
         return ("written by Godot: py -3 tools/check.py writes missing "
-                 ".gd.uid files; to move a script, git mv it together with "
-                 "its .gd.uid")
+                 ".gd.uid files; move a script together with its .gd.uid")
     if rel == "export_presets.cfg":
         return "the owner's local export settings; never touch it"
     if rel == "override.cfg":

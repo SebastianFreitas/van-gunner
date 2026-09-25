@@ -68,7 +68,12 @@ def unverified(mode: str) -> list[str]:
         full = os.path.join(root, p)
         if os.path.exists(full):
             return os.path.getmtime(full)
-        return float(git("log", "-1", "--format=%ct") or 0)
+        # deleted: walk up to the nearest surviving folder and use its
+        # mtime, which moves when an entry in it is deleted
+        d = os.path.dirname(full)
+        while d != root and not os.path.exists(d):
+            d = os.path.dirname(d)
+        return os.path.getmtime(d)
 
     try:
         with open(os.path.join(root, ".godot", "claude-verify.json"),
@@ -109,7 +114,7 @@ def main():
     if paths:
         more = f" (+{len(paths) - 12} more)" if len(paths) > 12 else ""
         problems.append("uncommitted files: " + ", ".join(paths[:12]) + more
-                        + ". The Ship command merges commits only")
+                        + ". The Commit command merges commits only")
     if m == "cloud":
         branch = git("branch", "--show-current")
         remote = (git("rev-parse", "--abbrev-ref", "@{upstream}")
