@@ -13,12 +13,12 @@ this is diffed against the committed tools/smoke/fingerprint.baseline.txt;
 with `--bless`, the baseline is overwritten after a clean run.
 """
 import difflib
-import os
 import pathlib
 import re
-import shutil
 import subprocess
 import sys
+
+from godot_env import godot_exe, project_lock, seed_import_cache, stamp_clean
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -32,53 +32,33 @@ FINGERPRINT = ROOT / "tools" / "smoke" / "fingerprint.txt"
 BASELINE = ROOT / "tools" / "smoke" / "fingerprint.baseline.txt"
 
 
-def godot_exe() -> str:
-    raw = os.environ.get("GODOT") or shutil.which("godot")
-    if not raw:
-        local_bin = pathlib.Path.home() / ".local" / "bin" / "godot"
-        if local_bin.exists():
-            raw = str(local_bin)
-    if not raw:
-        sys.exit(
-            "No Godot found: set GODOT to the Godot 4.7 executable "
-            "(Godot_v4.7-stable_win64_console.exe on Windows) or put `godot` on PATH "
-            "(cloud sessions: the environment's setup script runs tools/cloud_setup.sh)."
-        )
-    exe = pathlib.Path(raw)
-    if "console" not in exe.stem:
-        console = exe.with_name(exe.stem + "_console" + exe.suffix)
-        if console.exists():
-            exe = console
-    if not exe.exists():
-        sys.exit(f"GODOT points at a missing file: {exe}")
-    return str(exe)
-
-
 def main() -> int:
     bless = "--bless" in sys.argv[1:]
 
     if FINGERPRINT.exists():
         FINGERPRINT.unlink()
 
+    seed_import_cache(ROOT)
     exe = godot_exe()
     args = [
         exe, "--headless", "--path", str(ROOT),
         "res://tools/smoke/smoke_test.tscn", "--", "--smoke-sandbox",
     ]
     print(f"== smoke: godot --headless --path . res://tools/smoke/smoke_test.tscn -- --smoke-sandbox")
-    try:
-        proc = subprocess.run(
-            args,
-            cwd=ROOT,
-            capture_output=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=TIMEOUT_SECONDS,
-        )
-    except subprocess.TimeoutExpired:
-        print(f"   timed out after {TIMEOUT_SECONDS}s")
-        print("SMOKE FAILED: timed out")
-        return 1
+    with project_lock(ROOT):
+        try:
+            proc = subprocess.run(
+                args,
+                cwd=ROOT,
+                capture_output=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            print(f"   timed out after {TIMEOUT_SECONDS}s")
+            print("SMOKE FAILED: timed out")
+            return 1
 
     lines = [ANSI.sub("", line.rstrip()) for line in (proc.stdout + proc.stderr).splitlines()]
     hits = [line for line in lines if FAILURE.search(line)]
@@ -107,6 +87,7 @@ def main() -> int:
     if bless:
         BASELINE.write_bytes(FINGERPRINT.read_bytes())
         print("BASELINE WRITTEN")
+        stamp_clean(ROOT, "smoke")
         print("SMOKE CLEAN")
         return 0
 
@@ -127,6 +108,7 @@ def main() -> int:
         print("SMOKE FAILED: fingerprint differs from baseline")
         return 1
 
+    stamp_clean(ROOT, "smoke")
     print("SMOKE CLEAN")
     return 0
 
