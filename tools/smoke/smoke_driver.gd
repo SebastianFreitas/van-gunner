@@ -26,11 +26,16 @@ var _shots: _Shots
 func _ready() -> void:
 	_watchdog = get_tree().create_timer(_WATCHDOG_SECONDS)
 	_watchdog.timeout.connect(func() -> void: _fail("watchdog timeout"))
+	var van_seeds := 0
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--smoke-shots="):
 			_shots = _Shots.new()
 			_shots.dir = arg.trim_prefix("--smoke-shots=")
 			add_child(_shots)
+		elif arg.begins_with("--smoke-van-seeds="):
+			van_seeds = int(arg.trim_prefix("--smoke-van-seeds="))
+	if _shots != null:
+		_shots.van_seeds = van_seeds
 	_run()
 
 
@@ -64,6 +69,9 @@ func _run() -> void:
 
 	await _seconds(2.0)
 	await _shot("idle")
+	if _shots != null:
+		# Exterior views of the van itself, IDLE only.
+		await _shots.van_views("idle")
 
 	var van := get_tree().get_first_node_in_group(&"van_run")
 	var gun_stats: GunStatsController = get_tree().get_first_node_in_group(&"gun_stats")

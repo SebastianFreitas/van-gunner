@@ -38,11 +38,17 @@ rewritten in step 0). Read it before every step and copy its numbers into
 the spec. The existing van shaders (`scenes/van/van_*.gdshader`) stay the
 reference for the interior's grime.
 
-## How this task runs: one step per prompt
+## How this task runs: straight through, every phase
 
-The owner types "continue"; the session does **exactly one step**, start to
-finish, then ends the turn with the normal report and stops. Never start
-the next step in the same turn.
+Owner rule (2026-09-26): **never stop between steps.** Each step still lands
+as its own commit, then the session goes straight on to the next step in the
+same turn, through every phase to the wrap-up. The only reasons to end a
+turn early are an owner question (`AskUserQuestion` mid-turn is fine and
+does not end it) or a blocker only the owner can clear. When the context
+fills, follow the mode file's "Context full" rule: commit, write the handoff,
+keep going and let auto-compaction continue the work; never stop to ask for
+a new prompt. The normal report comes once, at the end of the task (or at
+the early stop), covering every step done in the turn.
 
 Every step:
 
@@ -64,10 +70,12 @@ Every step:
    views once step 3 adds them) and `py -3 tools/shot_stats.py`. Read
    the PNGs yourself.
 5. Tick the box, write what was learnt into the log, commit (the task-file
-   edit goes in the same commit), report with one or two PNGs, stop.
+   edit goes in the same commit), keep one or two PNGs aside for the final
+   report, go on to the next step.
 
 A step that grows past its scope splits: finish the part that is done,
-write the rest as a lettered step under it (for example 6b), commit, stop.
+write the rest as a lettered step under it (for example 6b), commit, and
+carry on with 6b next.
 
 ## The lenses
 
@@ -165,7 +173,7 @@ thinking"; add a lens when a step discovers one.
   `session_save.gd`), and whether the van scene is loaded before the run
   seed exists (then `VanLook` rebuilds on the first `phase_changed`).
 
-- [ ] 2. **Van views for the shots.** `tools/smoke/smoke_shots.gd` gains
+- [x] 2. **Van views for the shots.** `tools/smoke/smoke_shots.gd` gains
   three exterior cameras (side three-quarter front, side three-quarter
   rear, low front), saved as `*-van-*` shots at IDLE only, UI hidden, plus
   a `--van-seeds N` option in `tools/smoke.py` that rerolls N seeds at IDLE
@@ -412,6 +420,23 @@ playing?" Repeat a part (D-n b) if the owner wants another round.
   no run) or `SaveSandbox.enabled` (smoke), so shots and baselines stay put.
 - Scene dump blessed for the one new node; smoke fingerprint unchanged.
 
+2026-09-26, step 2:
+
+- The van views number themselves `v01-`… (`v01-idle-van-side-front`,
+  `v02-…-side-rear`, `v03-…-low-front`, then `vNN-idle-van-seed-<n>` for
+  `--van-seeds N`, seeds 1..N via `VanLook.rebuild`, the original restored),
+  so the main `01`..`12` numbering the art notes cite never shifts.
+  Cameras are rig-local: side views at (7, 3, ∓10), low front at (0, 1, -13),
+  all aimed at (0, 1.5, 0). `shot_stats.py` reports them as kind `van`.
+- **Light on the outside at IDLE:** the van is on the street, and its body
+  reads as a dark silhouette lit by the `ExteriorLight` moon (it casts the
+  van's shadow on the road) and the facade lamps; the rear windows glow from
+  the interior. The front face is black: nothing lights it. Step 5 answers
+  that with real headlights (a source you can point at), never ambient.
+- Van shots are dark enough already (mean 0.013..0.017); no target yet.
+  Owner rule the same day: the task now runs straight through (see "How
+  this task runs").
+
 ## Baseline (2026-09-25, before any change)
 
 The shots: `01-idle-front` shows the cage bulkhead, a flat brown box for
@@ -419,4 +444,11 @@ the bench, a box with the red button, a row of dark boxes on the right;
 `02-idle-back` shows the rear doors as flat panels with two small panes;
 `03-idle-outside` and `12-rear-park-stop-outside` see straight into the
 van from above (no roof or outer body), with the ceiling lamp visible as a
-white dome. Step 2 records the first `shot_stats` numbers here.
+white dome.
+
+`shot_stats` after step 2 (mean / p95 / clip%): `01` 0.0271 / 0.0896 /
+0.131, `02` 0.0091 / 0.0217 / 0, `03` 0.0090 / 0.0227 / 0.237, `06`
+0.0237 / 0.1534 / 0.765, `09` 0.0053 / 0.0125 / 0.042, `12` 0.0048 /
+0.0225 / 0.018; van views `v01` 0.0174 / 0.0923 / 0.239, `v02` 0.0129 /
+0.0359 / 0.357, `v03` 0.0145 / 0.0716 / 0.146, seeds 1..3 about 0.016 /
+0.08 / 0.3..0.5 (identical vans today; the spread is noise).

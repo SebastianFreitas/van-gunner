@@ -4,7 +4,9 @@
 Reads the PNG screenshots that `tools/smoke.py --shots DIR` writes and prints
 brightness stats per shot (mean and 95th-percentile linear luminance, share of
 clipped pixels, mean saturation), so the dark-look budget can be checked with
-numbers instead of eyeballing screenshots.
+numbers instead of eyeballing screenshots. `van` shots (`v01-...`) are exterior
+views of the van itself, saved with `tools/smoke.py --van-seeds N`; the UI is
+hidden for these like the `clean` shots.
 """
 from __future__ import annotations
 
@@ -25,7 +27,10 @@ def srgb_to_linear(c: float) -> float:
 
 
 def shot_kind(name: str) -> str:
-	"""`"clean"` for HUD-free shots (stem ends with `-outside` or `-back`), else `"hud"`."""
+	"""`"van"` for exterior van views (stem has `-van-`), `"clean"` for other HUD-free
+	shots (stem ends with `-outside` or `-back`), else `"hud"`."""
+	if "-van-" in name:
+		return "van"
 	if name.endswith("-outside") or name.endswith("-back"):
 		return "clean"
 	return "hud"

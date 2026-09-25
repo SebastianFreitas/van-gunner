@@ -22,6 +22,9 @@ window runs on a separate hidden desktop (see tools/hidden_desktop.py), so it
 is never visible and never takes focus or alt-tabs the owner out of a
 fullscreen app; the run needs no config file override. Windows desktop only;
 behaviour of the headless run is unchanged.
+
+`--van-seeds N` (with `--shots`) also shoots the van's side view for N rerolled
+look seeds at the idle checkpoint.
 """
 import argparse
 import difflib
@@ -57,10 +60,18 @@ def main() -> int:
         "--shots", metavar="DIR",
         help="play in an off-screen window and save screenshots to DIR (Windows desktop only)",
     )
+    parser.add_argument(
+        "--van-seeds", type=int, default=0, metavar="N",
+        help="with --shots: also shoot the van's side view for N rerolled look seeds at IDLE",
+    )
     opts = parser.parse_args()
 
     if opts.bless and opts.shots:
         print("SMOKE FAILED: --bless and --shots don't mix; bless from a headless run")
+        return 1
+
+    if opts.van_seeds < 0 or (opts.van_seeds > 0 and not opts.shots):
+        print("SMOKE FAILED: --van-seeds needs --shots and a count of 0 or more")
         return 1
 
     if FINGERPRINT.exists():
@@ -87,9 +98,12 @@ def main() -> int:
             "--resolution", "1440x720", "res://tools/smoke/smoke_test.tscn", "--",
             "--smoke-sandbox", "--smoke-shots=" + shots.as_posix(),
         ]
+        if opts.van_seeds > 0:
+            args.append("--smoke-van-seeds=" + str(opts.van_seeds))
         print(
             "== smoke: godot --path . (hidden desktop) res://tools/smoke/smoke_test.tscn -- "
             f"--smoke-sandbox --smoke-shots={shots.as_posix()}"
+            + (f" --smoke-van-seeds={opts.van_seeds}" if opts.van_seeds > 0 else "")
         )
     else:
         args = [
