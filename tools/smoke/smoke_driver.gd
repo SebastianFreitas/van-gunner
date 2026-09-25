@@ -254,6 +254,12 @@ func _save_round_trip_pass() -> void:
 	await _frames(5)
 	var after: Dictionary = GameSession.to_save_data()
 
+	# saved_at is wall-clock time, so two saves a second apart legitimately differ.
+	before = before.duplicate()
+	after = after.duplicate()
+	before.erase("saved_at")
+	after.erase("saved_at")
+
 	# load_from_data maps mid-street phases to TRAVELLING, so a phase that was
 	# mid-street at save time legitimately differs after the load.
 	var mid_street_phases := [
@@ -268,8 +274,6 @@ func _save_round_trip_pass() -> void:
 	]
 	if before.get("phase") in mid_street_phases:
 		_log("save round-trip: dropping phase key, %d was mid-street" % before["phase"])
-		before = before.duplicate()
-		after = after.duplicate()
 		before.erase("phase")
 		after.erase("phase")
 
