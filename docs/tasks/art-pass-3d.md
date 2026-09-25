@@ -166,7 +166,7 @@ run), and gameplay collision.
   `mechanic_workshop.gd`, `warehouse_bay.tscn`, `warehouse_look.gd`,
   `warehouse_interior.gd`: same treatment.
 
-- [ ] 12. **Junctions, side streets, statue, overheads.** `corridor_t_junction`,
+- [x] 12. **Junctions, side streets, statue, overheads.** `corridor_t_junction`,
   `corridor_crossroads.tscn`, `side_street_branch`, `act_statue.tscn`,
   `facade_overheads.gd`: consistent with the street (grime shaders, budget,
   pools). The side street's `FarVoid` stays black.
@@ -417,5 +417,25 @@ shot                           kind     mean    p95   clip%    sat
 03-idle-outside                clean  0.0088 0.0220   0.244  0.407
 06-combat-outside              clean  0.0360 0.1775   1.672  0.430
 09-elevator-stop-outside       clean  0.0053 0.0125   0.042  0.529
+12-rear-park-stop-outside      clean  0.0048 0.0225   0.018  0.383
+```
+
+### Step 12 after (junctions, statue, overheads)
+
+Junction and crossroads cross beams moved from a steel `StandardMaterial3D` (metallic 0.72,
+roughness 0.61) onto `industrial_surface` in the garage's rib recipe (3 x 0.5 m panels, 0.9,
+0.25). Overheads: the pipe-bridge pipes, catwalk floor, truss chords and concrete ribs go through
+`from_prop()` onto the prop grime shader; hangers, rails and diagonals stay flat. Statue figure
+down to albedo 0.22 at metallic 0.3 / roughness 0.75 (was 0.49 / 0.35 / 0.55); the orb is now an
+emissive tungsten lamp (1.8) with a shadowless 6 m `OrbLight` pool instead of an unshaded 0.79
+albedo. The side street has no materials of its own (road floor and spans are already done) and
+no `FarVoid` node exists. The smoke shots visit no junction, statue or overhead tile: numbers
+within noise.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0088 0.0220   0.244  0.407
+06-combat-outside              clean  0.0350 0.1783   1.560  0.430
+09-elevator-stop-outside       clean  0.0054 0.0125   0.042  0.529
 12-rear-park-stop-outside      clean  0.0048 0.0225   0.018  0.383
 ```

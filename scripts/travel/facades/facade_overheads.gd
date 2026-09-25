@@ -4,6 +4,7 @@ extends RefCounted
 ## touched, and it is dropped the moment either side opens.
 
 
+const _FacadeGrimeMaterials := preload("res://scripts/travel/facades/facade_grime_materials.gd")
 const _FacadeKeepOut := preload("res://scripts/travel/facades/facade_keep_out.gd")
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
 const _FacadeMeshKit := preload("res://scripts/travel/facades/facade_mesh_kit.gd")
@@ -36,7 +37,7 @@ static func _build_pipe_bridge(
 	host: Node3D, keep_out: RefCounted, rng: RandomNumberGenerator
 ) -> void:
 	var z := rng.randf_range(-7.0, 7.0)
-	var rust := _FacadeMaterials.rust_pipe_material()
+	var rust := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.rust_pipe_material())
 	_FacadeMeshKit.add_cylinder_node(
 		host, "OverheadPipeLow", 0.35, 0.35, _LENGTH, Vector3(0.0, 10.5, z), rust, true, keep_out,
 		_ALONG_X
@@ -60,9 +61,10 @@ static func _build_pipe_bridge(
 ## A steel catwalk floor with two top rails and posts every 2 m along both edges.
 static func _build_catwalk(host: Node3D, keep_out: RefCounted) -> void:
 	var iron := _FacadeMaterials.iron_material()
+	var floor_mat := _FacadeGrimeMaterials.from_prop(iron)
 	_FacadeMeshKit.add_box_node(
 		host, "OverheadCatwalkFloor", Vector3(_LENGTH, 0.15, 2.0), Vector3(0.0, 9.6, 0.0),
-		Vector3.ZERO, iron, true, keep_out
+		Vector3.ZERO, floor_mat, true, keep_out
 	)
 	var rail_st := SurfaceTool.new()
 	rail_st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -96,7 +98,8 @@ static func _build_truss(host: Node3D, keep_out: RefCounted) -> void:
 		var c := Vector3(0.0, y, 0.0)
 		added = _FacadeMeshKit.add_box(chord_st, c, chord_size, keep_out) or added
 	if added:
-		_FacadeMeshKit.commit(host, chord_st, "OverheadTrussChords", iron, true)
+		var chord_mat := _FacadeGrimeMaterials.from_prop(iron)
+		_FacadeMeshKit.commit(host, chord_st, "OverheadTrussChords", chord_mat, true)
 	for i in 8:
 		var x := -_LENGTH * 0.5 + (_LENGTH / 8.0) * (float(i) + 0.5)
 		var yaw := 0.6 if i % 2 == 0 else -0.6
@@ -112,7 +115,7 @@ static func _build_truss(host: Node3D, keep_out: RefCounted) -> void:
 ## the ground-level posts and the full-width beam at once, straddling the lane even though no
 ## single box in it does.
 static func _build_ribs(host: Node3D, keep_out: RefCounted) -> void:
-	var concrete := _FacadeMaterials.concrete_material()
+	var concrete := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.concrete_material())
 	var left_keep_out := _FacadeKeepOut.new(-1.0, 0)
 	var right_st := SurfaceTool.new()
 	right_st.begin(Mesh.PRIMITIVE_TRIANGLES)

@@ -1,12 +1,18 @@
-[gd_scene load_steps=7 format=3 uid="uid://dyn2nx35s88gm"]
+[gd_scene load_steps=8 format=3 uid="uid://dyn2nx35s88gm"]
 
 [ext_resource type="PackedScene" uid="uid://brodfloor01seg" path="res://scenes/corridor/road_floor.tscn" id="2_road_floor"]
 [ext_resource type="Script" path="res://scenes/corridor/corridor_t_junction.gd" id="3_junction"]
+[ext_resource type="Shader" uid="uid://bxqnk6jr56bab" path="res://scenes/corridor/industrial_surface.gdshader" id="4_industrial"]
 
-[sub_resource type="StandardMaterial3D" id="RibMaterial"]
-albedo_color = Color(0.055, 0.064, 0.061, 1)
-metallic = 0.72
-roughness = 0.61
+[sub_resource type="ShaderMaterial" id="RibMaterial"]
+render_priority = 0
+shader = ExtResource("4_industrial")
+shader_parameter/base_color = Color(0.07, 0.07, 0.065, 1)
+shader_parameter/seam_color = Color(0.02, 0.02, 0.018, 1)
+shader_parameter/rust_color = Color(0.2, 0.08, 0.035, 1)
+shader_parameter/panel_size_m = Vector2(3, 0.5)
+shader_parameter/roughness_value = 0.9
+shader_parameter/metallic_value = 0.25
 
 [sub_resource type="BoxMesh" id="CrossBeamMesh"]
 material = SubResource("RibMaterial")

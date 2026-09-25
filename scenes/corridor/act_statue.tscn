@@ -5,13 +5,16 @@ albedo_color = Color(0.22, 0.2, 0.18, 1)
 roughness = 0.9
 
 [sub_resource type="StandardMaterial3D" id="FigureMat"]
-albedo_color = Color(0.55, 0.48, 0.38, 1)
-metallic = 0.35
-roughness = 0.55
+albedo_color = Color(0.26, 0.22, 0.16, 1)
+metallic = 0.3
+roughness = 0.75
 
 [sub_resource type="StandardMaterial3D" id="GlowMat"]
-shading_mode = 0
-albedo_color = Color(0.91, 0.78, 0.48, 1)
+albedo_color = Color(0.12, 0.09, 0.05, 1)
+roughness = 0.8
+emission_enabled = true
+emission = Color(1, 0.72, 0.38, 1)
+emission_energy_multiplier = 1.8
 
 [sub_resource type="CylinderMesh" id="PedestalMesh"]
 material = SubResource("PedestalMat")
@@ -42,3 +45,10 @@ mesh = SubResource("FigureMesh")
 [node name="Orb" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.65, 0)
 mesh = SubResource("OrbMesh")
+
+[node name="OrbLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.65, 0)
+light_color = Color(1, 0.72, 0.38, 1)
+light_energy = 1.4
+light_cull_mask = 1
+omni_range = 6.0
