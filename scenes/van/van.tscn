@@ -27,6 +27,7 @@
 [ext_resource type="PackedScene" uid="uid://778mkcg651tk" path="res://scenes/van/van_shell.tscn" id="47"]
 [ext_resource type="PackedScene" uid="uid://dvpdo5r6xr0u4" path="res://scenes/van/van_breach_points.tscn" id="48"]
 [ext_resource type="PackedScene" uid="uid://djiqi7g12i72i" path="res://scenes/ui/run_hud.tscn" id="49"]
+[ext_resource type="Script" path="res://scripts/van/look/van_look.gd" id="50"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -280,6 +281,9 @@ spot_range = 22.0
 spot_attenuation = 1.2
 spot_angle = 62.0
 spot_angle_attenuation = 0.85
+
+[node name="VanLook" type="Node3D" parent="TravelPath/VanFollow/VanRig" unique_id=2100462920]
+script = ExtResource("50")
 
 [node name="Systems" type="Node" parent="." unique_id=928478009]
 

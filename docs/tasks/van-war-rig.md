@@ -154,7 +154,7 @@ thinking"; add a lens when a step discovers one.
   van is now a war rig built from a seed, the interior shaders stay the
   reference). Answers from the first two question rounds recorded above.
 
-- [ ] 1. **Van seed and reroll.** A `VanLook` node under the van root
+- [x] 1. **Van seed and reroll.** A `VanLook` node under the van root
   (`scripts/van/look/van_look.gd`) that computes `van_seed` as above, owns
   `rng_for(part_id: StringName) -> RandomNumberGenerator`, emits
   `look_rebuilt`, and rebuilds its child generators on `rebuild(seed)`.
@@ -397,6 +397,20 @@ playing?" Repeat a part (D-n b) if the owner wants another round.
   port. Visible upgrades: later.
 - The run seed already exists and is saved (`GameSession.run_seed`,
   `session_save.gd`), so the van seed needs no save change.
+
+2026-09-26, step 1:
+
+- `VanLook` sits at `TravelPath/VanFollow/VanRig/VanLook` (a Node3D, so the
+  hull parts later ride the rig). Children that implement
+  `rebuild_look(look: VanLook)` are rebuilt on every `rebuild(seed)`; they
+  draw from `look.rng_for(&"<part id>")`.
+- The run seed is set before the van scene loads on NEW (`start_new`) and on
+  load (`session_save.load_from_data`), but `VanLook` also re-derives on
+  `phase_changed` and `session_loaded` whenever `run_seed` changed, so the
+  order never matters. A `van reroll` sticks until the run seed changes.
+- Fixed default `DEFAULT_VAN_SEED = 1337` when `run_seed == 0` (scene dump,
+  no run) or `SaveSandbox.enabled` (smoke), so shots and baselines stay put.
+- Scene dump blessed for the one new node; smoke fingerprint unchanged.
 
 ## Baseline (2026-09-25, before any change)
 

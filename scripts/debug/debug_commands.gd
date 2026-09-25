@@ -49,6 +49,8 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 				matches = _filter_prefix(["open", "close", "toggle"], "")
 			"sidedoor":
 				matches = _filter_prefix(["open", "close", "toggle"], "")
+			"van":
+				matches = _filter_prefix(["seed", "reroll"], "")
 			"list":
 				matches = _filter_prefix(
 					["boons", "items", "commands", "classes", "cards", "stops", "sounds", "tree"], ""
@@ -82,6 +84,8 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 		matches = _filter_prefix(["open", "close", "toggle"], partial)
 	elif parts[0] == "sidedoor":
 		matches = _filter_prefix(["open", "close", "toggle"], partial)
+	elif parts[0] == "van":
+		matches = _filter_prefix(["seed", "reroll"], partial)
 	elif parts[0] == "list":
 		matches = _filter_prefix(
 			["boons", "items", "commands", "weapons", "cards", "stops", "sounds", "tree"], partial
@@ -141,6 +145,7 @@ func _register_commands() -> void:
 		"boss": _acts.cmd_boss,
 		"reardoor": _van.cmd_reardoor,
 		"sidedoor": _van.cmd_sidedoor,
+		"van": _van.cmd_van,
 		"class": _meta.cmd_class,
 		"sound": _meta.cmd_sound,
 		"parts": _meta.cmd_parts,
@@ -176,6 +181,8 @@ func _cmd_help(_args: Array) -> String:
 		+ "  phase          print current run phase\n"
 		+ "  reardoor [open|close|toggle]  swing the van rear doors\n"
 		+ "  sidedoor [open|close|toggle]  slide the van side doors\n"
+		+ "  van seed        print the van look seed\n"
+		+ "  van reroll [s]  rebuild the van look from a new (or given) seed\n"
 		+ "  class [id]      print the class, or equip one in any phase (e.g. class sniper)\n"
 		+ "  list classes [q] browse class ids\n"
 		+ "  list sounds [q] browse SoundCue ids\n"

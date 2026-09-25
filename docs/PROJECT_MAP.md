@@ -260,10 +260,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `signal health_changed(current: float, maximum: float)`
 
+**`scripts/van/look/van_look.gd`**
+
+- `signal look_rebuilt(seed_value: int)`
+
 
 ## Script index
 
-239 GDScript files, 34463 lines.
+240 GDScript files, 34561 lines.
 
 ### `scenes/corridor/`
 
@@ -354,13 +358,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
-| `debug_commands.gd` | — | 229 | Parses and runs debug console commands. |
+| `debug_commands.gd` | — | 236 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
 | `debug_facade_commands.gd` | — | 301 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
 | `debug_item_commands.gd` | — | 70 | Debug console commands: items. |
 | `debug_meta_commands.gd` | — | 55 | Debug console commands: meta. |
 | `debug_run_flow_commands.gd` | — | 54 | Debug console commands: run flow. |
-| `debug_van_commands.gd` | — | 50 | Debug console commands: van. |
+| `debug_van_commands.gd` | — | 69 | Debug console commands: van. |
 
 ### `scripts/dialogue/`
 
@@ -607,6 +611,12 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_side_wall_shell.gd` | — | 401 | Generic curved-shell / pane / frame-ring mesh builders for VanSideWall: the low-level lofting onto the cargo profile, shared by side walls, doors and windows. |
 | `van_vital.gd` | `VanVital` | 91 | One interior machine whose HP is a slice of van death hull. |
 
+### `scripts/van/look/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |
+
 ### `tools/`
 
 | File | class_name | LOC | Summary |
@@ -667,7 +677,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/loot_machine.tscn` | 9 | StaticBody3D |
 | `scenes/van/request_board.tscn` | 4 | StaticBody3D |
-| `scenes/van/van.tscn` | 56 | Node3D |
+| `scenes/van/van.tscn` | 57 | Node3D |
 | `scenes/van/van_breach_points.tscn` | 32 | Node3D |
 | `scenes/van/van_bulkhead.tscn` | 1 | StaticBody3D |
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |
@@ -851,4 +861,4 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `class`, `sound`, `parts`, `tree_reset`, `facade`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`
