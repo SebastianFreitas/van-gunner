@@ -1,0 +1,133 @@
+[gd_scene format=3 uid="uid://dvpdo5r6xr0u4"]
+
+[ext_resource type="Script" uid="uid://b70p1yv8tyk4e" path="res://scripts/enemies/breach_controller.gd" id="16"]
+[ext_resource type="Script" uid="uid://dua456vqj6g65" path="res://scripts/enemies/breach_point.gd" id="17"]
+
+[node name="BreachController" type="Node3D" unique_id=1006425113]
+script = ExtResource("16")
+
+[node name="BenchAttackMarker" type="Marker3D" parent="." unique_id=1382038346]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.15, 1.62, -1.55)
+
+[node name="RearLeft" type="Node3D" parent="." unique_id=2090988775]
+script = ExtResource("17")
+point_id = &"rear_left"
+kind = 0
+priority = 0
+door_side = &"left"
+
+[node name="Outside" type="Marker3D" parent="RearLeft" unique_id=957572841]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.05, 1.62, 5.2)
+
+[node name="Entry" type="Marker3D" parent="RearLeft" unique_id=1136288723]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.05, 1.62, 3.9)
+
+[node name="RearRight" type="Node3D" parent="." unique_id=900275214]
+script = ExtResource("17")
+point_id = &"rear_right"
+kind = 0
+priority = 0
+door_side = &"right"
+
+[node name="Outside" type="Marker3D" parent="RearRight" unique_id=1876458989]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.05, 1.62, 5.2)
+
+[node name="Entry" type="Marker3D" parent="RearRight" unique_id=778899219]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.05, 1.62, 3.9)
+
+[node name="RearLeftWindow" type="Node3D" parent="." unique_id=1727829101]
+script = ExtResource("17")
+point_id = &"rear_left_window"
+priority = 0
+door_side = &"left"
+bars_path = NodePath("../../../Interior/Shell/RearWall/LeftHinge/IronCross")
+
+[node name="Outside" type="Marker3D" parent="RearLeftWindow" unique_id=1711565123]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.2, 1.78, 5.2)
+
+[node name="Entry" type="Marker3D" parent="RearLeftWindow" unique_id=203672416]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.2, 1.78, 3.9)
+
+[node name="RearRightWindow" type="Node3D" parent="." unique_id=1781831001]
+script = ExtResource("17")
+point_id = &"rear_right_window"
+priority = 0
+door_side = &"right"
+bars_path = NodePath("../../../Interior/Shell/RearWall/RightHinge/IronCross")
+
+[node name="Outside" type="Marker3D" parent="RearRightWindow" unique_id=553436644]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.2, 1.78, 5.2)
+
+[node name="Entry" type="Marker3D" parent="RearRightWindow" unique_id=1242389339]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.2, 1.78, 3.9)
+
+[node name="LeftRearWindow" type="Node3D" parent="." unique_id=1968978248]
+script = ExtResource("17")
+point_id = &"left_rear_window"
+bars_path = NodePath("../../../Interior/Shell/SideWindows/LeftRear/Hinge/IronCross")
+
+[node name="Outside" type="Marker3D" parent="LeftRearWindow" unique_id=604762267]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -2.65, 1.62, 2.835)
+
+[node name="Entry" type="Marker3D" parent="LeftRearWindow" unique_id=1756178726]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.7, 1.62, 2.835)
+
+[node name="LeftFrontWindow" type="Node3D" parent="." unique_id=838287696]
+script = ExtResource("17")
+point_id = &"left_front_window"
+priority = 2
+bars_path = NodePath("../../../Interior/Shell/SideWindows/LeftFront/Hinge/IronCross")
+
+[node name="Outside" type="Marker3D" parent="LeftFrontWindow" unique_id=1092565286]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -2.65, 1.62, -0.375)
+
+[node name="Entry" type="Marker3D" parent="LeftFrontWindow" unique_id=367448086]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.7, 1.62, -0.375)
+
+[node name="RightRearWindow" type="Node3D" parent="." unique_id=380574849]
+script = ExtResource("17")
+point_id = &"right_rear_window"
+bars_path = NodePath("../../../Interior/Shell/SideWindows/RightRear/Hinge/IronCross")
+
+[node name="Outside" type="Marker3D" parent="RightRearWindow" unique_id=1925564715]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.65, 1.62, 2.835)
+
+[node name="Entry" type="Marker3D" parent="RightRearWindow" unique_id=1482990360]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.7, 1.62, 2.835)
+
+[node name="RightFrontWindow" type="Node3D" parent="." unique_id=1554753858]
+script = ExtResource("17")
+point_id = &"right_front_window"
+priority = 2
+bars_path = NodePath("../../../Interior/Shell/SideWindows/RightFront/Hinge/IronCross")
+
+[node name="Outside" type="Marker3D" parent="RightFrontWindow" unique_id=363756755]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.65, 1.62, -0.375)
+
+[node name="Entry" type="Marker3D" parent="RightFrontWindow" unique_id=2100462777]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.7, 1.62, -0.375)
+
+[node name="SideDoorLeft" type="Node3D" parent="." unique_id=2100462801]
+script = ExtResource("17")
+point_id = &"side_door_left"
+kind = 1
+door_side = &"left"
+
+[node name="Outside" type="Marker3D" parent="SideDoorLeft" unique_id=2100462802]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -3.16, 1.62, -3.485)
+
+[node name="Entry" type="Marker3D" parent="SideDoorLeft" unique_id=2100462803]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.7, 1.62, -3.485)
+
+[node name="SideDoorRight" type="Node3D" parent="." unique_id=2100462804]
+script = ExtResource("17")
+point_id = &"side_door_right"
+kind = 1
+door_side = &"right"
+
+[node name="Outside" type="Marker3D" parent="SideDoorRight" unique_id=2100462805]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 3.16, 1.62, -3.485)
+
+[node name="Entry" type="Marker3D" parent="SideDoorRight" unique_id=2100462806]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.7, 1.62, -3.485)
+
