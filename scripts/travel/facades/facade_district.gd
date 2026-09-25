@@ -49,3 +49,6 @@ extends Resource
 @export var sign_chance := 0.6
 @export var awning_chance := 0.5
 @export var furniture_chance := 0.5
+
+## Chance a plain (both-sides-NONE, no rare) tile gets cross-street overhead dressing.
+@export var overhead_chance := 0.0

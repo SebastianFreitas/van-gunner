@@ -13,6 +13,7 @@ const _FacadePropsGround := preload("res://scripts/travel/facades/facade_props_g
 const _FacadeSigns := preload("res://scripts/travel/facades/facade_signs.gd")
 const _FacadeFixtures := preload("res://scripts/travel/facades/facade_fixtures.gd")
 const _FacadeSetPieces := preload("res://scripts/travel/facades/facade_set_pieces.gd")
+const _FacadeOverheads := preload("res://scripts/travel/facades/facade_overheads.gd")
 
 const SIDE_NAMES: Array[String] = ["Left", "Right"]
 const SIDE_SIGNS: Array[float] = [-1.0, 1.0]
@@ -62,6 +63,8 @@ func configure(seed_: int, district_: int, neighborhood_seed_: int, allow_rare_:
 	rebuild_side(1)
 	if not _rare.is_empty() and (_rare[&"piece"] as FacadeSetPiece).span:
 		_build_span()
+	if _rare.is_empty() and _openings == [0, 0]:
+		_build_overhead()
 	return not _rare.is_empty()
 
 
@@ -75,6 +78,12 @@ func set_opening(side_idx: int, opening: int) -> void:
 		var span_root := _facades_host().get_node_or_null("Span")
 		if span_root:
 			span_root.queue_free()
+	if opening != 0:
+		var overhead_root := _facades_host().get_node_or_null("Overhead")
+		if overhead_root:
+			# Rename first so a same-frame rebuild can't collide on the name.
+			overhead_root.name = "OverheadOld"
+			overhead_root.queue_free()
 	_openings[side_idx] = opening
 	if _configured:
 		rebuild_side(side_idx)
@@ -211,6 +220,22 @@ func _build_span() -> void:
 		&"tile_seed": seed,
 	})
 	for inst: GeometryInstance3D in span_root.find_children("*", "GeometryInstance3D", true, false):
+		inst.visibility_range_end = 64.0
+
+
+## No rare on the tile and both sides still NONE: cross-street dressing under Facades/Overhead,
+## from its own RNG so it never disturbs the side or rare RNG streams.
+func _build_overhead() -> void:
+	var facades := _facades_host()
+	var overhead_root := Node3D.new()
+	overhead_root.name = "Overhead"
+	facades.add_child(overhead_root)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([seed, &"overhead"])
+	var district_res: FacadeDistrict = _FacadeRegistry.district(district)
+	_FacadeOverheads.build(overhead_root, _plans[0], _plans[1], _keep_outs[1], rng, district_res)
+	var overhead_meshes := overhead_root.find_children("*", "GeometryInstance3D", true, false)
+	for inst: GeometryInstance3D in overhead_meshes:
 		inst.visibility_range_end = 64.0
 
 

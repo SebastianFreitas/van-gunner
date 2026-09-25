@@ -35,3 +35,4 @@ sign_words = PackedStringArray("CLOSED", "FOR SALE", "KEEP OUT", "NO ENTRY")
 sign_chance = 0.3
 awning_chance = 0.2
 furniture_chance = 0.4
+overhead_chance = 0.15

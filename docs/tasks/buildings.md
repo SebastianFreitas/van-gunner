@@ -383,7 +383,7 @@ it"; `py -3 tools/gen_context.py`; delete this task file and `docs/tasks/buildin
 - [x] 10a. parking_deck, overgrown_ruin, glass_crown, radio_mast, blown_out_shop, gas_canopy
   (`spec_10a_set_pieces_batch3.md` + `spec_10a_notes.md`); every set-piece wrapped to 100 columns.
   (Old steps 9 and 10 were re-cut into 8b, 10a and 10b.)
-- [ ] 10b. chapel, cinema_marquee (+ `facade_marquee.gdshader`), crane_site, searchlight;
+- [x] 10b. chapel, cinema_marquee (+ `facade_marquee.gdshader`), crane_site, searchlight;
   industrial overhead dressing under `Facades/Overhead` (`spec_10b_set_pieces_overheads.md` +
   `spec_10b_notes.md`).
 - [x] 11. Junction facades (`corridor_t_junction.gd`, both junction scenes lose their wall meshes)

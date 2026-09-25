@@ -5,6 +5,8 @@ extends RefCounted
 
 static var _facade_shader: Shader
 static var _sign_shader: Shader
+static var _marquee_shader: Shader
+static var _beam_material: StandardMaterial3D
 static var _prop_cache: Dictionary = {}
 static var _label_cache: Dictionary = {}
 
@@ -19,6 +21,21 @@ static func sign_shader() -> Shader:
 	if _sign_shader == null:
 		_sign_shader = load("res://scenes/corridor/facade_sign.gdshader") as Shader
 	return _sign_shader
+
+
+static func marquee_shader() -> Shader:
+	if _marquee_shader == null:
+		_marquee_shader = load("res://scenes/corridor/facade_marquee.gdshader") as Shader
+	return _marquee_shader
+
+
+## A chasing bulb-strip material; a fresh ShaderMaterial each call since colour and length differ.
+static func marquee_material(color: Color, length_m: float) -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = marquee_shader()
+	mat.set_shader_parameter(&"color", color)
+	mat.set_shader_parameter(&"length_m", length_m)
+	return mat
 
 
 ## One ShaderMaterial per building; buildings differ enough that caching wouldn't help.
@@ -83,6 +100,19 @@ static func rust_pipe_material() -> StandardMaterial3D:
 
 static func concrete_material() -> StandardMaterial3D:
 	return prop_material(&"concrete", Color(0.3, 0.3, 0.29), 0.9, 0.0)
+
+
+## An additive, unshaded cone material for a searchlight beam; one instance shared by every
+## searchlight since the beam never varies.
+static func beam_material() -> StandardMaterial3D:
+	if _beam_material == null:
+		_beam_material = StandardMaterial3D.new()
+		_beam_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_beam_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_beam_material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		_beam_material.albedo_color = Color(0.9, 0.9, 1.0, 0.12)
+		_beam_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return _beam_material
 
 
 ## Ground-floor prop palette: awning canvas colours, sidewalk furniture and lamp glow, each
