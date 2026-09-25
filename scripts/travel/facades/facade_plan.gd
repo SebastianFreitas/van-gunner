@@ -43,103 +43,15 @@ const SPLITS := [
 ]
 const SPLIT_WEIGHTS := [0.34, 0.15, 0.15, 0.16, 0.07, 0.07, 0.06]
 
-## Step 4 moves these into resources; for now a plain table per district, index = district.
-const DISTRICTS: Array[Dictionary] = [
-	{  # 0 tenement
-		&"presets": [
-			&"brick_red", &"brick_red", &"brick_brown", &"brick_brown", &"plaster_tan", &"plaster_green"
-		],
-		&"height_min": 16.0,
-		&"height_max": 26.0,
-		&"tall_chance": 0.2,
-		&"tall_min": 28.0,
-		&"tall_max": 34.0,
-		&"ground_kinds": [1, 1, 1, 2, 5, 0],
-		&"lit_ratio": 0.35,
-		&"grime": 0.55,
-		&"boarded_ratio": 0.0,
-		&"broken_ratio": 0.03,
-		&"damage": 0.05,
-		&"band_every": [0.0, 2.0, 3.0],
-	},
-	{  # 1 industrial
-		&"presets": [
-			&"concrete_grey", &"concrete_grey", &"corrugated_green", &"corrugated_rust", &"brick_brown"
-		],
-		&"height_min": 12.0,
-		&"height_max": 20.0,
-		&"tall_chance": 0.15,
-		&"tall_min": 22.0,
-		&"tall_max": 30.0,
-		&"ground_kinds": [3, 3, 4, 4, 0, 0],
-		&"lit_ratio": 0.15,
-		&"grime": 0.6,
-		&"boarded_ratio": 0.0,
-		&"broken_ratio": 0.05,
-		&"damage": 0.1,
-		&"band_every": [0.0],
-	},
-	{  # 2 commercial
-		&"presets": [&"glass_blue", &"glass_blue", &"concrete_grey", &"plaster_tan", &"stone_grey"],
-		&"height_min": 28.0,
-		&"height_max": 40.0,
-		&"tall_chance": 0.5,
-		&"tall_min": 40.0,
-		&"tall_max": 40.0,
-		&"ground_kinds": [1, 1, 1, 1, 5, 0],
-		&"lit_ratio": 0.5,
-		&"grime": 0.25,
-		&"boarded_ratio": 0.0,
-		&"broken_ratio": 0.0,
-		&"damage": 0.0,
-		&"band_every": [0.0, 0.0, 4.0],
-	},
-	{  # 3 derelict
-		&"presets": [
-			&"plaster_tan", &"plaster_green", &"brick_brown", &"brick_red", &"concrete_grey"
-		],
-		&"height_min": 14.0,
-		&"height_max": 24.0,
-		&"tall_chance": 0.1,
-		&"tall_min": 26.0,
-		&"tall_max": 30.0,
-		&"ground_kinds": [2, 2, 2, 0, 1, 4],
-		&"lit_ratio": 0.05,
-		&"grime": 0.85,
-		&"boarded_ratio": 0.35,
-		&"broken_ratio": 0.3,
-		&"damage": 0.5,
-		&"band_every": [0.0, 3.0],
-	},
-	{  # 4 civic
-		&"presets": [&"stone_grey", &"stone_grey", &"plaster_tan", &"plaster_tan", &"brick_brown"],
-		&"height_min": 14.0,
-		&"height_max": 20.0,
-		&"tall_chance": 0.15,
-		&"tall_min": 24.0,
-		&"tall_max": 30.0,
-		&"ground_kinds": [5, 5, 5, 0, 1],
-		&"lit_ratio": 0.25,
-		&"grime": 0.35,
-		&"boarded_ratio": 0.0,
-		&"broken_ratio": 0.02,
-		&"damage": 0.05,
-		&"band_every": [1.0, 1.0, 2.0],
-	},
-]
-
-
 static func plan_side(
-	rng: RandomNumberGenerator, district: int, opening: int, neighborhood_seed: int
+	rng: RandomNumberGenerator, district: FacadeDistrict, opening: int, neighborhood_seed: int
 ) -> Array[Dictionary]:
-	district = clampi(district, 0, DISTRICTS.size() - 1)
-	var table: Dictionary = DISTRICTS[district]
 	var plans: Array[Dictionary] = []
 	if opening == OPENING_SIDE_STREET:
 		return plans
 	if opening == OPENING_BAY:
-		var preset: StringName = _pick(rng, table[&"presets"])
-		var height: float = maxf(_pick_height(rng, table), 16.0)
+		var preset: StringName = _pick(rng, district.presets)
+		var height: float = maxf(_pick_height(rng, district), 16.0)
 		var floors := maxi(MIN_FLOORS, roundi((height - GROUND_HEIGHT - PARAPET) / FLOOR_HEIGHT))
 		var tags: Array[StringName] = []
 		plans.append({
@@ -154,21 +66,22 @@ static func plan_side(
 			&"ground_units": 1,
 			&"mouth": true,
 			&"params": _params_for(
-				rng, table, preset, 20.0, height, GROUND_BLANK, 1, neighborhood_seed
+				rng, district, preset, 20.0, height, GROUND_BLANK, 1, neighborhood_seed
 			),
 			&"tags": tags,
 			&"rare": &"",
+			&"district_id": district.id,
 		})
 		return plans
 	var split_index := _weighted_index(rng, SPLIT_WEIGHTS)
 	var widths: Array = SPLITS[split_index]
 	var z := -TILE_HALF_Z
 	for width: float in widths:
-		var preset: StringName = _pick(rng, table[&"presets"])
-		var height: float = _pick_height(rng, table)
+		var preset: StringName = _pick(rng, district.presets)
+		var height: float = _pick_height(rng, district)
 		var floors := maxi(MIN_FLOORS, roundi((height - GROUND_HEIGHT - PARAPET) / FLOOR_HEIGHT))
 		var setback: float = SETBACKS[rng.randi() % SETBACKS.size()]
-		var ground_kind: int = _pick(rng, table[&"ground_kinds"])
+		var ground_kind: int = _pick(rng, district.ground_kinds)
 		var ground_units: int = clampi(roundi(width / 5.0), 1, 4)
 		var tags: Array[StringName] = []
 		plans.append({
@@ -183,21 +96,22 @@ static func plan_side(
 			&"ground_units": ground_units,
 			&"mouth": false,
 			&"params": _params_for(
-				rng, table, preset, width, height, ground_kind, ground_units, neighborhood_seed
+				rng, district, preset, width, height, ground_kind, ground_units, neighborhood_seed
 			),
 			&"tags": tags,
 			&"rare": &"",
+			&"district_id": district.id,
 		})
 		z += width
 	return plans
 
 
-static func _pick_height(rng: RandomNumberGenerator, table: Dictionary) -> float:
+static func _pick_height(rng: RandomNumberGenerator, district: FacadeDistrict) -> float:
 	var h: float
-	if rng.randf() < float(table[&"tall_chance"]):
-		h = rng.randf_range(table[&"tall_min"], table[&"tall_max"])
+	if rng.randf() < district.tall_chance:
+		h = rng.randf_range(district.tall_min, district.tall_max)
 	else:
-		h = rng.randf_range(table[&"height_min"], table[&"height_max"])
+		h = rng.randf_range(district.height_min, district.height_max)
 	var floors := maxi(MIN_FLOORS, roundi((h - GROUND_HEIGHT - PARAPET) / FLOOR_HEIGHT))
 	h = GROUND_HEIGHT + floors * FLOOR_HEIGHT + PARAPET
 	return minf(h, MAX_HEIGHT)
@@ -205,7 +119,7 @@ static func _pick_height(rng: RandomNumberGenerator, table: Dictionary) -> float
 
 static func _params_for(
 	rng: RandomNumberGenerator,
-	table: Dictionary,
+	district: FacadeDistrict,
 	preset: StringName,
 	width: float,
 	height: float,
@@ -220,12 +134,12 @@ static func _params_for(
 	p[&"ground_height"] = GROUND_HEIGHT
 	p[&"ground_kind"] = ground_kind
 	p[&"ground_units"] = float(ground_units)
-	p[&"lit_ratio"] = clampf(float(table[&"lit_ratio"]) * rng.randf_range(0.7, 1.3), 0.0, 1.0)
-	p[&"grime"] = clampf(float(table[&"grime"]) * rng.randf_range(0.8, 1.2), 0.0, 1.0)
-	p[&"boarded_ratio"] = table[&"boarded_ratio"]
-	p[&"broken_ratio"] = table[&"broken_ratio"]
-	p[&"damage"] = table[&"damage"]
-	p[&"band_every"] = _pick(rng, table[&"band_every"])
+	p[&"lit_ratio"] = clampf(district.lit_ratio * rng.randf_range(0.7, 1.3), 0.0, 1.0)
+	p[&"grime"] = clampf(district.grime * rng.randf_range(0.8, 1.2), 0.0, 1.0)
+	p[&"boarded_ratio"] = district.boarded_ratio
+	p[&"broken_ratio"] = district.broken_ratio
+	p[&"damage"] = district.damage
+	p[&"band_every"] = _pick(rng, district.band_every)
 	p[&"seed"] = rng.randf() * 1000.0
 	# Neighborhood drift: a shared per-tile hue/value nudge so a street reads as one place.
 	var drift := RandomNumberGenerator.new()

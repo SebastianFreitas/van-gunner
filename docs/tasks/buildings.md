@@ -288,8 +288,10 @@ Four independent designs were judged; these verified points are folded into the 
   `travel_world.gd` + `travel_controller.gd` changes; `travel_stops.gd` dead fallback removed;
   smoke `assert_bay_mouth_clear`. Check + smoke. (The mouth building is three meshes, header +
   two flanks, so no body AABB can enclose the mouth; `MOUTH_TOP_Y` 7.85 sits under the header.)
-- [ ] 4. Districts as resources (`facade_district.gd`, 5 `.tres`, `facade_registry.gd`) and
+- [x] 4. Districts as resources (`facade_district.gd`, 5 `.tres`, `facade_registry.gd`) and
   `facade_props_upper.gd` (ledges, cornices, AC units, fire escapes, balconies, roof clutter).
+  Lesson: in a merged ArrayMesh, child parts (rails, rungs, brackets) may only be emitted when
+  their parent box passed the gate, or the mesh AABB straddles the mouth.
 - [ ] 5. `facade_props_ground.gd` (storefronts, awnings, roll-ups, docks, stoops, sidewalk
   furniture, fixtures + lights).
 - [ ] 6. Glow on the environment (`van.tscn`), scene dump re-blessed.

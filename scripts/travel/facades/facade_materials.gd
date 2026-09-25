@@ -54,6 +54,29 @@ static func unshaded_material(key: StringName, color: Color) -> StandardMaterial
 	return mat
 
 
+## Trim (parapet, cornice, ledges, downspout): a shade darker than the building's own accent.
+static func trim_material(preset: StringName) -> StandardMaterial3D:
+	var key := StringName("trim_" + String(preset))
+	var accent: Color = preset(preset)[&"accent_color"]
+	return prop_material(key, accent.darkened(0.1), 0.8, 0.05)
+
+
+static func iron_material() -> StandardMaterial3D:
+	return prop_material(&"iron", Color(0.07, 0.075, 0.075), 0.65, 0.7)
+
+
+static func metal_grey_material() -> StandardMaterial3D:
+	return prop_material(&"metal_grey", Color(0.42, 0.44, 0.44), 0.55, 0.6)
+
+
+static func rust_pipe_material() -> StandardMaterial3D:
+	return prop_material(&"rust_pipe", Color(0.24, 0.12, 0.06), 0.5, 0.75)
+
+
+static func concrete_material() -> StandardMaterial3D:
+	return prop_material(&"concrete", Color(0.3, 0.3, 0.29), 0.9, 0.0)
+
+
 ## Facade uniform values for a named skin. Always a fresh Dictionary so callers can
 ## mutate it (e.g. to override the seed) without disturbing other buildings.
 static func preset(name: StringName) -> Dictionary:

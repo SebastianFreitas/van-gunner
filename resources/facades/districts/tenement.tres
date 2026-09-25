@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="FacadeDistrict" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/travel/facades/facade_district.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"tenement"
+index = 0
+presets = Array[StringName]([&"brick_red", &"brick_red", &"brick_brown", &"brick_brown", &"plaster_tan", &"plaster_green"])
+height_min = 16.0
+height_max = 26.0
+tall_chance = 0.2
+tall_min = 28.0
+tall_max = 34.0
+ground_kinds = Array[int]([1, 1, 1, 2, 5, 0])
+lit_ratio = 0.35
+grime = 0.55
+boarded_ratio = 0.0
+broken_ratio = 0.03
+damage = 0.05
+band_every = Array[float]([0.0, 2.0, 3.0])
+cornice_chance = 0.7
+ledge_chance = 0.8
+ac_unit_chance = 0.25
+fire_escape_chance = 0.4
+balcony_chance = 0.2
+downspout_chance = 0.6
+roof_clutter_chance = 0.6
+wall_pipe_chance = 0.1
+lamp_color = Color(1, 0.62, 0.3, 1)
+lamp_energy = 1.2
+lamps_per_side = 2
+dead_lamp_chance = 0.05
+sign_words = PackedStringArray("BODEGA", "LAUNDRY", "PAWN", "LIQUOR", "CHECKS CASHED", "KEYS", "NOODLES", "PIZZA", "TATTOO", "BAIL BONDS")
+sign_chance = 0.6
+awning_chance = 0.5
+furniture_chance = 0.5

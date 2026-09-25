@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="FacadeDistrict" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/travel/facades/facade_district.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"civic"
+index = 4
+presets = Array[StringName]([&"stone_grey", &"stone_grey", &"plaster_tan", &"plaster_tan", &"brick_brown"])
+height_min = 14.0
+height_max = 20.0
+tall_chance = 0.15
+tall_min = 24.0
+tall_max = 30.0
+ground_kinds = Array[int]([5, 5, 5, 0, 1])
+lit_ratio = 0.25
+grime = 0.35
+boarded_ratio = 0.0
+broken_ratio = 0.02
+damage = 0.05
+band_every = Array[float]([1.0, 1.0, 2.0])
+cornice_chance = 0.95
+ledge_chance = 0.9
+ac_unit_chance = 0.05
+fire_escape_chance = 0.05
+balcony_chance = 0.3
+downspout_chance = 0.5
+roof_clutter_chance = 0.3
+wall_pipe_chance = 0.0
+lamp_color = Color(1, 0.78, 0.45, 1)
+lamp_energy = 1.1
+lamps_per_side = 2
+dead_lamp_chance = 0.03
+sign_words = PackedStringArray("CLINIC", "LIBRARY", "COURT", "POST", "CHURCH", "HALL", "BANK")
+sign_chance = 0.5
+awning_chance = 0.1
+furniture_chance = 0.5
