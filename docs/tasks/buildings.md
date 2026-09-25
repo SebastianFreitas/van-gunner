@@ -296,7 +296,7 @@ Four independent designs were judged; these verified points are folded into the 
   furniture) + `facade_mesh_kit.gd` (shared gated box/quad/commit helpers); fixtures + lights
   split into `facade_fixtures.gd`. (`visibility_range_end` is a GeometryInstance3D property:
   lights don't have it.)
-- [ ] 6. Glow on the environment (`van.tscn`), scene dump re-blessed.
+- [x] 6. Glow on the environment (`van.tscn`), scene dump re-blessed.
 - [ ] 7. Signs: `shop_booth_flyers.gd` `draw_block_text` made static, `facade_signs.gd`,
   `facade_sign.gdshader`, box / neon / blade / banner / poster.
 - [ ] 8. Set-piece framework (`facade_set_piece.gd`, registry scan, rare roll + cooldown) and

@@ -41,6 +41,14 @@ fog_density = 1.0
 fog_depth_curve = 1.5
 fog_depth_begin = 20.0
 fog_depth_end = 56.0
+glow_enabled = true
+glow_levels/3 = true
+glow_levels/5 = true
+glow_intensity = 0.45
+glow_strength = 1.0
+glow_bloom = 0.03
+glow_blend_mode = 0
+glow_hdr_threshold = 1.1
 
 [sub_resource type="BoxMesh" id="FrontPanelMesh"]
 size = Vector3(1.6, 3.05, 0.2)
