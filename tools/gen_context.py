@@ -16,11 +16,12 @@ from __future__ import annotations
 
 import os
 import re
+import subprocess
 from collections import defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "docs", "PROJECT_MAP.md")
-SKIP_DIRS = {".git", ".godot", "__pycache__", ".import"}
+SKIP_DIRS = {".git", ".godot", "__pycache__", ".import", ".claude"}
 
 
 def walk(exts):
@@ -146,8 +147,25 @@ def resource_table(folder, fields):
     return rows
 
 
+def read_committed(rel):
+    """The file as committed at HEAD, falling back to the working copy.
+
+    The owner keeps an uncommitted test edit in the balance file; the map
+    documents committed values so it reads the same in every checkout.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "show", f"HEAD:{rel}"], cwd=ROOT, capture_output=True, timeout=10
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return read(rel)
+    if proc.returncode == 0:
+        return proc.stdout.decode("utf8", errors="ignore")
+    return read(rel)
+
+
 def balance_values():
-    txt = read("resources/balance/game_balance.tres")
+    txt = read_committed("resources/balance/game_balance.tres")
     body = txt.split("[resource]", 1)[-1]
     rows = []
     for line in body.strip().splitlines():
