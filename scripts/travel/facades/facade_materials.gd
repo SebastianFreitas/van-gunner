@@ -10,6 +10,13 @@ static var _beam_material: StandardMaterial3D
 static var _prop_cache: Dictionary = {}
 static var _label_cache: Dictionary = {}
 
+## Linear-luminance cap for non-emissive prop albedo (trims and highlights, per the art budget).
+const PROP_ALBEDO_MAX := 0.40
+## Minimum roughness on props: no mirror sheen.
+const PROP_ROUGHNESS_MIN := 0.7
+## Maximum metallic on props: oil, cans, bolts, never a mirror.
+const PROP_METALLIC_MAX := 0.3
+
 
 static func facade_shader() -> Shader:
 	if _facade_shader == null:
@@ -47,6 +54,9 @@ static func facade_material(params: Dictionary) -> ShaderMaterial:
 	return mat
 
 
+## Every flat prop colour passes the art budget here (non-emissive albedo capped at linear
+## luminance 0.40 keeping hue, roughness at least 0.7, metallic at most 0.3), so set-pieces
+## calling it with older literals are held to the rule too; emissive parts keep their albedo.
 static func prop_material(
 	key: StringName,
 	color: Color,
@@ -58,9 +68,9 @@ static func prop_material(
 	if _prop_cache.has(key):
 		return _prop_cache[key] as StandardMaterial3D
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mat.roughness = roughness
-	mat.metallic = metallic
+	mat.albedo_color = color if emission_energy > 0.0 else _budget_albedo(color)
+	mat.roughness = clampf(roughness, PROP_ROUGHNESS_MIN, 1.0)
+	mat.metallic = clampf(metallic, 0.0, PROP_METALLIC_MAX)
 	if emission_energy > 0.0:
 		mat.emission_enabled = true
 		mat.emission = emission
@@ -69,14 +79,17 @@ static func prop_material(
 	return mat
 
 
-static func unshaded_material(key: StringName, color: Color) -> StandardMaterial3D:
-	if _prop_cache.has(key):
-		return _prop_cache[key] as StandardMaterial3D
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_prop_cache[key] = mat
-	return mat
+## Scales a colour down in linear space so its luminance sits at or under PROP_ALBEDO_MAX,
+## keeping hue and alpha; colours already inside the budget pass through unchanged.
+static func _budget_albedo(color: Color) -> Color:
+	var lin := color.srgb_to_linear()
+	var lum := 0.2126 * lin.r + 0.7152 * lin.g + 0.0722 * lin.b
+	if lum <= PROP_ALBEDO_MAX:
+		return color
+	var k := PROP_ALBEDO_MAX / lum
+	var scaled := Color(lin.r * k, lin.g * k, lin.b * k).linear_to_srgb()
+	scaled.a = color.a
+	return scaled
 
 
 ## Trim (parapet, cornice, ledges, downspout): a shade darker than the building's own accent.
@@ -87,15 +100,15 @@ static func trim_material(preset_id: StringName) -> StandardMaterial3D:
 
 
 static func iron_material() -> StandardMaterial3D:
-	return prop_material(&"iron", Color(0.07, 0.075, 0.075), 0.65, 0.7)
+	return prop_material(&"iron", Color(0.07, 0.075, 0.075), 0.8, 0.3)
 
 
 static func metal_grey_material() -> StandardMaterial3D:
-	return prop_material(&"metal_grey", Color(0.42, 0.44, 0.44), 0.55, 0.6)
+	return prop_material(&"metal_grey", Color(0.42, 0.44, 0.44), 0.75, 0.3)
 
 
 static func rust_pipe_material() -> StandardMaterial3D:
-	return prop_material(&"rust_pipe", Color(0.24, 0.12, 0.06), 0.5, 0.75)
+	return prop_material(&"rust_pipe", Color(0.24, 0.12, 0.06), 0.85, 0.2)
 
 
 static func concrete_material() -> StandardMaterial3D:
@@ -120,35 +133,35 @@ static func beam_material() -> StandardMaterial3D:
 static func ground_material(key: StringName) -> StandardMaterial3D:
 	match key:
 		&"awning_red":
-			return prop_material(key, Color(0.45, 0.12, 0.1), 0.9, 0.0)
+			return prop_material(key, Color(0.34, 0.11, 0.09), 0.9, 0.0)
 		&"awning_green":
-			return prop_material(key, Color(0.12, 0.3, 0.18), 0.9, 0.0)
+			return prop_material(key, Color(0.13, 0.22, 0.15), 0.9, 0.0)
 		&"awning_blue":
-			return prop_material(key, Color(0.12, 0.18, 0.35), 0.9, 0.0)
+			return prop_material(key, Color(0.13, 0.16, 0.24), 0.9, 0.0)
 		&"awning_tan":
-			return prop_material(key, Color(0.5, 0.42, 0.28), 0.9, 0.0)
+			return prop_material(key, Color(0.4, 0.34, 0.24), 0.9, 0.0)
 		&"hydrant":
-			return prop_material(key, Color(0.55, 0.12, 0.08), 0.6, 0.3)
+			return prop_material(key, Color(0.42, 0.12, 0.09), 0.75, 0.2)
 		&"news_box":
-			return prop_material(key, Color(0.2, 0.25, 0.4), 0.5, 0.2)
+			return prop_material(key, Color(0.18, 0.21, 0.28), 0.75, 0.2)
 		&"dumpster":
-			return prop_material(key, Color(0.1, 0.25, 0.15), 0.8, 0.4)
+			return prop_material(key, Color(0.1, 0.18, 0.13), 0.85, 0.25)
 		&"booth":
-			return prop_material(key, Color(0.08, 0.1, 0.12), 0.4, 0.4)
+			return prop_material(key, Color(0.08, 0.1, 0.12), 0.75, 0.3)
 		&"booth_glow":
-			return prop_material(key, Color(0.6, 0.8, 1.0), 0.5, 0.0, Color(0.6, 0.8, 1.0), 2.0)
+			return prop_material(key, Color(0.45, 0.55, 0.4), 0.7, 0.0, Color(0.7, 0.9, 0.6), 1.25)
 		&"vending":
-			return prop_material(key, Color(0.35, 0.08, 0.08), 0.4, 0.3)
+			return prop_material(key, Color(0.35, 0.08, 0.08), 0.75, 0.2)
 		&"vending_glow":
-			return prop_material(key, Color(1.0, 0.9, 0.7), 0.5, 0.0, Color(1.0, 0.9, 0.7), 2.2)
+			return prop_material(key, Color(1.0, 0.9, 0.7), 0.7, 0.0, Color(1.0, 0.9, 0.7), 2.2)
 		&"bollard":
-			return prop_material(key, Color(0.15, 0.15, 0.15), 0.5, 0.6)
+			return prop_material(key, Color(0.15, 0.15, 0.15), 0.8, 0.3)
 		&"crate":
 			return prop_material(key, Color(0.4, 0.3, 0.18), 0.95, 0.0)
 		&"bench":
-			return prop_material(key, Color(0.25, 0.18, 0.1), 0.7, 0.05)
+			return prop_material(key, Color(0.25, 0.18, 0.1), 0.8, 0.05)
 		_:
-			return prop_material(key, Color(0.3, 0.3, 0.3), 0.6, 0.0)
+			return prop_material(key, Color(0.3, 0.3, 0.3), 0.8, 0.0)
 
 
 ## Facade uniform values for a named skin. Always a fresh Dictionary so callers can

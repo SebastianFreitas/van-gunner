@@ -111,7 +111,10 @@ Surfaces, in the road's recipe:
   instead of pasting their own copies.
 - **Small props** (under about 1 m, or anything built by `prop_material()`)
   may use a flat `StandardMaterial3D` colour, inside the albedo budget,
-  roughness 0.7 or more, metallic 0.3 or less.
+  roughness 0.7 or more, metallic 0.3 or less. `prop_material()` in
+  `facade_materials.gd` enforces this (non-emissive albedo capped at 0.40
+  linear luminance, hue kept): still write literals inside the budget, since
+  the clamp only hides a wrong value.
 
 The van: the owner likes it as it is. Its shaders are a reference, not a
 migration target; change the van only to fix a break of the dark budget,

@@ -263,7 +263,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-238 GDScript files, 34249 lines.
+238 GDScript files, 34262 lines.
 
 ### `scenes/corridor/`
 
@@ -508,7 +508,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `facade_district.gd` | `FacadeDistrict` | 55 | One neighborhood look: skin presets, height range, ground-floor kinds, window state ratios and prop chances. |
 | `facade_fixtures.gd` | — | 107 | Wall lamp fixtures and their SpotLight3D pools for one facade side: district colour, dead lamps, the world-wide light cap, and the layer-1 cull mask that keeps… |
 | `facade_keep_out.gd` | — | 163 | Keep-out volumes for one facade side: the gate every facade placer passes an AABB through, so nothing ever stands in the raider lane, hangs over the road below… |
-| `facade_materials.gd` | — | 315 | Static material factories for the facade system: a ShaderMaterial per building from a parameter dictionary, cached StandardMaterial3D props by key, and named s… |
+| `facade_materials.gd` | — | 328 | Static material factories for the facade system: a ShaderMaterial per building from a parameter dictionary, cached StandardMaterial3D props by key, and named s… |
 | `facade_mesh_kit.gd` | — | 121 | Box-and-quad helpers shared by every facade prop builder: gated boxes into a SurfaceTool, committing an ArrayMesh node, and single BoxMesh nodes for props that… |
 | `facade_overheads.gd` | — | 146 | Cross-street industrial dressing (pipe bridges, catwalks, ribs) built under Facades/Overhead when both sides are plain; it never reaches below 9 m over the roa… |
 | `facade_plan.gd` | — | 191 | Plans one facade side: splits the 20 m tile edge into buildings and gives each a skin preset, height, floors, ground kind and setback. |

@@ -119,15 +119,30 @@ run), and gameplay collision.
   `scenes/shaders/facade_styles.gdshaderinc`. May split into 6a (brick,
   stone, plaster) and 6b (concrete panel, glass, corrugated, bare frame).
 
-- [ ] 7. **Facade props and set-pieces.** `scripts/travel/facades/facade_materials.gd`
-  (`prop_material`, `unshaded_material`) and the set-piece scripts under
-  `scripts/travel/facades/set_pieces/`: every flat prop colour inside the
-  albedo budget, roughness >= 0.7, metallic <= 0.3; emissive parts follow
-  the emission rule (windows under the threshold, lamps and neon may
-  bloom). Large prop surfaces (over about 1 m: awnings, roll-up doors,
-  loading docks, set-piece bodies) move to a grime shader material instead
-  of flat colour. Split by family if large (7a ground props, 7b upper props,
-  7c set-pieces).
+- [x] 7a. **Prop budget in one place.** `facade_materials.gd`: `prop_material()`
+  caps non-emissive albedo at linear luminance 0.40 (hue kept), clamps
+  roughness to >= 0.7 and metallic to <= 0.3, so every prop and set-piece
+  is held to the rule; the named palette (iron, metal grey, rust pipe,
+  awnings, street furniture) is retuned to already sit inside it; the phone
+  booth glass is a dim fluorescent-green pane (1.25) instead of blue-white
+  2.0; the unused `unshaded_material` is gone.
+
+- [ ] 7b. **Set-piece literals and light tints.** The set-piece scripts under
+  `scripts/travel/facades/set_pieces/`: retune the `prop_material` literals
+  the clamp now overrides (tape, laundry white and yellow, hazard, crane
+  yellow, pump, net, plank; roughness and metallic) so source matches what
+  renders. Lit panes go under the threshold, warm: `pedestrian_bridge`
+  `bridge_glow` (blue-white 1.8), `chapel` `clock_face` (1.4 near-white).
+  Sources keep their bloom but lose the white or blue-white tint: `gas_canopy`
+  `canopy_glow`, `parking_deck` `fluoro` (to sick fluorescent green-white),
+  `rooftop_billboard` `flood` (tungsten). `mural.gd`'s texture colours
+  inside the albedo budget. Beacons, flame, neon, `glass_crown` cyan stay.
+
+- [ ] 7c. **Large prop surfaces on grime.** Awnings, roll-up doors, loading
+  docks and set-piece bodies over about 1 m move from flat `prop_material`
+  colour to a grime shader material (a small shader on the grime include
+  with a `surface_size_m` uniform and a base colour), in
+  `facade_props_ground.gd` and the set-pieces that build big slabs.
 
 - [ ] 8. **Industrial surface.** Rewrite `scenes/corridor/industrial_surface.gdshader`
   in the road's recipe on the grime include: metre-scale panels and seams
@@ -275,6 +290,21 @@ step 4; the change reads on close walls (`03` right side), not in the means.
 shot                           kind     mean    p95   clip%    sat
 03-idle-outside                clean  0.0094 0.0232   0.236  0.407
 06-combat-outside              clean  0.0364 0.1783   1.673  0.422
+09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
+12-rear-park-stop-outside      clean  0.0043 0.0176   0.008  0.383
+```
+
+### Step 7a after (prop budget in `prop_material`)
+
+`prop_material()` holds every flat prop to the budget (albedo <= 0.40 linear luminance,
+roughness >= 0.7, metallic <= 0.3); the named palette is retuned and the phone booth glass is
+a dim green pane. Props are a small share of the frame, so the means are step 6's: `06` stays
+over its target on the big sign and lamp heads, not on props.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0091 0.0230   0.237  0.407
+06-combat-outside              clean  0.0354 0.1773   1.604  0.429
 09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
 12-rear-park-stop-outside      clean  0.0043 0.0176   0.008  0.383
 ```
