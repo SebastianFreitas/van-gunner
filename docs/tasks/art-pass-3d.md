@@ -171,7 +171,7 @@ run), and gameplay collision.
   `facade_overheads.gd`: consistent with the street (grime shaders, budget,
   pools). The side street's `FarVoid` stays black.
 
-- [ ] 13. **Van audit.** Read the van shots against the budget. Change only a
+- [x] 13. **Van audit.** Read the van shots against the budget. Change only a
   clear break (and say which); expected result: no change, recorded here.
   Carries step 3's leftover: `06-combat-outside` (mean 0.036, target 0.015)
   did not move when the lamps changed, so its wall wash is the van's own
@@ -438,4 +438,24 @@ shot                           kind     mean    p95   clip%    sat
 06-combat-outside              clean  0.0350 0.1783   1.560  0.430
 09-elevator-stop-outside       clean  0.0054 0.0125   0.042  0.529
 12-rear-park-stop-outside      clean  0.0048 0.0225   0.018  0.383
+```
+
+### Step 13 (van audit): no change
+
+The van interior is inside its budget in every `*-back` shot (mean 0.0091..0.0093 against 0.011,
+p95 0.0217..0.0227 against 0.025, nothing clipped). A test run with the `ExteriorLight` "moon" at
+energy 0 (reverted, never committed) took `06-combat-outside` only from 0.0360 to 0.0343 mean,
+p95 unchanged at 0.178: the moon draws the diagonal shadow bands on the upper walls, not the
+excess. What keeps `06` over its target is emissive: the big vertical sign and lit panes right
+beside the overhead camera, which sits at second-floor height. The owner likes the van's light
+on the road sides and inside (door spill, rear cone, the moon's look), so `DoorSpill`,
+`RearCone` and `ExteriorLight` stay as they are, a deliberate exception to "light only from
+sources you can point at". Step 14 records that exception and that `06`'s target reads
+emissives close to a high camera rather than the street's ambient darkness.
+
+```
+shot                           kind     mean    p95   clip%    sat
+05-combat-back                 clean  0.0091 0.0217   0.000  0.420
+06-combat-outside              clean  0.0360 0.1775   1.672  0.430
+06-combat-outside  (moon off)  clean  0.0343 0.1783   1.557  0.480
 ```
