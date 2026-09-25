@@ -61,7 +61,7 @@ func build(ctx: Dictionary) -> void:
 	var mid_z := _z_at(plan, ss, width * 0.5)
 
 	var glass := _FacadeMaterials.prop_material(
-		&"stained_glass", Color(0.4, 0.15, 0.25), 0.4, 0.1, Color(0.9, 0.5, 0.35), 2.2
+		&"stained_glass", Color(0.4, 0.15, 0.25), 0.7, 0.1, Color(0.9, 0.5, 0.35), 2.2
 	)
 	var trim := _FacadeMaterials.trim_material(plan[&"preset"])
 	_FacadeMeshKit.add_cylinder_node(
@@ -88,7 +88,7 @@ func build(ctx: Dictionary) -> void:
 	_FacadeMeshKit.add_cylinder_node(
 		host, "ClockFace", 1.0, 1.0, 0.06, clock_center,
 		_FacadeMaterials.prop_material(
-			&"clock_face", Color(0.9, 0.88, 0.8), 0.6, 0.0, Color(1.0, 0.95, 0.8), 1.4
+			&"clock_face", Color(0.35, 0.32, 0.26), 0.7, 0.0, Color(1.0, 0.85, 0.6), 1.2
 		),
 		false, keep_out, _ALONG_X
 	)

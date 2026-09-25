@@ -87,7 +87,7 @@ func build(ctx: Dictionary) -> void:
 			host, plank_st, "ScaffoldPlanks",
 			_FacadeMaterials.prop_material(&"plank", Color(0.45, 0.35, 0.2), 0.95, 0.0), false
 		)
-	var net_mat := _FacadeMaterials.prop_material(&"net", Color(0.2, 0.5, 0.3, 0.55), 0.9, 0.0)
+	var net_mat := _FacadeMaterials.prop_material(&"net", Color(0.18, 0.3, 0.22, 0.55), 0.9, 0.0)
 	net_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	var net_st := SurfaceTool.new()
 	net_st.begin(Mesh.PRIMITIVE_TRIANGLES)

@@ -76,7 +76,7 @@ func build(ctx: Dictionary) -> void:
 	if _FacadeMeshKit.add_box(tape_st, tape_center, Vector3(0.02, 0.08, unit_w), keep_out):
 		_FacadeMeshKit.commit(
 			host, tape_st, "Tape",
-			_FacadeMaterials.prop_material(&"tape", Color(0.95, 0.85, 0.1), 0.6, 0.0), false
+			_FacadeMaterials.prop_material(&"tape", Color(0.73, 0.65, 0.07), 0.7, 0.0), false
 		)
 		var post_st := SurfaceTool.new()
 		post_st.begin(Mesh.PRIMITIVE_TRIANGLES)

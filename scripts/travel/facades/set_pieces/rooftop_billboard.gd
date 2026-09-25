@@ -84,7 +84,7 @@ func build(ctx: Dictionary) -> void:
 			flood_st, Vector3(post_x, flood_y, panel_center.z + dz), Vector3(0.15, 0.15, 0.5)
 		)
 	var flood_mat := _FacadeMaterials.prop_material(
-		&"flood", Color(0.9, 0.9, 0.8), 0.4, 0.2, Color(1, 1, 0.9), 2.5
+		&"flood", Color(0.4, 0.36, 0.28), 0.7, 0.2, Color(1.0, 0.8, 0.5), 2.5
 	)
 	_FacadeMeshKit.commit(host, flood_st, "Floods", flood_mat, false)
 

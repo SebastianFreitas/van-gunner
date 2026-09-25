@@ -65,7 +65,7 @@ func build(ctx: Dictionary) -> void:
 	)
 	# Glow strip flush under the canopy: tile y 6.15..6.2, centre tile y 6.175 = y0 + 6.575.
 	var glow_mat := _FacadeMaterials.prop_material(
-		&"canopy_glow", Color(0.9, 0.9, 0.85), 0.5, 0.0, Color(1.0, 1.0, 0.9), 2.2
+		&"canopy_glow", Color(0.4, 0.36, 0.28), 0.7, 0.0, Color(1.0, 0.82, 0.55), 2.2
 	)
 	_FacadeMeshKit.add_box_node(
 		host, "CanopyGlow", Vector3(2.8, 0.05, 7.8), Vector3(cx, _BASE_Y + 6.575, z_mid),
@@ -73,7 +73,7 @@ func build(ctx: Dictionary) -> void:
 	)
 
 	var post_mat := _FacadeMaterials.concrete_material()
-	var pump_mat := _FacadeMaterials.prop_material(&"pump", Color(0.7, 0.1, 0.1), 0.6, 0.2)
+	var pump_mat := _FacadeMaterials.prop_material(&"pump", Color(0.7, 0.1, 0.1), 0.7, 0.2)
 	for i in 2:
 		var pu := mid + (2.0 * float(i) - 1.0) * 3.0
 		_FacadeMeshKit.add_box_node(
@@ -118,7 +118,7 @@ func build(ctx: Dictionary) -> void:
 		return
 	var light := OmniLight3D.new()
 	light.name = "CanopyLight"
-	light.light_color = Color(1.0, 1.0, 1.0)
+	light.light_color = Color(1.0, 0.85, 0.6)
 	light.light_energy = 1.5
 	light.omni_range = 10.0
 	light.shadow_enabled = false

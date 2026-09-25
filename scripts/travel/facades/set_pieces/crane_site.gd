@@ -59,7 +59,7 @@ func build(ctx: Dictionary) -> void:
 	var mid_z := _z_at(plan, ss, width * 0.5)
 
 	# Set-back relative to xf (not absolute x), so a setback building still clears the lane box.
-	var net_mat := _FacadeMaterials.prop_material(&"net", Color(0.2, 0.5, 0.3, 0.55), 0.9, 0.0)
+	var net_mat := _FacadeMaterials.prop_material(&"net", Color(0.18, 0.3, 0.22, 0.55), 0.9, 0.0)
 	net_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	var net_y := _BASE_Y + _GROUND_H + 1.5 * _FLOOR_H
 	_FacadeMeshKit.add_box_node(
@@ -81,7 +81,7 @@ func build(ctx: Dictionary) -> void:
 		_FacadeMeshKit.commit(host, mast_st, "CraneMast", _FacadeMaterials.iron_material(), true)
 
 	var iron := _FacadeMaterials.iron_material()
-	var yellow := _FacadeMaterials.prop_material(&"crane_yellow", Color(0.85, 0.6, 0.1), 0.6, 0.3)
+	var yellow := _FacadeMaterials.prop_material(&"crane_yellow", Color(0.62, 0.44, 0.08), 0.7, 0.3)
 	var jib_y := y_top + mast_h - 0.4
 	var jib_yaw := rng.randf_range(-0.3, 0.3)
 	var jib_c := Vector3(xf - ss * 6.0, jib_y, mast_c.z)
@@ -106,7 +106,7 @@ func build(ctx: Dictionary) -> void:
 	)
 
 	var beacon_mat := _FacadeMaterials.prop_material(
-		&"beacon_red", Color(0.6, 0.05, 0.05), 0.5, 0.0, Color(1.0, 0.1, 0.1), 3.0
+		&"beacon_red", Color(0.6, 0.05, 0.05), 0.7, 0.0, Color(1.0, 0.1, 0.1), 3.0
 	)
 	_FacadeMeshKit.add_box_node(
 		host, "Beacon", Vector3(0.25, 0.25, 0.25),

@@ -54,7 +54,7 @@ func build(ctx: Dictionary) -> void:
 		_FacadeMeshKit.commit(
 			host, band_st, "Crown",
 			_FacadeMaterials.prop_material(
-				&"crown_glow", Color(0.5, 0.7, 0.9), 0.3, 0.2, Color(0.6, 0.8, 1.0), 2.4
+				&"crown_glow", Color(0.5, 0.7, 0.9), 0.7, 0.2, Color(0.6, 0.8, 1.0), 2.4
 			),
 			false
 		)
@@ -67,7 +67,7 @@ func build(ctx: Dictionary) -> void:
 	if _FacadeMeshKit.add_box(mast_st, mast_center, Vector3(0.1, 3.0, 0.1), keep_out):
 		_FacadeMeshKit.commit(host, mast_st, "CrownBeacon", _FacadeMaterials.iron_material(), true)
 		var beacon_mat := _FacadeMaterials.prop_material(
-			&"beacon_red", Color(0.6, 0.05, 0.05), 0.5, 0.0, Color(1.0, 0.1, 0.1), 3.0
+			&"beacon_red", Color(0.6, 0.05, 0.05), 0.7, 0.0, Color(1.0, 0.1, 0.1), 3.0
 		)
 		_FacadeMeshKit.add_box_node(
 			host, "Beacon", Vector3(0.3, 0.3, 0.3), Vector3(mast_x, y_top + 3.15, mid_z),

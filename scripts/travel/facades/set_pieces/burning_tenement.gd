@@ -67,7 +67,7 @@ func build(ctx: Dictionary) -> void:
 		_FacadeMeshKit.commit(
 			host, st, "Flames",
 			_FacadeMaterials.prop_material(
-				&"flame", Color(1.0, 0.5, 0.1), 0.5, 0.0, Color(1.0, 0.45, 0.1), 5.0
+				&"flame", Color(1.0, 0.5, 0.1), 0.7, 0.0, Color(1.0, 0.45, 0.1), 5.0
 			),
 			false
 		)

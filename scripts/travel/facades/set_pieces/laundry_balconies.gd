@@ -14,8 +14,8 @@ const _FLOOR_H := _FacadePlan.FLOOR_HEIGHT
 const MAX_BALCONIES := 24
 const _COLOR_NAMES: Array[StringName] = [&"white", &"red", &"blue", &"yellow", &"green"]
 const _COLORS := {
-	&"white": Color(0.88, 0.88, 0.86), &"red": Color(0.7, 0.15, 0.15),
-	&"blue": Color(0.15, 0.25, 0.55), &"yellow": Color(0.85, 0.75, 0.2),
+	&"white": Color(0.65, 0.65, 0.64), &"red": Color(0.7, 0.15, 0.15),
+	&"blue": Color(0.15, 0.25, 0.55), &"yellow": Color(0.74, 0.65, 0.17),
 	&"green": Color(0.25, 0.5, 0.25),
 }
 

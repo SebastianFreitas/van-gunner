@@ -127,7 +127,7 @@ run), and gameplay collision.
   booth glass is a dim fluorescent-green pane (1.25) instead of blue-white
   2.0; the unused `unshaded_material` is gone.
 
-- [ ] 7b. **Set-piece literals and light tints.** The set-piece scripts under
+- [x] 7b. **Set-piece literals and light tints.** The set-piece scripts under
   `scripts/travel/facades/set_pieces/`: retune the `prop_material` literals
   the clamp now overrides (tape, laundry white and yellow, hazard, crane
   yellow, pump, net, plank; roughness and metallic) so source matches what
@@ -307,4 +307,21 @@ shot                           kind     mean    p95   clip%    sat
 06-combat-outside              clean  0.0354 0.1773   1.604  0.429
 09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
 12-rear-park-stop-outside      clean  0.0043 0.0176   0.008  0.383
+```
+
+### Step 7b after (set-piece literals and light tints)
+
+Set-piece `prop_material` literals now sit inside the budget as written (tape, hazard, crane
+yellow, laundry white and yellow, net desaturated; every roughness >= 0.7, beacons included,
+consistent across their shared cache keys). `bridge_glow` and `clock_face` are warm panes
+under the threshold (0.85 and 0.88 emission luminance); `canopy_glow`, its light and `flood`
+are tungsten, `fluoro` sick green-white; the mural palettes are capped (base 0.20, the rest
+0.30). No set-piece rolls in the smoke's shots, so the numbers are 7a's within noise.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0089 0.0227   0.244  0.406
+06-combat-outside              clean  0.0350 0.1783   1.560  0.430
+09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
+12-rear-park-stop-outside      clean  0.0043 0.0173   0.008  0.383
 ```

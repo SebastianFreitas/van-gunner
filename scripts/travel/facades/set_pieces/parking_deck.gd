@@ -80,7 +80,7 @@ func build(ctx: Dictionary) -> void:
 		_FacadeMeshKit.commit(
 			host, light_st, "DeckLights",
 			_FacadeMaterials.prop_material(
-				&"fluoro", Color(0.8, 0.9, 0.95), 0.4, 0.1, Color(0.75, 0.9, 1.0), 2.0
+				&"fluoro", Color(0.4, 0.45, 0.38), 0.7, 0.1, Color(0.78, 1.0, 0.72), 2.0
 			),
 			false
 		)
@@ -91,7 +91,7 @@ func build(ctx: Dictionary) -> void:
 	if _FacadeMeshKit.add_box(stripe_st, stripe_center, Vector3(0.02, 0.15, 3.0), keep_out):
 		_FacadeMeshKit.commit(
 			host, stripe_st, "RampStripe",
-			_FacadeMaterials.prop_material(&"hazard", Color(0.9, 0.75, 0.1), 0.8, 0.0), false
+			_FacadeMaterials.prop_material(&"hazard", Color(0.77, 0.64, 0.08), 0.8, 0.0), false
 		)
 
 

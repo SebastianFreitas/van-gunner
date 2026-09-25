@@ -12,11 +12,11 @@ const _CACHE_CAP := 16
 ## warm / cool / mono; each is [base, shape a, shape b, glyph accent].
 const _PALETTES := [
 	[
-		Color(0.85, 0.35, 0.2), Color(0.95, 0.75, 0.25), Color(0.2, 0.25, 0.35),
-		Color(0.9, 0.9, 0.85),
+		Color(0.81, 0.33, 0.19), Color(0.72, 0.56, 0.18), Color(0.2, 0.25, 0.35),
+		Color(0.59, 0.59, 0.55),
 	],
-	[Color(0.2, 0.5, 0.7), Color(0.9, 0.85, 0.7), Color(0.1, 0.15, 0.25), Color(0.7, 0.2, 0.3)],
-	[Color(0.1, 0.1, 0.1), Color(0.9, 0.9, 0.9), Color(0.6, 0.6, 0.6), Color(0.8, 0.2, 0.2)],
+	[Color(0.2, 0.5, 0.7), Color(0.62, 0.58, 0.48), Color(0.1, 0.15, 0.25), Color(0.7, 0.2, 0.3)],
+	[Color(0.1, 0.1, 0.1), Color(0.58, 0.58, 0.58), Color(0.45, 0.45, 0.45), Color(0.8, 0.2, 0.2)],
 ]
 
 static var _cache: Dictionary = {}

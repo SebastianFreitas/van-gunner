@@ -61,7 +61,7 @@ func build(ctx: Dictionary) -> void:
 	if tallest_placed:
 		var beacon_center := tallest_center + Vector3(0.0, tallest_h * 0.5 + 0.125, 0.0)
 		var beacon_mat := _FacadeMaterials.prop_material(
-			&"beacon_red", Color(0.6, 0.05, 0.05), 0.5, 0.0, Color(1.0, 0.1, 0.1), 3.0
+			&"beacon_red", Color(0.6, 0.05, 0.05), 0.7, 0.0, Color(1.0, 0.1, 0.1), 3.0
 		)
 		_FacadeMeshKit.add_box_node(
 			host, "Beacon", Vector3(0.25, 0.25, 0.25), beacon_center, Vector3.ZERO, beacon_mat,

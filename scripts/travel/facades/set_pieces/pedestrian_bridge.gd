@@ -48,7 +48,7 @@ func build(ctx: Dictionary) -> void:
 		_FacadeMeshKit.commit(
 			host, glow_st, "BridgeGlow",
 			_FacadeMaterials.prop_material(
-				&"bridge_glow", Color(0.7, 0.8, 0.9), 0.4, 0.1, Color(0.8, 0.9, 1.0), 1.8
+				&"bridge_glow", Color(0.3, 0.24, 0.16), 0.7, 0.1, Color(1.0, 0.72, 0.42), 1.5
 			),
 			false
 		)
