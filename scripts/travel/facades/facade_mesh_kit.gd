@@ -87,14 +87,21 @@ static func add_box_node(
 	return mi
 
 
-## A single CylinderMesh node (a water tower's tank or lid); gated by a box AABB sized to the
-## larger radius, since a keep-out box can't represent a circle exactly.
+## A single CylinderMesh node (a water tower's tank or lid, a pipe bridge's pipe laid on its
+## side); gated by a box AABB sized to the larger radius, since a keep-out box can't represent a
+## circle exactly. `rotation_rad` defaults to upright; a quarter turn about z or x lays the
+## cylinder along x or z, so the gate AABB swaps height into that axis to match.
 static func add_cylinder_node(
 	host: Node3D, node_name: String, top_radius: float, bottom_radius: float, height: float,
-	center: Vector3, material: Material, shadows: bool, keep_out: RefCounted
+	center: Vector3, material: Material, shadows: bool, keep_out: RefCounted,
+	rotation_rad: Vector3 = Vector3.ZERO
 ) -> MeshInstance3D:
 	var max_r := maxf(top_radius, bottom_radius)
 	var gate_size := Vector3(2.0 * max_r, height, 2.0 * max_r)
+	if rotation_rad.z != 0.0:
+		gate_size = Vector3(height, 2.0 * max_r, 2.0 * max_r)
+	elif rotation_rad.x != 0.0:
+		gate_size = Vector3(2.0 * max_r, 2.0 * max_r, height)
 	if not keep_out.allows(_FacadeKeepOut.box_aabb(center, gate_size)):
 		return null
 	var mi := MeshInstance3D.new()
@@ -105,6 +112,7 @@ static func add_cylinder_node(
 	cyl.height = height
 	mi.mesh = cyl
 	mi.position = center
+	mi.rotation = rotation_rad
 	mi.material_override = material
 	mi.cast_shadow = SHADOW_ON if shadows else SHADOW_OFF
 	mi.visibility_range_end = VISIBILITY_RANGE

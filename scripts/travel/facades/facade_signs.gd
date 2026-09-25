@@ -22,7 +22,8 @@ const VISIBILITY_RANGE := 64.0
 # facade_sign.gdshader's own uniform defaults, reused for kinds without their own colour.
 const _DEFAULT_COLOR := Color(1.0, 0.85, 0.6)
 const _DEFAULT_ENERGY := 2.4
-const _NEON_COLORS: Array[Color] = [
+## Public so the neon_blade set-piece can share the same palette.
+const NEON_COLORS: Array[Color] = [
 	Color(1.0, 0.3, 0.6), Color(0.4, 0.9, 1.0), Color(1.0, 0.7, 0.3), Color(0.5, 1.0, 0.5),
 	Color(1.0, 0.35, 0.3),
 ]
@@ -43,6 +44,10 @@ static func build(
 	host: Node3D, plan: Dictionary, side_sign: float, keep_out: RefCounted, rng: RandomNumberGenerator,
 	district: FacadeDistrict
 ) -> void:
+	# A rare piece that owns this building's face (a mural, a collapse) suppresses its own sign
+	# before any RNG draw, since the piece already consumed this plan's identity.
+	if plan.get(&"suppress", []).has(&"signs"):
+		return
 	# Roll first, always, so a mouth or wordless district still consumes the same RNG draw as
 	# every other building, keeping the fixtures built after this side's loop aligned.
 	if rng.randf() >= district.sign_chance:
@@ -73,7 +78,12 @@ static func build(
 		&"neon":
 			_build_neon(host, plan, side_sign, keep_out, rng, district, word)
 		&"blade":
-			_build_blade(host, plan, side_sign, keep_out, rng, word)
+			var u_center := float(plan[&"width"]) * 0.5 + (1.0 if rng.randf() < 0.5 else -1.0)
+			var seed_value := rng.randf() * 1000.0
+			build_blade(
+				host, "SignBlade", plan, side_sign, keep_out, u_center, word, BLADE_SIZE,
+				BLADE_BOTTOM_Y, _DEFAULT_COLOR, _DEFAULT_ENERGY, seed_value, 0.0, 0.0
+			)
 		&"banner":
 			_build_banner(host, plan, side_sign, keep_out, rng, word)
 		&"poster":
@@ -88,7 +98,7 @@ static func _z_at(plan: Dictionary, side_sign: float, u: float) -> float:
 
 
 ## Every box face except those in skip_normals, in a plain 0..1 prop UV (dark backing faces).
-static func _emit_dark_faces(
+static func emit_dark_faces(
 	st: SurfaceTool, center: Vector3, size: Vector3, skip_normals: Array[Vector3]
 ) -> void:
 	var h := size * 0.5
@@ -106,7 +116,7 @@ static func _emit_dark_faces(
 
 
 ## A quad on the x = x plane; v runs top(0)-to-bottom(1), since an Image's row 0 is its top.
-static func _emit_face_x(
+static func emit_face_x(
 	st: SurfaceTool, x: float, y_top: float, y_bot: float, z_center: float, width: float, ss: float
 ) -> void:
 	var z_lo := z_center - ss * width * 0.5
@@ -117,8 +127,8 @@ static func _emit_face_x(
 	)
 
 
-## A quad on the z = z plane (a blade's large face); same top-v-0 rule as _emit_face_x.
-static func _emit_face_z(
+## A quad on the z = z plane (a blade's large face); same top-v-0 rule as emit_face_x.
+static func emit_face_z(
 	st: SurfaceTool, z: float, y_top: float, y_bot: float, x_center: float, depth: float, normal_z: float
 ) -> void:
 	var x_lo := x_center - depth * 0.5
@@ -130,7 +140,7 @@ static func _emit_face_z(
 
 
 ## Shared two-surface build (box, blade): dark faces but skip_normals, then text_cb's face(s).
-static func _build_boxed(
+static func build_boxed(
 	host: Node3D, node_name: String, center: Vector3, size: Vector3, skip_normals: Array[Vector3],
 	keep_out: RefCounted, text_cb: Callable, sign_mat: ShaderMaterial
 ) -> void:
@@ -139,7 +149,7 @@ static func _build_boxed(
 	var mesh := ArrayMesh.new()
 	var st_dark := SurfaceTool.new()
 	st_dark.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_emit_dark_faces(st_dark, center, size, skip_normals)
+	emit_dark_faces(st_dark, center, size, skip_normals)
 	st_dark.commit(mesh)
 	mesh.surface_set_material(0, _FacadeMaterials.prop_material(&"sign_box", Color(0.05, 0.05, 0.05), 0.7, 0.3))
 	var st_text := SurfaceTool.new()
@@ -166,7 +176,7 @@ static func _build_flat(
 		return
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_emit_face_x(st, x, y_top, y_bot, z_center, width, side_sign)
+	emit_face_x(st, x, y_top, y_bot, z_center, width, side_sign)
 	var mi := MeshInstance3D.new()
 	mi.name = node_name
 	mi.mesh = st.commit()
@@ -189,10 +199,10 @@ static func _build_box(
 	var sign_mat := _FacadeMaterials.sign_material(
 		word, 4, false, _DEFAULT_COLOR, _DEFAULT_ENERGY, 0, 0.0, 0.0, 0.0, float(word.length())
 	)
-	_build_boxed(
+	build_boxed(
 		host, "SignBox", center, size, [Vector3(-side_sign, 0.0, 0.0)], keep_out,
 		func(st: SurfaceTool) -> void:
-			_emit_face_x(
+			emit_face_x(
 				st, center.x - side_sign * size.x * 0.5, center.y + size.y * 0.5,
 				center.y - size.y * 0.5, center.z, size.z, side_sign
 			),
@@ -207,7 +217,7 @@ static func _build_neon(
 ) -> void:
 	var z_center := _z_at(plan, side_sign, float(plan[&"width"]) / float(plan[&"ground_units"]) * 0.5)
 	var x := _FacadePlan.face_x(plan, side_sign) - side_sign * 0.05
-	var color: Color = _NEON_COLORS[rng.randi_range(0, _NEON_COLORS.size() - 1)]
+	var color: Color = NEON_COLORS[rng.randi_range(0, NEON_COLORS.size() - 1)]
 	var flicker_amount := 0.3 if district.id == &"derelict" else 0.1
 	var sign_mat := _FacadeMaterials.sign_material(
 		word, 4, false, color, _DEFAULT_ENERGY, 1, rng.randf() * 1000.0, district.dead_lamp_chance,
@@ -216,28 +226,29 @@ static func _build_neon(
 	_build_flat(host, "SignNeon", x, 5.7, 4.9, z_center, 3.6, side_sign, keep_out, sign_mat)
 
 
-## A perpendicular blade sign readable while approaching the building.
-static func _build_blade(
-	host: Node3D, plan: Dictionary, side_sign: float, keep_out: RefCounted, rng: RandomNumberGenerator,
-	word: String
+## A perpendicular blade sign readable while approaching the building; public so a set-piece
+## (neon_blade) can place its own at a different size, height, colour and seed.
+static func build_blade(
+	host: Node3D, node_name: String, plan: Dictionary, side_sign: float, keep_out: RefCounted,
+	u_center: float, word: String, size: Vector3, bottom_y: float, color: Color, energy: float,
+	seed_value: float, dead_ratio: float, flicker_amount: float
 ) -> void:
-	var u_center := float(plan[&"width"]) * 0.5 + (1.0 if rng.randf() < 0.5 else -1.0)
 	var center := Vector3(
-		_FacadePlan.face_x(plan, side_sign) - side_sign * (FACE_GAP + 0.7),
-		_FacadePlan.BASE_Y + BLADE_BOTTOM_Y + BLADE_SIZE.y * 0.5, _z_at(plan, side_sign, u_center)
+		_FacadePlan.face_x(plan, side_sign) - side_sign * (FACE_GAP + size.x * 0.5),
+		_FacadePlan.BASE_Y + bottom_y + size.y * 0.5, _z_at(plan, side_sign, u_center)
 	)
 	var sign_mat := _FacadeMaterials.sign_material(
-		word, 4, true, _DEFAULT_COLOR, _DEFAULT_ENERGY, 1, rng.randf() * 1000.0, 0.0, 0.0, float(word.length())
+		word, 4, true, color, energy, 1, seed_value, dead_ratio, flicker_amount, float(word.length())
 	)
-	var y_top := center.y + BLADE_SIZE.y * 0.5
-	var y_bot := center.y - BLADE_SIZE.y * 0.5
-	var half_thick := BLADE_SIZE.z * 0.5
-	_build_boxed(
-		host, "SignBlade", center, BLADE_SIZE, [Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0)], keep_out,
+	var y_top := center.y + size.y * 0.5
+	var y_bot := center.y - size.y * 0.5
+	var half_thick := size.z * 0.5
+	build_boxed(
+		host, node_name, center, size, [Vector3(0.0, 0.0, 1.0), Vector3(0.0, 0.0, -1.0)], keep_out,
 		func(st: SurfaceTool) -> void:
 			# Both faces so it reads correctly (top to bottom) from either side of the corridor.
-			_emit_face_z(st, center.z + half_thick, y_top, y_bot, center.x, BLADE_SIZE.x, 1.0)
-			_emit_face_z(st, center.z - half_thick, y_top, y_bot, center.x, BLADE_SIZE.x, -1.0),
+			emit_face_z(st, center.z + half_thick, y_top, y_bot, center.x, size.x, 1.0)
+			emit_face_z(st, center.z - half_thick, y_top, y_bot, center.x, size.x, -1.0),
 		sign_mat
 	)
 

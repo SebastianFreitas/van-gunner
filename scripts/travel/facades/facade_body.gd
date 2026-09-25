@@ -40,7 +40,8 @@ static func build(host: Node3D, plan: Dictionary, side_sign: float, index: int) 
 		)
 		_add_end_return(st, x_face, x_back, z0, y0, y1, y0, w, -1.0)
 		_add_end_return(st, x_face, x_back, z1, y0, y1, y0, w, 1.0)
-		_add_roof(st, x_face, side_sign, y1, z0, z1)
+		if float(plan[&"params"].get(&"collapse_y", 0.0)) <= 0.0:  # roof UV isn't height: no discard
+			_add_roof(st, x_face, side_sign, y1, z0, z1)
 		return _commit_body(host, st, "Body%d" % index, material)
 
 	# The mouth needs three separate AABBs (header, flank, flank) so the smoke test's keep-out

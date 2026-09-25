@@ -24,12 +24,21 @@ static func build(
 	host: Node3D, plan: Dictionary, side_sign: float, keep_out: RefCounted,
 	rng: RandomNumberGenerator, district: FacadeDistrict
 ) -> void:
-	_build_trim(host, plan, side_sign, keep_out, rng, district)
-	_build_ac_units(host, plan, side_sign, keep_out, rng, district)
-	_build_fire_escape(host, plan, side_sign, keep_out, rng, district)
-	_build_balconies(host, plan, side_sign, keep_out, rng, district)
-	_build_roof_clutter(host, plan, side_sign, keep_out, rng, district)
-	_build_wall_pipes(host, plan, side_sign, keep_out, rng, district)
+	# A rare piece that owns this plan (laundry_balconies, a mural, a collapse...) suppresses the
+	# ordinary families it would otherwise double up on, before that family's own chance roll.
+	var suppress: Array = plan.get(&"suppress", [])
+	if not suppress.has(&"trim"):
+		_build_trim(host, plan, side_sign, keep_out, rng, district)
+	if not suppress.has(&"ac_units"):
+		_build_ac_units(host, plan, side_sign, keep_out, rng, district)
+	if not suppress.has(&"fire_escape"):
+		_build_fire_escape(host, plan, side_sign, keep_out, rng, district)
+	if not suppress.has(&"balconies"):
+		_build_balconies(host, plan, side_sign, keep_out, rng, district)
+	if not suppress.has(&"roof_clutter"):
+		_build_roof_clutter(host, plan, side_sign, keep_out, rng, district)
+	if not suppress.has(&"wall_pipes"):
+		_build_wall_pipes(host, plan, side_sign, keep_out, rng, district)
 
 
 ## A box centred `depth` out from the face, toward the road; doubling `depth` gives the outer

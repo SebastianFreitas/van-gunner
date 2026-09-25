@@ -376,8 +376,10 @@ it"; `py -3 tools/gen_context.py`; delete this task file and `docs/tasks/buildin
 - [x] 8a. Set-piece framework (`facade_set_piece.gd`, `facade_set_pieces.gd`, registry scan,
   rare roll + cooldown, `Facades/Span` for street-crossing pieces) and rooftop_billboard,
   water_tower, antenna_farm, power_outage (commit `6c24d98`).
-- [ ] 8b. burning_tenement, collapsed_block, neon_blade, pedestrian_bridge, pipe_bridge,
-  laundry_balconies, mural, scaffolded (`docs/tasks/buildings/spec_08b_set_pieces_batch2.md`).
+- [x] 8b. burning_tenement, collapsed_block, neon_blade, pedestrian_bridge, pipe_bridge,
+  laundry_balconies, mural, scaffolded (`docs/tasks/buildings/spec_08b_set_pieces_batch2.md` +
+  `spec_08b_notes.md`); public sign builders, per-plan `suppress` lists, no roof plate on a
+  collapsed body.
 - [ ] 9. Rares batch 2: pedestrian_bridge, pipe_bridge, crane_site, chapel, cinema_marquee
   (+ `facade_marquee.gdshader`), mural, scaffolded, laundry_balconies.
 - [ ] 10. Rares batch 3: parking_deck, overgrown_ruin, blown_out_shop, gas_canopy, searchlight,

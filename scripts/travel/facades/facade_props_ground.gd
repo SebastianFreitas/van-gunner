@@ -30,13 +30,18 @@ static func build(
 ) -> void:
 	if bool(plan.get(&"mouth", false)):
 		return
+	# A rare piece that owns this plan suppresses the ordinary families it would otherwise double
+	# up on, before that family's own chance roll.
+	var suppress: Array = plan.get(&"suppress", [])
 	_build_storefront(host, plan, side_sign, keep_out, rng, district)
-	_build_awnings(host, plan, side_sign, keep_out, rng, district)
+	if not suppress.has(&"awnings"):
+		_build_awnings(host, plan, side_sign, keep_out, rng, district)
 	_build_rollups(host, plan, side_sign, keep_out, rng, district)
 	_build_dock(host, plan, side_sign, keep_out, rng, district)
 	_build_arcade(host, plan, side_sign, keep_out, rng, district)
 	_build_stoop(host, plan, side_sign, keep_out, rng, district)
-	_build_furniture(host, plan, side_sign, keep_out, rng, district)
+	if not suppress.has(&"furniture"):
+		_build_furniture(host, plan, side_sign, keep_out, rng, district)
 
 
 ## A box centred `depth` out from the face, toward the road (mirrors facade_props_upper._out_x).

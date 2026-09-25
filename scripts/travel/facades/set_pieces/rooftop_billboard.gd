@@ -65,10 +65,10 @@ func build(ctx: Dictionary) -> void:
 	var sign_mat := _FacadeMaterials.sign_material(
 		word, 5, false, color, 2.0, 0, float(ctx[&"tile_seed"]), 0.0, 0.0, 8.0
 	)
-	_FacadeSigns._build_boxed(
+	_FacadeSigns.build_boxed(
 		host, "Panel", panel_center, panel_size, [Vector3(-side_sign, 0.0, 0.0)], keep_out,
 		func(st: SurfaceTool) -> void:
-			_FacadeSigns._emit_face_x(
+			_FacadeSigns.emit_face_x(
 				st, panel_center.x - side_sign * panel_size.x * 0.5, panel_center.y + panel_size.y * 0.5,
 				panel_center.y - panel_size.y * 0.5, panel_center.z, panel_size.z, side_sign
 			),
