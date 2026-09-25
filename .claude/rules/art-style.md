@@ -105,9 +105,10 @@ Surfaces, in the road's recipe:
   courses, corrugation, mullions, ribs, grain) fades to its average colour
   with `fwidth` before it gets smaller than a couple of screen pixels, so
   walls never moiré at distance.
-- **One noise library**: world shaders include the shared grime include
-  (the art pass extracts it from the asphalt) instead of pasting their own
-  `hash21`, `noise21`, `fbm` and `crack_field`.
+- **One noise library**: world shaders
+  `#include "res://scenes/shaders/grime.gdshaderinc"` (`hash21`, `hash22`,
+  `noise21`, `fbm`, `crack_field`, and the sidewalk's `crack_field_h21`)
+  instead of pasting their own copies.
 - **Small props** (under about 1 m, or anything built by `prop_material()`)
   may use a flat `StandardMaterial3D` colour, inside the albedo budget,
   roughness 0.7 or more, metallic 0.3 or less.

@@ -93,7 +93,7 @@ run), and gameplay collision.
   bay or side-street side. Do not touch the van's lights. Done when the
   street shots show pools and gaps, and raiders in `04-combat-*` still read.
 
-- [ ] 4. **Shared grime include.** Create `scenes/shaders/grime.gdshaderinc`
+- [x] 4. **Shared grime include.** Create `scenes/shaders/grime.gdshaderinc`
   with `hash21`, `hash22`, `noise21`, `fbm` and `crack_field` moved out of
   `asphalt_surface.gdshader`; the asphalt and sidewalk shaders
   `#include` it and lose their copies. Pure refactor: the road must look
@@ -218,4 +218,21 @@ shot                           kind     mean    p95   clip%    sat
 06-combat-outside              clean  0.0358 0.1775   1.606  0.422
 09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
 12-rear-park-stop-outside      clean  0.0045 0.0173   0.008  0.391
+```
+
+### Step 4 after (shared grime include, pure refactor)
+
+`scenes/shaders/grime.gdshaderinc` holds `hash21`, `hash22`, `noise21`, `fbm`,
+`crack_field` (the asphalt's, `hash22` cells) and `crack_field_h21` (the sidewalk's
+older seeding, kept so its crack layout does not move). The moved bodies were checked
+verbatim against the old shaders. The shots are not pixel-deterministic between runs
+(the untouched van interior `08` and `11` differ too), so the check is the stats: all
+within run-to-run noise of step 3.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0095 0.0234   0.236  0.403
+06-combat-outside              clean  0.0360 0.1763   1.676  0.423
+09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
+12-rear-park-stop-outside      clean  0.0045 0.0176   0.008  0.392
 ```
