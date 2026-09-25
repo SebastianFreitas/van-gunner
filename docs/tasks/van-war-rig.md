@@ -202,8 +202,16 @@ thinking"; add a lens when a step discovers one.
   today they neither receive nor shadow it; a layer-1 skin would shadow
   it everywhere except the openings, which changes the street's lighting
   (maybe for the better, maybe making raiders at the doors unreadable).
-  Decide with a before/after shot pair and the owner: skin
-  `cast_shadow = OFF`, or accept the physically right result. Also check
+  **Decided (owner left it to the session, 2026-09-25): the skin casts
+  shadows** (`cast_shadow = ON`), so the spill leaves the van only through
+  its real openings: light from a source you can point at, a darker street
+  around the van, and `06-combat-outside`'s excess wall wash likely drops.
+  Raiders at a breach stand in an opening, so they stay lit. The check that
+  can overturn it: a before/after `04-combat-*` / `06` pair plus a
+  `summon enemy` shot of a raider at a side door and at a rear door; if
+  either raider goes unreadable, set the skin's `cast_shadow = OFF`
+  instead, and record which way it went in the log. Energies stay as they
+  are either way (the owner's exception). Also check
   the overhead shot: the roof now hides the interior from the `*-outside`
   view; the shot targets may need a new row (say so, don't hide it).
 
