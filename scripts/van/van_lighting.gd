@@ -13,16 +13,8 @@ const LAYER_VAN_INTERIOR := 2
 
 
 func _ready() -> void:
-	# Forward+ leaves stale light↔geometry pairings when VisualInstance.layers
-	# changes after pairing (Godot #121989, fixed in 4.8). Hide lights first so
-	# they unpair, then retarget layers, then restore.
-	var suppressed: Array[Light3D] = []
-	for child in get_children():
-		if child is Light3D and child.visible:
-			child.visible = false
-			suppressed.append(child)
-
-	# Let the render server process the hide/unpair before retargeting layers.
+	# Mark one frame in, as the old workaround did, so geometry added during
+	# the first frame is covered.
 	await get_tree().process_frame
 
 	var interior := get_node_or_null(interior_path)
@@ -32,17 +24,26 @@ func _ready() -> void:
 	if player:
 		mark_interior_geometry(player)
 
-	await get_tree().process_frame
 
-	for light in suppressed:
-		if is_instance_valid(light):
-			light.visible = true
-
-
+## Moves every non-light VisualInstance3D under root to the van interior layer.
 static func mark_interior_geometry(root: Node) -> void:
-	if root is Light3D:
-		pass
-	elif root is VisualInstance3D:
-		(root as VisualInstance3D).layers = LAYER_VAN_INTERIOR
+	if root is VisualInstance3D and not (root is Light3D):
+		retarget_layers(root as VisualInstance3D, LAYER_VAN_INTERIOR)
 	for child in root.get_children():
 		mark_interior_geometry(child)
+
+
+## Changes vi.layers without leaving a stale light pairing. Godot 4.7 Forward+ keeps a
+## light↔geometry pairing across a layers change and skips unpairing once the masks stop overlapping
+## (Godot #121989, fixed in 4.8), so freeing the light or mesh later crashes the renderer. Hiding
+## the instance first unpairs it from every light, street lamps included, under the old mask.
+static func retarget_layers(vi: VisualInstance3D, mask: int) -> void:
+	if vi.layers == mask:
+		return
+	if not vi.is_inside_tree():
+		vi.layers = mask
+		return
+	var instance: RID = vi.get_instance()
+	RenderingServer.instance_set_visible(instance, false)
+	vi.layers = mask
+	RenderingServer.instance_set_visible(instance, vi.is_visible_in_tree())
