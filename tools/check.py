@@ -19,6 +19,7 @@ import pathlib
 import re
 import subprocess
 import sys
+import time
 
 from godot_env import godot_exe, project_lock, seed_import_cache, stamp_clean
 
@@ -93,6 +94,7 @@ def main() -> int:
     seed_import_cache(ROOT)
     exe = godot_exe()
     with project_lock(ROOT):
+        started = time.time()
         import_hits, _ = run_pass(exe, ["--import"], "import scan")
         load_hits, load_code = run_pass(
             exe, ["--script", "res://tools/check_scripts.gd"], "load check"
@@ -105,7 +107,7 @@ def main() -> int:
     if warnings:
         print(f"CHECK FAILED: {len(warnings)} GDScript warning(s); the tree is kept at 0")
         return 1
-    stamp_clean(ROOT, "check")
+    stamp_clean(ROOT, "check", started)
     print("CHECK CLEAN")
     return 0
 

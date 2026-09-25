@@ -250,6 +250,20 @@ def sync_worktree(branch: str) -> None:
     if git("status", "--porcelain", cwd=wt, check=False) == "":
         r = git_run("merge", "-q", "--no-edit", "main", cwd=wt)
         if r.returncode != 0:
+            conflicts = [
+                p for p in git("diff", "--name-only", "--diff-filter=U", cwd=wt, check=False).splitlines() if p
+            ]
+            if conflicts == [MAP]:
+                # main's map was regenerated on the combined tree when the branch landed, so it wins.
+                git_run("checkout", "--theirs", "--", MAP, cwd=wt)
+                git_run("add", "--", MAP, cwd=wt)
+                done = git_run("commit", "--no-edit", "-q", cwd=wt)
+                if done.returncode == 0:
+                    print(
+                        f"Merged main back into {branch} (taking main's {MAP}), so the next round "
+                        "there starts from this commit."
+                    )
+                    return
             git_run("merge", "--abort", cwd=wt)
             print(
                 f"Could not merge main back into {branch} ({wt}); ask Claude in that "

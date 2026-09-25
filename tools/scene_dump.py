@@ -18,6 +18,7 @@ import pathlib
 import re
 import subprocess
 import sys
+import time
 
 from godot_env import godot_exe, project_lock, seed_import_cache, stamp_clean
 
@@ -51,6 +52,7 @@ def main() -> int:
         "-- --smoke-sandbox res://scenes/van/van.tscn res://tools/scene_dump/van.txt"
     )
     with project_lock(ROOT):
+        started = time.time()
         try:
             proc = subprocess.run(
                 args,
@@ -86,7 +88,7 @@ def main() -> int:
     if bless:
         BASELINE.write_bytes(DUMP.read_bytes())
         print("BASELINE WRITTEN")
-        stamp_clean(ROOT, "scene_dump")
+        stamp_clean(ROOT, "scene_dump", started)
         print("SCENE DUMP CLEAN")
         return 0
 
@@ -108,7 +110,7 @@ def main() -> int:
         return 1
 
     print(f"scene dump: identical ({len(current.splitlines())} lines)")
-    stamp_clean(ROOT, "scene_dump")
+    stamp_clean(ROOT, "scene_dump", started)
     print("SCENE DUMP CLEAN")
     return 0
 

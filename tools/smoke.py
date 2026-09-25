@@ -29,6 +29,7 @@ import pathlib
 import re
 import subprocess
 import sys
+import time
 
 from godot_env import godot_exe, project_lock, seed_import_cache, stamp_clean
 
@@ -101,6 +102,7 @@ def main() -> int:
         ]
         print("== smoke: godot --headless --path . res://tools/smoke/smoke_test.tscn -- --smoke-sandbox")
     with project_lock(ROOT):
+        started = time.time()
         if shots is not None:
             override = ROOT / "override.cfg"
             override.write_text(
@@ -156,7 +158,7 @@ def main() -> int:
     if opts.bless:
         BASELINE.write_bytes(FINGERPRINT.read_bytes())
         print("BASELINE WRITTEN")
-        stamp_clean(ROOT, "smoke")
+        stamp_clean(ROOT, "smoke", started)
         print("SMOKE CLEAN")
         return 0
 
@@ -177,7 +179,7 @@ def main() -> int:
         print("SMOKE FAILED: fingerprint differs from baseline")
         return 1
 
-    stamp_clean(ROOT, "smoke")
+    stamp_clean(ROOT, "smoke", started)
     if shots is not None:
         pngs = sorted(shots.glob("*.png"))
         print(f"   {len(pngs)} shot(s) in {shots}:")

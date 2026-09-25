@@ -157,16 +157,18 @@ def _unlock(handle) -> None:  # handle: BinaryIO; left untyped to skip a single-
         fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
-def stamp_clean(root: pathlib.Path, kind: str) -> None:
+def stamp_clean(root: pathlib.Path, kind: str, started: float) -> None:
     """Record when a check, smoke or scene dump last passed in .godot/claude-verify.json,
-    which the Claude Code Stop hook compares with source mtimes.
+    which the Claude Code Stop hook compares with source mtimes. `started` is when the run
+    began (taken after the lock, right before Godot starts), so a file edited during the run
+    still counts as newer than the stamp.
     """
     path = root / ".godot" / "claude-verify.json"
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         data = {}
-    data[kind] = time.time()
+    data[kind] = started
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data), encoding="utf-8")
