@@ -1,5 +1,5 @@
 extends RefCounted
-## Wall lamp fixtures and their OmniLights for one facade side: district colour, dead lamps,
+## Wall lamp fixtures and their SpotLight3D pools for one facade side: district colour, dead lamps,
 ## the world-wide light cap, and the layer-1 cull mask that keeps them off the van interior.
 
 
@@ -11,7 +11,16 @@ const _FacadeMeshKit := preload("res://scripts/travel/facades/facade_mesh_kit.gd
 const MAX_WORLD_LIGHTS := 12
 const LIGHT_GROUP := &"facade_lights"
 const LAMP_Y := 5.2
-const LIGHT_RANGE := 9.0
+## Spot range in metres; reaches the ground from the lamp with falloff to spare.
+const POOL_RANGE := 8.0
+## Cone half-angle in degrees; about a 3.9 m radius pool on the ground, so the two lamps
+## of a tile leave a dark gap between them.
+const POOL_ANGLE := 38.0
+## Multiplies district.lamp_energy (the district value stays the relative brightness
+## between districts).
+const POOL_ENERGY_SCALE := 8.0
+## How far the light sits out from the wall face, toward the road.
+const LIGHT_OUT := 1.2
 
 
 ## A box centred `depth` out from the face, toward the road (mirrors facade_props_ground._out_x).
@@ -19,7 +28,7 @@ static func _out_x(xf: float, ss: float, depth: float) -> float:
 	return xf - ss * (_FacadeMeshKit.FACE_GAP + depth * 0.5)
 
 
-## Per side: wall lamp fixtures and their OmniLight3Ds, capped at MAX_WORLD_LIGHTS live lights.
+## Per side: wall lamp fixtures and their downward SpotLight3D pools, capped at MAX_WORLD_LIGHTS live lights.
 ## When force_dead is true every fixture is dead and no light is added; the power_outage
 ## set-piece uses it.
 static func build_fixtures(
@@ -81,14 +90,17 @@ static func build_fixtures(
 			continue
 		if host.get_tree().get_nodes_in_group(LIGHT_GROUP).size() >= MAX_WORLD_LIGHTS:
 			continue
-		var light := OmniLight3D.new()
+		var light := SpotLight3D.new()
 		light.name = "Light%d" % i
 		light.light_color = district.lamp_color
-		light.light_energy = district.lamp_energy
-		light.omni_range = LIGHT_RANGE
-		light.omni_attenuation = 1.5
+		light.light_energy = district.lamp_energy * POOL_ENERGY_SCALE
+		light.spot_range = POOL_RANGE
+		light.spot_angle = POOL_ANGLE
+		light.spot_attenuation = 1.0
+		light.spot_angle_attenuation = 2.0
 		light.shadow_enabled = false
 		light.light_cull_mask = 1
-		light.position = Vector3(x_face - side_sign * 0.7, LAMP_Y - 0.2, z)
+		light.position = Vector3(x_face - side_sign * LIGHT_OUT, LAMP_Y - 0.2, z)
+		light.rotation = Vector3(-PI * 0.5, 0.0, 0.0)
 		light.add_to_group(LIGHT_GROUP)
 		host.add_child(light)

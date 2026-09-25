@@ -84,7 +84,7 @@ run), and gameplay collision.
   is under its new target and still shows lit windows. Rules:
   `travel-and-stops.md` facades section.
 
-- [ ] 3. **Street lamps and light pools.** (Carries step 2's leftover: `06-combat-outside`
+- [x] 3. **Street lamps and light pools.** (Carries step 2's leftover: `06-combat-outside`
   must reach its target here; after step 2 its excess is lamp light on the walls and the
   big sign, not windows.) `scripts/travel/facades/facade_fixtures.gd`
   (wall lamps and their `OmniLight3D`): energies, range and colour so each
@@ -155,6 +155,13 @@ run), and gameplay collision.
 
 - [ ] 13. **Van audit.** Read the van shots against the budget. Change only a
   clear break (and say which); expected result: no change, recorded here.
+  Carries step 3's leftover: `06-combat-outside` (mean 0.036, target 0.015)
+  did not move when the lamps changed, so its wall wash is the van's own
+  mask-1 lights in `scenes/van/van.tscn` (`DoorSpill` energy 6.5, range
+  18 m, shadowed; `RearCone` 5.5; the `ExteriorLight` directional "moon",
+  which is light from nothing you can point at) plus big lit panes close to
+  the camera. Decide with the owner before dimming them: the door spill is
+  what lets the player see raiders at the doors.
 
 - [ ] 14. **Wrap-up.** Clear the art-style "off-style today" 3D list of
   everything fixed, add what was learnt to `travel-and-stops.md` and
@@ -195,5 +202,20 @@ their bloom); dark glass rough 0.5, metal 0. `06` fell from 0.099 to 0.036 mean 
 shot                           kind     mean    p95   clip%    sat
 03-idle-outside                clean  0.0094 0.0208   0.244  0.363
 06-combat-outside              clean  0.0357 0.1775   1.562  0.362
+12-rear-park-stop-outside      clean  0.0045 0.0173   0.008  0.391
+```
+
+### Step 3 after (lamp pools: `SpotLight3D` straight down, 38°, range 8 m, energy 8 x district)
+
+The wall halos round each lamp are gone and each lamp now lays a pool on the sidewalk and
+the wall foot, dark between lamps. Commercial lamps are tungsten and industrial lamps
+mercury green-grey instead of blue-white. `06` did not move: its excess is the van's own
+lights and near lit panes (moved to step 13), not the lamps.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0092 0.0230   0.237  0.401
+06-combat-outside              clean  0.0358 0.1775   1.606  0.422
+09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
 12-rear-park-stop-outside      clean  0.0045 0.0173   0.008  0.391
 ```
