@@ -279,8 +279,10 @@ Four independent designs were judged; these verified points are folded into the 
 
 ## Handoff (written 2026-09-25, updated at every clean commit boundary)
 
-Start a new session with: "Continue the buildings task from docs/tasks/buildings.md, Handoff
-section." Everything a fresh session needs is in this file and `docs/tasks/buildings/`.
+**The complete handoff is `docs/tasks/buildings/HANDOFF.md`** (as-built architecture, every
+constant and convention, verification, process, lessons, what the owner should look at, and the
+ordered list of remaining steps with their spec files). Start a new session with: "Continue the
+buildings task: read docs/tasks/buildings/HANDOFF.md first, then docs/tasks/buildings.md."
 
 ### Where the work stands
 
