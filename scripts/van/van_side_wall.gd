@@ -180,6 +180,11 @@ func _panel_helper() -> _Panel:
 	return _panel
 
 
+## The side panel mesh exactly as the liner builds it (holes included), for the hull's outer skin.
+func build_side_panel_mesh(wall_sign: float) -> ArrayMesh:
+	return _panel_helper().build_side_mesh(wall_sign)
+
+
 func _build() -> void:
 	if _built:
 		return

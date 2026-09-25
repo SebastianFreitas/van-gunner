@@ -200,13 +200,13 @@ thinking"; add a lens when a step discovers one.
 
 ### Phase B: big changes, the outside
 
-- [ ] 3b. **Render check of the exterior shader.** Step 3's cube test
+- [x] 3b. **Render check of the exterior shader.** Step 3's cube test
   timed out on the hidden desktop with no output (the temp scene never
   quit); headless `check.py` does not compile shaders. Folded into step 4:
   its `--shots` run is the first render of `van_exterior.gdshader`, so any
   shader compile error or off-budget look shows there. Tick with step 4.
 
-- [ ] 4. **Outer hull.** An outer skin following `VanSideWall`'s bow profile
+- [x] 4. **Outer hull.** An outer skin following `VanSideWall`'s bow profile
   and `VanCeiling`'s vault, a few cm outside the liners: roof, both sides,
   rear face and sills, with the same openings cut (reuse the wall's cut
   queries so doors, windows and the future gun port line up), on layer 1
@@ -463,6 +463,24 @@ playing?" Repeat a part (D-n b) if the owner wants another round.
 - A throwaway windowed scene on the hidden desktop hung until the timeout,
   and `run_hidden` returns no output on a timeout: give any such test
   `--quit-after` and `--log-file`, or test through the smoke shots.
+
+### Step 4 notes (hull)
+
+- `VanHull` (`scripts/van/look/van_hull.gd`, node `VanLook/Hull`) builds
+  `SideSkinL/R` (the liner's own panel mesh, holes included, through the new
+  public `VanSideWall.build_side_panel_mesh(wall_sign)`, shifted 0.06 m
+  outward; `_add_side` uses the panel helper, not `build_curved_shell_mesh`),
+  `RoofSkin` (vault +0.38 with edge lips), `RearSkin` (posts and header
+  round the door opening), `SillL/R`. `material` is the shared exterior
+  material later parts reuse. The meshes carry no UVs, so no tangents.
+- First GPU render of `van_exterior.gdshader`: compiles, seams and panel
+  breaks read, windows stay open. Vans are very dark at IDLE (moon only).
+- **DoorSpill: skin casts shadows, kept.** Raiders in `06` stay readable;
+  the smoke has no raider standing at a door, so the door-raider shot is
+  still owed (step 20's review). `03-idle-outside` now sees the roof, not
+  the interior: mean 0.0090 → 0.0074; `06` 0.0237 → 0.0235 (p95 0.1534 →
+  0.1719); `09` 0.0053 → 0.0027; `12` 0.0048 → 0.0038. Van views `v01`
+  0.0169 / 0.0901 / 0.241. No new target row needed yet.
 
 ## Baseline (2026-09-25, before any change)
 
