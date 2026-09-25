@@ -109,7 +109,7 @@ run), and gameplay collision.
   average colour with `fwidth`, so distant walls stop moiréing. Nothing else
   changes. Done when `03-idle-outside` shows no stripes on the far walls.
 
-- [ ] 6. **Facade walls, part 2: the road's grime.** Same shader, switched
+- [x] 6. **Facade walls, part 2: the road's grime.** Same shader, switched
   to the grime include. Per style, base tones inside the albedo budget;
   layers in the road's order: grain, rain streaks down from sills and roof
   line, soot, a dirt band at the foot that matches the sidewalk's edge dirt,
@@ -258,4 +258,23 @@ shot                           kind     mean    p95   clip%    sat
 06-combat-outside              clean  0.0275 0.1668   0.874  0.388
 09-elevator-stop-outside       clean  0.0053 0.0107   0.025  0.564
 12-rear-park-stop-outside      clean  0.0081 0.0222   0.007  0.436
+```
+
+### Step 6 after (road grime on facade walls)
+
+`facade_surface.gdshader` includes `grime.gdshaderinc` instead of its own noise copies and
+`apply_overlays` is the road's layer order: grain (faded with `fwidth`), a broad `grime`
+wash, rain streaks down from the roof line and under each sill, roof-line and window-head
+soot, a foot dirt band in the sidewalk's `dirt_color`, stains, `crack_field` cracks driven
+by `grime` and `damage`, then the old overgrowth and damage patches; wall roughness clamps
+to 0.78..0.95, frames 0.78/0.8, and non-emissive albedo is capped at luminance 0.4. Styles
+kept their own structure, so no 6b was needed. Numbers are within run-to-run noise of
+step 4; the change reads on close walls (`03` right side), not in the means.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0094 0.0232   0.236  0.407
+06-combat-outside              clean  0.0364 0.1783   1.673  0.422
+09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
+12-rear-park-stop-outside      clean  0.0043 0.0176   0.008  0.383
 ```

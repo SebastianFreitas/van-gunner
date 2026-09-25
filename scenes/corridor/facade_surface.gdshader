@@ -6,10 +6,13 @@ render_mode diffuse_burley, specular_schlick_ggx, cull_back;
 // UV is facade space in METRES (UV.x along the wall from its left end, UV.y above the
 // building base) — never scale it by a tile count.
 
+#include "res://scenes/shaders/grime.gdshaderinc"
+
 uniform int style = 0;                 // 0 brick, 1 concrete panel, 2 plaster, 3 glass curtain, 4 corrugated, 5 stone, 6 bare frame
 uniform vec3 base_color : source_color = vec3(0.30, 0.16, 0.12);
 uniform vec3 accent_color : source_color = vec3(0.22, 0.20, 0.18);   // frames, sills, piers, string courses, spandrels
 uniform vec3 mortar_color : source_color = vec3(0.16, 0.15, 0.13);
+uniform vec3 dirt_color : source_color = vec3(0.1, 0.09, 0.07);   // foot-of-wall dirt, the sidewalk's edge dirt
 uniform vec3 glass_color : source_color = vec3(0.03, 0.045, 0.05);
 uniform vec3 lit_color : source_color = vec3(1.0, 0.72, 0.42);
 uniform float seed = 0.0;
@@ -38,63 +41,8 @@ uniform float emission_energy = 2.2;   // fire (flicker) windows only; they may 
 uniform float window_emission = 0.5;   // peak channel of a lit night window; stays under the glow threshold
 uniform float roughness_value : hint_range(0.0, 1.0) = 0.85;
 
-float hash21(vec2 p) {
-	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-}
-
-vec2 hash22(vec2 p) {
-	return fract(sin(vec2(
-		dot(p, vec2(127.1, 311.7)),
-		dot(p, vec2(269.5, 183.3))
-	)) * 43758.5453);
-}
-
 float hash11(float x) {
 	return fract(sin(x * 127.1) * 43758.5453);
-}
-
-float noise21(vec2 p) {
-	vec2 i = floor(p);
-	vec2 f = fract(p);
-	float a = hash21(i);
-	float b = hash21(i + vec2(1.0, 0.0));
-	float c = hash21(i + vec2(0.0, 1.0));
-	float d = hash21(i + vec2(1.0, 1.0));
-	vec2 u = f * f * (3.0 - 2.0 * f);
-	return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-}
-
-float fbm(vec2 p) {
-	float v = 0.0;
-	float a = 0.5;
-	for (int i = 0; i < 4; i++) {
-		v += a * noise21(p);
-		p = p * 2.07 + vec2(17.3, 9.1);
-		a *= 0.5;
-	}
-	return v;
-}
-
-float crack_field(vec2 p) {
-	vec2 cell = floor(p);
-	vec2 f = fract(p);
-	float min_d = 1.0;
-	float second = 1.0;
-	for (int y = -1; y <= 1; y++) {
-		for (int x = -1; x <= 1; x++) {
-			vec2 g = vec2(float(x), float(y));
-			vec2 o = hash22(cell + g);
-			vec2 r = g + o - f;
-			float d = length(r);
-			if (d < min_d) {
-				second = min_d;
-				min_d = d;
-			} else if (d < second) {
-				second = d;
-			}
-		}
-	}
-	return second - min_d;
 }
 
 // 0 while a pattern of this period spans 8+ pixels along its axis, 1 once it is under ~3.
@@ -285,7 +233,7 @@ float facade_relief(vec2 p, vec2 fw) {
 void shade_skin(vec2 p, float sk, out vec3 albedo, out vec3 emission, out float rough, out float metal, vec2 fw) {
 	albedo = base_color;
 	emission = vec3(0.0);
-	rough = roughness_value;
+	rough = clamp(roughness_value, 0.78, 0.95);
 	metal = 0.0;
 	if (style == 0) {
 		vec2 brick_id;
@@ -467,40 +415,70 @@ void shade_ground(vec2 p, float sk, out vec3 albedo, out vec3 emission, out floa
 	}
 }
 
-// Grime, soot, overgrowth and damage overlays; never applied to a lit/dark window pane.
-void apply_overlays(vec2 p, inout vec3 albedo, inout vec3 emission, inout float rough, inout float metal) {
+// The road's grime recipe over everything but a window pane, in its order: grain, a broad
+// wash, rain streaks down from the roof line and sills, soot, the foot dirt band, stains,
+// cracks, then overgrowth and damage patches. Fine layers fade with fw like the patterns.
+void apply_overlays(vec2 p, inout vec3 albedo, inout vec3 emission, inout float rough, inout float metal, vec2 fw) {
 	if (string_course(p)) {
 		albedo = accent_color;
 	}
-	float base_grime = grime * 0.6 * (0.5 * smoothstep(3.0, 0.0, p.y) + 0.5 * fbm(p * 0.35 + seed + 11.0));
-	albedo *= clamp(1.0 - base_grime, 0.0, 1.0);
-	if (windows_on > 0.5 && style != 6 && p.y >= ground_height) {
-		float row;
-		float fy;
-		float col;
-		float fx;
-		bool valid;
+	float fwm = max(fw.x, fw.y);
+	float grain = mix(noise21(p * 24.0 + seed), 0.5, pattern_fade(1.0 / 24.0, fwm));
+	albedo *= 0.9 + 0.2 * grain;
+	albedo *= 1.0 - grime * 0.3 * fbm(p * 0.35 + seed + 11.0);
+
+	float streak = smoothstep(0.55, 0.85, noise21(vec2(p.x * 3.0, p.y * 0.08) + seed + 29.0));
+	streak = mix(streak, 0.25, pattern_fade(1.0 / 3.0, fw.x));
+	float run = 0.2 + 0.8 * (1.0 - smoothstep(0.0, 6.0, max(facade_height - p.y, 0.0)));
+	float head_soot = 0.0;
+	if (windows_on > 0.5 && style != 6 && style != 3 && p.y >= ground_height) {
+		float row; float fy; float col; float fx; bool valid;
 		window_grid(p, row, fy, col, fx, valid);
 		float pane_x0 = (window_pitch - window_w) * 0.5;
 		float pane_x1 = (window_pitch + window_w) * 0.5;
-		if (valid && fx >= pane_x0 && fx <= pane_x1) {
-			if (fy >= window_sill - 0.6 && fy < window_sill) {
-				float sill = grime * 0.5 * noise21(vec2(p.x * 9.0, p.y * 2.0));
-				albedo *= clamp(1.0 - sill, 0.0, 1.0);
+		if (valid && fx >= pane_x0 - 0.1 && fx <= pane_x1 + 0.1) {
+			if (fy < window_sill) {
+				run = max(run, 1.0 - smoothstep(0.0, 1.8, window_sill - fy));
 			}
 			float pane_top = window_sill + window_h;
 			if (fy >= pane_top) {
-				float soot_amt = soot * smoothstep(1.6, 0.0, fy - pane_top) * (0.6 + 0.4 * noise21(p * 5.0));
-				albedo = mix(albedo, vec3(0.02), soot_amt);
+				head_soot = (1.0 - smoothstep(0.0, 1.6, fy - pane_top)) * (0.6 + 0.4 * noise21(p * 5.0));
 			}
 		}
 	}
+	albedo *= 1.0 - grime * 0.55 * streak * run;
+
+	float roof_soot = (1.0 - smoothstep(0.0, 2.5, max(facade_height - p.y, 0.0)))
+		* (0.5 + 0.5 * fbm(p * 0.8 + seed + 3.0));
+	float soot_amt = max(soot * head_soot, max(soot, grime * 0.35) * roof_soot * 0.7);
+	albedo = mix(albedo, vec3(0.02), soot_amt);
+
+	float foot_edge = 0.9 + (fbm(vec2(p.x * 1.5, 3.0) + seed + 13.0) - 0.5) * 0.5;
+	float foot = 1.0 - smoothstep(0.0, foot_edge, p.y);
+	foot *= 0.4 + 0.6 * fbm(vec2(p.x * 4.0, p.y * 3.0) + seed + 7.0);
+	albedo = mix(albedo, dirt_color, foot * (0.35 + 0.4 * grime));
+
+	float stain = smoothstep(0.58, 0.85, fbm(p * 0.45 + seed + 5.2)) * grime;
+	albedo = mix(albedo, albedo * vec3(0.55, 0.5, 0.42), stain * 0.8);
+
+	float cracks = (1.0 - smoothstep(0.012, 0.04, crack_field(p * 0.8 + seed + 4.1)))
+		* (1.0 - line_fade(0.03, fwm));
+	cracks *= smoothstep(0.45, 0.75, fbm(p * 0.3 + seed + 17.0))
+		* clamp(0.25 * grime + 0.9 * damage, 0.0, 1.0);
+	albedo = mix(albedo, mortar_color * 0.4, cracks * 0.8);
+
 	if (fbm(p * 0.6 + seed + 23.0) > 1.0 - overgrowth * 0.5 && p.y < facade_height * 0.7) {
 		albedo = vec3(0.08, 0.12, 0.05) * (0.7 + 0.6 * noise21(p * 12.0));
 		rough = 0.95;
 	}
 	if (fbm(p * 1.3 + seed + 41.0) > 1.0 - damage * 0.45) {
 		albedo = mix(base_color * 0.5, mortar_color, 0.5);
+	}
+
+	rough = min(rough + stain * 0.05 + foot * 0.06, 0.95);
+	float lum = dot(albedo, vec3(0.2126, 0.7152, 0.0722));
+	if (lum > 0.4) {
+		albedo *= 0.4 / lum;
 	}
 }
 
@@ -520,7 +498,7 @@ void facade_shade(vec2 p, out vec3 albedo, out vec3 emission, out float rough, o
 	if (w_frame > 0.5) {
 		albedo = accent_color;
 		emission = vec3(0.0);
-		rough = style == 3 ? 0.6 : 0.7;
+		rough = style == 3 ? 0.78 : 0.8;
 		metal = style == 3 ? 0.2 : 0.0;
 		if (style == 3) {
 			float fx = mod(p.x, 1.5);
@@ -533,7 +511,7 @@ void facade_shade(vec2 p, out vec3 albedo, out vec3 emission, out float rough, o
 		shade_window(p, w_id, w_local, albedo, emission, rough, metal, fw);
 	}
 	if (w_pane < 0.5) {
-		apply_overlays(p, albedo, emission, rough, metal);
+		apply_overlays(p, albedo, emission, rough, metal, fw);
 	}
 }
 
