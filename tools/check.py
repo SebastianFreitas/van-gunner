@@ -9,13 +9,15 @@ SCRIPT ERROR, Parse Error or ERROR:. Godot's exit code alone is not reliable.
 2. `--script res://tools/check_scripts.gd`: loads every .gd, .tscn, .tres and
    .gdshader under res:// so parse errors and broken references surface.
 
-GODOT must hold the path to the Godot 4.7 executable. When the `_console` build sits
-next to the configured one it is used instead, because the plain Windows build does
-not write its output to a pipe.
+GODOT holds the path to the Godot 4.7 executable; when it is unset, `godot` on PATH
+(then ~/.local/bin/godot) is used, which is where tools/cloud_setup.sh installs it in
+a cloud session. When the `_console` build sits next to the configured one it is used
+instead, because the plain Windows build does not write its output to a pipe.
 """
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 
@@ -26,9 +28,17 @@ TIMEOUT_SECONDS = 600
 
 
 def godot_exe() -> str:
-    raw = os.environ.get("GODOT")
+    raw = os.environ.get("GODOT") or shutil.which("godot")
     if not raw:
-        sys.exit("GODOT is not set; point it at Godot_v4.7-stable_win64_console.exe")
+        local_bin = pathlib.Path.home() / ".local" / "bin" / "godot"
+        if local_bin.exists():
+            raw = str(local_bin)
+    if not raw:
+        sys.exit(
+            "No Godot found: set GODOT to the Godot 4.7 executable "
+            "(Godot_v4.7-stable_win64_console.exe on Windows) or put `godot` on PATH "
+            "(cloud sessions: the environment's setup script runs tools/cloud_setup.sh)."
+        )
     exe = pathlib.Path(raw)
     if "console" not in exe.stem:
         console = exe.with_name(exe.stem + "_console" + exe.suffix)

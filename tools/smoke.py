@@ -16,6 +16,7 @@ import difflib
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 
@@ -32,9 +33,17 @@ BASELINE = ROOT / "tools" / "smoke" / "fingerprint.baseline.txt"
 
 
 def godot_exe() -> str:
-    raw = os.environ.get("GODOT")
+    raw = os.environ.get("GODOT") or shutil.which("godot")
     if not raw:
-        sys.exit("GODOT is not set; point it at Godot_v4.7-stable_win64_console.exe")
+        local_bin = pathlib.Path.home() / ".local" / "bin" / "godot"
+        if local_bin.exists():
+            raw = str(local_bin)
+    if not raw:
+        sys.exit(
+            "No Godot found: set GODOT to the Godot 4.7 executable "
+            "(Godot_v4.7-stable_win64_console.exe on Windows) or put `godot` on PATH "
+            "(cloud sessions: the environment's setup script runs tools/cloud_setup.sh)."
+        )
     exe = pathlib.Path(raw)
     if "console" not in exe.stem:
         console = exe.with_name(exe.stem + "_console" + exe.suffix)
