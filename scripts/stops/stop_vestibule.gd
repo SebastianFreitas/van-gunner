@@ -244,7 +244,7 @@ func _floor_material() -> ShaderMaterial:
 		mat.set_shader_parameter("base_color", Color(0.16, 0.18, 0.17, 1.0))
 		mat.set_shader_parameter("seam_color", Color(0.035, 0.045, 0.04, 1.0))
 		mat.set_shader_parameter("rust_color", Color(0.3, 0.105, 0.045, 1.0))
-		mat.set_shader_parameter("tile_count", Vector2(4.0, 8.0))
+		mat.set_shader_parameter("panel_size_m", Vector2(1.5, 1.5))
 		mat.set_shader_parameter("roughness_value", 0.92)
 	return mat
 
@@ -257,7 +257,8 @@ func _wall_material() -> ShaderMaterial:
 		mat.set_shader_parameter("base_color", Color(0.16, 0.18, 0.17, 1.0))
 		mat.set_shader_parameter("seam_color", Color(0.035, 0.045, 0.04, 1.0))
 		mat.set_shader_parameter("rust_color", Color(0.3, 0.105, 0.045, 1.0))
-		mat.set_shader_parameter("tile_count", Vector2(6.0, 2.0))
+		mat.set_shader_parameter("panel_size_m", Vector2(1.2, 2.4))
+		mat.set_shader_parameter("foot_y_m", -4.0)
 		mat.set_shader_parameter("roughness_value", 0.78)
 	return mat
 

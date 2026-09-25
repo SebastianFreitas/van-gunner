@@ -27,7 +27,7 @@ static func panel_material() -> ShaderMaterial:
 	mat.set_shader_parameter("base_color", Color(0.14, 0.15, 0.14, 1.0))
 	mat.set_shader_parameter("seam_color", Color(0.04, 0.045, 0.04, 1.0))
 	mat.set_shader_parameter("rust_color", Color(0.32, 0.12, 0.05, 1.0))
-	mat.set_shader_parameter("tile_count", Vector2(6.0, 10.0))
+	mat.set_shader_parameter("panel_size_m", Vector2(0.6, 0.6))
 	mat.set_shader_parameter("roughness_value", 0.78)
 	return mat
 

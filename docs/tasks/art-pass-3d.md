@@ -144,7 +144,7 @@ run), and gameplay collision.
   with a `surface_size_m` uniform and a base colour), in
   `facade_props_ground.gd` and the set-pieces that build big slabs.
 
-- [ ] 8. **Industrial surface.** Rewrite `scenes/corridor/industrial_surface.gdshader`
+- [x] 8. **Industrial surface.** Rewrite `scenes/corridor/industrial_surface.gdshader`
   in the road's recipe on the grime include: metre-scale panels and seams
   (`surface_size_m` uniform as the sidewalk does), rivets, rust and oil
   stains, floor-level dirt, roughness and metallic in range. Every scene and
@@ -344,4 +344,22 @@ shot                           kind     mean    p95   clip%    sat
 06-combat-outside              clean  0.0360 0.1775   1.672  0.430
 09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
 12-rear-park-stop-outside      clean  0.0043 0.0173   0.008  0.383
+```
+
+### Step 8 after (industrial surface on grime)
+
+`industrial_surface.gdshader` is the road's recipe on the grime include, laid out in model-space
+metres (every user is an unscaled centred `BoxMesh`, so no `surface_size_m` plumbing was needed,
+as in 7c): `panel_size_m` panels offset half a panel, 3 cm seams and rivets faded with `fwidth`,
+per-panel tone, grain, grime wash, rust round seams, rivets and the foot, streaks on side faces,
+dust and oil (roughness to 0.35) on floors, a `foot_y_m` dirt band on walls (-4 on every 8 m
+wall), floor cracks; albedo capped at 0.40, roughness 0.78..0.95, metallic <= 0.3 (was 0.58).
+`tile_count` is gone from all nine users. Colours and roughness per stop are steps 9..11's.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0088 0.0220   0.244  0.407
+06-combat-outside              clean  0.0352 0.1783   1.557  0.431
+09-elevator-stop-outside       clean  0.0054 0.0120   0.020  0.561
+12-rear-park-stop-outside      clean  0.0048 0.0225   0.007  0.383
 ```

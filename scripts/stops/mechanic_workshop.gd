@@ -302,6 +302,6 @@ func _rust_material() -> ShaderMaterial:
 	mat.set_shader_parameter("base_color", Color(0.32, 0.14, 0.06, 1.0))
 	mat.set_shader_parameter("seam_color", Color(0.09, 0.04, 0.02, 1.0))
 	mat.set_shader_parameter("rust_color", Color(0.48, 0.18, 0.05, 1.0))
-	mat.set_shader_parameter("tile_count", Vector2(3.0, 4.0))
+	mat.set_shader_parameter("panel_size_m", Vector2(2.0, 0.3))
 	mat.set_shader_parameter("roughness_value", 0.9)
 	return mat
