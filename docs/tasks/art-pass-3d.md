@@ -158,7 +158,7 @@ run), and gameplay collision.
   to 0.3 or less), the stop lit by its own fixtures as pools. Rules:
   `travel-and-stops.md`, invariant 14 (`bay mouth clear:` in the smoke).
 
-- [ ] 10. **Stops, part 2: shop.** `shop_bay.tscn`, `shop_booth_materials.gd`
+- [x] 10. **Stops, part 2: shop.** `shop_bay.tscn`, `shop_booth_materials.gd`
   (steel, deck, grill, rivet metallic 0.78..0.92 down to 0.3 or less, grimed),
   keeping the booth's build order, flyer RNG order and every sprite as is.
 
@@ -379,5 +379,23 @@ shot                           kind     mean    p95   clip%    sat
 03-idle-outside                clean  0.0090 0.0227   0.237  0.408
 06-combat-outside              clean  0.0354 0.1773   1.604  0.430
 09-elevator-stop-outside       clean  0.0053 0.0122   0.042  0.529
+12-rear-park-stop-outside      clean  0.0048 0.0225   0.018  0.383
+```
+
+### Step 10 after (shop booth and bay to the budget)
+
+The booth's steel (pillars, frames, brows, trims) and counter deck moved from mirror-ish
+`StandardMaterial3D`s (metallic 0.9 and 0.78) onto `industrial_surface` (steel 2.4 m panels so
+seams rarely land on thin trims, roughness 0.82, metallic 0.28; deck 1.2 x 0.6 m panels, 0.8,
+0.25); grill and rivets are flat at metallic 0.3, roughness 0.75; wall panels 0.8 / 0.22; the
+sign board 0.78. The bay ceiling is the garage's rib recipe on the industrial surface (was
+metallic 0.72). Build order, flyer RNG, lights and the keeper sprite are unchanged. Numbers
+within noise; the booth reads as dull dark steel in `09`.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0088 0.0220   0.244  0.407
+06-combat-outside              clean  0.0350 0.1783   1.560  0.430
+09-elevator-stop-outside       clean  0.0053 0.0125   0.042  0.529
 12-rear-park-stop-outside      clean  0.0048 0.0225   0.018  0.383
 ```
