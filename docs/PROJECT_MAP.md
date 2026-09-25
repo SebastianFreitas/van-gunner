@@ -32,9 +32,13 @@
 
 Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`
 
-Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`
+Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `facade_lights`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`
 
 ## Signals and enums
+
+**`scenes/corridor/corridor_segment.gd`**
+
+- `enum Opening { NONE, SIDE_STREET, BAY }`
 
 **`scripts/acts/act_card_definition.gd`**
 
@@ -259,15 +263,15 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-195 GDScript files, 28258 lines.
+237 GDScript files, 34132 lines.
 
 ### `scenes/corridor/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `corridor_segment.gd` | — | 172 | A single corridor tile: wall variants, road floor, and side-street bay openings. |
-| `corridor_t_junction.gd` | — | 64 | Fills sidewalk corners where stem / branch / optional through-road meet the open junction slab. |
-| `side_street_branch.gd` | — | 20 | A side-street branch tile; mirrors its children when attached on the right side. |
+| `corridor_segment.gd` | — | 174 | A single corridor tile: road floor, wall collision, procedural facades on both sides, and the side-street / stop-bay openings that carve them. |
+| `corridor_t_junction.gd` | — | 132 | Fills sidewalk corners where stem / branch / optional through-road meet the open junction slab. |
+| `side_street_branch.gd` | — | 57 | A side-street branch tile; mirrors its children when attached on the right side. |
 
 ### `scripts/acts/`
 
@@ -350,8 +354,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
-| `debug_commands.gd` | — | 220 | Parses and runs debug console commands. |
+| `debug_commands.gd` | — | 229 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
+| `debug_facade_commands.gd` | — | 301 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
 | `debug_item_commands.gd` | — | 70 | Debug console commands: items. |
 | `debug_meta_commands.gd` | — | 55 | Debug console commands: meta. |
 | `debug_run_flow_commands.gd` | — | 54 | Debug console commands: run flow. |
@@ -457,10 +462,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
+| `block_glyphs.gd` | `BlockGlyphs` | 172 | Stamped 5 x 7 block-letter font shared by shop flyers and street signs: glyph bit rows, text drawing into an Image, and label textures for signs. |
 | `garage_lounge.gd` | — | 185 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `mechanic_talk.gd` | `MechanicTalk` | 133 | Mechanic bay keeper. |
 | `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. |
-| `shop_booth_flyers.gd` | — | 369 | Randomly placed sticker/flyer stickers on the shop booth face, plus their pixel-art textures. |
+| `shop_booth_flyers.gd` | — | 289 | Randomly placed sticker/flyer stickers on the shop booth face, plus their pixel-art textures. |
 | `shop_booth_frame.gd` | — | 219 | Counter deck, pillars, wall panels and window/transaction openings for the shop booth. |
 | `shop_booth_materials.gd` | — | 77 | Material factories for the shop counter booth — each call returns a fresh instance. |
 | `shop_booth_trim.gd` | — | 231 | Armor plating, viewing grill, window brow, lamp visuals and shop sign for the shop booth. |
@@ -487,10 +493,60 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `road_floor.gd` | `RoadFloor` | 365 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
 | `road_floor_details.gd` | — | 232 | Street furniture/detail builders for RoadFloor: expansion joints, drains, manholes and sidewalk dressing. |
 | `road_floor_materials.gd` | — | 35 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
-| `travel_controller.gd` | `TravelController` | 604 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
+| `travel_controller.gd` | `TravelController` | 608 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
 | `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
-| `travel_stops.gd` | — | 214 | Owns the stop fork, side-stop placement, elevator pad ride and stop-state cleanup. |
-| `travel_world.gd` | — | 247 | Owns corridor tile spawning/pruning, side streets, neighborhood variants and act statues. |
+| `travel_stops.gd` | — | 212 | Owns the stop fork, side-stop placement, elevator pad ride and stop-state cleanup. |
+| `travel_world.gd` | — | 268 | Owns corridor tile spawning/pruning, side streets, neighborhood variants and act statues. |
+
+### `scripts/travel/facades/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `corridor_facades.gd` | — | 249 | Owns a corridor tile's two facade sides: their openings, plans and built nodes. |
+| `facade_audit.gd` | — | 122 | Shared keep-out audits for a corridor tile's built facades: the bay-mouth clearance check (nothing built in front of a stop-bay opening) and the raider-lane cl… |
+| `facade_body.gd` | — | 261 | Builds one building's body: SurfaceTool quads with UV in metres (u along the facade, v up), end returns, a roof plate, the stop-bay header / flank cut, and the… |
+| `facade_district.gd` | `FacadeDistrict` | 55 | One neighborhood look: skin presets, height range, ground-floor kinds, window state ratios and prop chances. |
+| `facade_fixtures.gd` | — | 95 | Wall lamp fixtures and their OmniLights for one facade side: district colour, dead lamps, the world-wide light cap, and the layer-1 cull mask that keeps them o… |
+| `facade_keep_out.gd` | — | 163 | Keep-out volumes for one facade side: the gate every facade placer passes an AABB through, so nothing ever stands in the raider lane, hangs over the road below… |
+| `facade_materials.gd` | — | 315 | Static material factories for the facade system: a ShaderMaterial per building from a parameter dictionary, cached StandardMaterial3D props by key, and named s… |
+| `facade_mesh_kit.gd` | — | 121 | Box-and-quad helpers shared by every facade prop builder: gated boxes into a SurfaceTool, committing an ArrayMesh node, and single BoxMesh nodes for props that… |
+| `facade_overheads.gd` | — | 146 | Cross-street industrial dressing (pipe bridges, catwalks, ribs) built under Facades/Overhead when both sides are plain; it never reaches below 9 m over the roa… |
+| `facade_plan.gd` | — | 191 | Plans one facade side: splits the 20 m tile edge into buildings and gives each a skin preset, height, floors, ground kind and setback. |
+| `facade_props_ground.gd` | — | 329 | Ground-floor props for one building (storefront frames, awnings, roll-up lintels, loading docks, arcade pilasters, stoops, sidewalk furniture). |
+| `facade_props_upper.gd` | — | 354 | Upper-facade props for one building: trim (parapet cap, cornice, string-course ledges, downspout), AC units, a fire escape, balconies, roof clutter and wall pi… |
+| `facade_registry.gd` | — | 104 | Loads the facade data folders once: districts (sorted by index) and set-pieces (sorted by id). |
+| `facade_set_piece.gd` | `FacadeSetPiece` | 46 | One rare street set-piece: eligibility data plus the hooks a subclass overrides. |
+| `facade_set_pieces.gd` | — | 84 | Rolls which rare set-piece (if any) a tile gets and on which side, and drives the piece's hooks from corridor_facades. |
+| `facade_signs.gd` | — | 285 | Street signage for one building: a backlit box sign over a storefront, a neon strip, a perpendicular blade sign, a cloth banner, or a torn poster on a boarded… |
+| `facade_spans.gd` | — | 50 | Facade spans for walls that are not corridor tile sides (junction stems, branches, the T far wall, side-street flanks): a host node maps the tile body builder'… |
+
+### `scripts/travel/facades/set_pieces/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `antenna_farm.gd` | — | 88 | A cluster of roof masts of random height, two tilted dish plates and a beacon light atop the tallest mast. |
+| `blown_out_shop.gd` | — | 110 | A storefront gutted by fire: a charred black-out panel behind the first unit's glass, rubble kicked out onto the sidewalk, and police tape strung across the do… |
+| `burning_tenement.gd` | — | 122 | A tenement mid-fire: flickering, broken upper windows (soot is shader-only, nothing to build), a few glowing flame slabs behind the glass, and one warm light a… |
+| `chapel.gd` | — | 129 | A stone chapel front: a stained-glass rose window over the arcade, and a bell tower standing on the roof with a clock face and a pointed cap. |
+| `cinema_marquee.gd` | — | 151 | A cinema marquee bolted onto a storefront: a lit canopy slab with chasing bulb strips on its three outer faces, a backlit title panel, a vertical CINEMA blade,… |
+| `collapsed_block.gd` | — | 124 | A building torn open partway up: the shader discards everything above a noisy collapse edge, and rubble, standing rebar and two ragged slab stubs sell the wrec… |
+| `crane_site.gd` | — | 135 | A tower crane grafted onto a bare industrial frame: a green safety net over the low floors, a lattice mast standing on the roof, a jib and counter-jib, a hangi… |
+| `gas_canopy.gd` | — | 148 | A gas station canopy grafted onto a low storefront: a lit slab on two posts over the pumps, a price pole and one warm light underneath. |
+| `glass_crown.gd` | — | 100 | A commercial tower stretched to its full height, capped with a glowing crown band and a red beacon on a roof mast. |
+| `laundry_balconies.gd` | — | 138 | A tenement plastered in balconies: full window-grid coverage (not the rare few an ordinary building rolls), each one strung with hanging laundry. |
+| `mural.gd` | — | 131 | A blank wall (windows switched off) painted with a generated mural: solid shapes plus one giant glyph word from the district's sign list. |
+| `neon_blade.gd` | — | 59 | A giant neon blade bolted flat across the widest eligible face: the same two-face box builder facade_signs.gd uses for an ordinary blade, just bigger, brighter… |
+| `overgrown_ruin.gd` | — | 116 | A building half-swallowed by growth: the shader crops it at a collapse edge, ivy hangs from the sills below that line, and a couple of saplings have taken root… |
+| `parking_deck.gd` | — | 121 | A bare-frame parking structure: open waist bands at every deck level, fluorescent strip lighting under most slabs, and a hazard stripe marking the ramp entranc… |
+| `pedestrian_bridge.gd` | — | 55 | An enclosed pedestrian bridge crossing the street: a floor and roof well above the lane, two glazed side walls, and end portals closing the gap against the fac… |
+| `pipe_bridge.gd` | — | 49 | Three rusty pipes slung across the street on a shared industrial gantry: valve wheels on the middle pipe, hanger straps dropping onto the top one. |
+| `power_outage.gd` | — | 13 | No geometry: kills every window's lights on the tile. |
+| `radio_mast.gd` | — | 121 | A lattice radio mast on a low roof: three legs and cross rings every 2.5 m, two guy lines anchoring it to the roof, and a beacon at the top. |
+| `rooftop_billboard.gd` | — | 108 | A lit billboard panel on two posts atop the shortest eligible roof, with flood lights at its base; the panel's text face reuses facade_signs.gd's two-surface b… |
+| `scaffolded.gd` | — | 116 | A construction scaffold over the lower floors: two rows of standards joined by ledgers and transoms, a work plank on each level, and a green safety net over th… |
+| `searchlight.gd` | — | 92 | A rooftop searchlight sweeping a tilted cone over the street: a pedestal and housing on the roof, with a beam mesh spun by scripts/travel/facades/set_pieces/se… |
+| `searchlight_pivot.gd` | — | 15 | Spins a searchlight beam around its own tilted Y axis, sweeping a cone over the street. |
+| `water_tower.gd` | — | 96 | A rooftop water tower: four legs, a wood tank, a conical lid and a ladder on the road side. |
 
 ### `scripts/ui/`
 
@@ -568,7 +624,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `smoke_driver.gd` | — | 339 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
-| `smoke_route.gd` | — | 122 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
+| `smoke_route.gd` | — | 157 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 
 ## Scenes
@@ -578,14 +634,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/boot/boot.tscn` | 3 | Control |
 | `scenes/combat/projectile.tscn` | 4 | Area3D |
 | `scenes/corridor/act_statue.tscn` | 4 | Node3D |
-| `scenes/corridor/corridor_crossroads.tscn` | 37 | Node3D |
-| `scenes/corridor/corridor_segment.tscn` | 84 | Node3D |
-| `scenes/corridor/corridor_t_junction.tscn` | 31 | Node3D |
+| `scenes/corridor/corridor_crossroads.tscn` | 21 | Node3D |
+| `scenes/corridor/corridor_segment.tscn` | 11 | Node3D |
+| `scenes/corridor/corridor_t_junction.tscn` | 17 | Node3D |
 | `scenes/corridor/garage_bay.tscn` | 14 | Node3D |
 | `scenes/corridor/mechanic_bay.tscn` | 19 | Node3D |
 | `scenes/corridor/road_floor.tscn` | 1 | Node3D |
 | `scenes/corridor/shop_bay.tscn` | 23 | Node3D |
-| `scenes/corridor/side_street_branch.tscn` | 10 | Node3D |
+| `scenes/corridor/side_street_branch.tscn` | 2 | Node3D |
 | `scenes/corridor/stop_elevator.tscn` | 1 | Node3D |
 | `scenes/corridor/stop_vestibule.tscn` | 4 | Node3D |
 | `scenes/corridor/warehouse_bay.tscn` | 1 | Node3D |
@@ -622,7 +678,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Shaders
 
-`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`
+`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`
 
 ## Balance sheet (`resources/balance/game_balance.tres`)
 
@@ -793,4 +849,4 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `class`, `sound`, `parts`, `tree_reset`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `class`, `sound`, `parts`, `tree_reset`, `facade`

@@ -33,6 +33,7 @@ The main session directs exploration, designs the change, writes the spec, revie
 11. Autoloads never get a `class_name`; helpers split off an autoload never name or preload it.
 12. `GameBalance.get_act` vs `GameSession.run_act` is an open design question the owner holds: don't unify them. Wave counts in `game_balance.tres` are owner test values.
 13. `SaveSandbox` is the only test hook in game code.
+14. Nothing the facade system places may enter a stop-bay mouth, the reverse-park approach or the raider lane: every placement passes `FacadeKeepOut.allows`, bodies are gated by construction, and the smoke test asserts it (`facade stress 1` before the first fork, `bay mouth clear:` after the garage docks).
 
 ## Where things are
 
@@ -44,6 +45,7 @@ The main session directs exploration, designs the change, writes the spec, revie
 | Street cards, reveal, REST boon | `scripts/acts/`, `resources/acts/cards/`, `scripts/ui/act_reveal_panel.gd` |
 | Raiders, boss, cabin pathing, breach points, waves | `scripts/enemies/` |
 | Road, turns, parking, elevator, statues | `scripts/travel/` |
+| Street facades, districts, set-pieces | `scripts/travel/facades/`, `resources/facades/`, `scenes/corridor/facade_*.gdshader` |
 | Side stops: shop, garage, mechanic, warehouse | `scripts/stops/`, `resources/side_stops/`, `scenes/corridor/` |
 | Van shell, doors, windows, vitals, van root and HUD wiring | `scripts/van/` |
 | Gun, projectiles, damage, status effects | `scripts/combat/` |
@@ -83,7 +85,7 @@ After a structural change, re-run `py -3 tools/gen_context.py`. A new always-on 
 ## Token budget
 
 - Never read a whole script over 300 lines. Over 300 today:
-  - `scripts/travel/`: `travel_controller.gd` (603), `road_floor.gd` (364)
+  - `scripts/travel/`: `travel_controller.gd` (607), `road_floor.gd` (364), `facades/facade_props_upper.gd` (353), `facades/facade_props_ground.gd` (328), `facades/facade_materials.gd` (314)
   - `scripts/enemies/`: `window_raider.gd` (522), `breach_point.gd` (364), `cabin_nav.gd` (332), `encounter_director.gd` (318), `biker_boss.gd` (309)
   - `scripts/van/`: `van_side_wall_shell.gd` (400), `van_hull_mesh.gd` (399), `rear_doors.gd` (399), `van.gd` (390), `van_side_wall_panel.gd` (388), `van_ceiling.gd` (379), `van_side_wall.gd` (377), `iron_cross.gd` (354), `van_floor.gd` (339), `side_windows.gd` (333)
   - `scripts/core/`: `game_session.gd` (361), `meta_progression.gd` (344)
