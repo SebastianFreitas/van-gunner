@@ -4,13 +4,21 @@ extends RefCounted
 
 
 static var _facade_shader: Shader
+static var _sign_shader: Shader
 static var _prop_cache: Dictionary = {}
+static var _label_cache: Dictionary = {}
 
 
 static func facade_shader() -> Shader:
 	if _facade_shader == null:
 		_facade_shader = load("res://scenes/corridor/facade_surface.gdshader") as Shader
 	return _facade_shader
+
+
+static func sign_shader() -> Shader:
+	if _sign_shader == null:
+		_sign_shader = load("res://scenes/corridor/facade_sign.gdshader") as Shader
+	return _sign_shader
 
 
 ## One ShaderMaterial per building; buildings differ enough that caching wouldn't help.
@@ -236,3 +244,41 @@ static func preset_names() -> Array[StringName]:
 		&"bare_frame",
 	]
 	return names
+
+
+## A word's label texture, cached by (text, scale, vertical) so the same word across buildings
+## costs one Image. Rebuilt with mipmaps so the neon halo's textureLod sample has something to read.
+static func label_texture(text: String, scale: int, vertical: bool) -> ImageTexture:
+	var key := "%s|%d|%s" % [text, scale, vertical]
+	if _label_cache.has(key):
+		return _label_cache[key] as ImageTexture
+	var fg := Color(1.0, 1.0, 1.0, 1.0)
+	var bg := Color(0.0, 0.0, 0.0, 1.0)
+	var tex: ImageTexture
+	if vertical:
+		tex = BlockGlyphs.make_vertical_label(text, scale, fg, bg, 2)
+	else:
+		tex = BlockGlyphs.make_label(text, scale, fg, bg, 2)
+	var img := tex.get_image()
+	img.generate_mipmaps()
+	tex = ImageTexture.create_from_image(img)
+	_label_cache[key] = tex
+	return tex
+
+
+## One sign's material; a fresh ShaderMaterial each call since every sign's uniforms differ.
+static func sign_material(
+	text: String, scale: int, vertical: bool, color: Color, energy: float, mode: int, seed: float,
+	dead_ratio: float, flicker_amount: float, letter_cells: float
+) -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = sign_shader()
+	mat.set_shader_parameter(&"text_tex", label_texture(text, scale, vertical))
+	mat.set_shader_parameter(&"color", color)
+	mat.set_shader_parameter(&"energy", energy)
+	mat.set_shader_parameter(&"mode", mode)
+	mat.set_shader_parameter(&"seed", seed)
+	mat.set_shader_parameter(&"dead_ratio", dead_ratio)
+	mat.set_shader_parameter(&"flicker_amount", flicker_amount)
+	mat.set_shader_parameter(&"letter_cells", letter_cells)
+	return mat
