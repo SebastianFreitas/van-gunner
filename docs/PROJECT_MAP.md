@@ -263,7 +263,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-239 GDScript files, 34309 lines.
+239 GDScript files, 34463 lines.
 
 ### `scenes/corridor/`
 
@@ -465,10 +465,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `block_glyphs.gd` | `BlockGlyphs` | 172 | Stamped 5 x 7 block-letter font shared by shop flyers and street signs: glyph bit rows, text drawing into an Image, and label textures for signs. |
 | `garage_lounge.gd` | — | 185 | Sparse garage furniture — sofa and a TV in one corner, empty floor otherwise. |
 | `mechanic_talk.gd` | `MechanicTalk` | 133 | Mechanic bay keeper. |
-| `mechanic_workshop.gd` | — | 308 | Open auto-repair bay — workbench, hoist, tires. |
+| `mechanic_workshop.gd` | — | 329 | Open auto-repair bay — workbench, hoist, tires. |
 | `shop_booth_flyers.gd` | — | 289 | Randomly placed sticker/flyer stickers on the shop booth face, plus their pixel-art textures. |
 | `shop_booth_frame.gd` | — | 219 | Counter deck, pillars, wall panels and window/transaction openings for the shop booth. |
-| `shop_booth_materials.gd` | — | 77 | Material factories for the shop counter booth — each call returns a fresh instance. |
+| `shop_booth_materials.gd` | — | 88 | Material factories for the shop counter booth — each call returns a fresh instance. |
 | `shop_booth_trim.gd` | — | 231 | Armor plating, viewing grill, window brow, lamp visuals and shop sign for the shop booth. |
 | `shop_counter_booth.gd` | — | 164 | Fortified metal shop counter — armored face, cash slot, eye-level grilled window. |
 | `shop_hatch_net.gd` | — | 125 | Cargo-net screen on the shop hatch — thin diamond mesh, not solid bars. |
@@ -476,15 +476,15 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `shop_stock.gd` | — | 30 | Rolls 3 unique items from the shop pool and places them on the counter. |
 | `side_stop_definition.gd` | `SideStopDefinition` | 67 | A roadside stop on a fork road. |
 | `side_stop_registry.gd` | `SideStopRegistry` | 113 | Resolves side-stop definitions by id from resources/side_stops/. |
-| `stop_elevator.gd` | `StopElevator` | 355 | On-road lift that drops the van to the shared stop vestibule. |
-| `stop_vestibule.gd` | `StopVestibule` | 287 | Shared mouth for every roadside stop. |
+| `stop_elevator.gd` | `StopElevator` | 395 | On-road lift that drops the van to the shared stop vestibule. |
+| `stop_vestibule.gd` | `StopVestibule` | 348 | Shared mouth for every roadside stop. |
 | `warehouse_chest.gd` | `WarehouseChest` | 60 | Table-top crate. |
 | `warehouse_director.gd` | `WarehouseDirector` | 176 | Picks one hide layout per visit. |
 | `warehouse_dummy.gd` | `WarehouseDummy` | 114 | Standing shootable raider for warehouse hides. |
 | `warehouse_hide.gd` | `WarehouseHide` | 149 | One ambush pocket. |
-| `warehouse_interior.gd` | — | 243 | Flared warehouse bay: shell, wrapped dressing, table + chest, one hide layout. |
+| `warehouse_interior.gd` | — | 256 | Flared warehouse bay: shell, wrapped dressing, table + chest, one hide layout. |
 | `warehouse_laser.gd` | `WarehouseLaser` | 72 | Waist-high trip across the aisle. |
-| `warehouse_look.gd` | `WarehouseLook` | 143 | Shared palette / mesh helpers for the warehouse bay and its hide layouts. |
+| `warehouse_look.gd` | `WarehouseLook` | 148 | Shared palette / mesh helpers for the warehouse bay and its hide layouts. |
 
 ### `scripts/travel/`
 
@@ -511,7 +511,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `facade_keep_out.gd` | — | 163 | Keep-out volumes for one facade side: the gate every facade placer passes an AABB through, so nothing ever stands in the raider lane, hangs over the road below… |
 | `facade_materials.gd` | — | 328 | Static material factories for the facade system: a ShaderMaterial per building from a parameter dictionary, cached StandardMaterial3D props by key, and named s… |
 | `facade_mesh_kit.gd` | — | 121 | Box-and-quad helpers shared by every facade prop builder: gated boxes into a SurfaceTool, committing an ArrayMesh node, and single BoxMesh nodes for props that… |
-| `facade_overheads.gd` | — | 146 | Cross-street industrial dressing (pipe bridges, catwalks, ribs) built under Facades/Overhead when both sides are plain; it never reaches below 9 m over the roa… |
+| `facade_overheads.gd` | — | 149 | Cross-street industrial dressing (pipe bridges, catwalks, ribs) built under Facades/Overhead when both sides are plain; it never reaches below 9 m over the roa… |
 | `facade_plan.gd` | — | 191 | Plans one facade side: splits the 20 m tile edge into buildings and gives each a skin preset, height, floors, ground kind and setback. |
 | `facade_props_ground.gd` | — | 335 | Ground-floor props for one building (storefront frames, awnings, roll-up lintels, loading docks, arcade pilasters, stoops, sidewalk furniture). |
 | `facade_props_upper.gd` | — | 354 | Upper-facade props for one building: trim (parapet cap, cornice, string-course ledges, downspout), AC units, a fire escape, balconies, roof clutter and wall pi… |
@@ -635,7 +635,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|
 | `scenes/boot/boot.tscn` | 3 | Control |
 | `scenes/combat/projectile.tscn` | 4 | Area3D |
-| `scenes/corridor/act_statue.tscn` | 4 | Node3D |
+| `scenes/corridor/act_statue.tscn` | 5 | Node3D |
 | `scenes/corridor/corridor_crossroads.tscn` | 21 | Node3D |
 | `scenes/corridor/corridor_segment.tscn` | 11 | Node3D |
 | `scenes/corridor/corridor_t_junction.tscn` | 17 | Node3D |

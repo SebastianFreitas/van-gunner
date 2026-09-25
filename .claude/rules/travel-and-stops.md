@@ -51,6 +51,16 @@ Every corridor tile builds its buildings procedurally: `scenes/corridor/corridor
 
 `shop_counter_booth.gd` keeps its exports, build order, lights and box primitives; materials, flyers (and the block-letter glyph table), frame and trim are helpers beside it. Flyer placement is seeded: keep RNG call order when touching it.
 
+## Surfaces and lights (from the 3D art pass)
+
+The numbers are in `.claude/rules/art-style.md`; these are the traps.
+
+- **`industrial_surface.gdshader` lays panels out in model-space metres** (`panel_size_m`, `foot_y_m`), so every user must be an unscaled, centred `BoxMesh` sized through `mesh.size`. A node scale stretches the panels, and there is no `tile_count` or `surface_size_m` any more. Walls of different heights (the elevator shaft) leave `foot_y_m` at its off default instead of guessing one.
+- **Merged prop meshes carry 0..1 UVs per box face**, so `facade_prop_grime.gdshader` picks its pattern plane from the face's dominant normal axis in model space. Reach it only through `facade_grime_materials.gd`'s `from_prop()`, which caches one material per budgeted `prop_material()`, so the colour never changes when a prop moves onto grime.
+- **Facade walls fade their fine patterns with `fwidth(UV)`** (`pattern_fade`, `line_fade`, `soft_line` in `facade_surface.gdshader`). A new repeating pattern in that shader goes through them, or distant corrugated walls moiré again. Lit windows sit at `window_emission` 0.5 (under the 1.1 glow threshold); only fire windows bloom.
+- **A stop light moves with its fixture.** Every stop, junction and statue light hangs under a fixture mesh; move or retune them together and keep the energy unless the shots say otherwise. The statue orb's `OrbLight` is a shadowless 6 m pool.
+- **The smoke shots skip most of this.** They see the street, the shop on the lift and the garage; the mechanic, warehouse, junctions, statue and overheads need a temporary `stop elevator mechanic` or `stop warehouse` swap to shoot, reverted before committing.
+
 ## Testing
 
 The smoke test drives two forks in `speed` mode: an elevator stop (shop) and a rear-park stop (garage), docking and leaving each. `speed` skips panels, so it doesn't test the reveal or boon UI. Before the first fork it runs `facade stress 1`, which builds every district × set-piece (plus none) × opening case and audits the mouth and lane boxes; after the garage docks it asserts `bay mouth clear:` on the live tile. Facades never feed the fingerprint, so never `--bless` for facade work.

@@ -32,6 +32,13 @@ you can point at: street lamps, lit windows, signs, fire, the van's own
 lights, muzzle flash. Away from a source a surface falls to near-black
 within about 20 m, and the fog takes everything by 56 m.
 
+One deliberate exception (owner, art-pass step 13): the van's own mask-1
+lights in `scenes/van/van.tscn` stay as they are: `DoorSpill` (energy 6.5,
+18 m, shadowed; it is what lets the player see raiders at the doors),
+`RearCone` (5.5) and the `ExteriorLight` directional "moon", which is light
+from nothing you can point at. Don't dim or remove them to meet a shot
+target, and don't add another sourceless light on their precedent.
+
 - **Environment baseline** (`IndustrialEnvironment` in `scenes/van/van.tscn`):
   background (0.018, 0.024, 0.025), ambient (0.24, 0.29, 0.29) at energy
   0.24, depth fog 20..56 m in (0.008, 0.012, 0.011), glow threshold 1.1.
@@ -53,11 +60,14 @@ within about 20 m, and the fog takes everything by 56 m.
 - **Light pools:** street and stop lights are pools with dark gaps between
   them. Shadows stay crisp (shadow blur and light angular distance at or
   near 0). No SSAO, no GI.
-- **Screen check:** `tools/shot_stats.py` (added by the art-pass plan) gives
-  each `--shots` PNG its mean luminance, its 95th percentile and its
-  clipped-pixel share. The targets live in the table below once step 1 of
-  the art pass calibrates them; a visible change that moves a shot past
-  its target is a regression.
+- **Every stop light has a fixture:** a light in a stop, a junction or on a
+  statue hangs under a mesh you can point at (a tungsten ceiling lamp, a
+  caged lamp, a wall lamp, a trouble lamp, a drop bulb, an emissive orb). A
+  glow floating in air is a break; add the fixture, keep the energy.
+- **Screen check:** `tools/shot_stats.py <shots dir>` gives each `--shots`
+  PNG its mean luminance, its 95th percentile and its clipped-pixel share.
+  A visible change that moves a shot past its target below is a
+  regression.
 
 Calibrated in art-pass step 1 (2026-09-25) from the stop shots, which are
 the "dark enough" line (`09` mean 0.0052, `12` mean 0.0123, p95 0.019).
@@ -71,8 +81,25 @@ interior facing the rear doors; `*-front` the player's view with the HUD.
 | `*-back` (van interior, liked as is) | 0.011 | 0.025 | 0.05 |
 | `*-front` (HUD on, loose check) | 0.030 | 0.10 | 0.20 |
 
-Baseline breaks: `06-combat-outside` (mean 0.099, p95 0.85, clip 7.4%:
-the lit windows) and `03-idle-outside` (mean 0.018, clip 1.0%).
+After the 3D art pass (2026-09-25) every shot is inside its target except
+`06-combat-outside` (mean 0.036, p95 0.178, clip 1.6%; it was 0.099, 0.85
+and 7.4% before). That is accepted: the overhead camera sits at
+second-floor height right beside the big vertical sign and near lit panes,
+so `06` reads emissives close to a high camera, not the street's ambient
+darkness. Judge a change by how far it moves `06`, not by the table.
+
+Reading the numbers:
+
+- Shots are not pixel-deterministic between runs, and facade layouts are
+  seeded per run, so street numbers move with the buildings on screen.
+  Compare against a before run of the same session, and treat about
+  ±0.001 mean and ±0.1 clip% as noise.
+- A change to a large surface reads on near walls, docks and stoops, not in
+  the means: look at the PNGs as well.
+- The smoke shots visit only the street, the elevator stop (shop) and the
+  rear-park stop (garage). For the mechanic, the warehouse, a junction, a
+  statue or an overhead, check with a temporary debug swap (`stop elevator
+  mechanic`, `stop warehouse`) that is never committed.
 
 ## Procedural 3D (street, facades, stops, props, van)
 
@@ -120,17 +147,27 @@ Surfaces, in the road's recipe:
   `facade_grime_materials.gd`'s `from_prop()`, which puts the same budgeted
   colour on `facade_prop_grime.gdshader` (grime in model-space metres, so
   merged prop meshes with 0..1 UVs per face still get same-size detail).
+  Furniture, bumpers, rails, hangers, diagonals and every emissive part
+  stay flat.
+- **Stop, bay and junction steel** that is large (walls, ceilings, roll-up
+  slats, counter decks, cabinet runs, cross beams) goes on
+  `scenes/corridor/industrial_surface.gdshader`: panels of `panel_size_m`
+  laid out in model-space metres, seams and rivets faded with `fwidth`,
+  rust, streaks, dust and oil, and a `foot_y_m` dirt band on walls. It
+  assumes an unscaled, centred `BoxMesh`: size the mesh, never the node, or
+  the panels stretch. Ceilings and cross beams use the garage's rib recipe
+  (about 3 x 0.5 m panels, roughness 0.9, metallic 0.25); pick a panel size
+  large enough that seams rarely land on a thin trim (the shop booth's steel
+  uses 2.4 m). Small steel (grills, rivets, guides, rails) is flat at
+  metallic 0.3, roughness 0.75.
 
 The van: the owner likes it as it is. Its shaders are a reference, not a
 migration target; change the van only to fix a break of the dark budget,
 and say so in the report.
 
-Off-style today, to migrate (don't extend): `facade_surface.gdshader`'s lit
-windows (emission 2.2 blows past the glow threshold into white panes) and
-its fine patterns (moiré on distant walls); `industrial_surface.gdshader`
-(a 26-line seam grid with none of the grime layers, on every bay wall);
-the shop booth's metals (metallic 0.78 to 0.92 in
-`shop_booth_materials.gd`); bay materials with metallic 0.5 to 0.72.
+Off-style today (3D): nothing known. The 3D art pass (2026-09-25) brought
+the facades, props, set-pieces, stops, junctions, statue and overheads onto
+this file; a new break found later goes here.
 
 ## Pixel art (NPCs, raiders, bosses, items, pickups, wares, icons)
 
@@ -168,7 +205,7 @@ and the boon icons (`tools/generate_boon_icons.py` draws anti-aliased
 ## Checking it
 
 - Anything visible gets `tools/smoke.py --shots`; Read the PNGs, run
-  `tools/shot_stats.py` on the folder once it exists, and compare with the
+  `tools/shot_stats.py` on the folder, and compare with the
   references and with this file before reporting.
 - A new sprite: check it with `py -3 -c` and PIL before wiring it in
   (colour count, alpha levels only 0 and 255, size matches its canvas).
