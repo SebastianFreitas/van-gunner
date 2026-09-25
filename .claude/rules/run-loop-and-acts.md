@@ -50,7 +50,7 @@ Default forks are 4-ways. T-junctions are used when fewer than three cards remai
 
 ## Determinism
 
-Act deck shuffles are seeded from `hash([run_seed, run_act, channel])` (`session_act_deck.gd`), so a reload mid-act rebuilds the same deck. Wave composition and side-street placement use unseeded `randf()`/`randi()` on purpose, so replays aren't identical. The smoke fingerprint's `[act_deck]` line guards the seeded part.
+Act deck shuffles are seeded from `hash([run_seed, run_act, channel])` (`session_act_deck.gd`), so a reload mid-act rebuilds the same deck. Wave composition and spawn jitter use unseeded `randf()`/`randi()` on purpose, so replays aren't identical. Street layout (neighborhood variant, side streets, bay side, auto route pick) draws from `TravelController._rng`, seeded with `run_seed`; facades derive their own per-tile RNG from `hash([run_seed, _segment_index])` and never draw from `_rng`, because every extra draw there shifts the stop and fork sequence. The smoke fingerprint's `[act_deck]` line guards the seeded part.
 
 ## Registry
 
