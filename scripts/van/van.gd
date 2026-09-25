@@ -256,6 +256,9 @@ func _apply_phase_mouse_mode(phase: GameSession.RunPhase) -> void:
 
 func _capture_mouse_after_ui_click() -> void:
 	_mouse_capture_gen += 1
+	# The smoke's --shots window is off-screen; capturing would grab the owner's cursor.
+	if SaveSandbox.enabled:
+		return
 	var gen := _mouse_capture_gen
 	while (
 		Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)

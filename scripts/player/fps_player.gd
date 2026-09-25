@@ -32,7 +32,8 @@ var current_class: ClassDefinition
 
 
 func _ready() -> void:
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if not SaveSandbox.enabled:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	floor_snap_length = 0.2
 	add_to_group(&"player")
 	_movement_reference = get_node_or_null(movement_reference_path) as Node3D
@@ -55,6 +56,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			and mb.button_index == MOUSE_BUTTON_LEFT
 			and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
 			and not _ui_wants_free_cursor()
+			and not SaveSandbox.enabled
 		):
 			## Click in the world after a HUD/UI click stole the cursor.
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
