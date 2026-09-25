@@ -58,5 +58,5 @@ Act deck shuffles are seeded from `hash([run_seed, run_act, channel])` (`session
 
 ## Deliberate choices: don't change without asking
 
-- **Wave counts in `game_balance.tres` are test values the owner changes freely.** The working tree may hold an uncommitted edit; never stage it. It feeds the smoke `[waves]` section, so an owner edit there needs `py -3 tools/smoke.py --bless`.
+- **Wave counts in `game_balance.tres` are test values the owner changes freely.** The working tree may hold an uncommitted edit; never stage it. The smoke `[waves]` section pins `segment_wave_min` and `segment_wave_max` while it plans (`WAVE_MIN_PIN` / `WAVE_MAX_PIN` in `smoke_fingerprint.gd`), so an owner edit there never needs a re-bless and a clean clone reproduces the baseline.
 - **`GameBalance.get_act(route_step)` and `GameSession.run_act` disagree.** `get_act` is the old three-step pacing model (act 3 from route step 3 on); `run_act` is the deck-based counter (one act = six cards = six route steps). Every balance curve (mob world speed, engagement seconds, expected van upgrade fraction, wave sizing) still reads the old one, so difficulty stops scaling early in act 1. This is an open design question the owner is working on. Do not unify the two, do not rewire `get_act` to take `run_act`, do not add a shim. Raise it and wait.

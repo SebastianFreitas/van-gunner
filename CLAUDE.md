@@ -59,6 +59,7 @@ The main session directs exploration, designs the change, writes the spec, revie
 | Audio | `scripts/audio/`, `resources/audio/sound_bank.tres` |
 | Smoke test | `tools/smoke/`, `tools/smoke.py` |
 | Scene dump | `tools/scene_dump/`, `tools/scene_dump.py` |
+| Cloud session Godot install | `tools/cloud_setup.sh` |
 
 ## Code rules
 
@@ -123,18 +124,29 @@ Every delegation contains:
 
 ## Commands
 
-- **Headless check:** `py -3 tools/check.py` from the repo root. It runs `"$GODOT" --headless --path . --import` (imports new assets, writes missing `.gd.uid` files) and then `--script res://tools/check_scripts.gd`, which loads every `.gd`, `.tscn`, `.tres` and `.gdshader` so parse errors and broken references surface. `GODOT` holds the full path to the Godot 4.7 exe; the runner switches to the `_console` build next to it, since the plain exe writes nothing to a pipe. Any line containing `SCRIPT ERROR`, `Parse Error` or `ERROR:` is a failure; Godot's exit code alone is not reliable. Right after moving files, the first run can print stale `uid_cache` errors; run it again.
-- **Smoke test:** `py -3 tools/smoke.py`. Runs `res://tools/smoke/smoke_test.tscn` headless with `-- --smoke-sandbox` (saves and the meta profile never touch `user://`), plays a run like a player (NEW, IDLE, class panel, GO, `summon enemy`, firing, bench, a REST pick, two forks in `speed` mode with an elevator stop and a rear-park stop, a save round-trip) and fails on any error line, a non-zero exit, the 300 s timeout, or any difference between `tools/smoke/fingerprint.txt` and `fingerprint.baseline.txt`. `--bless` rewrites the baseline; only when a change is meant to alter the fingerprint. The `[waves]` section reads `game_balance.tres`, so an owner edit to wave counts needs a re-bless. Neither command exercises panel UI that `speed` skips (reveal, boon pick), so review UI changes by reading.
+- **Headless check:** `py -3 tools/check.py` from the repo root. It runs `"$GODOT" --headless --path . --import` (imports new assets, writes missing `.gd.uid` files) and then `--script res://tools/check_scripts.gd`, which loads every `.gd`, `.tscn`, `.tres` and `.gdshader` so parse errors and broken references surface. `GODOT` holds the full path to the Godot 4.7 exe (unset, the tools take `godot` from PATH); the runner switches to the `_console` build next to it, since the plain exe writes nothing to a pipe. Any line containing `SCRIPT ERROR`, `Parse Error` or `ERROR:` is a failure; Godot's exit code alone is not reliable. Right after moving files, the first run can print stale `uid_cache` errors; run it again.
+- **Smoke test:** `py -3 tools/smoke.py`. Runs `res://tools/smoke/smoke_test.tscn` headless with `-- --smoke-sandbox` (saves and the meta profile never touch `user://`), plays a run like a player (NEW, IDLE, class panel, GO, `summon enemy`, firing, bench, a REST pick, two forks in `speed` mode with an elevator stop and a rear-park stop, a save round-trip) and fails on any error line, a non-zero exit, the 300 s timeout, or any difference between `tools/smoke/fingerprint.txt` and `fingerprint.baseline.txt`. `--bless` rewrites the baseline; only when a change is meant to alter the fingerprint. The `[waves]` section pins `segment_wave_min` and `segment_wave_max` to 2 and 4 while it plans, so the owner's balance edits never move the fingerprint and a clean clone reproduces the baseline. Neither command exercises panel UI that `speed` skips (reveal, boon pick), so review UI changes by reading.
 - **Scene dump:** `py -3 tools/scene_dump.py`. Instantiates `van.tscn` headless (not added to the tree), writes every node's path, class, script, groups, stored properties and persistent connections to `tools/scene_dump/van.txt`, with embedded and `.tres` resources printed by content and a sharing index, and fails on any difference from `van.baseline.txt`. Run it for any change to the van's scenes that should not alter the built tree; `--bless` only when it should.
 - **PROJECT_MAP:** `py -3 tools/gen_context.py`
 - **Boons and pools:** `py -3 tools/generate_boons.py`; icons: `py -3 tools/generate_boon_icons.py`. Boon `.tres` files and boon pools are generated: change the generator and re-run it, never hand-edit its output.
 
 ## Git
 
-- Commit straight to `main` unless the user says otherwise. One commit per task step; every task ends with a commit, unasked.
+- Commit straight to `main` unless the user says otherwise; a cloud session commits to its own branch instead (see Cloud sessions). One commit per task step; every task ends with a commit, unasked.
 - Stage files by path. Never `git add -A` or `git add .`: `resources/balance/game_balance.tres` holds an uncommitted test edit and `export_presets.cfg` is untracked, and both stay out of commits.
 - Commit messages are one sentence saying what changed and why, like the existing history.
 
 ## Commands shown to the user
 
 They run in Windows PowerShell 5.1. Never print `&&`, `||`, `$(...)` or bash `if` for them; chain with `;` or give one command per block. The Bash tool is fine for your own use.
+
+## Cloud sessions
+
+A cloud session (claude.ai/code, or "move to cloud" in the desktop app) is a fresh Ubuntu x86_64 clone of the GitHub repo in its own container, on its own `claude/<name>` branch, so parallel sessions never share files. Nothing it pushes reaches `main` until the owner merges it.
+
+- **Branch:** work, commit and push only on the branch the session was given. Never push to `main` and never merge into it; the owner merges. This overrides "commit straight to `main`" above.
+- **Godot:** the container has none until the environment's Setup script field runs `bash tools/cloud_setup.sh`, which installs the checksum-pinned Godot 4.7 stable Linux build as `godot` on PATH; the tools use it when `GODOT` is unset. If a tool prints "No Godot found", the setup script didn't run: say so and stop, don't install anything by hand. If the setup script's download is refused, the environment's network allowlist needs GitHub's release asset host, `release-assets.githubusercontent.com`, or Full access.
+- **Commands:** `py -3` doesn't exist there; run every tool with `python3` (`python3 tools/check.py`). Everything else in this file applies unchanged. The first check imports every asset into `.godot/`, so it takes a few minutes.
+- **The clone is the committed tree.** The owner's uncommitted balance edit and `export_presets.cfg` aren't there. The smoke fingerprint pins the wave bounds it reads, so the baseline still matches; if the smoke test fails on a fresh clone before you changed anything, report that instead of blessing.
+- **Parallel branches collide in four files:** `docs/PROJECT_MAP.md`, the Token budget list above, `tools/smoke/fingerprint.baseline.txt` and `tools/scene_dump/van.baseline.txt`. When merging a branch whose only conflicts are those, take either side, then re-run `python3 tools/gen_context.py`, the smoke test and the scene dump, and bless only what the merged change was meant to alter.
+- **No scratch files in the repo.** Logs, dumps and notes go in the session's scratchpad, never the repo root.

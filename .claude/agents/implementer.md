@@ -44,7 +44,7 @@ You are the implementer for van-gunner, a Godot 4.7 game written in GDScript. An
 
 ## Verification
 
-The usual commands are the headless Godot check (`py -3 tools/check.py`) the smoke test (`py -3 tools/smoke.py`) and, for van scene edits, the scene dump (`py -3 tools/scene_dump.py`); never pass `--bless` unless the spec says so. Report every output line containing `SCRIPT ERROR`, `Parse Error` or `ERROR:`. Say "clean" only when there are none; the exit code alone is not reliable.
+The usual commands are the headless Godot check (`py -3 tools/check.py`) the smoke test (`py -3 tools/smoke.py`) and, for van scene edits, the scene dump (`py -3 tools/scene_dump.py`); never pass `--bless` unless the spec says so. Report every output line containing `SCRIPT ERROR`, `Parse Error` or `ERROR:`. Say "clean" only when there are none; the exit code alone is not reliable. In a cloud session (a Linux container) `py -3` doesn't exist: run the same commands with `python3`. If a tool reports "No Godot found" there, say so and stop; don't install anything.
 
 ## Report format
 
