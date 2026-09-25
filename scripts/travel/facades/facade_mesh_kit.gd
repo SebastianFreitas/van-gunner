@@ -85,3 +85,28 @@ static func add_box_node(
 	mi.visibility_range_end = VISIBILITY_RANGE
 	host.add_child(mi)
 	return mi
+
+
+## A single CylinderMesh node (a water tower's tank or lid); gated by a box AABB sized to the
+## larger radius, since a keep-out box can't represent a circle exactly.
+static func add_cylinder_node(
+	host: Node3D, node_name: String, top_radius: float, bottom_radius: float, height: float,
+	center: Vector3, material: Material, shadows: bool, keep_out: RefCounted
+) -> MeshInstance3D:
+	var max_r := maxf(top_radius, bottom_radius)
+	var gate_size := Vector3(2.0 * max_r, height, 2.0 * max_r)
+	if not keep_out.allows(_FacadeKeepOut.box_aabb(center, gate_size)):
+		return null
+	var mi := MeshInstance3D.new()
+	mi.name = node_name
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = top_radius
+	cyl.bottom_radius = bottom_radius
+	cyl.height = height
+	mi.mesh = cyl
+	mi.position = center
+	mi.material_override = material
+	mi.cast_shadow = SHADOW_ON if shadows else SHADOW_OFF
+	mi.visibility_range_end = VISIBILITY_RANGE
+	host.add_child(mi)
+	return mi

@@ -12,6 +12,7 @@ const _FacadePropsUpper := preload("res://scripts/travel/facades/facade_props_up
 const _FacadePropsGround := preload("res://scripts/travel/facades/facade_props_ground.gd")
 const _FacadeSigns := preload("res://scripts/travel/facades/facade_signs.gd")
 const _FacadeFixtures := preload("res://scripts/travel/facades/facade_fixtures.gd")
+const _FacadeSetPieces := preload("res://scripts/travel/facades/facade_set_pieces.gd")
 
 const SIDE_NAMES: Array[String] = ["Left", "Right"]
 const SIDE_SIGNS: Array[float] = [-1.0, 1.0]
@@ -31,6 +32,11 @@ var _plans: Array = [[], []]
 var _built: Array[bool] = [false, false]
 ## Kept for later steps (props) and for describe().
 var _keep_outs: Array = [null, null]
+## The rolled set-piece for this tile: piece + side_idx, or empty.
+var _rare: Dictionary = {}
+var _tile_rng_seed := 0
+## The plan index within the rolled side's plans that the set-piece targets; set by rebuild_side.
+var _rare_plan_index := -1
 
 
 func _init(owner: Node3D) -> void:
@@ -47,14 +53,28 @@ func configure(seed_: int, district_: int, neighborhood_seed_: int, allow_rare_:
 	neighborhood_seed = neighborhood_seed_
 	allow_rare = allow_rare_
 	_configured = true
+	var district_res: FacadeDistrict = _FacadeRegistry.district(district)
+	var tile_rng := RandomNumberGenerator.new()
+	tile_rng.seed = hash([seed, &"rare"])
+	_tile_rng_seed = tile_rng.seed
+	_rare = _FacadeSetPieces.roll(tile_rng, district_res, allow_rare, _openings)
 	rebuild_side(0)
 	rebuild_side(1)
-	return false
+	if not _rare.is_empty() and (_rare[&"piece"] as FacadeSetPiece).span:
+		_build_span()
+	return not _rare.is_empty()
 
 
 func set_opening(side_idx: int, opening: int) -> void:
 	if _openings[side_idx] == opening and _built[side_idx]:
 		return
+	# A bay or side street always wins over a rare: drop it (and any span) before the rebuild.
+	var rare_piece: FacadeSetPiece = _rare.get(&"piece")
+	if opening != 0 and rare_piece and (rare_piece.span or _rare[&"side_idx"] == side_idx):
+		_rare = {}
+		var span_root := _facades_host().get_node_or_null("Span")
+		if span_root:
+			span_root.queue_free()
 	_openings[side_idx] = opening
 	if _configured:
 		rebuild_side(side_idx)
@@ -92,6 +112,18 @@ func rebuild_side(side_idx: int) -> void:
 		rng, district_res, _openings[side_idx], neighborhood_seed
 	)
 	_plans[side_idx] = plans_out
+	if _rare_targets(side_idx):
+		var piece: FacadeSetPiece = _rare[&"piece"]
+		if piece.can_apply(plans_out):
+			var target := piece.pick_plan(plans_out, rng)
+			piece.apply_plans(plans_out, rng)
+			_rare_plan_index = target
+		else:
+			_rare = {}
+	elif not _rare.is_empty() and (_rare[&"piece"] as FacadeSetPiece).id == &"power_outage":
+		# power_outage is the one "atmosphere" piece that spans the tile without geometry: it
+		# darkens both sides even though the roll only picked one side to "own" it.
+		(_rare[&"piece"] as FacadeSetPiece).apply_plans(plans_out, rng)
 	for i in plans_out.size():
 		_FacadeBody.build(root, plans_out[i], SIDE_SIGNS[side_idx], i)
 		if plans_out[i].get(&"mouth", false):
@@ -105,9 +137,21 @@ func rebuild_side(side_idx: int) -> void:
 		_FacadeSigns.build(
 			root, plans_out[i], SIDE_SIGNS[side_idx], keep_out, rng, district_res
 		)
+	var force_dead := rare_id() == &"power_outage"
 	_FacadeFixtures.build_fixtures(
-		root, plans_out, SIDE_SIGNS[side_idx], keep_out, rng, district_res
+		root, plans_out, SIDE_SIGNS[side_idx], keep_out, rng, district_res, force_dead
 	)
+	if _rare_targets(side_idx):
+		(_rare[&"piece"] as FacadeSetPiece).build({
+			&"host": root,
+			&"plans": plans_out,
+			&"side_sign": SIDE_SIGNS[side_idx],
+			&"keep_out": keep_out,
+			&"rng": rng,
+			&"district": district_res,
+			&"plan": plans_out[_rare_plan_index],
+			&"tile_seed": seed,
+		})
 	for inst: GeometryInstance3D in root.find_children("*", "GeometryInstance3D", true, false):
 		# Fog ends at 56 m; tiles beyond that need not render.
 		inst.visibility_range_end = 64.0
@@ -127,7 +171,47 @@ func describe() -> String:
 				SIDE_NAMES[side_idx], _openings[side_idx], _plans[side_idx].size(), heights
 			]
 		)
+	if not _rare.is_empty():
+		lines.append("rare=%s" % String(rare_id()))
 	return "\n".join(lines)
+
+
+func rare_id() -> StringName:
+	if _rare.is_empty():
+		return &""
+	return (_rare[&"piece"] as FacadeSetPiece).id
+
+
+## True when the rolled piece is a side piece targeting this open side.
+func _rare_targets(side_idx: int) -> bool:
+	if _rare.is_empty():
+		return false
+	var piece: FacadeSetPiece = _rare[&"piece"]
+	return not piece.span and _rare[&"side_idx"] == side_idx and _openings[side_idx] == 0
+
+
+## The rolled piece is a span: builds it under Facades/Span, spanning both sides at once.
+func _build_span() -> void:
+	var facades := _facades_host()
+	var span_root := Node3D.new()
+	span_root.name = "Span"
+	facades.add_child(span_root)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([seed, &"span"])
+	var district_res: FacadeDistrict = _FacadeRegistry.district(district)
+	var piece: FacadeSetPiece = _rare[&"piece"]
+	piece.build({
+		&"host": span_root,
+		&"plans_left": _plans[0],
+		&"plans_right": _plans[1],
+		&"side_sign": 0.0,
+		&"keep_out": _keep_outs[1],
+		&"rng": rng,
+		&"district": district_res,
+		&"tile_seed": seed,
+	})
+	for inst: GeometryInstance3D in span_root.find_children("*", "GeometryInstance3D", true, false):
+		inst.visibility_range_end = 64.0
 
 
 func _facades_host() -> Node3D:

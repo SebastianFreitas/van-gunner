@@ -75,6 +75,10 @@ func describe_facades() -> String:
 	return _facades.describe()
 
 
+func rare_id() -> StringName:
+	return _facades.rare_id()
+
+
 func _set_side_street(side: StringName, enabled: bool, opening: int = -1) -> void:
 	var is_left := side == &"left"
 	var wall_collision := _left_wall_collision if is_left else _right_wall_collision
