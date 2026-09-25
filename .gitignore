@@ -26,3 +26,11 @@ tools/smoke/fingerprint.txt
 
 # Scene dump output; the committed baseline lives in van.baseline.txt
 tools/scene_dump/van.txt
+
+# Claude Code: session worktrees and the context handoff stay local
+.claude/worktrees/
+.claude/handoff.md
+
+# Written per run by tools/try.py (separate user:// profile) and
+# tools/smoke.py --shots (no-focus window); never committed
+/override.cfg
