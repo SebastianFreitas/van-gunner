@@ -10,6 +10,7 @@ const _FacadeBody := preload("res://scripts/travel/facades/facade_body.gd")
 const _FacadeRegistry := preload("res://scripts/travel/facades/facade_registry.gd")
 const _FacadePropsUpper := preload("res://scripts/travel/facades/facade_props_upper.gd")
 const _FacadePropsGround := preload("res://scripts/travel/facades/facade_props_ground.gd")
+const _FacadeFixtures := preload("res://scripts/travel/facades/facade_fixtures.gd")
 
 const SIDE_NAMES: Array[String] = ["Left", "Right"]
 const SIDE_SIGNS: Array[float] = [-1.0, 1.0]
@@ -100,7 +101,7 @@ func rebuild_side(side_idx: int) -> void:
 		_FacadePropsGround.build(
 			root, plans_out[i], SIDE_SIGNS[side_idx], keep_out, rng, district_res
 		)
-	_FacadePropsGround.build_fixtures(
+	_FacadeFixtures.build_fixtures(
 		root, plans_out, SIDE_SIGNS[side_idx], keep_out, rng, district_res
 	)
 	for inst: GeometryInstance3D in root.find_children("*", "GeometryInstance3D", true, false):
