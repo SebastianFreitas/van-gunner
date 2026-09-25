@@ -11,8 +11,20 @@ The run writes a deterministic fingerprint of class stats, loot pools, the
 act deck and wave plans to tools/smoke/fingerprint.txt. Without `--bless`,
 this is diffed against the committed tools/smoke/fingerprint.baseline.txt;
 with `--bless`, the baseline is overwritten after a clean run.
+
+`--shots DIR` plays the same run in a real window placed off-screen instead of
+headless, since headless Godot renders nothing, and saves PNGs to DIR at four
+checkpoints (idle, combat, the elevator stop and the rear-park stop). After a
+one-second settle, each checkpoint saves three views: the front as the player
+sees it, the back through the rear doors, and an outside view from above the
+cab looking back over the van; the UI is hidden for the back and outside
+views. It writes an `override.cfg` next to project.godot for the run, so the
+window renders but never takes the keyboard focus, and deletes it when the run
+ends. Windows desktop only; behaviour of the headless run is unchanged.
 """
+import argparse
 import difflib
+import os
 import pathlib
 import re
 import subprocess
@@ -33,19 +45,73 @@ BASELINE = ROOT / "tools" / "smoke" / "fingerprint.baseline.txt"
 
 
 def main() -> int:
-    bless = "--bless" in sys.argv[1:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--bless", action="store_true", help="rewrite fingerprint.baseline.txt after a clean run"
+    )
+    parser.add_argument(
+        "--shots", metavar="DIR",
+        help="play in an off-screen window and save screenshots to DIR (Windows desktop only)",
+    )
+    opts = parser.parse_args()
+
+    if opts.bless and opts.shots:
+        print("SMOKE FAILED: --bless and --shots don't mix; bless from a headless run")
+        return 1
 
     if FINGERPRINT.exists():
         FINGERPRINT.unlink()
 
+    shots: pathlib.Path | None = None
+    if opts.shots:
+        if sys.platform != "win32" and not os.environ.get("DISPLAY"):
+            print(
+                "SMOKE FAILED: --shots needs a display; this machine has none "
+                "(cloud containers can't take screenshots)"
+            )
+            return 1
+        shots = pathlib.Path(opts.shots).resolve()
+        shots.mkdir(parents=True, exist_ok=True)
+        for png in shots.glob("*.png"):
+            png.unlink()
+        override = ROOT / "override.cfg"
+        if override.exists():
+            print(
+                "SMOKE FAILED: override.cfg already exists in this checkout; --shots writes its "
+                "own. Move it away and run again."
+            )
+            return 1
+
     seed_import_cache(ROOT)
     exe = godot_exe()
-    args = [
-        exe, "--headless", "--path", str(ROOT),
-        "res://tools/smoke/smoke_test.tscn", "--", "--smoke-sandbox",
-    ]
-    print(f"== smoke: godot --headless --path . res://tools/smoke/smoke_test.tscn -- --smoke-sandbox")
+    if shots is not None:
+        args = [
+            exe, "--path", str(ROOT), "--position", "-10000,-10000",
+            "--resolution", "1440x720", "res://tools/smoke/smoke_test.tscn", "--",
+            "--smoke-sandbox", "--smoke-shots=" + shots.as_posix(),
+        ]
+        print(
+            "== smoke: godot --path . (off-screen window) res://tools/smoke/smoke_test.tscn -- "
+            f"--smoke-sandbox --smoke-shots={shots.as_posix()}"
+        )
+    else:
+        args = [
+            exe, "--headless", "--path", str(ROOT),
+            "res://tools/smoke/smoke_test.tscn", "--", "--smoke-sandbox",
+        ]
+        print("== smoke: godot --headless --path . res://tools/smoke/smoke_test.tscn -- --smoke-sandbox")
     with project_lock(ROOT):
+        if shots is not None:
+            override = ROOT / "override.cfg"
+            override.write_text(
+                "; Written by tools/smoke.py --shots for one run: the off-screen window renders\n"
+                "; but never takes the keyboard focus. Deleted when the run ends.\n"
+                "[display]\n"
+                "\n"
+                "window/size/no_focus=true\n",
+                encoding="utf-8",
+                newline="\n",
+            )
         try:
             proc = subprocess.run(
                 args,
@@ -59,6 +125,9 @@ def main() -> int:
             print(f"   timed out after {TIMEOUT_SECONDS}s")
             print("SMOKE FAILED: timed out")
             return 1
+        finally:
+            if shots is not None:
+                (ROOT / "override.cfg").unlink(missing_ok=True)
 
     lines = [ANSI.sub("", line.rstrip()) for line in (proc.stdout + proc.stderr).splitlines()]
     hits = [line for line in lines if FAILURE.search(line)]
@@ -84,7 +153,7 @@ def main() -> int:
         print("SMOKE FAILED: missing fingerprint.txt")
         return 1
 
-    if bless:
+    if opts.bless:
         BASELINE.write_bytes(FINGERPRINT.read_bytes())
         print("BASELINE WRITTEN")
         stamp_clean(ROOT, "smoke")
@@ -109,6 +178,11 @@ def main() -> int:
         return 1
 
     stamp_clean(ROOT, "smoke")
+    if shots is not None:
+        pngs = sorted(shots.glob("*.png"))
+        print(f"   {len(pngs)} shot(s) in {shots}:")
+        for png in pngs:
+            print("     " + png.name)
     print("SMOKE CLEAN")
     return 0
 

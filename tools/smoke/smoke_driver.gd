@@ -5,10 +5,12 @@ extends Node
 ## deterministic. Writes a fingerprint of stats, pools and deck/wave plans to
 ## user://, which tools/smoke.py diffs against a committed baseline. Runs only
 ## when SaveSandbox.enabled, so it never touches a real save on disk.
+## With --smoke-shots=<dir> (tools/smoke.py --shots) it also saves screenshots at fixed checkpoints.
 
 const _WATCHDOG_SECONDS := 270.0
 const _Fingerprint := preload("res://tools/smoke/smoke_fingerprint.gd")
 const _Route := preload("res://tools/smoke/smoke_route.gd")
+const _Shots := preload("res://tools/smoke/smoke_shots.gd")
 
 var _watchdog: SceneTreeTimer
 ## Direction chosen at the previous forced fork, so the next one picks differently.
@@ -17,11 +19,18 @@ var _watchdog: SceneTreeTimer
 var _last_route_direction: StringName = &""
 ## Route helper for the fork/side-stop pass; held so it lives through the awaits.
 var _route: RefCounted
+## Screenshot taker (tools/smoke.py --shots); null in the headless run.
+var _shots: _Shots
 
 
 func _ready() -> void:
 	_watchdog = get_tree().create_timer(_WATCHDOG_SECONDS)
 	_watchdog.timeout.connect(func() -> void: _fail("watchdog timeout"))
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--smoke-shots="):
+			_shots = _Shots.new()
+			_shots.dir = arg.trim_prefix("--smoke-shots=")
+			add_child(_shots)
 	_run()
 
 
@@ -54,6 +63,7 @@ func _run() -> void:
 		return
 
 	await _seconds(2.0)
+	await _shot("idle")
 
 	var van := get_tree().get_first_node_in_group(&"van_run")
 	var gun_stats: GunStatsController = get_tree().get_first_node_in_group(&"gun_stats")
@@ -200,6 +210,7 @@ func _run_pass(_van: Node) -> bool:
 		gun_controller.try_fire()
 		await get_tree().process_frame
 	await _seconds(2.0)
+	await _shot("combat")
 
 	_log(DebugCommands.run("chill"))
 	await _frames(5)
@@ -333,6 +344,14 @@ func _frames(n: int) -> void:
 
 func _seconds(s: float) -> void:
 	await get_tree().create_timer(s).timeout
+
+
+## Screenshots at a checkpoint when the smoke runs with --smoke-shots=<dir>; a no-op in
+## the headless run, which renders nothing.
+func _shot(shot_name: String) -> void:
+	if _shots == null:
+		return
+	await _shots.shot(shot_name)
 
 
 func _fail(msg: String) -> void:
