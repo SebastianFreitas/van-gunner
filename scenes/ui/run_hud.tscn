@@ -1,0 +1,335 @@
+[gd_scene format=3 uid="uid://djiqi7g12i72i"]
+
+[ext_resource type="PackedScene" path="res://scenes/ui/item_hud.tscn" id="12"]
+[ext_resource type="PackedScene" path="res://scenes/ui/bench_screen.tscn" id="13"]
+[ext_resource type="PackedScene" path="res://scenes/ui/driver_shout_hud.tscn" id="33"]
+[ext_resource type="Script" uid="uid://cmdwe4o0k1nme" path="res://scripts/ui/van_health_bar.gd" id="38"]
+[ext_resource type="PackedScene" path="res://scenes/ui/skill_tree_hud.tscn" id="40"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="42"]
+
+[node name="HUD" type="CanvasLayer" unique_id=1431776245]
+
+[node name="TopLeft" type="VBoxContainer" parent="." unique_id=1463701970]
+offset_left = 28.0
+offset_top = 24.0
+offset_right = 350.0
+offset_bottom = 200.0
+
+[node name="HealthLabel" type="Label" parent="TopLeft" unique_id=1496366238]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "VAN 100 / 100"
+
+[node name="VanHealth" type="Control" parent="TopLeft" unique_id=682510640]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 18)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+script = ExtResource("38")
+
+[node name="PlayerHealthLabel" type="Label" parent="TopLeft" unique_id=1496366239]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "YOU 50 / 50"
+
+[node name="PlayerHealth" type="ProgressBar" parent="TopLeft" unique_id=682510641]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 18)
+layout_mode = 2
+value = 50.0
+show_percentage = false
+
+[node name="PhaseLabel" type="Label" parent="TopLeft" unique_id=945648155]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
+text = "IDLE"
+
+[node name="WaveLabel" type="Label" parent="TopLeft" unique_id=777769972]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.66, 0.64, 1)
+text = "WAVES CLEARED  0  ·  ROUTE EVERY 10"
+
+[node name="AmmoLabel" type="Label" parent="TopLeft" unique_id=843703758]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.84, 0.55, 1)
+theme_override_font_sizes/font_size = 20
+text = "AMMO  12 / 12"
+
+[node name="AmmoBar" type="ProgressBar" parent="TopLeft" unique_id=310705615]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 10)
+layout_mode = 2
+max_value = 12.0
+value = 12.0
+show_percentage = false
+
+[node name="ReloadLabel" type="Label" parent="TopLeft" unique_id=217834513]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.55, 0.35, 1)
+theme_override_font_sizes/font_size = 16
+text = "RELOADING..."
+
+[node name="HitFlash" type="ColorRect" parent="." unique_id=682510642]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.75, 0.08, 0.06, 0.28)
+
+[node name="InteractionPrompt" type="Label" parent="." unique_id=808459113]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -250.0
+offset_top = -80.0
+offset_right = 250.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="MessageLabel" type="Label" parent="." unique_id=715288828]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -340.0
+offset_top = 90.0
+offset_right = 340.0
+offset_bottom = 145.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="Crosshair" type="Label" parent="." unique_id=780930844]
+unique_name_in_owner = true
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -13.0
+offset_top = -15.0
+offset_right = 13.0
+offset_bottom = 15.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 22
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Controls" type="Label" parent="." unique_id=1320681238]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -270.0
+offset_top = 24.0
+offset_right = -30.0
+offset_bottom = 108.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.65, 0.68, 0.67, 1)
+text = "LMB  SHOOT
+R  RELOAD
+E  INTERACT
+ESC  PAUSE
+SHIFT  GO
+C  EASY
+1-4  USE TOOL"
+horizontal_alignment = 2
+
+[node name="ItemHUD" parent="." unique_id=34599471 instance=ExtResource("12")]
+
+[node name="DriverShoutHud" parent="." unique_id=2081390309 instance=ExtResource("33")]
+unique_name_in_owner = true
+
+[node name="RestToast" type="Label" parent="." unique_id=1339528701]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -340.0
+offset_top = 72.0
+offset_right = 340.0
+offset_bottom = 110.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 18
+text = "BREAK — MOVE AROUND AND PREP"
+horizontal_alignment = 1
+
+[node name="RouteChoice" type="PanelContainer" parent="." unique_id=119216816]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -420.0
+offset_top = -220.0
+offset_right = 420.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Layout" type="VBoxContainer" parent="RouteChoice" unique_id=596446807]
+layout_mode = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Title" type="Label" parent="RouteChoice/Layout" unique_id=571961058]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.91, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 28
+text = "THE ROAD SPLITS"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="RouteChoice/Layout" unique_id=1015664258]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.66, 0.64, 1)
+theme_override_font_sizes/font_size = 12
+text = "Blue blessing · red danger — pick a road, or the van picks for you."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="RouteChoice/Layout" unique_id=439652936]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Left" type="Button" parent="RouteChoice/Layout/Buttons" unique_id=239635189]
+custom_minimum_size = Vector2(236, 268)
+layout_mode = 2
+
+[node name="Straight" type="Button" parent="RouteChoice/Layout/Buttons" unique_id=239635190]
+custom_minimum_size = Vector2(236, 268)
+layout_mode = 2
+
+[node name="Right" type="Button" parent="RouteChoice/Layout/Buttons" unique_id=591988108]
+custom_minimum_size = Vector2(236, 268)
+layout_mode = 2
+
+[node name="DriverTalk" type="PanelContainer" parent="." unique_id=690437762]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -150.0
+offset_right = 230.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Layout" type="VBoxContainer" parent="DriverTalk" unique_id=1922682488]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="DriverTalk/Layout" unique_id=1067243172]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "THE DRIVER"
+horizontal_alignment = 1
+
+[node name="DriverTalkHint" type="Label" parent="DriverTalk/Layout" unique_id=1148413592]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Yell let's go when you're ready."
+horizontal_alignment = 1
+
+[node name="Buttons" type="VBoxContainer" parent="DriverTalk/Layout" unique_id=182865414]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="StartRun" type="Button" parent="DriverTalk/Layout/Buttons" unique_id=1825216761]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 58)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "LET'S GO"
+
+[node name="Accelerate" type="Button" parent="DriverTalk/Layout/Buttons" unique_id=306058908]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(260, 58)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "ACCELERATE"
+
+[node name="SlowDown" type="Button" parent="DriverTalk/Layout/Buttons" unique_id=1177761472]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(260, 58)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "EASY"
+
+[node name="Close" type="Button" parent="DriverTalk/Layout/Buttons" unique_id=399278665]
+custom_minimum_size = Vector2(260, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "NEVER MIND"
+
+[node name="GameOver" type="PanelContainer" parent="." unique_id=500014647]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -100.0
+offset_right = 210.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Layout" type="VBoxContainer" parent="GameOver" unique_id=239982402]
+layout_mode = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="GameOver/Layout" unique_id=20697758]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "THE VAN IS LOST"
+horizontal_alignment = 1
+
+[node name="Menu" type="Button" parent="GameOver/Layout" unique_id=2054410725]
+layout_mode = 2
+text = "RETURN TO MENU"
+
+[node name="BenchScreen" parent="." unique_id=840301130 instance=ExtResource("13")]
+unique_name_in_owner = true
+
+[node name="SkillTreeHud" parent="." unique_id=1486896779 instance=ExtResource("40")]
+unique_name_in_owner = true
+
+[node name="PauseMenu" parent="." instance=ExtResource("42")]
+unique_name_in_owner = true
+

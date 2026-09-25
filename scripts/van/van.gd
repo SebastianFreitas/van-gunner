@@ -21,34 +21,34 @@ const _VanOverlays := preload("res://scripts/van/van_overlays.gd")
 	$TravelPath/VanFollow/VanRig/Interior/PlayerContainment
 )
 @onready var item_hud: Control = $HUD/ItemHUD
-@onready var prompt_label: Label = %InteractionPrompt
-@onready var phase_label: Label = %PhaseLabel
-@onready var wave_label: Label = %WaveLabel
-@onready var health_bar: _VanHealthBar = %VanHealth
-@onready var health_label: Label = %HealthLabel
-@onready var player_health_bar: ProgressBar = %PlayerHealth
-@onready var player_health_label: Label = %PlayerHealthLabel
-@onready var hit_flash: ColorRect = %HitFlash
-@onready var message_label: Label = %MessageLabel
-@onready var crosshair: Label = %Crosshair
-@onready var ammo_label: Label = %AmmoLabel
-@onready var ammo_bar: ProgressBar = %AmmoBar
-@onready var reload_label: Label = %ReloadLabel
-@onready var route_panel: Control = %RouteChoice
-@onready var driver_talk_panel: Control = %DriverTalk
-@onready var driver_talk_hint: Label = %DriverTalkHint
-@onready var start_run_button: Button = %StartRun
-@onready var accelerate_button: Button = %Accelerate
-@onready var slow_button: Button = %SlowDown
-@onready var driver_shout_hud: DriverShoutHud = %DriverShoutHud
-@onready var rest_toast: Label = %RestToast
-@onready var game_over_panel: Control = %GameOver
-@onready var pause_menu: PauseMenu = %PauseMenu
-@onready var bench_screen: BenchScreen = %BenchScreen
+@onready var prompt_label: Label = $HUD/%InteractionPrompt
+@onready var phase_label: Label = $HUD/%PhaseLabel
+@onready var wave_label: Label = $HUD/%WaveLabel
+@onready var health_bar: _VanHealthBar = $HUD/%VanHealth
+@onready var health_label: Label = $HUD/%HealthLabel
+@onready var player_health_bar: ProgressBar = $HUD/%PlayerHealth
+@onready var player_health_label: Label = $HUD/%PlayerHealthLabel
+@onready var hit_flash: ColorRect = $HUD/%HitFlash
+@onready var message_label: Label = $HUD/%MessageLabel
+@onready var crosshair: Label = $HUD/%Crosshair
+@onready var ammo_label: Label = $HUD/%AmmoLabel
+@onready var ammo_bar: ProgressBar = $HUD/%AmmoBar
+@onready var reload_label: Label = $HUD/%ReloadLabel
+@onready var route_panel: Control = $HUD/%RouteChoice
+@onready var driver_talk_panel: Control = $HUD/%DriverTalk
+@onready var driver_talk_hint: Label = $HUD/%DriverTalkHint
+@onready var start_run_button: Button = $HUD/%StartRun
+@onready var accelerate_button: Button = $HUD/%Accelerate
+@onready var slow_button: Button = $HUD/%SlowDown
+@onready var driver_shout_hud: DriverShoutHud = $HUD/%DriverShoutHud
+@onready var rest_toast: Label = $HUD/%RestToast
+@onready var game_over_panel: Control = $HUD/%GameOver
+@onready var pause_menu: PauseMenu = $HUD/%PauseMenu
+@onready var bench_screen: BenchScreen = $HUD/%BenchScreen
 ## Untyped on purpose — do not preload the schematic HUD into this file
 ## (same reason debug_console is load()ed: a HUD parse error must not
 ## hard-fail van.tscn).
-@onready var skill_tree_hud = %SkillTreeHud
+@onready var skill_tree_hud = $HUD/%SkillTreeHud
 @onready var crafting_table: CraftingTable = (
 	$TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable
 )
