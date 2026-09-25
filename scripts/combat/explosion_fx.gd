@@ -203,14 +203,14 @@ static func _stamp_ring(
 				img.set_pixel(x, y, color)
 
 
-static func _paint_blob(img: Image, cx: float, cy: float, radius: float, seed: int) -> void:
+static func _paint_blob(img: Image, cx: float, cy: float, radius: float, blob_seed: int) -> void:
 	if radius < 1.0:
 		return
 	var x0 := maxi(0, int(cx - radius - 2.0))
 	var y0 := maxi(0, int(cy - radius - 2.0))
 	var x1 := mini(TEX_SIZE, int(cx + radius + 3.0))
 	var y1 := mini(TEX_SIZE, int(cy + radius + 3.0))
-	var seed_f := float(seed)
+	var seed_f := float(blob_seed)
 	for y in range(y0, y1):
 		for x in range(x0, x1):
 			var dx := (float(x) + 0.5) - cx

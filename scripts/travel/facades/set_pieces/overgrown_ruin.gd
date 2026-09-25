@@ -20,7 +20,7 @@ func pick_plan(plans: Array[Dictionary], _rng: RandomNumberGenerator) -> int:
 	return _target_index(plans)
 
 
-func apply_plans(plans: Array[Dictionary], rng: RandomNumberGenerator) -> void:
+func apply_plans(plans: Array[Dictionary], _rng: RandomNumberGenerator) -> void:
 	var target := _target_index(plans)
 	if target == -1:
 		return

@@ -239,16 +239,16 @@ func add_corner_ticks(host: Control, color: Color) -> void:
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	host.add_child(overlay)
-	var len := 12.0
+	var tick_len := 12.0
 	var thick := 1.0
-	place_tick(overlay, Vector2(6, 6), Vector2(len, thick), color)
-	place_tick(overlay, Vector2(6, 6), Vector2(thick, len), color)
-	place_tick(overlay, Vector2(-6 - len, 6), Vector2(len, thick), color, true, false)
-	place_tick(overlay, Vector2(-6 - thick, 6), Vector2(thick, len), color, true, false)
-	place_tick(overlay, Vector2(6, -6 - thick), Vector2(len, thick), color, false, true)
-	place_tick(overlay, Vector2(6, -6 - len), Vector2(thick, len), color, false, true)
-	place_tick(overlay, Vector2(-6 - len, -6 - thick), Vector2(len, thick), color, true, true)
-	place_tick(overlay, Vector2(-6 - thick, -6 - len), Vector2(thick, len), color, true, true)
+	place_tick(overlay, Vector2(6, 6), Vector2(tick_len, thick), color)
+	place_tick(overlay, Vector2(6, 6), Vector2(thick, tick_len), color)
+	place_tick(overlay, Vector2(-6 - tick_len, 6), Vector2(tick_len, thick), color, true, false)
+	place_tick(overlay, Vector2(-6 - thick, 6), Vector2(thick, tick_len), color, true, false)
+	place_tick(overlay, Vector2(6, -6 - thick), Vector2(tick_len, thick), color, false, true)
+	place_tick(overlay, Vector2(6, -6 - tick_len), Vector2(thick, tick_len), color, false, true)
+	place_tick(overlay, Vector2(-6 - tick_len, -6 - thick), Vector2(tick_len, thick), color, true, true)
+	place_tick(overlay, Vector2(-6 - thick, -6 - tick_len), Vector2(thick, tick_len), color, true, true)
 
 
 func place_tick(

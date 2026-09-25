@@ -95,16 +95,16 @@ func close_talk() -> void:
 		actor.interaction_prompt_changed.emit(get_interaction_prompt())
 
 
-func get_speaker_line(_actor: Node3D) -> String:
+func get_speaker_line(_talker: Node3D) -> String:
 	return greeting
 
 
-func build_choices(_actor: Node3D) -> Array:
+func build_choices(_talker: Node3D) -> Array:
 	return []
 
 
 ## Return true when the buy/action applied. False keeps the page open.
-func execute_choice(_actor: Node3D, _choice: Variant) -> bool:
+func execute_choice(_talker: Node3D, _choice: Variant) -> bool:
 	return false
 
 

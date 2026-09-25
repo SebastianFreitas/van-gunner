@@ -28,10 +28,10 @@ func _ensure_facades() -> void:
 		_facades = _CorridorFacades.new(self)
 
 
-func configure(seed: int, district: int, neighborhood_seed: int, allow_rare: bool) -> bool:
+func configure(tile_seed: int, district_idx: int, neighborhood_seed: int, allow_rare: bool) -> bool:
 	_ensure_facades()
 	return _facades.configure(
-		seed, clampi(district, 0, DISTRICT_COUNT - 1), neighborhood_seed, allow_rare
+		tile_seed, clampi(district_idx, 0, DISTRICT_COUNT - 1), neighborhood_seed, allow_rare
 	)
 
 
@@ -102,7 +102,7 @@ func _set_side_street(side: StringName, enabled: bool, opening: int = -1) -> voi
 		and not side_street.is_configured()
 	):
 		side_street.configure(
-			hash([_facades.seed, &"branch", idx]), _facades.district, _facades.neighborhood_seed
+			hash([_facades.tile_seed, &"branch", idx]), _facades.district, _facades.neighborhood_seed
 		)
 
 

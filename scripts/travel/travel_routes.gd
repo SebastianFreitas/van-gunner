@@ -27,7 +27,6 @@ func on_route_chosen(direction: StringName, _step: int) -> void:
 			tc._stop_pending = false
 			tc._pending_stop = null
 			tc._stop_bay_side = &""
-			tc._stop_attach_segment_index = -1
 			tc._stop_align_progress = INF
 	build_turn_route()
 

@@ -80,6 +80,9 @@ var _turn_direction: StringName = &""
 var _active_junction: Node3D
 var _approach_stop_progress := INF
 var _turn_end_progress := INF
+# The travel_world / travel_routes / travel_stops helpers use these through `tc`;
+# GDScript only counts uses inside this file.
+@warning_ignore_start("unused_private_class_variable")
 var _next_segment_progress := 0.0
 var _segment_spawning_paused := false
 var _segment_index := 0
@@ -103,14 +106,9 @@ var _debug_speed_mode := false
 
 ## Per-direction stop on the live fork. Every offered road gets one.
 var _fork_stops: Dictionary = {}
-## First assigned stop this fork — kept for older duck-typed callers.
-var _fork_stop: SideStopDefinition
-## First assigned stop side this fork — kept for older duck-typed callers.
-var _stop_fork_side: StringName = &""
 ## Player took the stop fork — spawn that bay after the turn.
 var _stop_pending := false
 var _pending_stop: SideStopDefinition
-var _stop_attach_segment_index := -1
 var _stop_bay_side: StringName = &""
 var _active_stop: Node3D
 var _active_stop_def: SideStopDefinition
@@ -126,6 +124,7 @@ var _act_reveal_pending := false
 ## `route_progress` numbers; without this they look "ahead" on the new lattice
 ## and a stop can attach to the previous street.
 var _route_gen := 0
+@warning_ignore_restore("unused_private_class_variable")
 
 var _world: _TravelWorld
 var _routes: _TravelRoutes

@@ -133,7 +133,7 @@ func _spawn_dummies() -> void:
 	if offsets.is_empty():
 		for i in dummy_count:
 			var side := -0.45 if i % 2 == 0 else 0.45
-			offsets.append(Vector3(side * float(i / 2), 0.0, side * float((i + 1) / 2)))
+			offsets.append(Vector3(side * floorf(i / 2.0), 0.0, side * floorf((i + 1) / 2.0)))
 	var host := get_parent()
 	if host == null:
 		host = self

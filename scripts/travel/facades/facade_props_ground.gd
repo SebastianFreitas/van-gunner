@@ -75,8 +75,8 @@ static func _emit(
 
 
 static func _build_storefront(
-	host: Node3D, plan: Dictionary, ss: float, ko: RefCounted, rng: RandomNumberGenerator,
-	dist: FacadeDistrict
+	host: Node3D, plan: Dictionary, ss: float, ko: RefCounted, _rng: RandomNumberGenerator,
+	_dist: FacadeDistrict
 ) -> void:
 	if int(plan[&"ground_kind"]) != _FacadePlan.GROUND_STOREFRONT:
 		return
@@ -134,8 +134,8 @@ static func _build_awnings(
 
 
 static func _build_rollups(
-	host: Node3D, plan: Dictionary, ss: float, ko: RefCounted, rng: RandomNumberGenerator,
-	dist: FacadeDistrict
+	host: Node3D, plan: Dictionary, ss: float, ko: RefCounted, _rng: RandomNumberGenerator,
+	_dist: FacadeDistrict
 ) -> void:
 	if int(plan[&"ground_kind"]) != _FacadePlan.GROUND_ROLLUP:
 		return
@@ -157,7 +157,7 @@ static func _build_rollups(
 
 static func _build_dock(
 	host: Node3D, plan: Dictionary, ss: float, ko: RefCounted, rng: RandomNumberGenerator,
-	dist: FacadeDistrict
+	_dist: FacadeDistrict
 ) -> void:
 	if int(plan[&"ground_kind"]) != _FacadePlan.GROUND_DOCK:
 		return
@@ -187,8 +187,8 @@ static func _build_dock(
 
 
 static func _build_arcade(
-	host: Node3D, plan: Dictionary, ss: float, ko: RefCounted, rng: RandomNumberGenerator,
-	dist: FacadeDistrict
+	host: Node3D, plan: Dictionary, ss: float, ko: RefCounted, _rng: RandomNumberGenerator,
+	_dist: FacadeDistrict
 ) -> void:
 	if int(plan[&"ground_kind"]) != _FacadePlan.GROUND_ARCADE:
 		return

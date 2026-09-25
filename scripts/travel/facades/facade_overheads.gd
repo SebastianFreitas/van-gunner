@@ -15,7 +15,7 @@ const _ALONG_X := Vector3(0.0, 0.0, PI * 0.5)
 
 ## Only when district.overhead_chance passes rng.randf() does one of the four kinds get built.
 static func build(
-	host: Node3D, plans_left: Array, plans_right: Array, keep_out: RefCounted,
+	host: Node3D, _plans_left: Array, _plans_right: Array, keep_out: RefCounted,
 	rng: RandomNumberGenerator, district: FacadeDistrict
 ) -> void:
 	if rng.randf() >= district.overhead_chance:

@@ -352,7 +352,7 @@ func _follow_path(points: Array[Vector3], speed: float, van_relative: bool) -> v
 	for pt in points:
 		if not _active or is_defeated:
 			return
-		if _targeting.horizontal_xz(position, pt) <= 0.12:
+		if _RaiderTargeting.horizontal_xz(position, pt) <= 0.12:
 			continue
 		if nav and nav.is_passage_point(pt):
 			var waited := 0.0
@@ -371,7 +371,7 @@ func _wait_outside_for_breach() -> void:
 	var nav := _targeting.cabin_nav()
 	if nav:
 		var wait_at := nav.try_claim_outside_wait(self)
-		if _targeting.horizontal_xz(position, wait_at) > 0.4:
+		if _RaiderTargeting.horizontal_xz(position, wait_at) > 0.4:
 			var wait_path: Array[Vector3] = []
 			wait_path.append(wait_at)
 			await _follow_path(wait_path, 0.0, true)
@@ -471,13 +471,13 @@ func _pursue_vital() -> void:
 	if marker == null:
 		return
 	var dest := _targeting.parent_local(marker)
-	if _targeting.horizontal_xz(position, dest) > 0.4:
+	if _RaiderTargeting.horizontal_xz(position, dest) > 0.4:
 		await _follow_path(
 			_targeting.path_to_dest(dest), GameBalance.MOB_INTERIOR_SPEED, false
 		)
 		if not _active or is_defeated:
 			return
-	if _targeting.horizontal_xz(position, dest) > 0.45:
+	if _RaiderTargeting.horizontal_xz(position, dest) > 0.45:
 		return
 	_attach_marker = marker
 
@@ -486,7 +486,7 @@ func _wait_at_staging() -> void:
 	var nav := _targeting.cabin_nav()
 	if nav:
 		var dest := nav.staging_local(position)
-		if _targeting.horizontal_xz(position, dest) > 0.4:
+		if _RaiderTargeting.horizontal_xz(position, dest) > 0.4:
 			await _move_to_local(dest, GameBalance.MOB_INTERIOR_SPEED, false)
 	var elapsed := 0.0
 	while elapsed < _WAIT_TIMEOUT and _active and not is_defeated:

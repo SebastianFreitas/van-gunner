@@ -12,6 +12,8 @@ const _Route := preload("res://tools/smoke/smoke_route.gd")
 
 var _watchdog: SceneTreeTimer
 ## Direction chosen at the previous forced fork, so the next one picks differently.
+# smoke_route.gd uses this through the driver.
+@warning_ignore("unused_private_class_variable")
 var _last_route_direction: StringName = &""
 ## Route helper for the fork/side-stop pass; held so it lives through the awaits.
 var _route: RefCounted
@@ -179,7 +181,7 @@ func _bench_pass(van: Node) -> bool:
 	return true
 
 
-func _run_pass(van: Node) -> bool:
+func _run_pass(_van: Node) -> bool:
 	GameSession.begin_run()
 	await _frames(5)
 	if GameSession.phase != GameSession.RunPhase.TRAVELLING:

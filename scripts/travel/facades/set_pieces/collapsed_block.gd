@@ -52,14 +52,15 @@ func build(ctx: Dictionary) -> void:
 	rubble_st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var rubble_added := false
 	for i in rng.randi_range(8, 14):
-		var size := Vector3(
+		var rubble_size := Vector3(
 			rng.randf_range(0.3, 0.9), rng.randf_range(0.3, 0.9), rng.randf_range(0.3, 0.9)
 		)
 		var center := Vector3(
-			rubble_x, size.y * 0.5 - 0.06, _z_at(plan, side_sign, rng.randf_range(0.3, width - 0.3))
+			rubble_x, rubble_size.y * 0.5 - 0.06,
+			_z_at(plan, side_sign, rng.randf_range(0.3, width - 0.3))
 		)
-		if keep_out.allows(_FacadeKeepOut.box_aabb(center, size, rng.randf_range(0.0, TAU))):
-			_FacadeMeshKit.add_box_ungated(rubble_st, center, size)
+		if keep_out.allows(_FacadeKeepOut.box_aabb(center, rubble_size, rng.randf_range(0.0, TAU))):
+			_FacadeMeshKit.add_box_ungated(rubble_st, center, rubble_size)
 			rubble_added = true
 	if rubble_added:
 		_FacadeMeshKit.commit(

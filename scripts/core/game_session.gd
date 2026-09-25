@@ -2,6 +2,8 @@ extends Node
 ## Autoload: tracks run phase, van/player health, route and wave state for the current run.
 
 signal phase_changed(phase: RunPhase)
+# Emitted by the session_vitals / session_save helpers; GDScript only counts emits in this file.
+@warning_ignore("unused_signal")
 signal van_health_changed(current: float, maximum: float)
 signal player_health_changed(current: float, maximum: float)
 signal route_chosen(direction: StringName, step: int)
@@ -9,6 +11,7 @@ signal wave_changed(wave: int)
 signal room_changed(room: StringName)
 signal coins_changed(total: int)
 signal enemy_defeated(enemy: Node)
+@warning_ignore("unused_signal")
 signal session_loaded
 signal chill_mode_changed(enabled: bool)
 signal class_changed(class_id: StringName)

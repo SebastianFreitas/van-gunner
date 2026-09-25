@@ -45,17 +45,17 @@ func _ready() -> void:
 	call_deferred("_rebuild")
 
 
-func path_to(from_local: Vector3, to_local: Vector3) -> Array[Vector3]:
+func path_to(from_local: Vector3, target_local: Vector3) -> Array[Vector3]:
 	_ensure_graph()
 	if _nodes.is_empty():
-		return _paths.single_path(from_local, to_local)
+		return _paths.single_path(from_local, target_local)
 	var start_id := _paths.nearest_id(from_local)
-	var goal_id := _paths.nearest_id(to_local)
+	var goal_id := _paths.nearest_id(target_local)
 	var ids := _paths.astar(start_id, goal_id)
 	var pts: Array[Vector3] = []
 	for id in ids:
 		pts.append(_paths.node_pos(id))
-	pts.append(to_local)
+	pts.append(target_local)
 	return _paths.compress(from_local, pts)
 
 

@@ -52,48 +52,48 @@ static func lane_box() -> AABB:
 	)
 
 
-static func mouth_box(side_sign: float) -> AABB:
-	return _side_box(side_sign, MOUTH_NEAR_X, MOUTH_FAR_X, BOTTOM_Y, MOUTH_TOP_Y, MOUTH_HALF_Z)
+static func mouth_box(sign_x: float) -> AABB:
+	return _side_box(sign_x, MOUTH_NEAR_X, MOUTH_FAR_X, BOTTOM_Y, MOUTH_TOP_Y, MOUTH_HALF_Z)
 
 
-static func approach_box(side_sign: float) -> AABB:
-	return _side_box(side_sign, MOUTH_NEAR_X, APPROACH_FAR_X, BOTTOM_Y, APPROACH_TOP_Y, TILE_HALF_Z)
+static func approach_box(sign_x: float) -> AABB:
+	return _side_box(sign_x, MOUTH_NEAR_X, APPROACH_FAR_X, BOTTOM_Y, APPROACH_TOP_Y, TILE_HALF_Z)
 
 
-static func mouth_sky_box(side_sign: float) -> AABB:
+static func mouth_sky_box(sign_x: float) -> AABB:
 	return _side_box(
-		side_sign, MOUTH_NEAR_X, APPROACH_FAR_X, APPROACH_TOP_Y, MOUTH_SKY_TOP_Y, MOUTH_SKY_HALF_Z
+		sign_x, MOUTH_NEAR_X, APPROACH_FAR_X, APPROACH_TOP_Y, MOUTH_SKY_TOP_Y, MOUTH_SKY_HALF_Z
 	)
 
 
-static func flank_box(side_sign: float) -> AABB:
-	return _side_box(side_sign, LANE_HALF_X, FLANK_FAR_X, BOTTOM_Y, TOP_Y, 12.0)
+static func flank_box(sign_x: float) -> AABB:
+	return _side_box(sign_x, LANE_HALF_X, FLANK_FAR_X, BOTTOM_Y, TOP_Y, 12.0)
 
 
-static func body_boxes_for(side_sign: float, opening: int) -> Array[AABB]:
-	match opening:
+static func body_boxes_for(sign_x: float, opening_kind: int) -> Array[AABB]:
+	match opening_kind:
 		OPENING_BAY:
-			return [lane_box(), mouth_box(side_sign)]
+			return [lane_box(), mouth_box(sign_x)]
 		OPENING_SIDE_STREET:
-			return [lane_box(), flank_box(side_sign)]
+			return [lane_box(), flank_box(sign_x)]
 		_:
 			return [lane_box()]
 
 
-static func prop_boxes_for(side_sign: float, opening: int) -> Array[AABB]:
-	match opening:
+static func prop_boxes_for(sign_x: float, opening_kind: int) -> Array[AABB]:
+	match opening_kind:
 		OPENING_BAY:
 			return [
-				lane_box(), mouth_box(side_sign), approach_box(side_sign), mouth_sky_box(side_sign)
+				lane_box(), mouth_box(sign_x), approach_box(sign_x), mouth_sky_box(sign_x)
 			]
 		OPENING_SIDE_STREET:
-			return [lane_box(), flank_box(side_sign)]
+			return [lane_box(), flank_box(sign_x)]
 		_:
 			return [lane_box()]
 
 
-static func _prop_names_for(opening: int) -> Array[String]:
-	match opening:
+static func _prop_names_for(opening_kind: int) -> Array[String]:
+	match opening_kind:
 		OPENING_BAY:
 			return ["lane", "mouth", "approach", "mouth_sky"]
 		OPENING_SIDE_STREET:
@@ -150,10 +150,10 @@ static func box_aabb(center: Vector3, size: Vector3, yaw: float = 0.0) -> AABB:
 
 
 static func _side_box(
-	side_sign: float, near_x: float, far_x: float, y0: float, y1: float, half_z: float
+	sign_x: float, near_x: float, far_x: float, y0: float, y1: float, half_z: float
 ) -> AABB:
-	var xa := near_x * side_sign
-	var xb := far_x * side_sign
+	var xa := near_x * sign_x
+	var xb := far_x * sign_x
 	var x_min := minf(xa, xb)
 	var x_max := maxf(xa, xb)
 	return AABB(

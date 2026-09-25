@@ -97,8 +97,8 @@ static func _texture_for(
 		var glyph := word.substr(0, clampi(rng.randi_range(2, 4), 1, word.length()))
 		var scale := rng.randi_range(10, 14)
 		var origin := Vector2i(
-			(_TEX_SIZE - BlockGlyphs.text_width_px(glyph, scale)) / 2,
-			(_TEX_SIZE - BlockGlyphs.line_height(scale)) / 2
+			int((_TEX_SIZE - BlockGlyphs.text_width_px(glyph, scale)) / 2.0),
+			int((_TEX_SIZE - BlockGlyphs.line_height(scale)) / 2.0)
 		)
 		BlockGlyphs.draw_text(img, glyph, origin, pal[3], scale)
 	for x in _TEX_SIZE:

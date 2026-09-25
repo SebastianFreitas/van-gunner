@@ -20,7 +20,7 @@ const SIDE_SIGNS: Array[float] = [-1.0, 1.0]
 const FACADES_NODE := "Facades"
 
 var segment: Node3D
-var seed := 0
+var tile_seed := 0
 var district := 0
 var neighborhood_seed := 0
 var allow_rare := false
@@ -49,14 +49,14 @@ static func side_index(side: StringName) -> int:
 
 
 func configure(seed_: int, district_: int, neighborhood_seed_: int, allow_rare_: bool) -> bool:
-	seed = seed_
+	tile_seed = seed_
 	district = district_
 	neighborhood_seed = neighborhood_seed_
 	allow_rare = allow_rare_
 	_configured = true
 	var district_res: FacadeDistrict = _FacadeRegistry.district(district)
 	var tile_rng := RandomNumberGenerator.new()
-	tile_rng.seed = hash([seed, &"rare"])
+	tile_rng.seed = hash([tile_seed, &"rare"])
 	_tile_rng_seed = tile_rng.seed
 	_rare = _FacadeSetPieces.roll(tile_rng, district_res, allow_rare, _openings)
 	rebuild_side(0)
@@ -68,23 +68,23 @@ func configure(seed_: int, district_: int, neighborhood_seed_: int, allow_rare_:
 	return not _rare.is_empty()
 
 
-func set_opening(side_idx: int, opening: int) -> void:
-	if _openings[side_idx] == opening and _built[side_idx]:
+func set_opening(side_idx: int, new_opening: int) -> void:
+	if _openings[side_idx] == new_opening and _built[side_idx]:
 		return
 	# A bay or side street always wins over a rare: drop it (and any span) before the rebuild.
 	var rare_piece: FacadeSetPiece = _rare.get(&"piece")
-	if opening != 0 and rare_piece and (rare_piece.span or _rare[&"side_idx"] == side_idx):
+	if new_opening != 0 and rare_piece and (rare_piece.span or _rare[&"side_idx"] == side_idx):
 		_rare = {}
 		var span_root := _facades_host().get_node_or_null("Span")
 		if span_root:
 			span_root.queue_free()
-	if opening != 0:
+	if new_opening != 0:
 		var overhead_root := _facades_host().get_node_or_null("Overhead")
 		if overhead_root:
 			# Rename first so a same-frame rebuild can't collide on the name.
 			overhead_root.name = "OverheadOld"
 			overhead_root.queue_free()
-	_openings[side_idx] = opening
+	_openings[side_idx] = new_opening
 	if _configured:
 		rebuild_side(side_idx)
 
@@ -113,7 +113,7 @@ func rebuild_side(side_idx: int) -> void:
 	root.name = SIDE_NAMES[side_idx]
 	facades.add_child(root)
 	var rng := RandomNumberGenerator.new()
-	rng.seed = hash([seed, side_idx])
+	rng.seed = hash([tile_seed, side_idx])
 	var keep_out := _FacadeKeepOut.new(SIDE_SIGNS[side_idx], _openings[side_idx])
 	_keep_outs[side_idx] = keep_out
 	var district_res: FacadeDistrict = _FacadeRegistry.district(district)
@@ -159,7 +159,7 @@ func rebuild_side(side_idx: int) -> void:
 			&"rng": rng,
 			&"district": district_res,
 			&"plan": plans_out[_rare_plan_index],
-			&"tile_seed": seed,
+			&"tile_seed": tile_seed,
 		})
 	for inst: GeometryInstance3D in root.find_children("*", "GeometryInstance3D", true, false):
 		# Fog ends at 56 m; tiles beyond that need not render.
@@ -206,7 +206,7 @@ func _build_span() -> void:
 	span_root.name = "Span"
 	facades.add_child(span_root)
 	var rng := RandomNumberGenerator.new()
-	rng.seed = hash([seed, &"span"])
+	rng.seed = hash([tile_seed, &"span"])
 	var district_res: FacadeDistrict = _FacadeRegistry.district(district)
 	var piece: FacadeSetPiece = _rare[&"piece"]
 	piece.build({
@@ -217,7 +217,7 @@ func _build_span() -> void:
 		&"keep_out": _keep_outs[1],
 		&"rng": rng,
 		&"district": district_res,
-		&"tile_seed": seed,
+		&"tile_seed": tile_seed,
 	})
 	for inst: GeometryInstance3D in span_root.find_children("*", "GeometryInstance3D", true, false):
 		inst.visibility_range_end = 64.0
@@ -231,7 +231,7 @@ func _build_overhead() -> void:
 	overhead_root.name = "Overhead"
 	facades.add_child(overhead_root)
 	var rng := RandomNumberGenerator.new()
-	rng.seed = hash([seed, &"overhead"])
+	rng.seed = hash([tile_seed, &"overhead"])
 	var district_res: FacadeDistrict = _FacadeRegistry.district(district)
 	_FacadeOverheads.build(overhead_root, _plans[0], _plans[1], _keep_outs[1], rng, district_res)
 	var overhead_meshes := overhead_root.find_children("*", "GeometryInstance3D", true, false)

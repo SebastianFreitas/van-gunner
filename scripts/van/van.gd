@@ -60,6 +60,9 @@ const _VanOverlays := preload("res://scripts/van/van_overlays.gd")
 )
 
 var _debug_console: Control
+# The helpers beside van.gd (overlays, HUD, route choice, driver talk) and the smoke driver
+# use these through the van; GDScript only counts uses inside this file.
+@warning_ignore_start("unused_private_class_variable")
 var _act_reveal: Control
 var _act_deck: Node
 var _boon_choice: Control
@@ -74,6 +77,7 @@ var _left_route_btn: Button
 var _straight_route_btn: Button
 var _right_route_btn: Button
 var _last_player_hp := -1.0
+@warning_ignore_restore("unused_private_class_variable")
 var _route_ui: _VanRouteChoice
 var _hud: _VanHud
 var _driver_talk: _VanDriverTalk

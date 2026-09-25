@@ -14,8 +14,6 @@ func _init(owner: Node) -> void:
 func prepare_stop_fork() -> void:
 	# Cards are street modifiers. Every offered road still gets a building.
 	tc._fork_stops.clear()
-	tc._fork_stop = null
-	tc._stop_fork_side = &""
 	var used: Array[StringName] = []
 	if tc._last_stop_id != &"":
 		used.append(tc._last_stop_id)
@@ -30,9 +28,6 @@ func prepare_stop_fork() -> void:
 		tc._fork_stops[direction] = stop
 		if stop.id not in used:
 			used.append(stop.id)
-		if tc._fork_stop == null:
-			tc._fork_stop = stop
-			tc._stop_fork_side = direction
 
 
 func attach_stop_on_upcoming_segment(tiles_ahead: int) -> void:
@@ -101,7 +96,6 @@ func finish_stop_attach(host_progress: float) -> void:
 	tc._world_pieces.append(tc._active_stop)
 	tc._stop_align_progress = host_progress
 	tc._stop_pending = false
-	tc._stop_attach_segment_index = -1
 
 
 func instantiate_stop_host(def: SideStopDefinition) -> Node3D:
@@ -201,11 +195,8 @@ func clear_stop_state() -> void:
 	tc._active_stop = null
 	tc._active_stop_def = null
 	tc._pending_stop = null
-	tc._fork_stop = null
 	tc._fork_stops.clear()
 	tc._stop_pending = false
-	tc._stop_attach_segment_index = -1
 	tc._stop_bay_side = &""
 	tc._stop_align_progress = INF
-	tc._stop_fork_side = &""
 	tc._park_reversing = false

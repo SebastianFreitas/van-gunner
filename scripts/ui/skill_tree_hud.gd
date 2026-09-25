@@ -288,11 +288,11 @@ func _fit_view() -> void:
 		maxf(view.x - FIT_PADDING * 2.0, 32.0),
 		maxf(view.y - FIT_PADDING * 2.0, 32.0)
 	)
-	var scale := minf(avail.x / rect.size.x, avail.y / rect.size.y)
-	scale = clampf(scale, ZOOM_MIN, 1.0)
-	world.scale = Vector2(scale, scale)
+	var fit_scale := minf(avail.x / rect.size.x, avail.y / rect.size.y)
+	fit_scale = clampf(fit_scale, ZOOM_MIN, 1.0)
+	world.scale = Vector2(fit_scale, fit_scale)
 	## Rebuild shifts layout space so content sits at world local (0,0).
-	world.position = view * 0.5 - rect.size * 0.5 * scale
+	world.position = view * 0.5 - rect.size * 0.5 * fit_scale
 
 
 func _on_node_hovered(node: _SkillNodeDefinition) -> void:
@@ -330,8 +330,8 @@ func _position_tooltip() -> void:
 	if not tooltip.visible:
 		return
 	var pos := get_global_mouse_position() + TOOLTIP_OFFSET
-	var size := tooltip.get_combined_minimum_size()
+	var tip_size := tooltip.get_combined_minimum_size()
 	var view := get_viewport_rect().size
-	pos.x = minf(pos.x, view.x - size.x - TOOLTIP_MARGIN)
-	pos.y = minf(pos.y, view.y - size.y - TOOLTIP_MARGIN)
+	pos.x = minf(pos.x, view.x - tip_size.x - TOOLTIP_MARGIN)
+	pos.y = minf(pos.y, view.y - tip_size.y - TOOLTIP_MARGIN)
 	tooltip.global_position = pos

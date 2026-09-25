@@ -80,9 +80,9 @@ static func unshaded_material(key: StringName, color: Color) -> StandardMaterial
 
 
 ## Trim (parapet, cornice, ledges, downspout): a shade darker than the building's own accent.
-static func trim_material(preset: StringName) -> StandardMaterial3D:
-	var key := StringName("trim_" + String(preset))
-	var accent: Color = preset(preset)[&"accent_color"]
+static func trim_material(preset_id: StringName) -> StandardMaterial3D:
+	var key := StringName("trim_" + String(preset_id))
+	var accent: Color = preset(preset_id)[&"accent_color"]
 	return prop_material(key, accent.darkened(0.1), 0.8, 0.05)
 
 
@@ -298,8 +298,8 @@ static func label_texture(text: String, scale: int, vertical: bool) -> ImageText
 
 ## One sign's material; a fresh ShaderMaterial each call since every sign's uniforms differ.
 static func sign_material(
-	text: String, scale: int, vertical: bool, color: Color, energy: float, mode: int, seed: float,
-	dead_ratio: float, flicker_amount: float, letter_cells: float
+	text: String, scale: int, vertical: bool, color: Color, energy: float, mode: int,
+	noise_seed: float, dead_ratio: float, flicker_amount: float, letter_cells: float
 ) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = sign_shader()
@@ -307,7 +307,7 @@ static func sign_material(
 	mat.set_shader_parameter(&"color", color)
 	mat.set_shader_parameter(&"energy", energy)
 	mat.set_shader_parameter(&"mode", mode)
-	mat.set_shader_parameter(&"seed", seed)
+	mat.set_shader_parameter(&"seed", noise_seed)
 	mat.set_shader_parameter(&"dead_ratio", dead_ratio)
 	mat.set_shader_parameter(&"flicker_amount", flicker_amount)
 	mat.set_shader_parameter(&"letter_cells", letter_cells)
