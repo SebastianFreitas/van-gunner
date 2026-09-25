@@ -16,7 +16,10 @@ Subagents (Explore, Plan, implementer, implementer-wt, reviewer):
 
 transcript_path is always the parent session's transcript; a subagent's
 own transcript is agent_transcript_path (SubagentStop) or derived from
-agent_id. Usage = input + cache read + cache creation of the last turn.
+agent_id. A subagent whose own transcript can't be found is skipped,
+never measured from the parent's. Usage = input + cache read + cache
+creation of the last turn after the last compact boundary (none yet
+after a compaction: no reading).
 Never fails the hook: any error exits 0 (and allows the tool).
 """
 import json
@@ -47,6 +50,15 @@ def context_tokens(path):
         f.seek(max(0, size - 600_000))
         tail = f.read().decode("utf-8", "ignore")
     for line in reversed(tail.splitlines()):
+        if '"compact_boundary"' in line:
+            try:
+                o = json.loads(line)
+            except ValueError:
+                o = None
+            if o and o.get("subtype") == "compact_boundary":
+                # No turn since the last compaction: usage lines before the
+                # boundary measure the old, pre-compaction context.
+                return None
         if '"usage"' not in line:
             continue
         try:
@@ -130,7 +142,9 @@ def emit(event, msg):
 
 def on_subagent_stop(d):
     path = d.get("transcript_path")
-    sub = own_transcript(d) or (path if path and os.path.exists(path) else None)
+    # Never measure a subagent from the parent's transcript (the compaction
+    # agent has no transcript of its own).
+    sub = own_transcript(d)
     if not (path and sub):
         return
     agent_id = d.get("agent_id")
