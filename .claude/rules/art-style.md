@@ -78,7 +78,7 @@ interior facing the rear doors; `*-front` the player's view with the HUD.
 | Shots | Mean max | p95 max | Clip% max |
 |---|---|---|---|
 | `*-outside` (street and stops) | 0.015 | 0.030 | 1.0 |
-| `*-back` (van interior, liked as is) | 0.011 | 0.025 | 0.05 |
+| `*-back` (van interior) | 0.011 | 0.025 | 0.05 |
 | `*-front` (HUD on, loose check) | 0.030 | 0.10 | 0.20 |
 
 After the 3D art pass (2026-09-25) every shot is inside its target except
@@ -161,9 +161,15 @@ Surfaces, in the road's recipe:
   uses 2.4 m). Small steel (grills, rivets, guides, rails) is flat at
   metallic 0.3, roughness 0.75.
 
-The van: the owner likes it as it is. Its shaders are a reference, not a
-migration target; change the van only to fix a break of the dark budget,
-and say so in the report.
+The van (owner, 2026-09-25, task `docs/tasks/van-war-rig.md`): a scrap war
+rig built from a seed, a new look every run. Doors, windows, breach points,
+machines' positions and the walk space never vary; only the look does,
+drawn from hand-made kits with seeded jitter, one RNG stream per part. The
+interior shaders (`scenes/van/van_*.gdshader`) stay the reference for the
+interior's grime; the outside gets its own exterior shader on the grime
+include. Machines and junk are redneck technology (scavenged parts, welds,
+tape, cables that go somewhere), still low-poly primitives inside the
+budget above.
 
 Off-style today (3D): nothing known. The 3D art pass (2026-09-25) brought
 the facades, props, set-pieces, stops, junctions, statue and overheads onto
