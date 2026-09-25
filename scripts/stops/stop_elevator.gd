@@ -227,14 +227,33 @@ func _build_shaft() -> void:
 		concrete
 	)
 
+	var rim_y := -inner.y * 0.45
 	var rim := OmniLight3D.new()
 	rim.name = "ShaftGlow"
-	rim.position = Vector3(0.0, -inner.y * 0.45, 2.0)
+	rim.position = Vector3(-inner.x * 0.5 + 1.0, rim_y, 2.0)
 	rim.light_color = Color(0.85, 0.7, 0.45, 1.0)
 	rim.light_energy = 1.4
 	rim.omni_range = 12.0
 	rim.shadow_enabled = false
 	shaft.add_child(rim)
+
+	var lamp_head := _lamp_head_material()
+	_add_box(
+		shaft,
+		"ShaftLampHousing",
+		Vector3(0.24, 0.2, 1.0),
+		Vector3(-inner.x * 0.5 + 0.12, rim_y + 0.9, 2.0),
+		_guide_material(),
+		false
+	)
+	_add_box(
+		shaft,
+		"ShaftLampBulb",
+		Vector3(0.1, 0.12, 0.8),
+		Vector3(-inner.x * 0.5 + 0.25, rim_y + 0.85, 2.0),
+		lamp_head,
+		false
+	)
 	_set_tree_solid(shaft, false)
 
 
@@ -341,14 +360,35 @@ func _asphalt_material() -> Material:
 func _guide_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.28, 0.14, 0.06, 1.0)
-	mat.metallic = 0.4
-	mat.roughness = 0.7
+	mat.metallic = 0.3
+	mat.roughness = 0.8
 	return mat
 
 
-func _shaft_material() -> StandardMaterial3D:
+func _shaft_material() -> Material:
+	var shader := load("res://scenes/corridor/industrial_surface.gdshader") as Shader
+	if shader == null:
+		var fallback := StandardMaterial3D.new()
+		fallback.albedo_color = Color(0.08, 0.08, 0.075, 1.0)
+		fallback.metallic = 0.08
+		fallback.roughness = 0.92
+		return fallback
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+	mat.set_shader_parameter("base_color", Color(0.08, 0.08, 0.075, 1.0))
+	mat.set_shader_parameter("seam_color", Color(0.025, 0.025, 0.022, 1.0))
+	mat.set_shader_parameter("rust_color", Color(0.16, 0.08, 0.04, 1.0))
+	mat.set_shader_parameter("panel_size_m", Vector2(2.4, 2.4))
+	mat.set_shader_parameter("roughness_value", 0.92)
+	mat.set_shader_parameter("metallic_value", 0.05)
+	return mat
+
+
+func _lamp_head_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.08, 0.08, 0.075, 1.0)
-	mat.metallic = 0.08
-	mat.roughness = 0.92
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(1.0, 0.84, 0.58, 1.0)
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.82, 0.55, 1.0)
+	mat.emission_energy_multiplier = 1.3
 	return mat

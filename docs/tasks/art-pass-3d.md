@@ -152,7 +152,7 @@ run), and gameplay collision.
   vestibule, the shop booth, `garage_lounge.gd`, `mechanic_workshop.gd`,
   `warehouse_look.gd`); pass real sizes where they use it.
 
-- [ ] 9. **Stops, part 1: vestibule, elevator, garage.** `stop_vestibule.gd` /
+- [x] 9. **Stops, part 1: vestibule, elevator, garage.** `stop_vestibule.gd` /
   `.tscn`, `stop_elevator.gd` / `.tscn`, `garage_bay.tscn`,
   `garage_lounge.gd`: materials to the budget (bay metallic 0.5..0.72 down
   to 0.3 or less), the stop lit by its own fixtures as pools. Rules:
@@ -362,4 +362,22 @@ shot                           kind     mean    p95   clip%    sat
 06-combat-outside              clean  0.0352 0.1783   1.557  0.431
 09-elevator-stop-outside       clean  0.0054 0.0120   0.020  0.561
 12-rear-park-stop-outside      clean  0.0048 0.0225   0.007  0.383
+```
+
+### Step 9 after (vestibule, elevator, garage to the budget)
+
+Every metal in the three stops is metallic <= 0.3 and roughness >= 0.75 (vestibule steel 0.82,
+slats 0.62, guides 0.35..0.4, garage ceiling 0.55, lounge steel 0.82 before). Large steel moved
+onto `industrial_surface`: the vestibule ceiling and roll-up slats, the garage ceiling, the
+elevator shaft walls (no foot band: the walls differ in height). Lights keep their energies but
+each now has a fixture you can point at: a hanging tungsten ceiling lamp over the mouth, a caged
+lamp over the roll-up, a wall lamp in the shaft (`ShaftGlow` moved beside it); the garage bay
+lamp went from near-white to tungsten. Numbers within noise; the stops were already the line.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0090 0.0227   0.237  0.408
+06-combat-outside              clean  0.0354 0.1773   1.604  0.430
+09-elevator-stop-outside       clean  0.0053 0.0122   0.042  0.529
+12-rear-park-stop-outside      clean  0.0048 0.0225   0.018  0.383
 ```

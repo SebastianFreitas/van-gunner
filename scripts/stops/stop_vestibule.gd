@@ -70,7 +70,7 @@ func _place_markers() -> void:
 func _build_mouth() -> void:
 	var floor_mat := _floor_material()
 	var wall_mat := _wall_material()
-	var rib := _steel_material()
+	var ceiling := _ceiling_material()
 	var surfaces := StaticBody3D.new()
 	surfaces.name = "Surfaces"
 	add_child(surfaces)
@@ -103,7 +103,7 @@ func _build_mouth() -> void:
 		"Ceiling",
 		Vector3(DOOR_X, 0.35, MOUTH_WIDTH),
 		Vector3(mid_x, CEILING_Y, 0.0),
-		rib
+		ceiling
 	)
 
 
@@ -192,6 +192,36 @@ func _build_lights() -> void:
 	door_lamp.shadow_enabled = false
 	add_child(door_lamp)
 
+	var steel := _steel_material()
+	var lamp_head := _lamp_head_material()
+	_add_box(
+		self, "MouthLampHousing", Vector3(1.4, 0.1, 0.5), Vector3(2.4, CEILING_Y - 0.3, 0.0), steel
+	)
+	_add_box(
+		self,
+		"MouthLampBulb",
+		Vector3(1.2, 0.06, 0.34),
+		Vector3(2.4, CEILING_Y - 0.37, 0.0),
+		lamp_head
+	)
+	_add_box(
+		self, "MouthLampRod", Vector3(0.04, 0.3, 0.04), Vector3(2.4, CEILING_Y - 0.12, 0.0), steel
+	)
+	_add_box(
+		self,
+		"DoorLampHousing",
+		Vector3(0.24, 0.2, 1.0),
+		Vector3(DOOR_X - 0.4, DOOR_HEIGHT + 0.55, 0.0),
+		steel
+	)
+	_add_box(
+		self,
+		"DoorLampBulb",
+		Vector3(0.1, 0.12, 0.8),
+		Vector3(DOOR_X - 0.53, DOOR_HEIGHT + 0.5, 0.0),
+		lamp_head
+	)
+
 
 func _animate_door(open: bool) -> void:
 	if _door_leaf == null:
@@ -266,22 +296,52 @@ func _wall_material() -> ShaderMaterial:
 func _steel_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.09, 0.09, 0.085, 1.0)
-	mat.metallic = 0.82
-	mat.roughness = 0.48
+	mat.metallic = 0.3
+	mat.roughness = 0.8
 	return mat
 
 
-func _slat_material() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.16, 0.15, 0.13, 1.0)
-	mat.metallic = 0.62
-	mat.roughness = 0.58
+func _slat_material() -> ShaderMaterial:
+	var shader := load("res://scenes/corridor/industrial_surface.gdshader") as Shader
+	var mat := ShaderMaterial.new()
+	if shader:
+		mat.shader = shader
+		mat.set_shader_parameter("base_color", Color(0.16, 0.15, 0.13, 1.0))
+		mat.set_shader_parameter("seam_color", Color(0.04, 0.038, 0.032, 1.0))
+		mat.set_shader_parameter("rust_color", Color(0.28, 0.11, 0.045, 1.0))
+		mat.set_shader_parameter("panel_size_m", Vector2(1.0, 0.5))
+		mat.set_shader_parameter("roughness_value", 0.86)
+		mat.set_shader_parameter("metallic_value", 0.25)
 	return mat
 
 
 func _guide_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.22, 0.12, 0.06, 1.0)
-	mat.metallic = 0.35
-	mat.roughness = 0.72
+	mat.metallic = 0.3
+	mat.roughness = 0.8
+	return mat
+
+
+func _ceiling_material() -> ShaderMaterial:
+	var shader := load("res://scenes/corridor/industrial_surface.gdshader") as Shader
+	var mat := ShaderMaterial.new()
+	if shader:
+		mat.shader = shader
+		mat.set_shader_parameter("base_color", Color(0.07, 0.075, 0.07, 1.0))
+		mat.set_shader_parameter("seam_color", Color(0.02, 0.022, 0.02, 1.0))
+		mat.set_shader_parameter("rust_color", Color(0.2, 0.08, 0.035, 1.0))
+		mat.set_shader_parameter("panel_size_m", Vector2(2.0, 0.6))
+		mat.set_shader_parameter("roughness_value", 0.9)
+		mat.set_shader_parameter("metallic_value", 0.25)
+	return mat
+
+
+func _lamp_head_material() -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(1.0, 0.84, 0.58, 1.0)
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.82, 0.55, 1.0)
+	mat.emission_energy_multiplier = 1.3
 	return mat

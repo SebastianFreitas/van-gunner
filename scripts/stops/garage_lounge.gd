@@ -148,8 +148,8 @@ func _wood_material() -> StandardMaterial3D:
 func _steel_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.08, 0.085, 0.08, 1.0)
-	mat.metallic = 0.82
-	mat.roughness = 0.45
+	mat.metallic = 0.3
+	mat.roughness = 0.75
 	return mat
 
 
