@@ -184,7 +184,7 @@ thinking"; add a lens when a step discovers one.
   van is black from outside, say so, and step 4 or 7 answers it with a real
   source (headlights, a roof spotlight), never an ambient bump.
 
-- [ ] 3. **Exterior grime shader.** `scenes/van/van_exterior.gdshader` on
+- [x] 3. **Exterior grime shader.** `scenes/van/van_exterior.gdshader` on
   `grime.gdshaderinc`: a painted base from a `paint_color` uniform, primer
   and bare-metal patches, rust blooms at seams and sills, rain streaks,
   scratches, a dirt band at the sills, chipped paint at edges, a `plate`
@@ -199,6 +199,12 @@ thinking"; add a lens when a step discovers one.
   name or number on the side (seeded from a word list), yes or no?
 
 ### Phase B: big changes, the outside
+
+- [ ] 3b. **Render check of the exterior shader.** Step 3's cube test
+  timed out on the hidden desktop with no output (the temp scene never
+  quit); headless `check.py` does not compile shaders. Folded into step 4:
+  its `--shots` run is the first render of `van_exterior.gdshader`, so any
+  shader compile error or off-budget look shows there. Tick with step 4.
 
 - [ ] 4. **Outer hull.** An outer skin following `VanSideWall`'s bow profile
   and `VanCeiling`'s vault, a few cm outside the liners: roof, both sides,
@@ -436,6 +442,27 @@ playing?" Repeat a part (D-n b) if the owner wants another round.
 - Van shots are dark enough already (mean 0.013..0.017); no target yet.
   Owner rule the same day: the task now runs straight through (see "How
   this task runs").
+
+2026-09-26, step 3 questions:
+
+- **War paint: desaturated only.** Military drab, primer and rust tones; no
+  saturated accent anywhere on the van's paint (danger colour stays on the
+  raiders, fire and usables).
+- **Painted name: yes.** A crude stencilled or brushed name per van, picked
+  from a word list by the seed (step 9 paints it; step 3's palette may hold
+  the lettering colour, off-white or faded, inside the albedo budget).
+
+2026-09-26, step 3:
+
+- `van_exterior.gdshader` projects model-space metres (`surface_size_m`)
+  on the dominant normal axis, so any hull mesh works without UVs; plate
+  mode uses UV times `plate_size_m` for weld beads, heat tint and bolts.
+  `seed_offset` shifts the noise per van. `VanPaintPalette` holds 8
+  desaturated schemes (base, accent, primer, lettering) with `pick(rng)`
+  and `apply(material, scheme, rng)` (wear 0.35..0.8, seed offset).
+- A throwaway windowed scene on the hidden desktop hung until the timeout,
+  and `run_hidden` returns no output on a timeout: give any such test
+  `--quit-after` and `--log-file`, or test through the smoke shots.
 
 ## Baseline (2026-09-25, before any change)
 
