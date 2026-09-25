@@ -25,7 +25,9 @@ func apply_plans(plans: Array[Dictionary], _rng: RandomNumberGenerator) -> void:
 	if target == -1:
 		return
 	plans[target][&"rare"] = id
-	plans[target][&"suppress"] = [&"balconies", &"fire_escape", &"ac_units", &"wall_pipes", &"signs"]
+	plans[target][&"suppress"] = [
+		&"balconies", &"fire_escape", &"ac_units", &"wall_pipes", &"signs",
+	]
 
 
 func build(ctx: Dictionary) -> void:
@@ -53,23 +55,25 @@ func build(ctx: Dictionary) -> void:
 	var tube_added := false
 	for row_x: float in [xf - ss * 0.35, xf - ss * 0.8]:
 		for z: float in posts:
-			tube_added = (
-				_FacadeMeshKit.add_box(tube_st, Vector3(row_x, mid_y, z), Vector3(0.05, 9.6, 0.05), keep_out)
-				or tube_added
-			)
+			var post_c := Vector3(row_x, mid_y, z)
+			var post_size := Vector3(0.05, 9.6, 0.05)
+			var post_ok := _FacadeMeshKit.add_box(tube_st, post_c, post_size, keep_out)
+			tube_added = post_ok or tube_added
 		for line_y: float in lines:
-			tube_added = (
-				_FacadeMeshKit.add_box(tube_st, Vector3(row_x, line_y, mid_z), Vector3(0.05, 0.05, width), keep_out)
-				or tube_added
-			)
+			var ledger_c := Vector3(row_x, line_y, mid_z)
+			var ledger_size := Vector3(0.05, 0.05, width)
+			var ledger_ok := _FacadeMeshKit.add_box(tube_st, ledger_c, ledger_size, keep_out)
+			tube_added = ledger_ok or tube_added
 	for line_y: float in lines:
 		for z: float in posts:
-			tube_added = (
-				_FacadeMeshKit.add_box(tube_st, Vector3(mid_x, line_y, z), Vector3(0.5, 0.05, 0.05), keep_out)
-				or tube_added
-			)
+			var transom_c := Vector3(mid_x, line_y, z)
+			var transom_size := Vector3(0.5, 0.05, 0.05)
+			var transom_ok := _FacadeMeshKit.add_box(tube_st, transom_c, transom_size, keep_out)
+			tube_added = transom_ok or tube_added
 	if tube_added:
-		_FacadeMeshKit.commit(host, tube_st, "ScaffoldTubes", _FacadeMaterials.iron_material(), false)
+		_FacadeMeshKit.commit(
+			host, tube_st, "ScaffoldTubes", _FacadeMaterials.iron_material(), false
+		)
 	var plank_st := SurfaceTool.new()
 	plank_st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var plank_added := false

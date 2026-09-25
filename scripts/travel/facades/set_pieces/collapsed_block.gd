@@ -33,7 +33,8 @@ func apply_plans(plans: Array[Dictionary], rng: RandomNumberGenerator) -> void:
 	params[&"lit_ratio"] = 0.0
 	plan[&"rare"] = id
 	plan[&"suppress"] = [
-		&"trim", &"ac_units", &"fire_escape", &"balconies", &"roof_clutter", &"wall_pipes", &"signs",
+		&"trim", &"ac_units", &"fire_escape", &"balconies", &"roof_clutter", &"wall_pipes",
+		&"signs",
 	]
 	(plan[&"tags"] as Array[StringName]).append(&"collapsed")
 
@@ -54,21 +55,29 @@ func build(ctx: Dictionary) -> void:
 		var size := Vector3(
 			rng.randf_range(0.3, 0.9), rng.randf_range(0.3, 0.9), rng.randf_range(0.3, 0.9)
 		)
-		var center := Vector3(rubble_x, size.y * 0.5 - 0.06, _z_at(plan, side_sign, rng.randf_range(0.3, width - 0.3)))
+		var center := Vector3(
+			rubble_x, size.y * 0.5 - 0.06, _z_at(plan, side_sign, rng.randf_range(0.3, width - 0.3))
+		)
 		if keep_out.allows(_FacadeKeepOut.box_aabb(center, size, rng.randf_range(0.0, TAU))):
 			_FacadeMeshKit.add_box_ungated(rubble_st, center, size)
 			rubble_added = true
 	if rubble_added:
 		_FacadeMeshKit.commit(
-			host, rubble_st, "Rubble", _FacadeMaterials.prop_material(&"rubble", Color(0.22, 0.21, 0.2), 0.95, 0.0), true
+			host, rubble_st, "Rubble",
+			_FacadeMaterials.prop_material(&"rubble", Color(0.22, 0.21, 0.2), 0.95, 0.0), true
 		)
 	var iron := _FacadeMaterials.iron_material()
 	for i in 4:
-		var center := Vector3(rubble_x, 0.69, _z_at(plan, side_sign, rng.randf_range(0.3, width - 0.3)))
-		var rot := Vector3(
-			rng.randf_range(-0.3, 0.3), 0.0, (1.0 if rng.randf() < 0.5 else -1.0) * rng.randf_range(0.3, 0.6)
+		var center := Vector3(
+			rubble_x, 0.69, _z_at(plan, side_sign, rng.randf_range(0.3, width - 0.3))
 		)
-		_FacadeMeshKit.add_box_node(host, "Rebar%d" % i, Vector3(0.03, 1.5, 0.03), center, rot, iron, true, keep_out)
+		var rot := Vector3(
+			rng.randf_range(-0.3, 0.3), 0.0,
+			(1.0 if rng.randf() < 0.5 else -1.0) * rng.randf_range(0.3, 0.6)
+		)
+		_FacadeMeshKit.add_box_node(
+			host, "Rebar%d" % i, Vector3(0.03, 1.5, 0.03), center, rot, iron, true, keep_out
+		)
 	var lines: Array[float] = []
 	var k := 0
 	while _GROUND_H + float(k) * _FLOOR_H < collapse_y and k <= int(plan[&"floors"]):
@@ -90,7 +99,9 @@ func build(ctx: Dictionary) -> void:
 		)
 		stub_added = _FacadeMeshKit.add_box(stub_st, center, size, keep_out) or stub_added
 	if stub_added:
-		_FacadeMeshKit.commit(host, stub_st, "SlabStubs", _FacadeMaterials.concrete_material(), true)
+		_FacadeMeshKit.commit(
+			host, stub_st, "SlabStubs", _FacadeMaterials.concrete_material(), true
+		)
 
 
 ## Greatest-height plan of at least 18 m; a shorter roof would leave nothing to collapse into.

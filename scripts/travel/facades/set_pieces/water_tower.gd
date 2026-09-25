@@ -43,12 +43,14 @@ func build(ctx: Dictionary) -> void:
 	for du: float in [-0.9, 0.9]:
 		for dx: float in [-0.5, 0.5]:
 			var center := Vector3(base_x + dx, y_top + 1.5, _z_at(plan, side_sign, mid + du))
-			legs_ok = _FacadeMeshKit.add_box(leg_st, center, Vector3(0.15, 3.0, 0.15), keep_out) or legs_ok
+			var leg_ok := _FacadeMeshKit.add_box(leg_st, center, Vector3(0.15, 3.0, 0.15), keep_out)
+			legs_ok = leg_ok or legs_ok
 	if legs_ok:
 		_FacadeMeshKit.commit(host, leg_st, "Legs", _FacadeMaterials.iron_material(), true)
 	_FacadeMeshKit.add_cylinder_node(
 		host, "Tank", TANK_RADIUS, TANK_RADIUS, 3.0, Vector3(base_x, y_top + 4.5, z_mid),
-		_FacadeMaterials.prop_material(&"tank_wood", Color(0.3, 0.2, 0.14), 0.85, 0.1), true, keep_out
+		_FacadeMaterials.prop_material(&"tank_wood", Color(0.3, 0.2, 0.14), 0.85, 0.1), true,
+		keep_out
 	)
 	_FacadeMeshKit.add_cylinder_node(
 		host, "Lid", 0.1, 1.75, 0.8, Vector3(base_x, y_top + 6.4, z_mid),

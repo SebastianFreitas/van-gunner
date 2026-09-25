@@ -11,7 +11,10 @@ const _TEX_SIZE := 256
 const _CACHE_CAP := 16
 ## warm / cool / mono; each is [base, shape a, shape b, glyph accent].
 const _PALETTES := [
-	[Color(0.85, 0.35, 0.2), Color(0.95, 0.75, 0.25), Color(0.2, 0.25, 0.35), Color(0.9, 0.9, 0.85)],
+	[
+		Color(0.85, 0.35, 0.2), Color(0.95, 0.75, 0.25), Color(0.2, 0.25, 0.35),
+		Color(0.9, 0.9, 0.85),
+	],
 	[Color(0.2, 0.5, 0.7), Color(0.9, 0.85, 0.7), Color(0.1, 0.15, 0.25), Color(0.7, 0.2, 0.3)],
 	[Color(0.1, 0.1, 0.1), Color(0.9, 0.9, 0.9), Color(0.6, 0.6, 0.6), Color(0.8, 0.2, 0.2)],
 ]
@@ -35,7 +38,9 @@ func apply_plans(plans: Array[Dictionary], _rng: RandomNumberGenerator) -> void:
 	params[&"windows_on"] = 0.0
 	params[&"grime"] = 0.3
 	plans[target][&"rare"] = id
-	plans[target][&"suppress"] = [&"balconies", &"fire_escape", &"ac_units", &"wall_pipes", &"signs"]
+	plans[target][&"suppress"] = [
+		&"balconies", &"fire_escape", &"ac_units", &"wall_pipes", &"signs",
+	]
 
 
 func build(ctx: Dictionary) -> void:
@@ -48,7 +53,9 @@ func build(ctx: Dictionary) -> void:
 	var width := float(plan[&"width"])
 	var height := minf(float(plan[&"height"]) - 6.0, 14.0)
 	var xf := _FacadePlan.face_x(plan, ss)
-	var center := Vector3(xf - ss * 0.03, _BASE_Y + 4.8 + height * 0.5, _z_at(plan, ss, width * 0.5))
+	var center := Vector3(
+		xf - ss * 0.03, _BASE_Y + 4.8 + height * 0.5, _z_at(plan, ss, width * 0.5)
+	)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	if not _FacadeMeshKit.add_box(st, center, Vector3(0.02, height, width - 2.0), keep_out):
@@ -59,7 +66,9 @@ func build(ctx: Dictionary) -> void:
 	_FacadeMeshKit.commit(host, st, "Mural", mat, false)
 
 
-static func _texture_for(tile_seed: int, rng: RandomNumberGenerator, district: FacadeDistrict) -> ImageTexture:
+static func _texture_for(
+	tile_seed: int, rng: RandomNumberGenerator, district: FacadeDistrict
+) -> ImageTexture:
 	if _cache.has(tile_seed):
 		return _cache[tile_seed]
 	var pal: Array = _PALETTES[rng.randi_range(0, _PALETTES.size() - 1)]
@@ -88,7 +97,8 @@ static func _texture_for(tile_seed: int, rng: RandomNumberGenerator, district: F
 		var glyph := word.substr(0, clampi(rng.randi_range(2, 4), 1, word.length()))
 		var scale := rng.randi_range(10, 14)
 		var origin := Vector2i(
-			(_TEX_SIZE - BlockGlyphs.text_width_px(glyph, scale)) / 2, (_TEX_SIZE - BlockGlyphs.line_height(scale)) / 2
+			(_TEX_SIZE - BlockGlyphs.text_width_px(glyph, scale)) / 2,
+			(_TEX_SIZE - BlockGlyphs.line_height(scale)) / 2
 		)
 		BlockGlyphs.draw_text(img, glyph, origin, pal[3], scale)
 	for x in _TEX_SIZE:

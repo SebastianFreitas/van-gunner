@@ -33,7 +33,8 @@ func build(ctx: Dictionary) -> void:
 	for i in 2:
 		var x := -3.0 if i == 0 else 3.0
 		_FacadeMeshKit.add_cylinder_node(
-			host, "Valve%d" % i, 0.5, 0.5, 0.1, Vector3(x, mid.y, mid.z), iron, false, keep_out, _ALONG_X
+			host, "Valve%d" % i, 0.5, 0.5, 0.1, Vector3(x, mid.y, mid.z), iron, false, keep_out,
+			_ALONG_X
 		)
 	var top := pipes[2]
 	var hanger_st := SurfaceTool.new()
@@ -41,8 +42,7 @@ func build(ctx: Dictionary) -> void:
 	var hanger_added := false
 	for i in 4:
 		var center := Vector3(-6.0 + float(i) * 4.0, _BASE_Y + 13.6, top.z)
-		hanger_added = (
-			_FacadeMeshKit.add_box(hanger_st, center, Vector3(0.1, 1.2, 0.1), keep_out) or hanger_added
-		)
+		var ok := _FacadeMeshKit.add_box(hanger_st, center, Vector3(0.1, 1.2, 0.1), keep_out)
+		hanger_added = ok or hanger_added
 	if hanger_added:
 		_FacadeMeshKit.commit(host, hanger_st, "Hangers", iron, false)

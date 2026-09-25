@@ -380,11 +380,12 @@ it"; `py -3 tools/gen_context.py`; delete this task file and `docs/tasks/buildin
   laundry_balconies, mural, scaffolded (`docs/tasks/buildings/spec_08b_set_pieces_batch2.md` +
   `spec_08b_notes.md`); public sign builders, per-plan `suppress` lists, no roof plate on a
   collapsed body.
-- [ ] 9. Rares batch 2: pedestrian_bridge, pipe_bridge, crane_site, chapel, cinema_marquee
-  (+ `facade_marquee.gdshader`), mural, scaffolded, laundry_balconies.
-- [ ] 10. Rares batch 3: parking_deck, overgrown_ruin, blown_out_shop, gas_canopy, searchlight,
-  glass_crown, radio_mast; industrial overhead dressing (pipe bridges, catwalks, ribs) as district
-  props.
+- [x] 10a. parking_deck, overgrown_ruin, glass_crown, radio_mast, blown_out_shop, gas_canopy
+  (`spec_10a_set_pieces_batch3.md` + `spec_10a_notes.md`); every set-piece wrapped to 100 columns.
+  (Old steps 9 and 10 were re-cut into 8b, 10a and 10b.)
+- [ ] 10b. chapel, cinema_marquee (+ `facade_marquee.gdshader`), crane_site, searchlight;
+  industrial overhead dressing under `Facades/Overhead` (`spec_10b_set_pieces_overheads.md` +
+  `spec_10b_notes.md`).
 - [x] 11. Junction facades (`corridor_t_junction.gd`, both junction scenes lose their wall meshes)
   and side-street facades (`side_street_branch.tscn/.gd`, far-end building) via
   `facade_spans.gd` (a host node maps the tile body builder's frame onto any wall plane).

@@ -14,8 +14,9 @@ const _FLOOR_H := _FacadePlan.FLOOR_HEIGHT
 const MAX_BALCONIES := 24
 const _COLOR_NAMES: Array[StringName] = [&"white", &"red", &"blue", &"yellow", &"green"]
 const _COLORS := {
-	&"white": Color(0.88, 0.88, 0.86), &"red": Color(0.7, 0.15, 0.15), &"blue": Color(0.15, 0.25, 0.55),
-	&"yellow": Color(0.85, 0.75, 0.2), &"green": Color(0.25, 0.5, 0.25),
+	&"white": Color(0.88, 0.88, 0.86), &"red": Color(0.7, 0.15, 0.15),
+	&"blue": Color(0.15, 0.25, 0.55), &"yellow": Color(0.85, 0.75, 0.2),
+	&"green": Color(0.25, 0.5, 0.25),
 }
 
 
@@ -77,24 +78,40 @@ func build(ctx: Dictionary) -> void:
 			var top := y + 0.07
 			var ox := xf - ss * (0.02 + 0.9)
 			for dz: float in [-1.1, 1.1]:
-				_FacadeMeshKit.add_box_ungated(rail_st, Vector3(ox, top + 0.5, z + dz), Vector3(0.04, 1.0, 0.04))
-			_FacadeMeshKit.add_box_ungated(rail_st, Vector3(ox, top + 1.0, z), Vector3(0.04, 0.05, 2.2))
-			_FacadeMeshKit.add_box_ungated(rail_st, Vector3(ox, top + 0.225, z), Vector3(0.03, 0.45, 2.2))
+				_FacadeMeshKit.add_box_ungated(
+					rail_st, Vector3(ox, top + 0.5, z + dz), Vector3(0.04, 1.0, 0.04)
+				)
+			_FacadeMeshKit.add_box_ungated(
+				rail_st, Vector3(ox, top + 1.0, z), Vector3(0.04, 0.05, 2.2)
+			)
+			_FacadeMeshKit.add_box_ungated(
+				rail_st, Vector3(ox, top + 0.225, z), Vector3(0.03, 0.45, 2.2)
+			)
 			rail_added = true
 			for j in rng.randi_range(2, 4):
 				var cn: StringName = _COLOR_NAMES[rng.randi_range(0, _COLOR_NAMES.size() - 1)]
 				var cz := z + lerpf(-0.9, 0.9, (float(j) + 0.5) / 4.0)
-				_FacadeMeshKit.add_box_ungated(cloth_sts[cn], Vector3(ox, top + 0.75, cz), Vector3(0.02, 0.5, 0.35))
+				_FacadeMeshKit.add_box_ungated(
+					cloth_sts[cn], Vector3(ox, top + 0.75, cz), Vector3(0.02, 0.5, 0.35)
+				)
 				cloth_added[cn] = true
 	if slab_added:
-		_FacadeMeshKit.commit(host, slab_st, "Balconies", _FacadeMaterials.concrete_material(), true)
+		_FacadeMeshKit.commit(
+			host, slab_st, "Balconies", _FacadeMaterials.concrete_material(), true
+		)
 	if rail_added:
-		_FacadeMeshKit.commit(host, rail_st, "BalconyRails", _FacadeMaterials.iron_material(), false)
+		_FacadeMeshKit.commit(
+			host, rail_st, "BalconyRails", _FacadeMaterials.iron_material(), false
+		)
 	for cn: StringName in _COLOR_NAMES:
 		if not cloth_added[cn]:
 			continue
-		var mat := _FacadeMaterials.prop_material(StringName("laundry_" + String(cn)), _COLORS[cn], 0.95, 0.0)
-		_FacadeMeshKit.commit(host, cloth_sts[cn], "Laundry%s" % String(cn).capitalize(), mat, false)
+		var mat := _FacadeMaterials.prop_material(
+			StringName("laundry_" + String(cn)), _COLORS[cn], 0.95, 0.0
+		)
+		_FacadeMeshKit.commit(
+			host, cloth_sts[cn], "Laundry%s" % String(cn).capitalize(), mat, false
+		)
 
 
 ## Widest plan with windows on and a plaster/brick skin (style 0 brick, 2 plaster).

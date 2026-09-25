@@ -57,7 +57,8 @@ func build(ctx: Dictionary) -> void:
 	post_st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for u: float in [mid - offset, mid + offset]:
 		_FacadeMeshKit.add_box_ungated(
-			post_st, Vector3(post_x, y_top + 1.25, _z_at(plan, side_sign, u)), Vector3(0.2, 2.5, 0.2)
+			post_st, Vector3(post_x, y_top + 1.25, _z_at(plan, side_sign, u)),
+			Vector3(0.2, 2.5, 0.2)
 		)
 	_FacadeMeshKit.commit(host, post_st, "Posts", _FacadeMaterials.iron_material(), true)
 	var word: String = WORDS[rng.randi() % WORDS.size()]
@@ -69,8 +70,9 @@ func build(ctx: Dictionary) -> void:
 		host, "Panel", panel_center, panel_size, [Vector3(-side_sign, 0.0, 0.0)], keep_out,
 		func(st: SurfaceTool) -> void:
 			_FacadeSigns.emit_face_x(
-				st, panel_center.x - side_sign * panel_size.x * 0.5, panel_center.y + panel_size.y * 0.5,
-				panel_center.y - panel_size.y * 0.5, panel_center.z, panel_size.z, side_sign
+				st, panel_center.x - side_sign * panel_size.x * 0.5,
+				panel_center.y + panel_size.y * 0.5, panel_center.y - panel_size.y * 0.5,
+				panel_center.z, panel_size.z, side_sign
 			),
 		sign_mat
 	)

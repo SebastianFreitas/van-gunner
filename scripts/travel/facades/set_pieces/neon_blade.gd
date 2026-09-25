@@ -37,7 +37,8 @@ func build(ctx: Dictionary) -> void:
 	if district.sign_words.is_empty():
 		return
 	var word: String = district.sign_words[rng.randi() % district.sign_words.size()]
-	var color: Color = _FacadeSigns.NEON_COLORS[rng.randi_range(0, _FacadeSigns.NEON_COLORS.size() - 1)]
+	var colors := _FacadeSigns.NEON_COLORS
+	var color: Color = colors[rng.randi_range(0, colors.size() - 1)]
 	var seed_value := rng.randf() * 1000.0
 	_FacadeSigns.build_blade(
 		host, "RareBlade", plan, side_sign, keep_out, float(plan[&"width"]) * 0.5, word, _SIZE,

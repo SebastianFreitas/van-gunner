@@ -66,7 +66,9 @@ func build(ctx: Dictionary) -> void:
 	if added:
 		_FacadeMeshKit.commit(
 			host, st, "Flames",
-			_FacadeMaterials.prop_material(&"flame", Color(1.0, 0.5, 0.1), 0.5, 0.0, Color(1.0, 0.45, 0.1), 5.0),
+			_FacadeMaterials.prop_material(
+				&"flame", Color(1.0, 0.5, 0.1), 0.5, 0.0, Color(1.0, 0.45, 0.1), 5.0
+			),
 			false
 		)
 	var light_center := Vector3(
@@ -74,7 +76,10 @@ func build(ctx: Dictionary) -> void:
 	)
 	if not keep_out.allows(_FacadeKeepOut.box_aabb(light_center, Vector3(0.2, 0.2, 0.2))):
 		return
-	if not host.is_inside_tree() or host.get_tree().get_nodes_in_group(LIGHT_GROUP).size() >= MAX_LIGHTS:
+	if (
+		not host.is_inside_tree()
+		or host.get_tree().get_nodes_in_group(LIGHT_GROUP).size() >= MAX_LIGHTS
+	):
 		return
 	var light := OmniLight3D.new()
 	light.name = "FireLight"
