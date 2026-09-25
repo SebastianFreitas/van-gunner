@@ -100,7 +100,7 @@ run), and gameplay collision.
   identical (compare shots and stats, both unchanged). Van shaders are not
   touched.
 
-- [ ] 5. **Facade walls, part 1: no shimmer.** In `facade_surface.gdshader`,
+- [x] 5. **Facade walls, part 1: no shimmer.** In `facade_surface.gdshader`,
   fade every repeating pattern finer than about 0.25 m (brick courses and
   bricks, corrugation, glass mullions, panel grids, plank grain) to its
   average colour with `fwidth`, so distant walls stop moiréing. Nothing else
@@ -235,4 +235,24 @@ shot                           kind     mean    p95   clip%    sat
 06-combat-outside              clean  0.0360 0.1763   1.676  0.423
 09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
 12-rear-park-stop-outside      clean  0.0045 0.0176   0.008  0.392
+```
+
+### Step 5 after (fwidth fade of fine facade patterns)
+
+`facade_surface.gdshader` gets `pattern_fade`, `line_fade` and `soft_line`: brick courses
+and joints, stone joints, panel seams and bolts, corrugation, the corrugated 1 m line,
+roll-up ribs, plank stripes, gaps and grain, and glass-curtain mullions fade per axis
+(`fwidth(UV)`) to their average colour and flat relief as they go under a few pixels;
+close up they are unchanged. The before run's `03` showed ring moiré on corrugated walls;
+the after run shows none. Facade layouts differ between smoke runs (the run seed), so the
+street numbers move with the buildings on screen, not with this change: `03`'s higher p95
+is two big lit panes right next to the camera in this run's layout.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside  (before run)  clean  0.0135 0.0274   0.198  0.415
+03-idle-outside                clean  0.0202 0.0955   0.281  0.449
+06-combat-outside              clean  0.0275 0.1668   0.874  0.388
+09-elevator-stop-outside       clean  0.0053 0.0107   0.025  0.564
+12-rear-park-stop-outside      clean  0.0081 0.0222   0.007  0.436
 ```
