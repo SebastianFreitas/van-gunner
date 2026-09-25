@@ -6,6 +6,14 @@ extends RefCounted
 ## sequence, and therefore the fingerprint output, is unchanged.
 
 
+## Wave bounds the fingerprint plans with. game_balance.tres often carries an
+## uncommitted owner edit of segment_wave_min/max; pinning them here keeps the
+## baseline reproducible on a clean clone (cloud sessions) and tracks the planning
+## code, not the tuning. These are the values the baseline was blessed with.
+const WAVE_MIN_PIN := 2
+const WAVE_MAX_PIN := 4
+
+
 static func stats_line(label: String, s: GunStats) -> String:
 	var parts := PackedStringArray([label])
 	parts.append("fire_rate=%.4f" % s.fire_rate)
@@ -64,12 +72,18 @@ static func fingerprint_act_deck(lines: PackedStringArray) -> void:
 
 static func fingerprint_waves(lines: PackedStringArray) -> void:
 	lines.append("[waves]")
+	var saved_min: int = GameBalance.data.segment_wave_min
+	var saved_max: int = GameBalance.data.segment_wave_max
+	GameBalance.data.segment_wave_min = WAVE_MIN_PIN
+	GameBalance.data.segment_wave_max = WAVE_MAX_PIN
 	for route_step in range(1, 7):
 		var plan := GameBalance.build_segment_wave_plan(route_step)
 		var plan_strings := PackedStringArray()
 		for value in plan:
 			plan_strings.append(str(value))
 		lines.append("step %d: %s" % [route_step, " ".join(plan_strings)])
+	GameBalance.data.segment_wave_min = saved_min
+	GameBalance.data.segment_wave_max = saved_max
 
 
 static func fingerprint_rest_offer(lines: PackedStringArray) -> void:
