@@ -91,6 +91,15 @@ func _set_side_street(side: StringName, enabled: bool, opening: int = -1) -> voi
 	_facades.set_opening(
 		idx, opening if opening >= 0 else (Opening.SIDE_STREET if enabled else Opening.NONE)
 	)
+	# open_bay hides the branch right after this call, so skip building its facades for a bay
+	# mouth — a one-off cost that would be wasted the instant the branch goes invisible.
+	if (
+		enabled and opening != Opening.BAY and side_street.has_method(&"configure")
+		and not side_street.is_configured()
+	):
+		side_street.configure(
+			hash([_facades.seed, &"branch", idx]), _facades.district, _facades.neighborhood_seed
+		)
 
 
 func _sync_road_openings() -> void:

@@ -210,6 +210,12 @@ func spawn_special_ahead(scene: PackedScene) -> void:
 	tc._active_junction = scene.instantiate() as Node3D
 	tc.corridor_root.add_child(tc._active_junction)
 	tc._active_junction.global_transform = sample_route_transform(special_progress)
+	if tc._active_junction.has_method(&"configure"):
+		tc._active_junction.configure(
+			hash([GameSession.run_seed, &"junction", tc._segment_index]),
+			tc._neighborhood_variant,
+			hash([GameSession.run_seed, tc._neighborhood_start])
+		)
 	tc._world_pieces.append(tc._active_junction)
 	tc._approach_stop_progress = special_progress - tc.turn_radius
 

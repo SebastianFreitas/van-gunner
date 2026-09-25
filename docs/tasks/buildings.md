@@ -289,25 +289,11 @@ ground props, `2ee861a` districts + upper props, `0236d8f` BlockGlyphs, `93da90c
 integration, `19a5872` shader + materials, `26c17fd` this plan. Steps 1-6 and the glyph half of 7
 are done (ticked below).
 
-In flight when this section was written:
-
-- **Step 7b (signs)**: an implementer was working from `docs/tasks/buildings/spec_07b_signs.md`
-  on `scripts/travel/facades/facade_signs.gd` (new), `scenes/corridor/facade_sign.gdshader`
-  (new), `facade_materials.gd` (label textures, `sign_material`) and `corridor_facades.gd` (the
-  `_FacadeSigns.build` call after ground props). It runs the check and smoke itself.
-- **Step 9 (junction + branch facades)**: edits are on disk, UNVERIFIED (done edit-only because
-  Godot was busy): `scripts/travel/facades/facade_spans.gd` (new), `facade_plan.gd`
-  (`plan_length`), `scenes/corridor/corridor_t_junction.gd/.tscn`, `corridor_crossroads.tscn`,
-  `side_street_branch.gd/.tscn`, `corridor_segment.gd` (`_set_side_street` configures the
-  branch), `travel_world.gd` (`spawn_special_ahead` configures the junction). A sanity script for
-  it is `docs/tasks/buildings/span_sanity.gd.txt` (copy it outside the repo, run
-  `"<GODOT>_console.exe" --headless --path . --script <file>`).
-
-If `git status` shows those files modified/untracked: run `py -3 tools/check.py`, then
-`py -3 tools/smoke.py` (must log `bay mouth clear:`), then the span sanity; fix what fails through
-an implementer; then commit 7b (signs files + `corridor_facades.gd` + `facade_materials.gd`) and
-9 (the rest) as two commits, staged by path, and tick them below. If the tree is clean, they were
-committed already; check `git log`.
+Steps 7 (signs) and 11 (junction + branch facades) are committed too; see `git log`. Whatever
+is in flight is always one implementer working from the next spec in the table below; if
+`git status` shows modified facade files, run `py -3 tools/check.py`, `py -3 tools/smoke.py`
+(must log `bay mouth clear:`) and the step's sanity script, fix through an implementer, commit by
+path, tick the step.
 
 ### Remaining steps, in order, each with its spec
 
@@ -382,8 +368,9 @@ it"; `py -3 tools/gen_context.py`; delete this task file and `docs/tasks/buildin
   split into `facade_fixtures.gd`. (`visibility_range_end` is a GeometryInstance3D property:
   lights don't have it.)
 - [x] 6. Glow on the environment (`van.tscn`), scene dump re-blessed.
-- [ ] 7. Signs: `shop_booth_flyers.gd` `draw_block_text` made static, `facade_signs.gd`,
-  `facade_sign.gdshader`, box / neon / blade / banner / poster.
+- [x] 7. Signs: `BlockGlyphs` extracted from the flyers, `facade_signs.gd`,
+  `facade_sign.gdshader`, box / neon / blade / banner / poster (label quads give their top edge
+  v = 0 because Image row 0 is the top).
 - [ ] 8. Set-piece framework (`facade_set_piece.gd`, registry scan, rare roll + cooldown) and
   batch 1: burning_tenement, collapsed_block, rooftop_billboard, neon_blade, water_tower,
   antenna_farm, power_outage.
@@ -392,8 +379,9 @@ it"; `py -3 tools/gen_context.py`; delete this task file and `docs/tasks/buildin
 - [ ] 10. Rares batch 3: parking_deck, overgrown_ruin, blown_out_shop, gas_canopy, searchlight,
   glass_crown, radio_mast; industrial overhead dressing (pipe bridges, catwalks, ribs) as district
   props.
-- [ ] 11. Junction facades (`corridor_t_junction.gd`, both junction scenes lose their wall meshes)
-  and side-street facades (`side_street_branch.tscn/.gd`, far-end building).
+- [x] 11. Junction facades (`corridor_t_junction.gd`, both junction scenes lose their wall meshes)
+  and side-street facades (`side_street_branch.tscn/.gd`, far-end building) via
+  `facade_spans.gd` (a host node maps the tile body builder's frame onto any wall plane).
 - [ ] 12. Debug `facade` commands.
 - [ ] 13. Docs: `.claude/rules/travel-and-stops.md` facade section (keep-out, seeding, budgets),
   CLAUDE.md table row + token-budget list, `py -3 tools/gen_context.py`; delete this file.

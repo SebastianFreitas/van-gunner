@@ -73,10 +73,22 @@ static func plan_side(
 			&"district_id": district.id,
 		})
 		return plans
+	return plan_length(rng, district, 20.0, neighborhood_seed)
+
+
+## Splits a `length` metre span into buildings the same way a 20 m tile edge is split, scaling
+## each `SPLITS` row to fit; used for tile sides (length 20.0, bit-identical to the old code) and
+## for junction stems, branches and side-street flanks of any other length.
+static func plan_length(
+	rng: RandomNumberGenerator, district: FacadeDistrict, length: float, neighborhood_seed: int
+) -> Array[Dictionary]:
+	var plans: Array[Dictionary] = []
 	var split_index := _weighted_index(rng, SPLIT_WEIGHTS)
+	var scale := length / 20.0
 	var widths: Array = SPLITS[split_index]
-	var z := -TILE_HALF_Z
-	for width: float in widths:
+	var z := -length / 2.0
+	for base_width: float in widths:
+		var width: float = base_width * scale
 		var preset: StringName = _pick(rng, district.presets)
 		var height: float = _pick_height(rng, district)
 		var floors := maxi(MIN_FLOORS, roundi((height - GROUND_HEIGHT - PARAPET) / FLOOR_HEIGHT))
