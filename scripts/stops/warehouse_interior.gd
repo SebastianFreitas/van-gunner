@@ -226,9 +226,22 @@ func _build_table() -> void:
 
 
 func _build_lights() -> void:
+	var steel := WarehouseLook.steel_material()
+	var lamp := WarehouseLook.lamp_material()
+
+	# Each glow hangs under a fixture you can point at.
+	WarehouseLook.add_box(self, "AisleLampCord", Vector3(0.02, 2.13, 0.02), Vector3(10.0, 6.56, 0.0), steel)
+	WarehouseLook.add_box(self, "AisleLampShade", Vector3(0.5, 0.12, 0.5), Vector3(10.0, 5.44, 0.0), steel)
+	WarehouseLook.add_box(self, "AisleLampBulb", Vector3(0.26, 0.1, 0.26), Vector3(10.0, 5.33, 0.0), lamp)
+	WarehouseLook.add_box(self, "TableLampCord", Vector3(0.02, 5.08, 0.02), Vector3(10.0, 5.09, 0.4), steel)
+	WarehouseLook.add_box(self, "TableLampBulb", Vector3(0.12, 0.16, 0.12), Vector3(10.0, 2.47, 0.4), lamp)
+	WarehouseLook.add_box(self, "BackLampArm", Vector3(0.5, 0.06, 0.06), Vector3(19.55, 4.75, 0.0), steel)
+	WarehouseLook.add_box(self, "BackLampShade", Vector3(0.32, 0.1, 0.32), Vector3(19.3, 4.7, 0.0), steel)
+	WarehouseLook.add_box(self, "BackLampBulb", Vector3(0.22, 0.1, 0.22), Vector3(19.3, 4.6, 0.0), lamp)
+
 	_omni("AisleGlow", Vector3(10.0, 5.2, 0.0), Color(0.95, 0.82, 0.58, 1.0), 2.6, 14.0)
-	_omni("BackGlow", Vector3(17.5, 4.4, 0.0), Color(0.85, 0.72, 0.48, 1.0), 1.6, 9.0)
-	_omni("ChestGlow", Vector3(10.0, 2.2, 0.0), Color(0.95, 0.78, 0.42, 1.0), 0.85, 4.5)
+	_omni("BackGlow", Vector3(19.0, 4.45, 0.0), Color(0.85, 0.72, 0.48, 1.0), 1.6, 9.0)
+	_omni("ChestGlow", Vector3(10.0, 2.3, 0.4), Color(0.95, 0.78, 0.42, 1.0), 0.85, 4.5)
 
 
 func _omni(light_name: String, pos: Vector3, color: Color, energy: float, omni_range: float) -> void:

@@ -43,21 +43,21 @@ static func add_collision(body: CollisionObject3D, size: Vector3, pos: Vector3) 
 
 static func tarp_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.42, 0.38, 0.3, 1.0)
+	mat.albedo_color = Color(0.22, 0.2, 0.155, 1.0)
 	mat.roughness = 0.94
 	return mat
 
 
 static func tarp_dark_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.28, 0.26, 0.22, 1.0)
+	mat.albedo_color = Color(0.16, 0.15, 0.125, 1.0)
 	mat.roughness = 0.92
 	return mat
 
 
 static func canvas_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.55, 0.5, 0.4, 1.0)
+	mat.albedo_color = Color(0.27, 0.245, 0.19, 1.0)
 	mat.roughness = 0.9
 	return mat
 
@@ -86,8 +86,8 @@ static func rope_material() -> StandardMaterial3D:
 static func steel_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.1, 0.1, 0.095, 1.0)
-	mat.metallic = 0.78
-	mat.roughness = 0.5
+	mat.metallic = 0.3
+	mat.roughness = 0.75
 	return mat
 
 
@@ -98,7 +98,7 @@ static func dust_floor_material() -> ShaderMaterial:
 	mat.set_shader_parameter("seam_color", Color(0.05, 0.045, 0.035, 1.0))
 	mat.set_shader_parameter("rust_color", Color(0.3, 0.14, 0.05, 1.0))
 	mat.set_shader_parameter("panel_size_m", Vector2(3.0, 3.0))
-	mat.set_shader_parameter("roughness_value", 0.96)
+	mat.set_shader_parameter("roughness_value", 0.95)
 	return mat
 
 
@@ -114,11 +114,15 @@ static func plaster_material() -> ShaderMaterial:
 	return mat
 
 
-static func rib_material() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.07, 0.065, 0.055, 1.0)
-	mat.metallic = 0.5
-	mat.roughness = 0.74
+static func rib_material() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = INDUSTRIAL_SHADER
+	mat.set_shader_parameter("base_color", Color(0.07, 0.07, 0.065, 1.0))
+	mat.set_shader_parameter("seam_color", Color(0.02, 0.02, 0.018, 1.0))
+	mat.set_shader_parameter("rust_color", Color(0.2, 0.08, 0.035, 1.0))
+	mat.set_shader_parameter("panel_size_m", Vector2(2.0, 0.6))
+	mat.set_shader_parameter("roughness_value", 0.9)
+	mat.set_shader_parameter("metallic_value", 0.25)
 	return mat
 
 

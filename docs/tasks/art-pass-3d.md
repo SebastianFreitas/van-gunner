@@ -162,7 +162,7 @@ run), and gameplay collision.
   (steel, deck, grill, rivet metallic 0.78..0.92 down to 0.3 or less, grimed),
   keeping the booth's build order, flyer RNG order and every sprite as is.
 
-- [ ] 11. **Stops, part 3: mechanic and warehouse.** `mechanic_bay.tscn`,
+- [x] 11. **Stops, part 3: mechanic and warehouse.** `mechanic_bay.tscn`,
   `mechanic_workshop.gd`, `warehouse_bay.tscn`, `warehouse_look.gd`,
   `warehouse_interior.gd`: same treatment.
 
@@ -396,6 +396,26 @@ within noise; the booth reads as dull dark steel in `09`.
 shot                           kind     mean    p95   clip%    sat
 03-idle-outside                clean  0.0088 0.0220   0.244  0.407
 06-combat-outside              clean  0.0350 0.1783   1.560  0.430
+09-elevator-stop-outside       clean  0.0053 0.0125   0.042  0.529
+12-rear-park-stop-outside      clean  0.0048 0.0225   0.018  0.383
+```
+
+### Step 11 after (mechanic and warehouse to the budget)
+
+Mechanic: steel flat at metallic 0.3 / roughness 0.75 (was 0.78 / 0.52); dirty steel (cabinet run,
+pegboard, chassis, apron) and the primer car body on `industrial_surface` (metallic 0.25 and 0.15,
+primer albedo down from 0.42 to 0.24); oil 0.3 / 0.3; bay ceiling on the garage's rib recipe (was
+metallic 0.5). Warehouse: steel 0.3 / 0.75 (was 0.78 / 0.5), ceiling on the rib recipe, tarps and
+canvas down into the large-surface budget (canvas 0.50 -> 0.25). Floating glows got fixtures you
+can point at, energies unchanged: a trouble lamp over the mechanic, a floor work lamp by the oil,
+an aisle pendant, a drop bulb over the chest table and a back-wall lamp. The smoke shots never
+visit these stops; checked with a temporary swap (`stop elevator mechanic`, `stop warehouse`):
+warehouse outside mean 0.0040, mechanic lift 0.0054. Street and stop numbers below are unchanged.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0088 0.0220   0.244  0.407
+06-combat-outside              clean  0.0360 0.1775   1.672  0.430
 09-elevator-stop-outside       clean  0.0053 0.0125   0.042  0.529
 12-rear-park-stop-outside      clean  0.0048 0.0225   0.018  0.383
 ```

@@ -36,6 +36,7 @@ func _build() -> void:
 	_build_drums(rust, steel, oil, Vector3(6.45, 0.0, 3.55))
 	_build_jack(steel, Vector3(3.85, 0.0, -2.15))
 	_build_lamps(lamp, steel)
+	_build_hand_lamps(lamp, steel)
 
 	var work_light := OmniLight3D.new()
 	work_light.name = "WorkGlow"
@@ -48,7 +49,7 @@ func _build() -> void:
 
 	var keeper_light := OmniLight3D.new()
 	keeper_light.name = "KeeperGlow"
-	keeper_light.position = Vector3(4.1, 2.2, 2.45)
+	keeper_light.position = Vector3(4.1, 2.75, 2.45)
 	keeper_light.light_color = Color(1.0, 0.88, 0.62, 1.0)
 	keeper_light.light_energy = 1.1
 	keeper_light.omni_range = 4.5
@@ -218,6 +219,16 @@ func _build_lamps(lamp: Material, steel: Material) -> void:
 		_add_box(self, "Bulb_%d" % i, Vector3(0.32, 0.08, 0.55), Vector3(5.2, 6.78, z), lamp)
 
 
+func _build_hand_lamps(lamp: Material, steel: Material) -> void:
+	# Fixtures give KeeperGlow and OilSpillGlow a source you can see.
+	_add_box(self, "KeeperLampCord", Vector3(0.02, 4.52, 0.02), Vector3(4.1, 5.36, 2.45), steel)
+	_add_box(self, "KeeperLampShade", Vector3(0.26, 0.08, 0.26), Vector3(4.1, 3.06, 2.45), steel)
+	_add_box(self, "KeeperLampBulb", Vector3(0.14, 0.2, 0.14), Vector3(4.1, 2.92, 2.45), lamp)
+	_add_box(self, "FloorLampBase", Vector3(0.3, 0.03, 0.3), Vector3(4.6, 0.015, -2.4), steel)
+	_add_box(self, "FloorLampPole", Vector3(0.04, 0.8, 0.04), Vector3(4.6, 0.43, -2.4), steel)
+	_add_box(self, "FloorLampHead", Vector3(0.2, 0.16, 0.14), Vector3(4.6, 0.9, -2.4), lamp)
+
+
 func _add_box(
 	parent: Node3D, node_name: String, size: Vector3, pos: Vector3, material: Material
 ) -> MeshInstance3D:
@@ -243,24 +254,33 @@ func _add_collision(body: StaticBody3D, size: Vector3, pos: Vector3) -> void:
 
 func _steel_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.18, 0.17, 0.15, 1.0)
-	mat.metallic = 0.78
-	mat.roughness = 0.52
+	mat.albedo_color = Color(0.16, 0.155, 0.14, 1.0)
+	mat.metallic = 0.3
+	mat.roughness = 0.75
 	return mat
 
 
-func _dirty_steel_material() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.22, 0.18, 0.12, 1.0)
-	mat.metallic = 0.55
-	mat.roughness = 0.72
+func _dirty_steel_material() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = _INDUSTRIAL_SHADER
+	mat.set_shader_parameter("base_color", Color(0.2, 0.17, 0.12, 1.0))
+	mat.set_shader_parameter("seam_color", Color(0.06, 0.05, 0.035, 1.0))
+	mat.set_shader_parameter("rust_color", Color(0.3, 0.12, 0.045, 1.0))
+	mat.set_shader_parameter("panel_size_m", Vector2(1.2, 1.6))
+	mat.set_shader_parameter("roughness_value", 0.84)
+	mat.set_shader_parameter("metallic_value", 0.25)
 	return mat
 
 
-func _primer_material() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.62, 0.38, 0.16, 1.0)
-	mat.roughness = 0.78
+func _primer_material() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = _INDUSTRIAL_SHADER
+	mat.set_shader_parameter("base_color", Color(0.38, 0.22, 0.09, 1.0))
+	mat.set_shader_parameter("seam_color", Color(0.12, 0.07, 0.03, 1.0))
+	mat.set_shader_parameter("rust_color", Color(0.32, 0.12, 0.04, 1.0))
+	mat.set_shader_parameter("panel_size_m", Vector2(1.8, 0.9))
+	mat.set_shader_parameter("roughness_value", 0.8)
+	mat.set_shader_parameter("metallic_value", 0.15)
 	return mat
 
 
@@ -281,8 +301,8 @@ func _rubber_material() -> StandardMaterial3D:
 func _oil_material() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.08, 0.07, 0.04, 1.0)
-	mat.metallic = 0.35
-	mat.roughness = 0.22
+	mat.metallic = 0.3
+	mat.roughness = 0.3
 	return mat
 
 
@@ -304,4 +324,5 @@ func _rust_material() -> ShaderMaterial:
 	mat.set_shader_parameter("rust_color", Color(0.48, 0.18, 0.05, 1.0))
 	mat.set_shader_parameter("panel_size_m", Vector2(2.0, 0.3))
 	mat.set_shader_parameter("roughness_value", 0.9)
+	mat.set_shader_parameter("metallic_value", 0.2)
 	return mat
