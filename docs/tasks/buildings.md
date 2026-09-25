@@ -277,6 +277,91 @@ Four independent designs were judged; these verified points are folded into the 
 - Owner tuning: debug `facade` commands, exported constants on `corridor_segment.gd`, district and
   set-piece `.tres` files.
 
+## Handoff (written 2026-09-25, updated at every clean commit boundary)
+
+Start a new session with: "Continue the buildings task from docs/tasks/buildings.md, Handoff
+section." Everything a fresh session needs is in this file and `docs/tasks/buildings/`.
+
+### Where the work stands
+
+Commits on `main` so far (newest first): `41e06d0` glow, `d821381` fixtures split, `4ba75ff`
+ground props, `2ee861a` districts + upper props, `0236d8f` BlockGlyphs, `93da90c` core
+integration, `19a5872` shader + materials, `26c17fd` this plan. Steps 1-6 and the glyph half of 7
+are done (ticked below).
+
+In flight when this section was written:
+
+- **Step 7b (signs)**: an implementer was working from `docs/tasks/buildings/spec_07b_signs.md`
+  on `scripts/travel/facades/facade_signs.gd` (new), `scenes/corridor/facade_sign.gdshader`
+  (new), `facade_materials.gd` (label textures, `sign_material`) and `corridor_facades.gd` (the
+  `_FacadeSigns.build` call after ground props). It runs the check and smoke itself.
+- **Step 9 (junction + branch facades)**: edits are on disk, UNVERIFIED (done edit-only because
+  Godot was busy): `scripts/travel/facades/facade_spans.gd` (new), `facade_plan.gd`
+  (`plan_length`), `scenes/corridor/corridor_t_junction.gd/.tscn`, `corridor_crossroads.tscn`,
+  `side_street_branch.gd/.tscn`, `corridor_segment.gd` (`_set_side_street` configures the
+  branch), `travel_world.gd` (`spawn_special_ahead` configures the junction). A sanity script for
+  it is `docs/tasks/buildings/span_sanity.gd.txt` (copy it outside the repo, run
+  `"<GODOT>_console.exe" --headless --path . --script <file>`).
+
+If `git status` shows those files modified/untracked: run `py -3 tools/check.py`, then
+`py -3 tools/smoke.py` (must log `bay mouth clear:`), then the span sanity; fix what fails through
+an implementer; then commit 7b (signs files + `corridor_facades.gd` + `facade_materials.gd`) and
+9 (the rest) as two commits, staged by path, and tick them below. If the tree is clean, they were
+committed already; check `git log`.
+
+### Remaining steps, in order, each with its spec
+
+| Step | Spec | Notes |
+|---|---|---|
+| 8a set-piece framework + billboard, water tower, antenna farm, power outage | `docs/tasks/buildings/spec_08a_set_pieces.md` | needs 7b (billboard uses `sign_material`) |
+| 8b burning, collapsed, neon blade, pedestrian bridge, pipe bridge, laundry balconies, mural, scaffolded | `spec_08b_set_pieces_batch2.md` | needs 8a |
+| 10a parking deck, overgrown ruin, glass crown, radio mast, blown-out shop, gas canopy | `spec_10a_set_pieces_batch3.md` | needs 8a |
+| 10b chapel, cinema marquee (+ marquee shader), crane site, searchlight, industrial overheads | `spec_10b_set_pieces_overheads.md` | needs 8a |
+| 12 debug `facade` commands + `facade stress` matrix in the smoke | `spec_12_debug_stress.md` | needs 8a |
+| 13 docs | below | last |
+
+Step 13 (main session writes these directly): a "Facades" section in
+`.claude/rules/travel-and-stops.md` (keep-out boxes, seeding, the three-mesh mouth building, the
+parent-gating rule, the light cap and cull mask, districts and set-pieces as `.tres`, debug
+commands); CLAUDE.md: a "Facades" row in the table (`scripts/travel/facades/`,
+`resources/facades/`), the Token budget list (scripts over 300: `facade_surface.gdshader` is a
+shader, `facade_props_upper.gd` 344, `facade_props_ground.gd` 318), and the always-on invariant
+"14. Nothing the facade system places may enter a stop-bay mouth or the raider lane: every
+placement passes `FacadeKeepOut.allows`, bodies are gated by construction, and the smoke asserts
+it"; `py -3 tools/gen_context.py`; delete this task file and `docs/tasks/buildings/`.
+
+### How the work is done (process)
+
+- Main session designs and reviews; every code change goes to the `implementer` subagent with
+  the spec file path plus the "notes on the committed tree" paragraph (see the specs' headers).
+  The implementer never sees CLAUDE.md, so each spec restates the rules it needs.
+- Only one headless Godot run at a time. Two implementers may run in parallel only if one is
+  told "edit only, no Godot"; the main session (or the other implementer's run) verifies both.
+- Verification per step: `py -3 tools/check.py` (0 failure lines), `py -3 tools/smoke.py`
+  (fingerprint unchanged, `bay mouth clear:` logged), the step's one-off sanity script written
+  OUTSIDE the repo (e.g. the scratchpad), and `py -3 tools/scene_dump.py` only when `van.tscn`
+  changes (bless only then). Stage by path; never `git add -A` (`game_balance.tres` and
+  `export_presets.cfg` stay out).
+- Implementers are Sonnet with their own fresh context each; the session usage limit can cut one
+  off mid-file (it happened on step 4): a relaunch must be told to audit the partial work on disk.
+- The shader can be previewed without Godot: `docs/tasks/buildings/facade_preview.py.txt` is a
+  numpy port of the albedo/emission path; copy it to the scratchpad as `.py`, `py -3` it, and
+  Read the PNG.
+
+### Lessons that cost a retry (all now encoded in the specs)
+
+- Godot front faces are clockwise; `facade_body.add_quad` reads the sign from a BoxMesh at
+  runtime (oracle). Never write a second quad emitter.
+- A merged ArrayMesh's AABB is what the smoke audits: the mouth building is three meshes (header
+  + two flanks), and child parts (rails, rungs, brackets) are emitted only if the parent box
+  passed the gate.
+- `visibility_range_end` exists on GeometryInstance3D, not on lights.
+- `MOUTH_TOP_Y` 7.85 sits under the bay header at 7.9; `APPROACH_TOP_Y` 8.5 is for props.
+- A SceneTree `--script` sanity must `await process_frame` after `add_child` before touching
+  `@onready` fields.
+- `facade_props_ground.gd`/`facade_props_upper.gd` are near the cap: put new families in new
+  helpers, not in them.
+
 ## Steps (one commit each; tick when the commit lands)
 
 - [x] 1. This task file; fix the stale "side streets are unseeded" line in

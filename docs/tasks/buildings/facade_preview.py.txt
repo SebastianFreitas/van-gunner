@@ -1,0 +1,282 @@
+"""numpy port of facade_surface.gdshader (albedo + emission only) for a quick visual check.
+Renders a contact sheet of presets x ground kinds. Not part of the game."""
+import numpy as np
+from PIL import Image
+
+PX_PER_M = 24
+
+
+def hash21(p):
+    return np.modf(np.sin(p[..., 0] * 127.1 + p[..., 1] * 311.7) * 43758.5453)[0] % 1.0
+
+
+def hash22(p):
+    a = np.sin(p[..., 0] * 127.1 + p[..., 1] * 311.7) * 43758.5453
+    b = np.sin(p[..., 0] * 269.5 + p[..., 1] * 183.3) * 43758.5453
+    return np.stack([a % 1.0, b % 1.0], -1)
+
+
+def hash11(x):
+    return (np.sin(x * 127.1) * 43758.5453) % 1.0
+
+
+def noise21(p):
+    i = np.floor(p)
+    f = p - i
+    a = hash21(i)
+    b = hash21(i + [1, 0])
+    c = hash21(i + [0, 1])
+    d = hash21(i + [1, 1])
+    u = f * f * (3 - 2 * f)
+    return (a * (1 - u[..., 0]) + b * u[..., 0]) * (1 - u[..., 1]) + (c * (1 - u[..., 0]) + d * u[..., 0]) * u[..., 1]
+
+
+def fbm(p):
+    v = np.zeros(p.shape[:-1])
+    a = 0.5
+    for _ in range(4):
+        v += a * noise21(p)
+        p = p * 2.07 + [17.3, 9.1]
+        a *= 0.5
+    return v
+
+
+def crack_field(p):
+    cell = np.floor(p)
+    f = p - cell
+    min_d = np.ones(p.shape[:-1])
+    second = np.ones(p.shape[:-1])
+    for y in (-1, 0, 1):
+        for x in (-1, 0, 1):
+            g = np.array([x, y], float)
+            o = hash22(cell + g)
+            r = g + o - f
+            d = np.linalg.norm(r, axis=-1)
+            closer = d < min_d
+            second = np.where(closer, min_d, np.where(d < second, d, second))
+            min_d = np.where(closer, d, min_d)
+    return second - min_d
+
+
+def smoothstep(a, b, x):
+    t = np.clip((x - a) / (b - a), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def render(U, seed=3.0, style=0, base=(0.36, 0.17, 0.12), accent=(0.24, 0.21, 0.18),
+           mortar=(0.17, 0.155, 0.135), glass=(0.03, 0.045, 0.05), lit=(1.0, 0.72, 0.42),
+           facade_width=20.0, facade_height=24.0, floor_height=3.2, ground_height=4.6,
+           window_pitch=2.6, window_w=1.3, window_h=1.7, window_sill=0.9, windows_on=1.0,
+           lit_ratio=0.3, boarded_ratio=0.0, broken_ratio=0.0, band_every=0.0, grime=0.5,
+           damage=0.0, soot=0.0, overgrowth=0.0, collapse_y=0.0, ground_kind=0,
+           ground_units=2.0, emission_energy=2.2):
+    base, accent, mortar, glass, lit = map(lambda c: np.array(c, float), (base, accent, mortar, glass, lit))
+    px, py = U[..., 0], U[..., 1]
+    shp = px.shape
+    ones = np.ones(shp)
+    albedo = np.broadcast_to(base, shp + (3,)).copy()
+    emission = np.zeros(shp + (3,))
+    sk = fbm(U * 0.35 + seed)
+
+    # --- skin ---
+    if style == 0:
+        row = np.floor(py / 0.065)
+        off = np.where(row % 2 < 1, 0.0, 0.11)
+        bx = (px + off) % 0.22
+        by = py % 0.065
+        bid = np.stack([np.floor((px + off) / 0.22), row], -1)
+        brick = base * (0.85 + 0.3 * hash21(bid))[..., None]
+        var = hash21(bid + 5.0)
+        brick *= np.where(var < 0.08, 0.65, np.where(var > 0.94, 1.25, 1.0))[..., None]
+        albedo = np.where(((bx < 0.012) | (by < 0.012))[..., None], mortar, brick)
+    elif style == 1:
+        pm = np.stack([px % 2.4, py % 1.2], -1)
+        a = base * (1 - 0.25 * smoothstep(0.5, 0.8, fbm(U * 0.9 + seed)))[..., None]
+        tie = (np.linalg.norm(np.stack([px % 0.6, py % 0.6], -1) - 0.3, axis=-1) < 0.02) & (hash21(np.floor(U / 0.6)) < 0.4)
+        a = np.where(tie[..., None], mortar * 0.5, a)
+        albedo = np.where(((pm[..., 0] < 0.02) | (pm[..., 1] < 0.02))[..., None], mortar, a)
+    elif style == 2:
+        a = base[None, None] * (1 - 0.2 * smoothstep(0.45, 0.7, sk))[..., None]
+        a = np.where((crack_field(U * 0.9 + seed) < 0.02)[..., None], mortar, a)
+        a = np.where((fbm(U * 1.3 + seed + 5.0) > 0.66)[..., None], base * 0.55, a)
+        albedo = a
+    elif style == 4:
+        a = base[None, None] * (0.85 + 0.15 * np.sin(px / 0.1 * 2 * np.pi))[..., None]
+        a = np.where((py % 1.0 < 0.015)[..., None], mortar, a)
+        rust = 0.6 * smoothstep(0.6, 0.95, fbm(np.stack([px * 3.0, py * 0.4], -1) + seed))
+        albedo = a * (1 - rust[..., None]) + np.array([0.30, 0.11, 0.05]) * rust[..., None]
+    elif style == 5:
+        row = np.floor(py / 0.5)
+        off = np.where(row % 2 < 1, 0.0, 0.5)
+        bx = (px + off) % 1.0
+        by = py % 0.5
+        bid = np.stack([np.floor((px + off) / 1.0), row], -1)
+        albedo = np.where(((bx < 0.02) | (by < 0.02))[..., None], mortar, base * (0.9 + 0.2 * hash21(bid))[..., None])
+    elif style == 6:
+        is_col = px % 4.0 < 0.5
+        is_slab = (py - ground_height) % floor_height < 0.35
+        albedo = np.where((is_col | is_slab)[..., None], base, 0.01)
+
+    # --- ground zone ---
+    unit_w = facade_width / ground_units
+    u = np.floor(px / unit_w)
+    ux = px - u * unit_w
+    g = py < ground_height
+    if ground_kind == 0:
+        albedo = np.where((g & (py < 0.4))[..., None], accent * 0.8, albedo)
+    elif ground_kind == 1:
+        pier = (ux < 0.5) | (ux > unit_w - 0.5)
+        litshop = hash21(np.stack([u, np.full(shp, seed)], -1)) < 0.6
+        shopglass = g & ~pier & (py >= 0.5) & (py < 3.4)
+        albedo = np.where((g & pier)[..., None], accent, albedo)
+        albedo = np.where((g & ~pier & (py < 0.5))[..., None], accent * 0.6, albedo)
+        albedo = np.where(shopglass[..., None], glass, albedo)
+        e = lit * emission_energy * 0.5 * (1 - 0.6 * smoothstep(1.2, 3.4, py))[..., None]
+        e = e + np.where((py * 1.6 % 1.0 < 0.12)[..., None], 0.3, 0.0)
+        emission = np.where((shopglass & litshop)[..., None], e, emission)
+        albedo = np.where((g & ~pier & (py >= 3.4) & (py < 4.2))[..., None], accent, albedo)
+        albedo = np.where((g & ~pier & (py >= 4.2))[..., None], glass, albedo)
+    elif ground_kind == 2:
+        wood = accent * np.array([1.35, 1.1, 0.8]) * (0.85 + 0.3 * noise21(U * 18.0))[..., None]
+        wood = np.where(((py / 0.2) % 1.0 < 0.06)[..., None], wood * 0.6, wood)
+        missing = hash21(np.stack([np.floor(py / 0.2), u], -1)) < 0.12
+        a = np.where(missing[..., None], 0.01, wood)
+        a = np.where((py < 0.5)[..., None], accent * 0.6, a)
+        albedo = np.where(g[..., None], a, albedo)
+    elif ground_kind == 3:
+        door = g & (py < 3.8) & (ux >= 0.5) & (ux <= unit_w - 0.5)
+        frame = (ux < 0.8) | (ux > unit_w - 0.8) | (py < 0.3) | (py > 3.5)
+        col = accent * (0.9 + 0.1 * np.sin(py / 0.15 * 2 * np.pi))[..., None]
+        rust = 0.6 * smoothstep(0.6, 0.95, fbm(np.stack([px * 3.0, py * 0.4], -1) + seed))
+        col = col * (1 - rust[..., None]) + np.array([0.30, 0.11, 0.05]) * rust[..., None]
+        albedo = np.where((door & frame)[..., None], mortar, np.where(door[..., None], col, albedo))
+    elif ground_kind == 4:
+        dock = g & (py < 1.2)
+        bump = (np.abs(px % 2.0 - 1.0) < 0.15) & (np.abs(py - 0.6) < 0.15)
+        albedo = np.where(dock[..., None], np.where(bump[..., None], 0.01, mortar * 0.8), albedo)
+        dd = g & (py >= 1.2) & (py < 4.0) & (ux >= 0.75) & (ux <= unit_w - 0.75)
+        albedo = np.where(dd[..., None], np.array([0.012, 0.014, 0.014]), albedo)
+        strip = dd & (py > 3.9) & (hash21(np.stack([u, np.full(shp, seed + 3.0)], -1)) < 0.5)
+        emission = np.where(strip[..., None], lit * 0.8 * emission_energy, emission)
+    elif ground_kind == 5:
+        pil = (ux < 0.6) | (ux > unit_w - 0.6)
+        rx = (ux - unit_w * 0.5) / (unit_w * 0.5 - 0.6)
+        ry = (py - 3.4) / 1.2
+        rec = (np.sqrt(rx * rx + ry * ry) < 1.0) | (py < 3.4)
+        albedo = np.where((g & pil)[..., None], accent, np.where((g & ~pil & rec)[..., None], base * 0.6, albedo))
+
+    # --- windows ---
+    pane = np.zeros(shp, bool)
+    frame_m = np.zeros(shp, bool)
+    wid = np.zeros(shp + (2,))
+    local = np.zeros(shp + (2,))
+    if windows_on > 0.5 and style != 6:
+        above = py >= ground_height
+        wy = py - ground_height
+        if style == 3:
+            row = np.floor(wy / floor_height)
+            fy = wy - row * floor_height
+            col = np.floor(px / 1.5)
+            fx = px - col * 1.5
+            mull = 0.06
+            mullion = (fx < mull) | (fx > 1.5 - mull) | (fy > floor_height - mull)
+            frame_m = above & ((fy < 0.9) | mullion)
+            pane = above & ~frame_m
+            wid = np.stack([col, row], -1)
+            local = np.stack([(fx - mull) / (1.5 - 2 * mull), (fy - 0.9) / (floor_height - 0.9 - mull)], -1)
+        else:
+            row = np.floor(wy / floor_height)
+            fy = wy - row * floor_height
+            col = np.floor(px / window_pitch)
+            fx = px - col * window_pitch
+            valid = (col * window_pitch + window_pitch <= facade_width - 0.3) & (ground_height + (row + 1) * floor_height <= facade_height - 0.6)
+            x0 = (window_pitch - window_w) * 0.5
+            x1 = (window_pitch + window_w) * 0.5
+            pad = 0.08
+            in_pane = (fx >= x0) & (fx <= x1) & (fy >= window_sill) & (fy <= window_sill + window_h)
+            in_frame = (fx >= x0 - pad) & (fx <= x1 + pad) & (fy >= window_sill - pad) & (fy <= window_sill + window_h + pad)
+            pane = above & valid & in_pane
+            frame_m = above & valid & in_frame & ~in_pane
+            wid = np.stack([col, row], -1)
+            local = np.stack([(fx - x0) / window_w, (fy - window_sill) / window_h], -1)
+    h = hash21(wid + [seed, seed * 0.37])
+    is_lit = h < lit_ratio
+    is_board = (h >= lit_ratio) & (h < lit_ratio + boarded_ratio)
+    is_broken = (h >= lit_ratio + boarded_ratio) & (h < lit_ratio + boarded_ratio + broken_ratio)
+    curtain = 1 - 0.5 * smoothstep(0.55, 1.0, local[..., 1])
+    tint = np.where((hash11(h * 233.0) < 0.3)[..., None], lit * 0.4 + np.array([0.85, 0.9, 1.0]) * 0.6, lit)
+    lit_e = tint * (emission_energy * (0.55 + 0.45 * hash11(h * 91.0)) * curtain)[..., None]
+    wood = accent * np.array([1.35, 1.1, 0.8]) * (0.85 + 0.3 * noise21(U * 18.0))[..., None]
+    shard = 1 - smoothstep(0.0, 0.05, crack_field(local * 3.0 + h[..., None]))
+    diag = (local[..., 0] * 0.7 + local[..., 1] * 0.4 + h) % 1.0
+    dark = glass + (0.03 * smoothstep(0.4, 0.6, diag))[..., None]
+    win_alb = np.where(is_lit[..., None], glass, np.where(is_board[..., None], wood, np.where(is_broken[..., None], glass * 0.3 + (0.25 * shard)[..., None], dark)))
+    albedo = np.where(frame_m[..., None], accent, np.where(pane[..., None], win_alb, albedo))
+    emission = np.where(frame_m[..., None], 0.0, np.where((pane & is_lit)[..., None], lit_e, np.where(pane[..., None], 0.0, emission)))
+
+    # --- overlays (not on panes) ---
+    if band_every > 0:
+        wy = py - ground_height
+        row = np.floor(wy / floor_height)
+        fy = wy - row * floor_height
+        sc = (py >= ground_height) & (fy < 0.25) & (row % band_every < 0.5)
+        albedo = np.where((sc & ~pane)[..., None], accent, albedo)
+    base_grime = grime * 0.6 * (0.5 * smoothstep(3.0, 0.0, py) + 0.5 * fbm(U * 0.35 + seed + 11.0))
+    albedo = np.where(pane[..., None], albedo, albedo * np.clip(1 - base_grime, 0, 1)[..., None])
+    if overgrowth > 0:
+        og = (fbm(U * 0.6 + seed + 23.0) > 1 - overgrowth * 0.5) & (py < facade_height * 0.7) & ~pane
+        albedo = np.where(og[..., None], np.array([0.08, 0.12, 0.05]) * (0.7 + 0.6 * noise21(U * 12.0))[..., None], albedo)
+    if damage > 0:
+        dm = (fbm(U * 1.3 + seed + 41.0) > 1 - damage * 0.45) & ~pane
+        albedo = np.where(dm[..., None], (base * 0.5 + mortar) * 0.5, albedo)
+    alpha = np.ones(shp)
+    if collapse_y > 0:
+        edge = collapse_y + (fbm(np.stack([px * 0.35, np.full(shp, seed)], -1)) - 0.5) * 6.0
+        alpha = np.where(py > edge, 0.0, 1.0)
+        rub = (py > edge - 1.5) & (py <= edge)
+        rc = np.array([0.16, 0.15, 0.14]) * (0.6 + 0.5 * noise21(U * 4.0))[..., None]
+        rc = np.where((((py - ground_height) % floor_height) < 0.3)[..., None], np.array([0.32, 0.31, 0.29]), rc)
+        albedo = np.where(rub[..., None], rc, albedo)
+        emission = np.where(rub[..., None], 0.0, emission)
+    return albedo, emission, alpha
+
+
+def sheet(cases, width=20.0, height=24.0, out="facade_sheet.png"):
+    W = int(width * PX_PER_M)
+    H = int(height * PX_PER_M)
+    xs = (np.arange(W) + 0.5) / PX_PER_M
+    ys = (np.arange(H) + 0.5) / PX_PER_M
+    X, Y = np.meshgrid(xs, ys)
+    U = np.stack([X, Y[::-1]], -1)  # row 0 = top of the facade
+    tiles = []
+    for kw in cases:
+        alb, emi, alpha = render(U, **kw)
+        # crude night lighting: 0.45 directional-ish + 0.24 ambient, then emission, gamma
+        lin = alb * 0.55 + emi
+        lin = np.where(alpha[..., None] > 0.5, lin, np.array([0.018, 0.024, 0.025]))
+        img = np.clip(lin, 0, 1) ** (1 / 2.2)
+        tiles.append((img * 255).astype(np.uint8))
+    cols = 3
+    rows = (len(tiles) + cols - 1) // cols
+    canvas = np.zeros((rows * H + (rows - 1) * 8, cols * W + (cols - 1) * 8, 3), np.uint8)
+    for i, t in enumerate(tiles):
+        r, c = divmod(i, cols)
+        canvas[r * (H + 8):r * (H + 8) + H, c * (W + 8):c * (W + 8) + W] = t
+    Image.fromarray(canvas).save(out)
+    print("wrote", out, canvas.shape)
+
+
+if __name__ == "__main__":
+    P = dict
+    cases = [
+        P(style=0, ground_kind=1, seed=3.0, lit_ratio=0.35),                                                      # brick tenement, shopfront
+        P(style=0, base=(0.28, 0.19, 0.13), accent=(0.2, 0.18, 0.15), mortar=(0.15, 0.14, 0.12), lit=(1, 0.75, 0.5), ground_kind=5, band_every=3, seed=8.0),
+        P(style=1, base=(0.30, 0.31, 0.30), accent=(0.2, 0.21, 0.2), mortar=(0.12, 0.13, 0.13), lit=(0.85, 0.9, 1.0), window_pitch=3.0, window_w=1.8, window_h=1.4, ground_kind=3, ground_units=3, facade_height=16.0, lit_ratio=0.15, seed=11.0),
+        P(style=2, base=(0.42, 0.36, 0.26), accent=(0.26, 0.22, 0.17), mortar=(0.18, 0.16, 0.13), lit=(1, 0.78, 0.5), ground_kind=2, grime=0.85, boarded_ratio=0.35, broken_ratio=0.3, damage=0.5, lit_ratio=0.05, seed=5.0),
+        P(style=3, base=(0.05, 0.08, 0.11), accent=(0.16, 0.18, 0.2), mortar=(0.1, 0.1, 0.1), glass=(0.04, 0.06, 0.08), lit=(0.8, 0.88, 1.0), grime=0.15, lit_ratio=0.5, ground_kind=1, facade_height=24.0, seed=21.0),
+        P(style=4, base=(0.28, 0.17, 0.11), accent=(0.16, 0.13, 0.11), mortar=(0.1, 0.08, 0.07), windows_on=0.0, ground_kind=4, ground_units=2, facade_height=14.0, grime=0.7, seed=2.0),
+        P(style=5, base=(0.34, 0.33, 0.30), accent=(0.26, 0.25, 0.22), mortar=(0.14, 0.14, 0.13), lit=(1, 0.8, 0.5), window_pitch=3.2, window_h=2.2, band_every=1, ground_kind=5, lit_ratio=0.25, seed=9.0),
+        P(style=0, ground_kind=0, soot=0.9, lit=(1.0, 0.45, 0.15), lit_ratio=0.5, seed=4.0),                     # burning
+        P(style=2, ground_kind=2, collapse_y=14.0, overgrowth=0.6, grime=0.8, seed=6.0),                          # collapsed ruin
+    ]
+    sheet(cases)
