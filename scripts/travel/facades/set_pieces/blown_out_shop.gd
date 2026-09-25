@@ -6,6 +6,7 @@ extends FacadeSetPiece
 const _FacadeKeepOut := preload("res://scripts/travel/facades/facade_keep_out.gd")
 const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
+const _FacadeGrimeMaterials := preload("res://scripts/travel/facades/facade_grime_materials.gd")
 const _FacadeMeshKit := preload("res://scripts/travel/facades/facade_mesh_kit.gd")
 
 const _BASE_Y := _FacadePlan.BASE_Y
@@ -48,7 +49,10 @@ func build(ctx: Dictionary) -> void:
 	if _FacadeMeshKit.add_box(panel_st, panel_center, Vector3(0.02, 2.9, unit_w - 1.0), keep_out):
 		_FacadeMeshKit.commit(
 			host, panel_st, "Charred",
-			_FacadeMaterials.prop_material(&"charred", Color(0.02, 0.02, 0.02), 0.95, 0.0), false
+			_FacadeGrimeMaterials.from_prop(
+				_FacadeMaterials.prop_material(&"charred", Color(0.02, 0.02, 0.02), 0.95, 0.0)
+			),
+			false
 		)
 
 	var debris_x := side_sign * 8.25

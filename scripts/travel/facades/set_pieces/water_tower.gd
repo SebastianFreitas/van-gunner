@@ -4,6 +4,7 @@ extends FacadeSetPiece
 
 const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
+const _FacadeGrimeMaterials := preload("res://scripts/travel/facades/facade_grime_materials.gd")
 const _FacadeMeshKit := preload("res://scripts/travel/facades/facade_mesh_kit.gd")
 
 const MAX_HEIGHT := 30.0
@@ -49,8 +50,10 @@ func build(ctx: Dictionary) -> void:
 		_FacadeMeshKit.commit(host, leg_st, "Legs", _FacadeMaterials.iron_material(), true)
 	_FacadeMeshKit.add_cylinder_node(
 		host, "Tank", TANK_RADIUS, TANK_RADIUS, 3.0, Vector3(base_x, y_top + 4.5, z_mid),
-		_FacadeMaterials.prop_material(&"tank_wood", Color(0.3, 0.2, 0.14), 0.85, 0.1), true,
-		keep_out
+		_FacadeGrimeMaterials.from_prop(
+			_FacadeMaterials.prop_material(&"tank_wood", Color(0.3, 0.2, 0.14), 0.85, 0.1)
+		),
+		true, keep_out
 	)
 	_FacadeMeshKit.add_cylinder_node(
 		host, "Lid", 0.1, 1.75, 0.8, Vector3(base_x, y_top + 6.4, z_mid),

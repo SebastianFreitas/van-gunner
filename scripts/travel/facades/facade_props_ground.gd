@@ -8,6 +8,7 @@ const _FacadeKeepOut := preload("res://scripts/travel/facades/facade_keep_out.gd
 const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
 const _FacadeMeshKit := preload("res://scripts/travel/facades/facade_mesh_kit.gd")
+const _FacadeGrimeMaterials := preload("res://scripts/travel/facades/facade_grime_materials.gd")
 const _BASE_Y := _FacadePlan.BASE_Y
 
 ## Centre of the sidewalk strip; furniture depth <= 1.0 keeps abs(x) >= 7.75, inside the lane
@@ -94,7 +95,8 @@ static func _build_storefront(
 		var zc := _z_at(plan, ss, _u_c(i, unit_w))
 		boxes.append([Vector3(_out_x(xf, ss, 0.3), _BASE_Y + 3.8, zc), Vector3(0.3, 0.8, unit_w - 1.0)])
 		boxes.append([Vector3(_out_x(xf, ss, 0.2), _BASE_Y + 0.25, zc), Vector3(0.2, 0.5, unit_w - 1.0)])
-	_emit(host, "Storefront", _FacadeMaterials.trim_material(plan[&"preset"]), true, boxes, ko)
+	var material := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.trim_material(plan[&"preset"]))
+	_emit(host, "Storefront", material, true, boxes, ko)
 
 
 ## Pitched canopy nodes; the pitch sign puts the outer edge lower than the wall edge on both sides.
@@ -112,7 +114,7 @@ static func _build_awnings(
 		if rng.randf() >= dist.awning_chance:
 			continue
 		var key: StringName = _AWNING_COLORS[rng.randi_range(0, _AWNING_COLORS.size() - 1)]
-		var material := _FacadeMaterials.ground_material(key)
+		var material := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.ground_material(key))
 		var z := _z_at(plan, ss, _u_c(i, unit_w))
 		var size := Vector3(1.0, 0.1, unit_w - 1.4)
 		var center := Vector3(_out_x(xf, ss, 0.5), _BASE_Y + 3.55, z)
@@ -152,7 +154,8 @@ static func _build_rollups(
 		var u1 := float(i + 1) * unit_w - 0.55
 		boxes.append([Vector3(_out_x(xf, ss, 0.12), _BASE_Y + 1.9, _z_at(plan, ss, u0)), rail_size])
 		boxes.append([Vector3(_out_x(xf, ss, 0.12), _BASE_Y + 1.9, _z_at(plan, ss, u1)), rail_size])
-	_emit(host, "RollupFrames", _FacadeMaterials.metal_grey_material(), false, boxes, ko)
+	var material := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.metal_grey_material())
+	_emit(host, "RollupFrames", material, false, boxes, ko)
 
 
 static func _build_dock(
@@ -176,7 +179,8 @@ static func _build_dock(
 		var sz := edge_z + dir * (0.45 + float(k) * 0.9)
 		var sy := _BASE_Y + 0.9 - 0.3 * float(k)
 		boxes.append([Vector3(_out_x(xf, ss, 0.9), sy, sz), Vector3(0.9, 0.3, 0.9)])
-	_emit(host, "DockPlatform", _FacadeMaterials.concrete_material(), true, boxes, ko)
+	var material := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.concrete_material())
+	_emit(host, "DockPlatform", material, true, boxes, ko)
 	# Bumpers every 2 m along the platform's outer face (same pitch-cell math as a window column).
 	var bumpers := []
 	var bumper_n := maxi(0, floori((width - 0.4) / 2.0))
@@ -201,7 +205,8 @@ static func _build_arcade(
 		var z := _z_at(plan, ss, float(e) * unit_w)
 		boxes.append([Vector3(_out_x(xf, ss, 0.4), _BASE_Y + 2.2, z), Vector3(0.4, 4.4, 0.6)])
 		boxes.append([Vector3(_out_x(xf, ss, 0.5), _BASE_Y + 4.45, z), Vector3(0.5, 0.25, 0.8)])
-	_emit(host, "Pilasters", _FacadeMaterials.trim_material(plan[&"preset"]), true, boxes, ko)
+	var material := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.trim_material(plan[&"preset"]))
+	_emit(host, "Pilasters", material, true, boxes, ko)
 
 
 static func _build_stoop(
@@ -220,7 +225,8 @@ static func _build_stoop(
 	for k in 3:
 		var size: Vector3 = sizes[k]
 		boxes.append([Vector3(_out_x(xf, ss, size.x), _BASE_Y + 0.09 + 0.18 * float(k), z), size])
-	_emit(host, "Stoop", _FacadeMaterials.concrete_material(), true, boxes, ko)
+	var material := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.concrete_material())
+	_emit(host, "Stoop", material, true, boxes, ko)
 	# Outer corner of the bottom (widest) step.
 	var post := Vector3(_out_x(xf, ss, 0.9) - ss * 0.45, _BASE_Y + 0.45, z - 0.7)
 	_emit(host, "StoopRail", _FacadeMaterials.iron_material(), false, [[post, Vector3(0.05, 0.9, 0.05)]], ko)

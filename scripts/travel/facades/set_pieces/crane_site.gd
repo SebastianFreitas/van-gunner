@@ -5,6 +5,7 @@ extends FacadeSetPiece
 
 const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
+const _FacadeGrimeMaterials := preload("res://scripts/travel/facades/facade_grime_materials.gd")
 const _FacadeMeshKit := preload("res://scripts/travel/facades/facade_mesh_kit.gd")
 
 const _BASE_Y := _FacadePlan.BASE_Y
@@ -81,7 +82,9 @@ func build(ctx: Dictionary) -> void:
 		_FacadeMeshKit.commit(host, mast_st, "CraneMast", _FacadeMaterials.iron_material(), true)
 
 	var iron := _FacadeMaterials.iron_material()
-	var yellow := _FacadeMaterials.prop_material(&"crane_yellow", Color(0.62, 0.44, 0.08), 0.7, 0.3)
+	var yellow := _FacadeGrimeMaterials.from_prop(
+		_FacadeMaterials.prop_material(&"crane_yellow", Color(0.62, 0.44, 0.08), 0.7, 0.3)
+	)
 	var jib_y := y_top + mast_h - 0.4
 	var jib_yaw := rng.randf_range(-0.3, 0.3)
 	var jib_c := Vector3(xf - ss * 6.0, jib_y, mast_c.z)

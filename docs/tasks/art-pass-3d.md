@@ -138,7 +138,7 @@ run), and gameplay collision.
   `rooftop_billboard` `flood` (tungsten). `mural.gd`'s texture colours
   inside the albedo budget. Beacons, flame, neon, `glass_crown` cyan stay.
 
-- [ ] 7c. **Large prop surfaces on grime.** Awnings, roll-up doors, loading
+- [x] 7c. **Large prop surfaces on grime.** Awnings, roll-up doors, loading
   docks and set-piece bodies over about 1 m move from flat `prop_material`
   colour to a grime shader material (a small shader on the grime include
   with a `surface_size_m` uniform and a base colour), in
@@ -322,6 +322,26 @@ are tungsten, `fluoro` sick green-white; the mural palettes are capped (base 0.2
 shot                           kind     mean    p95   clip%    sat
 03-idle-outside                clean  0.0089 0.0227   0.244  0.406
 06-combat-outside              clean  0.0350 0.1783   1.560  0.430
+09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
+12-rear-park-stop-outside      clean  0.0043 0.0173   0.008  0.383
+```
+
+### Step 7c after (large props on grime)
+
+`scenes/corridor/facade_prop_grime.gdshader` (on the grime include; patterns in model-space
+metres picked by the face's dominant normal axis, since merged prop meshes carry 0..1 UVs per
+box face: tone, grain faded by `fwidth`, grime wash, rain streaks on sides, dust on tops,
+stains, faded cracks; albedo capped at 0.40, roughness 0.78..0.95, metallic <= 0.3) and
+`facade_grime_materials.gd` (`from_prop`, cached per budgeted `prop_material`, so colours are
+unchanged) now skin storefront piers, awnings and valances, roll-up frames, dock platforms,
+stoops, arcade pilasters, the crane jibs, the water-tower tank and the blown-out shop's
+charred panel. Furniture, bumpers, rails and every emissive part stay flat. Numbers are 7b's
+within noise; the change reads on near docks and stoops, not in the means.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0092 0.0230   0.236  0.409
+06-combat-outside              clean  0.0360 0.1775   1.672  0.430
 09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
 12-rear-park-stop-outside      clean  0.0043 0.0173   0.008  0.383
 ```

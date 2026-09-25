@@ -115,6 +115,11 @@ Surfaces, in the road's recipe:
   `facade_materials.gd` enforces this (non-emissive albedo capped at 0.40
   linear luminance, hue kept): still write literals inside the budget, since
   the clamp only hides a wrong value.
+- **Large props** (over about 1 m: awnings, lintels, docks, stoops, pilasters,
+  set-piece bodies) wrap their `prop_material()` in
+  `facade_grime_materials.gd`'s `from_prop()`, which puts the same budgeted
+  colour on `facade_prop_grime.gdshader` (grime in model-space metres, so
+  merged prop meshes with 0..1 UVs per face still get same-size detail).
 
 The van: the owner likes it as it is. Its shaders are a reference, not a
 migration target; change the van only to fix a break of the dark budget,

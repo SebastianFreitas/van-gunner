@@ -263,7 +263,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-238 GDScript files, 34262 lines.
+239 GDScript files, 34309 lines.
 
 ### `scenes/corridor/`
 
@@ -507,12 +507,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `facade_body.gd` | — | 261 | Builds one building's body: SurfaceTool quads with UV in metres (u along the facade, v up), end returns, a roof plate, the stop-bay header / flank cut, and the… |
 | `facade_district.gd` | `FacadeDistrict` | 55 | One neighborhood look: skin presets, height range, ground-floor kinds, window state ratios and prop chances. |
 | `facade_fixtures.gd` | — | 107 | Wall lamp fixtures and their SpotLight3D pools for one facade side: district colour, dead lamps, the world-wide light cap, and the layer-1 cull mask that keeps… |
+| `facade_grime_materials.gd` | — | 31 | Cached grime ShaderMaterials for large facade props, one per flat prop material, so big slabs (awnings, lintels, docks, set-piece bodies) share the road's grim… |
 | `facade_keep_out.gd` | — | 163 | Keep-out volumes for one facade side: the gate every facade placer passes an AABB through, so nothing ever stands in the raider lane, hangs over the road below… |
 | `facade_materials.gd` | — | 328 | Static material factories for the facade system: a ShaderMaterial per building from a parameter dictionary, cached StandardMaterial3D props by key, and named s… |
 | `facade_mesh_kit.gd` | — | 121 | Box-and-quad helpers shared by every facade prop builder: gated boxes into a SurfaceTool, committing an ArrayMesh node, and single BoxMesh nodes for props that… |
 | `facade_overheads.gd` | — | 146 | Cross-street industrial dressing (pipe bridges, catwalks, ribs) built under Facades/Overhead when both sides are plain; it never reaches below 9 m over the roa… |
 | `facade_plan.gd` | — | 191 | Plans one facade side: splits the 20 m tile edge into buildings and gives each a skin preset, height, floors, ground kind and setback. |
-| `facade_props_ground.gd` | — | 329 | Ground-floor props for one building (storefront frames, awnings, roll-up lintels, loading docks, arcade pilasters, stoops, sidewalk furniture). |
+| `facade_props_ground.gd` | — | 335 | Ground-floor props for one building (storefront frames, awnings, roll-up lintels, loading docks, arcade pilasters, stoops, sidewalk furniture). |
 | `facade_props_upper.gd` | — | 354 | Upper-facade props for one building: trim (parapet cap, cornice, string-course ledges, downspout), AC units, a fire escape, balconies, roof clutter and wall pi… |
 | `facade_registry.gd` | — | 104 | Loads the facade data folders once: districts (sorted by index) and set-pieces (sorted by id). |
 | `facade_set_piece.gd` | `FacadeSetPiece` | 46 | One rare street set-piece: eligibility data plus the hooks a subclass overrides. |
@@ -525,12 +526,12 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `antenna_farm.gd` | — | 88 | A cluster of roof masts of random height, two tilted dish plates and a beacon light atop the tallest mast. |
-| `blown_out_shop.gd` | — | 110 | A storefront gutted by fire: a charred black-out panel behind the first unit's glass, rubble kicked out onto the sidewalk, and police tape strung across the do… |
+| `blown_out_shop.gd` | — | 114 | A storefront gutted by fire: a charred black-out panel behind the first unit's glass, rubble kicked out onto the sidewalk, and police tape strung across the do… |
 | `burning_tenement.gd` | — | 122 | A tenement mid-fire: flickering, broken upper windows (soot is shader-only, nothing to build), a few glowing flame slabs behind the glass, and one warm light a… |
 | `chapel.gd` | — | 129 | A stone chapel front: a stained-glass rose window over the arcade, and a bell tower standing on the roof with a clock face and a pointed cap. |
 | `cinema_marquee.gd` | — | 151 | A cinema marquee bolted onto a storefront: a lit canopy slab with chasing bulb strips on its three outer faces, a backlit title panel, a vertical CINEMA blade,… |
 | `collapsed_block.gd` | — | 125 | A building torn open partway up: the shader discards everything above a noisy collapse edge, and rubble, standing rebar and two ragged slab stubs sell the wrec… |
-| `crane_site.gd` | — | 135 | A tower crane grafted onto a bare industrial frame: a green safety net over the low floors, a lattice mast standing on the roof, a jib and counter-jib, a hangi… |
+| `crane_site.gd` | — | 138 | A tower crane grafted onto a bare industrial frame: a green safety net over the low floors, a lattice mast standing on the roof, a jib and counter-jib, a hangi… |
 | `gas_canopy.gd` | — | 148 | A gas station canopy grafted onto a low storefront: a lit slab on two posts over the pumps, a price pole and one warm light underneath. |
 | `glass_crown.gd` | — | 100 | A commercial tower stretched to its full height, capped with a glowing crown band and a red beacon on a roof mast. |
 | `laundry_balconies.gd` | — | 138 | A tenement plastered in balconies: full window-grid coverage (not the rare few an ordinary building rolls), each one strung with hanging laundry. |
@@ -546,7 +547,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scaffolded.gd` | — | 116 | A construction scaffold over the lower floors: two rows of standards joined by ledgers and transoms, a work plank on each level, and a green safety net over th… |
 | `searchlight.gd` | — | 92 | A rooftop searchlight sweeping a tilted cone over the street: a pedestal and housing on the roof, with a beam mesh spun by scripts/travel/facades/set_pieces/se… |
 | `searchlight_pivot.gd` | — | 15 | Spins a searchlight beam around its own tilted Y axis, sweeping a cone over the street. |
-| `water_tower.gd` | — | 96 | A rooftop water tower: four legs, a wood tank, a conical lid and a ladder on the road side. |
+| `water_tower.gd` | — | 99 | A rooftop water tower: four legs, a wood tank, a conical lid and a ladder on the road side. |
 
 ### `scripts/ui/`
 
@@ -679,7 +680,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Shaders
 
-`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`
+`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_prop_grime.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`
 
 ## Balance sheet (`resources/balance/game_balance.tres`)
 
