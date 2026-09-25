@@ -72,7 +72,7 @@ run), and gameplay collision.
   down to it. Verify: run it twice on the same folder (same numbers);
   `py -3 .claude/hooks/gd-lint.py` does not apply (Python).
 
-- [ ] 2. **Night windows.** In `scenes/corridor/facade_surface.gdshader`,
+- [x] 2. **Night windows.** In `scenes/corridor/facade_surface.gdshader`,
   change only the lit-window emission and the glass colour: lit windows
   stay under the glow threshold (emission luminance about 0.9 or less at
   full flicker), warm amber or tungsten tints per window from the seed (a
@@ -84,7 +84,9 @@ run), and gameplay collision.
   is under its new target and still shows lit windows. Rules:
   `travel-and-stops.md` facades section.
 
-- [ ] 3. **Street lamps and light pools.** `scripts/travel/facades/facade_fixtures.gd`
+- [ ] 3. **Street lamps and light pools.** (Carries step 2's leftover: `06-combat-outside`
+  must reach its target here; after step 2 its excess is lamp light on the walls and the
+  big sign, not windows.) `scripts/travel/facades/facade_fixtures.gd`
   (wall lamps and their `OmniLight3D`): energies, range and colour so each
   lamp makes a pool with dark between pools; lamp heads may bloom. Keep the
   12-light cap, `light_cull_mask = 1` set before `add_child`, no light on a
@@ -180,4 +182,18 @@ shot                           kind     mean    p95   clip%    sat
 10-rear-park-stop-front        hud    0.0075 0.0073   0.000  0.211
 11-rear-park-stop-back         clean  0.0091 0.0217   0.000  0.427
 12-rear-park-stop-outside      clean  0.0123 0.0190   0.849  0.398
+```
+
+### Step 2 after (night windows, `window_emission` 0.5)
+
+Lit panes: warm tungsten, amber, a few dim green, max channel 0.5 (fire windows keep
+their bloom); dark glass rough 0.5, metal 0. `06` fell from 0.099 to 0.036 mean and
+7.4 to 1.6% clipped but is still over its target: what is left is the wall lamps
+(step 3) and the signs. The rest is unchanged within noise.
+
+```
+shot                           kind     mean    p95   clip%    sat
+03-idle-outside                clean  0.0094 0.0208   0.244  0.363
+06-combat-outside              clean  0.0357 0.1775   1.562  0.362
+12-rear-park-stop-outside      clean  0.0045 0.0173   0.008  0.391
 ```

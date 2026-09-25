@@ -34,7 +34,8 @@ uniform float collapse_y = 0.0;        // 0 = intact; else discard above a noisy
 uniform float flicker = 0.0;           // 1 = lit windows flicker with TIME (fire)
 uniform int ground_kind = 0;           // 0 blank, 1 storefront, 2 boarded, 3 roll-up, 4 loading dock, 5 arcade
 uniform float ground_units = 2.0;      // storefront / door bays across the facade
-uniform float emission_energy = 2.2;
+uniform float emission_energy = 2.2;   // fire (flicker) windows only; they may bloom
+uniform float window_emission = 0.5;   // peak channel of a lit night window; stays under the glow threshold
 uniform float roughness_value : hint_range(0.0, 1.0) = 0.85;
 
 float hash21(vec2 p) {
@@ -310,37 +311,54 @@ void shade_skin(vec2 p, float sk, out vec3 albedo, out vec3 emission, out float 
 	}
 }
 
+// Night palette for a lit window: warm tungsten or sodium amber, a few dim fluorescent green.
+// Max channel is 1.0; callers scale by window_emission so a pane never clips or blooms.
+vec3 night_window_tint(float h) {
+	float t = hash11(h * 233.0);
+	if (t < 0.15) {
+		return vec3(0.55, 0.78, 0.42) * 0.7;   // sick fluorescent green, dimmer
+	} else if (t < 0.55) {
+		return vec3(1.0, 0.62, 0.30);          // tungsten
+	} else if (t < 0.85) {
+		return vec3(1.0, 0.50, 0.18);          // sodium amber
+	}
+	return vec3(0.92, 0.70, 0.45);             // warm incandescent, the palest allowed
+}
+
 // Per-window pane state: lit, boarded, broken or dark, from a hash on the window id.
 void shade_window(vec2 p, vec2 id, vec2 local, out vec3 albedo, out vec3 emission, out float rough, out float metal) {
 	float h = hash21(id + vec2(seed, seed * 0.37));
 	emission = vec3(0.0);
 	if (h < lit_ratio) {
 		float curtain = 1.0 - 0.5 * smoothstep(0.55, 1.0, local.y);
-		vec3 tint = hash11(h * 233.0) < 0.3 ? mix(lit_color, vec3(0.85, 0.9, 1.0), 0.6) : lit_color;
 		float flick = flicker > 0.5
 			? clamp(0.55 + 0.45 * sin(TIME * 23.0 + h * 40.0) * sin(TIME * 7.0 + h * 13.0), 0.2, 1.0)
 			: 1.0;
 		albedo = glass_color;
-		emission = tint * emission_energy * (0.55 + 0.45 * hash11(h * 91.0)) * curtain * flick;
+		if (flicker > 0.5) {
+			emission = lit_color * emission_energy * (0.55 + 0.45 * hash11(h * 91.0)) * curtain * flick;
+		} else {
+			emission = night_window_tint(h) * window_emission * (0.45 + 0.55 * hash11(h * 91.0)) * curtain;
+		}
 		if (style == 3) {
 			emission *= 0.7;
 		}
-		rough = 0.25;
-		metal = 0.1;
+		rough = 0.6;
+		metal = 0.0;
 	} else if (h < lit_ratio + boarded_ratio) {
 		albedo = plank_color(p);
 		rough = 0.95;
 		metal = 0.0;
 	} else if (h < lit_ratio + boarded_ratio + broken_ratio) {
 		float shard = 1.0 - smoothstep(0.0, 0.05, crack_field(local * 3.0 + h));
-		albedo = glass_color * 0.3 + vec3(0.25 * shard);
-		rough = 0.4;
+		albedo = glass_color * 0.3 + vec3(0.12 * shard);
+		rough = 0.6;
 		metal = 0.0;
 	} else {
 		float diag = fract(local.x * 0.7 + local.y * 0.4 + h);
 		albedo = glass_color + vec3(0.03 * smoothstep(0.4, 0.6, diag));
-		rough = 0.2;
-		metal = 0.15;
+		rough = 0.5;
+		metal = 0.0;
 	}
 }
 
@@ -362,22 +380,23 @@ void shade_ground(vec2 p, float sk, out vec3 albedo, out vec3 emission, out floa
 		} else if (p.y < 3.4) {
 			albedo = glass_color;
 			if (hash21(vec2(u, seed)) < 0.6) {
-				emission = lit_color * emission_energy * 0.5 * (1.0 - 0.6 * smoothstep(1.2, 3.4, p.y));
+				vec3 shop_tint = night_window_tint(hash21(vec2(u, seed + 7.0)));
+				emission = shop_tint * window_emission * 0.9 * (1.0 - 0.6 * smoothstep(1.2, 3.4, p.y));
 				if (fract(p.y * 1.6) < 0.12) {
-					emission += vec3(0.3);
+					emission += shop_tint * 0.08;
 				}
-				rough = 0.25;
-				metal = 0.1;
+				rough = 0.6;
+				metal = 0.0;
 			} else {
-				rough = 0.2;
-				metal = 0.15;
+				rough = 0.5;
+				metal = 0.0;
 			}
 		} else if (p.y < 4.2) {
 			albedo = accent_color;
 		} else {
 			albedo = glass_color;
-			rough = 0.2;
-			metal = 0.15;
+			rough = 0.5;
+			metal = 0.0;
 		}
 	} else if (ground_kind == 2) {
 		if (p.y < 0.5) {
@@ -406,7 +425,7 @@ void shade_ground(vec2 p, float sk, out vec3 albedo, out vec3 emission, out floa
 		} else if (p.y < 4.0 && ux >= 0.75 && ux <= unit_w - 0.75) {
 			albedo = vec3(0.012, 0.014, 0.014);
 			if (p.y > 3.9 && hash21(vec2(u, seed + 3.0)) < 0.5) {
-				emission = lit_color * 0.8 * emission_energy;
+				emission = vec3(1.0, 0.55, 0.2) * 1.4;
 			}
 		}
 	} else if (ground_kind == 5) {
@@ -476,7 +495,7 @@ void facade_shade(vec2 p, out vec3 albedo, out vec3 emission, out float rough, o
 		albedo = accent_color;
 		emission = vec3(0.0);
 		rough = style == 3 ? 0.6 : 0.7;
-		metal = style == 3 ? 0.4 : 0.0;
+		metal = style == 3 ? 0.2 : 0.0;
 	} else if (w_pane > 0.5) {
 		shade_window(p, w_id, w_local, albedo, emission, rough, metal);
 	}

@@ -32,7 +32,7 @@ func apply_plans(plans: Array[Dictionary], _rng: RandomNumberGenerator) -> void:
 		(_CROWN_HEIGHT - _FacadePlan.GROUND_HEIGHT - _FacadePlan.PARAPET) / _FacadePlan.FLOOR_HEIGHT
 	)
 	plan[&"floors"] = maxi(1, int(floor(floors_raw)))
-	params[&"lit_ratio"] = 0.45
+	params[&"lit_ratio"] = 0.3
 	params[&"lit_color"] = Color(0.8, 0.88, 1.0)
 	plan[&"rare"] = id
 	plan[&"suppress"] = [&"fire_escape", &"balconies", &"ac_units", &"roof_clutter"]

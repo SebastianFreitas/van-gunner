@@ -29,7 +29,7 @@ func apply_plans(plans: Array[Dictionary], _rng: RandomNumberGenerator) -> void:
 	var target := _target_index(plans)
 	if target == -1:
 		return
-	plans[target][&"params"][&"lit_ratio"] = 0.6
+	plans[target][&"params"][&"lit_ratio"] = 0.35
 	plans[target][&"rare"] = id
 	plans[target][&"suppress"] = [&"awnings", &"signs", &"fire_escape"]
 
