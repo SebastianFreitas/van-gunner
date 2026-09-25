@@ -7,7 +7,7 @@ extends RefCounted
 const _FacadeKeepOut := preload("res://scripts/travel/facades/facade_keep_out.gd")
 const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
-const _FacadeBody := preload("res://scripts/travel/facades/facade_body.gd")
+const _FacadeMeshKit := preload("res://scripts/travel/facades/facade_mesh_kit.gd")
 const _BASE_Y := _FacadePlan.BASE_Y
 const _GROUND_H := _FacadePlan.GROUND_HEIGHT
 const _FLOOR_H := _FacadePlan.FLOOR_HEIGHT
@@ -18,13 +18,6 @@ const MAX_AC_UNITS := 8
 const MAX_LEDGES := 4
 ## Fog swallows higher roofs.
 const ROOF_CLUTTER_MAX_HEIGHT := 34.0
-const SHADOW_OFF := GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-## The six box faces as corner-index quads (see _add_box's bit-encoded corners) plus normal.
-const _BOX_FACES := [
-	[4, 6, 7, 5, 1.0, 0.0, 0.0], [0, 2, 3, 1, -1.0, 0.0, 0.0],
-	[2, 6, 7, 3, 0.0, 1.0, 0.0], [0, 4, 5, 1, 0.0, -1.0, 0.0],
-	[1, 5, 7, 3, 0.0, 0.0, 1.0], [0, 4, 6, 2, 0.0, 0.0, -1.0],
-]
 
 
 static func build(
@@ -78,27 +71,6 @@ static func _col_u(col: int, pitch: float) -> float:
 	return (float(col) + 0.5) * pitch
 
 
-## Emits an axis-aligned box as six quads if it clears the keep-out.
-static func _add_box(st: SurfaceTool, center: Vector3, size: Vector3, keep_out: RefCounted) -> bool:
-	var aabb := _FacadeKeepOut.box_aabb(center, size)
-	if not keep_out.allows(aabb):
-		return false
-	var h := size * 0.5
-	var pts: Array[Vector3] = []
-	for i in 8:
-		pts.append(center + Vector3(
-			h.x * (2.0 * float((i >> 2) & 1) - 1.0), h.y * (2.0 * float((i >> 1) & 1) - 1.0),
-			h.z * (2.0 * float(i & 1) - 1.0)
-		))
-	var uv := [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
-	for f: Array in _BOX_FACES:
-		_FacadeBody.add_quad(
-			st, pts[f[0]], pts[f[1]], pts[f[2]], pts[f[3]], uv[0], uv[1], uv[2], uv[3],
-			Vector3(f[4], f[5], f[6])
-		)
-	return true
-
-
 ## Builds one family's [center, size] box list into a single ArrayMesh; skips the node if the
 ## keep-out rejected every box.
 static func _emit(
@@ -109,21 +81,9 @@ static func _emit(
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var added := false
 	for b: Array in boxes:
-		added = _add_box(st, b[0], b[1], ko) or added
+		added = _FacadeMeshKit.add_box(st, b[0], b[1], ko) or added
 	if added:
-		_commit(host, st, node_name, material, shadows)
-
-
-static func _commit(
-	host: Node3D, st: SurfaceTool, node_name: String, material: Material, shadows: bool
-) -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = st.commit()
-	mi.material_override = material
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if shadows else SHADOW_OFF
-	host.add_child(mi)
-	return mi
+		_FacadeMeshKit.commit(host, st, node_name, material, shadows)
 
 
 static func _build_trim(

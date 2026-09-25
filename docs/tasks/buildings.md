@@ -292,8 +292,10 @@ Four independent designs were judged; these verified points are folded into the 
   `facade_props_upper.gd` (ledges, cornices, AC units, fire escapes, balconies, roof clutter).
   Lesson: in a merged ArrayMesh, child parts (rails, rungs, brackets) may only be emitted when
   their parent box passed the gate, or the mesh AABB straddles the mouth.
-- [ ] 5. `facade_props_ground.gd` (storefronts, awnings, roll-ups, docks, stoops, sidewalk
-  furniture, fixtures + lights).
+- [x] 5. `facade_props_ground.gd` (storefronts, awnings, roll-ups, docks, stoops, sidewalk
+  furniture) + `facade_mesh_kit.gd` (shared gated box/quad/commit helpers); fixtures + lights
+  split into `facade_fixtures.gd`. (`visibility_range_end` is a GeometryInstance3D property:
+  lights don't have it.)
 - [ ] 6. Glow on the environment (`van.tscn`), scene dump re-blessed.
 - [ ] 7. Signs: `shop_booth_flyers.gd` `draw_block_text` made static, `facade_signs.gd`,
   `facade_sign.gdshader`, box / neon / blade / banner / poster.

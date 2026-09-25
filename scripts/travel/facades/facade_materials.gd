@@ -77,6 +77,42 @@ static func concrete_material() -> StandardMaterial3D:
 	return prop_material(&"concrete", Color(0.3, 0.3, 0.29), 0.9, 0.0)
 
 
+## Ground-floor prop palette: awning canvas colours, sidewalk furniture and lamp glow, each
+## cached by key so repeated props across a tile share one material.
+static func ground_material(key: StringName) -> StandardMaterial3D:
+	match key:
+		&"awning_red":
+			return prop_material(key, Color(0.45, 0.12, 0.1), 0.9, 0.0)
+		&"awning_green":
+			return prop_material(key, Color(0.12, 0.3, 0.18), 0.9, 0.0)
+		&"awning_blue":
+			return prop_material(key, Color(0.12, 0.18, 0.35), 0.9, 0.0)
+		&"awning_tan":
+			return prop_material(key, Color(0.5, 0.42, 0.28), 0.9, 0.0)
+		&"hydrant":
+			return prop_material(key, Color(0.55, 0.12, 0.08), 0.6, 0.3)
+		&"news_box":
+			return prop_material(key, Color(0.2, 0.25, 0.4), 0.5, 0.2)
+		&"dumpster":
+			return prop_material(key, Color(0.1, 0.25, 0.15), 0.8, 0.4)
+		&"booth":
+			return prop_material(key, Color(0.08, 0.1, 0.12), 0.4, 0.4)
+		&"booth_glow":
+			return prop_material(key, Color(0.6, 0.8, 1.0), 0.5, 0.0, Color(0.6, 0.8, 1.0), 2.0)
+		&"vending":
+			return prop_material(key, Color(0.35, 0.08, 0.08), 0.4, 0.3)
+		&"vending_glow":
+			return prop_material(key, Color(1.0, 0.9, 0.7), 0.5, 0.0, Color(1.0, 0.9, 0.7), 2.2)
+		&"bollard":
+			return prop_material(key, Color(0.15, 0.15, 0.15), 0.5, 0.6)
+		&"crate":
+			return prop_material(key, Color(0.4, 0.3, 0.18), 0.95, 0.0)
+		&"bench":
+			return prop_material(key, Color(0.25, 0.18, 0.1), 0.7, 0.05)
+		_:
+			return prop_material(key, Color(0.3, 0.3, 0.3), 0.6, 0.0)
+
+
 ## Facade uniform values for a named skin. Always a fresh Dictionary so callers can
 ## mutate it (e.g. to override the seed) without disturbing other buildings.
 static func preset(name: StringName) -> Dictionary:
