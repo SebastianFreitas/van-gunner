@@ -32,7 +32,6 @@
 [ext_resource type="PackedScene" path="res://scenes/van/van_floor.tscn" id="28"]
 [ext_resource type="Shader" uid="uid://6ibrc7csxrcw" path="res://scenes/van/van_floor.gdshader" id="29"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_side_wall.tscn" id="30"]
-[ext_resource type="Shader" uid="uid://cyeupndbw5kwa" path="res://scenes/van/van_wall.gdshader" id="31"]
 [ext_resource type="Shader" uid="uid://ct0ys8gil2dhm" path="res://scenes/van/van_ceiling.gdshader" id="32"]
 [ext_resource type="PackedScene" path="res://scenes/ui/driver_shout_hud.tscn" id="33"]
 [ext_resource type="Script" uid="uid://cg24f5srch27x" path="res://scripts/van/front_partition.gd" id="34"]
@@ -45,6 +44,7 @@
 [ext_resource type="Script" uid="uid://d8k2nv4cabinav" path="res://scripts/enemies/cabin_nav.gd" id="41"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="42"]
 [ext_resource type="PackedScene" path="res://scenes/van/class_board.tscn" id="43"]
+[ext_resource type="ShaderMaterial" uid="uid://ywmwwtaxixb4" path="res://scenes/van/van_wall_material.tres" id="46"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -73,25 +73,6 @@ shader_parameter/rib_spacing_m = 0.085
 shader_parameter/panel_spacing_m = 1.55
 shader_parameter/roughness_value = 0.88
 shader_parameter/metallic_value = 0.22
-
-[sub_resource type="ShaderMaterial" id="WallMaterial"]
-render_priority = 0
-shader = ExtResource("31")
-shader_parameter/base_color = Color(0.22, 0.235, 0.225, 1)
-shader_parameter/seam_color = Color(0.07, 0.075, 0.07, 1)
-shader_parameter/kick_color = Color(0.1, 0.095, 0.085, 1)
-shader_parameter/belt_color = Color(0.14, 0.15, 0.145, 1)
-shader_parameter/wear_color = Color(0.32, 0.3, 0.26, 1)
-shader_parameter/stain_color = Color(0.04, 0.035, 0.03, 1)
-shader_parameter/rust_color = Color(0.24, 0.09, 0.035, 1)
-shader_parameter/wall_size_m = Vector2(9.4, 3.08)
-shader_parameter/panel_spacing_m = 1.15
-shader_parameter/rib_spacing_m = 0.42
-shader_parameter/kick_height_m = 0.38
-shader_parameter/belt_y_m = 0.96
-shader_parameter/waist_y_m = 1.48
-shader_parameter/roughness_value = 0.78
-shader_parameter/metallic_value = 0.28
 
 [sub_resource type="StandardMaterial3D" id="SideDoorTrimMaterial"]
 albedo_color = Color(0.08, 0.09, 0.09, 1)
@@ -249,7 +230,7 @@ script = ExtResource("27")
 floor_material = SubResource("FloorMaterial")
 
 [node name="SideWalls" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1665520798 instance=ExtResource("30")]
-wall_material = SubResource("WallMaterial")
+wall_material = ExtResource("46")
 door_jamb_material = SubResource("SideDoorTrimMaterial")
 
 [node name="FloorCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=901514165]
@@ -264,7 +245,7 @@ ceiling_material = SubResource("CeilingMaterial")
 [node name="LeftLowerRail" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=339440941]
 transform = Transform3D(0.9938522, -0.11071483, 0, 0.11071483, 0.9938522, 0, 0, 0, 1, -2.4996457, 0.525, 1.2)
 visible = false
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("SideRailMesh")
 
 [node name="LeftLowerCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1819202474]
@@ -274,7 +255,7 @@ shape = SubResource("SideRailShape")
 [node name="LeftUpperRail" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=300041863]
 transform = Transform3D(0.91836256, 0.39574006, 0, -0.39574006, 0.91836256, 0, 0, 0, 1, -2.1022267, 2.85, 1.2)
 visible = false
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("SideTopMesh")
 
 [node name="LeftUpperCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1746780477]
@@ -284,7 +265,7 @@ shape = SubResource("SideTopShape")
 [node name="RightLowerRail" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=259678759]
 transform = Transform3D(0.9938522, 0.11071483, 0, -0.11071483, 0.9938522, 0, 0, 0, 1, 2.4996457, 0.525, 1.2)
 visible = false
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("SideRailMesh")
 
 [node name="RightLowerCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=83138049]
@@ -294,7 +275,7 @@ shape = SubResource("SideRailShape")
 [node name="RightUpperRail" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=646741751]
 transform = Transform3D(0.91836256, -0.39574006, 0, 0.39574006, 0.91836256, 0, 0, 0, 1, 2.1022267, 2.85, 1.2)
 visible = false
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("SideTopMesh")
 
 [node name="RightUpperCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell" unique_id=1390590106]
@@ -306,37 +287,37 @@ shape = SubResource("SideTopShape")
 [node name="LeftRear" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=90263395]
 transform = Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.4970145, 1.525, 4.42)
 visible = false
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("SidePillarMesh")
 
 [node name="LeftMiddle" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=1516235068]
 transform = Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.4970145, 1.525, 1.25)
 visible = false
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("SidePillarMesh")
 
 [node name="LeftFront" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=925343552]
 transform = Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.4970145, 1.525, -2)
 visible = false
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("SidePillarMesh")
 
 [node name="RightRear" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=2029421694]
 transform = Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.4970145, 1.525, 4.42)
 visible = false
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("SidePillarMesh")
 
 [node name="RightMiddle" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=894746951]
 transform = Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.4970145, 1.525, 1.25)
 visible = false
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("SidePillarMesh")
 
 [node name="RightFront" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=518299233]
 transform = Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.4970145, 1.525, -2)
 visible = false
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("SidePillarMesh")
 
 [node name="LeftRearCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars" unique_id=1462294698]
@@ -374,7 +355,7 @@ visible = false
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/WallPanel" unique_id=528218169]
 size = Vector3(0.18, 1.62, 2.86)
-material = SubResource("WallMaterial")
+material = ExtResource("46")
 
 [node name="WindowCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/WallPanel" unique_id=1666920913]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0.1, 0, 0)
@@ -462,7 +443,7 @@ visible = false
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/WallPanel" unique_id=446177907]
 size = Vector3(0.18, 1.62, 2.86)
-material = SubResource("WallMaterial")
+material = ExtResource("46")
 
 [node name="WindowCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/WallPanel" unique_id=1493937975]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0.1, 0, 0)
@@ -551,7 +532,7 @@ visible = false
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/WallPanel" unique_id=234134982]
 size = Vector3(0.18, 1.62, 2.86)
-material = SubResource("WallMaterial")
+material = ExtResource("46")
 
 [node name="WindowCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/WallPanel" unique_id=1690091195]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -0.1, 0, 0)
@@ -640,7 +621,7 @@ visible = false
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/WallPanel" unique_id=2106676305]
 size = Vector3(0.18, 1.62, 2.86)
-material = SubResource("WallMaterial")
+material = ExtResource("46")
 
 [node name="WindowCut" type="CSGPolygon3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/WallPanel" unique_id=597506156]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -0.1, 0, 0)
@@ -731,7 +712,7 @@ transform = Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Panel" unique_id=1566990378]
 size = Vector3(0.18, 3.05, 2.53)
-material = SubResource("WallMaterial")
+material = ExtResource("46")
 
 [node name="OuterSkin" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Panel" unique_id=834392608]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08, 0, 0)
@@ -785,7 +766,7 @@ transform = Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0
 
 [node name="Body" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Panel" unique_id=1248690556]
 size = Vector3(0.18, 3.05, 2.53)
-material = SubResource("WallMaterial")
+material = ExtResource("46")
 
 [node name="OuterSkin" type="CSGBox3D" parent="TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Panel" unique_id=1469848193]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08, 0, 0)
@@ -1047,7 +1028,7 @@ script = ExtResource("34")
 
 [node name="LeftPanel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=772039291]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 1.525, -4.65)
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("FrontPanelMesh")
 
 [node name="LeftCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=1411117773]
@@ -1056,7 +1037,7 @@ shape = SubResource("FrontPanelShape")
 
 [node name="RightPanel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=1743236534]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.525, -4.65)
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("FrontPanelMesh")
 
 [node name="RightCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=1748334617]
@@ -1069,7 +1050,7 @@ collision_layer = 3
 script = ExtResource("3")
 
 [node name="Mesh" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/CabDoor" unique_id=455309128]
-material_override = SubResource("WallMaterial")
+material_override = ExtResource("46")
 mesh = SubResource("DoorMesh")
 
 [node name="Collision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/CabDoor" unique_id=1432763136]
