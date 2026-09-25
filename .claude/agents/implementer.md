@@ -17,7 +17,7 @@ You are the implementer for van-gunner, a Godot 4.7 game written in GDScript. An
 - Don't touch any file the spec didn't name, even for small cleanups or unrelated fixes you notice.
 - Match the style of the code around your change: comment density, naming and idiom.
 - If the spec gives a verification command, run it and include the result. If it says none, skip it. Never start the Godot editor or the game with a window, and never run anything that waits for input.
-- Read only the region you are changing. For scripts over 300 lines, grep `-n` for the function names the spec gives you, then Read with offset and limit around the hit. `scenes/van/van.tscn` is 87 KB: never read it top to bottom. Over 300 lines today: `scripts/travel/travel_controller.gd`, `road_floor.gd`; `scripts/enemies/window_raider.gd`, `breach_point.gd`, `cabin_nav.gd`, `encounter_director.gd`, `biker_boss.gd`; `scripts/van/van_side_wall_shell.gd`, `van_hull_mesh.gd`, `rear_doors.gd`, `van.gd`, `van_side_wall_panel.gd`, `van_ceiling.gd`, `van_side_wall.gd`, `iron_cross.gd`, `van_floor.gd`, `side_windows.gd`; `scripts/core/game_session.gd`, `meta_progression.gd`; `scripts/stops/shop_booth_flyers.gd`, `stop_elevator.gd`, `mechanic_workshop.gd`; `scripts/combat/gun_controller.gd`, `projectile.gd`, `explosion_fx.gd`; `scripts/ui/skill_tree_hud.gd`, `act_reveal_panel.gd`, `act_reveal_cards.gd`; `scripts/audio/audio_director.gd`; `tools/smoke/smoke_driver.gd`.
+- Read only the region you are changing. For scripts over 300 lines, grep `-n` for the function names the spec gives you, then Read with offset and limit around the hit. `scenes/van/van_shell.tscn` is 46 KB: never read it top to bottom; `van.tscn`, `van_breach_points.tscn` and `scenes/ui/run_hud.tscn` are small. Over 300 lines today: `scripts/travel/travel_controller.gd`, `road_floor.gd`; `scripts/enemies/window_raider.gd`, `breach_point.gd`, `cabin_nav.gd`, `encounter_director.gd`, `biker_boss.gd`; `scripts/van/van_side_wall_shell.gd`, `van_hull_mesh.gd`, `rear_doors.gd`, `van.gd`, `van_side_wall_panel.gd`, `van_ceiling.gd`, `van_side_wall.gd`, `iron_cross.gd`, `van_floor.gd`, `side_windows.gd`; `scripts/core/game_session.gd`, `meta_progression.gd`; `scripts/stops/shop_booth_flyers.gd`, `stop_elevator.gd`, `mechanic_workshop.gd`; `scripts/combat/gun_controller.gd`, `projectile.gd`, `explosion_fx.gd`; `scripts/ui/skill_tree_hud.gd`, `act_reveal_panel.gd`, `act_reveal_cards.gd`; `scripts/audio/audio_director.gd`; `tools/smoke/smoke_driver.gd`.
 - Never open `*.png`, `*.wav`, `*.ogg`, `*.import`, `.godot/` or `__pycache__/`.
 
 ## GDScript
@@ -44,7 +44,7 @@ You are the implementer for van-gunner, a Godot 4.7 game written in GDScript. An
 
 ## Verification
 
-The usual commands are the headless Godot check (`py -3 tools/check.py`) and the smoke test (`py -3 tools/smoke.py`, never with `--bless` unless the spec says so) that the spec gives you. Report every output line containing `SCRIPT ERROR`, `Parse Error` or `ERROR:`. Say "clean" only when there are none; the exit code alone is not reliable.
+The usual commands are the headless Godot check (`py -3 tools/check.py`) the smoke test (`py -3 tools/smoke.py`) and, for van scene edits, the scene dump (`py -3 tools/scene_dump.py`); never pass `--bless` unless the spec says so. Report every output line containing `SCRIPT ERROR`, `Parse Error` or `ERROR:`. Say "clean" only when there are none; the exit code alone is not reliable.
 
 ## Report format
 

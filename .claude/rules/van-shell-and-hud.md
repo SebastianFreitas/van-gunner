@@ -16,6 +16,10 @@ paths:
 
 `scripts/van/van.gd` is the root script of `van.tscn` and has no `class_name` (cycle rule). It keeps every `@onready` node, all state, the awaits, mouse capture and every method other files call. Helpers beside it take the van and read its fields: `van_route_choice.gd` (fork panel), `van_hud.gd` (HUD handlers, phase toasts), `van_driver_talk.gd` (driver talk, boost/slow requests), `van_overlays.gd` (bench / schematic / class panel / console / pause routing, `has_modal_free_cursor`, HUD passthrough). `tools/smoke/smoke_driver.gd` reads `van.get("_class_panel")`, `van.get("_boon_choice")` and `van.get("bench_screen")`, so those stay on van.
 
+## Van scene files
+
+`van.tscn` instances three sub-scenes at their old paths: `Interior/Shell` is `scenes/van/van_shell.tscn`, `EnemyContainer/BreachController` is `scenes/van/van_breach_points.tscn`, and `HUD` is `scenes/ui/run_hud.tscn`. Node paths from the van root are unchanged. The HUD's 25 unique-named nodes are owned by `run_hud.tscn`, so `van.gd` reaches them as `$HUD/%Name`; a bare `%Name` from the van root returns null. The HUD buttons' `pressed` connections to the van root live in `van.tscn`, since their target is outside the HUD scene. The shell, front partition and cab door share one wall material, `scenes/van/van_wall_material.tres`; `cab_door.gd`, `front_partition.gd` and `rear_doors.gd` read it through `walls.wall_material`. Keep it one shared resource. `py -3 tools/scene_dump.py` proves a van scene edit leaves the built tree unchanged.
+
 ## Mouse capture
 
 Godot ignores `MOUSE_MODE_CAPTURED` on the same frame as a GUI click. `van.gd` works around it with `_capture_mouse_after_ui_click()` and a `_mouse_capture_gen` counter. New overlays must call `refresh_mouse_mode()` on close rather than setting the mode themselves, and register in `has_modal_free_cursor()` (body in `van_overlays.gd`). Don't `gui_release_focus()` while the debug console is open: that unfocuses the LineEdit so you have to click it to type.
@@ -31,7 +35,7 @@ Any non-interactive HUD control must be `MOUSE_FILTER_IGNORE`, otherwise clickin
 ## Loading
 
 - Threaded loading of `van.tscn` fails. `SceneRouter.preload_van()` deliberately uses a synchronous `ResourceLoader.load`; the threaded path dies on the floor shader sub-resource. Don't "optimise" it back.
-- `debug_console.tscn` is `load()`ed, not `preload()`ed (`van_overlays.build_debug_console()`), so a broken console scene doesn't hard-fail the van scene at compile time. The schematic HUD is instanced in `van.tscn` but not preloaded into `van.gd` for the same reason.
+- `debug_console.tscn` is `load()`ed, not `preload()`ed (`van_overlays.build_debug_console()`), so a broken console scene doesn't hard-fail the van scene at compile time. The schematic HUD is instanced in `run_hud.tscn` but not preloaded into `van.gd` for the same reason.
 - `DebugConfig.ENABLED` is a `static var` from `OS.has_feature("debug")`. Editor and debug exports get the console (`H`); release exports don't. `DebugConfig.FORCE_ENABLED = true` ships it in a release build.
 
 ## Debug console

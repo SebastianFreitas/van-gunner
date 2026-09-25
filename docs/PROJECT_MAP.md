@@ -259,7 +259,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-194 GDScript files, 28096 lines.
+195 GDScript files, 28244 lines.
 
 ### `scenes/corridor/`
 
@@ -556,6 +556,12 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `check_scripts.gd` | — | 45 | Headless load check. |
 
+### `tools/scene_dump/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `scene_dump.gd` | — | 148 | Headless dump of an instantiated scene's nodes, properties, resources and connections for diffing. |
+
 ### `tools/smoke/`
 
 | File | class_name | LOC | Summary |
@@ -595,6 +601,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/item_hud.tscn` | 7 | Control |
 | `scenes/ui/main_menu.tscn` | 25 | Control |
 | `scenes/ui/pause_menu.tscn` | 22 | Control |
+| `scenes/ui/run_hud.tscn` | 43 | CanvasLayer |
 | `scenes/ui/skill_tree_hud.tscn` | 19 | Control |
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
@@ -602,12 +609,15 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/loot_machine.tscn` | 9 | StaticBody3D |
 | `scenes/van/request_board.tscn` | 4 | StaticBody3D |
-| `scenes/van/van.tscn` | 312 | Node3D |
+| `scenes/van/van.tscn` | 56 | Node3D |
+| `scenes/van/van_breach_points.tscn` | 32 | Node3D |
 | `scenes/van/van_bulkhead.tscn` | 1 | StaticBody3D |
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |
 | `scenes/van/van_floor.tscn` | 1 | Node3D |
+| `scenes/van/van_shell.tscn` | 184 | StaticBody3D |
 | `scenes/van/van_side_wall.tscn` | 1 | Node3D |
 | `scenes/van/van_vital_dummy.tscn` | 5 | StaticBody3D |
+| `tools/scene_dump/scene_dump.tscn` | 1 | Node |
 | `tools/smoke/smoke_test.tscn` | 1 | Node |
 
 ## Shaders

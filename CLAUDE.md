@@ -58,6 +58,7 @@ The main session directs exploration, designs the change, writes the spec, revie
 | Debug console | `scripts/debug/` |
 | Audio | `scripts/audio/`, `resources/audio/sound_bank.tres` |
 | Smoke test | `tools/smoke/`, `tools/smoke.py` |
+| Scene dump | `tools/scene_dump/`, `tools/scene_dump.py` |
 
 ## Code rules
 
@@ -90,7 +91,7 @@ After a structural change, re-run `py -3 tools/gen_context.py`. A new always-on 
   - `scripts/ui/`: `skill_tree_hud.gd` (337), `act_reveal_panel.gd` (305), `act_reveal_cards.gd` (302)
   - `scripts/audio/audio_director.gd` (367), `tools/smoke/smoke_driver.gd` (338)
   Grep `-n` for the function name, then Read with offset and limit. Function names don't drift; line numbers do.
-- `scenes/van/van.tscn` is 87 KB: grep for the node name and read about 40 lines around the hit.
+- The van scene is four files: `scenes/van/van.tscn` (16 KB: rig, props, systems, the HUD's button connections), `van_shell.tscn` (46 KB: walls, floor, ceiling, doors, windows), `van_breach_points.tscn` and `scenes/ui/run_hud.tscn`. Grep for the node name and read about 40 lines around the hit.
 - Never open `*.png`, `*.wav`, `*.ogg`, `*.import`, `.godot/` or `__pycache__/`.
 
 ## Delegation
@@ -117,12 +118,14 @@ Every delegation contains:
 - Moving or deleting a `.gd` moves or deletes its `.gd.uid`. A new script gets its `.gd.uid` from the next headless check; commit it with the script. Assets move or go together with their `.import` files.
 - Duck-typed calls count as uses. Before deleting or moving a method, grep for its name as `has_method(&"x")`, `call("x")`, `call_deferred(&"x")` and `method="x"` in `.tscn` connections, as well as direct calls and subclasses (`extends <Class>`).
 - A helper that reads its owner through an untyped variable breaks `:=` inference; give those locals explicit types.
+- `%Name` only finds nodes owned by the same scene. Moving a unique-named node into its own scene breaks `%Name` lookups from the parent; use `$Instance/%Name`.
 - Never launch the editor or the game with a window, and never run anything that waits for input.
 
 ## Commands
 
 - **Headless check:** `py -3 tools/check.py` from the repo root. It runs `"$GODOT" --headless --path . --import` (imports new assets, writes missing `.gd.uid` files) and then `--script res://tools/check_scripts.gd`, which loads every `.gd`, `.tscn`, `.tres` and `.gdshader` so parse errors and broken references surface. `GODOT` holds the full path to the Godot 4.7 exe; the runner switches to the `_console` build next to it, since the plain exe writes nothing to a pipe. Any line containing `SCRIPT ERROR`, `Parse Error` or `ERROR:` is a failure; Godot's exit code alone is not reliable. Right after moving files, the first run can print stale `uid_cache` errors; run it again.
 - **Smoke test:** `py -3 tools/smoke.py`. Runs `res://tools/smoke/smoke_test.tscn` headless with `-- --smoke-sandbox` (saves and the meta profile never touch `user://`), plays a run like a player (NEW, IDLE, class panel, GO, `summon enemy`, firing, bench, a REST pick, two forks in `speed` mode with an elevator stop and a rear-park stop, a save round-trip) and fails on any error line, a non-zero exit, the 300 s timeout, or any difference between `tools/smoke/fingerprint.txt` and `fingerprint.baseline.txt`. `--bless` rewrites the baseline; only when a change is meant to alter the fingerprint. The `[waves]` section reads `game_balance.tres`, so an owner edit to wave counts needs a re-bless. Neither command exercises panel UI that `speed` skips (reveal, boon pick), so review UI changes by reading.
+- **Scene dump:** `py -3 tools/scene_dump.py`. Instantiates `van.tscn` headless (not added to the tree), writes every node's path, class, script, groups, stored properties and persistent connections to `tools/scene_dump/van.txt`, with embedded and `.tres` resources printed by content and a sharing index, and fails on any difference from `van.baseline.txt`. Run it for any change to the van's scenes that should not alter the built tree; `--bless` only when it should.
 - **PROJECT_MAP:** `py -3 tools/gen_context.py`
 - **Boons and pools:** `py -3 tools/generate_boons.py`; icons: `py -3 tools/generate_boon_icons.py`. Boon `.tres` files and boon pools are generated: change the generator and re-run it, never hand-edit its output.
 

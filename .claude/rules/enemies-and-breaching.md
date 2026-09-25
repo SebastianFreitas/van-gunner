@@ -3,6 +3,7 @@ paths:
   - "scripts/enemies/**"
   - "scenes/enemies/**"
   - "resources/enemies/**"
+  - "scenes/van/van_breach_points.tscn"
 ---
 
 # Enemies, breaching and the cabin
@@ -18,6 +19,8 @@ Van raiders use a waypoint graph, not a navmesh. They are `Node3D`s under `Enemy
 ## Breach points
 
 A rear door and its window pane are two `BreachPoint`s. Door goons and agile climbers use separate pools, but the Outside markers sit about 15 cm apart. Occupancy is clustered on the opening (`BreachPoint._shares_opening`); `CabinNav` never occupies outside holes. Don't split that cluster or a mixed pack stacks.
+
+The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/EnemyContainer/BreachController`. The six window points' `bars_path` NodePaths reach out of that scene into the shell (`../../../Interior/Shell/.../IronCross`). `breach_point.gd` resolves them at runtime, relative to the node, so they hold only while both scenes sit at their current paths in `van.tscn`.
 
 ## Raiders
 
