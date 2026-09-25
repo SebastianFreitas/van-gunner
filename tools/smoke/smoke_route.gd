@@ -55,6 +55,9 @@ func drive_side_stop(travel: TravelController, stop_command: String, label: Stri
 		return false
 	driver._log("phase %s" % driver._phase_name())
 
+	if label == "rear-park" and not _assert_bay_mouth_clear(travel):
+		return false
+
 	await driver._frames(10)
 	travel.leave_stop()
 
@@ -64,6 +67,51 @@ func drive_side_stop(travel: TravelController, stop_command: String, label: Stri
 		)
 		return false
 	driver._log("phase %s" % driver._phase_name())
+	return true
+
+
+## Confirms nothing built at a docked bay's facade covers the mouth the van reverse-parked
+## through (mirrors facade_keep_out.gd's own bay boxes against every visible mesh built there).
+func _assert_bay_mouth_clear(travel: TravelController) -> bool:
+	var keep_out_script: GDScript = load("res://scripts/travel/facades/facade_keep_out.gd")
+	var checked := 0
+	var bays := 0
+	for piece in travel.corridor_root.get_children():
+		if not piece.has_method(&"opening_of"):
+			continue
+		for side in [&"left", &"right"]:
+			if piece.opening_of(side) != 2:  # 2 = Opening.BAY
+				continue
+			bays += 1
+			var side_sign := 1.0 if side == &"right" else -1.0
+			var root: Node3D = piece.facade_root(side)
+			if root == null:
+				driver._fail("bay side %s of %s has no facade root" % [side, piece.name])
+				return false
+			var body_boxes: Array[AABB] = keep_out_script.body_boxes_for(side_sign, 2)
+			var prop_boxes: Array[AABB] = keep_out_script.prop_boxes_for(side_sign, 2)
+			var inv: Transform3D = piece.global_transform.affine_inverse()
+			for node in root.find_children("*", "VisualInstance3D", true, false):
+				if not node.is_visible_in_tree():
+					continue
+				var local_aabb: AABB = (inv * node.global_transform) * node.get_aabb()
+				var boxes := body_boxes if String(node.name).begins_with("Body") else prop_boxes
+				for box in boxes:
+					if box.intersects(local_aabb):
+						driver._fail(
+							"facade node %s (aabb %s) covers the %s bay mouth" % [
+								node.get_path(), local_aabb, side
+							]
+						)
+						return false
+				checked += 1
+	if bays == 0:
+		driver._fail("no corridor tile has an open bay at the rear-park stop")
+		return false
+	if checked == 0:
+		driver._fail("the bay side built no facade nodes")
+		return false
+	driver._log("bay mouth clear: %d bay side(s), %d facade nodes checked" % [bays, checked])
 	return true
 
 

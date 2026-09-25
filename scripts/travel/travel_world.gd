@@ -2,6 +2,10 @@ extends RefCounted
 
 ## Owns corridor tile spawning/pruning, side streets, neighborhood variants and act statues.
 
+## No set-pieces on the intro street.
+const RARE_START_SEGMENT := 6
+const RARE_COOLDOWN := 3
+
 ## Untyped on purpose: TravelController and ActDeckController avoid class_name cycles,
 ## so helpers don't name the controller's class either.
 var tc: Node
@@ -54,8 +58,16 @@ func spawn_world_segment(world_transform: Transform3D, route_progress: float = N
 	if is_finite(route_progress):
 		segment.set_meta(&"route_progress", route_progress)
 		segment.set_meta(&"route_gen", tc._route_gen)
-	if segment.has_method(&"apply_variant"):
-		segment.apply_variant(pick_segment_variant())
+	if segment.has_method(&"configure"):
+		var district := pick_district()
+		var seed_value: int = hash([GameSession.run_seed, tc._segment_index])
+		var neighborhood_seed: int = hash([GameSession.run_seed, tc._neighborhood_start])
+		var allow_rare: bool = tc._segment_index >= RARE_START_SEGMENT and tc._rare_cooldown <= 0
+		var took_rare: bool = segment.configure(seed_value, district, neighborhood_seed, allow_rare)
+		if took_rare:
+			tc._rare_cooldown = RARE_COOLDOWN
+		elif tc._rare_cooldown > 0:
+			tc._rare_cooldown -= 1
 	if segment.has_method(&"apply_side_streets"):
 		var side_streets := pick_side_streets()
 		segment.apply_side_streets(side_streets.x != 0, side_streets.y != 0)
@@ -115,19 +127,20 @@ func begin_new_route() -> void:
 	tc._route_gen += 1
 
 
-func pick_segment_variant() -> int:
+func pick_district() -> int:
 	if tc._neighborhood_remaining <= 0:
-		tc._neighborhood_variant = tc._rng.randi() % tc.SEGMENT_VARIANT_COUNT
+		tc._neighborhood_variant = tc._rng.randi() % tc.DISTRICT_COUNT
 		if (
 			tc._last_neighborhood_variant >= 0
 			and tc._neighborhood_variant == tc._last_neighborhood_variant
 		):
-			tc._neighborhood_variant = (tc._neighborhood_variant + 1) % tc.SEGMENT_VARIANT_COUNT
+			tc._neighborhood_variant = (tc._neighborhood_variant + 1) % tc.DISTRICT_COUNT
 		tc._neighborhood_remaining = tc._rng.randi_range(
 			tc.NEIGHBORHOOD_MIN_LENGTH,
 			tc.NEIGHBORHOOD_MAX_LENGTH
 		)
 		tc._last_neighborhood_variant = tc._neighborhood_variant
+		tc._neighborhood_start = tc._segment_index
 	tc._neighborhood_remaining -= 1
 	return tc._neighborhood_variant
 

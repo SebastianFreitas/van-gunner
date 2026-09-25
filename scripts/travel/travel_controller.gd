@@ -12,7 +12,7 @@ enum TurnState {
 }
 
 const QUARTER_CIRCLE_HANDLE := 0.55228475
-const SEGMENT_VARIANT_COUNT := 4
+const DISTRICT_COUNT := 5
 const NEIGHBORHOOD_MIN_LENGTH := 2
 const NEIGHBORHOOD_MAX_LENGTH := 5
 const SIDE_STREET_CHANCE := 0.26
@@ -86,8 +86,12 @@ var _segment_index := 0
 var _neighborhood_variant := 0
 var _neighborhood_remaining := 0
 var _last_neighborhood_variant := -1
+## Tile index where the current neighborhood began; seeds its shared facade palette.
+var _neighborhood_start := 0
 ## Segments left that must stay closed after a side street.
 var _side_street_cooldown := 0
+## Tiles left before another facade set-piece may spawn.
+var _rare_cooldown := 0
 var _rng: RandomNumberGenerator
 var _van_velocity := Vector3.ZERO
 var _base_travel_speed := 8.0

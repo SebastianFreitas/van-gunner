@@ -226,6 +226,35 @@ rares need both sides `NONE`. Never on a bay side.
 | glass_crown | 3 | 2 | 40 m glass tower with an emissive crown band and a red beacon | none |
 | radio_mast | 3 | 1,3 | 15 m lattice mast on the roof, guy lines, red light | roof |
 
+## Grafted from the design panel (2026-09-25)
+
+Four independent designs were judged; these verified points are folded into the steps below:
+
+- Godot front faces are **clockwise** (its BoxMesh emits top-left, top-right, bottom-left). A
+  cross-product guard that assumes counter-clockwise culls every facade, and headless cannot see
+  it. `facade_body.add_quad` reads the sign off a `BoxMesh` at runtime (winding oracle) and every
+  builder emits quads through it; never write a second quad emitter.
+- `MultiMesh` readback (`get_aabb`, instance transforms) returns zeros under the headless renderer,
+  so every prop family is an `ArrayMesh` per building and the smoke assertion can trust
+  `MeshInstance3D.get_aabb()`.
+- The block-letter glyph table in `shop_booth_flyers.gd` only has A B C D E F H I K L N O P R S T U
+  W Y, `0`, `5`, `!` and space. Step 7 moves it into `scripts/stops/block_glyphs.gd`
+  (`class_name BlockGlyphs`, static) and adds G J M Q V X Z, digits, `-` and `&`; the flyers
+  delegate to it (drawing consumes no RNG, so flyer placement is unchanged).
+- Every facade `GeometryInstance3D` gets `visibility_range_end = 64` (fog ends at 56 m), so only the
+  tiles in view render.
+- Facade `OmniLight3D`s use `light_cull_mask` layer 1 only (never the van interior on layer 2), no
+  shadows, `visibility_range_end` 60, group `facade_lights`, world-wide cap 12 counted through the
+  group at build time.
+- No sign word may read like a stop: GARAGE and REPAIR are not in any word list. Roll-ups and
+  dock doors on ordinary tiles are always closed.
+- `facade stress` (debug command, step 12, also run by the smoke before the first fork): one
+  hidden tile per district rebuilt for every set-piece forced x openings {(NONE, NONE),
+  (BAY, NONE), (NONE, BAY)}, mouth audit each time, so the "never covered" guarantee is proven for
+  districts and rares the smoke drive never visits.
+- Optional (step 14): `tools/facade_probe.py` writing an SVG elevation per district for the owner's
+  browser.
+
 ## Determinism and performance
 
 - `seed = hash([run_seed, _segment_index])`; per side `rng.seed = hash([seed, side_index])`;
@@ -250,14 +279,15 @@ rares need both sides `NONE`. Never on a bay side.
 
 ## Steps (one commit each; tick when the commit lands)
 
-- [ ] 1. This task file; fix the stale "side streets are unseeded" line in
+- [x] 1. This task file; fix the stale "side streets are unseeded" line in
   `.claude/rules/run-loop-and-acts.md`.
-- [ ] 2. `facade_surface.gdshader` + `facade_materials.gd` (style presets, cache) + scratchpad
+- [x] 2. `facade_surface.gdshader` + `facade_materials.gd` (style presets, cache) + scratchpad
   preview render.
-- [ ] 3. Core: `facade_keep_out.gd`, `facade_plan.gd` (bodies only, heights, styles),
+- [x] 3. Core: `facade_keep_out.gd`, `facade_plan.gd` (bodies only, heights, styles),
   `facade_body.gd`, `corridor_facades.gd`; `corridor_segment.tscn` reshape and `.gd` rewrite;
   `travel_world.gd` + `travel_controller.gd` changes; `travel_stops.gd` dead fallback removed;
-  smoke `assert_bay_mouth_clear`. Check + smoke.
+  smoke `assert_bay_mouth_clear`. Check + smoke. (The mouth building is three meshes, header +
+  two flanks, so no body AABB can enclose the mouth; `MOUTH_TOP_Y` 7.85 sits under the header.)
 - [ ] 4. Districts as resources (`facade_district.gd`, 5 `.tres`, `facade_registry.gd`) and
   `facade_props_upper.gd` (ledges, cornices, AC units, fire escapes, balconies, roof clutter).
 - [ ] 5. `facade_props_ground.gd` (storefronts, awnings, roll-ups, docks, stoops, sidewalk

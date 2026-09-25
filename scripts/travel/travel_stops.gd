@@ -65,8 +65,6 @@ func place_bay_stop(host_segment: Node3D, host_progress: float) -> void:
 		host_segment.apply_side_streets(false, false)
 	if host_segment.has_method(&"open_bay"):
 		host_segment.open_bay(tc._stop_bay_side)
-	elif host_segment.has_method(&"open_shop_bay"):
-		host_segment.open_shop_bay(tc._stop_bay_side)
 
 	if not spawn_stop_host():
 		return

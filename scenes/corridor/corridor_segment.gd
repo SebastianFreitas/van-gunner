@@ -1,20 +1,14 @@
 extends Node3D
-## A single corridor tile: wall variants, road floor, and side-street bay openings.
+## A single corridor tile: road floor, wall collision, procedural facades on both sides, and the
+## side-street / stop-bay openings that carve them.
 
-const VARIANT_COUNT := 4
+enum Opening { NONE, SIDE_STREET, BAY }
+
+const DISTRICT_COUNT := 5
 const SIDE_STREET_CORNER_INSET := 0.85
+const _CorridorFacades := preload("res://scripts/travel/facades/corridor_facades.gd")
 
-@onready var _variants: Array[Node3D] = [
-	$Structure/Variant0,
-	$Structure/Variant1,
-	$Structure/Variant2,
-	$Structure/Variant3,
-]
 @onready var _road_floor: RoadFloor = $RoadFloor
-@onready var _left_wall: Node3D = $LeftWall
-@onready var _right_wall: Node3D = $RightWall
-@onready var _left_wall_upper: Node3D = $RightWall/LeftWall
-@onready var _right_wall_upper: Node3D = $RightWall/RightWall
 @onready var _left_wall_collision: CollisionShape3D = $Surfaces/LeftWallCollision
 @onready var _right_wall_collision: CollisionShape3D = $Surfaces/RightWallCollision
 @onready var _left_wall_upper_collision: CollisionShape3D = $Surfaces/LeftWallUpperCollision
@@ -22,11 +16,23 @@ const SIDE_STREET_CORNER_INSET := 0.85
 @onready var _side_street_left: Node3D = $SideStreets/Left
 @onready var _side_street_right: Node3D = $SideStreets/Right
 
+var _facades: _CorridorFacades
 
-func apply_variant(index: int) -> void:
-	index = clampi(index, 0, VARIANT_COUNT - 1)
-	for variant_index in _variants.size():
-		_variants[variant_index].visible = variant_index == index
+
+func _ready() -> void:
+	_ensure_facades()
+
+
+func _ensure_facades() -> void:
+	if _facades == null:
+		_facades = _CorridorFacades.new(self)
+
+
+func configure(seed: int, district: int, neighborhood_seed: int, allow_rare: bool) -> bool:
+	_ensure_facades()
+	return _facades.configure(
+		seed, clampi(district, 0, DISTRICT_COUNT - 1), neighborhood_seed, allow_rare
+	)
 
 
 func apply_side_streets(left: bool, right: bool) -> void:
@@ -37,14 +43,10 @@ func apply_side_streets(left: bool, right: bool) -> void:
 
 ## Open a wall gap for a side-stop bay without showing the cosmetic side street.
 func open_bay(side: StringName) -> void:
-	_set_side_street(side, true)
+	_set_side_street(side, true, Opening.BAY)
 	var side_street := _side_street_left if side == &"left" else _side_street_right
 	side_street.visible = false
 	_sync_road_openings()
-
-
-func open_shop_bay(side: StringName) -> void:
-	open_bay(side)
 
 
 ## Elevator stops hide this tile's road so the pad can fall through a real hole.
@@ -57,22 +59,38 @@ func set_carriageway_visible(road_on: bool) -> void:
 		_road_floor.visible = road_on
 
 
-func _set_side_street(side: StringName, enabled: bool) -> void:
+func opening_of(side: StringName) -> int:
+	return _facades.opening(_CorridorFacades.side_index(side))
+
+
+func facade_root(side: StringName) -> Node3D:
+	return _facades.facade_root(_CorridorFacades.side_index(side))
+
+
+func district() -> int:
+	return _facades.district
+
+
+func describe_facades() -> String:
+	return _facades.describe()
+
+
+func _set_side_street(side: StringName, enabled: bool, opening: int = -1) -> void:
 	var is_left := side == &"left"
-	var wall := _left_wall if is_left else _right_wall
-	var wall_upper := _left_wall_upper if is_left else _right_wall_upper
 	var wall_collision := _left_wall_collision if is_left else _right_wall_collision
 	var wall_upper_collision := (
 		_left_wall_upper_collision if is_left else _right_wall_upper_collision
 	)
 	var side_street := _side_street_left if is_left else _side_street_right
 
-	wall.visible = not enabled
-	wall_upper.visible = not enabled
 	wall_collision.disabled = enabled
 	wall_upper_collision.disabled = enabled
 	side_street.visible = enabled
-	_set_side_structure_visible(side, not enabled)
+	_ensure_facades()
+	var idx := _CorridorFacades.side_index(side)
+	_facades.set_opening(
+		idx, opening if opening >= 0 else (Opening.SIDE_STREET if enabled else Opening.NONE)
+	)
 
 
 func _sync_road_openings() -> void:
@@ -140,32 +158,3 @@ func _side_street_road(side_street: Node3D) -> RoadFloor:
 	if side_street == null:
 		return null
 	return side_street.get_node_or_null("RoadFloor") as RoadFloor
-
-
-func _set_side_structure_visible(side: StringName, structure_visible: bool) -> void:
-	for variant in _variants:
-		for child in variant.get_children():
-			if _is_side_structure_node(child.name, side):
-				child.visible = structure_visible
-
-
-func _is_side_structure_node(node_name: String, side: StringName) -> bool:
-	if side == &"left":
-		return (
-			node_name.begins_with("Left")
-			or node_name.begins_with("RibL")
-			or node_name.begins_with("MainPipeLeft")
-			or node_name.begins_with("ValveLeft")
-			or node_name.begins_with("BraceLeft")
-			or node_name.begins_with("BrokenLeft")
-			or node_name == "CatwalkRailL"
-		)
-	return (
-		node_name.begins_with("Right")
-		or node_name.begins_with("RibR")
-		or node_name.begins_with("MainPipeRight")
-		or node_name.begins_with("ValveRight")
-		or node_name.begins_with("BraceRight")
-		or node_name.begins_with("BrokenRight")
-		or node_name == "CatwalkRailR"
-	)
