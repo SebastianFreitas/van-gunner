@@ -373,9 +373,11 @@ it"; `py -3 tools/gen_context.py`; delete this task file and `docs/tasks/buildin
 - [x] 7. Signs: `BlockGlyphs` extracted from the flyers, `facade_signs.gd`,
   `facade_sign.gdshader`, box / neon / blade / banner / poster (label quads give their top edge
   v = 0 because Image row 0 is the top).
-- [ ] 8. Set-piece framework (`facade_set_piece.gd`, registry scan, rare roll + cooldown) and
-  batch 1: burning_tenement, collapsed_block, rooftop_billboard, neon_blade, water_tower,
-  antenna_farm, power_outage.
+- [x] 8a. Set-piece framework (`facade_set_piece.gd`, `facade_set_pieces.gd`, registry scan,
+  rare roll + cooldown, `Facades/Span` for street-crossing pieces) and rooftop_billboard,
+  water_tower, antenna_farm, power_outage (commit `6c24d98`).
+- [ ] 8b. burning_tenement, collapsed_block, neon_blade, pedestrian_bridge, pipe_bridge,
+  laundry_balconies, mural, scaffolded (`docs/tasks/buildings/spec_08b_set_pieces_batch2.md`).
 - [ ] 9. Rares batch 2: pedestrian_bridge, pipe_bridge, crane_site, chapel, cinema_marquee
   (+ `facade_marquee.gdshader`), mural, scaffolded, laundry_balconies.
 - [ ] 10. Rares batch 3: parking_deck, overgrown_ruin, blown_out_shop, gas_canopy, searchlight,

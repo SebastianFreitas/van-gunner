@@ -480,3 +480,31 @@ Adjustments to make to the specs before launching them (learned after they were 
 ## End-of-session note
 
 (Filled in by the session that stops; the newest entry is at the top.)
+
+### Session 1 stopped 2026-09-25 after commit `6c24d98` (step 8a)
+
+- Working tree at stop: clean except the owner's two files (`resources/balance/game_balance.tres`
+  modified, `export_presets.cfg` untracked). Nothing in flight. No implementer running.
+- Step 8a landed and is verified (check clean, smoke clean with `bay mouth clear`, sanity found
+  every piece by seed: antenna_farm seed 12, power_outage seed 2, rooftop_billboard seed 26,
+  water_tower seed 96 on district 0 with `allow_rare = true`, all gone after `open_bay`).
+  As built: `facade_set_piece.gd` (45 lines, `class_name FacadeSetPiece`: `id`, `weight`,
+  `districts`, `span`, `lights`; hooks `can_apply`, `pick_plan`, `apply_plans`, `build(ctx)`),
+  `facade_set_pieces.gd` (61: `roll(rng, district, allow_rare, openings)`, `RARE_CHANCE 0.07`,
+  `debug_force(id)`), `facade_registry.gd` (103: `set_pieces()`, `set_piece(id)`),
+  `corridor_facades.gd` (223: `_rare`, `_tile_rng_seed`, `_rare_plan_index`, `rare_id()`,
+  `_rare_targets()`, `_build_span()`; `power_outage` is special-cased to darken both sides and
+  force dead fixtures), `facade_mesh_kit.add_cylinder_node`, `corridor_segment.rare_id()`, four
+  scripts in `scripts/travel/facades/set_pieces/` and four `.tres` in
+  `resources/facades/set_pieces/` (exports equal to the class default are omitted, like
+  `garage.tres`; no `uid=`).
+- Known wrinkles to fix in 8b: (1) `rooftop_billboard.gd` calls `facade_signs.gd`'s private
+  `_build_boxed` / `_emit_face_x` across files — when 8b makes `build_blade` public, also make
+  `build_boxed` (and the face emitters it needs) public and switch the billboard to them;
+  (2) the span code path (`Facades/Span`, its drop in `set_opening`) has only been code-reviewed,
+  never exercised: 8b's `pedestrian_bridge` / `pipe_bridge` are the first span pieces, so its
+  sanity must assert `Facades/Span` exists and disappears on `open_bay`.
+- Next action for the new session: launch an implementer on
+  `docs/tasks/buildings/spec_08b_set_pieces_batch2.md` with a "notes on the committed tree"
+  paragraph built from this note (function names above, the two wrinkles, `facade_fixtures.gd`
+  owns `build_fixtures`), then 10a, 10b, 12, 13 as in section 9.
