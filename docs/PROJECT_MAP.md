@@ -263,7 +263,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-238 GDScript files, 34230 lines.
+238 GDScript files, 34249 lines.
 
 ### `scenes/corridor/`
 
@@ -341,7 +341,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `loot_collector.gd` | — | 226 | Hopper for street-kill loot. |
 | `meta_progression.gd` | — | 345 | Autoload: persists van speed level, rare parts and the meta skill tree across runs. |
 | `save_manager.gd` | — | 97 | Autoload: reads and writes save slot JSON files on disk. |
-| `save_sandbox.gd` | `SaveSandbox` | 8 | Test switch: when on, SaveManager and MetaProgression never touch user://. |
+| `save_sandbox.gd` | `SaveSandbox` | 10 | Test switch: when on, SaveManager and MetaProgression never touch user://, and the game never captures the mouse (the `--shots` window runs off-screen at -1000… |
 | `scene_router.gd` | — | 74 | Autoload: switches between the main menu and van scenes, preloading the van ahead of time. |
 | `session_act_deck.gd` | — | 203 | Act deck logic for GameSession. |
 | `session_save.gd` | — | 163 | Save serialization for GameSession. |
@@ -454,7 +454,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `boon_behavior_registry.gd` | `BoonBehaviorRegistry` | 142 | Dispatches combat events to registered boon behavior handlers. |
 | `boon_combat.gd` | `BoonCombat` | 216 | Thin dispatcher for boon combat logic. |
 | `boon_traits.gd` | `BoonTraits` | 75 | Stores passive boon modifiers that combat systems query at runtime. |
-| `fps_player.gd` | `FpsPlayer` | 273 | The first-person player controller: movement, interaction and shooting input. |
+| `fps_player.gd` | `FpsPlayer` | 275 | The first-person player controller: movement, interaction and shooting input. |
 | `usable_state.gd` | `UsableState` | 27 | Runtime state for one equipped usable item: charges and cooldown remaining. |
 | `usables_controller.gd` | `UsablesController` | 166 | Owns the player's usable item slots and boon inventory for the run. |
 
@@ -506,7 +506,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `facade_audit.gd` | — | 122 | Shared keep-out audits for a corridor tile's built facades: the bay-mouth clearance check (nothing built in front of a stop-bay opening) and the raider-lane cl… |
 | `facade_body.gd` | — | 261 | Builds one building's body: SurfaceTool quads with UV in metres (u along the facade, v up), end returns, a roof plate, the stop-bay header / flank cut, and the… |
 | `facade_district.gd` | `FacadeDistrict` | 55 | One neighborhood look: skin presets, height range, ground-floor kinds, window state ratios and prop chances. |
-| `facade_fixtures.gd` | — | 95 | Wall lamp fixtures and their OmniLights for one facade side: district colour, dead lamps, the world-wide light cap, and the layer-1 cull mask that keeps them o… |
+| `facade_fixtures.gd` | — | 107 | Wall lamp fixtures and their SpotLight3D pools for one facade side: district colour, dead lamps, the world-wide light cap, and the layer-1 cull mask that keeps… |
 | `facade_keep_out.gd` | — | 163 | Keep-out volumes for one facade side: the gate every facade placer passes an AABB through, so nothing ever stands in the raider lane, hangs over the road below… |
 | `facade_materials.gd` | — | 315 | Static material factories for the facade system: a ShaderMaterial per building from a parameter dictionary, cached StandardMaterial3D props by key, and named s… |
 | `facade_mesh_kit.gd` | — | 121 | Box-and-quad helpers shared by every facade prop builder: gated boxes into a SurfaceTool, committing an ArrayMesh node, and single BoxMesh nodes for props that… |
@@ -589,7 +589,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `side_doors.gd` | — | 292 | Sliding cargo-style side doors. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
-| `van.gd` | — | 395 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
+| `van.gd` | — | 398 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
 | `van_bulkhead.gd` | `VanBulkhead` | 202 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_bulkhead_mesh.gd` | — | 225 | Builds the bulkhead's frame posts, headers, panels and diagonal mesh netting. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |

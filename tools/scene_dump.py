@@ -61,6 +61,7 @@ def main() -> int:
                 encoding="utf-8",
                 errors="replace",
                 timeout=TIMEOUT_SECONDS,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
         except subprocess.TimeoutExpired:
             print(f"   timed out after {TIMEOUT_SECONDS}s")

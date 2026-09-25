@@ -39,6 +39,7 @@ def run_pass(exe: str, args: list[str], label: str) -> tuple[list[str], int]:
             encoding="utf-8",
             errors="replace",
             timeout=TIMEOUT_SECONDS,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
     except subprocess.TimeoutExpired:
         print(f"   timed out after {TIMEOUT_SECONDS}s")
@@ -67,6 +68,7 @@ def run_warning_pass(exe: str) -> list[str]:
             encoding="utf-8",
             errors="replace",
             timeout=TIMEOUT_SECONDS,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
     except subprocess.TimeoutExpired:
         print(f"   timed out after {TIMEOUT_SECONDS}s")

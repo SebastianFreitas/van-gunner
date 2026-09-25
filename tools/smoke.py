@@ -12,15 +12,16 @@ act deck and wave plans to tools/smoke/fingerprint.txt. Without `--bless`,
 this is diffed against the committed tools/smoke/fingerprint.baseline.txt;
 with `--bless`, the baseline is overwritten after a clean run.
 
-`--shots DIR` plays the same run in a real window placed off-screen instead of
-headless, since headless Godot renders nothing, and saves PNGs to DIR at four
-checkpoints (idle, combat, the elevator stop and the rear-park stop). After a
-one-second settle, each checkpoint saves three views: the front as the player
-sees it, the back through the rear doors, and an outside view from above the
-cab looking back over the van; the UI is hidden for the back and outside
-views. It writes an `override.cfg` next to project.godot for the run, so the
-window renders but never takes the keyboard focus, and deletes it when the run
-ends. Windows desktop only; behaviour of the headless run is unchanged.
+`--shots DIR` plays the same run in a real window instead of headless, since
+headless Godot renders nothing, and saves PNGs to DIR at four checkpoints (idle,
+combat, the elevator stop and the rear-park stop). After a one-second settle,
+each checkpoint saves three views: the front as the player sees it, the back
+through the rear doors, and an outside view from above the cab looking back
+over the van; the UI is hidden for the back and outside views. On Windows the
+window runs on a separate hidden desktop (see tools/hidden_desktop.py), so it
+is never visible and never takes focus or alt-tabs the owner out of a
+fullscreen app; the run needs no config file override. Windows desktop only;
+behaviour of the headless run is unchanged.
 """
 import argparse
 import difflib
@@ -31,7 +32,9 @@ import subprocess
 import sys
 import time
 
+import hidden_desktop
 from godot_env import godot_exe, project_lock, seed_import_cache, stamp_clean
+
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -75,24 +78,17 @@ def main() -> int:
         shots.mkdir(parents=True, exist_ok=True)
         for png in shots.glob("*.png"):
             png.unlink()
-        override = ROOT / "override.cfg"
-        if override.exists():
-            print(
-                "SMOKE FAILED: override.cfg already exists in this checkout; --shots writes its "
-                "own. Move it away and run again."
-            )
-            return 1
 
     seed_import_cache(ROOT)
     exe = godot_exe()
     if shots is not None:
         args = [
-            exe, "--path", str(ROOT), "--position", "-10000,-10000",
+            exe, "--path", str(ROOT),
             "--resolution", "1440x720", "res://tools/smoke/smoke_test.tscn", "--",
             "--smoke-sandbox", "--smoke-shots=" + shots.as_posix(),
         ]
         print(
-            "== smoke: godot --path . (off-screen window) res://tools/smoke/smoke_test.tscn -- "
+            "== smoke: godot --path . (hidden desktop) res://tools/smoke/smoke_test.tscn -- "
             f"--smoke-sandbox --smoke-shots={shots.as_posix()}"
         )
     else:
@@ -103,35 +99,34 @@ def main() -> int:
         print("== smoke: godot --headless --path . res://tools/smoke/smoke_test.tscn -- --smoke-sandbox")
     with project_lock(ROOT):
         started = time.time()
-        if shots is not None:
-            override = ROOT / "override.cfg"
-            override.write_text(
-                "; Written by tools/smoke.py --shots for one run: the off-screen window renders\n"
-                "; but never takes the keyboard focus. Deleted when the run ends.\n"
-                "[display]\n"
-                "\n"
-                "window/size/no_focus=true\n",
-                encoding="utf-8",
-                newline="\n",
-            )
-        try:
-            proc = subprocess.run(
-                args,
-                cwd=ROOT,
-                capture_output=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=TIMEOUT_SECONDS,
-            )
-        except subprocess.TimeoutExpired:
-            print(f"   timed out after {TIMEOUT_SECONDS}s")
-            print("SMOKE FAILED: timed out")
-            return 1
-        finally:
-            if shots is not None:
-                (ROOT / "override.cfg").unlink(missing_ok=True)
+        if shots is not None and sys.platform == "win32":
+            try:
+                returncode, output = hidden_desktop.run_hidden(args, ROOT, TIMEOUT_SECONDS)
+            except subprocess.TimeoutExpired:
+                print(f"   timed out after {TIMEOUT_SECONDS}s")
+                print("SMOKE FAILED: timed out")
+                return 1
+            except OSError as err:
+                print(f"SMOKE FAILED: could not start Godot on a hidden desktop: {err}")
+                return 1
+        else:
+            try:
+                proc = subprocess.run(
+                    args,
+                    cwd=ROOT,
+                    capture_output=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=TIMEOUT_SECONDS,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                )
+            except subprocess.TimeoutExpired:
+                print(f"   timed out after {TIMEOUT_SECONDS}s")
+                print("SMOKE FAILED: timed out")
+                return 1
+            returncode, output = proc.returncode, proc.stdout + proc.stderr
 
-    lines = [ANSI.sub("", line.rstrip()) for line in (proc.stdout + proc.stderr).splitlines()]
+    lines = [ANSI.sub("", line.rstrip()) for line in output.splitlines()]
     hits = [line for line in lines if FAILURE.search(line)]
     for hit in hits:
         print("   " + hit)
@@ -140,13 +135,13 @@ def main() -> int:
     smoke_lines = [line for line in lines if line.startswith("SMOKE:")]
     for line in smoke_lines:
         print("   " + line)
-    print(f"   exit {proc.returncode}, {len(hits)} failure line(s)")
+    print(f"   exit {returncode}, {len(hits)} failure line(s)")
 
     if hits:
         print(f"SMOKE FAILED: {len(hits)} failure line(s)")
         return 1
-    if proc.returncode != 0:
-        print(f"SMOKE FAILED: exit code {proc.returncode}")
+    if returncode != 0:
+        print(f"SMOKE FAILED: exit code {returncode}")
         return 1
     if not any(line == "SMOKE: done" for line in smoke_lines):
         print("SMOKE FAILED: missing 'SMOKE: done' line")

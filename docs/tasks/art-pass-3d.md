@@ -27,7 +27,10 @@ Every step:
 3. Spec, implement, verify: `py -3 tools/check.py`, `py -3 tools/smoke.py`,
    `py -3 tools/smoke.py --shots <scratchpad>/shots`, then
    `py -3 tools/shot_stats.py <scratchpad>/shots` (from step 1 on). Read
-   the before and after PNGs yourself.
+   the before and after PNGs yourself. The owner plays games while this
+   runs: `--shots` runs Godot on a hidden Windows desktop so it never
+   steals focus. Never launch a windowed Godot any other way (no editor,
+   no `try.py`, no hand-rolled `--position` window).
 4. Record the step's shot stats in the log at the bottom, tick the box,
    commit (the task-file edit goes in the same commit).
 5. Report with one or two PNGs, and stop.
