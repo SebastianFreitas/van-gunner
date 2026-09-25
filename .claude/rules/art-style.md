@@ -59,9 +59,20 @@ within about 20 m, and the fog takes everything by 56 m.
   the art pass calibrates them; a visible change that moves a shot past
   its target is a regression.
 
-| Shot | Mean luma max | Clipped max |
-|---|---|---|
-| (calibrated in art-pass step 1) | | |
+Calibrated in art-pass step 1 (2026-09-25) from the stop shots, which are
+the "dark enough" line (`09` mean 0.0052, `12` mean 0.0123, p95 0.019).
+Values are linear luminance; clip% is the share of pixels with any channel
+at 250 or more. `*-outside` is the camera above the cab; `*-back` the van
+interior facing the rear doors; `*-front` the player's view with the HUD.
+
+| Shots | Mean max | p95 max | Clip% max |
+|---|---|---|---|
+| `*-outside` (street and stops) | 0.015 | 0.030 | 1.0 |
+| `*-back` (van interior, liked as is) | 0.011 | 0.025 | 0.05 |
+| `*-front` (HUD on, loose check) | 0.030 | 0.10 | 0.20 |
+
+Baseline breaks: `06-combat-outside` (mean 0.099, p95 0.85, clip 7.4%:
+the lit windows) and `03-idle-outside` (mean 0.018, clip 1.0%).
 
 ## Procedural 3D (street, facades, stops, props, van)
 

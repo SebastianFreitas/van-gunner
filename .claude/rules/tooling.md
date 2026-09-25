@@ -13,6 +13,7 @@ paths:
 
 - `tools/check.py`, `smoke.py`, `scene_dump.py` run headless Godot. They share `tools/godot_env.py`: `find_godot()` (the `GODOT` env var, then on Windows the user-level `GODOT` from the registry, then `godot` on PATH, then `~/.local/bin/godot`; the `_console` sibling is preferred because the plain Windows build writes nothing to a pipe), `seed_import_cache()`, `project_lock()` and `stamp_clean()`.
 - `tools/try.py` and `tools/try_commit.py` are the owner's Try and Commit. Sessions print them in the report and never run them: they operate on the main checkout and the owner's GitHub Desktop state.
+- `tools/shot_stats.py <shots_dir>` is pure Python (PIL): mean and p95 linear luminance, clipped share and saturation per `--shots` PNG, checked against the targets table in `.claude/rules/art-style.md`.
 - `tools/gen_context.py` is pure Python and writes `docs/PROJECT_MAP.md`; it skips `.claude/` and reads the balance file from `HEAD`, so the map is the same in every checkout.
 
 ## Design choices

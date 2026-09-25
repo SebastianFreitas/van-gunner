@@ -62,7 +62,7 @@ run), and gameplay collision.
   and van references and a dark budget, update CLAUDE.md invariant 15, write
   this plan.
 
-- [ ] 1. **Darkness meter.** Add `tools/shot_stats.py`: takes a shots folder
+- [x] 1. **Darkness meter.** Add `tools/shot_stats.py`: takes a shots folder
   and prints, per PNG, mean linear luminance, 95th percentile, share of
   clipped pixels (any channel >= 250) and mean saturation, one line each,
   plus the HUD-free `*-outside` and `*-back` shots marked. PIL only, no
@@ -163,3 +163,21 @@ run), and gameplay collision.
 
 Step 1 writes the baseline here; every later step appends its after-numbers
 for the shots it changed.
+
+### Step 1 baseline (2026-09-25, before any art change)
+
+```
+shot                           kind     mean    p95   clip%    sat
+01-idle-front                  hud    0.0272 0.0896   0.134  0.369
+02-idle-back                   clean  0.0091 0.0217   0.000  0.428
+03-idle-outside                clean  0.0177 0.0242   1.007  0.360
+04-combat-front                hud    0.0075 0.0098   0.000  0.192
+05-combat-back                 clean  0.0091 0.0217   0.000  0.420
+06-combat-outside              clean  0.0989 0.8520   7.359  0.286
+07-elevator-stop-front         hud    0.0074 0.0071   0.000  0.202
+08-elevator-stop-back          clean  0.0096 0.0237   0.000  0.429
+09-elevator-stop-outside       clean  0.0052 0.0107   0.020  0.564
+10-rear-park-stop-front        hud    0.0075 0.0073   0.000  0.211
+11-rear-park-stop-back         clean  0.0091 0.0217   0.000  0.427
+12-rear-park-stop-outside      clean  0.0123 0.0190   0.849  0.398
+```
