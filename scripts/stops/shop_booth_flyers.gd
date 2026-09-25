@@ -240,16 +240,7 @@ func _make_flyer_texture(title: String, seed_i: int, rng: RandomNumberGenerator)
 
 
 func _text_pixel_width(text: String, text_scale: int) -> int:
-	var glyph_w := 5 * text_scale
-	var gap := 2 * text_scale
-	var width := 0
-	for ch in text.to_upper():
-		var pattern := glyph_pattern(ch)
-		if pattern.is_empty():
-			width += gap
-		else:
-			width += glyph_w + gap
-	return maxi(width - gap, 0)
+	return BlockGlyphs.text_width_px(text, text_scale)
 
 
 func _centered_text_x(text: String, img_w: int, text_scale: int, rng: RandomNumberGenerator) -> int:
@@ -290,79 +281,8 @@ func _add_flyer_plane(
 
 
 func _draw_block_text(img: Image, text: String, origin: Vector2i, color: Color, text_scale: int) -> void:
-	var cursor_x := origin.x
-	var glyph_w := 5 * text_scale
-	var gap := 2 * text_scale
-	for ch in text.to_upper():
-		var pattern := glyph_pattern(ch)
-		if pattern.is_empty():
-			cursor_x += gap
-			continue
-		for row in pattern.size():
-			var bits: int = pattern[row]
-			for col in 5:
-				if (bits >> (4 - col)) & 1:
-					for sy in text_scale:
-						for sx in text_scale:
-							var px := cursor_x + col * text_scale + sx
-							var py := origin.y + row * text_scale + sy
-							if px >= 0 and py >= 0 and px < img.get_width() and py < img.get_height():
-								var existing := img.get_pixel(px, py)
-								img.set_pixel(px, py, existing.lerp(color, color.a))
-		cursor_x += glyph_w + gap
+	BlockGlyphs.draw_text(img, text, origin, color, text_scale)
 
 
 static func glyph_pattern(ch: String) -> Array[int]:
-	# 5x7 bit rows, MSB left. Sparse / stamped look.
-	var empty: Array[int] = []
-	match ch:
-		"A":
-			return [0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001]
-		"B":
-			return [0b11110, 0b10001, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110]
-		"C":
-			return [0b01111, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b01111]
-		"D":
-			return [0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110]
-		"E":
-			return [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b11111]
-		"F":
-			return [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b10000]
-		"H":
-			return [0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001]
-		"I":
-			return [0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b11111]
-		"K":
-			return [0b10001, 0b10010, 0b10100, 0b11000, 0b10100, 0b10010, 0b10001]
-		"L":
-			return [0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11111]
-		"N":
-			return [0b10001, 0b11001, 0b10101, 0b10011, 0b10001, 0b10001, 0b10001]
-		"O":
-			return [0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110]
-		"P":
-			return [0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000, 0b10000]
-		"R":
-			return [0b11110, 0b10001, 0b10001, 0b11110, 0b10100, 0b10010, 0b10001]
-		"S":
-			return [0b01111, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b11110]
-		"T":
-			return [0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100]
-		"U":
-			return [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110]
-		"W":
-			return [0b10001, 0b10001, 0b10001, 0b10101, 0b10101, 0b10101, 0b01010]
-		"Y":
-			return [0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100]
-		"%":
-			return [0b11001, 0b11010, 0b00100, 0b01000, 0b10110, 0b10011, 0b00000]
-		"!":
-			return [0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00000, 0b00100]
-		"0":
-			return [0b01110, 0b10001, 0b10011, 0b10101, 0b11001, 0b10001, 0b01110]
-		"5":
-			return [0b11111, 0b10000, 0b11110, 0b00001, 0b00001, 0b10001, 0b01110]
-		" ":
-			return empty
-		_:
-			return [0b01110, 0b10001, 0b00010, 0b00100, 0b00100, 0b00000, 0b00100]
+	return BlockGlyphs.pattern(ch)
