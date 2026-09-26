@@ -274,7 +274,7 @@ thinking"; add a lens when a step discovers one.
 
   *Step 8 answers (owner, 2026-09-26):* seeded roof junk is spare tyres, jerry cans, crates, tarp bundles, antennas and a satellite dish (no wind turbine, no smoke stacks, no gun silhouette). Signature piece on every van: a live roof spotlight. Nothing alive up there.
 
-- [ ] 9. **Paint and identity.** The seeded paint scheme across hull, cab
+- [x] 9. **Paint and identity.** The seeded paint scheme across hull, cab
   and plates; the side name or number; primer patches; kill tallies or
   hand-painted marks. Then the first variation check: `--van-seeds 3` side
   by side.
@@ -399,6 +399,11 @@ playing?" Repeat a part (D-n b) if the owner wants another round.
   `van-shell-and-hud.md` (the `VanLook` split, seed rules, the DoorSpill
   decision), add `VanLook` rows to CLAUDE.md's table, regenerate
   `docs/PROJECT_MAP.md`, delete this file in the final commit.
+
+### Step 9 notes
+- `VanMarkings` (VanLook/Markings after Roof) paints a seeded stencil name (12 names) on both low sides, a two-digit number on the cab doors and 3-17 kill tallies on the left top band, as albedo Decals on cull mask 1 with textures rendered at runtime from a 5x7 pixel stencil font (`van_stencil_font.gd`) with dropout wear and drips. Paint colours are desaturated bone, oxblood and ochre.
+- Paint already spans hull, cab and plates (one hull material, duplicated for plates). Primer patches stay the shader's primer_color wear, not a new system.
+- The flank gets zero light at night, so the decals don't read in the shots even at 10x brightness: step 20 owes a flank light review and a shot that proves the name reads.
 
 ## Later (not this task)
 
