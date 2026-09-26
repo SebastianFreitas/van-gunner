@@ -296,7 +296,7 @@ thinking"; add a lens when a step discovers one.
   vice, grinder and pegboard; loot hopper → a scrap hopper with a crusher
   drum)?
 
-- [ ] 11. **Machine kit framework.** `scripts/van/look/machine_parts.gd` (a
+- [x] 11. **Machine kit framework.** `scripts/van/look/machine_parts.gd` (a
   library of low-poly part builders: motor, flywheel, belt and pulley, fan,
   car battery, jerry can, gauge, knife switch, CRT, tower PC, keyboard,
   pipe, vent, cable bundle) and `machine_motion.gd` (spin, pump, wobble,
@@ -433,6 +433,9 @@ z  4.7  |==== REAR DOORS (hinges x +-2.39) ======|   breach RearLeft/RearRight, 
 | Smoke vents | a roof vent over the generator (2.0, ceiling, 1.2) and one over the welding bench (1.6, ceiling, 0.1), piped up through the roof | the roof rack's spotlight at z -4.0 |
 
 Firing lines: the centre aisle x -0.6..0.6 runs from the cab door to the rear doors; the left windows are covered from x ~0.5, the right windows from x ~-0.8. Nothing new may stand in the aisle or above y 1.07 on the walls between window openings' z spans.
+
+### Step 11 answer (owner, 2026-09-26)
+Smoke, steam and sparks are **low-poly mesh puffs** (GPUParticles3D with a 4-segment sphere puff lit by the world; sparks are tiny emissive boxes that may bloom). No test shot was taken before asking; the options were described instead.
 
 ### Step 9 notes
 - `VanMarkings` (VanLook/Markings after Roof) paints a seeded stencil name (12 names) on both low sides, a two-digit number on the cab doors and 3-17 kill tallies on the left top band, as albedo Decals on cull mask 1 with textures rendered at runtime from a 5x7 pixel stencil font (`van_stencil_font.gd`) with dropout wear and drips. Paint colours are desaturated bone, oxblood and ochre.
