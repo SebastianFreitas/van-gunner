@@ -19,6 +19,7 @@ const _JUMP_CLEARANCE := 1.0
 @onready var head: Node3D = $Head
 @onready var interaction_ray: RayCast3D = $Head/Camera3D/InteractionRay
 @onready var weapon: GunController = $Head/Camera3D/Weapon
+@onready var camera: Camera3D = $Head/Camera3D
 @onready var gun_stats: GunStatsController = $GunStats
 @onready var usables: UsablesController = $Usables
 
@@ -29,6 +30,9 @@ var _local_horizontal_velocity := Vector3.ZERO
 var _jump_queued := false
 ## The equipped class; applied on ready and again whenever GameSession changes it.
 var current_class: ClassDefinition
+## Debug fly mode: no gravity, no collision, moves along the camera's full look direction.
+var ghost := false
+var _ghost_saved_mask := 0
 
 
 func _ready() -> void:
@@ -145,7 +149,33 @@ func _dialogue_hud() -> Node:
 	return get_tree().get_first_node_in_group(&"dialogue_hud")
 
 
+## Toggles debug fly mode: no gravity, no collision, free camera-relative movement.
+func set_ghost(on: bool) -> void:
+	if on == ghost:
+		return
+	if on:
+		_ghost_saved_mask = collision_mask
+		collision_mask = 0
+		ghost = true
+	else:
+		collision_mask = _ghost_saved_mask
+		ghost = false
+		velocity = Vector3.ZERO
+
+
 func _physics_process(delta: float) -> void:
+	if ghost:
+		var ghost_input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+		var forward := -camera.global_basis.z
+		var right := camera.global_basis.x
+		var dir := right * ghost_input.x - forward * ghost_input.y
+		if dir.length_squared() > 0.001:
+			dir = dir.normalized()
+		velocity = dir * move_speed * 2.5
+		if Input.is_action_pressed("jump"):
+			velocity += Vector3.UP * move_speed * 2.5
+		move_and_slide()
+		return
 	var reference_basis := _movement_reference.global_basis.orthonormalized()
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
