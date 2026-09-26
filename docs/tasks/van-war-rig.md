@@ -354,7 +354,7 @@ thinking"; add a lens when a step discovers one.
   style; the rear doors' inside dressed (lock bar, chains, bars). The
   existing van shaders stay; add geometry, not a new wall shader.
 
-- [ ] 20. **Gun port, part 1: the look.** A slot hatch in each side cargo
+- [x] 20. **Gun port, part 1: the look.** A slot hatch in each side cargo
   door leaf (`side_door_leaf.gd`): frame, sliding or hinged hatch, handle,
   seen from both sides; closed by default.
   **Owner questions:** one port per door or per leaf; sliding or hinged;

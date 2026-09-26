@@ -54,6 +54,9 @@ var _right_tween: Tween
 
 var _leaf: _SideDoorLeaf
 
+## Sliding gun port slots dressed onto each side door leaf.
+var gun_ports: Array[VanGunPort] = []
+
 
 func _init() -> void:
 	_leaf = _SideDoorLeaf.new(self)
@@ -75,6 +78,21 @@ func _fit_to_side_walls() -> void:
 		return
 	_leaf.fit_door_leaf(_left, -1.0, walls)
 	_leaf.fit_door_leaf(_right, 1.0, walls)
+
+	gun_ports.clear()
+	var mid_y := (walls.door_y_min + walls.door_y_max) * 0.5
+	var x_ref := walls.wall_x_at(mid_y)
+	for pair: Array in [[_left, -1.0], [_right, 1.0]]:
+		var leaf: Node3D = pair[0]
+		var wall_sign: float = pair[1]
+		var old_port := leaf.get_node_or_null("GunPort")
+		if old_port != null:
+			old_port.free()
+		var port := VanGunPort.new()
+		port.name = "GunPort"
+		leaf.add_child(port)
+		port.setup(wall_sign, walls, mid_y, x_ref)
+		gun_ports.append(port)
 
 
 func is_open() -> bool:
