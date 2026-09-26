@@ -84,6 +84,7 @@ The main session explores through `Explore`, designs the change, writes the spec
 | Street facades, districts, set-pieces | `scripts/travel/facades/`, `resources/facades/`, `scenes/corridor/facade_*.gdshader` |
 | Side stops: shop, garage, mechanic, warehouse | `scripts/stops/`, `resources/side_stops/`, `scenes/corridor/` |
 | Van shell, doors, windows, vitals, van root and HUD wiring | `scripts/van/` |
+| Van look (seeded war-rig dressing, machine looks, cables) | `scripts/van/look/` (`van_look.gd` owns the seed; `machine_parts.gd`, `machine_motion.gd`, `machine_damage.gd`; cables `van_cable_runs.gd` + `van_cable_router.gd`) |
 | Gun, projectiles, damage, status effects | `scripts/combat/` |
 | Classes | `scripts/classes/`, `resources/classes/` |
 | Player, boons, tools | `scripts/player/`, `scripts/items/`, `resources/items/` |

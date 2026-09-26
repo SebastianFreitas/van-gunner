@@ -171,6 +171,17 @@ include. Machines and junk are redneck technology (scavenged parts, welds,
 tape, cables that go somewhere), still low-poly primitives inside the
 budget above.
 
+Machines read as machines (owner play notes, 2026-09-26): 20+ parts of varied
+size, one desaturated accent colour each (generator safety orange, relay rack
+oxide green, bench oxblood and steel, hopper ochre), and a lamp you can point
+at that lights it (an `OmniLight3D` under a caged trouble lamp or arm lamp,
+energy 0.35 to 0.9, range 1.6 to 2.4, no shadow). Cables have logic: each one
+runs from a machine's `PowerPort` to another's along a trunk, with junction
+boxes at joins and clamps or tape along the way; nothing hangs from nowhere,
+and nothing intersects the bowed wall, a machine or the aisle. The game never
+leaves the van, so the exterior is seen only from the debug `ghost` flight
+and is not detailed further.
+
 Off-style today (3D): nothing known. The 3D art pass (2026-09-25) brought
 the facades, props, set-pieces, stops, junctions, statue and overheads onto
 this file; a new break found later goes here.

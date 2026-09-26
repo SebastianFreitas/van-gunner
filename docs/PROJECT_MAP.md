@@ -30,9 +30,9 @@
 
 ## Node groups
 
-Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`
+Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `head_hitbox`, `machine_power_ports`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`
 
-Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `facade_lights`, `gun_controller`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`
+Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `facade_lights`, `gun_controller`, `gun_port_leaf`, `gun_ports`, `gun_stats`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`
 
 ## Signals and enums
 
@@ -260,6 +260,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `signal health_changed(current: float, maximum: float)`
 
+**`scripts/van/look/machine_damage.gd`**
+
+- `signal state_changed(state: int)`
+- `enum State { HEALTHY, HURT, DYING }`
+
 **`scripts/van/look/van_look.gd`**
 
 - `signal look_rebuilt(seed_value: int)`
@@ -267,7 +272,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-240 GDScript files, 34561 lines.
+272 GDScript files, 40386 lines.
 
 ### `scenes/corridor/`
 
@@ -330,7 +335,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `gun_stats.gd` | `GunStats` | 46 | Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance. |
 | `gun_stats_controller.gd` | `GunStatsController` | 153 | Rebuilds a gun's effective stats from its base stats, class and modifiers. |
 | `gun_viewmodel.gd` | `GunViewmodel` | 222 | Viewmodel motion: quarter-roll per shot, tip-up accelerating spin on reload with a coast / settle finish so the mag change doesn't hard-cut. |
-| `projectile.gd` | `Projectile` | 320 | A bullet: flies, ricochets off scenery and resolves damage on hit. |
+| `projectile.gd` | `Projectile` | 341 | A bullet: flies, ricochets off scenery and resolves damage on hit. |
 | `projectile_pool.gd` | — | 82 | Reuses Projectile nodes to avoid instantiate/free churn during heavy fire. |
 | `stat_modifier.gd` | `StatModifier` | 14 | A single additive or multiplicative modifier applied to a named gun stat. |
 | `status_effect_controller.gd` | `StatusEffectController` | 128 | Poison stacks and the cold slow on one enemy. |
@@ -358,13 +363,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
-| `debug_commands.gd` | — | 236 | Parses and runs debug console commands. |
+| `debug_commands.gd` | — | 238 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
 | `debug_facade_commands.gd` | — | 301 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
 | `debug_item_commands.gd` | — | 70 | Debug console commands: items. |
 | `debug_meta_commands.gd` | — | 55 | Debug console commands: meta. |
 | `debug_run_flow_commands.gd` | — | 54 | Debug console commands: run flow. |
-| `debug_van_commands.gd` | — | 69 | Debug console commands: van. |
+| `debug_van_commands.gd` | — | 92 | Debug console commands: van. |
 
 ### `scripts/dialogue/`
 
@@ -458,7 +463,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `boon_behavior_registry.gd` | `BoonBehaviorRegistry` | 142 | Dispatches combat events to registered boon behavior handlers. |
 | `boon_combat.gd` | `BoonCombat` | 216 | Thin dispatcher for boon combat logic. |
 | `boon_traits.gd` | `BoonTraits` | 75 | Stores passive boon modifiers that combat systems query at runtime. |
-| `fps_player.gd` | `FpsPlayer` | 275 | The first-person player controller: movement, interaction and shooting input. |
+| `fps_player.gd` | `FpsPlayer` | 305 | The first-person player controller: movement, interaction and shooting input. |
 | `usable_state.gd` | `UsableState` | 27 | Runtime state for one equipped usable item: charges and cooldown remaining. |
 | `usables_controller.gd` | `UsablesController` | 166 | Owns the player's usable item slots and boon inventory for the run. |
 
@@ -591,7 +596,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `room_zone.gd` | `RoomZone` | 15 | Marks a van interior zone; tells GameSession which room the player is in. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. |
 | `side_door_leaf.gd` | — | 285 | Builds the side door leaf meshes (body, trim, frames, latch) onto SideDoors nodes. |
-| `side_doors.gd` | — | 292 | Sliding cargo-style side doors. |
+| `side_doors.gd` | — | 310 | Sliding cargo-style side doors. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
 | `van.gd` | — | 398 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
@@ -600,13 +605,15 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_driver_talk.gd` | — | 158 | The driver-talk panel: open/close, option refresh, and boost/slow shout handling. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
+| `van_gun_port.gd` | `VanGunPort` | 198 | A slot gun port on a side door leaf: welded frame and a steel plate sliding in a track, seen from inside and outside. |
+| `van_gun_port_interact.gd` | — | 16 | Layer-2 hit target in front of a side door's gun port; E slides the port's plate open or shut. |
 | `van_hud.gd` | — | 183 | Combat HUD readouts: ammo, health, waves, prompts, item toasts, stop toasts. |
 | `van_hull_mesh.gd` | `VanHullMesh` | 400 | XY end-cap slabs that follow VanSideWall's bow and VanCeiling's barrel vault. |
 | `van_lighting.gd` | `VanLighting` | 50 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) lights the corridor through openings without washing the cabin. |
 | `van_overlays.gd` | — | 238 | Modal overlays: bench, skill tree, class panel, debug console, pause menu, mouse passthrough. |
 | `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. |
 | `van_route_choice.gd` | — | 287 | Builds and refreshes the ROUTE_CHOICE panel: card art, stop labels, highlight state. |
-| `van_side_wall.gd` | `VanSideWall` | 378 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
+| `van_side_wall.gd` | `VanSideWall` | 383 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
 | `van_side_wall_panel.gd` | — | 389 | This wall's own side panel mesh: openings, reveals, returns, and the cut queries that decide which cells are punched for the side doors and windows. |
 | `van_side_wall_shell.gd` | — | 401 | Generic curved-shell / pane / frame-ring mesh builders for VanSideWall: the low-level lofting onto the cargo profile, shared by side walls, doors and windows. |
 | `van_vital.gd` | `VanVital` | 91 | One interior machine whose HP is a slice of van death hull. |
@@ -615,7 +622,37 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
+| `machine_damage.gd` | `MachineDamage` | 162 | Maps a VanVital's HP to healthy, hurt or dying, and drives its machine's motion speed, flicker, smoke puffs and sparks. |
+| `machine_motion.gd` | `MachineMotion` | 99 | Drives every moving part of one van machine (spin, pump, wobble, flicker) from a single _process, scaled by its damage state. |
+| `machine_parts.gd` | `MachineParts` | 284 | Static low-poly part builders (motor, flywheel, belt, fan, battery, can, gauge, switch, CRT, tower, keyboard, pipe, vent, cables) for the van's interior machin… |
+| `van_armour.gd` | `VanArmour` | 168 | The van's seeded outer armour: plates, rebar, spikes, road signs and a car-door shield, placed from slots clear of every opening and merged per material. |
+| `van_armour_pieces.gd` | — | 116 | Appends armour piece geometry (plates, bars, spikes, signs, a car door) into per-material SurfaceTools for VanArmour. |
+| `van_cab.gd` | `VanCab` | 291 | The van's cab and front: hood, windshield, a dim cab interior seen through it, mirrors and two real headlights, rebuilt from the look seed. |
+| `van_cab_parts.gd` | — | 55 | Cab interior and mirrors, split out of van_cab.gd to keep it under the line cap. |
+| `van_cable_router.gd` | — | 233 | Routes power cables around machine keep-out boxes inside the bowed shell and builds the small clamp, junction box, tape, plug and coil parts that VanCableRuns… |
+| `van_cable_runs.gd` | `VanCableRuns` | 376 | Seeded power tree: a thick generator-to-relay feed along the right trunk, relay drops to the PC rig, welding bench and hopper, ceiling lamp taps, then wall jun… |
+| `van_front_kit.gd` | — | 152 | Builds the van's seeded front kit (bumper, ram, windshield cage, lamp cages) onto a VanCab. |
+| `van_generator.gd` | `VanGenerator` | 117 | The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp… |
+| `van_generator_parts.gd` | — | 184 | Builds the generator set's welded skid, oil pan, radiator, tank, manifold, control gantry, junction box, trouble lamp and rust patches; the core script keeps t… |
+| `van_hull.gd` | `VanHull` | 201 | The van's outer skin: roof, sides, rear face and sills a few cm outside the liners, painted from the look seed. |
+| `van_inner_shell.gd` | `VanInnerShell` | 258 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
 | `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |
+| `van_markings.gd` | `VanMarkings` | 73 | The van's seeded painted identity: a stencil name on both sides, a number on the cab doors and kill tallies, as exterior-only decals. |
+| `van_paint_palette.gd` | `VanPaintPalette` | 78 | Seeded paint schemes for the war rig's exterior shader: base, accent, primer and lettering. |
+| `van_pc_rig.gd` | `VanPcRig` | 65 | The request board dressed as a scrap PC rig (plank desk on crates, towers, three CRTs, one on crt_screen.gdshader, keyboard, clutter, a desk lamp and a PowerPo… |
+| `van_pc_rig_parts.gd` | — | 299 | Part builders for VanPcRig (desk, PCs, CRTs, clutter, shelf, stool, lamp, power strip); rig-local metres, desk top y -0.18, partition face z 0, floor y -0.95. |
+| `van_rear_dressing.gd` | `VanRearDressing` | 175 | Seeded scrap dressing on the inside of the rear doors (lock bar, welded bars, chains) and on the cage bulkhead's lower corners (welded plates, rebar), parented… |
+| `van_relay_rack.gd` | `VanRelayRack` | 78 | The cab-relay vital rebuilt as an angle-iron relay rack (six batteries on a high shelf, a green relay cabinet, knife switch, fuses, gauge, a caged trouble lamp… |
+| `van_relay_rack_parts.gd` | — | 271 | Part builders for VanRelayRack: angle-iron frame, six car batteries, relay cabinet, fuse board, trouble lamp and the two power ports. |
+| `van_roof.gd` | `VanRoof` | 185 | The van's roof rack, antennas, dish and the always-on roof spotlight; the rack's junk is filled by a helper. |
+| `van_roof_junk.gd` | — | 135 | Fills VanRoof's rack with seeded junk: tyre stacks, jerry cans, crates and strapped tarp bundles. |
+| `van_scrap_hopper.gd` | `VanScrapHopper` | 235 | The loot hopper dressed as a scrap hopper (ochre frame, flared funnel, toothed crusher drum behind a guard cage, chute and catch bin, chain-driven motor, warni… |
+| `van_scrap_hopper_parts.gd` | — | 233 | Static dressing for the scrap hopper (frame, hazard band, cage, bin, chain drive, lamp mast, stop button, power port); built by van_scrap_hopper.gd. |
+| `van_stats_crt.gd` | `VanStatsCrt` | 117 | A second PC-rig CRT stacked on the desk tower that prints live run stats (act and street, hull, gold and parts, gun) in green phosphor text, refreshed on the s… |
+| `van_stencil_font.gd` | — | 151 | A 5x7 pixel stencil font that renders worn, hand-painted text and tally marks into Images for the van's decals. |
+| `van_welding_bench.gd` | `VanWeldingBench` | 186 | The crafting-bench vital rebuilt as a welding bench (heavy steel bench, gas bottles, welder box, vice, grinder with shrouds, pegboard with tools and hood, roof… |
+| `van_welding_bench_parts.gd` | — | 271 | Prop builders for the welding bench (gas bottles, welder box with torch and power port, anvil, clamps, rod can, offcuts, scorch marks, hood, grinder shrouds, a… |
+| `van_wheels.gd` | `VanWheels` | 193 | The van's seeded road wheels, arches, mud flaps, side exhaust and chained spares; visual only, spun by the van's measured speed. |
 
 ### `tools/`
 
@@ -633,10 +670,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `smoke_driver.gd` | — | 364 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
+| `smoke_driver.gd` | — | 372 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 158 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
-| `smoke_shots.gd` | — | 74 | Screenshots for tools/smoke.py --shots. |
+| `smoke_shots.gd` | — | 137 | Screenshots for tools/smoke.py --shots. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 
 ## Scenes
@@ -677,7 +714,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/loot_machine.tscn` | 9 | StaticBody3D |
 | `scenes/van/request_board.tscn` | 4 | StaticBody3D |
-| `scenes/van/van.tscn` | 57 | Node3D |
+| `scenes/van/van.tscn` | 73 | Node3D |
 | `scenes/van/van_breach_points.tscn` | 32 | Node3D |
 | `scenes/van/van_bulkhead.tscn` | 1 | StaticBody3D |
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |
@@ -690,7 +727,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Shaders
 
-`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_prop_grime.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`
+`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_prop_grime.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/crt_screen.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_exterior.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`
 
 ## Balance sheet (`resources/balance/game_balance.tres`)
 
@@ -861,4 +898,4 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `ghost`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`
