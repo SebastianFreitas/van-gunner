@@ -11,3 +11,10 @@ Shots: scratchpad `shots_p0/` (v04-v07 added by smoke_shots.gd `_save_van_view` 
   mirrored; fix it to face -Z.
 - Old outside shots (shots_cables2 v01-v03): the exterior reads as a black bus tube with no cab
   silhouette.
+
+## Correction (shots_p0b)
+- The diamond cage in v04 is the MID bulkhead (`van_bulkhead.gd`, "Mid/rear cargo bulkhead"), not
+  the front end. The cab end is the flat panelled wall behind the PC rig and relay rack (v07,
+  01-idle-front's far end is the rear). v07 is correct as-is; the player capsule is now hidden.
+- So the owner's "3 assets" at the front end are FrontPartition LeftPanel/RightPanel + CabDoor
+  (+ possibly the ceiling edge). Confirm by reading `front_partition.gd` / `cab_door.gd` shaping.

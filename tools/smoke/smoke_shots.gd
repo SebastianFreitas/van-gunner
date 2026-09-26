@@ -30,7 +30,7 @@ const _VAN_DRIVER_WALL_TARGET := Vector3(-2.4, 1.5, -2.3)
 const _VAN_PASSENGER_WALL := Vector3(-1.2, 1.65, -1.0)
 const _VAN_PASSENGER_WALL_TARGET := Vector3(2.4, 1.5, -2.3)
 const _VAN_CEILING_FRONT := Vector3(0.0, 1.4, 1.0)
-const _VAN_CEILING_FRONT_TARGET := Vector3(0.0, 3.0, -4.2)
+const _VAN_CEILING_FRONT_TARGET := Vector3(0.0, 3.0, -4.7)
 
 
 func shot(shot_name: String) -> void:
@@ -130,15 +130,27 @@ func van_views(shot_name: String) -> void:
 
 ## Points a temporary camera at the van from a rig-local spot, saves the shot and frees it.
 ## Defaults to looking at the van body's middle; interior audit spots pass their own target.
+## The player's mesh is hidden throughout: these cameras sit close to the player's spot
+## and would otherwise show the capsule mesh in frame.
 func _save_van_view(
 	rig: Node3D, from: Vector3, label: String, target: Vector3 = _VAN_TARGET
 ) -> void:
+	var player := get_tree().get_first_node_in_group(&"player") as Node3D
+	var hidden_meshes: Array[MeshInstance3D] = []
+	if player != null:
+		for node in player.find_children("*", "MeshInstance3D", true, false):
+			var mesh := node as MeshInstance3D
+			if mesh.visible:
+				mesh.visible = false
+				hidden_meshes.append(mesh)
 	var cam := Camera3D.new()
 	rig.add_child(cam)
 	cam.transform = Transform3D(Basis.looking_at(target - from, Vector3.UP), from)
 	cam.make_current()
 	await _save(label, "v")
 	cam.queue_free()
+	for mesh in hidden_meshes:
+		mesh.visible = true
 
 
 func _save(label: String, prefix: String = "") -> void:
