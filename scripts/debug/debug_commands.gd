@@ -146,6 +146,8 @@ func _register_commands() -> void:
 		"reardoor": _van.cmd_reardoor,
 		"sidedoor": _van.cmd_sidedoor,
 		"ghost": _van.cmd_ghost,
+		"torch": _van.cmd_torch,
+		"floodlight": _van.cmd_floodlight,
 		"van": _van.cmd_van,
 		"class": _meta.cmd_class,
 		"sound": _meta.cmd_sound,
@@ -183,6 +185,8 @@ func _cmd_help(_args: Array) -> String:
 		+ "  reardoor [open|close|toggle]  swing the van rear doors\n"
 		+ "  sidedoor [open|close|toggle]  slide the van side doors\n"
 		+ "  ghost [on|off]  fly through the van walls to look at it from outside\n"
+		+ "  torch [on|off]  head lamp on your camera (inspection light, rides with ghost)\n"
+		+ "  floodlight [on|off]  work lights at the van's four corners (whole exterior lit)\n"
 		+ "  van seed        print the van look seed\n"
 		+ "  van reroll [s]  rebuild the van look from a new (or given) seed\n"
 		+ "  class [id]      print the class, or equip one in any phase (e.g. class sniper)\n"

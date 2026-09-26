@@ -5,6 +5,21 @@ extends RefCounted
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 var _ghost_return_position := Vector3.ZERO
 
+## Debug inspection lights (torch, floodlight): render layers 1 (street, hull) and
+## 2 (van interior), so they light everything the player can fly to.
+const DEBUG_LIGHT_MASK := 3
+const TORCH_COLOR := Color(1.0, 0.93, 0.8)
+const TORCH_ENERGY := 6.0
+const TORCH_RANGE_M := 40.0
+const TORCH_ANGLE_DEG := 35.0
+## Rig-local work-light spots: outside the hull (x +/-2.6, z +/-4.7) at every corner.
+const FLOOD_CORNERS: Array[Vector3] = [
+	Vector3(9.0, 7.0, -13.0), Vector3(-9.0, 7.0, -13.0),
+	Vector3(9.0, 7.0, 13.0), Vector3(-9.0, 7.0, 13.0),
+]
+const FLOOD_ENERGY := 2.5
+const FLOOD_RANGE_M := 35.0
+
 
 func _init(owner: Node) -> void:
 	host = owner
@@ -70,6 +85,67 @@ func cmd_ghost(args: Array) -> String:
 	player.call(&"set_ghost", false)
 	player.position = _ghost_return_position
 	return "ghost off"
+
+
+func cmd_torch(args: Array) -> String:
+	var player: Node3D = host._find_player()
+	if player == null:
+		return "no player"
+	var camera := player.get("camera") as Node3D
+	if camera == null:
+		return "no player camera"
+	var torch := camera.get_node_or_null(^"DebugTorch") as SpotLight3D
+	if torch == null:
+		torch = SpotLight3D.new()
+		torch.name = &"DebugTorch"
+		torch.light_color = TORCH_COLOR
+		torch.light_energy = TORCH_ENERGY
+		torch.spot_range = TORCH_RANGE_M
+		torch.spot_angle = TORCH_ANGLE_DEG
+		torch.shadow_enabled = true
+		# Layers 1 (street, hull) and 2 (van interior); set before add_child, never after.
+		torch.light_cull_mask = DEBUG_LIGHT_MASK
+		torch.visible = false
+		camera.add_child(torch)
+	var on := _toggle_target(args, torch.visible)
+	torch.visible = on
+	return "torch %s" % ("on: a head lamp follows your look (works in ghost)" if on else "off")
+
+
+func cmd_floodlight(args: Array) -> String:
+	var van := host.get_tree().get_first_node_in_group(&"van_run")
+	var rig := van.get_node_or_null(^"TravelPath/VanFollow/VanRig") if van != null else null
+	if rig == null:
+		return "no van rig"
+	var flood := rig.get_node_or_null(^"DebugFloodlights") as Node3D
+	if flood == null:
+		flood = Node3D.new()
+		flood.name = &"DebugFloodlights"
+		flood.visible = false
+		for corner in FLOOD_CORNERS:
+			var lamp := OmniLight3D.new()
+			lamp.position = corner
+			lamp.light_energy = FLOOD_ENERGY
+			lamp.omni_range = FLOOD_RANGE_M
+			lamp.shadow_enabled = false
+			lamp.light_cull_mask = DEBUG_LIGHT_MASK
+			flood.add_child(lamp)
+		rig.add_child(flood)
+	var on := _toggle_target(args, flood.visible)
+	flood.visible = on
+	return "floodlight %s" % ("on: work lights at the van's four corners" if on else "off")
+
+
+## Resolves "on" / "off" / bare toggle against the current state.
+func _toggle_target(args: Array, current: bool) -> bool:
+	var action: String = str(args[0]).to_lower() if not args.is_empty() else ""
+	match action:
+		"on":
+			return true
+		"off":
+			return false
+		_:
+			return not current
 
 
 func cmd_van(args: Array) -> String:

@@ -22,6 +22,19 @@ const _VAN_TARGET := Vector3(0.0, 1.5, 0.0)
 const _VAN_SIDE_FRONT := Vector3(7.0, 3.0, -10.0)
 const _VAN_SIDE_REAR := Vector3(7.0, 3.0, 10.0)
 const _VAN_LOW_FRONT := Vector3(0.0, 1.0, -13.0)
+## Lit audit spots (debug floodlight on): three-quarters, straight on, a window close-up
+## and the roof, so every face of the exterior is legible.
+const _VAN_LIT_SPOTS: Array[Array] = [
+	["van-lit-side-front", Vector3(7.0, 3.0, -10.0), _VAN_TARGET],
+	["van-lit-side-rear", Vector3(7.0, 3.0, 10.0), _VAN_TARGET],
+	["van-lit-outside", Vector3(0.0, 9.0, -8.0), _VAN_TARGET],
+	["van-lit-quarter-driver", Vector3(-7.0, 2.5, -10.0), _VAN_TARGET],
+	["van-lit-quarter-passenger", Vector3(7.0, 2.5, -10.0), _VAN_TARGET],
+	["van-lit-front", Vector3(0.0, 1.2, -12.0), Vector3(0.0, 1.2, 0.0)],
+	["van-lit-rear", Vector3(0.0, 1.5, 12.0), Vector3(0.0, 1.5, 0.0)],
+	["van-lit-window", Vector3(6.0, 1.9, -1.5), Vector3(2.6, 1.9, -1.5)],
+	["van-lit-roof", Vector3(0.0, 12.0, 0.5), Vector3(0.0, 3.0, 0.0)],
+]
 ## Interior audit spots, room 4.84 m wide, 3.08 m tall, z -4.7..4.7, floor at y=0.
 const _VAN_FRONT_WALL := Vector3(0.0, 1.65, 2.0)
 const _VAN_FRONT_WALL_TARGET := Vector3(0.0, 1.5, -4.7)
@@ -122,6 +135,24 @@ func van_views(shot_name: String) -> void:
 					rig, _VAN_SIDE_FRONT, "%s-van-seed-%d" % [shot_name, seed_value]
 				)
 			look.rebuild(original)
+	if previous != null:
+		previous.make_current()
+	for layer in hidden:
+		layer.visible = true
+
+
+## The exterior again under the debug floodlight (`floodlight on`), then the lights go
+## back off, so the unlit shots stay inside the outside brightness budget.
+func van_views_lit(shot_name: String) -> void:
+	var rig := _rig()
+	if rig == null:
+		return
+	var hidden := _hide_ui()
+	var previous := get_viewport().get_camera_3d()
+	print("SMOKE: " + DebugCommands.run("floodlight on"))
+	for spot in _VAN_LIT_SPOTS:
+		await _save_van_view(rig, spot[1], "%s-%s" % [shot_name, spot[0]], spot[2])
+	print("SMOKE: " + DebugCommands.run("floodlight off"))
 	if previous != null:
 		previous.make_current()
 	for layer in hidden:

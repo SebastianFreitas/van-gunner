@@ -44,6 +44,8 @@ Any non-interactive HUD control must be `MOUSE_FILTER_IGNORE`, otherwise clickin
 
 In game, **H** opens it. `help` lists commands; `list commands|boons|items|classes|cards|stops|sounds|tree` enumerates content. `stop <id>` forces that side stop on the next fork (`stop rare_shop` or `stop elevator shop` for the elevator), `class <id>` equips a class in any phase, `parts [n]` grants Rare Parts, `tree_reset` wipes the schematic, `sound <cue>` auditions a cue. `speed` fast-forwards and auto-resolves reveals and boon picks, so it skips the panels; don't use it to test UI. `chill` / `unchill` pause and resume encounters without leaving the run. The main scene is `scenes/boot/boot.tscn`.
 
+Inspection lights: `torch [on|off]` hangs a `DebugTorch` SpotLight3D under the player camera (rides along in `ghost`); `floodlight [on|off]` adds `DebugFloodlights`, four omnis at the rig's corners, so the whole exterior is lit at once. Both are cull mask 3 (layers 1 and 2), built once and toggled with `visible` (never re-masked: light pairing, below), and off by default. `tools/smoke.py --shots` saves the `van-lit-*` views with the floodlight on; those are outside the `*-outside` brightness budget in `art-style.md`, the unlit shots are not.
+
 ## Van hull and vitals
 
 Player HP and van hull are both fail conditions: either bar at 0 is `GAME_OVER`. Van hull is the sum of interior vitals (bench, hopper, fuse box, cab relay), not door/window smash HP. Heal consumables restore player HP only; the weld kit (look-at, +50) repairs a machine, door or window. Max-HP boons still raise van hull, split across the vitals. Fuse box and cab relay vitals need an explicit `vital_id` on their `van.tscn` instances; the dummy scene leaves it empty, so both would become `&"van_vital"`.

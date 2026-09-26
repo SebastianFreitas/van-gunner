@@ -272,7 +272,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-275 GDScript files, 41063 lines.
+275 GDScript files, 41175 lines.
 
 ### `scenes/corridor/`
 
@@ -363,13 +363,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
-| `debug_commands.gd` | — | 238 | Parses and runs debug console commands. |
+| `debug_commands.gd` | — | 242 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
 | `debug_facade_commands.gd` | — | 301 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
 | `debug_item_commands.gd` | — | 70 | Debug console commands: items. |
 | `debug_meta_commands.gd` | — | 55 | Debug console commands: meta. |
 | `debug_run_flow_commands.gd` | — | 54 | Debug console commands: run flow. |
-| `debug_van_commands.gd` | — | 92 | Debug console commands: van. |
+| `debug_van_commands.gd` | — | 168 | Debug console commands: van. |
 
 ### `scripts/dialogue/`
 
@@ -673,10 +673,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `smoke_driver.gd` | — | 372 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
+| `smoke_driver.gd` | — | 373 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 158 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
-| `smoke_shots.gd` | — | 173 | Screenshots for tools/smoke.py --shots. |
+| `smoke_shots.gd` | — | 204 | Screenshots for tools/smoke.py --shots. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 
 ## Scenes
@@ -740,8 +740,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|
 | `base_damage_per_shot` | `1.5` |
 | `base_fire_rate` | `1.75` |
-| `segment_wave_min` | `1` |
-| `segment_wave_max` | `1` |
+| `segment_wave_min` | `2` |
+| `segment_wave_max` | `4` |
 | `act_wave_base_count` | `PackedInt32Array(2, 2, 2)` |
 | `act_wave_growth_per_step` | `PackedInt32Array(1, 1, 1)` |
 | `act_last_wave_extra` | `PackedInt32Array(2, 2, 3)` |
@@ -749,10 +749,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `act_engagement_seconds` | `PackedFloat32Array(10, 8, 6)` |
 | `act_expected_upgrade_fraction` | `PackedFloat32Array(0.333333, 0.666667, 1)` |
 | `segment_spawn_pool` | `ExtResource("2")` |
-| `mob_interior_speed` | `1.6` |
 | `act_target_van_speed` | `PackedFloat32Array(8, 9, 10)` |
-| `mechanic_full_repair_cost` | `45` |
-| `mechanic_van_boon_cost` | `40` |
 
 **Still on script defaults (`game_balance_data.gd`):**
 
@@ -770,8 +767,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `rear_door_breach_hp` | `96.0` |
 | `window_breach_hp` | `50.0` |
 | `rear_window_glass_hp` | `1.0` |
+| `mob_interior_speed` | `1.6` |
 | `van_speed_max_level` | `4` |
 | `van_speed_upgrade_base_cost` | `50` |
+| `mechanic_full_repair_cost` | `45` |
+| `mechanic_van_boon_cost` | `40` |
 | `poison_duration` | `2.0` |
 | `poison_tick_interval` | `0.5` |
 | `cold_slow_duration` | `2.5` |
@@ -901,4 +901,4 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `ghost`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `ghost`, `torch`, `floodlight`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`

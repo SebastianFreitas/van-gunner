@@ -72,6 +72,7 @@ func _run() -> void:
 	if _shots != null:
 		# Exterior views of the van itself, IDLE only.
 		await _shots.van_views("idle")
+		await _shots.van_views_lit("idle")
 
 	var van := get_tree().get_first_node_in_group(&"van_run")
 	var gun_stats: GunStatsController = get_tree().get_first_node_in_group(&"gun_stats")
