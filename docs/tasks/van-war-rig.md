@@ -317,10 +317,13 @@ thinking"; add a lens when a step discovers one.
 - [x] 14. **The welding bench** (today's bench vital and `CraftingTable`
   interaction). Same rules; the bench panel still opens.
 
-- [ ] 15. **The scrap hopper** (today's `LootMachine`): crusher drum,
+- [x] 15. **The scrap hopper** (today's `LootMachine`): crusher drum,
   chute, a dispense animation when loot drops. Research whether it is a
   vital (the rules file says hopper; the inventory found only three
   `van_vital` instances) and fix whichever is wrong.
+  Research answer: the hopper IS a vital (`vital_id = &"hopper"` inline in
+  `scenes/van/loot_machine.tscn`), four vitals in all; the rules file was
+  right and the earlier inventory missed the one inside the instanced scene.
 
 - [ ] 16. **PC rig, part 1: the skill-tree terminal.** Beige towers, CRTs,
   keyboard, tangled cables, a boot flicker; E opens the skill tree (the

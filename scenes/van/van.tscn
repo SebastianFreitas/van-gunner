@@ -37,6 +37,7 @@
 [ext_resource type="Script" path="res://scripts/van/look/van_generator.gd" id="57"]
 [ext_resource type="Script" path="res://scripts/van/look/van_relay_rack.gd" id="58"]
 [ext_resource type="Script" path="res://scripts/van/look/van_welding_bench.gd" id="59"]
+[ext_resource type="Script" path="res://scripts/van/look/van_scrap_hopper.gd" id="60"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -175,6 +176,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8885281, 0.43830076, -1.8)
 
 [node name="LootMachine" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1988471201 instance=ExtResource("35")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.62164927, 1.4382443, 0.96901906)
+
+[node name="Hopper" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/LootMachine" unique_id=372901845]
+script = ExtResource("60")
 
 [node name="FuseBox" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=718172379 instance=ExtResource("37")]
 transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 2.2095766, 0.48705465, 1.2149754)
