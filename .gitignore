@@ -34,3 +34,6 @@ tools/scene_dump/van.txt
 # Written per run by tools/try.py (separate user:// profile) and
 # tools/smoke.py --shots (no-focus window); never committed
 /override.cfg
+
+# Godot export presets hold per-machine output paths; each checkout keeps its own
+export_presets.cfg
