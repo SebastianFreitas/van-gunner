@@ -2,11 +2,12 @@ class_name VanGunPort
 extends Node3D
 ## A slot gun port on a side door leaf: welded frame and a steel plate sliding in a track, seen from inside and outside.
 
-const EYE_Y := 1.5            ## rig-space height of the slot centre
+const EYE_Y := 1.62           ## rig-space height of the slot centre, just under the 1.65 m camera
 const PORT_Z := -0.55         ## leaf-local z of the slot centre (toward the cab)
-const SLOT_HALF_Z := 0.26
-const SLOT_HALF_Y := 0.09
+const SLOT_HALF_Z := 0.42
+const SLOT_HALF_Y := 0.16
 const SLIDE_TIME := 0.25
+const SLIDE_DIST := 2.0 * SLOT_HALF_Z + 0.1  ## plate travel along z; clears the slot with margin
 
 const DOOR_THICKNESS := 0.14  ## matches side_door_leaf.gd's leaf shell thickness
 const BAR := 0.07             ## frame bar cross-section (inner frame)
@@ -83,7 +84,7 @@ func _build_inner(
 
 	var rail_x := face_x - wall_sign * 0.02
 	var rail_z0 := PORT_Z - SLOT_HALF_Z - 0.07
-	var rail_z1 := PORT_Z + SLOT_HALF_Z + 0.62
+	var rail_z1 := PORT_Z + SLIDE_DIST + SLOT_HALF_Z + 0.06
 	var rail_len := rail_z1 - rail_z0
 	var rail_mid_z := (rail_z0 + rail_z1) * 0.5
 	var top_rail_y := ly + SLOT_HALF_Y + 0.015
@@ -152,7 +153,7 @@ func set_open(open: bool) -> void:
 	_open = open
 	if is_instance_valid(_tween):
 		_tween.kill()
-	var target_z := PORT_Z + (2.0 * SLOT_HALF_Z + 0.1) if open else PORT_Z
+	var target_z := PORT_Z + SLIDE_DIST if open else PORT_Z
 	_tween = create_tween()
 	_tween.tween_property(_plate, "position:z", target_z, SLIDE_TIME) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
