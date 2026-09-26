@@ -1,6 +1,8 @@
 class_name VanGenerator
 extends Node3D
-## The fuse-box vital rebuilt as a scrap generator (motor, flywheel and belt, fan, gauge, jerry cans, exhaust to a roof vent) whose motion and smoke follow the vital's HP.
+## The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp, jerry cans, exhaust to a roof vent) whose motion and smoke follow the vital's HP.
+
+const _Parts := preload("res://scripts/van/look/van_generator_parts.gd")
 
 var _lamp_mat: StandardMaterial3D
 
@@ -16,41 +18,39 @@ func _ready() -> void:
 	var collision := body.get_node_or_null("Collision") as CollisionShape3D
 	if collision:
 		var shape := BoxShape3D.new()
-		shape.size = Vector3(0.75, 1.0, 0.8)
+		shape.size = Vector3(1.11, 1.02, 0.7)
 		collision.shape = shape
-		collision.position = Vector3(0.17, 0.01, 0.0)
+		collision.position = Vector3(0.365, 0.02, -0.05)
 
 	var steel := MachineParts.dark(Color(0.2, 0.2, 0.19), 0.85)
-	var paint := MachineParts.dark(Color(0.32, 0.22, 0.12), 0.9)
+	var paint := MachineParts.dark(Color(0.34, 0.16, 0.06), 0.9)
 	var rubber := MachineParts.dark(Color(0.06, 0.06, 0.06), 0.95)
 	var face := MachineParts.dark(Color(0.45, 0.43, 0.38), 0.9)
 	var lamp := MachineParts.emissive(Color(1.0, 0.45, 0.15), 1.6)
 	_lamp_mat = lamp
+	var rust := MachineParts.dark(Color(0.26, 0.11, 0.04), 0.95)
 
-	_build(steel, paint, rubber, face, lamp)
+	_build(steel, paint, rubber, face, lamp, rust)
 
 
 func _build(steel: Material, paint: Material, rubber: Material, face: Material,
-		lamp: Material) -> void:
-	var skid := MeshInstance3D.new()
-	skid.name = "Skid"
-	var skid_mesh := BoxMesh.new()
-	skid_mesh.size = Vector3(0.72, 0.08, 0.78)
-	skid.mesh = skid_mesh
-	skid.material_override = steel
-	skid.position = Vector3(0.17, -0.45, 0.0)
-	skid.layers = 2
-	add_child(skid)
+		lamp: Material, rust: Material) -> void:
+	var parts := _Parts.new(self, steel, paint, rubber, face, rust)
+	parts.build()
 
-	var motor_root := MachineParts.motor(self, Vector3(0.0, -0.41, 0.0), paint, 0.55, 0.2)
-	var flywheel_pos := Vector3(0.36, -0.41 + 0.3 + 0.02, -0.1)
+	var motor_root := MachineParts.motor(self, Vector3(0.2, -0.41, 0.0), paint, 0.55, 0.2)
+	var flywheel_pos := Vector3(0.56, -0.41 + 0.3 + 0.02, -0.1)
 	var flywheel_root := MachineParts.flywheel(self, flywheel_pos, steel, 0.3)
 	var hub_pos := flywheel_pos + Vector3(0.0, 0.3, 0.0)
-	MachineParts.belt(self, Vector3(0.3, -0.17, 0.0), hub_pos, rubber, 0.06, 0.22)
-	var fan_root := MachineParts.fan(self, Vector3(0.0, 0.1, 0.32), steel, 0.16)
-	var gauge_root := MachineParts.gauge(self, Vector3(0.2, 0.2, 0.3), steel, face)
-	MachineParts.jerry_can(self, Vector3(0.42, -0.49, 0.28), paint)
-	MachineParts.jerry_can(self, Vector3(0.42, -0.49, -0.34), paint)
+	MachineParts.belt(self, Vector3(0.5, -0.17, 0.0), hub_pos, rubber, 0.06, 0.22)
+	var fan_root := MachineParts.fan(self, Vector3(0.2, 0.1, 0.27), steel, 0.16)
+	# The gauge sits on the control box's face plate, turned to face the aisle (+x).
+	var gauge_root := MachineParts.gauge(self, Vector3(0.375, 0.755, 0.0), steel, face)
+	gauge_root.rotation.y = PI / 2.0
+	var can_a := MachineParts.jerry_can(self, Vector3(0.83, -0.49, 0.13), paint)
+	var can_b := MachineParts.jerry_can(self, Vector3(0.83, -0.49, -0.22), paint)
+	can_a.rotation.y = PI / 2.0
+	can_b.rotation.y = PI / 2.0
 	MachineParts.pipe(self, Vector3(-0.15, 0.1, -0.2), Vector3(-0.15, 2.4, -0.2), steel, 0.05)
 	MachineParts.vent(self, Vector3(-0.15, 2.4, -0.2), steel, 0.28)
 
@@ -60,15 +60,15 @@ func _build(steel: Material, paint: Material, rubber: Material, face: Material,
 	lamp_mesh.size = Vector3(0.04, 0.04, 0.04)
 	run_lamp.mesh = lamp_mesh
 	run_lamp.material_override = lamp
-	run_lamp.position = Vector3(0.2, 0.05, 0.38)
+	run_lamp.position = Vector3(0.375, 0.6, 0.07)
 	run_lamp.layers = 2
 	add_child(run_lamp)
 
-	_wire_motion(motor_root, flywheel_root, fan_root, gauge_root, lamp)
+	_wire_motion(motor_root, flywheel_root, fan_root, gauge_root, lamp, parts)
 
 
 func _wire_motion(motor_root: Node3D, flywheel_root: Node3D, fan_root: Node3D,
-		gauge_root: Node3D, lamp: Material) -> void:
+		gauge_root: Node3D, lamp: Material, parts: RefCounted) -> void:
 	var motion := MachineMotion.new()
 	motion.name = "Motion"
 	add_child(motion)
@@ -87,6 +87,8 @@ func _wire_motion(motor_root: Node3D, flywheel_root: Node3D, fan_root: Node3D,
 	if needle:
 		motion.add_wobble(needle, 0.25, 1.3)
 	motion.add_flicker(lamp, &"emission_energy_multiplier", 1.6)
+	motion.add_flicker(parts.get(&"trouble_light"), &"light_energy", 0.7)
+	motion.add_flicker(parts.get(&"bulb_mat"), &"emission_energy_multiplier", 1.6)
 
 	_bind_damage(motion)
 
