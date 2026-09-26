@@ -22,6 +22,15 @@ const _VAN_TARGET := Vector3(0.0, 1.5, 0.0)
 const _VAN_SIDE_FRONT := Vector3(7.0, 3.0, -10.0)
 const _VAN_SIDE_REAR := Vector3(7.0, 3.0, 10.0)
 const _VAN_LOW_FRONT := Vector3(0.0, 1.0, -13.0)
+## Interior audit spots, room 4.84 m wide, 3.08 m tall, z -4.7..4.7, floor at y=0.
+const _VAN_FRONT_WALL := Vector3(0.0, 1.65, 2.0)
+const _VAN_FRONT_WALL_TARGET := Vector3(0.0, 1.5, -4.7)
+const _VAN_DRIVER_WALL := Vector3(1.2, 1.65, -1.0)
+const _VAN_DRIVER_WALL_TARGET := Vector3(-2.4, 1.5, -2.3)
+const _VAN_PASSENGER_WALL := Vector3(-1.2, 1.65, -1.0)
+const _VAN_PASSENGER_WALL_TARGET := Vector3(2.4, 1.5, -2.3)
+const _VAN_CEILING_FRONT := Vector3(0.0, 1.4, 1.0)
+const _VAN_CEILING_FRONT_TARGET := Vector3(0.0, 3.0, -4.2)
 
 
 func shot(shot_name: String) -> void:
@@ -90,6 +99,18 @@ func van_views(shot_name: String) -> void:
 	await _save_van_view(rig, _VAN_SIDE_FRONT, shot_name + "-van-side-front")
 	await _save_van_view(rig, _VAN_SIDE_REAR, shot_name + "-van-side-rear")
 	await _save_van_view(rig, _VAN_LOW_FRONT, shot_name + "-van-low-front")
+	await _save_van_view(
+		rig, _VAN_FRONT_WALL, shot_name + "-front-wall", _VAN_FRONT_WALL_TARGET
+	)
+	await _save_van_view(
+		rig, _VAN_DRIVER_WALL, shot_name + "-driver-wall", _VAN_DRIVER_WALL_TARGET
+	)
+	await _save_van_view(
+		rig, _VAN_PASSENGER_WALL, shot_name + "-passenger-wall", _VAN_PASSENGER_WALL_TARGET
+	)
+	await _save_van_view(
+		rig, _VAN_CEILING_FRONT, shot_name + "-ceiling-front", _VAN_CEILING_FRONT_TARGET
+	)
 	if van_seeds > 0:
 		var look := get_tree().get_first_node_in_group(VanLook.GROUP) as VanLook
 		if look != null:
@@ -108,10 +129,13 @@ func van_views(shot_name: String) -> void:
 
 
 ## Points a temporary camera at the van from a rig-local spot, saves the shot and frees it.
-func _save_van_view(rig: Node3D, from: Vector3, label: String) -> void:
+## Defaults to looking at the van body's middle; interior audit spots pass their own target.
+func _save_van_view(
+	rig: Node3D, from: Vector3, label: String, target: Vector3 = _VAN_TARGET
+) -> void:
 	var cam := Camera3D.new()
 	rig.add_child(cam)
-	cam.transform = Transform3D(Basis.looking_at(_VAN_TARGET - from, Vector3.UP), from)
+	cam.transform = Transform3D(Basis.looking_at(target - from, Vector3.UP), from)
 	cam.make_current()
 	await _save(label, "v")
 	cam.queue_free()
