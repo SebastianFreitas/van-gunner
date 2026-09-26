@@ -6,6 +6,9 @@ extends Node3D
 
 const EXTERIOR_SHADER := preload("res://scenes/van/van_exterior.gdshader")
 
+## Builds the truck-body lines (rub rails, belt line, drip rail, corner posts) on the skin.
+const _HullLines := preload("res://scripts/van/look/van_hull_lines.gd")
+
 ## How far outside the liners the skin sits.
 const SKIN_OFFSET_M := 0.06
 
@@ -13,6 +16,9 @@ const SIDE_WALLS_PATH := ^"../../Interior/Shell/SideWalls"
 
 ## The shared exterior material; later parts (armour, cab) reuse it.
 var material: ShaderMaterial
+
+## Shared body cross-section that the skin and the body lines both sample.
+var _profile: VanBodyProfile
 
 
 func rebuild_look(look: VanLook) -> void:
@@ -25,6 +31,8 @@ func rebuild_look(look: VanLook) -> void:
 		push_warning("VanHull: no SideWalls at %s" % SIDE_WALLS_PATH)
 		return
 
+	_profile = VanBodyProfile.new(walls, walls.get_parent().get_node_or_null(^"Ceiling") as VanCeiling)
+
 	material = ShaderMaterial.new()
 	material.shader = EXTERIOR_SHADER
 	VanPaintPalette.apply(material, VanPaintPalette.pick(look.rng_for(&"paint")), look.rng_for(&"paint_wear"))
@@ -36,6 +44,7 @@ func rebuild_look(look: VanLook) -> void:
 	_build_roof(walls)
 	_build_rear(walls)
 	_build_sills(walls)
+	_HullLines.new(self).build(_profile, walls, material)
 
 
 func _build_sides(walls: VanSideWall) -> void:
