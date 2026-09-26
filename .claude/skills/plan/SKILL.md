@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Start, continue or run a many-phase plan in .claude/plans/. Planning asks every question up front through AskUserQuestion; running never asks. Owner-invoked only.
+description: Start, continue or run a many-phase plan in .claude/plans/. Planning asks every question up front through AskUserQuestion; running does one phase per context, then commits, writes PLAN_STATE.md and hard-stops for a /clear. Owner-invoked only.
 disable-model-invocation: true
 argument-hint: "new <name>: <brief>  |  (nothing: continue the active plan)"
 ---
@@ -39,7 +39,8 @@ The owner's flow, in their words:
     claude: n questions → writes the answers into the plan → n questions →
             writes them in → … (this defines WHAT we will explore, not
             the specifics; specifics belong to each phase's own research)
-    claude: starts the phases; each phase is one commit + a handoff
+    claude: starts the phases; each phase is one context, one commit,
+            one PLAN_STATE.md, then a hard stop and a /clear
 
 So the loop is rounds. Each round is one turn: ask, write every answer
 into the plan file, commit the plan, ask again. It ends when a round
@@ -99,23 +100,33 @@ phase's research while running (and may raise a phase question, below).
    - The Progress table lists every phase as `todo`.
    Then set `Stage: ready`, commit the plan and research by path, and ask
    one last `AskUserQuestion`: "Start running the plan? (Recommended) /
-   Change something first / Hold". Start → `Stage: running` and run the
-   first phase in the same turn. Change → record the change as a D and
-   run the gate again.
+   Change something first / Hold". Start → `Stage: running`, write `PLAN_STATE.md` (below) pointing at
+   phase 1, commit it, and stop with the hard-stop message (below): phase
+   1 runs in a fresh context, never in the planning turn. Change → record
+   the change as a D and run the gate again.
 
 Context: planning is long. At `CONTEXT WATCH` commit the plan file as it
 stands, write `.claude/handoff.md` with the loop step and the open items,
 keep working. The plan file *is* the handoff for everything settled.
 
-## `go` while Stage is `running`
+## `go` or "Read PLAN_STATE.md and execute the next phase" while Stage is `running`
 
-1. Read Progress; take the first `todo` row. Read only that phase, Brief,
-   Decisions, Constraints, Carry forward.
+**One phase per context, always.** A phase is the whole unit of work for
+a turn and for a context window: never start the next phase in the same
+context that finished one, however small it is and however much context
+is left. Two phases in one context is the failure this rule exists to
+prevent (architectural drift, context bloat, a summary standing in for
+the real decisions).
+
+1. Read `PLAN_STATE.md` at the repo root, then Progress; take the phase
+   `PLAN_STATE.md` names (it is the first `todo` row). Read only that
+   phase, Brief, Decisions, Constraints, Carry forward.
 2. Research that phase's topics (digest to `research/<name>-<NN>.md`),
-   design, specs, implementer, verify, review, commit, report, as
-   `CLAUDE.md` says.
-3. Set the row `done <sha>`; add what later phases need to Carry forward.
-4. **Phase questions: ask first, decide alone only when the owner is
+   design, specs, implementer, verify, review, as `CLAUDE.md` says. Keep
+   the focus on that phase's deliverables only: a fix or improvement the
+   phase does not list goes to Carry forward as a note for a later phase,
+   not into this one.
+3. **Phase questions: ask first, decide alone only when the owner is
    away.** A phase's research or design will sometimes force a decision
    the plan does not cover (something planning did not check). That is a
    phase question. Handle it in this order:
@@ -130,28 +141,81 @@ keep working. The plan file *is* the handoff for everything settled.
      run also went unanswered, the owner is away: from then on take the
      option you would have marked "(Recommended)", record it as
      `D<n> (auto)` with one line of reason, and keep going without asking
-     again in this run. One unanswered question alone does not switch
+     again in this phase. One unanswered question alone does not switch
      this on: it just becomes an `(auto)` and the next question is asked.
    - A **blocker** always waits, no matter how many timeouts: the code
      contradicts the plan; two decisions conflict; a step would be
      irreversible and is not in the plan (deleting files, rewriting a
      rules file beyond what a D says). Finish what can be finished, write
-     the handoff with the blocker named, end the turn.
+     `PLAN_STATE.md` with the blocker named under Next phase, commit, and
+     end the turn with the normal report.
    The owner reviews every `(auto)` at the end; each one also names a
    question planning should have asked.
-5. **Every phase ends with a commit and a handoff.** Write
-   `.claude/handoff.md` (the `handoff` skill's format: Done, Next, the
-   open phase questions) after every phase, not only at `CONTEXT WATCH`.
-   Compaction: Claude cannot run `/compact` itself; auto-compaction fires
-   at the configured line and the hook prints the handoff back in. An
-   owner who is present can run `/compact` between phases; never stop to
-   ask for it.
-6. Run phase after phase until Progress has no `todo`.
+4. **The handoff protocol.** When the phase's deliverables are done, halt
+   and run these steps in this exact order before anything else:
+   1. **Verify:** the Verify commands from `CLAUDE.md` that the change
+      needs (`tools/check.py`, `tools/smoke.py`, the scene dump, the
+      shots) all pass, or the specific deliverable is shown to work. A
+      phase with a failing check is not complete: fix it, or record the
+      failure in `PLAN_STATE.md` as the next phase's first requirement.
+   2. **Record:** set the phase's Progress row to `done`, fill the
+      phase's Notes line, add what later phases need to Carry forward.
+   3. **Commit:** one commit for the phase, staged by path, with a
+      descriptive one-sentence message; cloud mode also pushes and
+      updates the PR. Put its sha in the Progress row (`done <sha>`) in
+      the next commit.
+   4. **Update `PLAN_STATE.md`** at the repo root (format below): the
+      current state of the architecture as this phase leaves it, a
+      summary of the completed phase, and the exact starting point and
+      requirements for the next phase. Commit it with the plan file's
+      sha update (its own commit, staged by path; cloud mode pushes it
+      too).
+   5. **Hard stop.** Do not transition to the next phase, do not start
+      its research, do not "just" do a small piece of it. End the turn
+      with the normal report, and its last line is exactly:
+
+      Phase complete. Please run `/clear` to flush the context window, then prompt me with: 'Read PLAN_STATE.md and execute the next phase.'
+
+   `.claude/handoff.md` is not written between phases: `PLAN_STATE.md`
+   is the phase handoff, and it is committed. The `handoff` skill still
+   applies inside a phase (context full mid-phase, an error you cannot
+   get past): that is a mid-phase continuation, not a phase boundary,
+   and the Auto-continue rule stays as it is.
+5. The next phase starts only from the owner's prompt in a fresh context
+   ("Read PLAN_STATE.md and execute the next phase.", or a bare "go" after
+   a `/clear`). Never run phase after phase in one context, even when the
+   owner is away and every phase question has gone `(auto)`.
+
+## `PLAN_STATE.md` (repo root, committed)
+
+    # Plan state: <plan name>
+
+    Plan: .claude/plans/<name>.md · Stage: running
+    Updated: <YYYY-MM-DD> · after phase <n> · commit <sha>
+
+    ## Architecture now
+    - <file/function: what exists after this phase, one line each; only
+      what the next phases need to know>
+
+    ## Phase <n> · <name> · done
+    - <what was built, verified how, commit sha>
+    - <every D<n> (auto) taken in this phase>
+
+    ## Next phase: <n+1> · <name>
+    - Start at: <exact file, function or doc to open first>
+    - Requirements: <deliverables from the plan, plus anything this phase
+      found that the next one must handle first>
+    - Open questions: <phase questions to ask at its start, or none>
+
+Keep it under about 60 lines: it is read into a fresh context, and the
+plan file holds the rest.
 
 ## Last phase done → Stage done
 
-Set `Stage: done`, delete ACTIVE, list every `D<n> (auto)` in the report
-under **Look at**, commit. The plan file stays as the record.
+Set `Stage: done`, delete ACTIVE, delete `PLAN_STATE.md`, list every
+`D<n> (auto)` in the report under **Look at**, commit. The plan file
+stays as the record. This closing step belongs to the last phase's own
+context: it is part of that phase's handoff protocol, not a new phase.
 
 ## `/plan` with no active plan
 
