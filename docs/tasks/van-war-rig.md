@@ -314,7 +314,7 @@ thinking"; add a lens when a step discovers one.
 
 - [x] 13. **The relay rack** (today's cab-relay vital). Same rules.
 
-- [ ] 14. **The welding bench** (today's bench vital and `CraftingTable`
+- [x] 14. **The welding bench** (today's bench vital and `CraftingTable`
   interaction). Same rules; the bench panel still opens.
 
 - [ ] 15. **The scrap hopper** (today's `LootMachine`): crusher drum,

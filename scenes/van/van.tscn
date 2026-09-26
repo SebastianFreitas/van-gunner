@@ -36,6 +36,7 @@
 [ext_resource type="Script" path="res://scripts/van/look/van_markings.gd" id="56"]
 [ext_resource type="Script" path="res://scripts/van/look/van_generator.gd" id="57"]
 [ext_resource type="Script" path="res://scripts/van/look/van_relay_rack.gd" id="58"]
+[ext_resource type="Script" path="res://scripts/van/look/van_welding_bench.gd" id="59"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -165,6 +166,9 @@ display_name = "Crafting bench"
 
 [node name="AttackMarker" type="Marker3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable/VanVital" unique_id=158219309]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.75)
+
+[node name="Welder" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable" unique_id=978983249]
+script = ExtResource("59")
 
 [node name="LootAnchor" type="Marker3D" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1267364196]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8885281, 0.43830076, -1.8)
