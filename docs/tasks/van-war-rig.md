@@ -309,7 +309,7 @@ thinking"; add a lens when a step discovers one.
   sprite task). Must stay inside the dark budget (sparks may bloom; smoke
   is lit, not glowing).
 
-- [ ] 12. **The generator** (today's fuse-box vital): big pass on the kit,
+- [x] 12. **The generator** (today's fuse-box vital): big pass on the kit,
   staged damage wired. Keep node name, `vital_id` and AttackMarker.
 
 - [ ] 13. **The relay rack** (today's cab-relay vital). Same rules.

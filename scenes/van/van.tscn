@@ -34,6 +34,7 @@
 [ext_resource type="Script" path="res://scripts/van/look/van_armour.gd" id="54"]
 [ext_resource type="Script" path="res://scripts/van/look/van_roof.gd" id="55"]
 [ext_resource type="Script" path="res://scripts/van/look/van_markings.gd" id="56"]
+[ext_resource type="Script" path="res://scripts/van/look/van_generator.gd" id="57"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -173,6 +174,12 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.6
 [node name="FuseBox" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=718172379 instance=ExtResource("37")]
 transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 2.2095766, 0.48705465, 1.2149754)
 prompt = "Fuse box"
+
+[node name="Generator" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/FuseBox" unique_id=837462951]
+script = ExtResource("57")
+
+[node name="VanVital" parent="TravelPath/VanFollow/VanRig/Interior/Props/FuseBox" index="2"]
+vital_id = &"fuse_box"
 
 [node name="CabRelay" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=219581774 instance=ExtResource("37")]
 transform = Transform3D(4.371139e-08, 0, -1, -1, -4.371139e-08, -4.371139e-08, -4.371139e-08, 1, -1.9106855e-15, -1.3101273, 2.7922862, -4.20212)
