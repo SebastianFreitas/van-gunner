@@ -86,6 +86,11 @@ func _build(beige: Material, wood: Material, crate: Material, rubber: Material, 
 	]
 	MachineParts.cable_bundle(self, floor_to_crt_points, rubber, 0.015, 3)
 
+	var stats := VanStatsCrt.new()
+	stats.name = "StatsCrt"
+	stats.position = Vector3(-0.25, 0.24, 0.3)
+	add_child(stats)
+
 
 func _boot_flicker() -> void:
 	var tw := create_tween()

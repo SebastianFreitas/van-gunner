@@ -339,7 +339,7 @@ thinking"; add a lens when a step discovers one.
   noise, boot flicker); the stats CRT (step 17) is the same shader behind
   readable Label3D text in a pixel-style font. Phosphor: sick green on both.
 
-- [ ] 17. **PC rig, part 2: the stats CRT.** Live stats the owner picked in
+- [x] 17. **PC rig, part 2: the stats CRT.** Live stats the owner picked in
   step 10, refreshed on the signals that change them (never per frame).
   Research: where each stat lives (grep `docs/PROJECT_MAP.md` signals).
 
