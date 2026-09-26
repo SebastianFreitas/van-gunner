@@ -39,6 +39,7 @@
 [ext_resource type="Script" path="res://scripts/van/look/van_welding_bench.gd" id="59"]
 [ext_resource type="Script" path="res://scripts/van/look/van_scrap_hopper.gd" id="60"]
 [ext_resource type="Script" path="res://scripts/van/look/van_pc_rig.gd" id="61"]
+[ext_resource type="Script" path="res://scripts/van/look/van_cable_runs.gd" id="62"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -335,6 +336,9 @@ script = ExtResource("55")
 
 [node name="Markings" type="Node3D" parent="TravelPath/VanFollow/VanRig/VanLook" unique_id=2100462926]
 script = ExtResource("56")
+
+[node name="Cables" type="Node3D" parent="TravelPath/VanFollow/VanRig/VanLook" unique_id=2100462927]
+script = ExtResource("62")
 
 [node name="Systems" type="Node" parent="." unique_id=928478009]
 

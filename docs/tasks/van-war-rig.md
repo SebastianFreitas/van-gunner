@@ -343,7 +343,7 @@ thinking"; add a lens when a step discovers one.
   step 10, refreshed on the signals that change them (never per frame).
   Research: where each stat lives (grep `docs/PROJECT_MAP.md` signals).
 
-- [ ] 18. **Cables, pipes and junk.** Seeded cable trunks along the ceiling
+- [x] 18. **Cables, pipes and junk.** Seeded cable trunks along the ceiling
   ribs and walls that visibly connect the generator to the relay rack, the
   PCs, the bench and the lights (Function lens); duct-taped splices,
   zip-tied bundles, a pegboard, hanging tools, jerry cans, gas bottles,
