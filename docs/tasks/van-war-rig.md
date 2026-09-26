@@ -252,7 +252,7 @@ thinking"; add a lens when a step discovers one.
 
   *Step 6 notes:* `VanWheels` (VanLook/Wheels) spins wheels from the van's measured motion (no travel_controller read). Chassis rails and sump skipped: the sills already reach y -0.25, below the road at -0.2, so nothing under them is visible. Rear wheels are capped at radius 0.58 so arches stay under the side-window sills (y 1.068); no axle sits in the side-door span. The wheels read as dark mass in the street shots: owed to the lighting review in step 20.
 
-- [ ] 7. **Armour kit.** Seeded welded plates, rebar cages, spikes, chained
+- [x] 7. **Armour kit.** Seeded welded plates, rebar cages, spikes, chained
   tyres, road-sign plates, a car door bolted on as a shield, window grilles
   on the outside of the side windows and rear-door panes. Kit rules: every
   piece is placed from a slot list around the openings (never over a
@@ -261,6 +261,8 @@ thinking"; add a lens when a step discovers one.
   Research: how raiders' Outside markers and climb paths sit against the
   hull (`scenes/van/van_breach_points.tscn`), so no plate sits in a raider's
   way or clips a raider sprite.
+
+  *Step 7 notes:* `VanArmour` (VanLook/Armour) fills five slots per side (low_front, low_mid, pillar, top, tail) that clear every window, the side door and the rear arches, merged into four meshes (plates on the hull shader in plate_mode, rebar, signs, glass). Outside window grilles were skipped: the side windows and rear panes already carry gameplay bars that raiders break and the weld kit repairs, so cosmetic bars would read as that. Chained tyres live on the cab sides from step 6. The van's flank sits in deep shadow in the street shots (the armour only shows brightened): owed to the lighting review in step 20.
 
 - [ ] 8. **Roof.** Roof rack of seeded junk: spare tyres, jerry cans, crates,
   tarp bundles, antennas, a satellite dish, a scrap wind turbine that spins
