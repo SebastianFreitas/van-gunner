@@ -312,7 +312,7 @@ thinking"; add a lens when a step discovers one.
 - [x] 12. **The generator** (today's fuse-box vital): big pass on the kit,
   staged damage wired. Keep node name, `vital_id` and AttackMarker.
 
-- [ ] 13. **The relay rack** (today's cab-relay vital). Same rules.
+- [x] 13. **The relay rack** (today's cab-relay vital). Same rules.
 
 - [ ] 14. **The welding bench** (today's bench vital and `CraftingTable`
   interaction). Same rules; the bench panel still opens.
