@@ -464,6 +464,15 @@ playing?" Repeat a part (D-n b) if the owner wants another round.
   and `run_hidden` returns no output on a timeout: give any such test
   `--quit-after` and `--log-file`, or test through the smoke shots.
 
+### Steps 5 and 6 questions (owner, 2026-09-26)
+
+- **Headlights: real.** Two mask-1 spotlights lighting the road ahead,
+  inside the dark budget, under the light-pairing rule.
+- **Cab interior: seats, dash, steering wheel**, dim, with a seat kept free
+  for a later pixel-sprite driver.
+- **Stance: war-rig.** Oversized back wheels, chained spare tyres on the
+  sides, 4 to 6 wheels seeded.
+
 ### Step 4 notes (hull)
 
 - `VanHull` (`scripts/van/look/van_hull.gd`, node `VanLook/Hull`) builds

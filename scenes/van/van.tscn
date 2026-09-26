@@ -29,6 +29,7 @@
 [ext_resource type="PackedScene" uid="uid://djiqi7g12i72i" path="res://scenes/ui/run_hud.tscn" id="49"]
 [ext_resource type="Script" path="res://scripts/van/look/van_look.gd" id="50"]
 [ext_resource type="Script" path="res://scripts/van/look/van_hull.gd" id="51"]
+[ext_resource type="Script" path="res://scripts/van/look/van_cab.gd" id="52"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -288,6 +289,9 @@ script = ExtResource("50")
 
 [node name="Hull" type="Node3D" parent="TravelPath/VanFollow/VanRig/VanLook" unique_id=2100462921]
 script = ExtResource("51")
+
+[node name="Cab" type="Node3D" parent="TravelPath/VanFollow/VanRig/VanLook" unique_id=2100462922]
+script = ExtResource("52")
 
 [node name="Systems" type="Node" parent="." unique_id=928478009]
 
