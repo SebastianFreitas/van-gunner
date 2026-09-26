@@ -38,6 +38,7 @@
 [ext_resource type="Script" path="res://scripts/van/look/van_relay_rack.gd" id="58"]
 [ext_resource type="Script" path="res://scripts/van/look/van_welding_bench.gd" id="59"]
 [ext_resource type="Script" path="res://scripts/van/look/van_scrap_hopper.gd" id="60"]
+[ext_resource type="Script" path="res://scripts/van/look/van_pc_rig.gd" id="61"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -202,6 +203,10 @@ vital_id = &"cab_relay"
 
 [node name="RequestBoard" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1411434472 instance=ExtResource("39")]
 transform = Transform3D(8.742278e-08, 0, -1, 0, 1, 0, 1, 0, 8.742278e-08, -1.62, 0.95, -4.552016)
+prompt = "Skill tree terminal"
+
+[node name="PcRig" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard" unique_id=902787692]
+script = ExtResource("61")
 
 [node name="ClassBoard" parent="TravelPath/VanFollow/VanRig/Interior/Props" instance=ExtResource("43")]
 transform = Transform3D(8.742278e-08, 0, -1, 0, 1, 0, 1, 0, 8.742278e-08, 1.62, 0.95, -4.552016)

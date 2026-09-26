@@ -325,7 +325,7 @@ thinking"; add a lens when a step discovers one.
   `scenes/van/loot_machine.tscn`), four vitals in all; the rules file was
   right and the earlier inventory missed the one inside the instanced scene.
 
-- [ ] 16. **PC rig, part 1: the skill-tree terminal.** Beige towers, CRTs,
+- [x] 16. **PC rig, part 1: the skill-tree terminal.** Beige towers, CRTs,
   keyboard, tangled cables, a boot flicker; E opens the skill tree (the
   same `open_skill_tree()` the request board calls today), the request
   board goes. Screen look: emissive, under the glow threshold, sick green
@@ -333,6 +333,11 @@ thinking"; add a lens when a step discovers one.
   Research: how the screen shows content without a bitmap texture on a 3D
   surface (shader scanlines and blocky glyph noise, a `Label3D` in a pixel
   font, or a `SubViewport`): put the options to the owner with a test shot.
+
+  Owner answer (2026-09-26): shader + Label3D. The terminal screen is a
+  procedural shader (scanlines, glass vignette, scrolling blocky glyph
+  noise, boot flicker); the stats CRT (step 17) is the same shader behind
+  readable Label3D text in a pixel-style font. Phosphor: sick green on both.
 
 - [ ] 17. **PC rig, part 2: the stats CRT.** Live stats the owner picked in
   step 10, refreshed on the signals that change them (never per frame).

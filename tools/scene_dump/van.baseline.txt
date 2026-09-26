@@ -7008,7 +7008,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard StaticBody3D script
   physics_material_override=null
   constant_linear_velocity=Vector3(0, 0, 0)
   constant_angular_velocity=Vector3(0, 0, 0)
-  prompt="Open schematic"
+  prompt="Skill tree terminal"
 NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard/Board MeshInstance3D
   unique_name_in_owner=false
   process_mode=0
@@ -7101,6 +7101,21 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard/Collision Collision
   shape=BoxShape3D#50{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.12, 0.72, 0.52)}
   disabled=false
   debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard/PcRig Node3D script=res://scripts/van/look/van_pc_rig.gd
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
 NODE TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard StaticBody3D script=res://scripts/interactions/class_board.gd
   unique_name_in_owner=false
   process_mode=0
