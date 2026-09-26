@@ -26,6 +26,36 @@ Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 
 - Owner (2026-09-26): do the real planning rounds before any fix phase; phase 1 (tooling) stays committed as `74f8364`. Planning loop resumes at step 2 (research wide) for these areas: the cab and front, the body holes and seams, the side windows from outside, the underside and wheels, the exterior look under light. Then the option map, then question rounds. Phases 2–6 below are a draft to rewrite from the decisions.
 
+## Option map (from `research/van-exterior-2-00-intake.md` and the lit shots)
+
+**A · The cab and front** (today: `van_cab.gd` stub, a flat box with two lamp discs)
+- A1 Cab-over flat face: one front plane on the body profile, windshield high with a framed reveal, grille low, bumper bar, headlights in housings at the corners, A-pillars and cab doors with their own windows. Precedent: Tatra T815 (the War Rig's cab), Isuzu NPR box trucks. Fits the van-local -Z front and the one-piece front wall.
+- A2 Bonneted hood: hood ahead of the windshield, fenders, the current stub's direction. Precedent: Ford E-series, Mad Max 2015 Magnum Opus. Longer van, more geometry ahead of the profile.
+- A3 Armoured snout: A1 plus cage bars over the windshield and a plough/cowcatcher on the bumper. Precedent: War Rig, Crossout cabins.
+- A4 Patch the stub only: close its holes, keep its shape.
+
+**B · Holes and seams** (today: hull skin, roof, front wall, cab back, rear face built separately)
+- B1 Profile-sampled patches: corner caps, skirts and sills that take their outline from `VanBodyProfile`, closing each audited gap where it is.
+- B2 One closed shell: rebuild hull + roof + cab back + rear face as a single mesh from `section_points`, seams as dark lines and bevels. Precedent: low-poly armoured SUV packs. Changes the scene dump (`--bless`).
+- B3 Armour over the seams: bolt-on plates from `van_armour.gd` placed over every joint so gaps read as overlap. Precedent: War Rig plating.
+
+**C · Side windows from outside** (today: the interior pane is the only pane, seen from both sides)
+- C1 Exterior pane + frame: a second pane on layer 1 a few cm outside the interior one, dark tint, strong fresnel, no interior rim recipe, an outer frame ring and reveal. Precedent: GTA inner/outer vehicle glass. The interior stays untouched.
+- C2 Bars over glass: C1 plus welded bars or mesh outside, so the glass is mostly hidden. Precedent: War Rig, prison vans.
+- C3 Plated slit: the window boarded from outside with a slit; the interior view unchanged, the outside reads as armour.
+
+**D · Underside and wheels** (today: the passenger rear wheel floats clear of the sill, no frame or bumper)
+- D1 Chassis kit: arches cut into the sill with a lip, wheels tucked to the arch, frame rails, fuel tank, rear bumper with underride bar, side steps. Precedent: any box truck.
+- D2 Skirts: side armour skirts down to the hubs hiding the underside, arches only. Precedent: War Rig side plating.
+- D3 Leave for a later plan.
+
+**E · The exterior read at night** (today: the unlit shots are near black by budget)
+- E1 Keep the budget; let real sources do the work: headlights lighting the road ahead, tail and marker lamps glowing, a wet sheen on the skin inside the roughness bounds.
+- E2 Raise the `*-outside` budget a step so the skin reads.
+- E3 Inspection only: the exterior stays dark in play; `floodlight` is how it gets audited.
+
+**F · Order** (forced): audit first then fix per area (D2), or fix the cab first since it is the largest visible gap, audit the rest after.
+
 ## Decisions
 
 - **D1 · Debug light.** Both: `torch` (SpotLight3D on the player camera, rides along in `ghost`) and `floodlight` (four work lights around the van, whole exterior lit).
