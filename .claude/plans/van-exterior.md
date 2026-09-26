@@ -21,7 +21,7 @@ Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 
 | # | Phase | Kind | Rests on | Status |
 |---|---|---|---|---|
-| P0 | Audit + shots views | research/code | D1 | todo |
+| P0 | Audit + shots views | research/code | D1 | done 1a4b8a9 |
 | P1 | Profile API in VanSideWall | code | D2 | todo |
 | P2 | Front end as one VanFrontWall | code | D1 | todo |
 | P3 | Side walls conform to bow | code | D1 | todo |
