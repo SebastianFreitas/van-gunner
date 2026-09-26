@@ -14,10 +14,15 @@ const OUTER_BAR_THICK := 0.03 ## outer frame bar depth (x)
 const INNER_FRAME_THICK := 0.04
 const PROUD := 0.01
 
+const PASS_GROUP := &"gun_port_leaf"  ## colliders a shot may pass through when it crosses an open port's slot
+const PORT_GROUP := &"gun_ports"
+
 var _plate: Node3D            ## pivot holding the plate + handle; slides along +Z to open
 var _open := false
 var _tween: Tween
 var _layer := 2                ## render layer _box assigns before add_child; 1 while building outer parts
+var _slot_y := 0.0             ## local y of the slot centre, set in setup
+var _interact: StaticBody3D    ## layer-2 hit target that toggles this port
 
 
 func setup(wall_sign: float, walls: VanSideWall, leaf_mid_y: float, leaf_x_ref: float) -> void:
@@ -33,6 +38,36 @@ func setup(wall_sign: float, walls: VanSideWall, leaf_mid_y: float, leaf_x_ref: 
 
 	_build_inner(inner_x, ly, wall_sign, steel, weld, rust, slot)
 	_build_outer(outer_x, ly, wall_sign, steel, rust, slot)
+
+	_slot_y = ly
+	add_to_group(PORT_GROUP)
+	_build_interact(sx, ly, wall_sign)
+
+	var leaf := get_parent()
+	if leaf:
+		for leaf_part_name in ["Blocker", "Interact"]:
+			var leaf_part := leaf.get_node_or_null(leaf_part_name)
+			if leaf_part:
+				leaf_part.add_to_group(PASS_GROUP)
+
+
+## Builds the layer-2 hit target the player's interact ray picks before the leaf's own box.
+func _build_interact(sx: float, ly: float, wall_sign: float) -> void:
+	_interact = StaticBody3D.new()
+	_interact.name = "PortInteract"
+	_interact.set_script(preload("res://scripts/van/van_gun_port_interact.gd"))
+	_interact.collision_layer = 2
+	_interact.collision_mask = 0
+	_interact.position = Vector3(sx - wall_sign * 0.09, ly, PORT_Z)
+
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(0.18, 2.0 * SLOT_HALF_Y + 0.2, 2.0 * SLOT_HALF_Z + 0.2)
+	shape.shape = box
+	_interact.add_child(shape)
+
+	add_child(_interact)
+	_interact.add_to_group(PASS_GROUP)
 
 
 func _build_inner(
@@ -125,6 +160,26 @@ func set_open(open: bool) -> void:
 
 func is_open() -> bool:
 	return _open
+
+
+func toggle() -> void:
+	set_open(not _open)
+
+
+func get_port_prompt() -> String:
+	return "E  CLOSE PORT" if _open else "E  OPEN PORT"
+
+
+## True when a shot at collider/point should pass through this port's open slot instead of hitting it.
+func passes_shot(collider: Object, point: Vector3) -> bool:
+	if not _open:
+		return false
+	if collider == null or not (collider is Node) or not (collider as Node).is_in_group(PASS_GROUP):
+		return false
+	if collider != _interact and (collider as Node).get_parent() != get_parent():
+		return false
+	var p := to_local(point)
+	return absf(p.y - _slot_y) <= SLOT_HALF_Y and absf(p.z - PORT_Z) <= SLOT_HALF_Z
 
 
 func _box(parent: Node3D, part_name: String, mat: Material, pos: Vector3, size: Vector3) -> MeshInstance3D:

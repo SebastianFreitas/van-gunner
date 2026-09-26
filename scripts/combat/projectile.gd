@@ -142,17 +142,38 @@ func _physics_process(delta: float) -> void:
 	_resolve_hit(collider)
 
 
+const _MAX_PORT_PASSES := 3
+
+
 func _sweep_for_hit(from: Vector3, to: Vector3) -> Dictionary:
 	var space_state := get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(from, to, _collision_mask)
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
+	var excluded: Array[RID] = []
 	if owner_rid.is_valid():
-		query.exclude = [owner_rid]
-	var result := space_state.intersect_ray(query)
-	if result.is_empty():
-		return {}
-	return result
+		excluded.append(owner_rid)
+	for _i in range(_MAX_PORT_PASSES + 1):
+		query.exclude = excluded
+		var result := space_state.intersect_ray(query)
+		if result.is_empty():
+			return {}
+		if _passes_gun_port(result.collider, result.position):
+			excluded.append((result.collider as CollisionObject3D).get_rid())
+			continue
+		return result
+	return {}
+
+
+## True when a shot at collider/point should pass through an open gun port's slot instead of
+## stopping on it. Duck-typed against any node in the gun_port_leaf group; no VanGunPort reference.
+func _passes_gun_port(collider: Object, point: Vector3) -> bool:
+	if not (collider is Node) or not (collider as Node).is_in_group(&"gun_port_leaf"):
+		return false
+	for port in get_tree().get_nodes_in_group(&"gun_ports"):
+		if port.has_method(&"passes_shot") and port.passes_shot(collider, point):
+			return true
+	return false
 
 
 ## Bullets only bounce off scenery. Explosive Rounds detonate on first contact instead.
