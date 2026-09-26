@@ -272,6 +272,8 @@ thinking"; add a lens when a step discovers one.
   piece every van gets (so every roll is recognisably "the van")? Anything
   alive up there (the redneck chickens-in-a-cage idea), or no?
 
+  *Step 8 answers (owner, 2026-09-26):* seeded roof junk is spare tyres, jerry cans, crates, tarp bundles, antennas and a satellite dish (no wind turbine, no smoke stacks, no gun silhouette). Signature piece on every van: a live roof spotlight. Nothing alive up there.
+
 - [ ] 9. **Paint and identity.** The seeded paint scheme across hull, cab
   and plates; the side name or number; primer patches; kill tallies or
   hand-painted marks. Then the first variation check: `--van-seeds 3` side
