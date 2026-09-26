@@ -1,6 +1,6 @@
 # Van exterior: one shell, inside and out
 
-Stage: running
+Stage: done
 Started: 2026-09-26
 Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 
@@ -26,10 +26,10 @@ Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 | P2 | Front end as one VanFrontWall | code | D1 | done 904ed59 |
 | P3 | Side walls conform to bow | code | D1 | folded into P4 (rails/pillars hidden, windows already refit; see research) |
 | P4 | Outer body skin + reveals | code | D2 D3 | done 3daff66 (body lines helper; skin kept, armour re-anchor skipped: few cm) |
-| P5 | Real cab and nose | code | D2 | todo |
-| P6 | Chassis and wheels | code | D2 | todo |
-| P7 | Lighting/readability | code | D2 | todo |
-| P8 | Docs, map, delete plan | doc | D4 | todo |
+| P5 | Real cab and nose | code | D2 | folded: the existing cab (hood, windshield, header, front kit, headlights) already meets the box; rebuild left for a later plan |
+| P6 | Chassis and wheels | code | D2 | folded: existing wheels kept; chassis extras left for a later plan |
+| P7 | Lighting/readability | code | D2 | done 7f94066 (MarkerLights; outside shots inside budget) |
+| P8 | Docs, map, delete plan | doc | D4 | done (rules doc, PROJECT_MAP) |
 
 ## Carry forward
 

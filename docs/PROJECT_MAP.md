@@ -272,7 +272,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-272 GDScript files, 40386 lines.
+275 GDScript files, 41063 lines.
 
 ### `scenes/corridor/`
 
@@ -401,7 +401,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `cab_door.gd` | — | 185 | Decorative cab-facing door at the front partition. |
+| `cab_door.gd` | — | 198 | Cab door leaf in the front wall's doorway (x ±0.775, y 0..2.30): a recessed panel with a barred pass-through window into the cab. |
 | `class_board.gd` | — | 21 | Wall board where the run's class is picked. |
 | `crafting_table.gd` | `CraftingTable` | 10 | Interactable crafting table in the van; E opens the bench screen. |
 | `interactable.gd` | `Interactable` | 14 | Base class for world objects the player can interact with. |
@@ -589,7 +589,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). |
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. |
-| `front_partition.gd` | — | 101 | Front cargo partition: wall panels flanking the decorative cab door. |
 | `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
 | `rear_doors.gd` | — | 400 | Truck-style rear double doors. |
@@ -600,11 +599,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. |
 | `side_windows.gd` | — | 334 | Side cargo windows — top-hinged sashes that tip vertically outward. |
 | `van.gd` | — | 398 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
+| `van_body_profile.gd` | `VanBodyProfile` | 193 | One cross-section for the whole van body: the inner liner outline (floor, bowed sides, roof vault) and an outer skin offset from it, so inside and outside piec… |
 | `van_bulkhead.gd` | `VanBulkhead` | 202 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_bulkhead_mesh.gd` | — | 225 | Builds the bulkhead's frame posts, headers, panels and diagonal mesh netting. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_driver_talk.gd` | — | 158 | The driver-talk panel: open/close, option refresh, and boost/slow shout handling. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
+| `van_front_wall.gd` | `VanFrontWall` | 206 | The cargo room's cab-end wall as one slab cut from VanBodyProfile's section, with a doorway notch that the CabDoor leaf fills, so its edges meet the bowed wall… |
 | `van_gun_port.gd` | `VanGunPort` | 198 | A slot gun port on a side door leaf: welded frame and a steel plate sliding in a track, seen from inside and outside. |
 | `van_gun_port_interact.gd` | — | 16 | Layer-2 hit target in front of a side door's gun port; E slides the port's plate open or shut. |
 | `van_hud.gd` | — | 183 | Combat HUD readouts: ammo, health, waves, prompts, item toasts, stop toasts. |
@@ -634,9 +635,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_front_kit.gd` | — | 152 | Builds the van's seeded front kit (bumper, ram, windshield cage, lamp cages) onto a VanCab. |
 | `van_generator.gd` | `VanGenerator` | 117 | The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp… |
 | `van_generator_parts.gd` | — | 184 | Builds the generator set's welded skid, oil pan, radiator, tank, manifold, control gantry, junction box, trouble lamp and rust patches; the core script keeps t… |
-| `van_hull.gd` | `VanHull` | 201 | The van's outer skin: roof, sides, rear face and sills a few cm outside the liners, painted from the look seed. |
+| `van_hull.gd` | `VanHull` | 210 | The van's outer skin: roof, sides, rear face and sills a few cm outside the liners, painted from the look seed. |
+| `van_hull_lines.gd` | — | 194 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
 | `van_inner_shell.gd` | `VanInnerShell` | 258 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
 | `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |
+| `van_marker_lights.gd` | — | 127 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
 | `van_markings.gd` | `VanMarkings` | 73 | The van's seeded painted identity: a stencil name on both sides, a number on the cab doors and kill tallies, as exterior-only decals. |
 | `van_paint_palette.gd` | `VanPaintPalette` | 78 | Seeded paint schemes for the war rig's exterior shader: base, accent, primer and lettering. |
 | `van_pc_rig.gd` | `VanPcRig` | 65 | The request board dressed as a scrap PC rig (plank desk on crates, towers, three CRTs, one on crt_screen.gdshader, keyboard, clutter, a desk lamp and a PowerPo… |
@@ -673,7 +676,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `smoke_driver.gd` | — | 372 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 158 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
-| `smoke_shots.gd` | — | 137 | Screenshots for tools/smoke.py --shots. |
+| `smoke_shots.gd` | — | 173 | Screenshots for tools/smoke.py --shots. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 
 ## Scenes
@@ -714,7 +717,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/loot_machine.tscn` | 9 | StaticBody3D |
 | `scenes/van/request_board.tscn` | 4 | StaticBody3D |
-| `scenes/van/van.tscn` | 73 | Node3D |
+| `scenes/van/van.tscn` | 70 | Node3D |
 | `scenes/van/van_breach_points.tscn` | 32 | Node3D |
 | `scenes/van/van_bulkhead.tscn` | 1 | StaticBody3D |
 | `scenes/van/van_ceiling.tscn` | 1 | Node3D |

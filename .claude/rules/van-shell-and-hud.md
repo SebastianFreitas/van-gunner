@@ -18,7 +18,7 @@ paths:
 
 ## Van scene files
 
-`van.tscn` instances three sub-scenes at their old paths: `Interior/Shell` is `scenes/van/van_shell.tscn`, `EnemyContainer/BreachController` is `scenes/van/van_breach_points.tscn`, and `HUD` is `scenes/ui/run_hud.tscn`. Node paths from the van root are unchanged. The HUD's 25 unique-named nodes are owned by `run_hud.tscn`, so `van.gd` reaches them as `$HUD/%Name`; a bare `%Name` from the van root returns null. The HUD buttons' `pressed` connections to the van root live in `van.tscn`, since their target is outside the HUD scene. The shell, front partition and cab door share one wall material, `scenes/van/van_wall_material.tres`; `cab_door.gd`, `front_partition.gd` and `rear_doors.gd` read it through `walls.wall_material`. Keep it one shared resource. `py -3 tools/scene_dump.py` proves a van scene edit leaves the built tree unchanged.
+`van.tscn` instances three sub-scenes at their old paths: `Interior/Shell` is `scenes/van/van_shell.tscn`, `EnemyContainer/BreachController` is `scenes/van/van_breach_points.tscn`, and `HUD` is `scenes/ui/run_hud.tscn`. Node paths from the van root are unchanged. The HUD's 25 unique-named nodes are owned by `run_hud.tscn`, so `van.gd` reaches them as `$HUD/%Name`; a bare `%Name` from the van root returns null. The HUD buttons' `pressed` connections to the van root live in `van.tscn`, since their target is outside the HUD scene. The shell, front wall and cab door share one wall material, `scenes/van/van_wall_material.tres`; `cab_door.gd`, `van_front_wall.gd` and `rear_doors.gd` read it through `walls.wall_material` (the front wall duplicates it to set `wall_size_m`). Keep it one shared resource. `py -3 tools/scene_dump.py` proves a van scene edit leaves the built tree unchanged.
 
 ## Mouse capture
 
@@ -55,6 +55,12 @@ Talking frees the cursor (`has_modal_free_cursor`) so options highlight on hover
 ## Van shell geometry
 
 `VanSideWall` exposes the bow profile (`wall_x_at`, `local_x_on_wall`) and the curved mesh builders (`build_curved_shell_mesh`, `build_curved_pane_from_poly`, `build_curved_frame_ring_mesh`) that doors, windows, iron crosses, bulkhead and hull use. The builders delegate to `van_side_wall_shell.gd`; the wall's own panel is `van_side_wall_panel.gd`. Keep those public names on `VanSideWall`.
+
+`VanBodyProfile` (`scripts/van/van_body_profile.gd`, RefCounted, built by `VanBodyProfile.from_interior(Interior)`) is the one cross-section inside and outside sample: `inner_x_at(y)`, `outer_x_at(y)` (+0.12 wall), `roof_y_at(x)`, `outer_roof_y_at(x)`, `section_points(steps, outer)` and `build_reveal_mesh`. It lives beside `VanSideWall` because that script is near the 400-line cap. Anything new that must meet the walls or the vault (a partition, a cab back, a skin) takes its outline from here, never from its own constants: the old front end was three slabs with their own insets and it deformed against the vault.
+
+The cab end is one piece, `Interior/FrontWall` (`VanFrontWall`): a slab triangulated from `section_points` with a doorway notch (x ±0.775, y 0..2.30), a `CollisionPolygon3D` from the same outline, and casings. `CabDoor` is a recessed barred leaf inside that notch. Change the outline only through the profile or the notch constants, so mesh and collision stay one shape.
+
+Outside, `VanLook/Hull` still pushes the liner out 6 cm for the skin; `van_hull_lines.gd` adds the body lines (rub rail, belt line, drip rail broken around every opening, bowed corner posts) at `inner_x_at(y) + 0.06`. `VanLook/MarkerLights` holds the clearance, tail and ID lamps: each light sits at its fixture on layer 1, with energies tuned against the `*-outside` budget in `art-style.md`.
 
 ## Render layers and light pairing
 
