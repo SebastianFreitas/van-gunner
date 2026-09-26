@@ -379,27 +379,31 @@ best three to five fixes, a before/after pair in the report. **Owner
 question at the start of each:** "anything you noticed on <part> while
 playing?" Repeat a part (D-n b) if the owner wants another round.
 
-- [ ] D1. Outer hull and paint.
-- [ ] D2. Cab and front.
-- [ ] D3. Wheels and underside.
-- [ ] D4. Armour kit.
-- [ ] D5. Roof.
+  *Phase D answers, batch 1-2 (owner, 2026-09-26):* the game never leaves the van, so the exterior (D1-D5) is skipped; hull front barely reads (round body with vertical fins), nothing is visible in the dark. Generator, relay rack, bench and hopper (D6-D9): ok but not great looking, sometimes clip through things, and not readable as machines.
+
+  *Phase D answers, batch 3-4 (owner, 2026-09-26):* PC rig/stats CRT (D10): needs more detail, more assets, more real. Cables/pipes/junk (D11): need logic (say where each one connects, from where to where, not random assets), too sparse and repetitive, clips through things. Gun port (D12): super tiny and at the wrong height. D13, D14 and E1 skipped. Darkness not raised.
+
+- [x] D1. Outer hull and paint. SKIPPED (owner, 2026-09-26): exterior is dark and rarely seen.
+- [x] D2. Cab and front. SKIPPED (owner, 2026-09-26): exterior is dark and rarely seen.
+- [x] D3. Wheels and underside. SKIPPED (owner, 2026-09-26): exterior is dark and rarely seen.
+- [x] D4. Armour kit. SKIPPED (owner, 2026-09-26): exterior is dark and rarely seen.
+- [x] D5. Roof. SKIPPED (owner, 2026-09-26): exterior is dark and rarely seen.
 - [ ] D6. The generator.
 - [ ] D7. The relay rack.
 - [ ] D8. The welding bench.
 - [ ] D9. The scrap hopper.
 - [ ] D10. The PC rig and stats CRT.
 - [ ] D11. Cables, pipes and junk.
-- [ ] D12. Shell inside, doors and the gun ports.
-- [ ] D13. **Whole-van variation pass:** `--van-seeds 6`; every roll must read
+- [ ] D12. (gun port enlarged and re-levelled in 10066aa; rest of shell: no complaints) Shell inside, doors and the gun ports.
+- [x] D13. SKIPPED (owner, 2026-09-26). **Whole-van variation pass:** `--van-seeds 6`; every roll must read
   as the same builder's van and none may look broken; tune kit weights.
-- [ ] D14. **Whole-van performance pass:** draw calls and frame time before
+- [x] D14. SKIPPED (owner, 2026-09-26). **Whole-van performance pass:** draw calls and frame time before
   and after the task (research how to measure headless: `Performance`
   monitors printed by a smoke hook), merge what is left unmerged.
 
 ### Phase E: sound
 
-- [ ] E1. **Van sounds.** Hum per running machine, stuttering when hurt,
+- [x] E1. SKIPPED (owner, 2026-09-26). **Van sounds.** Hum per running machine, stuttering when hurt,
   hiss and crackle on smoke and sparks, the hatch's clank, wheel and
   engine drone with speed. Rules: `.claude/rules/audio.md`.
   **Owner question:** sounds from the existing bank only, or new ones
