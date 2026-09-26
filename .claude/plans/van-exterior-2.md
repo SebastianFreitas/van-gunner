@@ -1,6 +1,6 @@
 # Van exterior, round two: light it, audit it, fix it
 
-Stage: running
+Stage: planning
 Started: 2026-09-26
 Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 
@@ -24,7 +24,7 @@ Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 
 ## Open items
 
-- none
+- Owner (2026-09-26): do the real planning rounds before any fix phase; phase 1 (tooling) stays committed as `74f8364`. Planning loop resumes at step 2 (research wide) for these areas: the cab and front, the body holes and seams, the side windows from outside, the underside and wheels, the exterior look under light. Then the option map, then question rounds. Phases 2–6 below are a draft to rewrite from the decisions.
 
 ## Decisions
 
