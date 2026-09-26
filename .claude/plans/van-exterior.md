@@ -22,7 +22,7 @@ Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 | # | Phase | Kind | Rests on | Status |
 |---|---|---|---|---|
 | P0 | Audit + shots views | research/code | D1 | done 1a4b8a9 |
-| P1 | Profile API in VanSideWall | code | D2 | todo |
+| P1 | Profile API (VanBodyProfile, not on VanSideWall: 383-line cap) | code | D2 | done f58e652 |
 | P2 | Front end as one VanFrontWall | code | D1 | todo |
 | P3 | Side walls conform to bow | code | D1 | todo |
 | P4 | Outer body skin + reveals | code | D2 D3 | todo |
