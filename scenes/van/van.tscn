@@ -30,6 +30,7 @@
 [ext_resource type="Script" path="res://scripts/van/look/van_look.gd" id="50"]
 [ext_resource type="Script" path="res://scripts/van/look/van_hull.gd" id="51"]
 [ext_resource type="Script" path="res://scripts/van/look/van_cab.gd" id="52"]
+[ext_resource type="Script" path="res://scripts/van/look/van_wheels.gd" id="53"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -292,6 +293,9 @@ script = ExtResource("51")
 
 [node name="Cab" type="Node3D" parent="TravelPath/VanFollow/VanRig/VanLook" unique_id=2100462922]
 script = ExtResource("52")
+
+[node name="Wheels" type="Node3D" parent="TravelPath/VanFollow/VanRig/VanLook" unique_id=2100462923]
+script = ExtResource("53")
 
 [node name="Systems" type="Node" parent="." unique_id=928478009]
 

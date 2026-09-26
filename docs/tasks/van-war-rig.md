@@ -241,7 +241,7 @@ thinking"; add a lens when a step discovers one.
   Research: `front_partition.gd`, `cab_door.gd`, what the player sees
   through the cage today (`01-idle-front`).
 
-- [ ] 6. **Wheels and underside.** Four (or six, seeded?) low-poly wheels
+- [x] 6. **Wheels and underside.** Four (or six, seeded?) low-poly wheels
   with chunky tread blocks, spinning with the live van speed, arches,
   mud flaps, chassis rails and a sump visible under the sills, side exhaust
   pipes. Motion lens: speed comes from `travel_controller.gd` (grep its
@@ -249,6 +249,8 @@ thinking"; add a lens when a step discovers one.
   `PathFollow3D`: wheels are visual only.
   **Owner question:** chained spare tyres on the sides and oversized
   back wheels (war-rig stance), or a plain van stance?
+
+  *Step 6 notes:* `VanWheels` (VanLook/Wheels) spins wheels from the van's measured motion (no travel_controller read). Chassis rails and sump skipped: the sills already reach y -0.25, below the road at -0.2, so nothing under them is visible. Rear wheels are capped at radius 0.58 so arches stay under the side-window sills (y 1.068); no axle sits in the side-door span. The wheels read as dark mass in the street shots: owed to the lighting review in step 20.
 
 - [ ] 7. **Armour kit.** Seeded welded plates, rebar cages, spikes, chained
   tyres, road-sign plates, a car door bolted on as a shield, window grilles
