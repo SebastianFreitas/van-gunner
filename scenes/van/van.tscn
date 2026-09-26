@@ -16,7 +16,7 @@
 [ext_resource type="Script" uid="uid://4ve311r5ttni" path="res://scripts/van/van_lighting.gd" id="21"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_bulkhead.tscn" id="26"]
 [ext_resource type="Script" uid="uid://ce2v7o3gjwovw" path="res://scripts/van/van_player_containment.gd" id="27"]
-[ext_resource type="Script" uid="uid://cg24f5srch27x" path="res://scripts/van/front_partition.gd" id="34"]
+[ext_resource type="Script" uid="uid://ctf8fhvymnqck" path="res://scripts/van/van_front_wall.gd" id="34"]
 [ext_resource type="PackedScene" path="res://scenes/van/loot_machine.tscn" id="35"]
 [ext_resource type="Script" uid="uid://bgxcer8818k7j" path="res://scripts/van/van_vital.gd" id="36"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_vital_dummy.tscn" id="37"]
@@ -65,12 +65,6 @@ glow_bloom = 0.03
 glow_blend_mode = 0
 glow_hdr_threshold = 1.1
 
-[sub_resource type="BoxMesh" id="FrontPanelMesh"]
-size = Vector3(1.6, 3.05, 0.2)
-
-[sub_resource type="BoxShape3D" id="FrontPanelShape"]
-size = Vector3(1.6, 3.05, 0.2)
-
 [sub_resource type="BoxMesh" id="DoorMesh"]
 size = Vector3(1.55, 2.6334717, 0.22)
 
@@ -114,26 +108,8 @@ script = ExtResource("27")
 
 [node name="Shell" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1503775347 instance=ExtResource("47")]
 
-[node name="FrontPartition" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=450567163]
+[node name="FrontWall" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=450567163]
 script = ExtResource("34")
-
-[node name="LeftPanel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=772039291]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 1.525, -4.65)
-material_override = ExtResource("46")
-mesh = SubResource("FrontPanelMesh")
-
-[node name="LeftCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=1411117773]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 1.525, -4.65)
-shape = SubResource("FrontPanelShape")
-
-[node name="RightPanel" type="MeshInstance3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=1743236534]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.525, -4.65)
-material_override = ExtResource("46")
-mesh = SubResource("FrontPanelMesh")
-
-[node name="RightCollision" type="CollisionShape3D" parent="TravelPath/VanFollow/VanRig/Interior/FrontPartition" unique_id=1748334617]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.525, -4.65)
-shape = SubResource("FrontPanelShape")
 
 [node name="CabDoor" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1014773238]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4.65)

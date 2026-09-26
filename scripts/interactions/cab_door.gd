@@ -1,148 +1,161 @@
 extends Interactable
 
-## Decorative cab-facing door at the front partition.
-## Looks like a side cargo door (same liner shader + dark trim) but does not open —
-## interaction talks to the driver / leaves the shop (same accelerate cooldown as Shift).
-## Mesh follows the vaulted hull.
+## Cab door leaf in the front wall's doorway (x ±0.775, y 0..2.30): a recessed panel with a barred pass-through window into the cab.
+## Interacting talks to the driver / leaves the stop.
 
-const PARTITION_Z := -4.65
-const DOOR_HALF_W := 0.775
-const DOOR_THICKNESS := 0.22
-const Y_MIN := 0.02
-const TRIM_INSET := 0.06
-const TRIM_DEPTH := 0.03
-const BELT_Y := 1.375
-const BELT_HALF_H := 0.025
-const LOWER_CREASE_Y := 0.55
-const LOWER_CREASE_HALF_H := 0.02
+const LEAF_HALF_W := 0.755
+const LEAF_BOTTOM := 0.02
+const LEAF_TOP := 2.28
+const LEAF_DEPTH := 0.08
+const LEAF_Z := 0.02            ## leaf centre, local; its front face sits at local z 0.06 (Interior z -4.59), 4 cm behind the wall face
+const SILL_Y := 1.35
+const STILE_W := 0.14
+const RAIL_H := 0.14
+const BAR_W := 0.03
+const BAR_COUNT := 3
+const DOORWAY_HALF_W := 0.775
+const DOORWAY_TOP := 2.30
+const WALL_DEPTH := 0.2
+const BUILT_PARTS: Array[StringName] = [
+	&"StileLeft", &"StileRight", &"TopRail", &"Glass", &"Bar0", &"Bar1", &"Bar2", &"KickPlate", &"Handle",
+]
 
 @onready var _mesh: MeshInstance3D = $Mesh
 @onready var _collision: CollisionShape3D = $Collision
 
 
 func _ready() -> void:
-	_fit_to_hull()
+	_build_leaf()
 
 
-func _fit_to_hull() -> void:
-	var shell := get_parent().get_node_or_null("Shell")
-	if shell == null:
-		return
-	var walls := shell.get_node_or_null("SideWalls") as VanSideWall
-	var ceiling := shell.get_node_or_null("Ceiling") as VanCeiling
+func _build_leaf() -> void:
+	var shell := get_parent().get_node_or_null(^"Shell")
+	var walls: VanSideWall = null
+	if shell != null:
+		walls = shell.get_node_or_null(^"SideWalls") as VanSideWall
 
-	position = Vector3(0.0, 0.0, PARTITION_Z)
+	var body_mat := _leaf_material(walls)
+	var trim_mat: Material
+	if shell != null:
+		trim_mat = _trim_material(shell)
+	else:
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.08, 0.09, 0.09, 1)
+		mat.metallic = 0.65
+		mat.roughness = 0.4
+		trim_mat = mat
 
-	var body_mat := _door_body_material(walls, ceiling)
-	var trim_mat := _trim_material(shell)
-	var y_peak := VanHullMesh.vault_y(ceiling, 0.0, 3.05, 0.38)
+	for part_name in BUILT_PARTS:
+		var node := get_node_or_null(NodePath(part_name))
+		if node:
+			node.free()
 
 	if _mesh:
-		_mesh.position = Vector3.ZERO
-		_mesh.mesh = VanHullMesh.build_vaulted_xy_slab(
-			walls, ceiling,
-			-DOOR_HALF_W, 1.0, Y_MIN, DOOR_THICKNESS, Vector3.ZERO,
-			0.0, 0.02, 14, 28,
-			PackedVector2Array(), Vector2.ZERO,
-			3.05, 0.38, 2.42,
-			false,
-			DOOR_HALF_W
-		)
+		var box := BoxMesh.new()
+		box.size = Vector3(LEAF_HALF_W * 2.0, SILL_Y - LEAF_BOTTOM, LEAF_DEPTH)
+		_mesh.mesh = box
+		_mesh.position = Vector3(0.0, (LEAF_BOTTOM + SILL_Y) * 0.5, LEAF_Z)
 		_mesh.material_override = body_mat
 		_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		VanLighting.retarget_layers(_mesh, VanLighting.LAYER_VAN_INTERIOR)
 
-	for child_name in ["FrameLeft", "FrameRight", "FrameBottom", "FrameTop", "BeltStrip", "LowerCrease"]:
-		_free_child(child_name)
+	_add_part(
+		&"StileLeft", Vector3(STILE_W, LEAF_TOP - SILL_Y, LEAF_DEPTH),
+		Vector3(-(LEAF_HALF_W - STILE_W * 0.5), (SILL_Y + LEAF_TOP) * 0.5, LEAF_Z),
+		body_mat
+	)
+	_add_part(
+		&"StileRight", Vector3(STILE_W, LEAF_TOP - SILL_Y, LEAF_DEPTH),
+		Vector3(LEAF_HALF_W - STILE_W * 0.5, (SILL_Y + LEAF_TOP) * 0.5, LEAF_Z),
+		body_mat
+	)
+	_add_part(
+		&"TopRail", Vector3(2.0 * (LEAF_HALF_W - STILE_W), RAIL_H, LEAF_DEPTH),
+		Vector3(0.0, LEAF_TOP - RAIL_H * 0.5, LEAF_Z),
+		body_mat
+	)
 
-	var frame_top := y_peak - 0.04
-	_add_vertical_trim("FrameLeft", trim_mat, -DOOR_HALF_W + TRIM_INSET * 0.5, Y_MIN + TRIM_INSET, frame_top)
-	_add_vertical_trim("FrameRight", trim_mat, DOOR_HALF_W - TRIM_INSET * 0.5, Y_MIN + TRIM_INSET, frame_top)
-	_add_horizontal_trim(
-		"FrameBottom", trim_mat,
-		Y_MIN + TRIM_INSET * 0.5, TRIM_INSET * 0.7,
-		DOOR_HALF_W - TRIM_INSET
+	var wx := LEAF_HALF_W - STILE_W
+	var window_top := LEAF_TOP - RAIL_H
+	var window_h := window_top - SILL_Y
+	var window_mid_y := (SILL_Y + window_top) * 0.5
+
+	_add_part(
+		&"Glass", Vector3(2.0 * wx, window_h, 0.01),
+		Vector3(0.0, window_mid_y, LEAF_Z),
+		_glass_material()
 	)
-	_add_horizontal_trim(
-		"FrameTop", trim_mat,
-		frame_top - TRIM_INSET * 0.35, TRIM_INSET * 0.7,
-		DOOR_HALF_W - TRIM_INSET
+
+	for i in range(BAR_COUNT):
+		var bar_x := -wx + 2.0 * wx * float(i + 1) / float(BAR_COUNT + 1)
+		_add_part(
+			StringName("Bar%d" % i), Vector3(BAR_W, window_h, 0.025),
+			Vector3(bar_x, window_mid_y, LEAF_Z + 0.02),
+			trim_mat
+		)
+
+	_add_part(
+		&"KickPlate", Vector3(2.0 * LEAF_HALF_W - 0.08, 0.26, 0.012),
+		Vector3(0.0, LEAF_BOTTOM + 0.17, LEAF_Z + LEAF_DEPTH * 0.5 + 0.006),
+		trim_mat
 	)
-	_add_horizontal_trim("BeltStrip", trim_mat, BELT_Y, BELT_HALF_H * 2.0, DOOR_HALF_W - TRIM_INSET * 1.5)
-	_add_horizontal_trim(
-		"LowerCrease", trim_mat, LOWER_CREASE_Y, LOWER_CREASE_HALF_H * 2.0,
-		DOOR_HALF_W - TRIM_INSET * 1.5
+	_add_part(
+		&"Handle", Vector3(0.05, 0.16, 0.04),
+		Vector3(LEAF_HALF_W - 0.17, 1.05, LEAF_Z + LEAF_DEPTH * 0.5 + 0.02),
+		trim_mat
 	)
 
 	if _collision:
 		var shape := BoxShape3D.new()
-		shape.size = Vector3(DOOR_HALF_W * 2.0, y_peak - Y_MIN, DOOR_THICKNESS)
+		shape.size = Vector3(DOORWAY_HALF_W * 2.0, DOORWAY_TOP, WALL_DEPTH)
 		_collision.shape = shape
-		_collision.position = Vector3(0.0, (Y_MIN + y_peak) * 0.5, 0.0)
+		_collision.position = Vector3(0.0, DOORWAY_TOP * 0.5, 0.0)
 
 
-func _add_vertical_trim(node_name: String, mat: Material, x: float, y0: float, y1: float) -> void:
-	var height := absf(y1 - y0)
-	var box := BoxMesh.new()
-	box.size = Vector3(TRIM_INSET, height, TRIM_DEPTH)
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = box
-	mi.position = Vector3(x, (y0 + y1) * 0.5, DOOR_THICKNESS * 0.5 + TRIM_DEPTH * 0.5)
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mi)
-
-
-func _add_horizontal_trim(
-	node_name: String,
-	mat: Material,
-	y_center: float,
-	height: float,
-	half_w: float
-) -> void:
-	var box := BoxMesh.new()
-	box.size = Vector3(half_w * 2.0, height, TRIM_DEPTH)
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = box
-	mi.position = Vector3(0.0, y_center, DOOR_THICKNESS * 0.5 + TRIM_DEPTH * 0.5)
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mi)
-
-
-func _free_child(node_name: String) -> void:
-	var node := get_node_or_null(node_name)
-	if node:
-		node.free()
-
-
-func _door_body_material(walls: VanSideWall, ceiling: VanCeiling) -> Material:
+func _leaf_material(walls: VanSideWall) -> Material:
 	# Same cargo-liner shader the side doors use.
 	var source: Material = null
 	if walls != null and walls.wall_material != null:
 		source = walls.wall_material
 	else:
-		var side_doors := get_parent().get_node_or_null("Shell/SideDoors")
+		var side_doors := get_parent().get_node_or_null(^"Shell/SideDoors")
 		if side_doors:
-			var side_body := side_doors.get_node_or_null("Left/Panel/Body")
+			var side_body := side_doors.get_node_or_null(^"Left/Panel/Body")
 			if side_body and side_body.get("material") != null:
 				source = side_body.get("material") as Material
 	if source == null and _mesh != null:
 		source = _mesh.material_override
 
-	var y_peak := VanHullMesh.vault_y(ceiling, 0.0, 3.05, 0.38)
-	var door_height := y_peak - Y_MIN
 	if source is ShaderMaterial:
 		var mat := (source as ShaderMaterial).duplicate()
-		mat.set_shader_parameter("wall_size_m", Vector2(DOOR_HALF_W * 2.0, door_height))
+		mat.set_shader_parameter("wall_size_m", Vector2(LEAF_HALF_W * 2.0, LEAF_TOP - LEAF_BOTTOM))
 		mat.set_shader_parameter("panel_spacing_m", 0.85)
 		mat.set_shader_parameter("rib_spacing_m", 0.28)
-		mat.set_shader_parameter("kick_height_m", 0.32)
-		mat.set_shader_parameter("belt_y_m", 1.42)
-		mat.set_shader_parameter("waist_y_m", 2.05)
+		mat.set_shader_parameter("kick_height_m", 0.3)
 		return mat
 	return source
+
+
+func _glass_material() -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.03, 0.035, 0.035, 0.45)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.roughness = 0.08
+	mat.metallic = 0.3
+	return mat
+
+
+func _add_part(node_name: StringName, size: Vector3, pos: Vector3, mat: Material) -> void:
+	var box := BoxMesh.new()
+	box.size = size
+	var mi := MeshInstance3D.new()
+	mi.name = node_name
+	mi.mesh = box
+	mi.position = pos
+	mi.material_override = mat
+	mi.layers = VanLighting.LAYER_VAN_INTERIOR
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
 
 
 func _trim_material(shell: Node) -> Material:
