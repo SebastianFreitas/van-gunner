@@ -6,6 +6,7 @@ extends Node3D
 
 const HULL_PATH := ^"../Hull"
 const VanCabParts := preload("res://scripts/van/look/van_cab_parts.gd")
+const _FrontKit := preload("res://scripts/van/look/van_front_kit.gd")
 
 const CAB_BACK_Z := -4.72
 ## Windshield foot.
@@ -47,6 +48,7 @@ func rebuild_look(look: VanLook) -> void:
 	parts.build_interior()
 	parts.build_mirrors(hull.material, rng)
 	_build_headlights(rng)
+	_FrontKit.new(self).build(hull.material, look.rng_for(&"front_kit"))
 
 
 func _build_body(mat: Material, rng: RandomNumberGenerator) -> void:

@@ -229,7 +229,7 @@ thinking"; add a lens when a step discovers one.
   the overhead shot: the roof now hides the interior from the `*-outside`
   view; the shot targets may need a new row (say so, don't hide it).
 
-- [ ] 5. **Cab and front.** Hood with the engine bulge, grille behind a
+- [x] 5. **Cab and front.** Hood with the engine bulge, grille behind a
   cow-catcher or ram, bumper, taped or caged headlights, windshield behind
   a welded grille, cab doors, mirrors, the cab roof. Seeded from a
   front kit (3 to 4 ram shapes, 2 to 3 grille cages).
