@@ -360,6 +360,10 @@ thinking"; add a lens when a step discovers one.
   **Owner questions:** one port per door or per leaf; sliding or hinged;
   its height (standing shot or crouch)?
 
+  Owner answer (2026-09-26): one port per door (on the leaf toward the
+  cab), a sliding steel plate in a welded track, centred at standing eye
+  height (~1.5 m).
+
 - [ ] 21. **Gun port, part 2: the mechanic.** E opens and closes the hatch
   (a layer-2 interact target like `side_door_interact.gd`); open, the
   player's projectiles pass through the slot (collision gap or an
