@@ -89,6 +89,38 @@ def godot_missing(root: str) -> bool:
         return False
 
 
+def active_plan(root):
+    """The active plan's `PLAN:` line, or None when .claude/plans/ACTIVE is absent."""
+    try:
+        path = os.path.join(root, ".claude", "plans", "ACTIVE")
+        if not os.path.isfile(path):
+            return None
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+            text = f.read()
+        name = None
+        for line in text.splitlines():
+            if line.strip():
+                name = line.strip()
+                break
+        if not name:
+            return None
+        plan = os.path.join(root, ".claude", "plans", name + ".md")
+        if not os.path.isfile(plan):
+            stage = "missing file"
+        else:
+            stage = "unknown"
+            with open(plan, "r", encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    if line.startswith("Stage:"):
+                        stage = line[len("Stage:"):].strip()
+                        break
+        return (f"PLAN: {name} · {stage} (.claude/plans/{name}.md; "
+                "procedure .claude/skills/plan/SKILL.md). A bare 'go' "
+                "continues it.")
+    except Exception:
+        return None
+
+
 def dirty_paths(dirty):
     paths = []
     for line in dirty.splitlines():
@@ -149,6 +181,9 @@ def main():
             "unset, no godot on PATH). tools/check.py and tools/smoke.py "
             "cannot run: say so in the report. Cloud: the environment's "
             "setup script must run `bash tools/cloud_setup.sh`.")
+    plan_line = active_plan(root)
+    if plan_line:
+        lines.append(plan_line)
     lines.append("")
 
     hand_at = None

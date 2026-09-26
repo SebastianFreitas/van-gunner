@@ -30,7 +30,7 @@ paths:
 
 `.claude/settings.json` runs every hook through `.claude/hooks/run.sh` (the `py` launcher on Windows, where `python3` is often the Store stub). Hooks never fail on their own errors (any exception exits 0).
 
-- `session-start.py`: the mode and its `.claude/modes/<mode>.md`, a `NO GODOT` line, the dirty paths, the handoff; in shared mode it writes the dirty paths to `<session dir>/foreign-paths.json`.
+- `session-start.py`: the mode and its `.claude/modes/<mode>.md`, a `NO GODOT` line, the `PLAN: <name> · <stage>` line when `.claude/plans/ACTIVE` exists, the dirty paths, the handoff; in shared mode it writes the dirty paths to `<session dir>/foreign-paths.json`.
 - `git-guard.py`: blanket git, pushes, merges into main, branch deletion, worktree removal, checkout or switch in the main checkout, and staging a foreign path.
 - `file-guard.py`: whole reads over 300 lines, binaries and caches, edits of generated files, main-session multi-line source edits (skipped when the transcript's model is Fable), renumbered header ids.
 - `gd-lint.py`: lints the lines an edit wrote, plus whole-file checks; `py -3 .claude/hooks/gd-lint.py --scan` lints the tree.

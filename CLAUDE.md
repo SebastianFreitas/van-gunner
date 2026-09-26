@@ -40,6 +40,10 @@ If the owner replies with changes, do another round on the same branch and end w
 
 When the user points you at a file in `docs/tasks/`, that file is the task. Re-read it after every compaction (the SessionStart hook reminds you), work its steps in order, and tick its checklist as each step's commit lands. The task's last commit deletes the file.
 
+## Active plan
+
+A many-phase plan lives in `.claude/plans/<name>.md` (from `TEMPLATE.md`), run by the owner-invoked `/plan` skill (`.claude/skills/plan/SKILL.md`). When the SessionStart hook prints `PLAN: <name> · <stage>`, read the skill and the plan before anything else: a bare "go" continues it (planning rounds while `planning`, the next `todo` phase while `running`). Planning asks every question up front; running asks phase questions only at a phase's start. Never use the built-in plan mode (Shift+Tab) for this.
+
 ## Main session role
 
 The main session explores through `Explore`, designs the change, writes the spec, reviews the diff the implementer returns, and writes the follow-up spec if anything needs fixing.
