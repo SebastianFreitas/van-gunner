@@ -264,7 +264,7 @@ thinking"; add a lens when a step discovers one.
 
   *Step 7 notes:* `VanArmour` (VanLook/Armour) fills five slots per side (low_front, low_mid, pillar, top, tail) that clear every window, the side door and the rear arches, merged into four meshes (plates on the hull shader in plate_mode, rebar, signs, glass). Outside window grilles were skipped: the side windows and rear panes already carry gameplay bars that raiders break and the weld kit repairs, so cosmetic bars would read as that. Chained tyres live on the cab sides from step 6. The van's flank sits in deep shadow in the street shots (the armour only shows brightened): owed to the lighting review in step 20.
 
-- [ ] 8. **Roof.** Roof rack of seeded junk: spare tyres, jerry cans, crates,
+- [x] 8. **Roof.** Roof rack of seeded junk: spare tyres, jerry cans, crates,
   tarp bundles, antennas, a satellite dish, a scrap wind turbine that spins
   with speed, exhaust stacks that puff smoke, a roof spotlight (a real
   light source, or dead), a mounted-gun silhouette (decoration only).

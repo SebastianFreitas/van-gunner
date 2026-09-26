@@ -3,6 +3,7 @@ extends Node3D
 ## The van's roof rack, antennas, dish and the always-on roof spotlight; the rack's junk is filled by a helper.
 
 const HULL_PATH := ^"../Hull"
+const _Junk := preload("res://scripts/van/look/van_roof_junk.gd")
 
 ## Cargo roof vault profile, VanLook-local: roof_y(x) = 3.11 + 0.38 * (1 - (x / 2.55)^2).
 const RACK_Y := 3.66 ## Top of the rack rails; junk (later) sits on it.
@@ -41,6 +42,7 @@ func rebuild_look(look: VanLook) -> void:
 	_build_antennas(rack_material, rng)
 	_build_dish(hull_mat, rng)
 	_build_spotlight(hull_mat, rng)
+	_Junk.new(self).build(look.rng_for(&"roof_junk"))
 
 
 static func roof_y(x: float) -> float:
@@ -163,6 +165,11 @@ func add_bar(bar_name: String, from: Vector3, to: Vector3, thickness: float, mat
 	var bar := _add_mesh(bar_name, mesh, mat, (from + to) * 0.5)
 	bar.basis = Basis.looking_at(dir, up)
 	return bar
+
+
+## Public wrapper so helpers beside this script can add meshes without reaching into a private method.
+func add_mesh(mesh_name: String, mesh: Mesh, mat: Material, pos: Vector3) -> MeshInstance3D:
+	return _add_mesh(mesh_name, mesh, mat, pos)
 
 
 func _add_mesh(mesh_name: String, mesh: Mesh, mat: Material, pos: Vector3) -> MeshInstance3D:
