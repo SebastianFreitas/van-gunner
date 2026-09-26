@@ -281,7 +281,7 @@ thinking"; add a lens when a step discovers one.
 
 ### Phase C: big changes, the inside
 
-- [ ] 10. **Interior layout sheet.** Research only, plus the answers.
+- [x] 10. **Interior layout sheet.** Research only, plus the answers.
   Draw a top-down map of the interior (in this file, as a text grid or a
   table): every vital and its AttackMarker, the loot hopper, the bench, the
   request and class boards, breach openings and their approach, the walk
@@ -399,6 +399,40 @@ playing?" Repeat a part (D-n b) if the owner wants another round.
   `van-shell-and-hud.md` (the `VanLook` split, seed rules, the DoorSpill
   decision), add `VanLook` rows to CLAUDE.md's table, regenerate
   `docs/PROJECT_MAP.md`, delete this file in the final commit.
+
+### Step 10: interior layout sheet (answers 2026-09-26)
+
+Owner answers: the PC rig **replaces the request board** in its spot and does its job; the stats CRT shows **gun stats (damage, fire rate, reload), van stats (speed, hull), gold and rare parts, act and street**; all four vitals become the proposed pieces (fuse box -> generator with a flywheel and belts, cab relay -> a rack of car batteries with a knife switch, bench -> a welding bench with a vice, grinder and pegboard, loot hopper -> a scrap hopper with a crusher drum). Gameplay (HP, repair, AttackMarkers, interaction areas) stays where it is; only the look changes.
+
+Top-down, rig-local, -Z forward (cab at the top). Floor x -2.65..2.65, z -4.55..5.20. One cell is about 0.5 m.
+
+```
+          x: -2.6          0          +2.6
+z -4.6   [PC RIG]   [ CAB DOOR ]   [CLASS BD]     front partition; STATS CRT hangs above the cab door (0, 2.55, -4.45)
+z -4.2   RELAY RACK (-1.31, 2.79) high on the left, knife switch by the cab door
+z -3.5  |SIDE DOOR L                    SIDE DOOR R|  breach, approach x +-3.16
+z -2.7                 (player spawn)
+z -1.55                            BenchAttackMarker (1.15)
+z -0.4  |WIN LF                              WIN RF|  breach, y >= 1.07
+z  0.1                        WELDING BENCH (1.63) faces +x wall
+z  1.0   SCRAP HOPPER (-0.62, 1.44)
+z  1.2                             GENERATOR (2.21, 0.49) + smoke vent above
+z  2.8  |WIN LR                              WIN RR|  breach
+z  4.7  |==== REAR DOORS (hinges x +-2.39) ======|   breach RearLeft/RearRight, outside z 5.20
+```
+
+| Piece | Where | Keeps clear of |
+|---|---|---|
+| PC rig (was RequestBoard) | (-1.62, 0.95, -4.55), yaw -90, desk + CRT + tower against the partition | the cab door span x -0.8..0.8; the left side door z -4.79..-2.19 swing |
+| Stats CRT | hung from the ceiling on chains at (0, 2.55, -4.45), screen facing +Z | the cab door top; head height at the spawn (player eye ~1.6) |
+| Relay rack (was CabRelay) | (-1.31, 2.79, -4.20): batteries on a high shelf, knife switch below at y ~1.9 | the side-door opening, the PC rig's screen |
+| Welding bench (was CraftingTable) | (1.63, 0.43, 0.07), pegboard on the wall above between the right windows (z -0.05..0.2 is wall) | window openings z [-1.60,0.85] and [1.61,4.06] above y 1.07: pegboard stays below y 1.05 or in the gap |
+| Scrap hopper (was LootMachine) | (-0.62, 1.44, 0.97), crusher drum on its top | the aisle x -0.2..1.0 |
+| Generator (was FuseBox) | (2.21, 0.49, 1.21), flywheel toward the aisle, belts on its side | the right rear window above y 1.07 |
+| Cable trunks | two ceiling-corner runs at x +-2.2, y 2.95, z -4.4..4.4, plus drops to the generator, the relay rack and the PC rig | window and door tops (all below y 2.5) |
+| Smoke vents | a roof vent over the generator (2.0, ceiling, 1.2) and one over the welding bench (1.6, ceiling, 0.1), piped up through the roof | the roof rack's spotlight at z -4.0 |
+
+Firing lines: the centre aisle x -0.6..0.6 runs from the cab door to the rear doors; the left windows are covered from x ~0.5, the right windows from x ~-0.8. Nothing new may stand in the aisle or above y 1.07 on the walls between window openings' z spans.
 
 ### Step 9 notes
 - `VanMarkings` (VanLook/Markings after Roof) paints a seeded stencil name (12 names) on both low sides, a two-digit number on the cab doors and 3-17 kill tallies on the left top band, as albedo Decals on cull mask 1 with textures rendered at runtime from a 5x7 pixel stencil font (`van_stencil_font.gd`) with dropout wear and drips. Paint colours are desaturated bone, oxblood and ochre.
