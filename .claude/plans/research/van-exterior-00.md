@@ -36,3 +36,14 @@ Fix direction (P2): ONE `VanFrontWall` mesh from one closed section outline (flo
 the ceiling vault, the same inset), with the doorway cut as a hole, the door as a leaf inside the
 hole, a single material scale, collision from convex strips that follow the outline, and trims
 flush.
+
+## P3 inventory (side walls)
+- Rails (Shell/{Left,Right}{Lower,Upper}Rail) and pillars (Shell/SidePillars/*) are `visible=false`;
+  only their BoxShape3D collisions are live, and they sit at or outside the liner (0.04-0.19 m
+  outward), so nothing is visible or poking. The pillars' collision is harmless.
+- Windows are already refit at runtime by `side_windows.gd` l.79-148: the WallPanel CSG is hidden,
+  and the frame and glass are rebuilt with `build_curved_frame_ring_mesh`/`build_curved_pane_from_poly`.
+  IronCross uses `follow_side_wall_curve`. Only the window `Handle` CSG (van_shell.tscn l.312/400/489/578)
+  is static.
+- So P3 is small: check the Handle in shots and otherwise fold it into P4 (reveals via
+  VanBodyProfile.build_reveal_mesh).
