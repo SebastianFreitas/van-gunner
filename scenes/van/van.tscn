@@ -41,6 +41,7 @@
 [ext_resource type="Script" path="res://scripts/van/look/van_pc_rig.gd" id="61"]
 [ext_resource type="Script" path="res://scripts/van/look/van_cable_runs.gd" id="62"]
 [ext_resource type="Script" path="res://scripts/van/look/van_inner_shell.gd" id="63"]
+[ext_resource type="Script" path="res://scripts/van/look/van_rear_dressing.gd" id="64"]
 
 [sub_resource type="Environment" id="IndustrialEnvironment"]
 background_mode = 1
@@ -343,6 +344,9 @@ script = ExtResource("62")
 
 [node name="InnerShell" type="Node3D" parent="TravelPath/VanFollow/VanRig/VanLook" unique_id=2100462928]
 script = ExtResource("63")
+
+[node name="RearDressing" type="Node3D" parent="TravelPath/VanFollow/VanRig/VanLook" unique_id=3521187406]
+script = ExtResource("64")
 
 [node name="Systems" type="Node" parent="." unique_id=928478009]
 

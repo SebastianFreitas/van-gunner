@@ -349,7 +349,7 @@ thinking"; add a lens when a step discovers one.
   zip-tied bundles, a pegboard, hanging tools, jerry cans, gas bottles,
   a car-battery bank. Nothing in the walk space or a firing line.
 
-- [ ] 19. **Shell, inside.** Welded ribs, bolted plates and patched bullet
+- [x] 19. **Shell, inside.** Welded ribs, bolted plates and patched bullet
   holes inside the walls and ceiling; the cage bulkhead rebuilt in the kit
   style; the rear doors' inside dressed (lock bar, chains, bars). The
   existing van shaders stay; add geometry, not a new wall shader.
