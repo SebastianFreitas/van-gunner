@@ -6,6 +6,7 @@ extends Node3D
 
 const _Shell := preload("res://scripts/van/van_side_wall_shell.gd")
 const _Panel := preload("res://scripts/van/van_side_wall_panel.gd")
+const _Jambs := preload("res://scripts/van/van_side_wall_jambs.gd")
 
 @export var wall_height := 3.08
 @export var span_z := 9.4
@@ -39,8 +40,8 @@ var WINDOW_CUT_POLY: PackedVector2Array = PackedVector2Array([
 ])
 
 ## Side-door openings (match SideDoors layout).
-@export var door_half_length := 1.30
-@export var door_center_z := -3.485
+@export var door_half_length := 1.235
+@export var door_center_z := -3.42
 @export var door_y_min := 0.02
 @export var door_y_max := 3.05
 ## Inset of the door-jamb ring inner edge from the wall opening (meters).
@@ -185,9 +186,11 @@ func _panel_helper() -> _Panel:
 	return _panel
 
 
-## The side panel mesh exactly as the liner builds it (holes included), for the hull's outer skin.
-func build_side_panel_mesh(wall_sign: float) -> ArrayMesh:
-	return _panel_helper().build_side_mesh(wall_sign)
+## The defaults build the wall itself; the hull skin builds an outer layer with them.
+func build_side_panel_mesh(
+	wall_sign: float, x_from: float = 0.0, x_to: float = -1.0, inner_face: bool = true
+) -> ArrayMesh:
+	return _panel_helper().build_side_mesh(wall_sign, x_from, x_to, inner_face)
 
 
 func _build() -> void:
@@ -199,8 +202,8 @@ func _build() -> void:
 	var jamb_mat := door_jamb_material if door_jamb_material else mat
 	_add_side(&"LeftWall", -1.0, mat)
 	_add_side(&"RightWall", 1.0, mat)
-	_add_door_jambs(-1.0, jamb_mat)
-	_add_door_jambs(1.0, jamb_mat)
+	_Jambs.new(self).add_door_jambs(-1.0, jamb_mat)
+	_Jambs.new(self).add_door_jambs(1.0, jamb_mat)
 	_add_door_slide_tracks(jamb_mat)
 	_add_cargo_rails(mat)
 	_add_floor_seal_strips(jamb_mat)
@@ -209,49 +212,21 @@ func _build() -> void:
 func _add_side(side_name: StringName, wall_sign: float, mat: Material) -> void:
 	var mi := MeshInstance3D.new()
 	mi.name = String(side_name)
-	mi.mesh = _panel_helper().build_side_mesh(wall_sign)
+	mi.mesh = _panel_helper().build_side_mesh(wall_sign, 0.0, -1.0, true, _Panel.Part.FACES)
 	mi.material_override = mat
 	mi.layers = VanLighting.LAYER_VAN_INTERIOR
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
-
-
-func _door_jamb_outer_poly() -> PackedVector2Array:
-	var hz := door_half_length
-	var hy := (door_y_max - door_y_min) * 0.5
-	return PackedVector2Array([
-		Vector2(-hz, -hy), Vector2(hz, -hy), Vector2(hz, hy), Vector2(-hz, hy),
-	])
-
-
-func _door_jamb_inner_poly() -> PackedVector2Array:
-	var hz := door_half_length - door_jamb_inset
-	var hy := (door_y_max - door_y_min) * 0.5 - door_jamb_inset
-	if hz <= 0.05 or hy <= 0.05:
-		return PackedVector2Array()
-	return PackedVector2Array([
-		Vector2(-hz, -hy), Vector2(hz, -hy), Vector2(hz, hy), Vector2(-hz, hy),
-	])
-
-
-func _add_door_jambs(wall_sign: float, mat: Material) -> void:
-	var inner := _door_jamb_inner_poly()
-	if inner.size() < 3:
-		return
-	var mid_y := (door_y_min + door_y_max) * 0.5
-	var x_ref := _profile_x(mid_y)
-	var mi := MeshInstance3D.new()
-	mi.name = "DoorJamb_%s" % ("L" if wall_sign < 0.0 else "R")
-	mi.mesh = build_curved_frame_ring_mesh(
-		wall_sign, _door_jamb_outer_poly(), inner,
-		x_ref, mid_y, door_center_z, mid_y, thickness, 0.0, 8
+	# Opening returns are seen from outside through the cuts, so they render on layer 1 too.
+	var reveals := MeshInstance3D.new()
+	reveals.name = String(side_name) + "Reveals"
+	reveals.mesh = _panel_helper().build_side_mesh(
+		wall_sign, 0.0, -1.0, true, _Panel.Part.RETURNS
 	)
-	# Mesh is built around local origin — parent must sit on the wall (same as SideDoors leaves).
-	mi.position = Vector3(wall_sign * x_ref, mid_y, door_center_z)
-	mi.material_override = mat
-	mi.layers = VanLighting.LAYER_VAN_INTERIOR
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	add_child(mi)
+	reveals.material_override = mat
+	reveals.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+	reveals.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	add_child(reveals)
 
 
 func _add_door_slide_tracks(mat: Material) -> void:

@@ -65,6 +65,7 @@ static func views(rig: Node3D) -> Array[Dictionary]:
 		var hinge := window_node.get_node(^"Hinge") as Node3D
 		var frame_aabb := _merged_mesh_aabb(hinge, rig)
 		var centre := rig.to_local(hinge.global_transform.origin)
+		centre.x -= s * _SideWindows.HINGE_OUT_M # pivot sits outboard of the liner
 		# The hinge sits at the sash's top edge; drop to the frame's middle.
 		centre.y -= frame_aabb.size.y * 0.5
 		result.append(_view(

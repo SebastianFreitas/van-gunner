@@ -2,6 +2,10 @@ extends RefCounted
 ## Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner
 ## posts, all clear of the windows and side door so raiders can still breach through them.
 
+## The 1 cm gap every trim keeps off the face it sits on, so it is never coplanar with or buried
+## in the skin (D7).
+const TRIM_LIFT := 0.01
+
 var _hull: Node3D
 var _profile: VanBodyProfile
 var _walls: VanSideWall
@@ -28,9 +32,9 @@ func build(profile: VanBodyProfile, walls: VanSideWall, mat: ShaderMaterial) -> 
 	_build_corner_post("CornerPostRR", 1.0, half_len - 0.06)
 
 
-## X of the skin at height `y`, matching where SideSkin/RoofSkin already sit.
+## X of the trim's inner face at height `y`: the side skin's outer face plus TRIM_LIFT.
 func _skin_x(y: float) -> float:
-	return _profile.inner_x_at(y) + VanHull.SKIN_OFFSET_M
+	return _profile.inner_x_at(y) + VanHull.SIDE_SKIN_OUTER_M + TRIM_LIFT
 
 
 ## The rub rail, belt line and drip rail for one side, clear of that side's openings.

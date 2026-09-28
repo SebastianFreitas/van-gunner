@@ -3,7 +3,7 @@
 Stage: running
 Started: 2026-09-28
 Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/vanfix.state.md` while running).
-Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15)
+Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15); window hinge pivot position (D16 auto); side skin layering against the wall (D17 auto); who owns the opening reveals and whether the buried casings go (D18 auto); side door slide path vs the belt line and rub rail (D19)
 
 ## Rebase note (2026-09-28, landed on main)
 
@@ -101,6 +101,10 @@ the night read. So:
 - **D13 · Door slide recess.** The side door recesses 0.24 m outward (was 0.17) before sliding, so its cabin-side trim clears the 0.16 m side wall; the open door stands 7 cm further off the van side and keeps its framed-panel relief inside.
 - **D14 · Door front edge.** Shorten the side door 13 cm at its front edge (2.34 → 2.21 m wide, rear edge unchanged); the wall opening, jamb and track follow, so nothing is buried in the cab back wall or the front corner posts.
 - **D15 · Street-lit door and window parts.** Door `CurvedOuter`, `LatchPlate`, `Handle` and window `CurvedFrame`, `WindowGlass`, `IronCross` go on render layers 1 and 2, so street lights, the torch and cabin lights all reach them.
+- **D16 · Window hinge pivot (auto).** The side window's hinge pivot moves from the liner to 0.32 m outboard of it at the same height (past the hull skin's outer face at 0.22 and the casing at 0.13; 0.14 still clipped the skin's rounded top corners), so no sash part rises into the wall while it swings (D8). Reason: with the pivot at the liner the frame's outer top corner lifts into the wall above the cut; any pivot outboard of every sash part and all wall material fixes it with no visible change when closed.
+- **D17 · Side skin layer (auto).** The side hull skin owns only the outer layer: the wall's own grid and cuts from the wall's outer face (0.16) to `VanHull.SIDE_SKIN_OUTER_M` 0.22 off the liner, no inner face, so its returns continue the wall's edge to edge. Reason: the old skin was the whole wall panel shifted 0.06 out, overlapping the wall and z-fighting its returns (4 m² FLICKER); 0.22 keeps the outer face, casings and `HINGE_OUT_M` where they are.
+- **D18 · Reveal owners (auto).** Each side opening's cut is lined by two bands with one owner each: the wall's own reveal from the liner to 0.16 (split into `<Left|Right>WallReveals`, wall material, layers 1+2) and the skin's returns from 0.16 to 0.22; the door jamb keeps only its lip (its outer return is stripped), and the side door and window casings, fully buried inside wall and skin with holes equal to the cuts, are deleted as duplicates (D7). Reason: no visible change from inside, street light now reaches the reveal from outside, and every duplicate face pair is gone.
+- **D19 · Hull lines over the door's slide path.** The belt line and the rub rail break over the side door's slide path, from the door bay's rear edge to the fully open door's rear edge, the way the drip rail breaks around openings; the door itself carries no rail. The recess stays D13's 0.24 m and the rails keep their profile.
 
 ## Constraints (every phase)
 
@@ -116,8 +120,8 @@ the night read. So:
 | # | Phase | Kind | Rests on | Status |
 |---|---|---|---|---|
 | 1 | Geometry audit tool and close-up shots | code, research | D3, D9, D11 | done 60e1a32 |
-| 2 | Side doors and windows from inside | code | D7, D8, D10, audit | todo |
-| 3 | One sealed outer body | code | D4, D7, audit | todo |
+| 2 | Side doors and windows from inside | code | D7, D8, D10, audit | done cf9e65a |
+| 3 | One sealed outer body | code | D4, D7, audit | partial 1e0f3ab, 99442cd, b6dfee2 |
 | 4 | Sealed simple cab | code | D5, D4, audit | todo |
 | 5 | Add-ons snapped and height-capped | code | D6, audit | todo |
 
@@ -152,3 +156,8 @@ Verification: check, smoke (fingerprint/bless as the phase states), scene dump, 
 - (Phase 1) Rear doors show the same missing inner face as the side doors (LEAK_OUT on `RearWall/*Hinge/CurvedBody`): phase 3 seats the rear doors.
 - (Overtaken, see Rebase note: van-exterior-2 finished all seven phases.) Parked from van-exterior-2 (D1): the real cab with a dark interior and dash glow (its D3, D9), the underside and wheels (D6), the night read (D7). Its phase 1 tooling (torch, floodlight, lit shots v08–v16) stays and is used here.
 - A fresh worktree's first smoke run fails on `VanLook` not found (stale class cache); `py -3 tools/check.py` first fixes it.
+- (Phase 2) The audit poses every door and window at the same fraction, so the front window and its side door are audited open together, which the interlock forbids in play (except a breach smash); phase 5 should pose door-adjacent windows and their door in separate states.
+- (Phase 2) `side_windows.gd` `HINGE_OUT_M` 0.32 is sized to today's hull skin (panel mesh 0.16 thick, 0.06 out: outer face 0.22 off the liner). Phase 3 rebuilds the skin: re-derive it (pivot outboard of all wall material around the opening, open pane below the cut's rounded top corners) and re-audit the window swing.
+- (Phase 2) Left for later phases: front window vs its own slid-open door rows (the audit's all-open pose; play's interlock forbids it except a breach smash, phase 5 poses them apart); door vs `VanLook` Hull/Armour/Wheels/Cables/MarkerLights rows (D6, phases 3 and 5); `CurvedBody` LEAK_OUT past the jamb gap (phase 3); ExteriorPane EDGE rows (single-sided pane, by design); the rust band on the window reveal in c10 is the grime shader, not geometry.
+- (Phase 3) Every exterior piece but the side skin sits at `SKIN_OFFSET_M` 0.06 off the liner (roof edge, rear posts, sills, patches, hull lines, armour face), while the side skin's outer face is at 0.22 (D17): the sealed body needs one outer surface; the roof crown must stay under the rack (y 3.66). `VanBodyProfile.outer_x_at` is liner + 0.12 but the wall is 0.16 thick.
+- (Phase 3, session 5) `HINGE_OUT_M` 0.32's reasoning named the window casing (0.13), now deleted; the skin's outer face 0.22 still sets it. `van_side_wall_panel.gd` and `van_side_wall_shell.gd` are at the 400-line cap: any further panel or ring change needs a helper split first.

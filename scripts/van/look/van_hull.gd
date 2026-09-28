@@ -1,22 +1,24 @@
 class_name VanHull
 extends Node3D
 
-## The van's outer skin: roof, sides, rear face and sills a few cm outside the liners, painted
-## from the look seed.
+## The van's outer skin: roof, sides, rear face, sills and belly, all meeting the side skin's
+## 0.22 m outer face, painted from the look seed.
 
 const EXTERIOR_SHADER := preload("res://scenes/van/van_exterior.gdshader")
 
 ## Builds the truck-body lines (rub rails, belt line, drip rail, corner posts) on the skin.
 const _HullLines := preload("res://scripts/van/look/van_hull_lines.gd")
 
-## Closes the rear corner, sill and side door casing gaps left in the skin above.
+## Closes the rear corner and sill gaps left in the skin above.
 const _HullPatches := preload("res://scripts/van/look/van_hull_patches.gd")
 
-## Casing rings around each side cargo window opening.
-const _HullWindowCasings := preload("res://scripts/van/look/van_hull_window_casings.gd")
-
-## How far outside the liners the skin sits.
+## The roof's vertical offset above the wall top (and what `van_armour.gd` still sits against until
+## phase 5). Roof, rear, sills, belly and hull lines meet `SIDE_SKIN_OUTER_M` instead.
 const SKIN_OFFSET_M := 0.06
+
+## How far the side skin's outer face stands off the liner: the side wall's 0.16 plus 0.06.
+## `side_windows.gd` `HINGE_OUT_M` is sized against it.
+const SIDE_SKIN_OUTER_M := 0.22
 
 const SIDE_WALLS_PATH := ^"../../Interior/Shell/SideWalls"
 
@@ -51,7 +53,6 @@ func rebuild_look(look: VanLook) -> void:
 	_build_rear(walls)
 	_HullPatches.new(self).build(walls)
 	_HullLines.new(self).build(_profile, walls, material)
-	_HullWindowCasings.new(self).build(walls)
 
 	if is_inside_tree():
 		for node in get_tree().get_nodes_in_group(&"side_doors"):
@@ -60,16 +61,19 @@ func rebuild_look(look: VanLook) -> void:
 
 
 func _build_sides(walls: VanSideWall) -> void:
-	# The wall's mesh instance sits at the identity transform (Shell/SideWalls are unrotated,
-	# unoffset children of Interior), so the skin only needs to step out along X.
+	if walls.thickness >= SIDE_SKIN_OUTER_M:
+		push_warning("VanHull: side wall thickness %s reaches the skin; no side skins" % walls.thickness)
+		return
+	# The skin is the layer from the wall's outer face to SIDE_SKIN_OUTER_M. It shares the wall's
+	# grid and cuts (identity transform, no shift), so its returns continue the wall's returns
+	# edge to edge and no surface has two owners.
 	for wall_sign: float in [-1.0, 1.0]:
-		var mesh := walls.build_side_panel_mesh(wall_sign)
-		var pos := Vector3(wall_sign * SKIN_OFFSET_M, 0.0, 0.0)
-		_add_mesh("SideSkinL" if wall_sign < 0.0 else "SideSkinR", mesh, pos)
+		var mesh := walls.build_side_panel_mesh(wall_sign, walls.thickness, SIDE_SKIN_OUTER_M, false)
+		_add_mesh("SideSkinL" if wall_sign < 0.0 else "SideSkinR", mesh, Vector3.ZERO)
 
 
 func _build_roof(walls: VanSideWall) -> void:
-	var w: float = walls.wall_x_at(walls.wall_height) + SKIN_OFFSET_M
+	var w: float = walls.wall_x_at(walls.wall_height) + SIDE_SKIN_OUTER_M
 	var z_min := -4.72
 	var z_max := 4.78
 	var x_segments := 20
@@ -102,12 +106,12 @@ func _build_roof(walls: VanSideWall) -> void:
 			st.add_vertex(v11)
 			st.add_vertex(v01)
 
-	# Down-turned lip along both long edges (x = +-w), 0.10 m, facing outward, overlapping the
-	# side skin's top (the roof edge sits 6 cm above it).
+	# Down-turned lip along both long edges (x = +-w), facing outward, from the roof edge down to
+	# the side skin's top edge, so it continues the skin's outer face with no overlap.
 	for edge_sign: float in [-1.0, 1.0]:
 		var x_edge := edge_sign * w
 		var y_top := _roof_y(x_edge, w, walls)
-		var y_bot := y_top - 0.10
+		var y_bot := walls.wall_height
 		for iz in range(z_segments):
 			var z0 := lerpf(z_min, z_max, float(iz) / float(z_segments))
 			var z1 := lerpf(z_min, z_max, float(iz + 1) / float(z_segments))
@@ -142,7 +146,7 @@ func _roof_y(x: float, w: float, walls: VanSideWall) -> float:
 
 func _build_rear(walls: VanSideWall) -> void:
 	var z := 4.78
-	var w: float = walls.wall_x_at(walls.wall_height) + SKIN_OFFSET_M
+	var w: float = walls.wall_x_at(walls.wall_height) + SIDE_SKIN_OUTER_M
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -155,7 +159,7 @@ func _build_rear(walls: VanSideWall) -> void:
 		var rows: Array = []
 		for iy in range(y_steps + 1):
 			var y := lerpf(-0.25, walls.wall_height, float(iy) / float(y_steps))
-			var x_outer := post_sign * (walls.wall_x_at(clampf(y, 0.0, walls.wall_height)) + SKIN_OFFSET_M)
+			var x_outer := post_sign * (walls.wall_x_at(clampf(y, 0.0, walls.wall_height)) + SIDE_SKIN_OUTER_M)
 			rows.append([Vector3(x_inner, y, z), Vector3(x_outer, y, z)])
 		for iy in range(y_steps):
 			var in0: Vector3 = rows[iy][0]

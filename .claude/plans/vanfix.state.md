@@ -7,72 +7,58 @@ Status: partial
 
 ## Architecture now
 - `tools/van_audit.py`: launcher (`--out`, `--strict`, `--timeout`), report-only (exit 0)
-  until phase 5; report at `.godot/van_audit/report.txt`. FLICKER counts parallel faces within
-  `PLANE_EPS` 0.01 m as coplanar (`van_audit_overlap.gd`), so edge-to-edge gaps are 2 cm (D12).
+  until phase 5; report at `.godot/van_audit/report.txt` (~4 min, use `--timeout 600`).
+  FLICKER counts parallel faces within `PLANE_EPS` 0.01 m as coplanar, so edge-to-edge gaps
+  are 2 cm (D12), stacked lifts 1 cm (D7). CLIP `at=` is the mean of the intersection points
+  (two symmetric corners average to the part's centre).
 - `tools/van_audit/van_audit.tscn` + `van_audit.gd` runner; helpers `van_audit_mesh.gd`,
-  `van_audit_states.gd`, `van_audit_overlap.gd` (FLICKER/CLIP/OPENING), `van_audit_gaps.gd`
-  (EDGE, LEAK_IN, LEAK_OUT: LEAK_OUT is cast from OUTSIDE and flags layer-2-only meshes seen
-  from the street).
-- `tools/smoke/smoke_shots_closeups.gd`: close-ups `c01`..`c32`.
-- Door leaf (`scripts/van/side_door_leaf.gd`): `DOOR_HALF_Z` 1.17, `JAMB_CLEAR` 0.13 (2 cm
-  inside the jamb opening ±1.19 z, 0.13..2.94 y), `PANEL_HALF_Z` 1.07, trim strips 2 cm inside
-  the panel frame's opening, `TRIM_LIFT` 0.01. Inner stack from the body face toward the
-  cabin: RecessedPanel (single-sided) 1 cm, Perimeter/PanelFrame 1–5.5 cm, strips 2–6.5 cm;
-  LatchPlate 1 cm proud of the outer skin.
-- Windows (`scripts/van/side_windows.gd`): `TRIM_LIFT` 0.01, `FRAME_THICKNESS` =
-  `CASING_BACK_REF` 0.04 − 0.01 = 0.03 (outer face 1 cm inboard of the hull casing's inner
-  face); `FRAME_OUTER_POLY` a mitred 2 cm inset of `VanSideWall.WINDOW_CUT_POLY`. Hinge pivot
-  at the liner (x 0 in hinge space); the audit shows no swing row, so D8's swing is clean as is.
-- Iron cross (`scripts/van/iron_cross.gd`): vertical bar `TRIM_LIFT` inboard of the horizontal.
-  Its placement `iron_inset = IRON_INSET 0.035 − glass_outward_bump 0.05` puts it 1.5 cm
-  outboard of the liner, inside the frame's depth band (0..3 cm): the end pads overlap the
-  frame (tiny FLICKER rows below).
-- Window glass single-sided, `WINDOW_EDGE_SUBDIV` 10 everywhere; wall hole cut from the raw
-  12 `WINDOW_CUT_POLY` vertices.
+  `van_audit_states.gd` (poses every door and window at the same fraction),
+  `van_audit_overlap.gd` (FLICKER/CLIP/OPENING), `van_audit_gaps.gd` (EDGE, LEAK_IN,
+  LEAK_OUT cast from outside).
+- `tools/smoke/smoke_shots_closeups.gd`: close-ups `c01`..`c32`; window close-ups aim at
+  the hinge origin minus `HINGE_OUT_M`.
+- Side door leaf (`scripts/van/side_door_leaf.gd`): opening `door_half_length` 1.235 at
+  `door_center_z` -3.42, recess 0.24 (D13), leaf `DOOR_HALF_Z` 1.105, `PANEL_HALF_Z` 1.005,
+  `JAMB_CLEAR` 0.13; inner stack RecessedPanel 1 cm, Perimeter/PanelFrame 1–5.5 cm, strips
+  2–6.5 cm; LatchPlate 1 cm proud; Handle local z 0.81; CurvedOuter/LatchPlate/Handle on
+  layers 1+2 (D15). Gun port untouched (D10).
+- Side windows (`scripts/van/side_windows.gd`): frame `FRAME_THICKNESS` 0.03, outline a
+  mitred 2 cm inset of `VanSideWall.WINDOW_CUT_POLY`; the `Hinge` pivot sits `HINGE_OUT_M`
+  0.32 outboard of the liner at `y_hinge` 2.515 (children shifted back, closed pose
+  unchanged; D16), past the hull skin (`SideSkin<S>` = side panel mesh 0.16 thick, 0.06 out,
+  outer face 0.22) and casing (0.13). Frame/glass/iron on layers 1+2.
+- Iron cross (`scripts/van/iron_cross.gd`): bars end `BAR_END_CLEAR` 0.04 inside the span,
+  pads `PAD_END_CLEAR` 0.02; vertical bar `TRIM_LIFT` inboard of the horizontal.
+
+- Side hull skin (`scripts/van/look/van_hull.gd` `_build_sides`): `walls.build_side_panel_mesh(wall_sign, walls.thickness, SIDE_SKIN_OUTER_M, false)`, i.e. the wall's grid and cuts from 0.16 to `SIDE_SKIN_OUTER_M` 0.22 off the liner with no inner face (D17). `VanSideWall.build_side_panel_mesh(wall_sign, x_from, x_to, inner_face)` passes through to `van_side_wall_panel.gd` `build_side_mesh` (398 lines, cap 400). Roof, rear, sills, patches, hull lines and armour still use `SKIN_OFFSET_M` 0.06.
+
+- Side opening reveals (D18): `VanSideWall._add_side` builds `<Left|Right>Wall` from `van_side_wall_panel.gd` `build_side_mesh(..., Part.FACES)` (layer 2) and `<Left|Right>WallReveals` from `Part.RETURNS` (returns + window/door reveals, liner to 0.16, wall material, layers 1+2); the hull skin still calls `Part.ALL` for 0.16..0.22. `van_side_wall_panel.gd` and `van_side_wall_shell.gd` are at the 400-line cap. Door jambs are built by `scripts/van/van_side_wall_jambs.gd` (ring minus its outer return, layers 1+2). The side door casing (`van_hull_patches.gd`) and `van_hull_window_casings.gd` are deleted (buried duplicates).
 
 ## Completed phase
-Phase 1 (see git log). Phase 2 in progress, landed so far: 354b7ac (2-1 door leaf), a0e1c78
-(2-2A window sampling), e8961dd (2-2B frame off the casing, iron bars apart), 7a4d3cb (2-3
-door gaps 2 cm), 0f610ef (2-4 frame outline 2 cm inside the wall cut). Each CHECK/SMOKE CLEAN,
-scene dump identical (no bless). Audit after all: gone are leaf vs jamb, frame vs casing/skin,
-frame vs wall (closed), iron bar vs iron bar, PanelFrame vs strips/perimeter. Shots: c01 the
-closed door now reads solid from inside with framed panels (picture 1 fixed); c10 the open
-window's reveal still shows a ragged rust edge (likely the grime shader on the reveal; re-check
-against picture 3 after the questions).
-
-Remaining door/window rows (audit 2026-09-28, closed unless named):
-- Door front edge: CLIP `SideDoors/<S>/CurvedBody` vs `Interior/FrontWall/Slab` (z −4.55,
-  142 hits) and `VanLook/Hull/CornerPostF<S>` (z −4.65); FLICKER `SideDoors/Left/PanelFrame` vs
-  `FrontWall/Slab` (0.109 m²). Leaf spans z −4.655..−2.315 (center −3.485); the wall's door
-  opening reaches −4.785. D14.
-- LatchPlate: CLIP vs `SideSkin<S>`, `SideDoorCasing<S>`, `InnerShell/CeilRib1_*` at y 3.05–3.07,
-  FLICKER vs `SideDoorCasing<S>` 0.049 m². Internal: the plate sits above the leaf top (2.92);
-  bring it inside the leaf (y ≤ leaf top − 2 cm). Spec after the questions.
-- CLIP leaf vs `VanLook/MarkerLights/ClearanceL0|LensL0` (R too) at y 2.92, z −4.20: marker
-  lights sit on the door; move them off the door in the look phase (carry forward).
-- Half/open: FLICKER `SideWalls/<S>Wall` vs `PanelFrame|PerimeterFrame|BeltStrip|LowerCrease`
-  (up to 0.41 m² open). D13.
-- Half/open: FLICKER leaf parts vs `VanLook/Armour/ArmourPlates|ArmourGlass|ArmourRebar`,
-  `VanLook/Wheels/SpareL`, `ToolBox`, `Hull/SideDoorCasing<S>`, `SideSkin<S>`,
-  `SideWindowCasing<S>1`: hull dressing stays put while the door slides through it. Owned by the
-  add-ons phase (D6: clear of every door); carry forward.
-- IronCross end pads vs `CurvedFrame` (0.003–0.007 m², every pose). Spec after the questions:
-  move the iron cross (bars and pads) 2 cm inboard of the frame's cabin face, or shorten the
-  pads to stop 2 cm inside the frame opening; the second keeps the bars on the glass.
-- LEAK_OUT: door `CurvedOuter` (1164/1095 rays), `LatchPlate` (70/57), `CurvedBody` (18/14),
-  window `CurvedFrame` (50–65), `WindowGlass` (3–6), `IronCross/*` (1–31). D15.
-- Noise (argue in research 01 at phase close): OPENING `open=win_*_front node=SideDoors/*`
-  (slid-open door in the front window's swing box), door vs `VanLook/Cables/*` (cable router).
+Phase 2 · Side doors and windows from inside, done (commits 354b7ac..cf9e65a, scene-dump bless
+65b4809). Window pivot 0.32 m out (D16). Remaining window rows: front window vs its own open door
+in the audit's all-open pose (forbidden in play by the interlocks; phase 5 poses them apart) and
+the single-sided ExteriorPane EDGE rows.
 
 ## Next phase
-Phase 2 · Side doors and windows from inside (D7, D8, D10), continued (Blocker answered as D13-D15).
-1. Door spec from D13 (recess 0.24 m) and D14 (shorten front 13 cm), one spec each, `side_doors.gd` /
-   `side_door_leaf.gd` / `van_side_wall.gd` only as the answer needs.
-2. LatchPlate inside the leaf; iron end pads 2 cm inside the frame opening (one spec each).
-3. D15's layer change (layers 1 and 2).
-4. Audit (600000 ms), grouped as in this session; shots c01, c02, c05, c10; scene dump; argue
-   the noise in research 01; Handoff protocol.
+Phase 3 · One sealed outer body (D4, D7), continued. Done: 1e0f3ab (D17); session 5: 99442cd, b6dfee2
+(D18); session 6: 0927763 (roof, rear posts/header, rear corner strips and sills meet the 0.22 face;
+rear corner's rear return deleted, RearSkin owns the rear face; new `BellySkin` at y -0.25 closes the
+bottom between the sills; hull lines `_skin_x` = inner + 0.22 + `TRIM_LIFT` 0.01, so they are now
+visible: at 0.06 they were buried in wall + skin), 08f3d43 (rear leaves' CurvedBody, WindowGlass,
+WindowFrame, IronCross on layers 1+2 via new `scripts/van/rear_door_lighting.gd`, retarget_layers;
+`rear_doors.gd` is at 400 lines). Check, smoke, scene dump clean (identical). Audit after 08f3d43:
+CLIP 110, EDGE 27, FLICKER 1710, HEIGHT 43, LEAK_IN 1, LEAK_OUT 44 (was 75), OPENING 99, REAR_ROOF 8.
+Shots v09, v14 read: rear doors now street-lit, body closed.
+Remaining, one spec each:
+1. D19: break `BeltLineL0/R0` and `RubRailL0/R0` over the side door's slide path (bay's rear edge to
+   the open door's rear edge), like the drip rail's breaks; clears 8 CLIP rows vs `CurvedBody`.
+2. Rear doors seated: leaves 0.16 thick at z 4.78 ± 0.08 stand 8 cm proud of RearSkin (plane z 4.78);
+   seat them (explore `rear_doors.gd` `_fit_to_hull`, hinge x 2.39, Y_MIN 0.02) and line the rear
+   opening with a reveal from the rear liner to z 4.78 if missing. Leftover EDGE rows: `SillL/R` open
+   top edge at y 0.04 (length 9.52), `RearSkin` at x -2.39 y 2.04, `RearCornerL/R` bottom at z 4.70,
+   `RoofSkin` front edge z -4.72; sills/belly end at z 4.80, 2 cm past the rear face.
+3. Optional: FLICKER `LeftWall`/`RightWall` vs `DoorJamb_L/R` 0.084 at (±2.495, 2.237, -4.644) and
+   `DoorJamb_R` vs `FrontWall/Slab` 0.023.
+Then verify: check, smoke, scene dump, audit, lit shots v08–v16 and close-ups c01, c02, c10.
 
-## Blocker
-none (answered 2026-09-28: Q1 → D13 recess 0.24 m, Q2 → D14 shorten front 13 cm, Q3 → D15
-layers 1 and 2; all the recommended options).

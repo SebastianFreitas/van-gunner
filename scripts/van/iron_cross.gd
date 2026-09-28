@@ -21,8 +21,16 @@ const BrokenIronCrossScene := preload("res://scenes/van/broken_iron_cross.tscn")
 ## D7: the two crossing bars sit TRIM_LIFT apart in depth so they don't share a plane.
 const TRIM_LIFT := 0.01
 
+## D12: each end pad's outer edge stops 2 cm inside the bar span, so it stays inside the frame opening (which is >= the span) and never shares a plane with a bar's end face.
+const PAD_END_CLEAR := 0.02
+
+## D12: each bar ends 2 cm inside its end pad (4 cm inside the span), so its end face is buried in the pad and sits over 2 cm from both the pad's face and the frame opening.
+const BAR_END_CLEAR := 0.04
+
 var _built := false
 var _broken := false
+## When true every built mesh sits on layers 1 and 2 (D15) and joins VanLighting.GROUP_EXTERIOR_LAYER so VanLighting doesn't force it back to layer 2.
+var _street_lit := false
 ## When set, vertical elements bend with the cargo side-wall profile.
 var _curve_walls: VanSideWall = null
 var _curve_mid_y := 0.0
@@ -38,6 +46,30 @@ func follow_side_wall_curve(walls: VanSideWall, mid_y: float) -> void:
 	_curve_walls = walls
 	_curve_mid_y = mid_y
 	rebuild()
+
+
+## Put the built bars on the street-lit layers (or back on the interior layer).
+func set_street_lit(on: bool) -> void:
+	_street_lit = on
+	for n in find_children("*", "VisualInstance3D", true, false):
+		var vi := n as VisualInstance3D
+		if vi == null or vi is Light3D:
+			continue
+		if on:
+			if not vi.is_in_group(VanLighting.GROUP_EXTERIOR_LAYER):
+				vi.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
+			VanLighting.retarget_layers(vi, VanLighting.LAYER_STREET_AND_INTERIOR)
+		else:
+			if vi.is_in_group(VanLighting.GROUP_EXTERIOR_LAYER):
+				vi.remove_from_group(VanLighting.GROUP_EXTERIOR_LAYER)
+			VanLighting.retarget_layers(vi, VanLighting.LAYER_VAN_INTERIOR)
+
+
+func _apply_street_lit(mi: MeshInstance3D) -> void:
+	if not _street_lit:
+		return
+	mi.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+	mi.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 
 
 ## Swap intact bars for a randomized blown-out stub set after a window breach.
@@ -123,8 +155,8 @@ func _build() -> void:
 	# Mounting pads where bars meet the frame.
 	var pad_depth := bar_depth * 1.15
 	var pad_z := pad_depth * 0.5
-	var half_w := span_width * 0.5 - end_pad_size * 0.15
-	var half_h := span_height * 0.5 - end_pad_size * 0.15
+	var half_w := span_width * 0.5 - PAD_END_CLEAR - end_pad_size * 0.5
+	var half_h := span_height * 0.5 - PAD_END_CLEAR - end_pad_size * 0.5
 	_add_box("EndPad", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(half_w, 0.0, pad_z), iron)
 	_add_box("EndPad", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(-half_w, 0.0, pad_z), iron)
 	_add_box(
@@ -156,13 +188,13 @@ func _add_vertical_bar(z: float, iron: Material) -> void:
 	if _curve_walls == null:
 		_add_box(
 			"VerticalBar",
-			Vector3(bar_width, span_height, bar_depth),
+			Vector3(bar_width, span_height - 2.0 * BAR_END_CLEAR, bar_depth),
 			Vector3(0.0, 0.0, z),
 			iron
 		)
 		return
 
-	var half_h := span_height * 0.5
+	var half_h := span_height * 0.5 - BAR_END_CLEAR
 	var half_w := bar_width * 0.5
 	var half_d := bar_depth * 0.5
 	var segs := maxi(curve_segments, 2)
@@ -183,14 +215,14 @@ func _add_horizontal_bar(z: float, iron: Material) -> void:
 	if _curve_walls == null:
 		_add_box(
 			"HorizontalBar",
-			Vector3(span_width, bar_width, bar_depth),
+			Vector3(span_width - 2.0 * BAR_END_CLEAR, bar_width, bar_depth),
 			Vector3(0.0, 0.0, z),
 			iron
 		)
 		return
 
 	# Cross-section spans local Y; each corner follows the wall bow at its height.
-	var half_w := span_width * 0.5
+	var half_w := span_width * 0.5 - BAR_END_CLEAR
 	var half_y := bar_width * 0.5
 	var half_d := bar_depth * 0.5
 	var segs := maxi(curve_segments, 2)
@@ -276,6 +308,7 @@ func _add_center_plate(plate_z: float, iron: Material) -> void:
 	mi.mesh = st.commit()
 	mi.material_override = iron
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	_apply_street_lit(mi)
 	add_child(mi)
 
 
@@ -306,6 +339,7 @@ func _commit_lofted_bar(node_name: String, rings: Array, iron: Material) -> void
 	mi.mesh = st.commit()
 	mi.material_override = iron
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	_apply_street_lit(mi)
 	add_child(mi)
 
 
@@ -340,6 +374,7 @@ func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material
 	mi.position = pos
 	mi.material_override = material
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	_apply_street_lit(mi)
 	add_child(mi)
 
 

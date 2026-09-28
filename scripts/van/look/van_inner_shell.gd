@@ -15,7 +15,7 @@ const WALL_Y_TOP := 2.95
 const WALL_Y_BOT := 0.1
 const WALL_SEGMENTS := 6
 
-const DOOR_Z_MIN := -4.785
+const DOOR_Z_MIN := -4.655
 const DOOR_Z_MAX := -2.185
 const WINDOW_SPANS: Array[Vector2] = [Vector2(-1.60, 0.85), Vector2(1.61, 4.06)]
 const Z_MIN := -4.5

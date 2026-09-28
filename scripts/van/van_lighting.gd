@@ -8,6 +8,9 @@ extends Node3D
 
 const LAYER_VAN_INTERIOR := 2
 
+## Street-facing parts of interior pieces (door outer skin, window frame, glass, bars): lit by street lights (layer 1) and cabin lights (layer 2).
+const LAYER_STREET_AND_INTERIOR := 3
+
 ## Exterior faces of interior parts (e.g. a window's exterior pane) stay on layer 1.
 const GROUP_EXTERIOR_LAYER := &"van_exterior_layer"
 

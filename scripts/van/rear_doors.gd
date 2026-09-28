@@ -65,6 +65,7 @@ var _right_tween: Tween
 
 func _ready() -> void:
 	_fit_to_hull()
+	preload("res://scripts/van/rear_door_lighting.gd").apply(_left_hinge, _right_hinge)
 	_left_grip_closed = _left_grip.position
 	_left_mount_closed = _left_mount.position
 	_right_grip_closed = _right_grip.position

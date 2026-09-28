@@ -6,13 +6,26 @@ extends RefCounted
 const _Shell := preload("res://scripts/van/van_side_wall_shell.gd")
 
 var wall: Node3D  # the VanSideWall; reads its exports and profile when called
+var _x_from := 0.0  ## Offset off the liner of the mesh's inner face for the current build.
+var _x_to := 0.0  ## Offset off the liner of the mesh's outer face for the current build.
+var _inner_face := true  ## Whether the current build emits the cabin-side face.
 
 
 func _init(owner: Node3D) -> void:
 	wall = owner
 
 
-func build_side_mesh(wall_sign: float) -> ArrayMesh:
+## Which parts of the panel a build emits: grid faces, opening returns/reveals, or both.
+enum Part { ALL, FACES, RETURNS }
+
+
+func build_side_mesh(
+	wall_sign: float, x_from: float = 0.0, x_to: float = -1.0, inner_face: bool = true,
+	part: int = Part.ALL
+) -> ArrayMesh:
+	_x_from = x_from
+	_x_to = wall.thickness if x_to < 0.0 else x_to
+	_inner_face = inner_face
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
@@ -27,7 +40,7 @@ func build_side_mesh(wall_sign: float) -> ArrayMesh:
 		var row_solid: Array = []
 		var ty := float(iy) / float(wall.y_segments)
 		var y: float = ty * wall.wall_height
-		var x_inner: float = wall_sign * wall._profile_x(y)
+		var x_inner: float = wall_sign * (wall._profile_x(y) + _x_from)
 		for iz in range(wall.z_segments + 1):
 			var tz := float(iz) / float(wall.z_segments)
 			var z := lerpf(-half_z, half_z, tz)
@@ -43,8 +56,8 @@ func build_side_mesh(wall_sign: float) -> ArrayMesh:
 	for iy in range(wall.y_segments + 1):
 		var row: Array = []
 		var y: float = float(iy) / float(wall.y_segments) * wall.wall_height
-		var x_inner: float = wall_sign * wall._profile_x(y)
-		var x_outer: float = x_inner + wall_sign * wall.thickness
+		var x_inner: float = wall_sign * (wall._profile_x(y) + _x_from)
+		var x_outer: float = x_inner + wall_sign * (_x_to - _x_from)
 		for iz in range(wall.z_segments + 1):
 			var z := lerpf(-half_z, half_z, float(iz) / float(wall.z_segments))
 			row.append(Vector3(x_outer, y, z))
@@ -54,8 +67,8 @@ func build_side_mesh(wall_sign: float) -> ArrayMesh:
 	# the rear door CSG silhouette instead of a stair-stepped rect.
 	project_window_cut_fringe(wall_sign, verts, outer, solid)
 
-	# Interior face (normals toward cabin).
-	for iy in range(wall.y_segments):
+	# Interior face (normals toward cabin); the hull skin's outer layer has none.
+	for iy in range(wall.y_segments if _inner_face and part != Part.RETURNS else 0):
 		for iz in range(wall.z_segments):
 			var y0: float = float(iy) / float(wall.y_segments) * wall.wall_height
 			var y1: float = float(iy + 1) / float(wall.y_segments) * wall.wall_height
@@ -83,7 +96,7 @@ func build_side_mesh(wall_sign: float) -> ArrayMesh:
 				_Shell.add_tri(st, v00, uv00, v10, uv10, v01, uv01)
 				_Shell.add_tri(st, v10, uv10, v11, uv11, v01, uv01)
 
-	for iy in range(wall.y_segments):
+	for iy in range(wall.y_segments if part != Part.RETURNS else 0):
 		for iz in range(wall.z_segments):
 			var y0: float = float(iy) / float(wall.y_segments) * wall.wall_height
 			var y1: float = float(iy + 1) / float(wall.y_segments) * wall.wall_height
@@ -108,11 +121,11 @@ func build_side_mesh(wall_sign: float) -> ArrayMesh:
 				_Shell.add_tri(st, v00, uv00, v01, uv01, v10, uv10)
 				_Shell.add_tri(st, v10, uv10, v01, uv01, v11, uv11)
 
-	# Opening returns (thickness around cutouts).
-	add_opening_returns(st, wall_sign, verts, outer, uvs, solid)
-	# Reveal faces at window + door holes — grid returns are edge-on when looking out.
-	add_window_opening_reveals(st, wall_sign)
-	add_door_opening_reveals(st, wall_sign)
+	if part != Part.FACES:
+		# Returns around cutouts, plus reveals (grid returns are edge-on looking out).
+		add_opening_returns(st, wall_sign, verts, outer, uvs, solid)
+		add_window_opening_reveals(st, wall_sign)
+		add_door_opening_reveals(st, wall_sign)
 
 	st.generate_normals()
 	st.generate_tangents()
@@ -126,7 +139,6 @@ func add_window_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
 	var n_poly: int = wall.WINDOW_CUT_POLY.size()
 	if n_poly < 3:
 		return
-
 	for cz in wall.window_centers_z:
 		for i in range(n_poly):
 			var a: Vector2 = wall.WINDOW_CUT_POLY[i]
@@ -139,10 +151,10 @@ func add_window_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
 				var yb: float = wall.window_center_y + lb.y
 				var za: float = cz + la.x
 				var zb: float = cz + lb.x
-				var xi_a: float = wall_sign * wall._profile_x(ya)
-				var xo_a: float = xi_a + wall_sign * wall.thickness
-				var xi_b: float = wall_sign * wall._profile_x(yb)
-				var xo_b: float = xi_b + wall_sign * wall.thickness
+				var xi_a: float = wall_sign * (wall._profile_x(ya) + _x_from)
+				var xo_a: float = xi_a + wall_sign * (_x_to - _x_from)
+				var xi_b: float = wall_sign * (wall._profile_x(yb) + _x_from)
+				var xo_b: float = xi_b + wall_sign * (_x_to - _x_from)
 				var i_a := Vector3(xi_a, ya, za)
 				var o_a := Vector3(xo_a, ya, za)
 				var i_b := Vector3(xi_b, yb, zb)
@@ -183,8 +195,8 @@ func add_door_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
 		var za := lerpf(z0, z1, float(iz) / float(segs_z))
 		var zb := lerpf(z0, z1, float(iz + 1) / float(segs_z))
 		var y_top: float = wall.door_y_max
-		var xi: float = wall_sign * wall._profile_x(y_top)
-		var xo: float = xi + wall_sign * wall.thickness
+		var xi: float = wall_sign * (wall._profile_x(y_top) + _x_from)
+		var xo: float = xi + wall_sign * (_x_to - _x_from)
 		var i_a := Vector3(xi, y_top, za)
 		var o_a := Vector3(xo, y_top, za)
 		var i_b := Vector3(xi, y_top, zb)
@@ -199,8 +211,8 @@ func add_door_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
 		var za := lerpf(z0, z1, float(iz) / float(segs_z))
 		var zb := lerpf(z0, z1, float(iz + 1) / float(segs_z))
 		var y_bot: float = wall.door_y_min
-		var xi: float = wall_sign * wall._profile_x(y_bot)
-		var xo: float = xi + wall_sign * wall.thickness
+		var xi: float = wall_sign * (wall._profile_x(y_bot) + _x_from)
+		var xo: float = xi + wall_sign * (_x_to - _x_from)
 		var i_a := Vector3(xi, y_bot, za)
 		var o_a := Vector3(xo, y_bot, za)
 		var i_b := Vector3(xi, y_bot, zb)
@@ -215,10 +227,10 @@ func add_door_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
 		var ya: float = lerpf(wall.door_y_min, wall.door_y_max, float(iy) / float(segs_y))
 		var yb: float = lerpf(wall.door_y_min, wall.door_y_max, float(iy + 1) / float(segs_y))
 		var z_fwd := z1
-		var xi_a: float = wall_sign * wall._profile_x(ya)
-		var xo_a: float = xi_a + wall_sign * wall.thickness
-		var xi_b: float = wall_sign * wall._profile_x(yb)
-		var xo_b: float = xi_b + wall_sign * wall.thickness
+		var xi_a: float = wall_sign * (wall._profile_x(ya) + _x_from)
+		var xo_a: float = xi_a + wall_sign * (_x_to - _x_from)
+		var xi_b: float = wall_sign * (wall._profile_x(yb) + _x_from)
+		var xo_b: float = xi_b + wall_sign * (_x_to - _x_from)
 		var i_a := Vector3(xi_a, ya, z_fwd)
 		var o_a := Vector3(xo_a, ya, z_fwd)
 		var i_b := Vector3(xi_b, yb, z_fwd)
@@ -233,10 +245,10 @@ func add_door_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
 		var ya: float = lerpf(wall.door_y_min, wall.door_y_max, float(iy) / float(segs_y))
 		var yb: float = lerpf(wall.door_y_min, wall.door_y_max, float(iy + 1) / float(segs_y))
 		var z_rear := z0
-		var xi_a: float = wall_sign * wall._profile_x(ya)
-		var xo_a: float = xi_a + wall_sign * wall.thickness
-		var xi_b: float = wall_sign * wall._profile_x(yb)
-		var xo_b: float = xi_b + wall_sign * wall.thickness
+		var xi_a: float = wall_sign * (wall._profile_x(ya) + _x_from)
+		var xo_a: float = xi_a + wall_sign * (_x_to - _x_from)
+		var xi_b: float = wall_sign * (wall._profile_x(yb) + _x_from)
+		var xo_b: float = xi_b + wall_sign * (_x_to - _x_from)
 		var i_a := Vector3(xi_a, ya, z_rear)
 		var o_a := Vector3(xo_a, ya, z_rear)
 		var i_b := Vector3(xi_b, yb, z_rear)
@@ -345,9 +357,9 @@ func project_window_cut_fringe(wall_sign: float, verts: Array, outer: Array, sol
 			var p := nearest_on_window_cut(y, z)
 			var wy := p.x
 			var wz := p.y
-			var x: float = wall_sign * wall._profile_x(wy)
+			var x: float = wall_sign * (wall._profile_x(wy) + _x_from)
 			verts[iy][iz] = Vector3(x, wy, wz)
-			outer[iy][iz] = Vector3(x + wall_sign * wall.thickness, wy, wz)
+			outer[iy][iz] = Vector3(x + wall_sign * (_x_to - _x_from), wy, wz)
 			solid[iy][iz] = true
 
 

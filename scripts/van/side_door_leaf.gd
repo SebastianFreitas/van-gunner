@@ -4,8 +4,8 @@ extends RefCounted
 
 var doors: Node3D  # the owning SideDoors node; reads/writes its fields when called
 
-## Door leaf extents (slightly inset from the wall opening).
-const DOOR_HALF_Z := 1.17
+## Door leaf extents (slightly inset from the wall opening): door_half_length 1.235 - JAMB_CLEAR 0.13.
+const DOOR_HALF_Z := 1.105
 const DOOR_THICKNESS := 0.14
 const OUTER_SKIN := 0.035
 
@@ -13,8 +13,12 @@ const OUTER_SKIN := 0.035
 const JAMB_CLEAR := 0.13
 
 ## Recessed panel + trim (from original CSG Panel, local y/z from door center).
+## The latch plate stops 4 cm inside the leaf edge, 2 cm inside the outer skin's edge (D12).
+const LATCH_EDGE_CLEAR := 0.04
+const LATCH_SIZE := 0.60
+
 const PANEL_CENTER_Y := -0.07
-const PANEL_HALF_Z := 1.07
+const PANEL_HALF_Z := 1.005
 const PANEL_HALF_Y := 1.22
 const PANEL_FRAME_INSET := 0.08
 const PANEL_RECESS_DEPTH := 0.05
@@ -85,6 +89,8 @@ func fit_door_leaf(leaf: Node3D, wall_sign: float, walls: VanSideWall) -> void:
 	)
 	outer.material_override = trim_mat
 	outer.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	outer.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+	outer.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	leaf.add_child(outer)
 
 	var door_half_y := (y_max - y_min) * 0.5
@@ -133,9 +139,12 @@ func fit_door_leaf(leaf: Node3D, wall_sign: float, walls: VanSideWall) -> void:
 		-wall_sign * (2.0 * TRIM_LIFT + FRAME_THICKNESS), trim_mat, "LowerCrease"
 	)
 
-	add_latch_plate(leaf, walls, wall_sign, x_ref, mid_y, z_ref, trim_mat)
+	add_latch_plate(leaf, walls, wall_sign, x_ref, mid_y, z_ref, (y_max - y_min) * 0.5, trim_mat)
 
-	place_on_curve(leaf.get_node_or_null("Handle") as Node3D, walls, wall_sign, x_ref, mid_y, 1.375, 0.85, 0.12)
+	var handle := leaf.get_node_or_null("Handle") as Node3D
+	place_on_curve(handle, walls, wall_sign, x_ref, mid_y, 1.375, 0.81, 0.12)
+	if handle != null:
+		_mark_street_lit(handle)
 
 
 func place_on_curve(
@@ -291,13 +300,14 @@ func add_latch_plate(
 	x_ref: float,
 	mid_y: float,
 	z_ref: float,
+	leaf_half_y: float,
 	trim_mat: Material
 ) -> void:
 	# Exterior latch backing plate beside the handle (cargo sliding-door look).
-	var plate_y0 := mid_y + 0.95
-	var plate_y1 := mid_y + 1.55
-	var plate_z0 := z_ref + 0.55
-	var plate_z1 := z_ref + 1.15
+	var plate_y1 := mid_y + leaf_half_y - LATCH_EDGE_CLEAR
+	var plate_y0 := plate_y1 - LATCH_SIZE
+	var plate_z1 := z_ref + DOOR_HALF_Z - LATCH_EDGE_CLEAR
+	var plate_z0 := plate_z1 - LATCH_SIZE
 	var plate := MeshInstance3D.new()
 	plate.name = "LatchPlate"
 	plate.mesh = walls.build_curved_shell_mesh(
@@ -310,4 +320,16 @@ func add_latch_plate(
 	)
 	plate.material_override = trim_mat
 	plate.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	plate.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+	plate.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	leaf.add_child(plate)
+
+
+func _mark_street_lit(root: Node) -> void:
+	# retarget_layers is the only safe way to change layers on a node already in the tree.
+	if root is VisualInstance3D and not (root is Light3D):
+		if not root.is_in_group(VanLighting.GROUP_EXTERIOR_LAYER):
+			root.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
+		VanLighting.retarget_layers(root as VisualInstance3D, VanLighting.LAYER_STREET_AND_INTERIOR)
+	for child in root.get_children():
+		_mark_street_lit(child)

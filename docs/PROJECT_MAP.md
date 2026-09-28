@@ -256,6 +256,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `enum OpeningSide { LEFT, RIGHT }`
 
+**`scripts/van/van_side_wall_panel.gd`**
+
+- `enum Part { ALL, FACES, RETURNS }`
+
 **`scripts/van/van_vital.gd`**
 
 - `signal health_changed(current: float, maximum: float)`
@@ -272,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-288 GDScript files, 43594 lines.
+289 GDScript files, 43687 lines.
 
 ### `scenes/corridor/`
 
@@ -589,16 +593,17 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). |
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. |
-| `iron_cross.gd` | `IronCross` | 360 | Welded iron + on a window pane. |
+| `iron_cross.gd` | `IronCross` | 395 | Welded iron + on a window pane. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
-| `rear_doors.gd` | — | 400 | Truck-style rear double doors. |
+| `rear_door_lighting.gd` | — | 27 | Puts the rear leaves' outward-visible parts on layers 1+2 so street lights reach them (D15). |
+| `rear_doors.gd` | — | 401 | Truck-style rear double doors. |
 | `room_zone.gd` | `RoomZone` | 15 | Marks a van interior zone; tells GameSession which room the player is in. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. |
-| `side_door_leaf.gd` | — | 314 | Builds the side door leaf meshes (body, trim, frames, latch) onto SideDoors nodes. |
-| `side_doors.gd` | — | 331 | Sliding cargo-style side doors. |
+| `side_door_leaf.gd` | — | 336 | Builds the side door leaf meshes (body, trim, frames, latch) onto SideDoors nodes. |
+| `side_doors.gd` | — | 332 | Sliding cargo-style side doors. |
 | `side_window_exterior.gd` | — | 50 | Adds the dark-tinted exterior pane that rides a side cargo window's sash. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. |
-| `side_windows.gd` | — | 357 | Side cargo windows — top-hinged sashes that tip vertically outward. |
+| `side_windows.gd` | — | 374 | Side cargo windows — top-hinged sashes that tip vertically outward. |
 | `van.gd` | — | 398 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
 | `van_body_profile.gd` | `VanBodyProfile` | 193 | One cross-section for the whole van body: the inner liner outline (floor, bowed sides, roof vault) and an outer skin offset from it, so inside and outside piec… |
 | `van_bulkhead.gd` | `VanBulkhead` | 202 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
@@ -611,12 +616,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_gun_port_interact.gd` | — | 16 | Layer-2 hit target in front of a side door's gun port; E slides the port's plate open or shut. |
 | `van_hud.gd` | — | 183 | Combat HUD readouts: ammo, health, waves, prompts, item toasts, stop toasts. |
 | `van_hull_mesh.gd` | `VanHullMesh` | 400 | XY end-cap slabs that follow VanSideWall's bow and VanCeiling's barrel vault. |
-| `van_lighting.gd` | `VanLighting` | 53 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) lights the corridor through openings without washing the cabin. |
+| `van_lighting.gd` | `VanLighting` | 56 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) lights the corridor through openings without washing the cabin. |
 | `van_overlays.gd` | — | 238 | Modal overlays: bench, skill tree, class panel, debug console, pause menu, mouse passthrough. |
 | `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. |
 | `van_route_choice.gd` | — | 287 | Builds and refreshes the ROUTE_CHOICE panel: card art, stop labels, highlight state. |
-| `van_side_wall.gd` | `VanSideWall` | 388 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
-| `van_side_wall_panel.gd` | — | 389 | This wall's own side panel mesh: openings, reveals, returns, and the cut queries that decide which cells are punched for the side doors and windows. |
+| `van_side_wall.gd` | `VanSideWall` | 363 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
+| `van_side_wall_jambs.gd` | — | 83 | Door jambs for VanSideWall: the frame ring's lip inside each side door bay, without the outer return the wall's reveal owns. |
+| `van_side_wall_panel.gd` | — | 401 | This wall's own side panel mesh: openings, reveals, returns, and the cut queries that decide which cells are punched for the side doors and windows. |
 | `van_side_wall_shell.gd` | — | 400 | Generic curved-shell / pane / frame-ring mesh builders for VanSideWall: the low-level lofting onto the cargo profile, shared by side walls, doors and windows. |
 | `van_vital.gd` | `VanVital` | 91 | One interior machine whose HP is a slice of van death hull. |
 
@@ -639,10 +645,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_front_kit.gd` | — | 170 | Builds the van's seeded front kit (bumper, ram, windshield cage, lamp cages) onto a VanCab. |
 | `van_generator.gd` | `VanGenerator` | 117 | The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp… |
 | `van_generator_parts.gd` | — | 184 | Builds the generator set's welded skid, oil pan, radiator, tank, manifold, control gantry, junction box, trouble lamp and rust patches; the core script keeps t… |
-| `van_hull.gd` | `VanHull` | 215 | The van's outer skin: roof, sides, rear face and sills a few cm outside the liners, painted from the look seed. |
-| `van_hull_lines.gd` | — | 194 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
-| `van_hull_patches.gd` | — | 191 | Skin patches that close the four gaps left in VanHull's outer shell: the rear corner return behind the door posts, the rocker sill along both sides, and a casi… |
-| `van_hull_window_casings.gd` | — | 55 | Body-coloured casing ring around each side cargo window opening, modeled on VanHullPatches' side door casing ring. |
+| `van_hull.gd` | `VanHull` | 219 | The van's outer skin: roof, sides, rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted from the look seed. |
+| `van_hull_lines.gd` | — | 198 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
+| `van_hull_patches.gd` | — | 154 | Skin patches that close the gaps left in VanHull's outer shell: the rear corner strip behind the side skin, the rocker sill along both sides and the belly betw… |
 | `van_inner_shell.gd` | `VanInnerShell` | 258 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
 | `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |
 | `van_marker_lights.gd` | — | 127 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
@@ -689,7 +694,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 158 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
 | `smoke_shots.gd` | — | 270 | Screenshots for tools/smoke.py --shots. |
-| `smoke_shots_closeups.gd` | — | 150 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
+| `smoke_shots_closeups.gd` | — | 151 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 
 ### `tools/van_audit/`

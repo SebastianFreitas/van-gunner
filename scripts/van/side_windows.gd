@@ -51,10 +51,14 @@ const SASH_HALF_H := 0.74
 
 ## D7: 1 cm between stacked parts.
 const TRIM_LIFT := 0.01
-## Casing inner face (van_hull_window_casings.gd CASING_BACK_M) sits this far proud of the
-## liner; keep the frame's outer face TRIM_LIFT inboard of it so the two never share a plane.
+## Reference depth off the liner (the removed hull casing's inner face); keep the frame's
+## outer face TRIM_LIFT inboard of it.
 const CASING_BACK_REF := 0.04
 const FRAME_THICKNESS := CASING_BACK_REF - TRIM_LIFT
+## The pivot sits outboard of all wall material: the hull skin's outer face is 0.22 out (panel
+## 0.16 + SKIN_OFFSET_M 0.06), casing 0.13. At 0.32 the open sash stays below the cut's rounded
+## top corners (y 0.519), so the frame stiles never pass through the skin's corner material.
+const HINGE_OUT_M := 0.32
 
 ## 2 cm (every edge offset inward, mitred corners) inside VanSideWall.WINDOW_CUT_POLY,
 ## because the van audit treats faces within 1 cm as coplanar.
@@ -138,6 +142,8 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	)
 	frame.material_override = frame_mat
 	frame.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	frame.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+	frame.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	hinge.add_child(frame)
 
 	# Single-sided (facing the cabin): drop the duplicate backface triangles.
@@ -153,6 +159,8 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	)
 	glass.material_override = glass_mat
 	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	glass.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+	glass.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	hinge.add_child(glass)
 
 	var exterior_x_shift := wall_sign * EXTERIOR_PANE_PROUD_M
@@ -167,6 +175,7 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	var iron_cross := hinge.get_node_or_null("IronCross") as IronCross
 	_place_on_curve(iron_cross, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, iron_inset)
 	if iron_cross:
+		iron_cross.set_street_lit(true)
 		iron_cross.follow_side_wall_curve(walls, mid_y)
 	_place_on_curve(breakable as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, breakable_inset)
 	_place_on_curve(hinge.get_node_or_null("Interact") as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.0)
@@ -174,6 +183,14 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	var handle := hinge.get_node_or_null("Handle") as Node3D
 	if handle:
 		_place_on_curve(handle, walls, wall_sign, x_ref, y_hinge, mid_y - 0.52, -0.95, 0.08)
+
+	# Move the pivot outboard of every part so the tipping sash never rises through the wall;
+	# children shift the other way, so the closed pose is unchanged.
+	var pivot := Vector3(wall_sign * HINGE_OUT_M, 0.0, 0.0)
+	hinge.position = pivot
+	for child in hinge.get_children():
+		if child is Node3D:
+			(child as Node3D).position -= pivot
 
 
 func _place_on_curve(
