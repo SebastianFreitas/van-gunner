@@ -9,6 +9,9 @@ const EXTERIOR_SHADER := preload("res://scenes/van/van_exterior.gdshader")
 ## Builds the truck-body lines (rub rails, belt line, drip rail, corner posts) on the skin.
 const _HullLines := preload("res://scripts/van/look/van_hull_lines.gd")
 
+## Closes the rear corner, sill and side door casing gaps left in the skin above.
+const _HullPatches := preload("res://scripts/van/look/van_hull_patches.gd")
+
 ## How far outside the liners the skin sits.
 const SKIN_OFFSET_M := 0.06
 
@@ -43,7 +46,7 @@ func rebuild_look(look: VanLook) -> void:
 	_build_sides(walls)
 	_build_roof(walls)
 	_build_rear(walls)
-	_build_sills(walls)
+	_HullPatches.new(self).build(walls)
 	_HullLines.new(self).build(_profile, walls, material)
 
 
@@ -90,11 +93,12 @@ func _build_roof(walls: VanSideWall) -> void:
 			st.add_vertex(v11)
 			st.add_vertex(v01)
 
-	# Down-turned lip along both long edges (x = +-w), 0.05 m, facing outward.
+	# Down-turned lip along both long edges (x = +-w), 0.10 m, facing outward, overlapping the
+	# side skin's top (the roof edge sits 6 cm above it).
 	for edge_sign: float in [-1.0, 1.0]:
 		var x_edge := edge_sign * w
 		var y_top := _roof_y(x_edge, w, walls)
-		var y_bot := y_top - 0.05
+		var y_bot := y_top - 0.10
 		for iz in range(z_segments):
 			var z0 := lerpf(z_min, z_max, float(iz) / float(z_segments))
 			var z1 := lerpf(z_min, z_max, float(iz + 1) / float(z_segments))
@@ -187,14 +191,6 @@ func _build_rear(walls: VanSideWall) -> void:
 	st.generate_normals()
 	# No tangents: the exterior shader projects in model space and these meshes carry no UVs.
 	_add_mesh("RearSkin", st.commit())
-
-
-func _build_sills(walls: VanSideWall) -> void:
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(0.10, 0.28, 9.5)
-	for s: float in [-1.0, 1.0]:
-		var pos := Vector3(s * (walls.wall_x_at(0.0) + SKIN_OFFSET_M + 0.03), -0.11, 0.03)
-		_add_mesh("SillL" if s < 0.0 else "SillR", mesh, pos)
 
 
 func _add_mesh(mesh_name: String, mesh: Mesh, pos: Vector3 = Vector3.ZERO) -> MeshInstance3D:
