@@ -12,8 +12,8 @@ const RED := Color(0.9, 0.08, 0.05)
 
 const SIDE_LIGHT_ENERGY := 0.35
 const SIDE_LIGHT_RANGE := 3.0
-const TAIL_LIGHT_ENERGY := 0.45
-const TAIL_LIGHT_RANGE := 2.6
+const TAIL_LIGHT_ENERGY := 0.55
+const TAIL_LIGHT_RANGE := 3.2
 
 const ID_LAMP_X: Array[float] = [-0.35, 0.0, 0.35]
 

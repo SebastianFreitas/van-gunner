@@ -15,6 +15,8 @@ const SPOT_Z := -4.0 ## The spotlight's cell at the rack's front; junk must leav
 const SPOT_ENERGY := 2.2
 const SPOT_RANGE := 24.0
 const SPOT_ANGLE := 22.0
+const SPOT_PITCH := -8.0 ## Beam pitch in degrees; shallow enough that most of the cone clears the cab roof.
+const SPOT_LENS_GLOW := 1.2 ## Lens emission; a warm glow, not a white disc.
 
 var spotlight: SpotLight3D
 var rack_material: StandardMaterial3D
@@ -128,10 +130,11 @@ func _build_spotlight(hull_mat: Material, rng: RandomNumberGenerator) -> void:
 	add_bar("SpotMount", Vector3(0.0, RACK_Y, SPOT_Z), Vector3(0.0, RACK_Y + 0.14, SPOT_Z), 0.05, hull_mat)
 
 	var lens_mat := StandardMaterial3D.new()
-	lens_mat.albedo_color = Color(0.9, 0.85, 0.7)
+	lens_mat.albedo_color = Color(0.30, 0.26, 0.19)
+	lens_mat.roughness = 0.8
 	lens_mat.emission_enabled = true
 	lens_mat.emission = Color(1.0, 0.9, 0.7)
-	lens_mat.emission_energy_multiplier = 2.0
+	lens_mat.emission_energy_multiplier = SPOT_LENS_GLOW
 
 	var lens_mesh := CylinderMesh.new()
 	lens_mesh.top_radius = 0.14
@@ -140,11 +143,21 @@ func _build_spotlight(hull_mat: Material, rng: RandomNumberGenerator) -> void:
 	var lens := _add_mesh("SpotLens", lens_mesh, lens_mat, Vector3(0.0, RACK_Y + 0.28, SPOT_Z - 0.17))
 	lens.rotation_degrees = Vector3(90.0, 0.0, 0.0)
 
+	var visor_mesh := BoxMesh.new()
+	visor_mesh.size = Vector3(0.40, 0.025, 0.22)
+	var visor := _add_mesh("SpotVisor", visor_mesh, hull_mat, Vector3(0.0, RACK_Y + 0.28 + 0.175, SPOT_Z - 0.26))
+	visor.rotation_degrees = Vector3(-8.0, 0.0, 0.0)
+
+	var cheek_mesh := BoxMesh.new()
+	cheek_mesh.size = Vector3(0.025, 0.14, 0.20)
+	_add_mesh("SpotVisorCheekL", cheek_mesh, hull_mat, Vector3(-0.19, RACK_Y + 0.28 + 0.10, SPOT_Z - 0.26))
+	_add_mesh("SpotVisorCheekR", cheek_mesh, hull_mat, Vector3(0.19, RACK_Y + 0.28 + 0.10, SPOT_Z - 0.26))
+
 	var yaw := rng.randf_range(-20.0, 20.0)
 	var light := SpotLight3D.new()
 	light.name = "RoofSpot"
 	light.position = Vector3(0.0, RACK_Y + 0.28, SPOT_Z - 0.2)
-	light.rotation_degrees = Vector3(-14.0, yaw, 0.0)
+	light.rotation_degrees = Vector3(SPOT_PITCH, yaw, 0.0)
 	light.light_energy = SPOT_ENERGY
 	light.spot_range = SPOT_RANGE
 	light.spot_angle = SPOT_ANGLE

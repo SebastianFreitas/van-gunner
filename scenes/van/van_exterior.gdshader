@@ -4,7 +4,8 @@ render_mode diffuse_burley, specular_schlick_ggx;
 // The war rig's outer skin: painted panels with hull seams, wear through to primer and bare
 // metal, rust, rain streaks, scratches and a road-dirt sill band, all in model-space metres.
 // `plate_mode` swaps the hull seams for a single welded armour plate (weld bead, heat tint,
-// bolts) for patch panels bolted onto the hull.
+// bolts) for patch panels bolted onto the hull. Also carries a faint rain-wet sheen (roughness
+// pulled to roughness_min, never below it).
 
 #include "res://scenes/shaders/grime.gdshaderinc"
 
@@ -39,6 +40,13 @@ uniform float bolt_spacing_m = 0.25;
 uniform float roughness_min : hint_range(0.0, 1.0) = 0.78;
 uniform float roughness_max : hint_range(0.0, 1.0) = 0.95;
 uniform float metallic_max : hint_range(0.0, 1.0) = 0.3;
+
+/// How much of the skin reads rain-wet; wet areas pull roughness to roughness_min.
+uniform float wetness : hint_range(0.0, 1.0) = 0.7;
+/// Specular on fully wet skin; dry skin stays at 0.5.
+uniform float wet_specular : hint_range(0.0, 1.0) = 0.65;
+/// Grime bump that breaks the wet highlight up.
+uniform float wet_normal_strength : hint_range(0.0, 1.0) = 0.25;
 
 varying vec3 v_pos_m;
 varying vec3 v_nrm;
@@ -148,11 +156,17 @@ void fragment() {
 	metallic_out = mix(metallic_out, 0.0, rust);
 
 	// Rain streaks on side faces only.
+	float wet = 0.0;
 	if (side_face) {
 		float streak = noise21(vec2(h * 9.0, y * 0.35) + seed_offset);
 		float streak_mask = smoothstep(0.6, 0.85, streak);
 		col = mix(col, dirt_color, streak_mask * 0.35);
+		wet = max(wet, streak_mask);
 	}
+
+	// Wet patches: broad fbm blotches of rain sheen, plus water pooling on upward faces.
+	float wet_patch = smoothstep(0.45, 0.75, fbm(ps * 0.35 + vec2(7.0, 3.0)));
+	wet = max(wet, wet_patch * 0.8);
 
 	// Scratches: thin near-horizontal lines, faded with distance.
 	float scratch_line = abs(fract(y * 23.0 + noise21(ps * vec2(0.8, 6.0)) * 0.7) - 0.5);
@@ -167,7 +181,15 @@ void fragment() {
 	col = mix(col, dirt_color, sill * 0.85);
 	if (!side_face && n.y > 0.5) {
 		col = mix(col, dirt_color, 0.3);
+		wet = max(wet, 0.6);
 	}
+
+	// Rust and the sill dirt band stay dry-looking.
+	wet *= (1.0 - rust * 0.7) * (1.0 - sill * 0.5);
+	wet = clamp(wet * wetness, 0.0, 1.0);
+
+	// Wet paint reads very slightly darker.
+	col *= 1.0 - wet * 0.12;
 
 	float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
 	if (lum > 0.4) {
@@ -177,6 +199,18 @@ void fragment() {
 
 	float rough = roughness_max - chip_mask * (roughness_max - roughness_min);
 	rough = mix(rough, roughness_max, rust * 0.5 + rough_hint * 0.5);
+	rough = mix(rough, roughness_min, wet);
 	ROUGHNESS = clamp(rough, roughness_min, roughness_max);
 	METALLIC = clamp(metallic_out, 0.0, metallic_max);
+	SPECULAR = mix(0.5, wet_specular, wet);
+
+	// Grime bump breaks the wet highlight up; faded with fwidth so it never shimmers.
+	float bump_n = fbm(ps * 3.0);
+	float bx = fbm(ps * 3.0 + vec2(0.05, 0.0)) - bump_n;
+	float by = fbm(ps * 3.0 + vec2(0.0, 0.05)) - bump_n;
+	float bump_fade = 1.0 - smoothstep(0.3, 1.0, fwidth(ps.x * 3.0));
+	bx *= bump_fade;
+	by *= bump_fade;
+	NORMAL_MAP = normalize(vec3(-bx, -by, 1.0) * vec3(wet_normal_strength * 4.0, wet_normal_strength * 4.0, 1.0)) * 0.5 + 0.5;
+	NORMAL_MAP_DEPTH = 1.0;
 }

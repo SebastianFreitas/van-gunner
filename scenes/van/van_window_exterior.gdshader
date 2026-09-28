@@ -36,11 +36,11 @@ void fragment() {
 	float alpha = mix(base_alpha_low, base_alpha_high, f);
 	NORMAL = n;
 
-	float dust = smoothstep(0.45, 0.8, fbm(model_pos.zy / dust_scale_m)) * 0.6;
+	float dust = smoothstep(0.45, 0.8, fbm(model_pos.zy / dust_scale_m)) * 0.35;
 	float bottom_band = smoothstep(0.4, -0.6, model_pos.y);
 	float dirt = clamp(dust + bottom_band * 0.5, 0.0, 1.0);
 
-	vec3 dirty_albedo = vec3(0.07, 0.065, 0.058);
+	vec3 dirty_albedo = vec3(0.045, 0.042, 0.038);
 	ALBEDO = mix(base_albedo, dirty_albedo, dirt);
 	ROUGHNESS = mix(base_roughness, 0.9, dirt);
 	METALLIC = 0.0;
