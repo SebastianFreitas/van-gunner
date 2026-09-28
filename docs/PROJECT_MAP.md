@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-289 GDScript files, 43771 lines.
+289 GDScript files, 43864 lines.
 
 ### `scenes/corridor/`
 
@@ -636,18 +636,18 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_armour.gd` | `VanArmour` | 198 | The van's seeded outer armour: plates, rebar, spikes, road signs and a car-door shield, placed from slots clear of every opening and merged per material. |
 | `van_armour_pieces.gd` | — | 116 | Appends armour piece geometry (plates, bars, spikes, signs, a car door) into per-material SurfaceTools for VanArmour. |
 | `van_cab.gd` | `VanCab` | 176 | The van's cab-over cab on the body profile: shell, face, windshield, doors, a dark cab behind the glass, mirrors and two real headlights, rebuilt from the look… |
-| `van_cab_face.gd` | — | 197 | Dresses the cab-over face and sides: framed split windshield, A-pillar trims, grille, headlight housings and the two cab doors with windows. |
+| `van_cab_face.gd` | — | 205 | Dresses the cab-over face and sides: framed split windshield, A-pillar trims, grille, headlight housings and the two cab doors with windows. |
 | `van_cab_parts.gd` | — | 100 | The dark cab behind the windshield (dash, dash glow, seats, driver silhouette) and the mirrors. |
-| `van_cab_shell.gd` | — | 178 | Builds the cab-over shell on VanBodyProfile: skin, dark liner, back lip, back wall and the flat face with its windshield opening. |
+| `van_cab_shell.gd` | — | 180 | Builds the cab-over shell on VanBodyProfile: skin, dark liner, back lip, back wall and the flat face with its windshield opening. |
 | `van_cable_router.gd` | — | 233 | Routes power cables around machine keep-out boxes inside the bowed shell and builds the small clamp, junction box, tape, plug and coil parts that VanCableRuns… |
 | `van_cable_runs.gd` | `VanCableRuns` | 376 | Seeded power tree: a thick generator-to-relay feed along the right trunk, relay drops to the PC rig, welding bench and hopper, ceiling lamp taps, then wall jun… |
-| `van_chassis.gd` | — | 220 | Builds the van's chassis kit around the wheels: arch flares and wells, side steps, saddle tank, toolbox, short exhaust, chained spares, rear rails and bumper. |
+| `van_chassis.gd` | — | 221 | Builds the van's chassis kit around the wheels: arch flares and wells, side steps, saddle tank, toolbox, short exhaust, chained spares, rear rails and bumper. |
 | `van_front_kit.gd` | — | 170 | Builds the van's seeded front kit (bumper, ram, windshield cage, lamp cages) onto a VanCab. |
 | `van_generator.gd` | `VanGenerator` | 117 | The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp… |
 | `van_generator_parts.gd` | — | 184 | Builds the generator set's welded skid, oil pan, radiator, tank, manifold, control gantry, junction box, trouble lamp and rust patches; the core script keeps t… |
-| `van_hull.gd` | `VanHull` | 294 | The van's outer skin: roof, sides, rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted from the look seed. |
-| `van_hull_lines.gd` | — | 207 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
-| `van_hull_patches.gd` | — | 154 | Skin patches that close the gaps left in VanHull's outer shell: the rear corner strip behind the side skin, the rocker sill along both sides and the belly betw… |
+| `van_hull.gd` | `VanHull` | 335 | The van's outer skin: roof, sides, front face (the step to the cab skin), rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted fr… |
+| `van_hull_lines.gd` | — | 231 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
+| `van_hull_patches.gd` | — | 168 | Skin patches that close the gaps left in VanHull's outer shell: the rear corner strip behind the side skin, the rocker sill along both sides and the belly betw… |
 | `van_inner_shell.gd` | `VanInnerShell` | 258 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
 | `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |
 | `van_marker_lights.gd` | — | 127 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
@@ -666,7 +666,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_stencil_font.gd` | — | 151 | A 5x7 pixel stencil font that renders worn, hand-painted text and tally marks into Images for the van's decals. |
 | `van_welding_bench.gd` | `VanWeldingBench` | 186 | The crafting-bench vital rebuilt as a welding bench (heavy steel bench, gas bottles, welder box, vice, grinder with shrouds, pegboard with tools and hood, roof… |
 | `van_welding_bench_parts.gd` | — | 271 | Prop builders for the welding bench (gas bottles, welder box with torch and power port, anvil, clamps, rod can, offcuts, scorch marks, hood, grinder shrouds, a… |
-| `van_wheels.gd` | `VanWheels` | 144 | The van's seeded road wheels and mud flaps, spun by the van's measured speed; the chassis kit around them lives in van_chassis.gd. |
+| `van_wheels.gd` | `VanWheels` | 147 | The van's seeded road wheels and mud flaps, spun by the van's measured speed; the chassis kit around them lives in van_chassis.gd. |
 
 ### `tools/`
 

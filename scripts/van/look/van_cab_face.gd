@@ -40,22 +40,28 @@ func _build_windshield(f: float, mat: Material) -> void:
 
 	var mid_y := (VanCab.WS_BOT_Y + VanCab.WS_TOP_Y) * 0.5
 	_cab._add_mesh("WindshieldPost",
-			_cab._box(Vector3(0.08, VanCab.WS_TOP_Y - VanCab.WS_BOT_Y, VanCab.WS_REVEAL)), mat,
+			_cab._box(Vector3(0.08, VanCab.WS_TOP_Y - VanCab.WS_BOT_Y + 0.04, VanCab.WS_REVEAL)),
+			mat,
 			Vector3(0.0, mid_y, f + VanCab.WS_REVEAL * 0.5))
 
 
 func _build_frame(f: float, mat: Material) -> void:
+	# Back faces sit 2 cm behind the flat face and the pieces butt instead of overlapping, so
+	# no two faces share a plane.
 	var hw := VanCab.WS_HALF_W
-	_cab._add_mesh("WindshieldFrameTop", _cab._box(Vector3(2.0 * hw + 0.14, 0.07, 0.06)), mat,
-			Vector3(0.0, VanCab.WS_TOP_Y + 0.035, f - 0.03))
-	_cab._add_mesh("WindshieldFrameBottom", _cab._box(Vector3(2.0 * hw + 0.14, 0.07, 0.06)), mat,
-			Vector3(0.0, VanCab.WS_BOT_Y - 0.035, f - 0.03))
-	var h := VanCab.WS_TOP_Y - VanCab.WS_BOT_Y + 0.14
+	var ov := 0.02
+	var z := f - 0.02
+	_cab._add_mesh("WindshieldFrameTop", _cab._box(Vector3(2.0 * hw + 0.14, 0.07 + ov, 0.08)), mat,
+			Vector3(0.0, VanCab.WS_TOP_Y + 0.025, z))
+	_cab._add_mesh("WindshieldFrameBottom",
+			_cab._box(Vector3(2.0 * hw + 0.14, 0.07 + ov, 0.08)), mat,
+			Vector3(0.0, VanCab.WS_BOT_Y - 0.025, z))
+	var h := VanCab.WS_TOP_Y - VanCab.WS_BOT_Y - 2.0 * ov
 	var mid_y := (VanCab.WS_BOT_Y + VanCab.WS_TOP_Y) * 0.5
-	_cab._add_mesh("WindshieldFrameL", _cab._box(Vector3(0.07, h, 0.06)), mat,
-			Vector3(-(hw + 0.035), mid_y, f - 0.03))
-	_cab._add_mesh("WindshieldFrameR", _cab._box(Vector3(0.07, h, 0.06)), mat,
-			Vector3(hw + 0.035, mid_y, f - 0.03))
+	_cab._add_mesh("WindshieldFrameL", _cab._box(Vector3(0.07 + ov, h, 0.08)), mat,
+			Vector3(-(hw + 0.025), mid_y, z))
+	_cab._add_mesh("WindshieldFrameR", _cab._box(Vector3(0.07 + ov, h, 0.08)), mat,
+			Vector3(hw + 0.025, mid_y, z))
 
 
 func _build_a_pillars(f: float, mat: Material) -> void:
@@ -65,8 +71,9 @@ func _build_a_pillars(f: float, mat: Material) -> void:
 	var h := top - bottom
 	for s: float in [-1.0, 1.0]:
 		var suffix := "L" if s < 0.0 else "R"
-		var x := s * (_cab.profile.outer_x_at(VanCab.WS_BOT_Y) - 0.06)
-		_cab._add_mesh("APillar%s" % suffix, _cab._box(Vector3(0.12, h, 0.12)), mat,
+		# Outer face 3 cm inside the outline, so it clears the bumper's end face (x 2.55).
+		var x := s * (_cab.profile.outer_x_at(VanCab.WS_BOT_Y) - 0.08)
+		_cab._add_mesh("APillar%s" % suffix, _cab._box(Vector3(0.10, h, 0.12)), mat,
 				Vector3(x, mid_y, f + 0.02))
 
 
@@ -86,13 +93,14 @@ func _build_grille(f: float, mat: Material) -> void:
 				Vector3(0.0, y, f - 0.05))
 
 	var surround_t := 0.08
+	var outer_w := 2.0 * hw + 2.0 * surround_t
 	_cab._add_mesh("GrilleSurroundTop",
-			_cab._box(Vector3(2.0 * hw + surround_t, surround_t, surround_t)), mat,
+			_cab._box(Vector3(outer_w, surround_t, surround_t)), mat,
 			Vector3(0.0, top + surround_t * 0.5, f - 0.05))
 	_cab._add_mesh("GrilleSurroundBottom",
-			_cab._box(Vector3(2.0 * hw + surround_t, surround_t, surround_t)), mat,
+			_cab._box(Vector3(outer_w, surround_t, surround_t)), mat,
 			Vector3(0.0, bot - surround_t * 0.5, f - 0.05))
-	var side_h := top - bot + surround_t
+	var side_h := top - bot
 	_cab._add_mesh("GrilleSurroundL", _cab._box(Vector3(surround_t, side_h, surround_t)), mat,
 			Vector3(-hw - surround_t * 0.5, (bot + top) * 0.5, f - 0.05))
 	_cab._add_mesh("GrilleSurroundR", _cab._box(Vector3(surround_t, side_h, surround_t)), mat,
@@ -112,15 +120,15 @@ func _build_headlight_housings(f: float, mat: Material) -> void:
 		var x := s * VanCab.HEADLIGHT_X
 		_cab._add_mesh("HeadlightHousing%s" % suffix, _cab._box(Vector3(0.62, 0.44, 0.22)), mat,
 				Vector3(x, VanCab.HEADLIGHT_Y, f - 0.08))
-		_cab._add_mesh("HeadlightBezel%s" % suffix, _cab._box(Vector3(0.46, 0.34, 0.02)), bezel_mat,
-				Vector3(x, VanCab.HEADLIGHT_Y, f - 0.195))
+		_cab._add_mesh("HeadlightBezel%s" % suffix, _cab._box(Vector3(0.46, 0.34, 0.04)), bezel_mat,
+				Vector3(x, VanCab.HEADLIGHT_Y, f - 0.20))
 
 		var lens_mesh := CylinderMesh.new()
 		lens_mesh.top_radius = 0.14
 		lens_mesh.bottom_radius = 0.14
 		lens_mesh.height = 0.04
 		var lens := _cab._add_mesh("HeadlightLens%s" % suffix, lens_mesh, lens_mat,
-				Vector3(x, VanCab.HEADLIGHT_Y, f - 0.21), Vector3(deg_to_rad(90.0), 0.0, 0.0))
+				Vector3(x, VanCab.HEADLIGHT_Y, f - 0.225), Vector3(deg_to_rad(90.0), 0.0, 0.0))
 		lens.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 		_cab._add_mesh("HeadlightVisor%s" % suffix, _cab._box(Vector3(0.66, 0.05, 0.14)), mat,

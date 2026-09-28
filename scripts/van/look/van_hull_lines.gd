@@ -10,6 +10,10 @@ const TRIM_LIFT := 0.01
 const DOOR_SLIDE_M := 2.45
 ## Half length of the side door leaf. Keep in step with `DOOR_HALF_Z` in side_door_leaf.gd.
 const DOOR_LEAF_HALF_Z := 1.105
+## Half depth of a corner post along z.
+const POST_HALF_Z := 0.06
+## The D12 edge-to-edge gap between a rail end and a corner post.
+const POST_GAP := 0.02
 
 var _hull: Node3D
 var _profile: VanBodyProfile
@@ -31,10 +35,10 @@ func build(profile: VanBodyProfile, walls: VanSideWall, mat: ShaderMaterial) -> 
 		_build_body_lines(wall_sign)
 
 	var half_len := profile.half_length()
-	_build_corner_post("CornerPostFL", -1.0, -half_len + 0.06)
-	_build_corner_post("CornerPostFR", 1.0, -half_len + 0.06)
-	_build_corner_post("CornerPostRL", -1.0, half_len - 0.06)
-	_build_corner_post("CornerPostRR", 1.0, half_len - 0.06)
+	_build_corner_post("CornerPostFL", -1.0, -half_len + POST_HALF_Z)
+	_build_corner_post("CornerPostFR", 1.0, -half_len + POST_HALF_Z)
+	_build_corner_post("CornerPostRL", -1.0, half_len - POST_HALF_Z)
+	_build_corner_post("CornerPostRR", 1.0, half_len - POST_HALF_Z)
 
 
 ## X of the trim's inner face at height `y`: the side skin's outer face plus TRIM_LIFT.
@@ -46,8 +50,8 @@ func _skin_x(y: float) -> float:
 ## and belt line also break over the side door's slide path (D19); the door carries no rail.
 func _build_body_lines(side_sign: float) -> void:
 	var suffix := "L" if side_sign < 0.0 else "R"
-	var z_min := -_profile.half_length() + 0.05
-	var z_max := _profile.half_length() - 0.05
+	var z_min := -_profile.half_length() + 2.0 * POST_HALF_Z + POST_GAP
+	var z_max := _profile.half_length() - 2.0 * POST_HALF_Z - POST_GAP
 
 	var rub_ranges := _clear_ranges(z_min, z_max, 0.95, true)
 	for i in range(rub_ranges.size()):
@@ -129,10 +133,11 @@ func _build_strip(node_name: String, y: float, z0: float, z1: float, height: flo
 
 
 ## A vertical corner post at box corner `z`, following the bow from floor to roof: an outer face
-## plus two end-cap faces so it reads as a proud edge rather than a flat decal.
+## plus two end-cap faces so it reads as a proud edge rather than a flat decal, and a cap at the
+## floor and at the roof so the post is a closed solid.
 func _build_corner_post(node_name: String, side_sign: float, z: float) -> void:
-	var z0 := z - 0.06
-	var z1 := z + 0.06
+	var z0 := z - POST_HALF_Z
+	var z1 := z + POST_HALF_Z
 	var steps := 12
 	var rows: Array[Array] = []
 	for i in range(steps + 1):
@@ -183,6 +188,25 @@ func _build_corner_post(node_name: String, side_sign: float, z: float) -> void:
 		else:
 			_tri_uv(st, a_in1, b_in1, a_out1, Vector2(0, t0), Vector2(0, t1), Vector2(1, t0))
 			_tri_uv(st, a_out1, b_in1, b_out1, Vector2(1, t0), Vector2(0, t1), Vector2(1, t1))
+
+	# Bottom (normal -Y, row 0) and top (normal +Y, last row) caps, so no open ring shows at either
+	# end. Winding flips with the sign as the faces above do, and between bottom and top.
+	for top in [false, true]:
+		var r: Array = rows[steps] if top else rows[0]
+		var c_in0: Vector3 = r[0]
+		var c_in1: Vector3 = r[1]
+		var c_out0: Vector3 = r[2]
+		var c_out1: Vector3 = r[3]
+		var uv_in0 := Vector2(0, 0)
+		var uv_in1 := Vector2(1, 0)
+		var uv_out0 := Vector2(0, 1)
+		var uv_out1 := Vector2(1, 1)
+		if (side_sign > 0.0) != top:
+			_tri_uv(st, c_in0, c_in1, c_out0, uv_in0, uv_in1, uv_out0)
+			_tri_uv(st, c_out0, c_in1, c_out1, uv_out0, uv_in1, uv_out1)
+		else:
+			_tri_uv(st, c_in0, c_out0, c_in1, uv_in0, uv_out0, uv_in1)
+			_tri_uv(st, c_out0, c_out1, c_in1, uv_out0, uv_out1, uv_in1)
 
 	st.generate_normals()
 	st.generate_tangents()

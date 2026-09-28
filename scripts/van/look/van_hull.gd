@@ -1,8 +1,8 @@
 class_name VanHull
 extends Node3D
 
-## The van's outer skin: roof, sides, rear face, sills and belly, all meeting the side skin's
-## 0.22 m outer face, painted from the look seed.
+## The van's outer skin: roof, sides, front face (the step to the cab skin), rear face, sills and
+## belly, all meeting the side skin's 0.22 m outer face, painted from the look seed.
 
 const EXTERIOR_SHADER := preload("res://scenes/van/van_exterior.gdshader")
 
@@ -51,6 +51,7 @@ func rebuild_look(look: VanLook) -> void:
 	_build_sides(walls)
 	_build_roof(walls)
 	_build_rear(walls)
+	_build_front(walls)
 	_HullPatches.new(self).build(walls)
 	_HullLines.new(self).build(_profile, walls, material)
 
@@ -74,7 +75,7 @@ func _build_sides(walls: VanSideWall) -> void:
 
 func _build_roof(walls: VanSideWall) -> void:
 	var w: float = walls.wall_x_at(walls.wall_height) + SIDE_SKIN_OUTER_M
-	var z_min := -4.72
+	var z_min := -walls.span_z * 0.5
 	var z_max := 4.78
 	var x_segments := 20
 	var z_segments := 24
@@ -216,6 +217,46 @@ func _build_rear(walls: VanSideWall) -> void:
 	st.generate_normals()
 	# No tangents: the exterior shader projects in model space and these meshes carry no UVs.
 	_add_mesh("RearSkin", st.commit())
+
+
+## The front face closes the step between the skin (0.22 m off the liner) and the cab skin
+## (0.12 m off) over the roof, at the side skin's front returns' z. Its inner edge lies on the cab
+## outline's top, its outer edge on the roof curve, and a quad per corner reaches down to the
+## returns' top edge (y = wall height), where the cab outline steps up from the wall top.
+func _build_front(walls: VanSideWall) -> void:
+	var z := -walls.span_z * 0.5
+	var w: float = walls.wall_x_at(walls.wall_height) + SIDE_SKIN_OUTER_M
+	var xc: float = _profile.outer_x_at(walls.wall_height)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	var top_steps := 16
+	for i in range(top_steps):
+		var f0 := float(i) / float(top_steps)
+		var f1 := float(i + 1) / float(top_steps)
+		var xi0 := lerpf(-xc, xc, f0)
+		var xi1 := lerpf(-xc, xc, f1)
+		var xo0 := lerpf(-w, w, f0)
+		var xo1 := lerpf(-w, w, f1)
+		var in0 := Vector3(xi0, _profile.outer_roof_y_at(xi0), z)
+		var in1 := Vector3(xi1, _profile.outer_roof_y_at(xi1), z)
+		var out0 := Vector3(xo0, _roof_y(xo0, w, walls), z)
+		var out1 := Vector3(xo1, _roof_y(xo1, w, walls), z)
+		_rear_tri(st, in0, in1, out0, Vector3.FORWARD)
+		_rear_tri(st, in1, out1, out0, Vector3.FORWARD)
+
+	# Corners: from the wall top's cab point and skin edge up to the strip's ends.
+	for side: float in [-1.0, 1.0]:
+		var cab_wall := Vector3(side * xc, walls.wall_height, z)
+		var cab_top := Vector3(side * xc, _profile.outer_roof_y_at(side * xc), z)
+		var skin_wall := Vector3(side * w, walls.wall_height, z)
+		var skin_top := Vector3(side * w, _roof_y(side * w, w, walls), z)
+		_rear_tri(st, cab_wall, skin_wall, cab_top, Vector3.FORWARD)
+		_rear_tri(st, skin_wall, skin_top, cab_top, Vector3.FORWARD)
+
+	st.generate_normals()
+	# No tangents: the exterior shader projects in model space and these meshes carry no UVs.
+	_add_mesh("FrontSkin", st.commit())
 
 
 ## Height where the opening's side edge (liner - 0.01) meets its top edge (vault - 0.005).

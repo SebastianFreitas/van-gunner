@@ -50,13 +50,13 @@ func _ram(kind: StringName, mat: Material, rng: RandomNumberGenerator) -> void:
 					i += 1
 			var tip_bot := Vector3(0.0, 0.0, -9.2)
 			var tip_top := Vector3(0.0, 0.7, -9.2)
-			_bar("RamBar%d" % i, tip_bot, tip_top, 0.12, mat)
+			_bar("RamBar%d" % i, tip_bot, tip_top, 0.08, mat)
 			i += 1
 			for s: float in [-1.0, 1.0]:
 				var bot_from := Vector3(s * 2.4 * jitter, 0.0, _mount_z(0.0))
 				var top_from := Vector3(s * 2.4 * jitter, 0.7, _mount_z(0.7))
 				_bar("RamBar%d" % i, bot_from.lerp(tip_bot, 0.5), top_from.lerp(tip_top, 0.5),
-						0.12, mat)
+						0.08, mat)
 				i += 1
 		&"bar_ram":
 			for y: float in [0.25, 0.75]:
@@ -66,7 +66,7 @@ func _ram(kind: StringName, mat: Material, rng: RandomNumberGenerator) -> void:
 			for x: float in [-1.2, 1.2]:
 				for y: float in [0.25, 0.75]:
 					_bar("RamBar%d" % i, Vector3(x * jitter, y, -9.0),
-							Vector3(x * jitter, y, _mount_z(y)), 0.18, mat)
+							Vector3(x * jitter, y, _mount_z(y)), 0.14, mat)
 					i += 1
 		&"cow_catcher":
 			var top_rail_from := Vector3(-2.2 * jitter, 0.6, _mount_z(0.6))
@@ -81,7 +81,7 @@ func _ram(kind: StringName, mat: Material, rng: RandomNumberGenerator) -> void:
 				var t := float(n) / 6.0
 				var top := top_rail_from.lerp(top_rail_to, t)
 				var bot := bot_rail_from.lerp(bot_rail_to, t)
-				_bar("RamBar%d" % i, top, bot, 0.07, mat)
+				_bar("RamBar%d" % i, top, bot, 0.05, mat)
 				i += 1
 		&"tyre_ram":
 			var torus := TorusMesh.new()
@@ -138,8 +138,8 @@ func _cage(kind: StringName, mat: Material) -> void:
 	var corners: Array[Vector3] = [top_l, top_r, bot_l, bot_r]
 	for c: int in range(4):
 		var corner: Vector3 = corners[c]
-		_cab._add_mesh("CageTab%d" % c, _cab._box(Vector3(0.06, 0.06, 0.10)), mat,
-				Vector3(corner.x, corner.y, face_z - 0.05))
+		_cab._add_mesh("CageTab%d" % c, _cab._box(Vector3(0.08, 0.08, 0.08)), mat,
+				Vector3(corner.x, corner.y, face_z - 0.06))
 
 
 func _lamp_cages(mat: Material) -> void:
@@ -150,8 +150,8 @@ func _lamp_cages(mat: Material) -> void:
 		for dx: float in [-0.1, 0.0, 0.1]:
 			var suffix := "L" if s < 0.0 else "R"
 			_bar("LampCage%s%d" % [suffix, i],
-					Vector3(lamp_x + dx, VanCab.HEADLIGHT_Y - 0.22, face_z - 0.23),
-					Vector3(lamp_x + dx, VanCab.HEADLIGHT_Y + 0.22, face_z - 0.23), 0.025, mat)
+					Vector3(lamp_x + dx, VanCab.HEADLIGHT_Y - 0.22, face_z - 0.27),
+					Vector3(lamp_x + dx, VanCab.HEADLIGHT_Y + 0.22, face_z - 0.27), 0.025, mat)
 			i += 1
 
 

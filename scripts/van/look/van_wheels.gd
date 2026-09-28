@@ -11,6 +11,9 @@ const WHEEL_X := 2.8
 const TYRE_WIDTH := 0.42
 
 const FRONT_AXLE_Z := -7.25
+## Front wheels sit this much further out than the rear, so the tyre's inner cap clears the cab
+## skin's bowed side by 2 cm (the audit's coplanar tolerance is 1 cm).
+const FRONT_WHEEL_OUT := 0.04
 const FRONT_RADIUS := 0.5
 const REAR_RADIUS := 0.58
 
@@ -57,7 +60,7 @@ func rebuild_look(look: VanLook) -> void:
 		var side_label := "L" if side < 0.0 else "R"
 		var idx := 0
 		_build_wheel("Wheel%s%d" % [side_label, idx],
-				Vector3(side * WHEEL_X, ROAD_Y + FRONT_RADIUS, FRONT_AXLE_Z), FRONT_RADIUS, hull_mat, rubber)
+				Vector3(side * (WHEEL_X + FRONT_WHEEL_OUT), ROAD_Y + FRONT_RADIUS, FRONT_AXLE_Z), FRONT_RADIUS, hull_mat, rubber)
 		idx += 1
 		for z: float in rear_axles:
 			_build_wheel("Wheel%s%d" % [side_label, idx],

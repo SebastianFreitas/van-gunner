@@ -91,6 +91,8 @@ func _build_back_lip(outline: PackedVector2Array, mat: Material) -> void:
 ## Hides the body's rounded front end from the windshield.
 func _build_back_wall(outline: PackedVector2Array) -> void:
 	var mat := VanCab._dark_material(Color(0.03, 0.03, 0.03), 0.9)
+	# Two-sided so the cab's back end reads closed from the body side too.
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var centre := Vector3(0.0, 1.5, -4.0)
 	var z := VanCab.CAB_BACK_Z - 0.02
 	var indices := Geometry2D.triangulate_polygon(outline)

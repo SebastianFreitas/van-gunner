@@ -110,8 +110,9 @@ func _build_steps(side: float, label: String, mat: Material) -> void:
 		_wheels._add_mesh("SideStepHanger%s%d" % [label, i], _wheels._box(Vector3(0.18, 0.12, 0.06)), mat,
 				Vector3(side * (SKIN_X + 0.09), -0.04, -3.485 + offset))
 
+	# Centred 3 cm further out than the hangers so its inner face clears the cab skin's bowed side.
 	_wheels._add_mesh("CabStep%s" % label, _wheels._box(Vector3(0.28, 0.05, 1.2)), mat,
-			Vector3(side * (SKIN_X + 0.14), 0.02, -5.7))
+			Vector3(side * (SKIN_X + 0.17), 0.02, -5.7))
 	for i: int in range(2):
 		var offset: float = 0.5 if i == 0 else -0.5
 		_wheels._add_mesh("CabStepHanger%s%d" % [label, i], _wheels._box(Vector3(0.18, 0.12, 0.06)), mat,

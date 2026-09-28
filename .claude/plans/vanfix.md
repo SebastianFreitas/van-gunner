@@ -3,7 +3,7 @@
 Stage: running
 Started: 2026-09-28
 Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/vanfix.state.md` while running).
-Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15); window hinge pivot position (D16 auto); side skin layering against the wall (D17 auto); who owns the opening reveals and whether the buried casings go (D18 auto); side door slide path vs the belt line and rub rail (D19)
+Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15); window hinge pivot position (D16 auto); side skin layering against the wall (D17 auto); who owns the opening reveals and whether the buried casings go (D18 auto); side door slide path vs the belt line and rub rail (D19); whether the front audit calls for replacing the cab (D21 auto); front wheels moved out to clear the cab skin (D22 auto)
 
 ## Rebase note (2026-09-28, landed on main)
 
@@ -105,6 +105,8 @@ the night read. So:
 - **D17 · Side skin layer (auto).** The side hull skin owns only the outer layer: the wall's own grid and cuts from the wall's outer face (0.16) to `VanHull.SIDE_SKIN_OUTER_M` 0.22 off the liner, no inner face, so its returns continue the wall's edge to edge. Reason: the old skin was the whole wall panel shifted 0.06 out, overlapping the wall and z-fighting its returns (4 m² FLICKER); 0.22 keeps the outer face, casings and `HINGE_OUT_M` where they are.
 - **D18 · Reveal owners (auto).** Each side opening's cut is lined by two bands with one owner each: the wall's own reveal from the liner to 0.16 (split into `<Left|Right>WallReveals`, wall material, layers 1+2) and the skin's returns from 0.16 to 0.22; the door jamb keeps only its lip (its outer return is stripped), and the side door and window casings, fully buried inside wall and skin with holes equal to the cuts, are deleted as duplicates (D7). Reason: no visible change from inside, street light now reaches the reveal from outside, and every duplicate face pair is gone.
 - **D19 · Hull lines over the door's slide path.** The belt line and the rub rail break over the side door's slide path, from the door bay's rear edge to the fully open door's rear edge, the way the drip rail breaks around openings; the door itself carries no rail. The recess stays D13's 0.24 m and the rails keep their profile.
+- **D21 · Cab sealing scope (auto).** The phase 4 audit shows no LEAK, CLIP or OPENING row at the front and the shots show a closed cab, so D5's reopened course stands: phase 4 keeps the real cab and only removes its coplanar trim (FLICKER) and closes the back wall from both sides. Reason: nothing in the audit says otherwise.
+- **D22 · Front wheels off the cab skin (auto).** The front wheels sit `VanWheels.FRONT_WHEEL_OUT` 0.04 m further out than the rear, the cab steps 3 cm out (inner face 2 cm off `CabSkin`) and the A-pillars 3 cm inside the outline (2 cm inside the bumper ends), because the tyre caps, treads and steps lay on the cab's bowed side plane and the pillars 1 cm off the bumper ends (FLICKER). Reason: a few cm, invisible in play; review at the end.
 
 ## Constraints (every phase)
 
@@ -121,8 +123,8 @@ the night read. So:
 |---|---|---|---|---|
 | 1 | Geometry audit tool and close-up shots | code, research | D3, D9, D11 | done 60e1a32 |
 | 2 | Side doors and windows from inside | code | D7, D8, D10, audit | done cf9e65a |
-| 3 | One sealed outer body | code | D4, D7, audit | partial 1e0f3ab, 99442cd, b6dfee2 |
-| 4 | Sealed simple cab | code | D5, D4, audit | todo |
+| 3 | One sealed outer body | code | D4, D7, audit | done a809f31 |
+| 4 | Sealed simple cab | code | D5, D4, audit | done 815948b |
 | 5 | Add-ons snapped and height-capped | code | D6, audit | todo |
 
 ## Phases
@@ -140,10 +142,12 @@ Verification: check, smoke, scene dump (bless if the tree changes, say so), audi
 ### 3 · One sealed outer body (D4, D7)
 Deliverables: the exterior skin rebuilt as one closed shell from `VanBodyProfile` (sides, roof, rear, bottom, meeting the front), reveals at every door and window, hull lines on the D7 gap, the rear doors seated in it; the liner faces only in.
 Verification: check, smoke, scene dump, audit clear for gaps on the body, lit shots v08–v16 and the new close-ups.
+Notes: done a809f31 (sessions 4–9: 1e0f3ab..a809f31). Side skin 0.16–0.22 (D17), reveal owners (D18), roof/rear/sills/belly/front skin at the 0.22 face, RearSkin ring around the leaves, hull lines breaking over the door slide (D19), FrontSkin closing the cab step. Audit: CLIP 102, EDGE 24, FLICKER 1727, LEAK_IN 1, LEAK_OUT 44; the body's EDGE rows left are per-mesh seams and the single-sided side skin, no holes.
 
 ### 4 · Sealed simple cab (D5, D4)
 Deliverables: `van_cab.gd` front closed into a plain sealed block on the body outline, windshield and door outlines, joined to the body without gaps; front kit refit onto it. The detailed cab stays parked.
 Verification: check, smoke, scene dump, audit clear at the front, front and quarter shots.
+Notes: done 815948b (session 11: fda7fad, 23f70b1, 815948b). Real cab kept (D21): windshield frame, post, grille surround, headlight bezel/lens buried off the cab face's plane, back wall double-sided; ram joints, cage tabs, lamp cages refit; cab steps, front wheels and A-pillars off the cab side and bumper (D22). Audit: `VanLook/Cab/` FLICKER 41 → 0, total FLICKER 1727 → 1683; the 3 cab EDGE rows left are tube ends (CabLiner, CabBackLip) and a CabFace seam at the windshield corner, no holes.
 
 ### 5 · Add-ons snapped and height-capped (D6)
 Deliverables: armour, rebar, spikes, signs, roof rack, roof junk, antennas, spares and rear dressing placed against the sealed body's surface; a placement check (touches the body, clear of openings, under the roof cap) drops any failure; the audit becomes a smoke failure.
@@ -161,3 +165,5 @@ Verification: check, smoke (fingerprint/bless as the phase states), scene dump, 
 - (Phase 2) Left for later phases: front window vs its own slid-open door rows (the audit's all-open pose; play's interlock forbids it except a breach smash, phase 5 poses them apart); door vs `VanLook` Hull/Armour/Wheels/Cables/MarkerLights rows (D6, phases 3 and 5); `CurvedBody` LEAK_OUT past the jamb gap (phase 3); ExteriorPane EDGE rows (single-sided pane, by design); the rust band on the window reveal in c10 is the grime shader, not geometry.
 - (Phase 3) Every exterior piece but the side skin sits at `SKIN_OFFSET_M` 0.06 off the liner (roof edge, rear posts, sills, patches, hull lines, armour face), while the side skin's outer face is at 0.22 (D17): the sealed body needs one outer surface; the roof crown must stay under the rack (y 3.66). `VanBodyProfile.outer_x_at` is liner + 0.12 but the wall is 0.16 thick.
 - (Phase 3, session 5) `HINGE_OUT_M` 0.32's reasoning named the window casing (0.13), now deleted; the skin's outer face 0.22 still sets it. `van_side_wall_panel.gd` and `van_side_wall_shell.gd` are at the 400-line cap: any further panel or ring change needs a helper split first.
+- (Phase 3) The audit's EDGE check is per mesh (open = one triangle, no physics body within 1.5 cm), so edge-to-edge seams between hull pieces (FrontSkin/RoofSkin, RearSkin/Sill/BellySkin/RearCorner at the rear bottom corner, CornerPostF caps at z -4.58) and SideSkin's by-design missing inner face (D17) still report; phase 5 should match edges across meshes before `--strict`. LEAK_IN 1 at (2.703, 1.086, -0.202) is unexplained. Optional FLICKER: `Left/RightWall` vs `DoorJamb_L/R` at (±2.495, 2.237, -4.644), `DoorJamb_R` vs `FrontWall/Slab`.
+- (Phase 4) Every wheel's `Hub` and its `Bolt%d` boxes share planes (FLICKER on `VanLook/Wheels/Wheel*/Hub`, 30 rows); `van_wheels.gd` `_build_wheel`. Clear them with the add-ons in phase 5 (a 2 cm lift of the bolts off the hub face).
