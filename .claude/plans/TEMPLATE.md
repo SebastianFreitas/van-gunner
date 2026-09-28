@@ -2,7 +2,8 @@
 
 Stage: planning
 Started: <YYYY-MM-DD>
-Procedure: `.claude/skills/plan/SKILL.md` (planning loop, then "go").
+Procedure: `.claude/skills/plan/SKILL.md` (planning loop, then one phase
+per context: "Read PLAN_STATE.md and execute the next phase.").
 
 ## Brief (owner's words, verbatim)
 

@@ -40,9 +40,13 @@ If the owner replies with changes, do another round on the same branch and end w
 
 When the user points you at a file in `docs/tasks/`, that file is the task. Re-read it after every compaction (the SessionStart hook reminds you), work its steps in order, and tick its checklist as each step's commit lands. The task's last commit deletes the file.
 
+Two pieces of work never share one context. A task step, like a plan phase, is one context: verify it, commit it, tick it, and stop with the report; the owner clears and prompts for the next step. Never continue into the next step because there is context left.
+
 ## Active plan
 
-A many-phase plan lives in `.claude/plans/<name>.md` (from `TEMPLATE.md`), run by the owner-invoked `/plan` skill (`.claude/skills/plan/SKILL.md`). When the SessionStart hook prints `PLAN: <name> · <stage>`, read the skill and the plan before anything else: a bare "go" continues it (planning rounds while `planning`, the next `todo` phase while `running`). Planning asks every question up front; running asks phase questions only at a phase's start. Never use the built-in plan mode (Shift+Tab) for this.
+A many-phase plan lives in `.claude/plans/<name>.md` (from `TEMPLATE.md`), run by the owner-invoked `/plan` skill (`.claude/skills/plan/SKILL.md`). When the SessionStart hook prints `PLAN: <name> · <stage>`, read the skill and the plan before anything else: a bare "go" continues it (planning rounds while `planning`, the one next `todo` phase while `running`). Planning asks every question up front; running asks phase questions only at a phase's start. Never use the built-in plan mode (Shift+Tab) for this.
+
+Running is strictly one phase per context. A phase ends with the handoff protocol in the skill: verify, commit, update `PLAN_STATE.md` at the repo root (architecture now, the phase done, the exact start of the next one), commit that, then a hard stop ending with the skill's exact "Phase complete" message. The next phase starts only from the owner's "Read PLAN_STATE.md and execute the next phase." in a fresh context. Never chain phases, however small the next one is.
 
 ## Main session role
 
@@ -151,7 +155,7 @@ In worktree and cloud mode the Stop hook refuses to end a turn whose Godot chang
 
 Quality drops as a context grows, long before the window is full. `.claude/hooks/context-watch.py` measures every context after every tool call and prints `CONTEXT WATCH` at 80% of its line and past it. Lines: main 140k, Explore and Plan 100k, reviewer 80k, implementer 60k; a subagent at 1.5 times its line has every further tool call denied.
 
-- Main session past its line: finish only the current atomic step (an implementer already running may finish; start nothing new), verify, commit, then follow your mode file's "Context full" rule. The `handoff` skill has the handoff format and "Auto-continue": after the handoff, keep working; auto-compaction (set a little past the line, `CLAUDE_CODE_AUTO_COMPACT_WINDOW` in `.claude/settings.json`) summarizes the conversation mid-turn and the hook prints the handoff back in, so the owner types nothing. Never clear the session to continue: in the desktop app a clear stops its process. Use the skill too whenever a turn must end with work half done.
+- Main session past its line: finish only the current atomic step (an implementer already running may finish; start nothing new), verify, commit, then follow your mode file's "Context full" rule. The `handoff` skill has the handoff format and "Auto-continue": after the handoff, keep working; auto-compaction (set a little past the line, `CLAUDE_CODE_AUTO_COMPACT_WINDOW` in `.claude/settings.json`) summarizes the conversation mid-turn and the hook prints the handoff back in, so the owner types nothing. Never clear the session yourself to continue mid-step: in the desktop app a clear stops its process. Use the skill too whenever a turn must end with work half done. Between plan phases and task steps the rule is the opposite: the turn hard-stops and the owner runs `/clear` (see Active task and Active plan).
 - `SUBAGENT CONTEXT ... over the line` means the spec or Explore prompt was too wide: next time name the file, function and line range, or split the task.
 - A handoff printed at session start: restate the plan in two lines, continue from Next, never redo Done, delete the file once absorbed.
 
