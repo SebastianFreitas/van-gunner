@@ -89,7 +89,7 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 | 2 | Audit with pictures | research, doc | D2, D8 | done c4711c6 |
 | 3 | Holes and seams | code | D5, audit | todo (run 3rd) |
 | 4 | Side windows from outside | code | D4, audit | todo (run 4th) |
-| 5 | A real cab and what the windshield shows | code | D3, D9, audit | todo (run 1st) |
+| 5 | A real cab and what the windshield shows | code | D3, D9, audit | done b662a42 |
 | 6 | Underside and wheels | code | D6, audit | todo (run 2nd) |
 | 7 | The night read | code | D7, audit | todo (run 5th) |
 
@@ -116,6 +116,7 @@ Verification: check, smoke, lit and unlit window close-ups, interior front/back 
 ### 5 · A real cab and what the windshield shows (D3, D9)
 Deliverables: `van_cab.gd` rebuilt as a cab-over face on the body profile (helper split past 300 lines): A-pillars, cab doors with windows, windshield with a framed reveal, grille and bumper refit from `van_front_kit.gd`, headlight housings; behind the windshield a dark cab with dashboard, seat backs, a driver silhouette and a faint dash glow.
 Verification: check, smoke, scene dump, front and quarter lit shots, unlit front inside the budget.
+Notes: done in b662a42. `van_cab.gd` core + `van_cab_shell.gd` (skin, liner, back lip at -4.72, back wall, floor, face with windshield hole, reveal, all from `section_points(12, true)`) + `van_cab_face.gd` (split windshield, frame, A-pillars, grille, headlight housings, cab doors) + `van_cab_parts.gd` (dash, 0.25 dash glow, seats, driver) + `van_front_kit.gd` (bumper against the face, rams bolted via `_mount_z`, cages welded to the windshield frame). Closes C1–C5 and S2; headlight spots kept (N2). Check, smoke clean, scene dump identical (built at runtime); `03-idle-outside` mean 0.0083, p95 0.0227.
 
 ### 6 · Underside and wheels (D6)
 Deliverables: arches cut into the sill with a lip, wheels tucked to the arch (the floating passenger rear wheel), frame rails, fuel tank, rear bumper with underride bar, side steps.
@@ -129,3 +130,5 @@ Verification: check, smoke, unlit `--shots` through `tools/shot_stats.py` agains
 
 - Phase 1: `py -3 tools/smoke.py --shots DIR` writes `v08..v16-idle-van-lit-*.png` (side-front, side-rear, outside, quarter-driver, quarter-passenger, front, rear, window, roof) with the floodlight on. First look at them: the side door leaf renders as a glossy black slab, interior lamps blow out through the rear side window, the cab is a flat box with two bare lamp discs, the passenger-side rear wheel floats clear of the sill. Phase 2 audits from these.
 - Phase 2: the audit is `research/van-exterior-2-01-audit.md` (IDs C1–C5, S1–S6, W1–W5, U1–U6, N1–N5); each fix phase takes its section and re-reads its shots against those IDs. The "floating rear wheel" is really the front axle (z -7.25, x ±2.8) standing under the sideless cab (U1). The headlights already light the road (N2): phase 5 keeps those SpotLights. W1 (glossy black side door leaf, `side_door_leaf.gd` `door_body_material()`) belongs to phase 4. Not located yet: the rear step plate (S5), the floating window bars (W4), the diagonal rod (U6), the roof white disc (N5).
+
+- Phase 5: the cab now runs from the hull's -4.72 (back lip, S2 closed) to the face at `NOSE_Z` -8.2; its side skin sits at `profile.outer_x_at(y)` (about 2.54 at the sill). Phase 6: the front wheels (`FRONT_AXLE_Z` -7.25, `WHEEL_X` 2.8) stand outside the cab side and need arches cut into the cab skin in `van_cab_shell.gd` (CabSkin) as well as the hull sill; the cab floor is `CAB_FLOOR_Y` 0.9 and the skin runs down to `BASE_Y` -0.25. Phase 3: C1/S2 no longer apply at the front; what is left is S1, S3, S4, S5, S6. The plow posts use the V-bars' side stance (about ±2.4); they read fine in the lit front shot.
