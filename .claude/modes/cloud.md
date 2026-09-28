@@ -53,7 +53,13 @@ verification and the map regeneration.
 
 ### Context full
 
-Finish the atomic step, commit, push, and put the handoff (the `handoff`
+**A running plan phase is the exception:** it never auto-continues. At the
+line it finishes the atomic step, commits, writes `.claude/plans/<name>.state.md`
+with `Status: partial` (the plan skill's handoff) and stops. A planning
+interview follows the skill's Context rule: commit the plan, write the
+handoff below, keep going.
+
+Otherwise: finish the atomic step, commit, push, and put the handoff (the `handoff`
 skill's headings) in the PR body under `## Handoff`. Also write it to
 `.claude/handoff.md`, then keep going with Next in the same turn.
 Auto-compaction (the skill's "Auto-continue") summarizes the conversation

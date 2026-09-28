@@ -2,8 +2,8 @@
 
 Stage: ready
 Started: 2026-09-28
-Procedure: `.claude/skills/plan/SKILL.md` (planning loop, then one phase
-per context: "Read PLAN_STATE.md and execute the next phase.").
+Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/vanfix.state.md` while running).
+Interview: done under the old procedure (no parts A/B/C)
 
 ## Rebase note (2026-09-28, landed on main)
 

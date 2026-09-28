@@ -385,7 +385,7 @@ and "Next phase" as the rest of it; then hard-stop. Next session, split
 the phase in the Progress table before continuing. A session that stops
 after designing saves each finished spec as
 `.claude/plans/<name>.spec-<phase>-<k>.md` (the Spec format in
-`CLAUDE.md`, ready to send) and names them in Next phase; the next
+`.claude/playbook.md`, ready to send) and names them in Next phase; the next
 session sends them to the implementer instead of exploring again, and
 deletes each in the commit that lands its work.
 

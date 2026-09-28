@@ -4,7 +4,7 @@ Stage: running
 Started: 2026-09-28
 Procedure: `.claude/skills/plan/SKILL.md` today; this plan replaces it with
 Portfolio's (the interview, then "go").
-Interview: A, B, C done · 20 asked (focused, D1) · missed: does the first phase run in the planning turn or a fresh one? · missed: in an app-run phase, does a timed-out stop-line question block or wait?
+Interview: A, B, C done · 20 asked (focused, D1) · missed: does the first phase run in the planning turn or a fresh one? · missed: in an app-run phase, does a timed-out stop-line question block or wait? · missed: what happens to a migration target that finishes before its phase runs? · missed: does a worktree session run Commit itself? (D24) · missed: does autoplan land phases itself or do its sessions? (D27)
 
 ## Brief (owner's words, verbatim)
 
@@ -158,6 +158,23 @@ Interview: A, B, C done · 20 asked (focused, D1) · missed: does the first phas
   `(auto)`; below-line choices are never asked. Reason: D13 forbids `(auto)` on the stop line.
 - **D22 (auto) · askUserQuestionTimeout.** Not added to `settings.json`: Portfolio's settings.json
   does not set it (only its skill mentions it); it stays the app's own setting. Phase 2.
+- **D23 · van-exterior-2 stays done.** Owner, phase 3 start: keep it as the finished record, only
+  its header lines change. Overtakes D10: the owner closed it (all 7 phases) before phase 3 and
+  vanfix picks up its leftovers; `van-exterior.md` and root `PLAN_STATE.md` were already gone.
+- **D24 · Worktree sessions run Commit themselves.** Owner, phase 4 start: like Portfolio, a
+  worktree session runs `try.py <branch> --commit` once the work is verified and committed (local
+  `main` only, never pushes); the report names the commit on `main`. Try stays printed. Autoplan
+  phases land each phase on `main` too. Phase 4 itself still printed Commit (the rule lands with it).
+- **D25 (auto) · Tools not built yet are listed as coming.** The playbook names autoplan, probe and
+  shots under "Coming in workflow-port phases 5-7 (not there yet)", so D16's list and phase 4's
+  "every command named exists" both hold; phases 5-7 drop the marker when each lands.
+- **D26 (auto) · try.py branch listing unchanged.** `list_branches` already lists every
+  `refs/heads/claude/*` (so `claude/plan-*`) and `resolve` accepts `plan-<name>`. Phase 5.
+- **D27 (auto) · Autoplan does not land phases itself.** Each headless session runs
+  `try.py <branch> --commit` per the worktree mode file (D24); autoplan's end message names the
+  command for anything left unlanded. Reason: Portfolio's runner never lands; one path, not two.
+- **D28 (auto) · Headless compaction.** Autoplan keeps Portfolio's `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`
+  in its `--settings`, and `--dry-run` skips the dirty-tree gate. Reason: port as is; test tooling.
 
 ## Initial idea (Part B)
 
@@ -169,8 +186,7 @@ Skipped by D1 (tooling plan, focused interview): the phases below carry every pi
 
 - Portfolio is read-only. Nothing website-specific is copied.
 - Here's extras (file-guard, gd-lint, verify stamps, reviewer, docs/tasks, try_commit) stay.
-- van-exterior-2 keeps running between phases of this plan: its plan file and PLAN_STATE
-  stay readable by whatever skill is current.
+- Other plans (vanfix, ready) keep their plan files readable by whatever skill is current.
 
 ## Progress
 
@@ -178,9 +194,9 @@ Skipped by D1 (tooling plan, focused interview): the phases below carry every pi
 |---|---|---|---|---|
 | 1 | Plan skill, template, unattended.md | doc | D2 D3 D9 D13 D14 | done 3c7a388 |
 | 2 | Plan hooks: HERE, per-plan state, context numbers | code (py) | D3 D15 | done 87e1138 |
-| 3 | Migrate plans | doc | D3 D10 | todo |
-| 4 | CLAUDE.md, playbook, modes, handoff, implementer agents | doc | D15 D16 | todo |
-| 5 | tools/autoplan.py (+ try branch listing) | code (py) | D4 D9 D13 D15 D17 | todo |
+| 3 | Migrate plans | doc | D3 D10 D23 | done fa81eda |
+| 4 | CLAUDE.md, playbook, modes, handoff, implementer agents | doc | D15 D16 | done 857f7c9 |
+| 5 | tools/autoplan.py (+ try branch listing) | code (py) | D4 D9 D13 D15 D17 | done 8dc395d |
 | 6 | tools/probe.py | code (py + gd) | D6 D7 D12 | todo |
 | 7 | tools/shots.py capture/compare | code (py) | D5 D11 | todo |
 | 8 | Docs, tooling rules, PROJECT_MAP, Stage done | doc | all | todo |
@@ -224,6 +240,9 @@ guesses, `Stage: planning`, `Interview: B open` (D10); root `PLAN_STATE.md` cont
 deleted; this plan's own state file written.
 Verification: `git grep -n "PLAN_STATE" -- . ':!.claude/plans/research'` shows only history
 mentions; session-start prints both plans correctly from this worktree with HERE set.
+Notes: done fa81eda. D23: van-exterior-2 kept done (headers only); vanfix headers moved to the
+new Procedure/Interview lines; `ACTIVE` deleted; nothing else to move (main had already dropped
+`van-exterior.md` and root `PLAN_STATE.md`).
 
 ### 4 · CLAUDE.md, playbook, modes, handoff, implementer agents
 Deliverable: CLAUDE.md "Active plan" rewritten (several plans, HERE, state files, autoplan,
@@ -241,6 +260,9 @@ same flags with D17 defaults (effort medium, subscription only, stop on usage li
 `claude/plan-*` branches. Two implementer specs.
 Verification: `py -3 tools/autoplan.py --dry-run workflow-port` prints the command and the phase
 it would run; `py -3 -m py_compile tools/autoplan.py`.
+Notes: done 2bc2d36 + 8dc395d. 1050 lines; per-plan `read_state(name)`, `child_env` strips billing
+vars, usage limit → exit 3, dry-run creates nothing, worktree gets HERE; playbook lists it. D26,
+D27, D28 (auto). Reviewer: no gaps.
 
 ### 6 · tools/probe.py
 Deliverable: `tools/probe.py` + `tools/probe/probe_runner.gd` (flags from D6, D7, D12), project
@@ -263,11 +285,12 @@ Verification: `py -3 tools/check.py`; `py -3 tools/smoke.py`.
 
 ## Carry forward
 
-- Phases 3-8: `ACTIVE` is now ignored by every hook; each checkout needs HERE when two plans are
-  active (this worktree has HERE = workflow-port). The main checkout will print `PLANS:` until
-  its HERE is written (phase 3 or the owner).
-- Phase 4: CLAUDE.md "Context budget" still says main 140k and compaction "a little past"; now
-  120k and 65% of 200k (tooling.md already updated).
-- Phase 4: CLAUDE.md "Active plan" and the Spec format pointer (skill says "Spec format in
-  `CLAUDE.md`"; update to `.claude/playbook.md` when it moves). Skill's Unblock prints
+- Phases 4-8: `ACTIVE` is deleted (phase 3); each checkout needs HERE when two plans are active
+  (vanfix ready + workflow-port running). A new worktree has no HERE: `go workflow-port` or the
+  state-file prompt binds it. The main checkout prints `PLANS:` until the owner writes its HERE.
+- Phase 5: the skill's Unblock prints
   `py -3 C:/Users/Traff/Documents/van-gunner/tools/autoplan.py <name>`: phase 5 must accept that.
+- Phases 5-7: each drops its "Coming ... (not there yet)" entry in `.claude/playbook.md` (D25).
+- Phase 5+: worktree sessions run `try.py --commit` themselves (D24); autoplan sessions do too
+  (D27). Autoplan's real run (a live `claude -p` stream) is untested here: phase 6 or 7 may be the
+  first run through it; watch `.claude/autoplan/` logs.

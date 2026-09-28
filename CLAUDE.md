@@ -22,16 +22,16 @@ The owner sends one prompt and comes back to a finished, verified change plus tw
 
 1. **Explore** through the `Explore` subagent. Ask the owner only when the answer changes what you build, always with the `AskUserQuestion` tool (never a plain-text question), then keep working in the same turn once they answer. A turn ends early only when something went really wrong, never just to ask.
 2. **Read the rules** for every area you will touch (see Domain rules).
-3. **Spec:** one per implementer call (see Spec format). A step with more than about three deliverables becomes several specs.
+3. **Spec:** one per implementer call (format in `.claude/playbook.md`). A step with more than about three deliverables becomes several specs.
 4. **Implement** with the `implementer` subagent.
 5. **Verify:** the commands in Verify; look at the screenshots yourself for anything visible.
 6. **Review:** over about 150 lines or more than three files, the `reviewer` subagent checks the diff against the spec and reports only gaps that break the spec, an invariant or a check; fix them with a follow-up spec.
-7. **Commit** by path, as your mode says.
+7. **Commit** by path, as your mode says, with a message that describes the work (a squash takes the branch tip's message). In worktree mode run the mode's `try.py --commit` yourself once verified.
 8. **Report:** end the turn with exactly this and nothing after it:
    1. **Name:** the feature in plain words, then the branch (and the PR in cloud).
    2. **How it looks:** for a visible change, one or two PNGs from `tools/smoke.py --shots`, sent with SendUserFile and never committed; otherwise one line saying why there is none.
    3. **Try:** one `bash` block, one command, from your mode file, plus one line saying what to do in the game to see the change as exact steps a new player can follow (name the class and where to pick it, which fork, or the exact debug console command; `H` opens the console); never "any class" or "any fork".
-   4. **Commit:** one `bash` block, one command, from your mode file (shared mode: the one line it gives).
+   4. **Commit:** which commit already landed on local `main` (worktree), or one `bash` block, one command, from your mode file (cloud; shared mode: the one line it gives).
    5. **Look at:** at most three bullets, plus anything left open.
 
 If the owner replies with changes, do another round on the same branch and end with the same report.
@@ -44,9 +44,16 @@ Two pieces of work never share one context. A task step, like a plan phase, is o
 
 ## Active plan
 
-A many-phase plan lives in `.claude/plans/<name>.md` (from `TEMPLATE.md`), run by the owner-invoked `/plan` skill (`.claude/skills/plan/SKILL.md`). When the SessionStart hook prints `PLAN: <name> · <stage>`, read the skill and the plan before anything else: a bare "go" continues it (planning rounds while `planning`, the one next `todo` phase while `running`). Planning asks every question up front; running asks phase questions only at a phase's start. Never use the built-in plan mode (Shift+Tab) for this.
+Big work runs as a plan: `.claude/plans/<name>.md` (from `TEMPLATE.md`), started with `/plan new <name>: <brief>` and driven by the owner-invoked `/plan` skill (`.claude/skills/plan/SKILL.md`). Never use the built-in plan mode (Shift+Tab) for this.
 
-Running is strictly one phase per context. A phase ends with the handoff protocol in the skill: verify, commit, update `PLAN_STATE.md` at the repo root (architecture now, the phase done, the exact start of the next one), commit that, then a hard stop ending with the skill's exact "Phase complete" message. The next phase starts only from the owner's "Read PLAN_STATE.md and execute the next phase." in a fresh context. Never chain phases, however small the next one is.
+- **Several at once, one per checkout.** Every plan whose `Stage:` is planning, ready or running is active. The gitignored `.claude/plans/HERE` binds this checkout's plan (with no HERE, the only active plan). The SessionStart hook prints `PLAN: <name> · <stage>` for the bound plan and lists the others (never touch their files); `PLANS: ...` means none is bound here: `go <name>` binds and continues it.
+- **Planning happens in the app:** an interview through `AskUserQuestion` until every choice execution will face is settled by a D. A bare "go" continues it.
+- **Running is strictly one phase per fresh context** (owner's rule, 2026-09-26). A phase verifies, commits, writes its state file `.claude/plans/<name>.state.md` (first line `Status: phase-done|partial|blocked|plan-done`: architecture now, the phase done, the exact start of the next one), commits that, then hard-stops with the skill's exact "Phase complete" message. The next phase starts only from the owner's "Read .claude/plans/<name>.state.md and execute the next phase." (or "go") after `/clear`. Never chain phases, however small the next one is.
+- **Phase questions** are asked only at a phase's start; anything seen, heard or felt, a balance number, a change outside Scope or a deletion is never decided alone (the skill's stop line).
+- **Blocked:** a phase that needs the owner writes the questions into the state file with `Status: blocked` and stops. A "go" in the app on that checkout asks them, records the D's, unblocks and prints the command to continue; it never runs the phase itself.
+- **Unattended:** `py -3 tools/autoplan.py <name>` (workflow-port phase 5) runs the phases from a terminal, one headless session each, in `.claude/worktrees/plan-<name>`. Inside such a session `AUTOPLAN=1` is set: read `.claude/skills/plan/unattended.md`, not the whole skill.
+
+The same split applies outside plans: a prompt with two separable pieces of work gets the first finished, committed and reported, and the second named under "Look at".
 
 ## Main session role
 
@@ -104,7 +111,7 @@ The main session explores through `Explore`, designs the change, writes the spec
 | Scene dump | `tools/scene_dump/`, `tools/scene_dump.py` |
 | Godot discovery, `.godot/` seeding, tool lock, verify stamps | `tools/godot_env.py` |
 | The owner's Try and Commit | `tools/try.py`, `tools/try_commit.py` |
-| Claude Code workflow | `.claude/modes/`, `.claude/hooks/`, `.claude/agents/`, `.claude/skills/`, `.claude/settings.json`, `.claude/rules/tooling.md` |
+| Claude Code workflow | `.claude/playbook.md` (specs, delegation, tool commands), `.claude/modes/`, `.claude/hooks/`, `.claude/agents/`, `.claude/skills/`, `.claude/settings.json`, `.claude/rules/tooling.md` |
 | Cloud session Godot install | `tools/cloud_setup.sh` |
 
 ## Code rules
@@ -121,23 +128,7 @@ Area notes live in `.claude/rules/*.md`, each scoped by `paths:` globs. Claude C
 
 ## Delegation
 
-- Every code change goes to `implementer`, one task per call, one file per call unless the change genuinely spans files. It runs with `omitClaudeMd`: it sees only the spec and its agent file, which already carries the GDScript conventions, the scene-text rules and the verification commands. The spec adds the invariants and area pitfalls that apply.
-- Parallel implementer calls only on completely separate files. The tools lock each project folder, so their Godot runs wait for each other instead of colliding.
-- Parallel tasks on the same file (worktree and cloud mode only): `implementer-wt`, each in its own worktree cut from your `HEAD`, so commit first. Merge their branches one at a time with `git merge --no-ff`, resolve, regenerate the map, re-run the check and the smoke test.
-- A new file over about 250 lines: the spec writes a skeleton first and adds function groups with Edits. One big Write dies on the output cap.
-- An implementer that reports "blocked" or "hit the context line": never resume it with SendMessage (that reloads its whole context); write a narrower spec for a fresh call.
-
-## Spec format
-
-Complete enough that the implementer never chooses a name, a location or a design. Every delegation contains:
-
-1. **Target files:** the exact path of every file to create, edit or delete, and the function names to grep for.
-2. **Symbols:** exact names and full typed signatures for everything added or changed.
-3. **Logic steps:** the implementation as an ordered, numbered list.
-4. **Edge cases:** each one and exactly how to handle it.
-5. **Do not touch:** files, symbols and behaviour that must stay unchanged, including foreign edits already in a target file (shared mode).
-6. **Rules:** the invariants and `.claude/rules/` pitfalls this change must respect.
-7. **Verification:** the commands from Verify, plus a `git grep` proving deleted symbols are gone when the spec deletes something.
+Every code change goes to `implementer`, one task per call, one file per call unless the change genuinely spans files. It runs with `omitClaudeMd`: it sees only the spec and its agent file, which already carries the GDScript conventions, the scene-text rules and the verification commands. The spec adds the invariants and area pitfalls that apply. Read `.claude/playbook.md` before the first spec of a turn: parallel calls, `implementer-wt`, big new files, blocked implementers, the Spec format and the tool commands.
 
 ## Verify
 
@@ -153,9 +144,9 @@ In worktree and cloud mode the Stop hook refuses to end a turn whose Godot chang
 
 ## Context budget
 
-Quality drops as a context grows, long before the window is full. `.claude/hooks/context-watch.py` measures every context after every tool call and prints `CONTEXT WATCH` at 80% of its line and past it. Lines: main 140k, Explore and Plan 100k, reviewer 80k, implementer 60k; a subagent at 1.5 times its line has every further tool call denied.
+Quality drops as a context grows, long before the window is full. `.claude/hooks/context-watch.py` measures every context after every tool call and prints `CONTEXT WATCH` at 80% of its line and past it. Lines: main 120k (headless autoplan sessions too; its runner kills at 140k), Explore and Plan 100k, reviewer 80k, implementer 60k; a subagent at 1.5 times its line has every further tool call denied.
 
-- Main session past its line: finish only the current atomic step (an implementer already running may finish; start nothing new), verify, commit, then follow your mode file's "Context full" rule. The `handoff` skill has the handoff format and "Auto-continue": after the handoff, keep working; auto-compaction (set a little past the line, `CLAUDE_CODE_AUTO_COMPACT_WINDOW` in `.claude/settings.json`) summarizes the conversation mid-turn and the hook prints the handoff back in, so the owner types nothing. Never clear the session yourself to continue mid-step: in the desktop app a clear stops its process. Use the skill too whenever a turn must end with work half done. Between plan phases and task steps the rule is the opposite: the turn hard-stops and the owner runs `/clear` (see Active task and Active plan).
+- Main session past its line: finish only the current atomic step (an implementer already running may finish; start nothing new), verify, commit, then follow your mode file's "Context full" rule. The `handoff` skill has the handoff format and "Auto-continue": after the handoff, keep working; auto-compaction (at 130k: 65% of the 200k `CLAUDE_CODE_AUTO_COMPACT_WINDOW`, `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` in `.claude/settings.json`) summarizes the conversation mid-turn and the hook prints the handoff back in, so the owner types nothing. Never clear the session yourself to continue mid-step: in the desktop app a clear stops its process. Use the skill too whenever a turn must end with work half done. A running plan never auto-continues across a phase: a phase that hits the line stops as `partial` in its state file, and between plan phases and task steps the turn hard-stops and the owner runs `/clear` (see Active task and Active plan).
 - `SUBAGENT CONTEXT ... over the line` means the spec or Explore prompt was too wide: next time name the file, function and line range, or split the task.
 - A handoff printed at session start: restate the plan in two lines, continue from Next, never redo Done, delete the file once absorbed.
 
@@ -173,16 +164,7 @@ After a structural change, re-run `py -3 tools/gen_context.py` (it reads committ
 
 ## Commands
 
-The tools find Godot themselves (`GODOT`, then the Windows user variable, then `godot` on PATH) and switch to the `_console` build, since the plain exe writes nothing to a pipe. Local tools run with `py -3`; the cloud container has only `python3`.
-
-- **Headless check:** `py -3 tools/check.py`.
-- **Smoke test:** `py -3 tools/smoke.py [--bless | --shots DIR]`. Plays a run like a player headless with `-- --smoke-sandbox` (saves and the meta profile never touch `user://`): NEW, IDLE, class panel, GO, `summon enemy`, firing, bench, a REST pick, two forks in `speed` mode with an elevator stop and a rear-park stop, a save round-trip. Fails on any error line, a non-zero exit, the 300 s timeout, or any difference between `tools/smoke/fingerprint.txt` and `fingerprint.baseline.txt`. The `[waves]` section pins `segment_wave_min` and `segment_wave_max` to 2 and 4 while it plans, so the owner's balance edits never move the fingerprint and a clean clone reproduces the baseline.
-- **Scene dump:** `py -3 tools/scene_dump.py [--bless]`. Instantiates `van.tscn` headless and fails on any difference from `tools/scene_dump/van.baseline.txt`. Run it for any change to the van's scenes that should not alter the built tree.
-- **Lint the tree:** `py -3 .claude/hooks/gd-lint.py --scan [paths]`.
-- **PROJECT_MAP:** `py -3 tools/gen_context.py`.
-- **Boons and pools:** `py -3 tools/generate_boons.py`; icons: `py -3 tools/generate_boon_icons.py`. Boon `.tres` files, pools and icons are generated: change the generator and re-run it (the file guard refuses hand edits).
-- **Try and Commit** (`tools/try.py`) belong to the owner: print them in the report, never run them.
-- Never launch the editor or a windowed game yourself, and never run anything that waits for input. The one exception is `tools/smoke.py --shots`, which runs on a hidden desktop the owner never sees and quits itself.
+The tool commands (check, smoke, scene dump, lint, map, generators, and the coming autoplan, probe and shots) are in `.claude/playbook.md`. `tools/try.py`: Try belongs to the owner (print it, never run it); worktree mode runs Commit itself once verified, cloud and shared print it. Never launch the editor or a windowed game yourself, and never run anything that waits for input; the one exception is `tools/smoke.py --shots`, which runs on a hidden desktop and quits itself.
 
 ## Git
 

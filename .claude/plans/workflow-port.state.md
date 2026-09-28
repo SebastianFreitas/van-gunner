@@ -2,54 +2,55 @@ Status: phase-done
 
 # Plan state: workflow-port
 
-- **Plan:** `workflow-port`, `.claude/plans/workflow-port.md`; branch
-  `claude/port-claude-workflow-godot-294f0c` (worktree `port-claude-workflow-godot-294f0c`).
-- This worktree has the gitignored `.claude/plans/HERE` = `workflow-port`, so the hook prints
-  `PLAN: workflow-port · running · <Status>` and lists van-exterior-2 as another active plan.
-  Root `PLAN_STATE.md` is still van-exterior-2's until phase 3 moves it.
+- **Plan:** `workflow-port`, `.claude/plans/workflow-port.md`. Phases 3-5 ran on branch
+  `claude/workflow-port-state-next-890c49` (worktree `workflow-port-state-next-890c49`); phases 1-2
+  on `claude/port-claude-workflow-godot-294f0c`. Worktree sessions land their own work with
+  `try.py <branch> --commit` (D24).
+- A fresh worktree has no HERE: with vanfix (ready) and workflow-port (running) both active the
+  hook prints `PLANS:`; write `workflow-port` to the gitignored `.claude/plans/HERE` first.
 
 ## Architecture now
-- `.claude/skills/plan/SKILL.md` (435 lines), `.claude/skills/plan/unattended.md` (88 lines),
-  `.claude/plans/TEMPLATE.md`: the new procedure (phase 1).
-- `.claude/hooks/session-start.py`: `plan_lines(root)` scans `.claude/plans/*.md` (skips
-  TEMPLATE and `*.state.md`) for `Stage: planning|ready|running`, binds by HERE or the only
-  active plan, appends the state file's Status while running, lists others, else `PLANS:`.
-  `ACTIVE` is ignored.
+- `.claude/skills/plan/SKILL.md`, `.claude/skills/plan/unattended.md`, `.claude/plans/TEMPLATE.md`:
+  the procedure (phase 1).
+- `.claude/hooks/session-start.py`: HERE binding, `PLAN:`/`PLANS:` lines (phase 2).
 - `.claude/hooks/context-watch.py`: main line `int(AUTOPLAN_LINE or 120_000)`.
-- `.claude/settings.json`: `CLAUDE_CODE_AUTO_COMPACT_WINDOW` 200000,
-  `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` 65.
-- `.gitignore`: `.claude/plans/HERE`, `.claude/autoplan/`.
-- `.claude/rules/tooling.md` Hooks: describes HERE binding and the 120k / 65% numbers.
-- Unchanged: git guard, file guard, CLAUDE.md (phase 4), root `PLAN_STATE.md` and `ACTIVE`
-  (phase 3).
+- `.claude/settings.json`: `CLAUDE_CODE_AUTO_COMPACT_WINDOW` 200000, `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` 65.
+- `CLAUDE.md` (phase 4): Active plan (several plans, HERE, state files, autoplan), playbook pointer,
+  120k line, worktree sessions self-run Commit.
+- `.claude/playbook.md`: Delegation, Spec format, Commands; Autoplan is now a real Commands bullet;
+  "Coming in workflow-port phases 6-7" lists probe and shots.
+- `tools/autoplan.py` (phase 5, 1050 lines): `resolve_plan` (arg → HERE → single ready/running),
+  `read_plan`, `read_state(name)` (`.claude/plans/<name>.state.md`), `ensure_plan_worktree` (writes
+  HERE), `acquire_lock` (`.claude/autoplan/`), `phase_brief`, `session_prompt`, `build_cmd`,
+  `child_env` (strips billing vars), `run_session` (stream-json, kill line, usage-limit detection),
+  `safety_commit` (by path), `main` (exit 3 on usage limit; `--dry-run` creates nothing).
+- `tools/try.py`: unchanged; already lists `claude/*` branches (D26).
 
 ## Completed phase
-- 2 · Plan hooks · 87e1138. Verified: `py -3 -m py_compile` on both hooks; session-start run on
-  sample stdin: no HERE → `PLANS: van-exterior-2 · running, workflow-port · running`; HERE set →
-  `PLAN: workflow-port · running · phase-done` + Other line; temp plan folders covered HERE
-  naming an unknown plan, a blocked state file, no state file, no active plans with HERE set;
-  `git grep "plans/ACTIVE\|active_plan" .claude/hooks` empty; settings.json parses;
-  context-watch honours `AUTOPLAN_LINE`. D22 (auto): no `askUserQuestionTimeout` key.
+- 5 · tools/autoplan.py · 2bc2d36 + 8dc395d. Verified: `py -3 -m py_compile tools/autoplan.py`;
+  `py -3 tools/autoplan.py --dry-run workflow-port` printed the claude.exe path, the command
+  (`--model --effort --permission-mode --disallowedTools --allowedTools --settings`, no billing
+  flag), `phase: 5 · ...`, `state: phase-done`, the worktree line, and created nothing; reviewer
+  found no gaps. D26, D27, D28 (auto). Not run live (a real headless session).
 
-## Next phase: 3 · Migrate plans
-- Deliverable (plan "### 3"): `van-exterior.md` into the new headers (Stage done, content
-  kept); `van-exterior-2.md` into the new TEMPLATE, Initial idea written from D1-D9 with `[?]`
-  where it guesses, `Stage: planning`, `Interview: B open` (D10); root `PLAN_STATE.md` content
-  moved into `.claude/plans/van-exterior-2.state.md` and the root file deleted;
-  `.claude/plans/ACTIVE` deleted; this plan's own state file kept current.
-- Verification: `git grep -n "PLAN_STATE" -- . ':!.claude/plans/research'` shows only history
-  mentions; session-start prints both plans correctly from this worktree with HERE set.
-- Rests on: D3, D10.
-- First action: read `.claude/plans/TEMPLATE.md` (headers), then `grep -n "^#"` on
-  `van-exterior.md` and `van-exterior-2.md` and read root `PLAN_STATE.md`.
+## Next phase: 6 · tools/probe.py
+- Deliverable (plan "### 6"): `tools/probe.py` + `tools/probe/probe_runner.gd` (flags from D6, D7,
+  D12: `res://path.tscn [--cmd "<console line>"]... [--eval "expr"] [--frames N] [--shot out.png
+  [--every <s> --max <n>]]`), project lock, hidden desktop for shots, error-line failure like smoke;
+  a probe needing the session boots main with the smoke sandbox. Drop probe's "coming" entry in
+  `.claude/playbook.md`.
+- Verification: `py -3 tools/probe.py res://scenes/van/van.tscn --eval "get_child_count()"` prints
+  a number; `--cmd floodlight --shot <scratch>/p.png --every 0.5 --max 3` writes three PNGs (Read
+  them); `py -3 tools/check.py`, `py -3 tools/smoke.py`.
+- Rests on: D6, D7, D12 (D13 stop line; D24 landing).
+- First action: read `.claude/rules/tooling.md`, then have Explore map `tools/smoke.py` and
+  `tools/godot_env.py` (lock, Godot discovery, hidden desktop, error-line scan, sandbox flag) and
+  `scripts/debug/` `DebugCommands.run` into `file:line` anchors. Two specs max (py, gd).
 
 ## Requirements / gotchas
-- All phase-3 files are Markdown: the main session may edit them directly.
-- van-exterior-2 at `Stage: planning` stops being "running": its state file then only matters
-  once it is running again; say so in its state file.
-- Deleting `ACTIVE` changes nothing for the hooks (already ignored). The main checkout prints
-  `PLANS:` until its HERE names a plan: mention it in the report's Look at.
-- Never write in Portfolio.
+- `.py`/`.gd` are source: the implementer writes them. Keep implementer specs narrow: the phase-5
+  part-2 implementer went over its 60k line reading a 440-line source range.
+- Never write in Portfolio. Never launch a windowed Godot: shots only via the hidden desktop.
 
 ## Blocker
 - none

@@ -33,8 +33,9 @@ context has absorbed it.
 
 For a context-full handoff the session keeps working with no owner input:
 auto-compaction, not a clear. `.claude/settings.json` sets
-`CLAUDE_CODE_AUTO_COMPACT_WINDOW` to 180000, so Claude Code compacts the
-conversation a little past the 140k handoff line, mid-turn, and goes on in
+`CLAUDE_CODE_AUTO_COMPACT_WINDOW` to 200000 and `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`
+to 65, so Claude Code compacts the conversation at 130k, a little past the
+120k handoff line, mid-turn, and goes on in
 the same turn. The SessionStart hook runs again with source `compact` and
 prints `.claude/handoff.md` (and the task-file reminder) into the
 compacted context. It is the same session, folder, branch and PR, so never

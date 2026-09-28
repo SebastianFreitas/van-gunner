@@ -44,7 +44,12 @@ Replace `<branch>` with `git branch --show-current`.
   `commit` at its prompt does the Commit step. Add `--editor` to open the
   Godot editor on the branch instead, or `--scene res://<path>.tscn` to
   play one scene.
-- **Commit:** `py -3 C:/Users/Traff/Documents/van-gunner/tools/try.py <branch> --commit`
+- **Commit:** `py -3 C:/Users/Traff/Documents/van-gunner/tools/try.py <branch> --commit`.
+  **You run it yourself** once the work is verified and committed on the
+  branch, then keep going; the report names the commit now on `main`
+  instead of handing over the command (owner, 2026-09-28, workflow-port
+  D24). Make the branch tip's message describe the work first: the squash
+  takes its message. It
   squashes the branch into one commit on top of local `main` without
   touching the main checkout's files, regenerates `docs/PROJECT_MAP.md` and
   runs the headless check on the combined tree in the try checkout (the
@@ -62,7 +67,13 @@ start the next round with `git merge main` here. Archiving the session in the ap
 
 ### Context full
 
-Finish the atomic step, commit on the branch, write `.claude/handoff.md`
+**A running plan phase is the exception:** it never auto-continues. At the
+line it finishes the atomic step, commits, writes `.claude/plans/<name>.state.md`
+with `Status: partial` (the plan skill's handoff) and stops. A planning
+interview follows the skill's Context rule: commit the plan, write the
+handoff below, keep going.
+
+Otherwise: finish the atomic step, commit on the branch, write `.claude/handoff.md`
 (format: the `handoff` skill) in this worktree (gitignored, it stays here),
 then keep going with Next in the same turn. Auto-compaction (the skill's
 "Auto-continue") summarizes the conversation a little past the line,

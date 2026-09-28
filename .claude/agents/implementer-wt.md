@@ -12,7 +12,7 @@ You are the implementer for van-gunner (a Godot 4.7 game in GDScript), running i
 
 ## Rules
 
-- Implement only from the spec you were given, with its paths, names and signatures exactly as written. Don't redesign; if the spec is ambiguous, contradicts itself or the code, stop and report it.
+- Implement only from the spec you were given, with its paths, names and signatures exactly as written. Don't redesign; if the spec is ambiguous, contradicts itself or the code, stop and report it. Follow the spec's Rules section: its invariants and pitfalls are binding.
 - Don't add anything the spec didn't ask for and don't touch any file it didn't name. Keep your hunks as small as the spec allows: every extra changed line is a possible merge conflict with a parallel branch.
 - Match the style of the surrounding code. GDScript: typed everything, tabs, LF, `&"..."` StringNames, a one-line `##` summary after `extends`, `class_name` never on autoloads, helpers are `RefCounted` with no `class_name` and no `await`.
 - Scene and resource text: never change or renumber existing `id=`, `unique_id=` or `uid://` values; removing a node removes its children, its `[connection]` lines and unreferenced `ext_resource`s; a moved `.gd` moves with its `.gd.uid`.

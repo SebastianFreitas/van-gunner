@@ -2,8 +2,9 @@
 
 Stage: done
 Started: 2026-09-26
-Procedure: `.claude/skills/plan/SKILL.md` (planning loop, then one phase
-per context: "Read PLAN_STATE.md and execute the next phase.").
+Procedure: `.claude/skills/plan/SKILL.md` before workflow-port (planning loop; ran with the root
+state file, removed when it closed).
+Interview: old procedure (no parts A/B/C); closed before the migration (workflow-port D23)
 
 ## Brief (owner's words, verbatim)
 

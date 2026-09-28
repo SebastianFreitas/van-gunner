@@ -43,7 +43,13 @@ Commit command, oldest first; nobody merges by hand.
 
 ### Context full
 
-Finish the atomic step, commit, write `.claude/handoff.md` (format: the
+**A running plan phase is the exception:** it never auto-continues. At the
+line it finishes the atomic step, commits, writes `.claude/plans/<name>.state.md`
+with `Status: partial` (the plan skill's handoff) and stops. A planning
+interview follows the skill's Context rule: commit the plan, write the
+handoff below, keep going.
+
+Otherwise: finish the atomic step, commit, write `.claude/handoff.md` (format: the
 `handoff` skill), then keep going with Next in the same turn.
 Auto-compaction (the skill's "Auto-continue") summarizes the conversation
 a little past the line, mid-turn, and the SessionStart hook prints the
