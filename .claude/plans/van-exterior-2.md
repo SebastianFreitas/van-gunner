@@ -1,8 +1,9 @@
 # Van exterior, round two: light it, audit it, fix it
 
-Stage: planning
+Stage: ready
 Started: 2026-09-26
-Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
+Procedure: `.claude/skills/plan/SKILL.md` (planning loop, then one phase
+per context: "Read PLAN_STATE.md and execute the next phase.").
 
 ## Brief (owner's words, verbatim)
 
@@ -24,8 +25,7 @@ Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 
 ## Open items
 
-- Round 2 (next): E night read, F order, what the windshield shows from outside.
-- Owner (2026-09-26): do the real planning rounds before any fix phase; phase 1 (tooling) stays committed as `74f8364`. Planning loop resumes at step 2 (research wide) for these areas: the cab and front, the body holes and seams, the side windows from outside, the underside and wheels, the exterior look under light. Then the option map, then question rounds. Phases 2–6 below are a draft to rewrite from the decisions.
+- none (rounds 1 and 2 answered 2026-09-28; round 2 opened nothing new).
 
 ## Option map (from `research/van-exterior-2-00-intake.md` and the lit shots)
 
@@ -65,6 +65,9 @@ Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 - **D4 · Windows from outside (C1).** Exterior pane + frame: a second dark-tinted pane on layer 1 outside the interior one, strong fresnel, no interior rim recipe, an outer frame ring and reveal. The interior pane stays untouched.
 - **D5 · Seams (B1).** Profile-sampled patches: corner caps, skirts and sills from `VanBodyProfile`, closing each audited gap where it is.
 - **D6 · Underside (D1).** Chassis kit: arches cut into the sill with a lip, wheels tucked to the arch, frame rails, fuel tank, rear bumper with underride bar, side steps.
+- **D7 · Night read (E1).** Keep the `*-outside` brightness budget. Real sources do the work: the new headlights light the road ahead, tail and marker lamps glow, the skin gets a faint wet sheen inside the roughness bounds that catches street lamps.
+- **D8 · Order (F).** Audit first: phase 2 lists every exterior issue with a picture, and the fix phases run in the order the audit sets.
+- **D9 · Through the windshield.** A dark cab with a dash glow: dashboard, seat backs and the driver's silhouette, lit only by a faint dash glow.
 
 ## Constraints (every phase)
 
@@ -78,33 +81,45 @@ Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 
 | # | Phase | Kind | Rests on | Status |
 |---|---|---|---|---|
-| 1 | Tooling: torch, floodlight, lit shots | code | D1 | done |
-| 2 | Audit with pictures | research, doc | D2 | todo |
-| 3 | Holes and seams | code | D2, audit | todo |
-| 4 | Side windows from outside | code | D2, audit | todo |
-| 5 | The front: a real cab | code | D2, audit | todo |
-| 6 | Underside and wheels (if the audit lists it) | code | D2, audit | todo |
+| 1 | Tooling: torch, floodlight, lit shots | code | D1 | done 74f8364 |
+| 2 | Audit with pictures | research, doc | D2, D8 | todo |
+| 3 | Holes and seams | code | D5, audit | todo |
+| 4 | Side windows from outside | code | D4, audit | todo |
+| 5 | A real cab and what the windshield shows | code | D3, D9, audit | todo |
+| 6 | Underside and wheels | code | D6, audit | todo |
+| 7 | The night read | code | D7, audit | todo |
+
+Phases 3 to 7 run in the order phase 2's audit sets (D8); the numbers are labels, the audit's order is the run order.
 
 ## Phases
 
-### 1 · Tooling
-Deliverable: `cmd_torch` / `cmd_floodlight` in `debug_van_commands.gd`, registered after `ghost`; `van_views_lit()` in `smoke_shots.gd` with new exterior spots (front three-quarters both sides, straight front, straight rear, side window close-up, roof top-down), called from `smoke_driver.gd` after `van_views`; rules paragraph; map regenerated.
-Verification: check, smoke (fingerprint same), scene dump (same), `--shots` and Read the `-lit` PNGs.
+### 1 · Tooling (done)
+`cmd_torch` / `cmd_floodlight` in `debug_van_commands.gd`; `van_views_lit()` in `smoke_shots.gd` (v08..v16 `van-lit-*`); rules paragraph; map regenerated.
 
-### 2 · Audit
-Deliverable: `.claude/plans/research/van-exterior-2-01-audit.md`, one entry per issue (shot, builder, severity), grouped front/cab, holes and seams, windows under light, other. PNGs sent to the owner. Phase question at the start of 3: order and "leave it" entries.
+### 2 · Audit with pictures (D2, D8)
+Research: the lit shots v08..v16, extra `ghost` + `floodlight` angles if the shots miss an area.
+Deliverables: `.claude/plans/research/van-exterior-2-01-audit.md`, one entry per issue (shot, builder or node, severity), grouped cab/front, holes and seams, windows, underside/wheels, night read; the run order for phases 3 to 7 written into Progress; annotated PNGs sent to the owner.
+Verification: every issue in Carry forward appears in the audit; every entry names a builder.
 
-### 3 · Holes and seams
-Close every audited gap between hull, roof, front wall, cab back, rear face, sills; patches sample `VanBodyProfile`.
+### 3 · Holes and seams (D5)
+Deliverables: every audited gap between hull skin, roof, front wall, cab back, rear face and sills closed by patches that sample `VanBodyProfile`.
+Verification: check, smoke, scene dump (bless only if the phase says the tree changes), lit shots re-read against the audit entries.
 
-### 4 · Side windows from outside
-Outer frame ring and pane on layer 1 from the `VanSideWall` builders, reveal depth, exterior glass material without the interior rim recipe; interior pane, iron cross, breakable glass untouched.
+### 4 · Side windows from outside (D4)
+Deliverables: per side window an outer frame ring and a dark-tinted pane on layer 1 from the `VanSideWall` builders, a reveal with depth, an exterior glass material with strong fresnel and no interior rim recipe. Interior pane, iron cross, breakable glass unchanged.
+Verification: check, smoke, lit and unlit window close-ups, interior front/back shots unchanged by eye, `*-outside` budget.
 
-### 5 · A real cab
-Rebuild `van_cab.gd` (helper split if over 300 lines): A-pillars, cab doors on the profile, windshield with depth, grille and bumper refit from `van_front_kit.gd`, headlight housings, mirrors.
+### 5 · A real cab and what the windshield shows (D3, D9)
+Deliverables: `van_cab.gd` rebuilt as a cab-over face on the body profile (helper split past 300 lines): A-pillars, cab doors with windows, windshield with a framed reveal, grille and bumper refit from `van_front_kit.gd`, headlight housings; behind the windshield a dark cab with dashboard, seat backs, a driver silhouette and a faint dash glow.
+Verification: check, smoke, scene dump, front and quarter lit shots, unlit front inside the budget.
 
-### 6 · Underside and wheels
-Arches, frame rails, rear bumper, steps, only if the audit lists them.
+### 6 · Underside and wheels (D6)
+Deliverables: arches cut into the sill with a lip, wheels tucked to the arch (the floating passenger rear wheel), frame rails, fuel tank, rear bumper with underride bar, side steps.
+Verification: check, smoke, scene dump, low lit side and rear shots.
+
+### 7 · The night read (D7)
+Deliverables: headlights that light the road ahead, tail and marker lamps glowing, a faint wet sheen on the skin inside roughness 0.78 to 0.95; all inside the `*-outside` budget.
+Verification: check, smoke, unlit `--shots` through `tools/shot_stats.py` against `art-style.md`, the owner's view by eye.
 
 ## Carry forward
 
