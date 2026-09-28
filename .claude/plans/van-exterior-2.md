@@ -93,7 +93,7 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 | 3 | Holes and seams | code | D5, audit | todo (run 3rd) |
 | 4 | Side windows from outside | code | D4, audit | todo (run 4th) |
 | 5 | A real cab and what the windshield shows | code | D3, D9, audit | done b662a42 |
-| 6 | Underside and wheels | code | D6, audit | todo (run 2nd) |
+| 6 | Underside and wheels | code | D6, D14-D16, audit | done c2bf8bf |
 | 7 | The night read | code | D7, audit | todo (run 5th) |
 
 Phases 3 to 7 run in the order phase 2's audit sets (D8): **5 → 6 → 3 → 4 → 7**; the numbers are labels. Next phase = the first `todo` in that order.
@@ -124,6 +124,7 @@ Notes: done in b662a42. `van_cab.gd` core + `van_cab_shell.gd` (skin, liner, bac
 ### 6 · Underside and wheels (D6)
 Deliverables: arches cut into the sill with a lip, wheels tucked to the arch (the floating passenger rear wheel), frame rails, fuel tank, rear bumper with underride bar, side steps.
 Verification: check, smoke, scene dump, low lit side and rear shots.
+Notes: done in c2bf8bf. `van_chassis.gd` (RefCounted helper of `VanWheels`): flares with lips + dark wells per wheel, side and cab steps, saddle tank (-exhaust side), toolbox + 2.3 m exhaust (exhaust side), spares at z -1.55, frame rails + rear bumper (top y 0). Tread 24 blocks. Check, smoke, scene dump clean; lit side shots read by eye. Reviewer skipped (context line).
 
 ### 7 · The night read (D7)
 Deliverables: headlights that light the road ahead, tail and marker lamps glowing, a faint wet sheen on the skin inside roughness 0.78 to 0.95; all inside the `*-outside` budget.
@@ -135,3 +136,4 @@ Verification: check, smoke, unlit `--shots` through `tools/shot_stats.py` agains
 - Phase 2: the audit is `research/van-exterior-2-01-audit.md` (IDs C1–C5, S1–S6, W1–W5, U1–U6, N1–N5); each fix phase takes its section and re-reads its shots against those IDs. The "floating rear wheel" is really the front axle (z -7.25, x ±2.8) standing under the sideless cab (U1). The headlights already light the road (N2): phase 5 keeps those SpotLights. W1 (glossy black side door leaf, `side_door_leaf.gd` `door_body_material()`) belongs to phase 4. Not located yet: the rear step plate (S5), the floating window bars (W4), the diagonal rod (U6), the roof white disc (N5).
 
 - Phase 5: the cab now runs from the hull's -4.72 (back lip, S2 closed) to the face at `NOSE_Z` -8.2; its side skin sits at `profile.outer_x_at(y)` (about 2.54 at the sill). Phase 6: the front wheels (`FRONT_AXLE_Z` -7.25, `WHEEL_X` 2.8) stand outside the cab side and need arches cut into the cab skin in `van_cab_shell.gd` (CabSkin) as well as the hull sill; the cab floor is `CAB_FLOOR_Y` 0.9 and the skin runs down to `BASE_Y` -0.25. Phase 3: C1/S2 no longer apply at the front; what is left is S1, S3, S4, S5, S6. The plow posts use the V-bars' side stance (about ±2.4); they read fine in the lit front shot.
+- Phase 6: the body sits at road level (floor y 0, road -0.2), so there is no visible underside: rails show only under the rear doors. U6 was the spare chains on the cab doors (spares moved). Phase 3: S5 (rear step plate) now sits just above the new `RearBumper` (z 4.92, y -0.19..-0.01): check they don't overlap.
