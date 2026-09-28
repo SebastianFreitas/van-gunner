@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-289 GDScript files, 43687 lines.
+289 GDScript files, 43771 lines.
 
 ### `scenes/corridor/`
 
@@ -645,8 +645,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_front_kit.gd` | — | 170 | Builds the van's seeded front kit (bumper, ram, windshield cage, lamp cages) onto a VanCab. |
 | `van_generator.gd` | `VanGenerator` | 117 | The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp… |
 | `van_generator_parts.gd` | — | 184 | Builds the generator set's welded skid, oil pan, radiator, tank, manifold, control gantry, junction box, trouble lamp and rust patches; the core script keeps t… |
-| `van_hull.gd` | `VanHull` | 219 | The van's outer skin: roof, sides, rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted from the look seed. |
-| `van_hull_lines.gd` | — | 198 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
+| `van_hull.gd` | `VanHull` | 294 | The van's outer skin: roof, sides, rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted from the look seed. |
+| `van_hull_lines.gd` | — | 207 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
 | `van_hull_patches.gd` | — | 154 | Skin patches that close the gaps left in VanHull's outer shell: the rear corner strip behind the side skin, the rocker sill along both sides and the belly betw… |
 | `van_inner_shell.gd` | `VanInnerShell` | 258 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
 | `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |

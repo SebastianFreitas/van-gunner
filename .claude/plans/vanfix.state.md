@@ -50,15 +50,22 @@ WindowFrame, IronCross on layers 1+2 via new `scripts/van/rear_door_lighting.gd`
 `rear_doors.gd` is at 400 lines). Check, smoke, scene dump clean (identical). Audit after 08f3d43:
 CLIP 110, EDGE 27, FLICKER 1710, HEIGHT 43, LEAK_IN 1, LEAK_OUT 44 (was 75), OPENING 99, REAR_ROOF 8.
 Shots v09, v14 read: rear doors now street-lit, body closed.
+Session 7: ddb070e (D19: rub rail and belt line break from the bay's front to the open leaf's rear
+edge, `van_hull_lines.gd` consts `DOOR_SLIDE_M` 2.45 and `DOOR_LEAF_HALF_Z` 1.105 mirror
+side_doors.gd/side_door_leaf.gd), 6c93377 (`RearSkin` rebuilt as a ring at z 4.78 whose opening follows
+the rear leaves' outline 2 cm out: bottom y 0.0, sides liner - 0.01, top vault - 0.005; the leaves
+span z 4.63..4.79 at hinge z 4.71, the old posts/header lay 1 cm inside them), 7502ce1 (reveal from
+the ring's inner edge back to the liner's end z 4.70 on sides and top). Check, smoke, scene dump
+clean (identical). Audit: CLIP 102, EDGE 26, FLICKER 1703, HEIGHT 43, LEAK_IN 1, LEAK_OUT 44,
+OPENING 99, REAR_ROOF 8; no RearSkin rows. Shots v09, v14 read after 6c93377: rear closed, leaves
+framed by a thin rim.
 Remaining, one spec each:
-1. D19: break `BeltLineL0/R0` and `RubRailL0/R0` over the side door's slide path (bay's rear edge to
-   the open door's rear edge), like the drip rail's breaks; clears 8 CLIP rows vs `CurvedBody`.
-2. Rear doors seated: leaves 0.16 thick at z 4.78 ± 0.08 stand 8 cm proud of RearSkin (plane z 4.78);
-   seat them (explore `rear_doors.gd` `_fit_to_hull`, hinge x 2.39, Y_MIN 0.02) and line the rear
-   opening with a reveal from the rear liner to z 4.78 if missing. Leftover EDGE rows: `SillL/R` open
-   top edge at y 0.04 (length 9.52), `RearSkin` at x -2.39 y 2.04, `RearCornerL/R` bottom at z 4.70,
-   `RoofSkin` front edge z -4.72; sills/belly end at z 4.80, 2 cm past the rear face.
-3. Optional: FLICKER `LeftWall`/`RightWall` vs `DoorJamb_L/R` 0.084 at (±2.495, 2.237, -4.644) and
-   `DoorJamb_R` vs `FrontWall/Slab` 0.023.
+1. Leftover body EDGE rows: `SillL/R` open top edge at y 0.04 (length 9.52), `RearCornerL/R` bottom
+   at z 4.70, `RoofSkin` front edge z -4.72; sills/belly end at z 4.80, 2 cm past the rear face.
+   `RubRail<L|R>0` vs `CornerPostRL/RR` FLICKER (rail ends z 4.65 inside the post's z 4.58..4.70):
+   end the rails 2 cm before the posts.
+2. Optional: FLICKER `LeftWall`/`RightWall` vs `DoorJamb_L/R` 0.084 at (±2.495, 2.237, -4.644),
+   `DoorJamb_R` vs `FrontWall/Slab` 0.023, `Floor/Deck` vs `BellySkin` 45.7 m² at y -0.25 (belly
+   coplanar with the deck's underside: drop the belly 2 cm or delete it if the deck already closes).
 Then verify: check, smoke, scene dump, audit, lit shots v08–v16 and close-ups c01, c02, c10.
 

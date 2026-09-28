@@ -5,6 +5,11 @@ extends RefCounted
 ## The 1 cm gap every trim keeps off the face it sits on, so it is never coplanar with or buried
 ## in the skin (D7).
 const TRIM_LIFT := 0.01
+## How far the side door leaf slides open along z. Keep in step with `slide_distance` in
+## side_doors.gd (neither script has a class_name to read it from).
+const DOOR_SLIDE_M := 2.45
+## Half length of the side door leaf. Keep in step with `DOOR_HALF_Z` in side_door_leaf.gd.
+const DOOR_LEAF_HALF_Z := 1.105
 
 var _hull: Node3D
 var _profile: VanBodyProfile
@@ -37,18 +42,19 @@ func _skin_x(y: float) -> float:
 	return _profile.inner_x_at(y) + VanHull.SIDE_SKIN_OUTER_M + TRIM_LIFT
 
 
-## The rub rail, belt line and drip rail for one side, clear of that side's openings.
+## The rub rail, belt line and drip rail for one side, clear of that side's openings. The rub rail
+## and belt line also break over the side door's slide path (D19); the door carries no rail.
 func _build_body_lines(side_sign: float) -> void:
 	var suffix := "L" if side_sign < 0.0 else "R"
 	var z_min := -_profile.half_length() + 0.05
 	var z_max := _profile.half_length() - 0.05
 
-	var rub_ranges := _clear_ranges(z_min, z_max, 0.95)
+	var rub_ranges := _clear_ranges(z_min, z_max, 0.95, true)
 	for i in range(rub_ranges.size()):
 		var r: Vector2 = rub_ranges[i]
 		_build_strip("RubRail%s%d" % [suffix, i], 0.95, r.x, r.y, 0.09, 0.05, side_sign)
 
-	var belt_ranges := _clear_ranges(z_min, z_max, 2.62)
+	var belt_ranges := _clear_ranges(z_min, z_max, 2.62, true)
 	for i in range(belt_ranges.size()):
 		var r: Vector2 = belt_ranges[i]
 		_build_strip("BeltLine%s%d" % [suffix, i], 2.62, r.x, r.y, 0.05, 0.03, side_sign)
@@ -63,8 +69,11 @@ func _build_body_lines(side_sign: float) -> void:
 
 
 ## The z-ranges within [z_min, z_max] at height `y` that clear every window and the side door
-## (each padded by 6 cm). Pieces shorter than 0.15 m are dropped.
-func _clear_ranges(z_min: float, z_max: float, y: float) -> Array[Vector2]:
+## (each padded by 6 cm). With `over_door_path` the door's block extends to the far end of the
+## slid-open leaf. Pieces shorter than 0.15 m are dropped.
+func _clear_ranges(
+	z_min: float, z_max: float, y: float, over_door_path: bool = false
+) -> Array[Vector2]:
 	var pad := 0.06
 	var blocks: Array[Vector2] = []
 	for cz: float in _walls.window_centers_z:
@@ -73,10 +82,10 @@ func _clear_ranges(z_min: float, z_max: float, y: float) -> Array[Vector2]:
 		if y >= wy0 and y <= wy1:
 			blocks.append(Vector2(cz - _walls.window_half_length - pad, cz + _walls.window_half_length + pad))
 	if y >= _walls.door_y_min - pad and y <= _walls.door_y_max + pad:
-		blocks.append(Vector2(
-			_walls.door_center_z - _walls.door_half_length - pad,
-			_walls.door_center_z + _walls.door_half_length + pad,
-		))
+		var door_end := _walls.door_center_z + _walls.door_half_length
+		if over_door_path:
+			door_end = maxf(door_end, _walls.door_center_z + DOOR_SLIDE_M + DOOR_LEAF_HALF_Z)
+		blocks.append(Vector2(_walls.door_center_z - _walls.door_half_length - pad, door_end + pad))
 
 	blocks.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.x < b.x)
 	var merged: Array[Vector2] = []
