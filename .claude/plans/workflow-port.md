@@ -175,6 +175,12 @@ Interview: A, B, C done · 20 asked (focused, D1) · missed: does the first phas
   command for anything left unlanded. Reason: Portfolio's runner never lands; one path, not two.
 - **D28 (auto) · Headless compaction.** Autoplan keeps Portfolio's `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`
   in its `--settings`, and `--dry-run` skips the dirty-tree gate. Reason: port as is; test tooling.
+- **D29 (auto) · Probe entry and defaults.** The probe runs a `.tscn` entry
+  (`tools/probe/probe_runner.tscn`) that spawns a worker under root, because `go_to_van` frees the
+  current scene. With no scene argument it boots the run to the van at IDLE. `--smoke-sandbox` is
+  always passed. `--timeout` defaults to 180 s, and the game's watchdog fires 20 s before that.
+  Shot sequences are named `<stem>-NN.png`. The probe writes no verify stamp. Reason: most console
+  lines need the run, and a probe must never stand in for check or smoke.
 
 ## Initial idea (Part B)
 
@@ -197,7 +203,7 @@ Skipped by D1 (tooling plan, focused interview): the phases below carry every pi
 | 3 | Migrate plans | doc | D3 D10 D23 | done fa81eda |
 | 4 | CLAUDE.md, playbook, modes, handoff, implementer agents | doc | D15 D16 | done 857f7c9 |
 | 5 | tools/autoplan.py (+ try branch listing) | code (py) | D4 D9 D13 D15 D17 | done 8dc395d |
-| 6 | tools/probe.py | code (py + gd) | D6 D7 D12 | todo |
+| 6 | tools/probe.py | code (py + gd) | D6 D7 D12 | done 3cb6c9b |
 | 7 | tools/shots.py capture/compare | code (py) | D5 D11 | todo |
 | 8 | Docs, tooling rules, PROJECT_MAP, Stage done | doc | all | todo |
 
@@ -270,6 +276,8 @@ lock, hidden desktop for shots, error-line failure like smoke.
 Verification: `py -3 tools/probe.py res://scenes/van/van.tscn --eval "get_child_count()"` prints
 a number; `--cmd floodlight --shot <scratch>/p.png --every 0.5 --max 3` writes three PNGs (Read
 them); `py -3 tools/check.py`, `py -3 tools/smoke.py`.
+Notes: done 3cb6c9b. The van.tscn eval printed `PROBE EVAL: 7`. Floodlight wrote p-01..03, and
+p-01 shows the van at IDLE. Check and smoke clean, lint 0, reviewer found no gaps. D29 (auto).
 
 ### 7 · tools/shots.py
 Deliverable: `capture <name>` (smoke `--shots` into `.godot/shots/<name>/`), `compare <a> <b>`
@@ -291,6 +299,8 @@ Verification: `py -3 tools/check.py`; `py -3 tools/smoke.py`.
 - Phase 5: the skill's Unblock prints
   `py -3 C:/Users/Traff/Documents/van-gunner/tools/autoplan.py <name>`: phase 5 must accept that.
 - Phases 5-7: each drops its "Coming ... (not there yet)" entry in `.claude/playbook.md` (D25).
+  Only Shots is left; phase 7 removes the whole "Coming in workflow-port phase 7" bullet.
+- Phase 7 can use `tools/probe.py --shot` for quick single views (D29).
 - Phase 5+: worktree sessions run `try.py --commit` themselves (D24); autoplan sessions do too
   (D27). Autoplan's real run (a live `claude -p` stream) is untested here: phase 6 or 7 may be the
   first run through it; watch `.claude/autoplan/` logs.

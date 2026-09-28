@@ -66,13 +66,18 @@ with `py -3`; the cloud container has only `python3`.
   anything.
 - **Try and Commit:** `tools/try.py`, commands in your mode file. Try belongs to the owner: print
   it, never run it. Commit: worktree mode runs it itself once verified; cloud and shared print it.
-- Coming in workflow-port phases 6-7 (not there yet; don't call them until they land):
-  - **Probe** (phase 6): `py -3 tools/probe.py res://<scene>.tscn [--cmd "<console line>"]...
-    [--eval "<expr>"] [--frames N] [--shot out.png [--every <s> --max <n>]]`: one scene headless
-    (hidden desktop for shots), fails on any error line.
+- **Probe:** `py -3 tools/probe.py [res://<scene>.tscn] [--cmd "<console line>"]...
+  [--eval "<expr>"] [--frames N] [--shot out.png [--every <s> --max <n>]] [--timeout S]`. Loads
+  one scene headless and evaluates the expression against its root (`PROBE EVAL: <value>`); with
+  no scene it boots the run to the van at IDLE (`SceneRouter.go_to_van()`), always with
+  `--smoke-sandbox`. `--cmd` lines run through `DebugCommands.run` in order first (most need the
+  run, so no scene). `--shot` renders on the hidden desktop like `smoke.py --shots`; `--every`
+  and `--max` write `<stem>-01.png`…. Fails on any error line, a non-zero exit, a timeout or a
+  missing PNG; prints `PROBE CLEAN`. No verify stamp: it never replaces check or smoke.
+- Coming in workflow-port phase 7 (not there yet; don't call it until it lands):
   - **Shots** (phase 7): `py -3 tools/shots.py capture <name>` (smoke `--shots` into
     `.godot/shots/<name>/`) and `py -3 tools/shots.py compare <a> <b>` (`same`/`changed` per
     view).
 - Never launch the editor or a windowed game yourself, and never run anything that waits for
-  input. The one exception is `tools/smoke.py --shots`, which runs on a hidden desktop the owner
-  never sees and quits itself.
+  input. The exceptions are `tools/smoke.py --shots` and `tools/probe.py --shot`, which
+  run on a hidden desktop the owner never sees and quit themselves.

@@ -272,7 +272,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-281 GDScript files, 42066 lines.
+282 GDScript files, 42237 lines.
 
 ### `scenes/corridor/`
 
@@ -669,6 +669,12 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `check_scripts.gd` | — | 45 | Headless load check. |
 
+### `tools/probe/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `probe_runner.gd` | — | 171 | Headless probe entry scene: runs debug commands/evals/screenshots from user args and quits. |
+
 ### `tools/scene_dump/`
 
 | File | class_name | LOC | Summary |
@@ -731,6 +737,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/van/van_shell.tscn` | 184 | StaticBody3D |
 | `scenes/van/van_side_wall.tscn` | 1 | Node3D |
 | `scenes/van/van_vital_dummy.tscn` | 5 | StaticBody3D |
+| `tools/probe/probe_runner.tscn` | 1 | Node |
 | `tools/scene_dump/scene_dump.tscn` | 1 | Node |
 | `tools/smoke/smoke_test.tscn` | 1 | Node |
 
