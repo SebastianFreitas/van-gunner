@@ -3,7 +3,7 @@
 Stage: running
 Started: 2026-09-28
 Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/vanfix.state.md` while running).
-Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto)
+Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15)
 
 ## Rebase note (2026-09-28, landed on main)
 
@@ -98,6 +98,9 @@ the night read. So:
 - **D8 · Window.** Same swing, clean clearance: frame, glass, bars and wall opening cut so nothing passes through anything anywhere in the swing, checked at closed, half and fully open.
 - **D11 · Audit layout (auto).** `tools/van_audit.py` + `tools/van_audit/` runner that boots the van at IDLE like the probe, collects every visible triangle in rig space, and reports FLICKER / CLIP / OPENING (triangle tests, doors and windows posed closed, half, open without tweens), HEIGHT / REAR_ROOF, EDGE and LEAK_IN / LEAK_OUT (Jolt ray and sphere queries on temporary layer-20 proxies); close-ups are a `c`-prefixed view set so `v01`.. never renumber. Reason: physics queries make leaks cheap in GDScript, and a separate tool keeps smoke untouched until phase 5 wires it in.
 - **D12 · Gap vs audit tolerance (auto).** Where two parallel faces sit edge to edge (leaf vs jamb, frame rim vs wall cut, trim ends vs frame openings) the gap is 2 cm, because the audit counts faces within `PLANE_EPS` 1 cm as coplanar; stacked depth lifts stay `TRIM_LIFT` 1 cm (D7). Reason: 1 cm exactly still flagged, and 1 cm more is invisible in play.
+- **D13 · Door slide recess.** The side door recesses 0.24 m outward (was 0.17) before sliding, so its cabin-side trim clears the 0.16 m side wall; the open door stands 7 cm further off the van side and keeps its framed-panel relief inside.
+- **D14 · Door front edge.** Shorten the side door 13 cm at its front edge (2.34 → 2.21 m wide, rear edge unchanged); the wall opening, jamb and track follow, so nothing is buried in the cab back wall or the front corner posts.
+- **D15 · Street-lit door and window parts.** Door `CurvedOuter`, `LatchPlate`, `Handle` and window `CurvedFrame`, `WindowGlass`, `IronCross` go on render layers 1 and 2, so street lights, the torch and cabin lights all reach them.
 
 ## Constraints (every phase)
 
