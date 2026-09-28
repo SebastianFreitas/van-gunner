@@ -62,7 +62,7 @@ Talking frees the cursor (`has_modal_free_cursor`) so options highlight on hover
 
 The cab end is one piece, `Interior/FrontWall` (`VanFrontWall`): a slab triangulated from `section_points` with a doorway notch (x ±0.775, y 0..2.30), a `CollisionPolygon3D` from the same outline, and casings. `CabDoor` is a recessed barred leaf inside that notch. Change the outline only through the profile or the notch constants, so mesh and collision stay one shape.
 
-Outside, `VanLook/Hull` still pushes the liner out 6 cm for the skin; `van_hull_lines.gd` adds the body lines (rub rail, belt line, drip rail broken around every opening, bowed corner posts) at `inner_x_at(y) + 0.06`. `VanLook/MarkerLights` holds the clearance, tail and ID lamps: each light sits at its fixture on layer 1, with energies tuned against the `*-outside` budget in `art-style.md`.
+Outside, `VanLook/Hull` still pushes the liner out 6 cm for the skin; `van_hull_lines.gd` adds the body lines (rub rail, belt line, drip rail broken around every opening, bowed corner posts) at `inner_x_at(y) + 0.06`. `VanLook/MarkerLights` holds the clearance, tail and ID lamps: each light sits at its fixture on layer 1, with energies tuned against the `*-outside` budget in `art-style.md`. The skin's night read is a rain-wet sheen in `van_exterior.gdshader` (`wetness`, `wet_specular`): it only pulls roughness down to `roughness_min` 0.78, never below; make it read by adding a source, not by lowering that bound. The roof-rack spot (`van_roof.gd`) wears a visor so its lens is not a white disc from above.
 
 ## Render layers and light pairing
 

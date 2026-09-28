@@ -1,6 +1,6 @@
 # Van exterior, round two: light it, audit it, fix it
 
-Stage: running
+Stage: done
 Started: 2026-09-26
 Procedure: `.claude/skills/plan/SKILL.md` (planning loop, then one phase
 per context: "Read PLAN_STATE.md and execute the next phase.").
@@ -78,6 +78,7 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 - **D17 · Window tint (phase 4).** Dim silhouettes: the outer pane about 75% opaque head-on, near-opaque at glancing angles; lamps show as small dull glows, never white streaks.
 - **D18 · Side door face (phase 4).** Same paint as the hull: the leaf's outer skin wears the seeded exterior shader.
 - **D19 · Pillar rebar (phase 4).** Bend it onto the body: bars follow the wall's lean a few cm off the skin, with welded standoffs.
+- **D20 · Roof spot (phase 7, N5).** Hood it: keep the light and its road pool, weld a visor over the lens so from above it reads as a dark hood, dim the lens to a warm glow (emission 1.2), tilt the beam up a little so less lands on the cab roof.
 
 ## Constraints (every phase)
 
@@ -97,7 +98,7 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 | 4 | Side windows from outside | code | D4, D17-D19, audit | done d93335e |
 | 5 | A real cab and what the windshield shows | code | D3, D9, audit | done b662a42 |
 | 6 | Underside and wheels | code | D6, D14-D16, audit | done c2bf8bf |
-| 7 | The night read | code | D7, audit | todo (run 5th) |
+| 7 | The night read | code | D7, D20, audit | done c970044 |
 
 Phases 3 to 7 run in the order phase 2's audit sets (D8): **5 → 6 → 3 → 4 → 7**; the numbers are labels. Next phase = the first `todo` in that order.
 
@@ -134,6 +135,7 @@ Notes: done in c2bf8bf. `van_chassis.gd` (RefCounted helper of `VanWheels`): fla
 ### 7 · The night read (D7)
 Deliverables: headlights that light the road ahead, tail and marker lamps glowing, a faint wet sheen on the skin inside roughness 0.78 to 0.95; all inside the `*-outside` budget.
 Verification: check, smoke, unlit `--shots` through `tools/shot_stats.py` against `art-style.md`, the owner's view by eye.
+Notes: done in c970044. `van_exterior.gdshader`: `wetness` 0.7 / `wet_specular` 0.65 / `wet_normal_strength` 0.25; wet from rain streaks, fbm patches and upward faces, dried over rust and the sill band, pulls roughness to `roughness_min` (clamp kept) and adds an fwidth-faded fbm NORMAL_MAP. N5 was the roof-rack spot lens (`van_roof.gd` `_build_spotlight`): `SpotVisor` + cheeks, lens glow 1.2, `SPOT_PITCH` -8. Tail glow 0.55 / 3.2 m (N3). Window dust 0.35, albedo 0.045. Headlights unchanged (N2). Check, smoke, scene dump clean; every budgeted shot at or below its before value (`03-idle-outside` 0.0080 / 0.0227). Reviewer skipped (small diff, context line).
 
 ## Carry forward
 
