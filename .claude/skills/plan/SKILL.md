@@ -302,11 +302,10 @@ a phase runs them all, once, on its finished change:
   `project.godot`: also `py -3 tools/smoke.py`.
 - The van's scenes: also `py -3 tools/scene_dump.py`.
 - Anything visible: `py -3 tools/smoke.py --shots <scratchpad>/shots`,
-  then Read the PNGs. Coming in workflow-port phases 6 and 7:
+  then Read the PNGs. Also
   `tools/probe.py` (one scene headless, `--cmd`, `--eval`, `--shot`
   with a frame sequence) and `tools/shots.py` (`capture <name>`,
-  `compare <a> <b>` printing `same`/`changed` per view). Once they land,
-  a visible phase's Verification names the views that must change and
+  `compare <a> <b>` printing `same`/`changed` per view). A visible phase's Verification names the views that must change and
   says the rest stay `same`.
 - Panel UI the smoke's `speed` mode skips (act reveal, boon pick) is
   reviewed by reading, and the report's Try line says where to look.

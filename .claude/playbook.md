@@ -74,10 +74,15 @@ with `py -3`; the cloud container has only `python3`.
   run, so no scene). `--shot` renders on the hidden desktop like `smoke.py --shots`; `--every`
   and `--max` write `<stem>-01.png`…. Fails on any error line, a non-zero exit, a timeout or a
   missing PNG; prints `PROBE CLEAN`. No verify stamp: it never replaces check or smoke.
-- Coming in workflow-port phase 7 (not there yet; don't call it until it lands):
-  - **Shots** (phase 7): `py -3 tools/shots.py capture <name>` (smoke `--shots` into
-    `.godot/shots/<name>/`) and `py -3 tools/shots.py compare <a> <b>` (`same`/`changed` per
-    view).
+- **Shots:** `py -3 tools/shots.py capture <name> [--van-seeds N]` runs `smoke.py --shots` into
+  `.godot/shots/<name>/` (per checkout, gitignored, kept between sessions; a full windowed smoke
+  on the hidden desktop, 1-2 minutes). `py -3 tools/shots.py compare <a> <b> [--raw]` prints
+  `same`/`changed` (or `only-a`/`only-b`) per view with its mean pixel diff and tolerance, ends
+  `SHOTS SAME` (exit 0) or `SHOTS CHANGED: k of n` (exit 1); `<a>`/`<b>` are set names or
+  directories. Each view's tolerance is 2× the noise measured between two captures of one tree,
+  written into the tool (`TOLERANCE`). A visible change: capture `before` on the parent commit,
+  `after` on the change, compare; the phase's Verification names the views that must change.
 - Never launch the editor or a windowed game yourself, and never run anything that waits for
-  input. The exceptions are `tools/smoke.py --shots` and `tools/probe.py --shot`, which
-  run on a hidden desktop the owner never sees and quit themselves.
+  input. The exceptions are `tools/smoke.py --shots`, `tools/shots.py capture` and
+  `tools/probe.py --shot`, which run on a hidden desktop the owner never sees and quit
+  themselves.

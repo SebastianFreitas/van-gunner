@@ -181,6 +181,11 @@ Interview: A, B, C done · 20 asked (focused, D1) · missed: does the first phas
   always passed. `--timeout` defaults to 180 s, and the game's watchdog fires 20 s before that.
   Shot sequences are named `<stem>-NN.png`. The probe writes no verify stamp. Reason: most console
   lines need the run, and a probe must never stand in for check or smoke.
+- **D30 (auto) · Shots metric.** The diff is the mean absolute RGB difference on 0..255.
+  `TOLERANCE_FLOOR` is 0.05, so views measured at 0 don't flag float jitter.
+  `DEFAULT_TOLERANCE` is 1.0, for views missing from the table (new views and `--van-seeds`).
+  `compare` exits 1 on any `changed`, `only-a` or `only-b`. Reason: this is test tooling, and a
+  simple metric is enough for same/changed.
 
 ## Initial idea (Part B)
 
@@ -204,7 +209,7 @@ Skipped by D1 (tooling plan, focused interview): the phases below carry every pi
 | 4 | CLAUDE.md, playbook, modes, handoff, implementer agents | doc | D15 D16 | done 857f7c9 |
 | 5 | tools/autoplan.py (+ try branch listing) | code (py) | D4 D9 D13 D15 D17 | done 8dc395d |
 | 6 | tools/probe.py | code (py + gd) | D6 D7 D12 | done 3cb6c9b |
-| 7 | tools/shots.py capture/compare | code (py) | D5 D11 | todo |
+| 7 | tools/shots.py capture/compare | code (py) | D5 D11 | done 599745c |
 | 8 | Docs, tooling rules, PROJECT_MAP, Stage done | doc | all | todo |
 
 ## Phases
@@ -285,6 +290,9 @@ Deliverable: `capture <name>` (smoke `--shots` into `.godot/shots/<name>/`), `co
 view, written into the tool (D11).
 Verification: capture twice on this tree, compare prints all `same`; the measured noise is
 recorded in Carry forward.
+Notes: done 599745c. The captures noise-a and noise-b compared `SHOTS SAME (28 views)`, and a third
+capture, noise-c, also compared all same. The playbook has a Shots bullet, and SKILL.md's
+"Coming in" wording is gone. D30 (auto).
 
 ### 8 · Docs and Stage done
 Deliverable: `.claude/rules/tooling.md` (probe, shots, autoplan, HERE, state files),
@@ -301,6 +309,15 @@ Verification: `py -3 tools/check.py`; `py -3 tools/smoke.py`.
 - Phases 5-7: each drops its "Coming ... (not there yet)" entry in `.claude/playbook.md` (D25).
   Only Shots is left; phase 7 removes the whole "Coming in workflow-port phase 7" bullet.
 - Phase 7 can use `tools/probe.py --shot` for quick single views (D29).
+- Phase 7 measured the noise on 2026-09-28 as the mean abs RGB diff between two captures.
+  - `06-combat-outside` measured 9.73 because the raiders move, and `v16-idle-van-lit-roof`
+    measured 2.74.
+  - `04-combat-front` measured 0.32. Every other view measured 0.15 or less, and the
+    exterior van views measured 0.
+  - `TOLERANCE` in `tools/shots.py` is 2x these values. A change to combat-outside or the lit
+    roof is only seen when it is large.
+- Phase 8: `.claude/rules/tooling.md` should describe shots.py: the store, the metric and the
+  per-view tolerance table, and how to re-measure (`compare --raw`, then double).
 - Phase 5+: worktree sessions run `try.py --commit` themselves (D24); autoplan sessions do too
   (D27). Autoplan's real run (a live `claude -p` stream) is untested here: phase 6 or 7 may be the
   first run through it; watch `.claude/autoplan/` logs.
