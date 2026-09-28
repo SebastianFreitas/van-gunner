@@ -272,7 +272,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-288 GDScript files, 43562 lines.
+288 GDScript files, 43594 lines.
 
 ### `scenes/corridor/`
 
@@ -589,16 +589,16 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). |
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. |
-| `iron_cross.gd` | `IronCross` | 355 | Welded iron + on a window pane. |
+| `iron_cross.gd` | `IronCross` | 360 | Welded iron + on a window pane. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
 | `rear_doors.gd` | — | 400 | Truck-style rear double doors. |
 | `room_zone.gd` | `RoomZone` | 15 | Marks a van interior zone; tells GameSession which room the player is in. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. |
-| `side_door_leaf.gd` | — | 306 | Builds the side door leaf meshes (body, trim, frames, latch) onto SideDoors nodes. |
+| `side_door_leaf.gd` | — | 314 | Builds the side door leaf meshes (body, trim, frames, latch) onto SideDoors nodes. |
 | `side_doors.gd` | — | 331 | Sliding cargo-style side doors. |
-| `side_window_exterior.gd` | — | 48 | Adds the dark-tinted exterior pane that rides a side cargo window's sash. |
+| `side_window_exterior.gd` | — | 50 | Adds the dark-tinted exterior pane that rides a side cargo window's sash. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. |
-| `side_windows.gd` | — | 344 | Side cargo windows — top-hinged sashes that tip vertically outward. |
+| `side_windows.gd` | — | 357 | Side cargo windows — top-hinged sashes that tip vertically outward. |
 | `van.gd` | — | 398 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
 | `van_body_profile.gd` | `VanBodyProfile` | 193 | One cross-section for the whole van body: the inner liner outline (floor, bowed sides, roof vault) and an outer skin offset from it, so inside and outside piec… |
 | `van_bulkhead.gd` | `VanBulkhead` | 202 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
@@ -615,9 +615,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_overlays.gd` | — | 238 | Modal overlays: bench, skill tree, class panel, debug console, pause menu, mouse passthrough. |
 | `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. |
 | `van_route_choice.gd` | — | 287 | Builds and refreshes the ROUTE_CHOICE panel: card art, stop labels, highlight state. |
-| `van_side_wall.gd` | `VanSideWall` | 383 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
+| `van_side_wall.gd` | `VanSideWall` | 388 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
 | `van_side_wall_panel.gd` | — | 389 | This wall's own side panel mesh: openings, reveals, returns, and the cut queries that decide which cells are punched for the side doors and windows. |
-| `van_side_wall_shell.gd` | — | 401 | Generic curved-shell / pane / frame-ring mesh builders for VanSideWall: the low-level lofting onto the cargo profile, shared by side walls, doors and windows. |
+| `van_side_wall_shell.gd` | — | 400 | Generic curved-shell / pane / frame-ring mesh builders for VanSideWall: the low-level lofting onto the cargo profile, shared by side walls, doors and windows. |
 | `van_vital.gd` | `VanVital` | 91 | One interior machine whose HP is a slice of van death hull. |
 
 ### `scripts/van/look/`

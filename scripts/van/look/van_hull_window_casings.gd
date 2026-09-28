@@ -32,7 +32,7 @@ func _build_casing(walls: VanSideWall, s: float, z_center: float, index: int) ->
 
 	var mesh := walls.build_curved_frame_ring_mesh(
 		s, outer_poly, inner_poly, x_ref, mid_y, z_center, mid_y,
-		CASING_PROUD_M - CASING_BACK_M, s * CASING_BACK_M, 8
+		CASING_PROUD_M - CASING_BACK_M, s * CASING_BACK_M, VanSideWall.WINDOW_EDGE_SUBDIV
 	)
 	var pos := Vector3(s * x_ref, mid_y, z_center)
 	var side_letter := "L" if s < 0.0 else "R"

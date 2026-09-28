@@ -68,3 +68,16 @@ c01 (left door inside closed: flat grey slab, no inner leaf detail, reads as a h
 c02 (left door inside open: the opening is clean), c10 (left-rear window inside open: ragged
 rust ring round the frame, the sawtooth), c31 (rear roof centre: rack rails, crate and
 antenna base proud of the roof line).
+
+## Phase 2 correction (session 3)
+
+`LEAK_OUT` is cast from *outside* (72 cameras 7 m out, `van_audit_gaps.gd`
+`check_leaks_outside`): a row means an interior-only mesh (render layer 2, not 1) is the
+first thing seen from the street, not a hole seen from inside. The side-door rows therefore
+say the leaf's outer trim skin is on the interior layer (unlit by street lights), which is a
+separate matter from picture 1. Picture 1 matches shot c01 instead: from inside the closed
+leaf shows no wall-shader ribs, i.e. the camera sees `CurvedOuter`'s back, not a
+`CurvedBody` inner face (winding or missing face: spec 2-1 step 1 diagnoses it). Clearing
+the door/window LEAK_OUT rows needs the exterior-facing leaf and frame parts on layer 1 as
+well (via `VanLighting.retarget_layers` or `layers` before `add_child`): not in specs 2-1/2-2,
+decide at phase 2's close whether it is audit noise (argue here) or a follow-up spec.

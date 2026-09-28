@@ -5,14 +5,17 @@ extends RefCounted
 var doors: Node3D  # the owning SideDoors node; reads/writes its fields when called
 
 ## Door leaf extents (slightly inset from the wall opening).
-const DOOR_HALF_Z := 1.265
+const DOOR_HALF_Z := 1.17
 const DOOR_THICKNESS := 0.14
 const OUTER_SKIN := 0.035
 
+## Leaf edge clearance inside the jamb: door_jamb_inset 0.11 + 2 cm.
+const JAMB_CLEAR := 0.13
+
 ## Recessed panel + trim (from original CSG Panel, local y/z from door center).
-const PANEL_CENTER_Y := -0.15
-const PANEL_HALF_Z := 1.10
-const PANEL_HALF_Y := 1.275
+const PANEL_CENTER_Y := -0.07
+const PANEL_HALF_Z := 1.07
+const PANEL_HALF_Y := 1.22
 const PANEL_FRAME_INSET := 0.08
 const PANEL_RECESS_DEPTH := 0.05
 const BELT_Y := -0.05
@@ -22,14 +25,17 @@ const LOWER_CREASE_HALF_H := 0.02
 const PERIMETER_FRAME_INSET := 0.06
 const FRAME_THICKNESS := 0.045
 
+## D7: trim sits 1 cm proud of the face it rests on, so no two surfaces share a plane.
+const TRIM_LIFT := 0.01
+
 
 func _init(owner: Node3D) -> void:
 	doors = owner
 
 
 func fit_door_leaf(leaf: Node3D, wall_sign: float, walls: VanSideWall) -> void:
-	var y_min := walls.door_y_min
-	var y_max := walls.door_y_max
+	var y_min := walls.door_y_min + JAMB_CLEAR
+	var y_max := walls.door_y_max - JAMB_CLEAR
 	var mid_y := (y_min + y_max) * 0.5
 	var x_ref := walls.wall_x_at(mid_y)
 	var z_ref := walls.door_center_z
@@ -89,7 +95,8 @@ func fit_door_leaf(leaf: Node3D, wall_sign: float, walls: VanSideWall) -> void:
 	)
 	add_frame_ring(
 		leaf, walls, wall_sign, x_ref, mid_y, z_ref, mid_y,
-		perimeter_outer, perimeter_inner, frame_mat, "PerimeterFrame", 0.0, 10
+		perimeter_outer, perimeter_inner, frame_mat, "PerimeterFrame",
+		-wall_sign * (TRIM_LIFT + FRAME_THICKNESS), 10
 	)
 
 	var panel_outer := rect_poly(PANEL_HALF_Z, PANEL_HALF_Y)
@@ -99,30 +106,31 @@ func fit_door_leaf(leaf: Node3D, wall_sign: float, walls: VanSideWall) -> void:
 	add_frame_ring(
 		leaf, walls, wall_sign, x_ref, mid_y, z_ref, mid_y + PANEL_CENTER_Y,
 		panel_outer, panel_inner, frame_mat, "PanelFrame",
-		-wall_sign * PANEL_RECESS_DEPTH * 0.35, 8
+		-wall_sign * (TRIM_LIFT + FRAME_THICKNESS), 8
 	)
 
 	var recessed := MeshInstance3D.new()
 	recessed.name = "RecessedPanel"
 	recessed.mesh = walls.build_curved_pane_from_poly(
 		wall_sign, panel_inner, x_ref, mid_y, z_ref, mid_y + PANEL_CENTER_Y,
-		-wall_sign * PANEL_RECESS_DEPTH, 6
+		-wall_sign * TRIM_LIFT, 6, false
 	)
 	recessed.material_override = body_mat
 	recessed.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	leaf.add_child(recessed)
 
+	var strip_half_z := PANEL_HALF_Z - PANEL_FRAME_INSET - 0.02
 	add_trim_strip(
 		leaf, walls, wall_sign, x_ref, mid_y, z_ref,
 		mid_y + BELT_Y - BELT_HALF_H, mid_y + BELT_Y + BELT_HALF_H,
-		z_ref - PANEL_HALF_Z, z_ref + PANEL_HALF_Z,
-		-wall_sign * PANEL_RECESS_DEPTH * 0.5, trim_mat, "BeltStrip"
+		z_ref - strip_half_z, z_ref + strip_half_z,
+		-wall_sign * (2.0 * TRIM_LIFT + FRAME_THICKNESS), trim_mat, "BeltStrip"
 	)
 	add_trim_strip(
 		leaf, walls, wall_sign, x_ref, mid_y, z_ref,
 		mid_y + LOWER_CREASE_Y - LOWER_CREASE_HALF_H, mid_y + LOWER_CREASE_Y + LOWER_CREASE_HALF_H,
-		z_ref - PANEL_HALF_Z, z_ref + PANEL_HALF_Z,
-		-wall_sign * PANEL_RECESS_DEPTH * 0.5, trim_mat, "LowerCrease"
+		z_ref - strip_half_z, z_ref + strip_half_z,
+		-wall_sign * (2.0 * TRIM_LIFT + FRAME_THICKNESS), trim_mat, "LowerCrease"
 	)
 
 	add_latch_plate(leaf, walls, wall_sign, x_ref, mid_y, z_ref, trim_mat)
@@ -295,7 +303,7 @@ func add_latch_plate(
 	plate.mesh = walls.build_curved_shell_mesh(
 		wall_sign, plate_y0, plate_y1, plate_z0, plate_z1,
 		x_ref, mid_y, z_ref, 0.012,
-		wall_sign * (DOOR_THICKNESS + OUTER_SKIN * 0.5), 6, 8,
+		wall_sign * (DOOR_THICKNESS + OUTER_SKIN + TRIM_LIFT), 6, 8,
 		INF, -INF, INF, -INF,
 		PackedVector2Array(),
 		PackedVector2Array()

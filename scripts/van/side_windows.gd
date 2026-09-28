@@ -48,14 +48,21 @@ const _Exterior := preload("res://scripts/van/side_window_exterior.gd")
 
 ## Matches original CSG sash (half extents).
 const SASH_HALF_H := 0.74
-const FRAME_THICKNESS := 0.05
 
-## Exact CSG outlines from van.tscn (Vector2 = local Z, local Y from window center).
+## D7: 1 cm between stacked parts.
+const TRIM_LIFT := 0.01
+## Casing inner face (van_hull_window_casings.gd CASING_BACK_M) sits this far proud of the
+## liner; keep the frame's outer face TRIM_LIFT inboard of it so the two never share a plane.
+const CASING_BACK_REF := 0.04
+const FRAME_THICKNESS := CASING_BACK_REF - TRIM_LIFT
+
+## 2 cm (every edge offset inward, mitred corners) inside VanSideWall.WINDOW_CUT_POLY,
+## because the van audit treats faces within 1 cm as coplanar.
 var FRAME_OUTER_POLY: PackedVector2Array = PackedVector2Array([
-	Vector2(-1.029, -0.74), Vector2(-1.196, -0.666), Vector2(-1.28, -0.543),
-	Vector2(-1.28, 0.543), Vector2(-1.196, 0.666), Vector2(-1.029, 0.74),
-	Vector2(1.029, 0.74), Vector2(1.196, 0.666), Vector2(1.28, 0.543),
-	Vector2(1.28, -0.543), Vector2(1.196, -0.666), Vector2(1.029, -0.74),
+	Vector2(-0.979, -0.687), Vector2(-1.129, -0.62), Vector2(-1.202, -0.513),
+	Vector2(-1.202, 0.513), Vector2(-1.129, 0.62), Vector2(-0.979, 0.687),
+	Vector2(0.979, 0.687), Vector2(1.129, 0.62), Vector2(1.202, 0.513),
+	Vector2(1.202, -0.513), Vector2(1.129, -0.62), Vector2(0.979, -0.687),
 ])
 var GLASS_POLY: PackedVector2Array = PackedVector2Array([
 	Vector2(-0.861, -0.617), Vector2(-1.017, -0.56), Vector2(-1.1, -0.455),
@@ -127,16 +134,22 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	frame.name = "CurvedFrame"
 	frame.mesh = walls.build_curved_frame_ring_mesh(
 		wall_sign, FRAME_OUTER_POLY, GLASS_POLY,
-		x_ref, y_hinge, z_center, mid_y, FRAME_THICKNESS, 0.0, 10
+		x_ref, y_hinge, z_center, mid_y, FRAME_THICKNESS, 0.0, VanSideWall.WINDOW_EDGE_SUBDIV
 	)
 	frame.material_override = frame_mat
 	frame.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	hinge.add_child(frame)
 
+	# Single-sided (facing the cabin): drop the duplicate backface triangles.
+	if glass_mat is BaseMaterial3D:
+		glass_mat = (glass_mat as BaseMaterial3D).duplicate() as BaseMaterial3D
+		(glass_mat as BaseMaterial3D).cull_mode = BaseMaterial3D.CULL_DISABLED
+
 	var glass := MeshInstance3D.new()
 	glass.name = "WindowGlass"
 	glass.mesh = walls.build_curved_pane_from_poly(
-		wall_sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, glass_x, 8
+		wall_sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, glass_x,
+		VanSideWall.WINDOW_EDGE_SUBDIV, false
 	)
 	glass.material_override = glass_mat
 	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

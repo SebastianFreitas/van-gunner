@@ -25,6 +25,10 @@ const _Panel := preload("res://scripts/van/van_side_wall_panel.gd")
 @export var window_center_y := 1.775
 @export var window_centers_z: PackedFloat32Array = PackedFloat32Array([2.835, -0.375])
 
+## D8: one ring sampling for every piece that follows the window opening, so their edges
+## coincide instead of stepping.
+const WINDOW_EDGE_SUBDIV := 10
+
 ## Exact CSG WindowCut outline (z_off, y_off from window center). Wall metal
 ## forms the surround; the dark frame outer sits over this lip like rear doors.
 var WINDOW_CUT_POLY: PackedVector2Array = PackedVector2Array([
@@ -139,10 +143,11 @@ func build_curved_pane_from_poly(
 	z_ref: float,
 	poly_center_y: float,
 	x_shift: float = 0.0,
-	edge_subdiv: int = 4
+	edge_subdiv: int = 4,
+	double_sided: bool = true
 ) -> ArrayMesh:
 	return _shell_helper().build_curved_pane_from_poly(
-		wall_sign, poly, x_ref, y_ref, z_ref, poly_center_y, x_shift, edge_subdiv
+		wall_sign, poly, x_ref, y_ref, z_ref, poly_center_y, x_shift, edge_subdiv, double_sided
 	)
 
 

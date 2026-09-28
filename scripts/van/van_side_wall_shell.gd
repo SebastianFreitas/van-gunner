@@ -107,7 +107,8 @@ func build_curved_pane_from_poly(
 	z_ref: float,
 	poly_center_y: float,
 	x_shift: float = 0.0,
-	edge_subdiv: int = 4
+	edge_subdiv: int = 4,
+	double_sided: bool = true
 ) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -140,14 +141,12 @@ func build_curved_pane_from_poly(
 	var c := Vector3(wall_sign * (wall._profile_x(cy) - x_ref) + x_shift, cy - y_ref, cz - z_ref)
 	var cuv := Vector2((cz + half_span) / wall.span_z, cy / wall.wall_height)
 
-	var m := ring.size()
-	for i in range(m):
-		var v0: Vector3 = ring[i]
-		var v1: Vector3 = ring[(i + 1) % m]
-		var uv0: Vector2 = ring_uv[i]
-		var uv1: Vector2 = ring_uv[(i + 1) % m]
-		add_tri(st, c, cuv, v0, uv0, v1, uv1)
-		add_tri(st, c, cuv, v1, uv1, v0, uv0)
+	for i in range(ring.size()):
+		var j := (i + 1) % ring.size()
+		if double_sided or wall_sign < 0.0:
+			add_tri(st, c, cuv, ring[i], ring_uv[i], ring[j], ring_uv[j])
+		if double_sided or wall_sign > 0.0:
+			add_tri(st, c, cuv, ring[j], ring_uv[j], ring[i], ring_uv[i])
 
 	st.generate_normals()
 	st.generate_tangents()

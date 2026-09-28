@@ -26,8 +26,10 @@ static func add_exterior_pane(
 	pane.name = "ExteriorPane"
 	pane.layers = 1
 	pane.add_to_group(&"van_exterior_layer")
+	# The shader is cull_disabled, so one-sided triangles (no duplicates) still show.
 	pane.mesh = walls.build_curved_pane_from_poly(
-		wall_sign, poly, x_ref, y_ref, z_ref, poly_center_y, x_shift, 8
+		wall_sign, poly, x_ref, y_ref, z_ref, poly_center_y, x_shift,
+		VanSideWall.WINDOW_EDGE_SUBDIV, false
 	)
 	pane.material_override = pane_material()
 	pane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

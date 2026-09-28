@@ -18,6 +18,9 @@ const BrokenIronCrossScene := preload("res://scenes/van/broken_iron_cross.tscn")
 @export var curve_segments := 14
 @export var rebuild_on_ready := true
 
+## D7: the two crossing bars sit TRIM_LIFT apart in depth so they don't share a plane.
+const TRIM_LIFT := 0.01
+
 var _built := false
 var _broken := false
 ## When set, vertical elements bend with the cargo side-wall profile.
@@ -98,7 +101,9 @@ func _build() -> void:
 	var z := bar_depth * 0.5
 
 	_add_horizontal_bar(z, iron)
-	_add_vertical_bar(z, iron)
+	# D7: the vertical bar crosses in front — push it TRIM_LIFT further inboard so the two
+	# bars don't share a depth plane where they overlap.
+	_add_vertical_bar(z - TRIM_LIFT, iron)
 
 	# Center weld plate — thicker, sits proud of the bars.
 	var plate_z := z + (plate_depth - bar_depth) * 0.5 + 0.008

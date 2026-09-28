@@ -3,7 +3,7 @@
 Stage: running
 Started: 2026-09-28
 Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/vanfix.state.md` while running).
-Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto)
+Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto)
 
 ## Rebase note (2026-09-28, landed on main)
 
@@ -97,6 +97,7 @@ the night read. So:
 - **D10 · Gun port.** Leave the port as is: the door leaf is sealed and solid from inside around the port's existing opening; hatch, hole and open/close stay as they are and the audit skips them. The port gets a full rework later (owner: "its gonna have to be fully reworked").
 - **D8 · Window.** Same swing, clean clearance: frame, glass, bars and wall opening cut so nothing passes through anything anywhere in the swing, checked at closed, half and fully open.
 - **D11 · Audit layout (auto).** `tools/van_audit.py` + `tools/van_audit/` runner that boots the van at IDLE like the probe, collects every visible triangle in rig space, and reports FLICKER / CLIP / OPENING (triangle tests, doors and windows posed closed, half, open without tweens), HEIGHT / REAR_ROOF, EDGE and LEAK_IN / LEAK_OUT (Jolt ray and sphere queries on temporary layer-20 proxies); close-ups are a `c`-prefixed view set so `v01`.. never renumber. Reason: physics queries make leaks cheap in GDScript, and a separate tool keeps smoke untouched until phase 5 wires it in.
+- **D12 · Gap vs audit tolerance (auto).** Where two parallel faces sit edge to edge (leaf vs jamb, frame rim vs wall cut, trim ends vs frame openings) the gap is 2 cm, because the audit counts faces within `PLANE_EPS` 1 cm as coplanar; stacked depth lifts stay `TRIM_LIFT` 1 cm (D7). Reason: 1 cm exactly still flagged, and 1 cm more is invisible in play.
 
 ## Constraints (every phase)
 
