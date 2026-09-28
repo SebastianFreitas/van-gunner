@@ -68,6 +68,10 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 - **D7 · Night read (E1).** Keep the `*-outside` brightness budget. Real sources do the work: the new headlights light the road ahead, tail and marker lamps glow, the skin gets a faint wet sheen inside the roughness bounds that catches street lamps.
 - **D8 · Order (F).** Audit first: phase 2 lists every exterior issue with a picture, and the fix phases run in the order the audit sets.
 - **D9 · Through the windshield.** A dark cab with a dash glow: dashboard, seat backs and the driver's silhouette, lit only by a faint dash glow.
+- **D10 · Cab length (phase 5).** Keep 3.5 m: the grille stays at `NOSE_Z` -8.2, the front axle (-7.25) under the cab floor, the headlight pools where they are.
+- **D11 · Rams (phase 5).** Keep all four seeded variants, refit so every beam bolts to the bumper or the face.
+- **D12 · Windshield cages (phase 5).** Keep bars, grid and slit plate seeded, welded to the new windshield frame a few cm in front of the glass.
+- **D13 · Driver (phase 5).** A low-poly dark shape (head, torso, arms on the wheel), lit only by the dash glow.
 
 ## Constraints (every phase)
 
