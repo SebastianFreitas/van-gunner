@@ -24,6 +24,7 @@ Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 
 ## Open items
 
+- Round 2 (next): E night read, F order, what the windshield shows from outside.
 - Owner (2026-09-26): do the real planning rounds before any fix phase; phase 1 (tooling) stays committed as `74f8364`. Planning loop resumes at step 2 (research wide) for these areas: the cab and front, the body holes and seams, the side windows from outside, the underside and wheels, the exterior look under light. Then the option map, then question rounds. Phases 2–6 below are a draft to rewrite from the decisions.
 
 ## Option map (from `research/van-exterior-2-00-intake.md` and the lit shots)
@@ -60,6 +61,10 @@ Procedure: `.claude/skills/plan/SKILL.md` (running phases, one commit each).
 
 - **D1 · Debug light.** Both: `torch` (SpotLight3D on the player camera, rides along in `ghost`) and `floodlight` (four work lights around the van, whole exterior lit).
 - **D2 · Scope.** Tooling, then an audit with pictures, then one fix phase per area.
+- **D3 · Cab shape (A1).** Cab-over flat face: one front plane on the body profile, windshield high with a framed reveal, grille low, bumper bar, headlight housings, A-pillars and cab doors with their own windows.
+- **D4 · Windows from outside (C1).** Exterior pane + frame: a second dark-tinted pane on layer 1 outside the interior one, strong fresnel, no interior rim recipe, an outer frame ring and reveal. The interior pane stays untouched.
+- **D5 · Seams (B1).** Profile-sampled patches: corner caps, skirts and sills from `VanBodyProfile`, closing each audited gap where it is.
+- **D6 · Underside (D1).** Chassis kit: arches cut into the sill with a lip, wheels tucked to the arch, frame rails, fuel tank, rear bumper with underride bar, side steps.
 
 ## Constraints (every phase)
 
