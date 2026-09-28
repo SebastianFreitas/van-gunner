@@ -1,8 +1,10 @@
 class_name VanWheels
 extends Node3D
-## The van's seeded road wheels, arches, mud flaps, side exhaust and chained spares; visual only, spun by the van's measured speed.
+## The van's seeded road wheels and mud flaps, spun by the van's measured speed; the chassis kit around them lives in van_chassis.gd.
 
 const HULL_PATH := ^"../Hull"
+## Builds the flares, steps, tank, toolbox, exhaust, spares and rear bumper.
+const _Chassis := preload("res://scripts/van/look/van_chassis.gd")
 
 const ROAD_Y := -0.2
 const WHEEL_X := 2.8
@@ -15,7 +17,7 @@ const REAR_RADIUS := 0.58
 const REAR_AXLES_4: Array[float] = [3.0]
 const REAR_AXLES_6: Array[float] = [2.3, 3.6]
 
-const TREAD_BLOCKS := 14
+const TREAD_BLOCKS := 24
 
 ## Spinning pivots, one per wheel.
 var wheel_pivots: Array[Node3D] = []
@@ -56,23 +58,15 @@ func rebuild_look(look: VanLook) -> void:
 		var idx := 0
 		_build_wheel("Wheel%s%d" % [side_label, idx],
 				Vector3(side * WHEEL_X, ROAD_Y + FRONT_RADIUS, FRONT_AXLE_Z), FRONT_RADIUS, hull_mat, rubber)
-		_build_arch("Arch%s%d" % [side_label, idx],
-				Vector3(side * WHEEL_X, ROAD_Y + FRONT_RADIUS, FRONT_AXLE_Z), FRONT_RADIUS, hull_mat)
 		idx += 1
 		for z: float in rear_axles:
 			_build_wheel("Wheel%s%d" % [side_label, idx],
 					Vector3(side * WHEEL_X, ROAD_Y + REAR_RADIUS, z), REAR_RADIUS, hull_mat, rubber)
-			_build_arch("Arch%s%d" % [side_label, idx],
-					Vector3(side * WHEEL_X, ROAD_Y + REAR_RADIUS, z), REAR_RADIUS, hull_mat)
 			idx += 1
 		_build_mud_flap("MudFlap%s" % side_label,
 				Vector3(side * WHEEL_X, ROAD_Y + 0.3, last_rear_z + REAR_RADIUS + 0.14), rubber)
 
-	_build_exhaust(exhaust_side, hull_mat)
-	if spare_mask & 1:
-		_build_spare("SpareL", -1.0, rubber, hull_mat)
-	if spare_mask & 2:
-		_build_spare("SpareR", 1.0, rubber, hull_mat)
+	_Chassis.new(self).build(hull_mat, rubber, rear_axles, exhaust_side, spare_mask)
 
 
 func _process(delta: float) -> void:
@@ -101,15 +95,15 @@ func _build_wheel(wheel_name: String, pos: Vector3, radius: float, hull_mat: Mat
 	tyre_mesh.top_radius = radius * 0.86
 	tyre_mesh.bottom_radius = radius * 0.86
 	tyre_mesh.height = TYRE_WIDTH
-	tyre_mesh.radial_segments = 16
+	tyre_mesh.radial_segments = 24
 	var tyre := _add_mesh("Tyre", tyre_mesh, rubber, Vector3.ZERO, pivot)
 	tyre.rotation_degrees.z = 90.0
 
-	var r_c := radius * 0.93
+	var r_c := radius * 0.89
 	for i: int in range(TREAD_BLOCKS):
 		var a: float = i * TAU / TREAD_BLOCKS
 		var block_pos := Vector3(0.0, cos(a), sin(a)) * r_c
-		var block := _add_mesh("Tread%d" % i, _box(Vector3(TYRE_WIDTH, radius * 0.14, radius * 0.26)),
+		var block := _add_mesh("Tread%d" % i, _box(Vector3(TYRE_WIDTH * 0.9, radius * 0.07, radius * 0.12)),
 				rubber, block_pos, pivot)
 		block.rotation.x = a
 
@@ -127,51 +121,8 @@ func _build_wheel(wheel_name: String, pos: Vector3, radius: float, hull_mat: Mat
 		_add_mesh("Bolt%d" % i, _box(Vector3(0.05, 0.05, 0.05)), hull_mat, bolt_pos, pivot)
 
 
-func _build_arch(arch_name: String, pos: Vector3, radius: float, hull_mat: Material) -> void:
-	var w := TYRE_WIDTH + 0.1
-	_add_mesh(arch_name + "Top", _box(Vector3(w, 0.06, radius * 1.3)), hull_mat,
-			Vector3(pos.x, pos.y + radius + 0.05, pos.z))
-	var front := _add_mesh(arch_name + "Front", _box(Vector3(w, 0.06, radius * 0.8)), hull_mat,
-			Vector3(pos.x, pos.y + radius * 0.55, pos.z + radius * 0.85))
-	front.rotation_degrees.x = -40.0
-	var back := _add_mesh(arch_name + "Back", _box(Vector3(w, 0.06, radius * 0.8)), hull_mat,
-			Vector3(pos.x, pos.y + radius * 0.55, pos.z - radius * 0.85))
-	back.rotation_degrees.x = 40.0
-
-
 func _build_mud_flap(flap_name: String, pos: Vector3, rubber: Material) -> void:
 	_add_mesh(flap_name, _box(Vector3(0.44, 0.5, 0.03)), rubber, pos)
-
-
-func _build_exhaust(side: float, hull_mat: Material) -> void:
-	var pipe_mesh := CylinderMesh.new()
-	pipe_mesh.top_radius = 0.07
-	pipe_mesh.bottom_radius = 0.07
-	pipe_mesh.height = 7.9
-	var pipe := _add_mesh("ExhaustPipe", pipe_mesh, hull_mat, Vector3(side * 2.66, ROAD_Y + 0.12, -2.45))
-	pipe.rotation_degrees.x = 90.0
-
-	var tip_mesh := CylinderMesh.new()
-	tip_mesh.top_radius = 0.08
-	tip_mesh.bottom_radius = 0.08
-	tip_mesh.height = 0.35
-	var tip := _add_mesh("ExhaustTip", tip_mesh, hull_mat, Vector3(side * 2.66, ROAD_Y + 0.2, 1.62))
-	tip.rotation_degrees.x = 60.0
-
-
-func _build_spare(spare_name: String, side: float, rubber: Material, hull_mat: Material) -> void:
-	var tyre_mesh := CylinderMesh.new()
-	tyre_mesh.top_radius = 0.42
-	tyre_mesh.bottom_radius = 0.42
-	tyre_mesh.height = 0.26
-	var tyre := _add_mesh(spare_name, tyre_mesh, rubber, Vector3(side * 2.6, 0.75, -5.5))
-	tyre.rotation_degrees.z = 90.0
-
-	var side_letter := spare_name.substr(5, 1)
-	for i: int in range(2):
-		var strap := _add_mesh("SpareChain%s%d" % [side_letter, i], _box(Vector3(0.04, 0.04, 0.95)),
-				hull_mat, Vector3(side * 2.75, 0.75, -5.5))
-		strap.rotation.x = deg_to_rad(45.0) if i == 0 else deg_to_rad(-45.0)
 
 
 func _add_mesh(mesh_name: String, mesh: Mesh, mat: Material, pos: Vector3, parent: Node3D = self) -> MeshInstance3D:

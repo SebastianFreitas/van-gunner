@@ -72,6 +72,9 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 - **D11 · Rams (phase 5).** Keep all four seeded variants, refit so every beam bolts to the bumper or the face.
 - **D12 · Windshield cages (phase 5).** Keep bars, grid and slit plate seeded, welded to the new windshield frame a few cm in front of the glass.
 - **D13 · Driver (phase 5).** A low-poly dark shape (head, torso, arms on the wheel), lit only by the dash glow.
+- **D14 · Arches (phase 6).** Bolt-on flares: wheels stay outboard (the floor is at road level and the hold runs to the walls, so a real cut would put the wheels in the hold); each wheel gets a curved flare with a lip, a dark well plate on the skin behind the tyre, so the sill reads as stopping at the wheel.
+- **D15 · Spares (phase 6).** Off the cab doors: chained upright to the body side just behind the side cargo door, below the windows, ahead of the rear wheels.
+- **D16 · Exhaust (phase 6).** A short pipe under the body side between the side door and the rear wheels, ending in a turned-down tip ahead of the rear axle.
 
 ## Constraints (every phase)
 
