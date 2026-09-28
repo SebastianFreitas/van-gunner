@@ -82,7 +82,7 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 | # | Phase | Kind | Rests on | Status |
 |---|---|---|---|---|
 | 1 | Tooling: torch, floodlight, lit shots | code | D1 | done 74f8364 |
-| 2 | Audit with pictures | research, doc | D2, D8 | done (this commit) |
+| 2 | Audit with pictures | research, doc | D2, D8 | done c4711c6 |
 | 3 | Holes and seams | code | D5, audit | todo (run 3rd) |
 | 4 | Side windows from outside | code | D4, audit | todo (run 4th) |
 | 5 | A real cab and what the windshield shows | code | D3, D9, audit | todo (run 1st) |
