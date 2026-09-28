@@ -94,7 +94,7 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 | 1 | Tooling: torch, floodlight, lit shots | code | D1 | done 74f8364 |
 | 2 | Audit with pictures | research, doc | D2, D8 | done c4711c6 |
 | 3 | Holes and seams | code | D5, audit | done f8d8339 |
-| 4 | Side windows from outside | code | D4, audit | todo (run 4th) |
+| 4 | Side windows from outside | code | D4, D17-D19, audit | done d93335e |
 | 5 | A real cab and what the windshield shows | code | D3, D9, audit | done b662a42 |
 | 6 | Underside and wheels | code | D6, D14-D16, audit | done c2bf8bf |
 | 7 | The night read | code | D7, audit | todo (run 5th) |
@@ -119,6 +119,7 @@ Notes: done in f8d8339. `van_hull_patches.gd` (RefCounted helper of `VanHull`): 
 ### 4 · Side windows from outside (D4)
 Deliverables: per side window an outer frame ring and a dark-tinted pane on layer 1 from the `VanSideWall` builders, a reveal with depth, an exterior glass material with strong fresnel and no interior rim recipe. Interior pane, iron cross, breakable glass unchanged.
 Verification: check, smoke, lit and unlit window close-ups, interior front/back shots unchanged by eye, `*-outside` budget.
+Notes: done in d93335e. `side_window_exterior.gd` + `van_window_exterior.gdshader`: `ExteriorPane` child of each `WindowGlass` (liner +0.055, layer 1, group `van_exterior_layer` which `VanLighting.mark_interior_geometry` skips), fresnel alpha 0.75..0.97, dust from fbm; the pane mesh is double-wound so the shader discards when the camera is on the cabin side (`instance uniform outward_sign`). `van_hull_window_casings.gd`: `SideWindowCasingL0/L1/R0/R1` rings 0.07 wide, liner +0.04..+0.13. `side_doors.gd` `set_exterior_material` / `side_door_leaf.gd` `apply_exterior_material`: CurvedOuter wears the hull shader (model-space, `sill_y_m`/`accent_band` shifted by the door mid y). `van_armour.gd` pillar rebar follows `_skin_x(y)` with standoffs. Check, smoke, scene dump clean; `*-outside`/`*-back` stats unchanged within noise; lit v15 read by eye. Reviewer skipped (context line).
 
 ### 5 · A real cab and what the windshield shows (D3, D9)
 Deliverables: `van_cab.gd` rebuilt as a cab-over face on the body profile (helper split past 300 lines): A-pillars, cab doors with windows, windshield with a framed reveal, grille and bumper refit from `van_front_kit.gd`, headlight housings; behind the windshield a dark cab with dashboard, seat backs, a driver silhouette and a faint dash glow.
@@ -142,3 +143,4 @@ Verification: check, smoke, unlit `--shots` through `tools/shot_stats.py` agains
 - Phase 5: the cab now runs from the hull's -4.72 (back lip, S2 closed) to the face at `NOSE_Z` -8.2; its side skin sits at `profile.outer_x_at(y)` (about 2.54 at the sill). Phase 6: the front wheels (`FRONT_AXLE_Z` -7.25, `WHEEL_X` 2.8) stand outside the cab side and need arches cut into the cab skin in `van_cab_shell.gd` (CabSkin) as well as the hull sill; the cab floor is `CAB_FLOOR_Y` 0.9 and the skin runs down to `BASE_Y` -0.25. Phase 3: C1/S2 no longer apply at the front; what is left is S1, S3, S4, S5, S6. The plow posts use the V-bars' side stance (about ±2.4); they read fine in the lit front shot.
 - Phase 3: the side door leaf still stands about 11 cm proud of the skin inside its new casing (body 0.14 + outer skin 0.035 from the liner) and is glossy black (W1): phase 4 owns the leaf's material; the casing (liner +0.19) now frames it.
 - Phase 6: the body sits at road level (floor y 0, road -0.2), so there is no visible underside: rails show only under the rear doors. U6 was the spare chains on the cab doors (spares moved). Phase 3: S5 (rear step plate) now sits just above the new `RearBumper` (z 4.92, y -0.19..-0.01): check they don't overlap.
+- Phase 4: open for the owner's eye or phase 7: the lit side panes read milky tan under the floodlight (dust layer albedo 0.07 may be strong); unverified whether the casing ring closes its inner reveal face and whether the open sash clips the casing top; the rebar grid was not visible in lit v15 (check `ghost` + `torch`); `CurvedOuter`'s end caps also wear the hull paint when the door is open.

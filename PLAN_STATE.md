@@ -1,24 +1,26 @@
 # Plan state: van-exterior-2
 
 Plan: .claude/plans/van-exterior-2.md · Stage: running
-Updated: 2026-09-28 · after phase 3 · commit f8d8339
+Updated: 2026-09-28 · after phase 4 · commit d93335e
 
 ## Architecture now
 - `scripts/debug/debug_van_commands.gd`: `cmd_torch` and `cmd_floodlight` (cull mask 3, toggled with `visible`).
 - `tools/smoke/smoke_shots.gd` `van_views_lit()`: `--shots` saves v08..v16 `idle-van-lit-*` (side-front, side-rear, outside, quarter-driver, quarter-passenger, front, rear, window, roof).
-- `scripts/van/look/van_cab.gd` + `van_cab_shell.gd` / `van_cab_face.gd` / `van_cab_parts.gd`: cab-over from -4.72 to `NOSE_Z` -8.2; `van_front_kit.gd` bumper, rams, cages.
-- `scripts/van/look/van_wheels.gd` + `van_chassis.gd`: wheels, flares, wells, steps, tank, exhaust, spares, frame rails, `RearBumper` (z 4.92).
-- `scripts/van/look/van_hull.gd`: side skin (`SKIN_OFFSET_M` 0.06, z -4.7..4.7, y 0..3.08), roof z -4.72..4.78 with a 0.10 lip, RearSkin at z 4.78; calls `van_hull_lines.gd` and `van_hull_patches.gd`.
-- `scripts/van/look/van_hull_patches.gd`: `RearCornerL/R`, chamfered `SillL/R`, `SideDoorCasingL/R` (ring 0.07 wide round the side door opening, liner +0.04..+0.19, built with `walls.build_curved_shell_mesh` and a rectangular hole).
-- Side door: `side_door_leaf.gd` `fit_door_leaf()` builds `CurvedBody` (0.14 thick from the liner) + `CurvedOuter` (0.035) with `door_body_material()` (glossy black, W1). The leaf recesses inward then slides +z inside the van (`side_doors.gd`).
-- Side windows: `side_windows.gd`, interior `RearWindowGlassMaterial` seen from both sides; openings z [2.835, -0.375], y centre 1.775, half 1.222 × 0.707.
+- `scripts/van/look/van_cab.gd` + `van_cab_shell.gd` / `van_cab_face.gd` / `van_cab_parts.gd`: cab-over to `NOSE_Z` -8.2, headlight SpotLights kept (N2), dash glow 0.25; `van_front_kit.gd` bumper, rams, cages.
+- `scripts/van/look/van_wheels.gd` + `van_chassis.gd`: wheels, flares, wells, steps, tank, exhaust, spares, rails, `RearBumper`.
+- `scripts/van/look/van_hull.gd`: skin (+0.06), roof, RearSkin; calls `van_hull_lines.gd`, `van_hull_patches.gd`, `van_hull_window_casings.gd`; pushes its exterior material to group `side_doors` (`set_exterior_material`).
+- `VanLook/MarkerLights`: clearance, tail and ID lamps on layer 1, tuned against the `*-outside` budget.
+- Side windows: `side_window_exterior.gd` hangs `ExteriorPane` (layer 1, group `van_exterior_layer`, skipped by `VanLighting.mark_interior_geometry`) under each `WindowGlass`; `van_window_exterior.gdshader` discards from the cabin side.
+- Exterior shader `scenes/van/van_exterior.gdshader` paints in model space (`sill_y_m`, `accent_band`, roughness uniforms).
 
-## Phase 3 · Holes and seams · done
-- S1 rear corner returns, S3 sealed sill, S4 roof lip, S6 door casing; S5 was the road under the rear, closed by phase 6's bumper. Commit f8d8339.
-- Verified: check, smoke, scene dump identical, lit v09/v14/v15 read by eye. Reviewer skipped (main context at its line).
-- No `(auto)` decisions.
+## Phase 4 · Side windows from outside · done
+- Exterior panes (D4, D17), casings round the openings (W3), side door leaf outer skin in hull paint (W1, D18), pillar rebar bent onto the skin with standoffs (W4, D19). Commit d93335e.
+- Verified: check, smoke, scene dump identical, shot stats unchanged within noise, lit v15 read by eye. Reviewer skipped (main context at its line).
+- No `(auto)` decisions. Loose ends are in the plan's Carry forward (Phase 4 line).
 
-## Next phase: 4 · Side windows from outside
-- Start at: the audit's "Windows and door leaf" section (`.claude/plans/research/van-exterior-2-01-audit.md`, W1–W5), then `scripts/van/side_windows.gd` and `side_door_leaf.gd` `door_body_material()`; read `.claude/rules/art-style.md` and `.claude/rules/van-shell-and-hud.md`.
-- Requirements: D4 per side window an outer frame ring and a dark-tinted exterior pane on layer 1, a reveal with depth, exterior glass with strong fresnel and no interior rim recipe; interior pane, iron cross and breakable glass unchanged. W1: give the door leaf's outside an exterior (non-glossy) look; it sits in the new casing. W4: locate the floating bars beside the side window (candidates `van_armour_pieces.gd` `add_bar()`). W5 (rear door windows) is the reference. Verify: check, smoke, scene dump, lit and unlit window close-ups, interior views unchanged by eye, `*-outside` budget.
+## Next phase: 7 · The night read (last phase)
+- Start at: the audit's "Night read" section (`.claude/plans/research/van-exterior-2-01-audit.md`, N1–N5), then `VanLook/MarkerLights` and `van_exterior.gdshader` roughness; read `.claude/rules/art-style.md` (emission and `*-outside` budget) and `.claude/rules/van-shell-and-hud.md`.
+- Requirements (D7): headlights light the road ahead (already true, N2: keep), tail and marker lamps glow, a faint wet sheen on the skin inside roughness 0.78..0.95, all inside the `*-outside` budget. Locate N5 (roof white disc). Also look at the Phase 4 carry-forward: milky lit side panes (dust layer in `van_window_exterior.gdshader`), casing reveal and sash clip, rebar visibility.
+- Verify: check, smoke, scene dump, unlit `--shots` through `tools/shot_stats.py` against `art-style.md`, the owner's view by eye.
+- Last phase: its handoff also closes the plan (Stage done, delete ACTIVE and PLAN_STATE.md, list `(auto)` decisions).
 - Open questions: none known; list the phase's own decisions at its start.
