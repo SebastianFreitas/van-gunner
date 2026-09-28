@@ -1,0 +1,145 @@
+# vanfix
+
+Stage: ready
+Started: 2026-09-28
+Procedure: `.claude/skills/plan/SKILL.md` (planning loop, then one phase
+per context: "Read PLAN_STATE.md and execute the next phase.").
+
+## Rebase note (2026-09-28, landed on main)
+
+This plan was written in a worktree cut from main at 1554975, before
+van-exterior-2 phases 2 to 7 landed (c4711c6 .. c970044). Main now has the
+audit (`research/van-exterior-2-01-audit.md`), the seam patches
+(`van_hull_patches.gd`), the side-window exterior panes and casings, the
+real cab-over cab (`van_cab*.gd`), the chassis kit (`van_chassis.gd`) and
+the night read. So:
+
+- **Current state** and **First look** below describe the old van: phase 1
+  re-surveys the code on main and re-takes the shots before trusting them.
+- **D1** is overtaken: van-exterior-2 finished (Stage: done), nothing is
+  parked from it.
+- **D5 is reopened**: phase 4 seals the existing real cab (gaps, joins to
+  the body) instead of replacing it with a simple block; ask the owner at
+  phase 4's start if the audit says otherwise.
+- The owner's pictures 1 to 3 (side door from inside, window sawtooth)
+  were taken of main's van and still stand.
+
+## Brief (owner's words, verbatim)
+
+> we need to fix the van once again dude
+> from the outside 90% of the assets are not properlly connected
+> the side doors, form the inside have some asset flcikering on top of eahc other probably
+> also theres still artifacts coming out of the van, specially on the backpart, form the ouside you see weird vertical walls going above the van.
+>
+> for this place i wanan focus on these things specifically, right now, it doesnt matter if the textures are amazing, or whaetver, it looks horrible because of these 2 main issues, the assets arent connected you can see inside from literally every angle, and theres asset cliping, i have specially noticed on the window, the corners, very noticable after you open the window, and the side door on the inside. make a plan to review everything about the van for this specific problems and solve them
+> if you want, before you start making the plan and ask me questions, i could send you tons of pictures
+
+## Scope
+
+- In: the van's geometry only: `scenes/van/van_shell.tscn` and its builders in `scripts/van/` (side walls, side doors and `side_door_leaf.gd`, side windows, rear doors, front wall, ceiling, pillars, rails), `scripts/van/look/` (hull, hull lines, cab, front kit, armour, markings, marker lights, wheels, roof, roof junk, rear dressing), a new geometry audit under `tools/`, new close-up views in `tools/smoke/smoke_shots.gd`, `.claude/rules/van-shell-and-hud.md`.
+- Out (stays exactly as is): textures and shader looks (the brief: "it doesnt matter if the textures are amazing"); DoorSpill, RearCone, ExteriorLight and the `*-outside` budget; door and window gameplay (breach, smash HP, weld, gun ports), breach points and walk space; interior machines and cables unless the audit names one; the detailed real cab (D5).
+
+## Current state (explored 2026-09-28; anchors drift, grep the names)
+
+- `van_shell.tscn` `Shell`: SideWalls (`VanSideWall`), Ceiling (vault), Floor, SideWindows (4: hinge + frame + glass + iron + breakable), SideDoors (CSG-style Panel parts Body/OuterSkin/Inset/BeltLine/LowerCrease), SidePillars (6 hard-coded 0.18 × 3.05 × 0.5 m posts), Rails (4 bowed edges).
+- `VanBodyProfile`: `inner_x_at`, `outer_x_at` (+0.12 wall), `roof_y_at`, `outer_roof_y_at` (+0.14 roof); the one outline.
+- `van_hull.gd`: skin pushed out 0.06 (`SKIN_OFFSET_M`) from the liner, i.e. halfway through the 0.12 wall, built as separate sides, roof (0.05 lip), rear, sills (y -0.25): separate pieces, not one closed body.
+- `van_hull_lines.gd`: rails, belt, drip, corner posts at `inner_x_at + 0.06`, the same plane as the skin.
+- `side_door_leaf.gd` `fit_door_leaf`: body 0.14 thick, outer skin 0.035, frame rings and panel trims at 0.035–0.045 offsets on the same curve: coplanar candidates for the inside flicker.
+- `side_windows.gd` `_fit_window_root`: glass, iron cross and breakable glass ride the hinge within 1–6 cm of the fixed frame (0.05 thick at offset 0); the 10-step frame ring and the cross bars meet at the corners the swing passes.
+- `rear_doors.gd`: two leaves 0.16 thick, 12 mm centre gap, window hole; `van_rear_dressing.gd` adds lock bar, welded bars, chains, cage corners.
+- `van_cab.gd`: hood, windshield, header, headlights; from the quarter view the front is an open box you can see into.
+- Add-ons: `van_armour.gd` (plates at a fixed `FACE_X` 2.6, rebar, spikes, road signs), `van_roof.gd` (rack at y 3.66, antennas 1.2–2.2 m, dish), `van_roof_junk.gd` (can exceed the rack), `van_wheels.gd` (spares, arches, flaps).
+- Tooling: `smoke_shots.gd` whole-van views v01–v03, interior v04–v07, lit v08–v16; debug `ghost`, `torch`, `floodlight`.
+- Owner pictures (2026-09-28, `images/1-3.png` in that session's scratchpad): (1) side cargo door from inside is a see-through hole: the leaf's inner face is missing, the street shows through and only trim strips float in it; (2) same with the gun port open; (3) the opened side window: the frame ring and wall reveal have sawtooth, stepped edges along the opening. The rear "vertical walls above the van" had no picture: the audit finds them.
+- First look (2026-09-28 shots): side door leaf reads as a glossy black slab from outside; the front is an open wooden box; rear doors and hull meet the side skin with visible steps.
+
+## Option map (planning only; struck lines are settled by a D)
+
+### Relation to van-exterior-2
+- ~~Replace it, park cab/underside/night read~~ → D1
+- ~~Pause and resume after~~ / ~~Fold into it~~
+
+### Finding problems
+- ~~Headless measuring audit + close-up shots, kept in smoke~~ · precedent: mesh-lint passes in asset pipelines (open-edge / coplanar checks) → D3
+- ~~Shots only~~ / ~~Owner pictures only~~
+
+### Holes
+- ~~One closed outer body from the outline, reveals at openings~~ · precedent: watertight/manifold hulls (racing-game car shells) → D4
+- ~~Patch each gap~~ / ~~Double-sided liner~~
+
+### Front
+- ~~Sealed simple cab block~~ → D5 / ~~Full real cab now~~ / ~~Leave out~~
+
+### Add-ons
+- ~~Snap to body, height cap, else drop~~ → D6 / ~~Strip all~~ / ~~Only pictured ones~~
+
+### Flicker
+- ~~One owner per surface, fixed lift gap for trim~~ · precedent: decal offset / polygon offset practice → D7 / ~~Nudge apart~~
+
+### Window swing
+- ~~Same swing, clearance checked at closed, half, open~~ → D8 / ~~Slide into pocket~~ / ~~Outer shutter~~
+
+## Open items
+
+- none (round 2 answered 2026-09-28).
+
+## Decisions (owner answers; `(auto)` = taken while running, review at the end)
+
+- **D1 · Old plan.** Vanfix replaces van-exterior-2: it takes over the audit, holes/seams and window phases; the cab, underside and night-read phases are parked as notes for after vanfix.
+- **D2 · Pictures.** Yes: the owner sends pictures before round 2.
+- **D3 · Audit.** Tool + close-up shots: a headless audit tool lists every pair of surfaces lying on top of each other and every gap between outside pieces, with node names; fixed close-up shots of every seam, door and window, closed and opened; it stays in the smoke test so a new gap or overlap fails.
+- **D4 · Holes.** One closed outer body: the outside skin rebuilt as one sealed shell from the body outline (sides, roof, rear, front, bottom meeting), every door and window opening lined by a reveal; add-ons sit on top.
+- **D5 · Front.** (Reopened, see Rebase note: seal the existing real cab.) Seal it as a simple cab: a plain sealed cab block on the body outline (windshield, doors outlined, no gaps); the detailed real cab stays parked.
+- **D6 · Add-ons.** Snap to the body, else drop: every add-on placed against the sealed body's surface and checked (touches the body, clear of every door, window and opening, under a height cap above the roof); a failing one is not built.
+- **D7 · Flicker.** One owner per surface: duplicates deleted; trim, frames and plates that sit on top lifted by a fixed gap (about 1 cm); the audit checks the gap.
+- **D9 · Order.** Inside first: audit tool and shots → side door and window from inside → sealed outer body → sealed simple cab → add-ons snapped and height-capped.
+- **D10 · Gun port.** Leave the port as is: the door leaf is sealed and solid from inside around the port's existing opening; hatch, hole and open/close stay as they are and the audit skips them. The port gets a full rework later (owner: "its gonna have to be fully reworked").
+- **D8 · Window.** Same swing, clean clearance: frame, glass, bars and wall opening cut so nothing passes through anything anywhere in the swing, checked at closed, half and fully open.
+
+## Constraints (every phase)
+
+- Geometry only: no texture or shader-look work; exterior materials keep their recipe (`art-style.md`: procedural grime, metallic ≤ 0.3, roughness 0.78–0.95, always night).
+- `VanBodyProfile` is the one outline for anything meeting the wall, vault or skin (rules file); no piece gets its own width constants.
+- Light pairing: set `layers` / `light_cull_mask` before `add_child`; retarget only through `VanLighting.retarget_layers`.
+- Door/window gameplay, breach points, collision shapes and walk space unchanged unless a phase says so.
+- `DEFAULT_VAN_SEED` 1337; the scene dump and smoke fingerprint are blessed only by a phase that says the tree changes, and the report says so.
+- Worktree mode: commit by path on the branch, never push.
+
+## Progress
+
+| # | Phase | Kind | Rests on | Status |
+|---|---|---|---|---|
+| 1 | Geometry audit tool and close-up shots | code, research | D3, D9 | todo |
+| 2 | Side doors and windows from inside | code | D7, D8, D10, audit | todo |
+| 3 | One sealed outer body | code | D4, D7, audit | todo |
+| 4 | Sealed simple cab | code | D5, D4, audit | todo |
+| 5 | Add-ons snapped and height-capped | code | D6, audit | todo |
+
+## Phases
+
+### 1 · Geometry audit tool and close-up shots (D3, D9)
+Research: how to list coplanar overlaps and open gaps from Godot meshes headless (triangle/AABB tests on the built `van.tscn`), then go past it.
+Deliverables: a headless audit under `tools/` (run from `tools/smoke/` or its own `.py`) that instances the van at seed 1337 and reports, with node paths: surface pairs within 1 cm of each other and facing the same way (flicker), outside edges that don't meet a neighbour (see-through gaps), anything above a roof height cap, anything passing through a door or window opening; side doors and windows checked closed, half and fully open; the gun port skipped (D10). Close-up `--shots` views of every seam, both side doors from inside and outside, every side window closed and open, the rear roof line. `.claude/plans/research/vanfix-01-audit.md`: every finding (node, builder, picture, severity), the owner's three pictures matched to findings. The audit's pass/fail wiring into smoke comes in the phase that clears its last finding; until then it reports.
+Verification: check, smoke, the audit names the side-door hole, the window sawtooth and something above the rear roof line.
+
+### 2 · Side doors and windows from inside (D7, D8, D10)
+Deliverables: side door leaves solid from both sides (inner face built, trim lifted by the D7 gap, duplicates removed), port untouched; the window frame, reveal, glass and iron cut clean along the opening with no stepped edges and no part crossing another at closed, half or open.
+Verification: check, smoke, scene dump (bless if the tree changes, say so), audit clear for doors and windows, close-up shots re-read against pictures 1–3.
+
+### 3 · One sealed outer body (D4, D7)
+Deliverables: the exterior skin rebuilt as one closed shell from `VanBodyProfile` (sides, roof, rear, bottom, meeting the front), reveals at every door and window, hull lines on the D7 gap, the rear doors seated in it; the liner faces only in.
+Verification: check, smoke, scene dump, audit clear for gaps on the body, lit shots v08–v16 and the new close-ups.
+
+### 4 · Sealed simple cab (D5, D4)
+Deliverables: `van_cab.gd` front closed into a plain sealed block on the body outline, windshield and door outlines, joined to the body without gaps; front kit refit onto it. The detailed cab stays parked.
+Verification: check, smoke, scene dump, audit clear at the front, front and quarter shots.
+
+### 5 · Add-ons snapped and height-capped (D6)
+Deliverables: armour, rebar, spikes, signs, roof rack, roof junk, antennas, spares and rear dressing placed against the sealed body's surface; a placement check (touches the body, clear of openings, under the roof cap) drops any failure; the audit becomes a smoke failure.
+Verification: check, smoke (fingerprint/bless as the phase states), scene dump, audit fully clear across several `van` seeds, rear and roof shots.
+
+## Carry forward
+
+- (Overtaken, see Rebase note: van-exterior-2 finished all seven phases.) Parked from van-exterior-2 (D1): the real cab with a dark interior and dash glow (its D3, D9), the underside and wheels (D6), the night read (D7). Its phase 1 tooling (torch, floodlight, lit shots v08–v16) stays and is used here.
+- A fresh worktree's first smoke run fails on `VanLook` not found (stale class cache); `py -3 tools/check.py` first fixes it.
