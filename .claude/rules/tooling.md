@@ -30,7 +30,7 @@ paths:
 
 `.claude/settings.json` runs every hook through `.claude/hooks/run.sh` (the `py` launcher on Windows, where `python3` is often the Store stub). Hooks never fail on their own errors (any exception exits 0).
 
-- `session-start.py`: the mode and its `.claude/modes/<mode>.md`, a `NO GODOT` line, the `PLAN: <name> · <stage>` line when `.claude/plans/ACTIVE` exists, the dirty paths, the handoff; in shared mode it writes the dirty paths to `<session dir>/foreign-paths.json`.
+- `session-start.py`: the mode and its `.claude/modes/<mode>.md`, a `NO GODOT` line, the active plans (`Stage: planning|ready|running`): `PLAN: <name> · <stage>` for the one bound by the gitignored `.claude/plans/HERE` (or the only active one), with its `<name>.state.md` Status while running, the others listed, or `PLANS:` when none is bound, the dirty paths, the handoff; in shared mode it writes the dirty paths to `<session dir>/foreign-paths.json`.
 - `git-guard.py`: blanket git, pushes, merges into main, branch deletion, worktree removal, checkout or switch in the main checkout, and staging a foreign path.
 - `file-guard.py`: whole reads over 300 lines, binaries and caches, edits of generated files, main-session multi-line source edits (skipped when the transcript's model is Fable), renumbered header ids.
 - `gd-lint.py`: lints the lines an edit wrote, plus whole-file checks; `py -3 .claude/hooks/gd-lint.py --scan` lints the tree.
@@ -38,7 +38,7 @@ paths:
 - `stop-guard.py`: uncommitted files, unpushed cloud commits, unverified Godot changes (a deleted file counts from its folder's mtime).
 - `git-guard.py` matches its rules against the command with quoted text masked, so commit messages and search strings ("raiders push the van", `git grep "checkout"`) never trip them; a cloud push is refused only when it targets `main` or `master`.
 
-Context-full sessions continue by auto-compaction (`CLAUDE_CODE_AUTO_COMPACT_WINDOW` = 180000 in `settings.json`, a little past the 140k handoff line), and `session-start.py` prints the handoff again with source `compact`. Never `clear_session("self")`: in the desktop app a clear stops the session's process, and any `CronCreate` job dies with it.
+Context-full sessions continue by auto-compaction (`CLAUDE_CODE_AUTO_COMPACT_WINDOW` = 200000 at `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` = 65 in `settings.json`, so about 130k, a little past the 120k handoff line; `AUTOPLAN_LINE` overrides the line for autoplan runs), and `session-start.py` prints the handoff again with source `compact`. Never `clear_session("self")`: in the desktop app a clear stops the session's process, and any `CronCreate` job dies with it.
 
 The first tool call after a compaction runs before its assistant line reaches the transcript, so the last `usage` in the file is the old, pre-compaction context: `context-watch.py` stops at a `compact_boundary` line and reports nothing. SubagentStop also fires for the compaction agent, which has no transcript of its own; a subagent is only ever measured from its own transcript.
 

@@ -10,9 +10,14 @@
 4. In shared mode on a fresh start or /clear: the uncommitted paths are
    also written to `<session dir>/foreign-paths.json`, which git-guard
    reads to refuse staging them.
-5. No Godot found: a warning line, since the check and smoke test cannot
+5. Every time: the active plans (Stage planning/ready/running in
+   .claude/plans/*.md). The one bound to this checkout
+   (.claude/plans/HERE, or the only active plan) prints as
+   `PLAN: <name> · <stage>`, with its state file's Status while running;
+   the others are listed, or `PLANS:` when none is bound.
+6. No Godot found: a warning line, since the check and smoke test cannot
    run.
-6. After compaction: a reminder to re-read the active `docs/tasks/` file,
+7. After compaction: a reminder to re-read the active `docs/tasks/` file,
    if any exist.
 
 SessionStart also fires after compaction ("compact") and on resume; the
@@ -26,6 +31,7 @@ Never fails the hook: any error exits 0.
 import glob
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -89,36 +95,114 @@ def godot_missing(root: str) -> bool:
         return False
 
 
-def active_plan(root):
-    """The active plan's `PLAN:` line, or None when .claude/plans/ACTIVE is absent."""
+def plan_lines(root):
+    """Active plans in .claude/plans/*.md, and the one bound to this checkout."""
     try:
-        path = os.path.join(root, ".claude", "plans", "ACTIVE")
-        if not os.path.isfile(path):
-            return None
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
-            text = f.read()
-        name = None
-        for line in text.splitlines():
-            if line.strip():
-                name = line.strip()
+        plans = os.path.join(root, ".claude", "plans")
+        if not os.path.isdir(plans):
+            return []
+
+        active = []
+        for fname in os.listdir(plans):
+            if (not fname.endswith(".md") or fname == "TEMPLATE.md"
+                    or fname.endswith(".state.md")):
+                continue
+            path = os.path.join(plans, fname)
+            try:
+                with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                    text = f.read()
+            except OSError:
+                continue
+            m = re.search(r"^Stage:\s*(planning|ready|running)", text, re.M)
+            if m:
+                active.append((fname[:-3], m.group(1)))
+        active.sort()
+
+        here_path = os.path.join(plans, "HERE")
+        here = ""
+        try:
+            with open(here_path, "r", encoding="utf-8", errors="ignore") as f:
+                here_text = f.read()
+        except OSError:
+            here_text = ""
+        for here_line in here_text.splitlines():
+            if here_line.strip():
+                here = here_line.strip()
                 break
-        if not name:
-            return None
-        plan = os.path.join(root, ".claude", "plans", name + ".md")
-        if not os.path.isfile(plan):
-            stage = "missing file"
+
+        active_names = [n for n, _ in active]
+        if here and here in active_names:
+            bound = here
+        elif len(active) == 1:
+            bound = active[0][0]
         else:
-            stage = "unknown"
-            with open(plan, "r", encoding="utf-8", errors="ignore") as f:
-                for line in f:
-                    if line.startswith("Stage:"):
-                        stage = line[len("Stage:"):].strip()
-                        break
-        return (f"PLAN: {name} · {stage} (.claude/plans/{name}.md; "
-                "procedure .claude/skills/plan/SKILL.md). A bare 'go' "
-                "continues it.")
+            bound = None
+
+        if not active:
+            if here:
+                return [f"(.claude/plans/HERE names '{here}', which is not "
+                         "an active plan: delete HERE.)"]
+            return []
+
+        here_note = None
+        if here and here != bound:
+            here_note = (f"(.claude/plans/HERE names '{here}', which is not "
+                          "active: rewrite HERE.)")
+
+        if bound:
+            stage = dict(active)[bound]
+            head = f"PLAN: {bound} · {stage}"
+            if stage == "running":
+                state_path = os.path.join(plans, bound + ".state.md")
+                if os.path.isfile(state_path):
+                    with open(state_path, "r", encoding="utf-8",
+                               errors="ignore") as f:
+                        state_line = f.readline().strip()
+                    status = None
+                    if state_line.startswith("Status:"):
+                        status = state_line[len("Status:"):].strip()
+                        head += f" · {status}"
+                    if status == "blocked":
+                        second = (f"Read .claude/skills/plan/SKILL.md, then "
+                                   f".claude/plans/{bound}.state.md (its Next "
+                                   f"phase) and .claude/plans/{bound}.md. A "
+                                   "bare 'go' continues it. Status blocked: "
+                                   "do the skill's Unblock, never the phase.")
+                    else:
+                        second = (f"Read .claude/skills/plan/SKILL.md, then "
+                                   f".claude/plans/{bound}.state.md (its Next "
+                                   f"phase) and .claude/plans/{bound}.md. A "
+                                   "bare 'go' continues it.")
+                else:
+                    head += " · no state file"
+                    second = (f"Read .claude/skills/plan/SKILL.md, then "
+                               f".claude/plans/{bound}.md (no state file: "
+                               "take the first todo row in Progress). A "
+                               "bare 'go' continues it.")
+            else:
+                second = (f"Read .claude/skills/plan/SKILL.md, then "
+                           f".claude/plans/{bound}.md: Interview, Brief, "
+                           "Decisions, Open items, Progress. A bare 'go' "
+                           "continues it.")
+            lines = [head, second]
+            others = [(n, s) for n, s in active if n != bound]
+            if others:
+                lines.append("Other active plans (run in their own "
+                              "checkouts, do not touch their files): " +
+                              ", ".join(f"{n} · {s}" for n, s in others))
+            if here_note:
+                lines.append(here_note)
+            return lines
+
+        lines = ["PLANS: " + ", ".join(f"{n} · {s}" for n, s in active),
+                 "No plan is bound to this checkout. 'go <name>' binds one "
+                 "(write the name to .claude/plans/HERE) and continues it; a "
+                 "bare 'go' asks which. See .claude/skills/plan/SKILL.md."]
+        if here_note:
+            lines.append(here_note)
+        return lines
     except Exception:
-        return None
+        return []
 
 
 def dirty_paths(dirty):
@@ -181,9 +265,7 @@ def main():
             "unset, no godot on PATH). tools/check.py and tools/smoke.py "
             "cannot run: say so in the report. Cloud: the environment's "
             "setup script must run `bash tools/cloud_setup.sh`.")
-    plan_line = active_plan(root)
-    if plan_line:
-        lines.append(plan_line)
+    lines.extend(plan_lines(root))
     lines.append("")
 
     hand_at = None

@@ -2,8 +2,8 @@
 
 Stage: planning
 Started: <YYYY-MM-DD>
-Procedure: `.claude/skills/plan/SKILL.md` (planning loop, then one phase
-per context: "Read PLAN_STATE.md and execute the next phase.").
+Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/<name>.state.md` while running).
+Interview: A open   <- A/B/C open or done; missed: lines while running
 
 ## Brief (owner's words, verbatim)
 
@@ -34,11 +34,25 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 
 ## Decisions (owner answers; `(auto)` = taken while running, review at the end)
 
-- **D1 · <topic>.** <the answer, owner's words when written by them>. Settles: <option-map lines>.
+- **D1 · <topic>.** <the answer, owner's words when written by them>. Settles: <option-map lines / piece n / phase n>.
+
+## Initial idea (Part B; prose, beginning to end, as the owner experiences it)
+
+<one to three pages; every sentence rests on a D or the Brief; guesses carry [?] until asked>
+
+### Piece 1 · <name>
+<5 to 15 lines: what is on screen, what moves, what is heard, what the player does, in order>
+
+### Piece 2 · <name>
+...
+
+## Walk-through (one line per piece; every piece is shown to the owner)
+
+- Piece 1 · <That is it / changed: ...> · D<n>, D<m>
 
 ## Constraints (every phase)
 
-- <rules that hold for the whole plan: art rules, perf, reduced motion, snapshot `same` outside the phase's scenes, research is for ideas never copying>
+- <rules that hold for the whole plan: invariants, art-style values, the smoke fingerprint and scene dump unchanged unless a phase says bless, shot views `same` outside the phase's scope, research is for ideas never copying>
 
 ## Progress
 
@@ -50,9 +64,10 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 ## Phases
 
 ### 1 · <name>
-Research: <topics, then "go past the list">.
+Research: <where things are: files, functions, rules files to read>.
 Deliverable: <exact files / functions / docs>.
-Verification: <exact command, or the snap scenes that must be `same` / must change>.
+Verification: <exact commands (check, smoke, scene dump, shots) and the views that must change / stay `same`>.
+Reviewed: <Part C answers: delivers right / out list and verification agreed / splits, D<n>>
 Notes: <filled when done: research digest path, what changed>
 
 ### 2 · <name>
@@ -60,4 +75,4 @@ Notes: <filled when done: research digest path, what changed>
 
 ## Carry forward
 
-- <facts later phases need: run names, token names, numbers measured>
+- <facts later phases need: names, numbers measured, shot set names>

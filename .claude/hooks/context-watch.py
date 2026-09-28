@@ -26,7 +26,7 @@ import json
 import os
 import sys
 
-LIMIT = 140_000     # main session: tokens in context that trigger the handoff
+LIMIT = int(os.environ.get("AUTOPLAN_LINE") or 120_000)  # main session: handoff line, under auto-compact at 130k (65% of 200k)
 SOFT = 0.8          # warn from this fraction of a line
 HARD = 1.5          # subagents: deny all tools from this multiple of the line
 

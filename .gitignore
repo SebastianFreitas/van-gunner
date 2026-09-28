@@ -31,6 +31,10 @@ tools/scene_dump/van.txt
 .claude/worktrees/
 .claude/handoff.md
 
+# Plans: HERE binds this checkout's plan; autoplan keeps its run logs locally
+.claude/plans/HERE
+.claude/autoplan/
+
 # Written per run by tools/try.py (separate user:// profile) and
 # tools/smoke.py --shots (no-focus window); never committed
 /override.cfg
