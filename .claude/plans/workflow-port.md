@@ -1,6 +1,6 @@
 # Workflow port: Portfolio's planning and execution workflow, in Godot terms
 
-Stage: running
+Stage: done
 Started: 2026-09-28
 Procedure: `.claude/skills/plan/SKILL.md` today; this plan replaces it with
 Portfolio's (the interview, then "go").
@@ -210,7 +210,7 @@ Skipped by D1 (tooling plan, focused interview): the phases below carry every pi
 | 5 | tools/autoplan.py (+ try branch listing) | code (py) | D4 D9 D13 D15 D17 | done 8dc395d |
 | 6 | tools/probe.py | code (py + gd) | D6 D7 D12 | done 3cb6c9b |
 | 7 | tools/shots.py capture/compare | code (py) | D5 D11 | done 599745c |
-| 8 | Docs, tooling rules, PROJECT_MAP, Stage done | doc | all | todo |
+| 8 | Docs, tooling rules, PROJECT_MAP, Stage done | doc | all | done 96a4303 |
 
 ## Phases
 
@@ -298,6 +298,7 @@ capture, noise-c, also compared all same. The playbook has a Shots bullet, and S
 Deliverable: `.claude/rules/tooling.md` (probe, shots, autoplan, HERE, state files),
 `py -3 tools/gen_context.py`, `Stage: done`, this plan's state file deleted, HERE cleared.
 Verification: `py -3 tools/check.py`; `py -3 tools/smoke.py`.
+Notes: done 96a4303. tooling.md gains Probe, Shots (noise table and re-measure steps) and Autoplan design notes, a "Plans: HERE and state files" section, and `paths:` for `tools/probe/**`, `.claude/plans/**`, `.claude/skills/plan/**`; its Try/Commit line now says worktree sessions run Commit (D24). gen_context left the map unchanged. Check and smoke clean.
 
 ## Carry forward
 
