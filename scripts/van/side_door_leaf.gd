@@ -171,6 +171,27 @@ func steal_material(parent: Node, path: String) -> Material:
 	return null
 
 
+## Puts the hull's exterior material on the leaf's outer skin only (CurvedBody keeps the
+## interior liner). The shader paints in model-space metres, and the leaf's own origin sits at
+## the door's mid height, so a duplicated copy has its y-based uniforms shifted back down by
+## door_mid_y to land the sill dirt band and accent stripe at the same world height as the hull.
+func apply_exterior_material(leaf: Node3D, mat: Material, door_mid_y: float) -> void:
+	var outer := leaf.get_node_or_null("CurvedOuter") as GeometryInstance3D
+	if outer == null:
+		return
+	if mat is ShaderMaterial:
+		var shader_mat := (mat as ShaderMaterial).duplicate() as ShaderMaterial
+		var sill_v: Variant = shader_mat.get_shader_parameter(&"sill_y_m")
+		var sill := 0.0 if sill_v == null else float(sill_v)
+		shader_mat.set_shader_parameter(&"sill_y_m", sill - door_mid_y)
+		var band_v: Variant = shader_mat.get_shader_parameter(&"accent_band")
+		var band := Vector2(1.1, 1.35) if band_v == null else band_v as Vector2
+		shader_mat.set_shader_parameter(&"accent_band", band - Vector2(door_mid_y, door_mid_y))
+		outer.material_override = shader_mat
+	else:
+		outer.material_override = mat
+
+
 func door_body_material(source: Material, door_height: float) -> Material:
 	if source is ShaderMaterial:
 		var mat := (source as ShaderMaterial).duplicate()

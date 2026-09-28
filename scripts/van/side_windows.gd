@@ -40,6 +40,11 @@ const GLASS_INSET := 0.06
 ## Original iron / breakable collider inset (into cabin).
 const IRON_INSET := 0.035
 const BREAKABLE_INSET := 0.04
+## Exterior pane stand-off from the liner: clear of the IronCross bars' outer face,
+## capped so it doesn't poke past the hull skin.
+const EXTERIOR_PANE_PROUD_M := 0.055
+
+const _Exterior := preload("res://scripts/van/side_window_exterior.gd")
 
 ## Matches original CSG sash (half extents).
 const SASH_HALF_H := 0.74
@@ -136,6 +141,11 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	glass.material_override = glass_mat
 	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	hinge.add_child(glass)
+
+	var exterior_x_shift := wall_sign * EXTERIOR_PANE_PROUD_M
+	_Exterior.add_exterior_pane(
+		glass, walls, wall_sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, exterior_x_shift
+	)
 
 	var breakable := hinge.get_node_or_null("BreakableGlass")
 	if breakable and breakable.has_method("bind_glass_visual"):

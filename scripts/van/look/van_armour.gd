@@ -3,6 +3,7 @@ extends Node3D
 ## The van's seeded outer armour: plates, rebar, spikes, road signs and a car-door shield, placed from slots clear of every opening and merged per material.
 
 const HULL_PATH := ^"../Hull"
+const SIDE_WALLS_PATH := ^"../../Interior/Shell/SideWalls"
 const FACE_X := 2.6
 const _Pieces := preload("res://scripts/van/look/van_armour_pieces.gd")
 
@@ -19,6 +20,8 @@ const SLOTS: Array[Dictionary] = [
 var plate_material: ShaderMaterial
 ## Crooked-plate tilts left to spend on the side currently being built.
 var _crooked_left := 0
+## The side wall, read for the body's lean so the pillar rebar grid can hug the skin.
+var _walls: VanSideWall
 
 
 func rebuild_look(look: VanLook) -> void:
@@ -27,6 +30,7 @@ func rebuild_look(look: VanLook) -> void:
 		child.queue_free()
 
 	var hull := get_node_or_null(HULL_PATH) as VanHull
+	_walls = get_node_or_null(SIDE_WALLS_PATH) as VanSideWall
 	var hull_mat: Material = null
 	if hull != null:
 		hull_mat = hull.material
@@ -104,13 +108,27 @@ func _fill_slot(pieces: RefCounted, slot: Dictionary, side: float, rng: RandomNu
 				_place_plate(pieces, side, cz, cy, w, h, 0, rng)
 		&"pillar":
 			if rng.randf() < 0.5:
-				var x := side * (FACE_X + 0.05)
-				for zbar: float in [zr.x + 0.08, cz, zr.y - 0.08]:
-					pieces.add_bar(&"rebar", Vector3(x, yr.x, zbar), Vector3(x, yr.y, zbar), 0.03)
 				var step := h / 3.0
-				for i: int in range(4):
-					var ybar := yr.x + step * float(i)
-					pieces.add_bar(&"rebar", Vector3(x, ybar, zr.x), Vector3(x, ybar, zr.y), 0.03)
+				var levels: Array[float] = [yr.x, yr.x + step, yr.x + step * 2.0, yr.y]
+				for zbar: float in [zr.x + 0.08, cz, zr.y - 0.08]:
+					for i: int in range(3):
+						var y0 := levels[i]
+						var y1 := levels[i + 1]
+						pieces.add_bar(
+							&"rebar", Vector3(_bar_x(side, y0), y0, zbar),
+							Vector3(_bar_x(side, y1), y1, zbar), 0.03
+						)
+					for y_end: float in [yr.x, yr.y]:
+						pieces.add_bar(
+							&"rebar", Vector3(side * _skin_x(y_end), y_end, zbar),
+							Vector3(_bar_x(side, y_end), y_end, zbar), 0.035
+						)
+				for i2: int in range(4):
+					var ybar := levels[i2]
+					pieces.add_bar(
+						&"rebar", Vector3(_bar_x(side, ybar), ybar, zr.x),
+						Vector3(_bar_x(side, ybar), ybar, zr.y), 0.03
+					)
 			else:
 				_place_plate(pieces, side, cz, cy, w, h, 0, rng)
 		&"top":
@@ -132,6 +150,18 @@ func _fill_slot(pieces: RefCounted, slot: Dictionary, side: float, rng: RandomNu
 				for i3: int in range(3):
 					var sy := yr.x + ystep * (float(i3) + 0.5)
 					pieces.add_spike(side, Vector3(side * FACE_X, sy, cz), 0.22)
+
+
+## Skin x at height y (the wall's lean, pushed out to the hull skin); FACE_X if no wall is set.
+func _skin_x(y: float) -> float:
+	if _walls == null:
+		return FACE_X
+	return _walls.wall_x_at(y) + VanHull.SKIN_OFFSET_M
+
+
+## Rebar bar x at height y, standing a hair proud of the skin so it reads as bolted on.
+func _bar_x(side: float, y: float) -> float:
+	return side * (_skin_x(y) + 0.045)
 
 
 ## Rolls the crooked-plate budget for this side and returns a tilt in degrees, 0.0 if not crooked.

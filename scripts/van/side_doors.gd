@@ -57,6 +57,12 @@ var _leaf: _SideDoorLeaf
 ## Sliding gun port slots dressed onto each side door leaf.
 var gun_ports: Array[VanGunPort] = []
 
+## Door mid-height, used to correct a duplicated exterior material's y-based uniforms.
+var _door_mid_y := 0.0
+
+## The hull's exterior material, applied to each leaf's outer skin once fitted.
+var _exterior_material: Material
+
 
 func _init() -> void:
 	_leaf = _SideDoorLeaf.new(self)
@@ -81,6 +87,7 @@ func _fit_to_side_walls() -> void:
 
 	gun_ports.clear()
 	var mid_y := (walls.door_y_min + walls.door_y_max) * 0.5
+	_door_mid_y = mid_y
 	var x_ref := walls.wall_x_at(mid_y)
 	for pair: Array in [[_left, -1.0], [_right, 1.0]]:
 		var leaf: Node3D = pair[0]
@@ -93,6 +100,20 @@ func _fit_to_side_walls() -> void:
 		leaf.add_child(port)
 		port.setup(wall_sign, walls, mid_y, x_ref)
 		gun_ports.append(port)
+
+	if _exterior_material != null:
+		_leaf.apply_exterior_material(_left, _exterior_material, _door_mid_y)
+		_leaf.apply_exterior_material(_right, _exterior_material, _door_mid_y)
+
+
+## Stores the hull's exterior material and applies it to each fitted leaf's outer skin, so a
+## look reroll (or a call before the leaves exist) always lands on both doors.
+func set_exterior_material(mat: Material) -> void:
+	_exterior_material = mat
+	if _left == null or _right == null:
+		return  # leaves not fitted yet — _fit_to_side_walls() applies the stored material later
+	_leaf.apply_exterior_material(_left, mat, _door_mid_y)
+	_leaf.apply_exterior_material(_right, mat, _door_mid_y)
 
 
 func is_open() -> bool:

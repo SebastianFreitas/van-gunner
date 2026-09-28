@@ -8,6 +8,9 @@ extends Node3D
 
 const LAYER_VAN_INTERIOR := 2
 
+## Exterior faces of interior parts (e.g. a window's exterior pane) stay on layer 1.
+const GROUP_EXTERIOR_LAYER := &"van_exterior_layer"
+
 @export var interior_path: NodePath = NodePath("../Interior")
 @export var player_path: NodePath = NodePath("../Player")
 
@@ -27,7 +30,7 @@ func _ready() -> void:
 
 ## Moves every non-light VisualInstance3D under root to the van interior layer.
 static func mark_interior_geometry(root: Node) -> void:
-	if root is VisualInstance3D and not (root is Light3D):
+	if root is VisualInstance3D and not (root is Light3D) and not root.is_in_group(GROUP_EXTERIOR_LAYER):
 		retarget_layers(root as VisualInstance3D, LAYER_VAN_INTERIOR)
 	for child in root.get_children():
 		mark_interior_geometry(child)

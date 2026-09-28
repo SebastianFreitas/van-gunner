@@ -12,6 +12,9 @@ const _HullLines := preload("res://scripts/van/look/van_hull_lines.gd")
 ## Closes the rear corner, sill and side door casing gaps left in the skin above.
 const _HullPatches := preload("res://scripts/van/look/van_hull_patches.gd")
 
+## Casing rings around each side cargo window opening.
+const _HullWindowCasings := preload("res://scripts/van/look/van_hull_window_casings.gd")
+
 ## How far outside the liners the skin sits.
 const SKIN_OFFSET_M := 0.06
 
@@ -48,6 +51,12 @@ func rebuild_look(look: VanLook) -> void:
 	_build_rear(walls)
 	_HullPatches.new(self).build(walls)
 	_HullLines.new(self).build(_profile, walls, material)
+	_HullWindowCasings.new(self).build(walls)
+
+	if is_inside_tree():
+		for node in get_tree().get_nodes_in_group(&"side_doors"):
+			if node.has_method(&"set_exterior_material"):
+				node.call(&"set_exterior_material", material)
 
 
 func _build_sides(walls: VanSideWall) -> void:

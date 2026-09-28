@@ -75,6 +75,9 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 - **D14 · Arches (phase 6).** Bolt-on flares: wheels stay outboard (the floor is at road level and the hold runs to the walls, so a real cut would put the wheels in the hold); each wheel gets a curved flare with a lip, a dark well plate on the skin behind the tyre, so the sill reads as stopping at the wheel.
 - **D15 · Spares (phase 6).** Off the cab doors: chained upright to the body side just behind the side cargo door, below the windows, ahead of the rear wheels.
 - **D16 · Exhaust (phase 6).** A short pipe under the body side between the side door and the rear wheels, ending in a turned-down tip ahead of the rear axle.
+- **D17 · Window tint (phase 4).** Dim silhouettes: the outer pane about 75% opaque head-on, near-opaque at glancing angles; lamps show as small dull glows, never white streaks.
+- **D18 · Side door face (phase 4).** Same paint as the hull: the leaf's outer skin wears the seeded exterior shader.
+- **D19 · Pillar rebar (phase 4).** Bend it onto the body: bars follow the wall's lean a few cm off the skin, with welded standoffs.
 
 ## Constraints (every phase)
 
