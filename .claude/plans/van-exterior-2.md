@@ -82,14 +82,14 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 | # | Phase | Kind | Rests on | Status |
 |---|---|---|---|---|
 | 1 | Tooling: torch, floodlight, lit shots | code | D1 | done 74f8364 |
-| 2 | Audit with pictures | research, doc | D2, D8 | todo |
-| 3 | Holes and seams | code | D5, audit | todo |
-| 4 | Side windows from outside | code | D4, audit | todo |
-| 5 | A real cab and what the windshield shows | code | D3, D9, audit | todo |
-| 6 | Underside and wheels | code | D6, audit | todo |
-| 7 | The night read | code | D7, audit | todo |
+| 2 | Audit with pictures | research, doc | D2, D8 | done (this commit) |
+| 3 | Holes and seams | code | D5, audit | todo (run 3rd) |
+| 4 | Side windows from outside | code | D4, audit | todo (run 4th) |
+| 5 | A real cab and what the windshield shows | code | D3, D9, audit | todo (run 1st) |
+| 6 | Underside and wheels | code | D6, audit | todo (run 2nd) |
+| 7 | The night read | code | D7, audit | todo (run 5th) |
 
-Phases 3 to 7 run in the order phase 2's audit sets (D8); the numbers are labels, the audit's order is the run order.
+Phases 3 to 7 run in the order phase 2's audit sets (D8): **5 → 6 → 3 → 4 → 7**; the numbers are labels. Next phase = the first `todo` in that order.
 
 ## Phases
 
@@ -124,3 +124,4 @@ Verification: check, smoke, unlit `--shots` through `tools/shot_stats.py` agains
 ## Carry forward
 
 - Phase 1: `py -3 tools/smoke.py --shots DIR` writes `v08..v16-idle-van-lit-*.png` (side-front, side-rear, outside, quarter-driver, quarter-passenger, front, rear, window, roof) with the floodlight on. First look at them: the side door leaf renders as a glossy black slab, interior lamps blow out through the rear side window, the cab is a flat box with two bare lamp discs, the passenger-side rear wheel floats clear of the sill. Phase 2 audits from these.
+- Phase 2: the audit is `research/van-exterior-2-01-audit.md` (IDs C1–C5, S1–S6, W1–W5, U1–U6, N1–N5); each fix phase takes its section and re-reads its shots against those IDs. The "floating rear wheel" is really the front axle (z -7.25, x ±2.8) standing under the sideless cab (U1). The headlights already light the road (N2): phase 5 keeps those SpotLights. W1 (glossy black side door leaf, `side_door_leaf.gd` `door_body_material()`) belongs to phase 4. Not located yet: the rear step plate (S5), the floating window bars (W4), the diagonal rod (U6), the roof white disc (N5).
