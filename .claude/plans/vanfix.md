@@ -1,9 +1,9 @@
 # vanfix
 
-Stage: ready
+Stage: running
 Started: 2026-09-28
 Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/vanfix.state.md` while running).
-Interview: done under the old procedure (no parts A/B/C)
+Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto)
 
 ## Rebase note (2026-09-28, landed on main)
 
@@ -96,6 +96,7 @@ the night read. So:
 - **D9 · Order.** Inside first: audit tool and shots → side door and window from inside → sealed outer body → sealed simple cab → add-ons snapped and height-capped.
 - **D10 · Gun port.** Leave the port as is: the door leaf is sealed and solid from inside around the port's existing opening; hatch, hole and open/close stay as they are and the audit skips them. The port gets a full rework later (owner: "its gonna have to be fully reworked").
 - **D8 · Window.** Same swing, clean clearance: frame, glass, bars and wall opening cut so nothing passes through anything anywhere in the swing, checked at closed, half and fully open.
+- **D11 · Audit layout (auto).** `tools/van_audit.py` + `tools/van_audit/` runner that boots the van at IDLE like the probe, collects every visible triangle in rig space, and reports FLICKER / CLIP / OPENING (triangle tests, doors and windows posed closed, half, open without tweens), HEIGHT / REAR_ROOF, EDGE and LEAK_IN / LEAK_OUT (Jolt ray and sphere queries on temporary layer-20 proxies); close-ups are a `c`-prefixed view set so `v01`.. never renumber. Reason: physics queries make leaks cheap in GDScript, and a separate tool keeps smoke untouched until phase 5 wires it in.
 
 ## Constraints (every phase)
 
@@ -110,7 +111,7 @@ the night read. So:
 
 | # | Phase | Kind | Rests on | Status |
 |---|---|---|---|---|
-| 1 | Geometry audit tool and close-up shots | code, research | D3, D9 | todo |
+| 1 | Geometry audit tool and close-up shots | code, research | D3, D9, D11 | done 60e1a32 |
 | 2 | Side doors and windows from inside | code | D7, D8, D10, audit | todo |
 | 3 | One sealed outer body | code | D4, D7, audit | todo |
 | 4 | Sealed simple cab | code | D5, D4, audit | todo |
@@ -122,6 +123,7 @@ the night read. So:
 Research: how to list coplanar overlaps and open gaps from Godot meshes headless (triangle/AABB tests on the built `van.tscn`), then go past it.
 Deliverables: a headless audit under `tools/` (run from `tools/smoke/` or its own `.py`) that instances the van at seed 1337 and reports, with node paths: surface pairs within 1 cm of each other and facing the same way (flicker), outside edges that don't meet a neighbour (see-through gaps), anything above a roof height cap, anything passing through a door or window opening; side doors and windows checked closed, half and fully open; the gun port skipped (D10). Close-up `--shots` views of every seam, both side doors from inside and outside, every side window closed and open, the rear roof line. `.claude/plans/research/vanfix-01-audit.md`: every finding (node, builder, picture, severity), the owner's three pictures matched to findings. The audit's pass/fail wiring into smoke comes in the phase that clears its last finding; until then it reports.
 Verification: check, smoke, the audit names the side-door hole, the window sawtooth and something above the rear roof line.
+Notes: done 60e1a32. `tools/van_audit.py` + `tools/van_audit/` (mesh, states, overlap, gaps) and close-ups c01–c32; findings in `research/vanfix-01-audit.md` (side-door LEAK_OUT on CurvedOuter, window CurvedFrame FLICKER vs hull casing, REAR_ROOF rack/crate/antenna). Audit takes ~4 min.
 
 ### 2 · Side doors and windows from inside (D7, D8, D10)
 Deliverables: side door leaves solid from both sides (inner face built, trim lifted by the D7 gap, duplicates removed), port untouched; the window frame, reveal, glass and iron cut clean along the opening with no stepped edges and no part crossing another at closed, half or open.
@@ -141,5 +143,8 @@ Verification: check, smoke (fingerprint/bless as the phase states), scene dump, 
 
 ## Carry forward
 
+- (Phase 1) The audit takes ~4 min, nearly all in three FLICKER passes; phase 5 must speed it up (normal bucketing, or moving-roots-only flicker at half/open) before `--strict` goes into smoke.
+- (Phase 1) The side door leaf `CurvedBody` clips the jamb, casing and forward into the cab back wall (z to -4.74); fix the leaf length before triaging the door OPENING rows (props in the PcRig/CabRelay area).
+- (Phase 1) Rear doors show the same missing inner face as the side doors (LEAK_OUT on `RearWall/*Hinge/CurvedBody`): phase 3 seats the rear doors.
 - (Overtaken, see Rebase note: van-exterior-2 finished all seven phases.) Parked from van-exterior-2 (D1): the real cab with a dark interior and dash glow (its D3, D9), the underside and wheels (D6), the night read (D7). Its phase 1 tooling (torch, floodlight, lit shots v08–v16) stays and is used here.
 - A fresh worktree's first smoke run fails on `VanLook` not found (stale class cache); `py -3 tools/check.py` first fixes it.

@@ -12,8 +12,13 @@ var _count := 0
 ## Seeds rolled for the variation shots at IDLE (tools/smoke.py --van-seeds N); 0 skips them.
 var van_seeds := 0
 ## Van shots number themselves v01-, v02-... so the main 01-... numbering, which the
-## art notes cite by number, never shifts.
-var _van_count := 0
+## art notes cite by number, never shifts. Keyed by prefix, so a new prefix (e.g. "c") starts
+## its own 01-... run instead of continuing "v"'s count.
+var _prefix_counts: Dictionary = {}
+
+const _SideDoors := preload("res://scripts/van/side_doors.gd")
+const _SideWindows := preload("res://scripts/van/side_windows.gd")
+const _CloseupViews := preload("res://tools/smoke/smoke_shots_closeups.gd")
 
 ## Rig-local point the van cameras look at: the van body's middle.
 const _VAN_TARGET := Vector3(0.0, 1.5, 0.0)
@@ -159,12 +164,72 @@ func van_views_lit(shot_name: String) -> void:
 		layer.visible = true
 
 
+## Close-ups of door and window seams, both doors and every window (inside and outside,
+## closed and open), and the rear roof line, under the debug floodlight. Each view opens
+## exactly its own doors/windows through the gameplay API and waits for the tweens to settle,
+## so a door or window is never mid-tween in a shot; everything is closed again before
+## returning, so this never moves the IDLE fingerprint.
+func van_views_closeups() -> void:
+	var rig := _rig()
+	if rig == null:
+		return
+	var side_doors := rig.get_node_or_null(^"Interior/Shell/SideDoors")
+	var side_windows := rig.get_node_or_null(^"Interior/Shell/SideWindows")
+	if side_doors == null or side_windows == null:
+		return
+	var hidden := _hide_ui()
+	var previous := get_viewport().get_camera_3d()
+	print("SMOKE: " + DebugCommands.run("floodlight on"))
+	var player := get_tree().get_first_node_in_group(&"player") as Node3D
+	# The scripts' own tween durations, summed, plus a settle margin.
+	var settle: float = (
+		side_doors.recess_duration + side_doors.slide_duration
+		+ side_doors.grip_retract_duration + side_doors.mount_retract_duration
+		+ side_windows.open_duration + side_windows.grip_retract_duration
+		+ side_windows.mount_retract_duration + 0.3
+	)
+	var open_doors: Array[StringName] = []
+	var open_windows: Array[StringName] = []
+	for view in _CloseupViews.views(rig):
+		var wanted_doors: Array[StringName] = view["doors"]
+		var wanted_windows: Array[StringName] = view["windows"]
+		if wanted_doors != open_doors or wanted_windows != open_windows:
+			for side in [_SideDoors.SIDE_LEFT, _SideDoors.SIDE_RIGHT]:
+				if side in wanted_doors and not side in open_doors:
+					side_doors.open_door(side)
+				elif side in open_doors and not side in wanted_doors:
+					side_doors.close_door(side)
+			for id in _SideWindows.ALL_WINDOWS:
+				if id in wanted_windows and not id in open_windows:
+					side_windows.open_window(id)
+				elif id in open_windows and not id in wanted_windows:
+					side_windows.close_window(id)
+			open_doors = wanted_doors
+			open_windows = wanted_windows
+			await get_tree().create_timer(settle).timeout
+		var from: Vector3 = view["from"]
+		if player != null and rig.to_global(from).distance_to(player.global_position) < 0.5:
+			from.z -= 0.6
+		await _save_van_view(rig, from, view["label"], view["target"], "c")
+	for side in [_SideDoors.SIDE_LEFT, _SideDoors.SIDE_RIGHT]:
+		side_doors.close_door(side)
+	for id in _SideWindows.ALL_WINDOWS:
+		side_windows.close_window(id)
+	await get_tree().create_timer(settle).timeout
+	print("SMOKE: " + DebugCommands.run("floodlight off"))
+	if previous != null:
+		previous.make_current()
+	for layer in hidden:
+		layer.visible = true
+
+
 ## Points a temporary camera at the van from a rig-local spot, saves the shot and frees it.
 ## Defaults to looking at the van body's middle; interior audit spots pass their own target.
 ## The player's mesh is hidden throughout: these cameras sit close to the player's spot
 ## and would otherwise show the capsule mesh in frame.
 func _save_van_view(
-	rig: Node3D, from: Vector3, label: String, target: Vector3 = _VAN_TARGET
+	rig: Node3D, from: Vector3, label: String, target: Vector3 = _VAN_TARGET,
+	prefix: String = "v"
 ) -> void:
 	var player := get_tree().get_first_node_in_group(&"player") as Node3D
 	var hidden_meshes: Array[MeshInstance3D] = []
@@ -178,7 +243,7 @@ func _save_van_view(
 	rig.add_child(cam)
 	cam.transform = Transform3D(Basis.looking_at(target - from, Vector3.UP), from)
 	cam.make_current()
-	await _save(label, "v")
+	await _save(label, prefix)
 	cam.queue_free()
 	for mesh in hidden_meshes:
 		mesh.visible = true
@@ -194,8 +259,9 @@ func _save(label: String, prefix: String = "") -> void:
 		_count += 1
 		path = dir.path_join("%02d-%s.png" % [_count, label])
 	else:
-		_van_count += 1
-		path = dir.path_join("%s%02d-%s.png" % [prefix, _van_count, label])
+		var count: int = _prefix_counts.get(prefix, 0) + 1
+		_prefix_counts[prefix] = count
+		path = dir.path_join("%s%02d-%s.png" % [prefix, count, label])
 	var err := image.save_png(path)
 	if err != OK:
 		push_error("SMOKE: could not save shot %s: %s" % [path, error_string(err)])

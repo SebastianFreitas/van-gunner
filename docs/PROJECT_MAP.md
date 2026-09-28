@@ -272,7 +272,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-282 GDScript files, 42237 lines.
+288 GDScript files, 43562 lines.
 
 ### `scenes/corridor/`
 
@@ -685,11 +685,22 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `smoke_driver.gd` | — | 373 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
+| `smoke_driver.gd` | — | 374 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 158 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
-| `smoke_shots.gd` | — | 204 | Screenshots for tools/smoke.py --shots. |
+| `smoke_shots.gd` | — | 270 | Screenshots for tools/smoke.py --shots. |
+| `smoke_shots_closeups.gd` | — | 150 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
+
+### `tools/van_audit/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `van_audit.gd` | — | 240 | Headless van audit entry scene: collects every visible triangle of the van, checks it and writes a report. |
+| `van_audit_gaps.gd` | — | 328 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges and see-through leaks, found by raycasting temporary ConcavePolygonShape3D pr… |
+| `van_audit_mesh.gd` | — | 133 | Collects every visible triangle under a rig into parallel arrays, all in rig-local space, for the van audit's checks (specs 1-2 and 1-3 add more consumers). |
+| `van_audit_overlap.gd` | — | 301 | Coplanar-overlap (flicker), moving-part interpenetration (clip) and door/window opening-blocked checks over an AuditMesh triangle set (vanfix spec 1-2). |
+| `van_audit_states.gd` | — | 106 | Poses the side doors and windows into closed / half / open states directly, with no tweens and no gameplay calls, so the audit's flicker/clip/opening checks ca… |
 
 ## Scenes
 
@@ -740,6 +751,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `tools/probe/probe_runner.tscn` | 1 | Node |
 | `tools/scene_dump/scene_dump.tscn` | 1 | Node |
 | `tools/smoke/smoke_test.tscn` | 1 | Node |
+| `tools/van_audit/van_audit.tscn` | 1 | Node |
 
 ## Shaders
 
