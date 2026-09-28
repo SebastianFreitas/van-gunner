@@ -90,7 +90,7 @@ per context: "Read PLAN_STATE.md and execute the next phase.").
 |---|---|---|---|---|
 | 1 | Tooling: torch, floodlight, lit shots | code | D1 | done 74f8364 |
 | 2 | Audit with pictures | research, doc | D2, D8 | done c4711c6 |
-| 3 | Holes and seams | code | D5, audit | todo (run 3rd) |
+| 3 | Holes and seams | code | D5, audit | done f8d8339 |
 | 4 | Side windows from outside | code | D4, audit | todo (run 4th) |
 | 5 | A real cab and what the windshield shows | code | D3, D9, audit | done b662a42 |
 | 6 | Underside and wheels | code | D6, D14-D16, audit | done c2bf8bf |
@@ -111,6 +111,7 @@ Verification: every issue in Carry forward appears in the audit; every entry nam
 ### 3 · Holes and seams (D5)
 Deliverables: every audited gap between hull skin, roof, front wall, cab back, rear face and sills closed by patches that sample `VanBodyProfile`.
 Verification: check, smoke, scene dump (bless only if the phase says the tree changes), lit shots re-read against the audit entries.
+Notes: done in f8d8339. `van_hull_patches.gd` (RefCounted helper of `VanHull`): `RearCornerL/R` (side strip z 4.64..4.80 + return at z 4.80, inner x ≥ 2.40), `SillL/R` (chamfered extrusion from `wall_x_at(0)+0.06`, z -4.72..4.80, replaces the boxes), `SideDoorCasingL/R` (curved shell ring 0.07 wide round the side door opening, liner +0.04..+0.19); roof lip 0.10. S5 was the road in the shade under the rear: phase 6's `RearBumper` closes it, no plate exists. Check, smoke, scene dump clean; lit v09/v14/v15 read by eye. Reviewer skipped (context line).
 
 ### 4 · Side windows from outside (D4)
 Deliverables: per side window an outer frame ring and a dark-tinted pane on layer 1 from the `VanSideWall` builders, a reveal with depth, an exterior glass material with strong fresnel and no interior rim recipe. Interior pane, iron cross, breakable glass unchanged.
@@ -136,4 +137,5 @@ Verification: check, smoke, unlit `--shots` through `tools/shot_stats.py` agains
 - Phase 2: the audit is `research/van-exterior-2-01-audit.md` (IDs C1–C5, S1–S6, W1–W5, U1–U6, N1–N5); each fix phase takes its section and re-reads its shots against those IDs. The "floating rear wheel" is really the front axle (z -7.25, x ±2.8) standing under the sideless cab (U1). The headlights already light the road (N2): phase 5 keeps those SpotLights. W1 (glossy black side door leaf, `side_door_leaf.gd` `door_body_material()`) belongs to phase 4. Not located yet: the rear step plate (S5), the floating window bars (W4), the diagonal rod (U6), the roof white disc (N5).
 
 - Phase 5: the cab now runs from the hull's -4.72 (back lip, S2 closed) to the face at `NOSE_Z` -8.2; its side skin sits at `profile.outer_x_at(y)` (about 2.54 at the sill). Phase 6: the front wheels (`FRONT_AXLE_Z` -7.25, `WHEEL_X` 2.8) stand outside the cab side and need arches cut into the cab skin in `van_cab_shell.gd` (CabSkin) as well as the hull sill; the cab floor is `CAB_FLOOR_Y` 0.9 and the skin runs down to `BASE_Y` -0.25. Phase 3: C1/S2 no longer apply at the front; what is left is S1, S3, S4, S5, S6. The plow posts use the V-bars' side stance (about ±2.4); they read fine in the lit front shot.
+- Phase 3: the side door leaf still stands about 11 cm proud of the skin inside its new casing (body 0.14 + outer skin 0.035 from the liner) and is glossy black (W1): phase 4 owns the leaf's material; the casing (liner +0.19) now frames it.
 - Phase 6: the body sits at road level (floor y 0, road -0.2), so there is no visible underside: rails show only under the rear doors. U6 was the spare chains on the cab doors (spares moved). Phase 3: S5 (rear step plate) now sits just above the new `RearBumper` (z 4.92, y -0.19..-0.01): check they don't overlap.
