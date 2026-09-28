@@ -1,6 +1,6 @@
 # Van exterior, round two: light it, audit it, fix it
 
-Stage: ready
+Stage: running
 Started: 2026-09-26
 Procedure: `.claude/skills/plan/SKILL.md` (planning loop, then one phase
 per context: "Read PLAN_STATE.md and execute the next phase.").
