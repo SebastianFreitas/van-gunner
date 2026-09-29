@@ -27,6 +27,8 @@ const GAP_Z_MIN := 0.85
 const GAP_Z_MAX := 1.61
 const CLAMP_STEP := 0.6
 const TAPE_STEP := 0.9
+## Least arc distance between a splice band centre and a clamp or marker centre (half lengths + 2 cm).
+const SPLICE_CLEAR := 0.105
 const ROUTE_COUNT := 4
 
 var _router: Router
@@ -38,6 +40,8 @@ var _colors: Array[Material] = []
 var _plan := PackedFloat32Array()
 var _style_seed := 0
 var _clamp_count := 0
+## Centres of the clamps and bands laid so far, for splices to keep clear of.
+var _fixtures: Array[Vector3] = []
 var _used := {}
 var _trunk_l := PackedVector3Array()
 var _trunk_r := PackedVector3Array()
@@ -49,6 +53,7 @@ func rebuild_look(look: VanLook) -> void:
 		child.queue_free()
 	_used.clear()
 	_clamp_count = 0
+	_fixtures.clear()
 
 	_router = Router.new(get_node_or_null(WALLS_PATH) as VanSideWall)
 	_steel = MachineParts.dark(Color(0.18, 0.18, 0.17), 0.8)
@@ -250,14 +255,19 @@ func _furnish(pts: PackedVector3Array, radius: float, clamp_step: float, tape_st
 			var pos := pts[i] + dir * (next_clamp - travelled)
 			var style := int((_style_seed + _clamp_count * 7919) % 3)
 			_router.add_clamp(self, pos, dir, radius, style, _steel, _tie)
+			_fixtures.append(pos)
 			_clamp_count += 1
 			next_clamp += clamp_step
 		while tape_step > 0.0 and next_tape < travelled + seg_len:
-			_router.add_tape_band(self, pts[i] + dir * (next_tape - travelled), dir, radius, _tape, 0.05)
+			var band := pts[i] + dir * (next_tape - travelled)
+			_router.add_tape_band(self, band, dir, radius, _tape, 0.05)
+			_fixtures.append(band)
 			next_tape += tape_step
 		travelled += seg_len
 
 
+## A splice that lands on a clamp or marker band slides along the run clear of it, so their
+## faces never sit in one plane.
 func _splice_route(pts: PackedVector3Array, radius: float, idx: int) -> void:
 	var total := 0.0
 	for i: int in range(pts.size() - 1):
@@ -269,8 +279,17 @@ func _splice_route(pts: PackedVector3Array, radius: float, idx: int) -> void:
 			var seg_len := pts[i].distance_to(pts[i + 1])
 			if seg_len >= 0.01 and travelled + seg_len >= want:
 				var dir := (pts[i + 1] - pts[i]) / seg_len
-				_router.add_tape_band(self, pts[i] + dir * (want - travelled), dir, radius + 0.008,
-						_tape, 0.12)
+				var pos := pts[i] + dir * (want - travelled)
+				for _try: int in range(4):
+					var clear := true
+					for f: Vector3 in _fixtures:
+						if f.distance_to(pos) < SPLICE_CLEAR:
+							pos += dir * SPLICE_CLEAR
+							clear = false
+					if clear:
+						break
+				_router.add_tape_band(self, pos, dir, radius + 0.018, _tape, 0.12)
+				_fixtures.append(pos)
 				break
 			travelled += seg_len
 

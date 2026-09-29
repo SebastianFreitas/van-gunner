@@ -98,7 +98,7 @@ func _build_leaf(hinge: Node3D, mirror: float, is_left_leaf: bool, rng: RandomNu
 
 	var patch_count := rng.randi_range(0, 2)
 	for i: int in range(patch_count):
-		_add_rust_patch(hinge, mirror, rng, plate_mat)
+		_add_rust_patch(hinge, mirror, rng, plate_mat, i)
 
 
 func _add_horizontal_bar(hinge: Node3D, y: float, mirror: float, mat: Material) -> void:
@@ -143,12 +143,16 @@ func _add_chain(hinge: Node3D, mirror: float, y_low: float, y_high: float, mat: 
 				Vector3(0.0, 0.0, rot_z), Vector3(1.0, 1.0, 0.5))
 
 
-func _add_rust_patch(hinge: Node3D, mirror: float, rng: RandomNumberGenerator, mat: Material) -> void:
+## Patch `index` sits 3 cm further out than the one before, so overlapping patches never share a
+## plane (audit FLICKER).
+func _add_rust_patch(hinge: Node3D, mirror: float, rng: RandomNumberGenerator, mat: Material,
+		index: int) -> void:
 	var patch_mesh := BoxMesh.new()
 	patch_mesh.size = Vector3(rng.randf_range(0.3, 0.5), rng.randf_range(0.3, 0.5), 0.012)
 	var patch_x := mirror * rng.randf_range(0.3, 1.6)
 	var patch_y := rng.randf_range(-1.4, -0.3)
-	_spawn(hinge, patch_mesh, mat, Vector3(patch_x, patch_y, LEAF_INNER_Z - 0.02))
+	_spawn(hinge, patch_mesh, mat,
+			Vector3(patch_x, patch_y, LEAF_INNER_Z - 0.02 - 0.03 * index))
 
 
 func _build_bulkhead_corner(bulkhead: Node3D, mirror: float, rng: RandomNumberGenerator,

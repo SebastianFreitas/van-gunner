@@ -53,6 +53,21 @@ func _run() -> void:
 		_fail("could not find van rig at %s" % String(RIG_PATH))
 		return
 
+	var seed_arg := _user_arg("--van-seed=")
+	if seed_arg != "":
+		var look := get_tree().get_first_node_in_group(VanLook.GROUP) as VanLook
+		if look == null:
+			_fail("no VanLook for --van-seed")
+			return
+		look.reroll(int(seed_arg))
+		print("AUDIT van seed %d" % int(seed_arg))
+		for i in range(5):
+			await get_tree().process_frame
+		if _done:
+			return
+	if OS.get_cmdline_user_args().has("--plant-flicker"):
+		_plant_flicker()
+
 	_freeze_machines()
 	collect()
 	var probes: Array = []
@@ -128,6 +143,28 @@ func _run() -> void:
 
 ## Stops every MachineMotion and restores its parts to their rest pose; animated fan, flywheel
 ## and needle poses made FLICKER rows vary from run to run.
+## Value after `prefix` in the user args, or "" when the arg is absent.
+func _user_arg(prefix: String) -> String:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with(prefix):
+			return arg.trim_prefix(prefix)
+	return ""
+
+
+## A known failure so `tools/smoke.py --plant-flicker` can prove strict mode fails: two
+## identical boxes, so every face pair is coplanar.
+func _plant_flicker() -> void:
+	for box_name in ["AuditPlantA", "AuditPlantB"]:
+		var box := MeshInstance3D.new()
+		box.name = box_name
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(0.3, 0.3, 0.3)
+		box.mesh = mesh
+		rig.add_child(box)
+		box.position = Vector3(0.0, 1.6, 0.0)
+	print("AUDIT planted flicker at (0, 1.6, 0)")
+
+
 func _freeze_machines() -> void:
 	for node: Node in get_tree().current_scene.find_children("*", "MachineMotion", true, false):
 		node.set_process(false)

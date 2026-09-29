@@ -25,6 +25,8 @@ const HOP_MIN_Y := 2.2
 const HOP_PAD := 0.05
 
 var _walls: VanSideWall
+## Numbers the parts: a repeated name would become "@MeshInstance3D@N" and hide what it is.
+var _part_count := 0
 
 
 func _init(walls: VanSideWall) -> void:
@@ -117,25 +119,28 @@ func add_clamp(parent: Node3D, pos: Vector3, dir: Vector3, radius: float, style:
 	var w := radius * 2.0 + 0.03
 	match style % 3:
 		0:
-			_add(parent, _box(Vector3(w, w, 0.03)), steel, pos, _facing(dir))
+			_add(parent, _box(Vector3(w, w, 0.03)), steel, pos, _facing(dir), "ClampStrap")
 		1:
-			_add(parent, _cyl(radius + 0.016, 0.03), steel, pos, _facing(dir) * _axis_fix())
+			_add(parent, _cyl(radius + 0.016, 0.03), steel, pos, _facing(dir) * _axis_fix(),
+					"ClampRing")
 		_:
-			_add(parent, _box(Vector3(w - 0.01, w - 0.01, 0.012)), tie, pos, _facing(dir))
+			_add(parent, _box(Vector3(w - 0.01, w - 0.01, 0.012)), tie, pos, _facing(dir),
+					"ClampTie")
 
 
 ## Steel cube where a route joins a trunk, with two terminal studs on its underside.
 func add_junction_box(parent: Node3D, pos: Vector3, steel: Material, dark: Material) -> void:
-	_add(parent, _box(Vector3(0.12, 0.12, 0.12)), steel, pos, Basis.IDENTITY)
+	_add(parent, _box(Vector3(0.12, 0.12, 0.12)), steel, pos, Basis.IDENTITY, "JunctionBox")
 	for sx: float in [-0.03, 0.03]:
-		_add(parent, _cyl(0.012, 0.05), dark, pos + Vector3(sx, -0.085, 0.0), Basis.IDENTITY)
+		_add(parent, _cyl(0.012, 0.05), dark, pos + Vector3(sx, -0.085, 0.0), Basis.IDENTITY,
+				"JunctionStud")
 
 
 ## Short band of tape around a cable; length 0.05 for a marker band, longer for a splice.
 func add_tape_band(parent: Node3D, pos: Vector3, dir: Vector3, radius: float, mat: Material,
 		length: float) -> void:
 	var w := radius * 2.0 + 0.02
-	_add(parent, _box(Vector3(w, w, length)), mat, pos, _facing(dir))
+	_add(parent, _box(Vector3(w, w, length)), mat, pos, _facing(dir), "TapeBand")
 
 
 ## Plug block seated on a machine port; the cable arrives along dir.
@@ -270,8 +275,11 @@ func _cyl(radius: float, height: float) -> CylinderMesh:
 	return mesh
 
 
-func _add(parent: Node3D, mesh: Mesh, mat: Material, pos: Vector3, basis: Basis) -> void:
+func _add(parent: Node3D, mesh: Mesh, mat: Material, pos: Vector3, basis: Basis,
+		part: String = "CablePart") -> void:
 	var mi := MeshInstance3D.new()
+	mi.name = "%s%d" % [part, _part_count]
+	_part_count += 1
 	mi.mesh = mesh
 	mi.material_override = mat
 	mi.transform = Transform3D(basis, pos)

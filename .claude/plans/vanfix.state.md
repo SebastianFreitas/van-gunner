@@ -1,4 +1,4 @@
-Status: phase-done
+Status: plan-done
 # Plan state: vanfix
 
 ## Plan
@@ -119,19 +119,17 @@ rules for the rear sill with a rule-owned `box` `REAR_SILL` (D57) and `Interior/
 EDGE 10, FLICKER 10, LEAK_IN 0, LEAK_OUT 0; MINOR 382. Check, smoke clean; shots read (02-idle-back: ribs hug
 the wall, nothing floating).
 
+16 (partial, session 4 of autoplan run; the runner's brief named phase 13, already done in 237ff1a). Commits d0dd143 (ten by-design EDGE rows exempt, D59) and 4163d7c (casing head 1.5 cm proud of its posts, vent grille straddles the duct end, frame rails end 2 cm before the rear bumper, no weld beads in the belt rail band, D12). Audit: EDGE 0, FLICKER 4 (Vault vs PatchCeil0_Ring, Cables @366/@386, CatchBin Scrap2/Scrap8, Bulkhead TopRail_9/MeshBack_322); EDGE_EXEMPT 22. Check, smoke clean; no shots (offsets under 2 cm). The ceiling ring row is a model mismatch: `van_inner_shell.gd` `_ceiling_y` assumes edge 3.02 / half-span 2.36, the real Ceiling is 3.05 / 2.04 (D60).
+
+16 (done, session 5 of autoplan run). Commits 0a02ce3 (`van_inner_shell.gd` `CEILING_PATH` `../../Interior/Shell/Ceiling`, `_ceiling_y` = `Ceiling.vault_y_at(x) - 0.015`, old constants the fallback, D60) and a0202d6 (cable splice bands `radius + 0.018`, 1.8 cm proud of the 5 cm marker tape; scrap piece 8 +0.015 y; odd bulkhead top rails 0.10 deep, past the weave back face, D12). Audit: `VAN AUDIT CLEAN`, EDGE 0, FLICKER 0, LEAK_IN 0, LEAK_OUT 0; INFO FLICKER_MINOR 390, EDGE_EXEMPT 22, FLICKER_EXEMPT 31, LEAK_OUT_EXEMPT 11. Check, smoke clean; shots read (01-idle-front, 02-idle-back: ceiling ribs hug the vault, bulkhead unchanged to the eye).
+
+17 (done, session 6 of autoplan run; the runner's brief named phase 13 again). Commit 7f471b0: `tools/van_audit.py` takes `--van-seed N` and `--plant-flicker`, and `run()` is importable; `tools/smoke.py` runs the strict audit after a clean headless run (about 90 s total) and `--plant-flicker` proves it fails (verified: exit 1). Seeds 1337, 1, 2 audit clean after fixes: roof cans pitch 0.39 m, max 3 per cell (D27); ram bar mounts `_mount_z` NOSE_Z - 0.08 (6 cm, 2 cm hit the grille slats); rear rust patches stepped 3 cm in z; wall patches skip the cargo/belt rail bands; cable splices slide clear of clamps and marker bands and router parts are named; D61 exempts rays through the side door's 2 cm slide clearance. Door-adjacent windows were already posed apart (`win_half`/`win_open`, D23). Check, smoke clean; shots read (v19 roof, v08 seed 1, 02-idle-back).
+
 ## Blocker
 none
 
 ## Next phase
-Phase 16 (EDGE rows and FLICKER leftovers). EDGE input: `Cab/CabLiner` (78, bottom edge y -0.222 z -4.72,
-5 m), `Cab/CabBackLip` (31), `Hull/RearSkin` (2), `Hull/CornerPostFL/FR` (12 each), `Hull/BellySkin` (2),
-`RearWall/Left|RightHinge/CurvedBody` (100 each), `Hull/RearCornerL/R` (1 each). FLICKER leftovers:
-CasingLeft/Right vs CasingHead, Vault vs PatchCeil0_Ring, Cables @366/@386, FrameRailL/R vs RearBumper,
-CatchBin Scrap2/Scrap8, VentDuct vs VentGrille, Bulkhead TopRail_9 vs MeshBack_322, and new with D58
-`SideWalls/BeltRail_R_1` vs `InnerShell/WallRibR4_Weld3` (0.0052 m2 at y ~1.5, z 1.35: the weld bead is
-0.07 across a 0.03 rib, so it pokes 2 cm into the wall and meets the belt rail's horizontal faces; trim
-the bead's wall side or skip beads inside the belt rail band). Then 17 (strict in smoke).
-No phase question stops (Questions: auto).
+None: Stage done. Look at (owner-delegated): D47, D49, D50, D53, D54, D55, D58, D59, D60, D61 (side door slit exempt instead of a seal), plus the 6 cm ram bar move and at most 3 roof cans per cell.
 
 ## Requirements / gotchas
 - Animated machine parts are frozen at rest in the audit (D48). Row presence uses `total`, not per-pair cuts (D51).

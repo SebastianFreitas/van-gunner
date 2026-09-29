@@ -4,8 +4,9 @@ extends Node3D
 ## walls and welded patches over bullet holes, dressing the inside of the van shell.
 
 const WALL_PATH := ^"../../Interior/Shell/SideWalls"
+const CEILING_PATH := ^"../../Interior/Shell/Ceiling"
 
-const RIB_Z0 := -4.05
+const RIB_Z0:= -4.05
 const RIB_STEP := 1.35
 const RIB_COUNT := 7
 const CEIL_SEGMENTS := 8
@@ -35,6 +36,12 @@ const RING_PROUD := 0.015
 ## Weld ring's back face, 5 mm behind the liner; shallow so it stays clear of the vault/wall's
 ## far face.
 const RING_BURY := 0.005
+## Belt rail height, mirrors VanSideWall._add_cargo_rails (1.52, 0.06 section); weld beads
+## within 2 cm of it are skipped so their faces do not meet the rail's (vanfix D12).
+const BELT_RAIL_Y := 1.52
+## Cargo tie rail height, mirrors VanSideWall._add_cargo_rails (0.72, same 0.06 section).
+const CARGO_RAIL_Y := 0.72
+const BELT_RAIL_HALF := 0.03
 ## Patch face 2 cm proud of the ring face so it does not z-fight it.
 const PATCH_PROUD := 0.035
 ## Patch back face, metres behind the liner (negative: it sits on the ring's front face, 2 cm
@@ -44,6 +51,7 @@ const PATCH_BURY := -0.015
 const _Fit := preload("res://scripts/van/look/van_inner_shell_fit.gd")
 
 var _wall: VanSideWall
+var _ceiling: Node
 var _weld_bead_mesh: BoxMesh
 var _fit: RefCounted = _Fit.new(self)
 ## Side (float) -> Array[Rect2] of the plate rects (z, y) placed on it.
@@ -57,6 +65,7 @@ func rebuild_look(look: VanLook) -> void:
 	_placed_plates = {}
 
 	_wall = get_node_or_null(WALL_PATH) as VanSideWall
+	_ceiling = get_node_or_null(CEILING_PATH)
 	_weld_bead_mesh = BoxMesh.new()
 	# 2 cm proud of the rib's 0.03 faces either way it runs, buried in its 0.07 depth
 	_weld_bead_mesh.size = Vector3(0.07, 0.07, 0.03)
@@ -90,7 +99,11 @@ func _ceiling_inset(x: float, d: float) -> float:
 	return _ceiling_y(x) + 0.015 - d
 
 
+## Follows the real Ceiling node's vault (its exports, so build order does not matter); the old
+## constants are only the fallback when the node is missing.
 func _ceiling_y(x: float) -> float:
+	if _ceiling != null and _ceiling.has_method(&"vault_y_at"):
+		return float(_ceiling.call(&"vault_y_at", x)) - 0.015
 	return 3.02 + 0.38 * (1.0 - pow(x / 2.36, 2.0)) - 0.015
 
 
@@ -146,7 +159,7 @@ func _build_rib_chain(pts: PackedVector3Array, base_name: String, mat: Material)
 		var a: Vector3 = pts[i]
 		var b: Vector3 = pts[i + 1]
 		_add_rib_segment(a, b, "%s_%d" % [base_name, i], mat)
-		if i > 0:
+		if i > 0 and absf(a.y - BELT_RAIL_Y) > BELT_RAIL_HALF + 0.035 + RIB_CLEAR:
 			_add_mesh("%s_Weld%d" % [base_name, i], _weld_bead_mesh, mat, a)
 
 
@@ -242,6 +255,10 @@ func _build_wall_patch(rng: RandomNumberGenerator, idx: int, patch_mat: Material
 		if _in_span(z, DOOR_Z_MIN, DOOR_Z_MAX):
 			continue
 		if y > 1.05 and _in_window_span(z):
+			continue
+		# The ring must not lie on the cargo rail (0.72) or the belt rail.
+		var ring_reach := r + 0.015 + BELT_RAIL_HALF + RIB_CLEAR
+		if absf(y - CARGO_RAIL_Y) < ring_reach or absf(y - BELT_RAIL_Y) < ring_reach:
 			continue
 		if not _fit.clear_of_ribs(z - (r + 0.015), z + (r + 0.015)):
 			continue

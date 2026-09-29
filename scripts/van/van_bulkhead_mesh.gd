@@ -133,7 +133,7 @@ func add_curved_header(inner_x: float, outer_x: float, material: Material) -> vo
 			continue
 		# Box local +X is the long axis for the rail — rotate from +X onto the vault tangent.
 		var angle := atan2(dy, dx)
-		var depth: float = bulkhead.frame_depth - RAIL_DEPTH_INSET - (0.04 if i % 2 == 1 else 0.0)
+		var depth: float = bulkhead.frame_depth - RAIL_DEPTH_INSET - (-0.01 if i % 2 == 1 else 0.0)
 		bulkhead._add_box(
 			"TopRail_%d" % i,
 			Vector3(length + 0.008, bulkhead.frame_thickness, depth),

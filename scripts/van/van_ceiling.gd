@@ -156,7 +156,8 @@ func _build_vent_duct() -> void:
 	var grille_y := _vault_surface_y(grille_z, duct_x) - 0.05
 	_add_box(
 		"VentGrille",
-		Vector3(0.16, 0.06, 0.018),
+		# 3 cm deep, centred on the duct end, so its faces are 1.5 cm off the duct's (vanfix D12)
+		Vector3(0.16, 0.06, 0.03),
 		Vector3(duct_x, grille_y, grille_z),
 		grille_mat
 	)

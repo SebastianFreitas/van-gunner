@@ -14,10 +14,27 @@ const OPENING: Dictionary = {
 
 ## FLICKER rows match when (a, b) or the swap match both globs; EDGE and LEAK_OUT rows use only "a";
 ## LEAK_OUT rules need the hit inside a side opening, or inside the rule's own rig-local "box"
-## (an AABB) when it has one.
+## (an AABB) when it has one. A rule with "entry" (Array of AABB) instead exempts a ray whose
+## path from the camera to its hit passes through one of them. It matches any node, so it goes LAST
+## (rule_for returns the first match).
 ## Globs are String.match() patterns against the node path as printed in the report.
 ## The rear sill: deck end and step ramp under the rear doors, rig-local (D57).
 const REAR_SILL := AABB(Vector3(-2.5, -0.4, 4.5), Vector3(5.0, 0.5, 0.9))
+## The side door's leaf-to-jamb slide clearance slits on both sides, padded 1 cm around the 2 cm
+## gap (D12, D61): the leaf (DOOR_HALF_Z 1.105 in side_door_leaf.gd, JAMB_CLEAR 0.02) sits inside
+## the jamb lip (van_side_wall.gd door_center_z -3.42, door_half_length 1.235, door_jamb_inset
+## 0.11: lip z -2.295 / -4.545, y 0.13 / 2.94). x spans the lip's outer face at +-2.60.
+## Order per side: rear, front, bottom, top.
+const DOOR_SLITS: Array[AABB] = [
+	AABB(Vector3(2.30, 0.02, -2.325), Vector3(0.5, 3.03, 0.04)),
+	AABB(Vector3(2.30, 0.02, -4.555), Vector3(0.5, 3.03, 0.04)),
+	AABB(Vector3(2.30, 0.12, -4.555), Vector3(0.5, 0.04, 2.27)),
+	AABB(Vector3(2.30, 2.91, -4.555), Vector3(0.5, 0.04, 2.27)),
+	AABB(Vector3(-2.80, 0.02, -2.325), Vector3(0.5, 3.03, 0.04)),
+	AABB(Vector3(-2.80, 0.02, -4.555), Vector3(0.5, 3.03, 0.04)),
+	AABB(Vector3(-2.80, 0.12, -4.555), Vector3(0.5, 0.04, 2.27)),
+	AABB(Vector3(-2.80, 2.91, -4.555), Vector3(0.5, 0.04, 2.27)),
+]
 const RULES: Array[Dictionary] = [
 	{
 		"section": "FLICKER", "a": "Interior/Bulkhead/KickPlate_*",
@@ -49,6 +66,37 @@ const RULES: Array[Dictionary] = [
 		"section": "EDGE", "a": "VanLook/Hull/SideSkin*", "b": "", "d": "D17",
 		"reason": "the side skin owns only the outer layer, no inner face; "
 			+ "its returns meet the wall's",
+	},
+	{
+		"section": "EDGE", "a": "VanLook/Cab/CabLiner", "b": "", "d": "D59",
+		"reason": "the cab liner's back rim ends inside the cab back wall at the body seam",
+	},
+	{
+		"section": "EDGE", "a": "VanLook/Cab/CabBackLip", "b": "", "d": "D59",
+		"reason": "the back lip is a single-sided trim band; its rims sit on the body and "
+			+ "cab skins",
+	},
+	{
+		"section": "EDGE", "a": "VanLook/Hull/RearSkin", "b": "", "d": "D59",
+		"reason": "the rear skin's bottom seam sits below the sill, closed by the rear corners",
+	},
+	{
+		"section": "EDGE", "a": "VanLook/Hull/CornerPostF*", "b": "", "d": "D59",
+		"reason": "the front corner posts' top end caps meet the roof edge; no ray sees through",
+	},
+	{
+		"section": "EDGE", "a": "VanLook/Hull/BellySkin", "b": "", "d": "D59",
+		"reason": "the belly skin is a single plate under the deck; its rear edge is under "
+			+ "the sill",
+	},
+	{
+		"section": "EDGE", "a": "Interior/Shell/RearWall/*Hinge/CurvedBody", "b": "", "d": "D59",
+		"reason": "the rear leaf body's short open edges sit under its frame, hardware and "
+			+ "window frame; the leak rays find no see-through",
+	},
+	{
+		"section": "EDGE", "a": "VanLook/Hull/RearCorner*", "b": "", "d": "D59",
+		"reason": "the rear corner strip's end sits on the sill top under the rear skin",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/DoorJamb_*", "b": "", "d": "D54",
@@ -84,6 +132,10 @@ const RULES: Array[Dictionary] = [
 		"section": "LEAK_OUT", "a": "Interior/Shell/Floor/Deck", "b": "", "d": "D57",
 		"box": REAR_SILL,
 		"reason": "the deck's end face is the rear sill under the rear doors",
+	},
+	{
+		"section": "LEAK_OUT", "a": "*", "b": "", "d": "D61", "entry": DOOR_SLITS,
+		"reason": "ray enters through the side door's 2 cm leaf-to-jamb slide clearance (D12)",
 	},
 ]
 

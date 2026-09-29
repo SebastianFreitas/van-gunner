@@ -65,7 +65,8 @@ func rebuild() -> void:
 	_add_box(
 		"CasingHead",
 		Vector3(2.0 * DOOR_HALF_W + 2.0 * CASING_W, CASING_W, CASING_DEPTH),
-		Vector3(0.0, DOOR_TOP_Y + CASING_W * 0.5, casing_z),
+		# 1.5 cm proud of the posts so their coplanar faces do not z-fight (vanfix D12)
+		Vector3(0.0, DOOR_TOP_Y + CASING_W * 0.5, casing_z + 0.015),
 		trim_mat
 	)
 

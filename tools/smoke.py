@@ -10,7 +10,9 @@ Error or ERROR:, on a non-zero exit, on a timeout, or if the run does not log
 The run writes a deterministic fingerprint of class stats, loot pools, the
 act deck and wave plans to tools/smoke/fingerprint.txt. Without `--bless`,
 this is diffed against the committed tools/smoke/fingerprint.baseline.txt;
-with `--bless`, the baseline is overwritten after a clean run.
+with `--bless`, the baseline is overwritten after a clean run. The headless run then
+also runs `tools/van_audit.py --strict` (about 50 s) and fails on any audit finding;
+`--plant-flicker` plants a coplanar box pair in the audit to prove it fails.
 
 `--shots DIR` plays the same run in a real window instead of headless, since
 headless Godot renders nothing, and saves PNGs to DIR at four checkpoints (idle,
@@ -36,6 +38,7 @@ import sys
 import time
 
 import hidden_desktop
+import van_audit
 from godot_env import godot_exe, project_lock, seed_import_cache, stamp_clean
 
 
@@ -51,6 +54,18 @@ FINGERPRINT = ROOT / "tools" / "smoke" / "fingerprint.txt"
 BASELINE = ROOT / "tools" / "smoke" / "fingerprint.baseline.txt"
 
 
+def _audit_ok(opts: argparse.Namespace) -> bool:
+    """Runs the van audit in strict mode; it takes its own project lock."""
+    code = van_audit.run(
+        ROOT / ".godot" / "van_audit" / "report.txt", strict=True,
+        timeout=TIMEOUT_SECONDS, plant_flicker=opts.plant_flicker,
+    )
+    if code != 0:
+        print("SMOKE FAILED: van audit (strict) failed; report at .godot/van_audit/report.txt")
+        return False
+    return True
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -64,7 +79,15 @@ def main() -> int:
         "--van-seeds", type=int, default=0, metavar="N",
         help="with --shots: also shoot the van's side view for N rerolled look seeds at IDLE",
     )
+    parser.add_argument(
+        "--plant-flicker", action="store_true",
+        help="plant a coplanar box pair in the audit to prove the strict audit fails",
+    )
     opts = parser.parse_args()
+
+    if opts.plant_flicker and opts.shots:
+        print("SMOKE FAILED: --plant-flicker needs the headless run")
+        return 1
 
     if opts.bless and opts.shots:
         print("SMOKE FAILED: --bless and --shots don't mix; bless from a headless run")
@@ -167,6 +190,8 @@ def main() -> int:
     if opts.bless:
         BASELINE.write_bytes(FINGERPRINT.read_bytes())
         print("BASELINE WRITTEN")
+        if shots is None and not _audit_ok(opts):
+            return 1
         stamp_clean(ROOT, "smoke", started)
         print("SMOKE CLEAN")
         return 0
@@ -188,6 +213,8 @@ def main() -> int:
         print("SMOKE FAILED: fingerprint differs from baseline")
         return 1
 
+    if shots is None and not _audit_ok(opts):
+        return 1
     stamp_clean(ROOT, "smoke", started)
     if shots is not None:
         pngs = sorted(shots.glob("*.png"))

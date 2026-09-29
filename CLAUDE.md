@@ -135,7 +135,7 @@ Every code change goes to `implementer`, one task per call, one file per call un
 In worktree and cloud mode the Stop hook refuses to end a turn whose Godot changes are newer than the last clean run of what they need.
 
 - Any `.gd`, `.tscn`, `.tres`, `.gdshader` or `project.godot` change: `py -3 tools/check.py` (import scan, a load of every script and resource, and a debugger pass that fails on any GDScript warning; about 15 s warm).
-- Anything under `scripts/`, `scenes/`, `resources/` or `tools/smoke/`, or `project.godot`: also `py -3 tools/smoke.py` (about 40 s).
+- Anything under `scripts/`, `scenes/`, `resources/` or `tools/smoke/`, or `project.godot`: also `py -3 tools/smoke.py` (about 90 s: the run, then `tools/van_audit.py --strict`, which fails smoke on any van audit finding).
 - The van's scenes (`scenes/van/`, `scenes/ui/run_hud.tscn`): also `py -3 tools/scene_dump.py`.
 - Anything visible (models, materials, shaders, facades, lighting, HUD): `py -3 tools/smoke.py --shots <scratchpad>/shots`, then Read the PNGs yourself before reporting. At IDLE, in combat, at the elevator stop and at the rear-park stop it saves three views: what the player sees, the player turned to the rear doors, and a camera above the cab looking back over the van at the street, raiders or stop (UI hidden in the last two). On Windows it runs Godot on a separate hidden Win32 desktop (`tools/hidden_desktop.py`), so no window ever appears on, takes focus from, or alt-tabs the owner out of what they are doing (they play fullscreen games while sessions verify); Windows desktop only. Never launch a windowed Godot any other way.
 - `--bless` only when a change is meant to alter the fingerprint or the van tree; say so in the report.

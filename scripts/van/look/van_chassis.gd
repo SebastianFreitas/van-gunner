@@ -313,8 +313,8 @@ func _build_spare(side: float, label: String, rubber: Material, mat: Material, z
 func _build_rear_bumper(mat: Material) -> void:
 	for side: float in [-1.0, 1.0]:
 		var letter := "L" if side < 0.0 else "R"
-		_wheels._add_mesh("FrameRail%s" % letter, _wheels._box(Vector3(0.16, 0.14, 1.0)), mat,
-				Vector3(side * 1.05, -0.12, 4.4))
+		_wheels._add_mesh("FrameRail%s" % letter, _wheels._box(Vector3(0.16, 0.14, 0.92)), mat,
+				Vector3(side * 1.05, -0.12, 4.36)) # ends 2 cm before the bumper (vanfix D12)
 		_wheels._add_mesh("BumperHanger%s" % letter, _wheels._box(Vector3(0.06, 0.14, 0.18)), mat,
 				Vector3(side * 1.02, -0.10, 4.79))
 		_wheels._add_mesh("BumperCap%s" % letter, _wheels._box(Vector3(0.06, 0.2, 0.2)), mat,

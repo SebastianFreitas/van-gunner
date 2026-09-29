@@ -116,6 +116,8 @@ func build_bin() -> void:
 				rng.randf_range(0.05, 0.12))
 		var pos := Vector3(rng.randf_range(-0.28, 0.28), 0.03 + size.y * 0.5,
 				rng.randf_range(-0.12, 0.12))
+		if i == 8:
+			pos.y += 0.015 # clear of Scrap2's face plane (audit flicker gap)
 		var heap := _box(bin, "Scrap%d" % i, _black if i % 3 == 0 else _steel, pos, size)
 		heap.rotation = Vector3(tilt.randf_range(-0.3, 0.3), rng.randf_range(0.0, PI),
 				tilt.randf_range(-0.3, 0.3))

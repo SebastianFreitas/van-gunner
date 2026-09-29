@@ -129,6 +129,8 @@ func check_leaks_outside(tris: RefCounted, runner: Node, opening_boxes: Dictiona
 				var inside := false
 				if rule.has("box"):
 					inside = (rule.box as AABB).has_point(hit.pos)
+				elif rule.has("entry"):
+					inside = _enters_through(origin, hit.pos, rule.entry)
 				else:
 					inside = _in_opening(hit.pos, opening_boxes)
 				if not rule.is_empty() and inside:
@@ -168,6 +170,14 @@ func _emit_rows(runner: Node, section: String, agg: Dictionary) -> void:
 		if row.has("d"):
 			text += " rule=%s" % row.d
 		runner.add_finding(section, text)
+
+
+## True when the ray's path from the camera to the hit passes through one of the entry boxes.
+func _enters_through(from: Vector3, to: Vector3, entries: Array) -> bool:
+	for entry: AABB in entries:
+		if entry.intersects_segment(from, to):
+			return true
+	return false
 
 
 func _in_opening(p: Vector3, boxes: Dictionary) -> bool:

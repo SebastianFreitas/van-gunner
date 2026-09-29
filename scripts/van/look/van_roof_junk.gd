@@ -89,9 +89,13 @@ func _cans(center: Vector3, rng: RandomNumberGenerator) -> void:
 	var n := rng.randi_range(2, 4)
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(0.18, 0.45, 0.34)
-	var span := (n - 1) * 0.22
+	# Pitch = can depth + 2 cm gap + slack for the +-8 degree yaw (D12); a 4th can no
+	# longer fits the 1.25 m cell, so it is dropped (D27).
+	var pitch := 0.39
+	n = mini(n, 3)
+	var span := (n - 1) * pitch
 	for i: int in range(n):
-		var pos := center + Vector3(0.0, 0.225, -span * 0.5 + i * 0.22)
+		var pos := center + Vector3(0.0, 0.225, -span * 0.5 + i * pitch)
 		var can := _roof.add_mesh(_next_name("JunkCan"), mesh, _mat(&"can", Color()), pos)
 		can.rotation_degrees.y = rng.randf_range(-8.0, 8.0)
 

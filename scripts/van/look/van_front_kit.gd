@@ -35,7 +35,8 @@ func _bumper(mat: Material) -> void:
 func _mount_z(y: float) -> float:
 	if y <= VanCab.BUMPER_TOP_Y + 0.01:
 		return VanCab.BUMPER_FRONT_Z
-	return VanCab.NOSE_Z - 0.02
+	# Rail faces (0.07 thick) then clear the cab face, grille back and slat planes by 1.5 cm+ (D12).
+	return VanCab.NOSE_Z - 0.08
 
 
 func _ram(kind: StringName, mat: Material, rng: RandomNumberGenerator) -> void:
