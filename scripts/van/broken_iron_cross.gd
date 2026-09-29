@@ -65,21 +65,21 @@ func _build() -> void:
 	var rivet_mat := _rivet_material()
 	var z := bar_depth * 0.5
 	var pad_depth := bar_depth * 1.15
-	var pad_z := pad_depth * 0.5
+	var pad_z := 0.015 + pad_depth * 0.5
 	var half_w := span_width * 0.5 - end_pad_size * 0.15
 	var half_h := span_height * 0.5 - end_pad_size * 0.15
 
 	# Frame mounts stay — bars snap off inward of these.
-	_add_box("EndPad", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(half_w, 0.0, pad_z), iron)
-	_add_box("EndPad", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(-half_w, 0.0, pad_z), iron)
+	_add_box("EndPadR", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(half_w, 0.0, pad_z), iron)
+	_add_box("EndPadL", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(-half_w, 0.0, pad_z), iron)
 	_add_box(
-		"EndPad",
+		"EndPadT",
 		Vector3(end_pad_size * 0.85, end_pad_size, pad_depth),
 		Vector3(0.0, half_h, pad_z + _curve_z(half_h)),
 		iron
 	)
 	_add_box(
-		"EndPad",
+		"EndPadB",
 		Vector3(end_pad_size * 0.85, end_pad_size, pad_depth),
 		Vector3(0.0, -half_h, pad_z + _curve_z(-half_h)),
 		iron

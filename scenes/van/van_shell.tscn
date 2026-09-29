@@ -109,7 +109,7 @@ metallic = 0.7
 roughness = 0.45
 
 [sub_resource type="BoxMesh" id="RearWindowGlassMesh"]
-size = Vector3(1.8, 1.36, 0.04)
+size = Vector3(1.8, 1.36, 0.016)
 
 [sub_resource type="BoxShape3D" id="RearWindowGlassShape"]
 size = Vector3(1.88, 1.44, 0.22)
@@ -745,7 +745,7 @@ depth = 0.28
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.315, 0.225, 0.02)
 
 [node name="Outer" type="CSGPolygon3D" parent="RearWall/LeftHinge/WindowFrame" unique_id=54160015]
-polygon = PackedVector2Array(-0.86, -0.845, -1, -0.76, -1.07, -0.62, -1.07, 0.62, -1, 0.76, -0.86, 0.845, 0.86, 0.845, 1, 0.76, 1.07, 0.62, 1.07, -0.62, 1, -0.76, 0.86, -0.845)
+polygon = PackedVector2Array(-0.86, -0.845, -1, -0.76, -1.04, -0.62, -1.04, 0.62, -1, 0.76, -0.86, 0.845, 0.86, 0.845, 1, 0.76, 1.04, 0.62, 1.04, -0.62, 1, -0.76, 0.86, -0.845)
 depth = 0.05
 material = SubResource("RearWindowFrameMaterial")
 
@@ -830,7 +830,7 @@ depth = 0.28
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.315, 0.225, 0.02)
 
 [node name="Outer" type="CSGPolygon3D" parent="RearWall/RightHinge/WindowFrame" unique_id=278585995]
-polygon = PackedVector2Array(-0.86, -0.845, -1, -0.76, -1.07, -0.62, -1.07, 0.62, -1, 0.76, -0.86, 0.845, 0.86, 0.845, 1, 0.76, 1.07, 0.62, 1.07, -0.62, 1, -0.76, 0.86, -0.845)
+polygon = PackedVector2Array(-0.86, -0.845, -1, -0.76, -1.04, -0.62, -1.04, 0.62, -1, 0.76, -0.86, 0.845, 0.86, 0.845, 1, 0.76, 1.04, 0.62, 1.04, -0.62, 1, -0.76, 0.86, -0.845)
 depth = 0.05
 material = SubResource("RearWindowFrameMaterial")
 

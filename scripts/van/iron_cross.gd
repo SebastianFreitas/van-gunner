@@ -138,7 +138,8 @@ func _build() -> void:
 	_add_vertical_bar(z - TRIM_LIFT, iron)
 
 	# Center weld plate — thicker, sits proud of the bars.
-	var plate_z := z + (plate_depth - bar_depth) * 0.5 + 0.008
+	# Back face 2 cm inside both bars so it never shares a depth plane with either.
+	var plate_z := 0.02 + plate_depth * 0.5
 	_add_center_plate(plate_z, iron)
 
 	# Four rivets on the plate corners.
@@ -154,19 +155,20 @@ func _build() -> void:
 
 	# Mounting pads where bars meet the frame.
 	var pad_depth := bar_depth * 1.15
-	var pad_z := pad_depth * 0.5
+	# Back face 1.5 cm inside the bar's back face, so the pad's faces clear the bar's.
+	var pad_z := 0.015 + pad_depth * 0.5
 	var half_w := span_width * 0.5 - PAD_END_CLEAR - end_pad_size * 0.5
 	var half_h := span_height * 0.5 - PAD_END_CLEAR - end_pad_size * 0.5
-	_add_box("EndPad", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(half_w, 0.0, pad_z), iron)
-	_add_box("EndPad", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(-half_w, 0.0, pad_z), iron)
+	_add_box("EndPadR", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(half_w, 0.0, pad_z), iron)
+	_add_box("EndPadL", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(-half_w, 0.0, pad_z), iron)
 	_add_box(
-		"EndPad",
+		"EndPadT",
 		Vector3(end_pad_size * 0.85, end_pad_size, pad_depth),
 		Vector3(0.0, half_h, pad_z + _curve_z(half_h)),
 		iron
 	)
 	_add_box(
-		"EndPad",
+		"EndPadB",
 		Vector3(end_pad_size * 0.85, end_pad_size, pad_depth),
 		Vector3(0.0, -half_h, pad_z + _curve_z(-half_h)),
 		iron

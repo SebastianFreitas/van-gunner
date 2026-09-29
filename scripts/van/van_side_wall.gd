@@ -244,10 +244,10 @@ func _add_door_slide_tracks(mat: Material) -> void:
 		var track := MeshInstance3D.new()
 		track.name = "DoorSlideTrack_%s" % ("L" if wall_sign < 0.0 else "R")
 		var box := BoxMesh.new()
-		box.size = Vector3(0.06, 0.085, length)
+		box.size = Vector3(0.075, 0.085, length)
 		track.mesh = box
 		track.material_override = mat
-		track.position = Vector3(wall_sign * (x - wall_sign * 0.035), track_y, z_mid)
+		track.position = Vector3(wall_sign * (x - wall_sign * 0.0225), track_y, z_mid)
 		track.rotation.z = wall_sign * lean
 		track.layers = VanLighting.LAYER_VAN_INTERIOR
 		track.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
@@ -284,12 +284,12 @@ func _add_floor_seal_strips(mat: Material) -> void:
 
 func _add_cargo_rails(mat: Material) -> void:
 	# Lower tie rail sits under the windows — run full length except the door bay.
-	_add_rail_segments(mat, 0.72, _solid_z_ranges_below_windows())
+	_add_rail_segments(mat, 0.72, _solid_z_ranges_below_windows(), "CargoRail")
 	# Mid belt rail only on solid spans between openings.
-	_add_rail_segments(mat, 1.52, _solid_z_ranges_mid())
+	_add_rail_segments(mat, 1.52, _solid_z_ranges_mid(), "BeltRail")
 
 
-func _add_rail_segments(mat: Material, rail_y: float, ranges: Array) -> void:
+func _add_rail_segments(mat: Material, rail_y: float, ranges: Array, prefix: String) -> void:
 	var x := _profile_x(rail_y)
 	var lean := lean_angle_at(rail_y)
 	var idx := 0
@@ -302,13 +302,13 @@ func _add_rail_segments(mat: Material, rail_y: float, ranges: Array) -> void:
 		var z_mid := (z0 + z1) * 0.5
 		for wall_sign in [-1.0, 1.0]:
 			var rail := MeshInstance3D.new()
-			rail.name = "CargoRail_%s_%d" % ["L" if wall_sign < 0.0 else "R", idx]
+			rail.name = "%s_%s_%d" % [prefix, "L" if wall_sign < 0.0 else "R", idx]
 			var box := BoxMesh.new()
-			box.size = Vector3(0.045, 0.06, length)
+			box.size = Vector3(0.06, 0.06, length)
 			rail.mesh = box
 			rail.material_override = mat
-			# Sit just proud of the interior face.
-			rail.position = Vector3(wall_sign * (x - wall_sign * 0.025), rail_y, z_mid)
+			# 1.5 cm into the wall, 4.5 cm proud: embedded so the faces never z-fight.
+			rail.position = Vector3(wall_sign * (x - wall_sign * 0.015), rail_y, z_mid)
 			rail.rotation.z = wall_sign * lean
 			rail.layers = VanLighting.LAYER_VAN_INTERIOR
 			rail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON

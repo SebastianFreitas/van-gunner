@@ -4813,7 +4813,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/WindowFrame/O
   collision_mask=1
   collision_priority=1.0
   flip_faces=false
-  polygon=<PackedVector2Array len=166 md5=2a901914e267b25c7591e7938f053db4>
+  polygon=<PackedVector2Array len=166 md5=3fb971de06c2591c0dfa685210fe63b9>
   mode=0
   depth=0.05
   smooth_faces=false
@@ -4898,7 +4898,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/WindowGlass M
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#21{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(1.8, 1.36, 0.04), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#21{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(1.8, 1.36, 0.016), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -5452,7 +5452,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/WindowFrame/
   collision_mask=1
   collision_priority=1.0
   flip_faces=false
-  polygon=<PackedVector2Array len=166 md5=2a901914e267b25c7591e7938f053db4>
+  polygon=<PackedVector2Array len=166 md5=3fb971de06c2591c0dfa685210fe63b9>
   mode=0
   depth=0.05
   smooth_faces=false

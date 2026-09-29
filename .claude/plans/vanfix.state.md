@@ -41,30 +41,36 @@ Status: partial
 - Caps: `rear_doors.gd`, `van_side_wall_shell.gd` at 400 lines; split before adding.
 
 ## Completed phase
-Phase 5 in progress. Autoplan session 2 landed 5febd43: (d) rear dressing done (bars and beads
-0.08 at `BAR_Z` -0.09, 1.5 cm into the leaf, `BAR_Y_LOW` -1.12 below the Handle; one straddling
-box per lock bracket at `LOCK_BAR_Z` -0.10); floor decals at `DECAL_LIFT` 0.012 (D42); generator
-drip pan a flanged tray (`_skid`, rims 3 cm standing in it, puddle embedded; 1.5 cm open corners).
-Earlier: 06ed1ec (D38-D41), D35-D37 (258d238..a937e13).
-Audit now: CLIP 0, EDGE 23, FLICKER 525 (all `closed`), LEAK_IN 1, LEAK_OUT 40, OPENING 0.
-FLICKER groups (rows; intra-prop ones are details of builders in `scripts/van/look/`):
+Phase 5 in progress. Session 3: 210c157 (side rails/tracks 1.5 cm into the liner, mid rails
+`BeltRail_*`, jamb ring `thickness - 0.024`), 32a481d (iron cross plate/pads `EndPadL/R/T/B` into
+the bars, rear glass 1.6 cm, frame `Outer` x ±1.04, dump blessed). Before: 5febd43, 06ed1ec.
+Audit now: CLIP 0, EDGE 23, FLICKER 508 (±4 run to run), LEAK_IN 1, LEAK_OUT 45, OPENING 0.
+FLICKER groups left (intra-prop ones are details of builders in `scripts/van/look/`):
 Generator self 78, Welder self 72, PcRig self 56, Hopper self 53, CabRelay Rack self 45,
-KickPlate_0..5 vs Generator 49, FrontWall/Slab vs Rack 11 / PcRig 4, SideWalls self 8 (LeftWall
-vs CargoRail_L_*, Wall vs DoorJamb 82 pairs, DoorSlideTrack), RearWall IronCross (HorizontalBar
-vs CenterPlate/EndPad, in van_shell.tscn), CurvedBody vs WindowFrame, WindowFrame vs WindowGlass,
-cable strands (@Node3D@375 Strand7, @448/@444/@418 strand pairs), WallRib vs Plate 16,
-PatchWall/Ceil _Ring vs patch 10, wall posts vs CargoRail/FloorSeal, RearEntryRamp vs BumperHanger.
+KickPlate_0..5 vs Generator 49, FrontWall/Slab vs Rack 11 / PcRig 4, cable strands (@375 Strand7,
+@448/@444/@418 strand pairs), WallRib vs Plate 16, PatchWall/Ceil _Ring vs patch 10, Bulkhead
+TopRail vs TopRail_7..9 / MidPost, RearEntryRamp and RightHinge/CurvedBody vs BumperHanger, new
+`CargoRail_R_0` vs `VanLook/Wheels/FlareR1/R2` (rail now reaches into the wall where the flare is).
+Side-wall leftovers: `DoorJamb_L/R` vs Left/RightWall (41 pairs: the wall panel's inner face runs
+3.9 cm into the bay at its front edge, z -4.655..-4.616, under the jamb lip's inner face; fix by
+dropping the jamb's inner-face triangles there, not by `x_shift`, which makes the jamb hit
+`SideDoors/*/CurvedBody`); `DoorJamb_R` vs `FrontWall/Slab` (narrowing `_inner_poly` hz hit the
+door leaves too); `FloorSeal_L/R` vs `Bulkhead/*WallPost_0`, vs `RightWallReveals`, vs
+`RightHinge/CurvedBody` (seal untouched so far).
 Get the list: group `^FLICKER` rows by a=/b= prefix (awk over the report).
-- LEAK_OUT 40, LEAK_IN 1 (through=nothing at (2.706, 1.158, -1.382)), EDGE 23: not triaged yet.
+- LEAK_OUT 45 (was 40; the +5 are 1-3 ray rows through the rear-door centre seam at x ≈ 0 onto
+  Bulkhead/CabDoor, likely noise, check against the frame shrink), LEAK_IN 1 (through=nothing at
+  (2.706, 1.158, -1.382)), EDGE 23: not triaged yet; `DoorJamb_L/R` LEAK_OUT ~90 rays each.
 
 ## Blocker
 none.
 
 ## Next phase
-Phase 5 continued: (e) the FLICKER groups above, two specs per session (start with the SideWalls
-cargo rails / door jambs and the RearWall IronCross + window frame, then cable strands, then one
-prop builder per spec: give each implementer the grep for its rows and the ≥ 1.2 cm rule, parts
-must still touch, embed rather than float); (f) LEAK_OUT/LEAK_IN triage and EDGE exemptions;
+Phase 5 continued: (e) the FLICKER groups above, two specs per session (next: the side-wall
+leftovers (jamb inner-face strip, floor seal) together with the cable strands, then one prop
+builder per spec: give each implementer the grep for its rows, the line ranges to read and the
+≥ 1.2 cm rule, parts must still touch, embed rather than float; keep implementer prompts narrow,
+the side-wall one ran past 60k); (f) LEAK_OUT/LEAK_IN triage and EDGE exemptions;
 (g) wire --strict into smoke once every count is 0; rear and roof shots, several van seeds
 (smoke.py --shots DIR --van-seeds 3). Nothing visible was shot in the last two sessions: look at
 the D40 ceiling cables, the rear-door bars and the generator pan in the next shots.

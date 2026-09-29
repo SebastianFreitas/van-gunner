@@ -16,9 +16,10 @@ func add_door_jambs(wall_sign: float, mat: Material) -> void:
 	var x_ref := _wall.wall_x_at(mid_y)
 	var mi := MeshInstance3D.new()
 	mi.name = "DoorJamb_%s" % ("L" if wall_sign < 0.0 else "R")
+	# Outer lip face sits 2.4 cm inside the wall's outer plane so it never z-fights the wall.
 	var mesh := _wall.build_curved_frame_ring_mesh(
 		wall_sign, _outer_poly(), inner,
-		x_ref, mid_y, _wall.door_center_z, mid_y, _wall.thickness, 0.0, 8
+		x_ref, mid_y, _wall.door_center_z, mid_y, _wall.thickness - 0.024, 0.0, 8
 	)
 	var hy := (_wall.door_y_max - _wall.door_y_min) * 0.5
 	mi.mesh = _strip_outer_return(mesh, _wall.door_half_length, hy)
