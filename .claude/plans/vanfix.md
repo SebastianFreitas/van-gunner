@@ -3,9 +3,7 @@
 Stage: running
 Started: 2026-09-28
 Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/vanfix.state.md` while running).
-Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15); window hinge pivot position (D16 auto); side skin layering against the wall (D17 auto); who owns the opening reveals and whether the buried casings go (D18 auto); side door slide path vs the belt line and rub rail (D19); whether the front audit calls for replacing the cab (D21 auto); front wheels moved out to clear the cab skin (D22 auto); audit speed-up, front windows posed apart from their doors and cross-mesh EDGE seams (D23 auto); roof height cap (D24), antennas (D25), rear roof (D26); roof place-or-drop grouping (D27 auto); flare and spare solids (D28 auto); arch trims, chain segments, exhaust and sill breaks (D29 auto); add-ons in the side door slide path (D30); phase 5 was too big for one context (split into 5, 5b, 5c, 5d, D31 auto)
-
-- **D31 · Phase 5 split (auto).** Phase 5 ran partial across several sessions, so the Progress table splits it: 5 finishes the roof, wheels, sill and chassis kit (spec-5-2), 5b the side add-ons, 5c interior FLICKER, 5d exemptions and `--strict`. Reason: the skill's rule for a phase too big for one context.
+Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15); window hinge pivot position (D16 auto); side skin layering against the wall (D17 auto); who owns the opening reveals and whether the buried casings go (D18 auto); side door slide path vs the belt line and rub rail (D19); whether the front audit calls for replacing the cab (D21 auto); front wheels moved out to clear the cab skin (D22 auto); audit speed-up, front windows posed apart from their doors and cross-mesh EDGE seams (D23 auto); roof height cap (D24), antennas (D25), rear roof (D26); roof place-or-drop grouping (D27 auto); flare and spare solids (D28 auto); arch trims, chain segments, exhaust and sill breaks (D29 auto); add-ons in the side door slide path (D30); low side armour vs the door path and chassis items (D32)
 
 ## Rebase note (2026-09-28, landed on main)
 
@@ -117,6 +115,7 @@ the night read. So:
 - **D28 · Flare and spare solids (auto).** Wheel flares are one closed single-sided L sweep 2 cm thick buried 3 cm into the skin; hub bolts stand 2 cm proud; the spare hub is 8 cm thick and its chains 2 cm thin 2 cm off every face. Reason: the double-wound flare quads and 5 mm–1 cm stacks were FLICKER (D12).
 - **D29 · Arches and chains (auto).** Flare end caps use only profile vertices (quad P0P1P4P5 + two triangles); tandem rear arches trim their flares where they meet (1 cm each side of the mid z) and clamp their wells to the mid z; the spare chains are four 0.20 m segments that stop inside the hub; the exhaust pipe sits 2 cm off the sill; the sill breaks over the rear arches (spec-5-1). Reason: T-junctions, overlaps and buried faces the audit reports; invisible in play or a clear fix (the tyres ran through the sill).
 - **D30 · Add-ons behind the side door.** The spare wheel, saddle tank and toolbox move out of the side door's slide path into the slot behind the open door (z 0.16 to the first rear arch's flare, less 2 cm) and pack in order on each side: exhaust side toolbox then spare; other side the tank shortened to 1.2 m, then spare. Whatever doesn't fit is not built (D6), so six-wheel vans mostly lose their spares and four-wheel vans keep one. Reason: the sliding door passed through all three (owner, Q1).
+- **D32 · Low side armour dropped.** `VanArmour.SLOTS` `low_front` (in the side door's slide path) and `low_mid` (over the D30 toolbox/tank/spare; the band left above them, y 1.0 to the window bottom less 2 cm, is too thin for a plate) are both removed. The side keeps its pillar, top and tail armour, all snapped to the real skin (`VanHull.SIDE_SKIN_OUTER_M`). Reason: the open door slid over the low plates with no room, and D6 drops what doesn't fit (owner, Q2).
 
 ## Constraints (every phase)
 
@@ -135,10 +134,7 @@ the night read. So:
 | 2 | Side doors and windows from inside | code | D7, D8, D10, audit | done cf9e65a |
 | 3 | One sealed outer body | code | D4, D7, audit | done a809f31 |
 | 4 | Sealed simple cab | code | D5, D4, audit | done 815948b |
-| 5 | Add-ons snapped and height-capped (roof, wheels, sill, chassis kit: spec-5-2 left) | code | D6, D24–D30, audit | partial |
-| 5b | Side add-ons (armour, rebar, spikes, signs, rear dressing) snapped clear of doors/windows; SillR vs ExhaustHanger rows | code | D6, audit | todo |
-| 5c | Interior FLICKER (Bulkhead, Props, InnerShell, Shell) | code | D7, audit | todo |
-| 5d | Audit exemptions (animated props, by-design single-sided EDGE), `--strict` wired into smoke | code | D3, audit | todo |
+| 5 | Add-ons snapped and height-capped | code | D6, audit | todo |
 
 ## Phases
 

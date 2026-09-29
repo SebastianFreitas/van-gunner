@@ -1,50 +1,48 @@
-# Spec 5-2 · Spare, tank and toolbox behind the open side door (D30)
+# Spec 5-2 · Side-step hangers, roof rack and antenna FLICKER
 
-Worktree: C:/Users/Traff/Documents/van-gunner/.claude/worktrees/go-cc7a37. Do not commit.
+Worktree: C:/Users/Traff/Documents/van-gunner/.claude/worktrees/plan-vanfix. Do not commit.
 
 ## Goal
-The side door slides back to z ≈ 0.135 when open; today the toolbox (z 0.1 ± 0.46), tank
-(z 0.1 ± 0.75) and spares (z -1.55 ± 0.42) sit in its path. Pack them into the slot behind the
-open door, in front of the first rear arch's flare, and skip whatever doesn't fit (D6).
+Clear the audit's FLICKER rows (parallel faces within 0.01 m) between the side steps and their
+hangers, the hangers and the side skin, the roof rack's rails, slats, legs and antenna bases, and
+each antenna whip against itself. Rule for every fix (D12): parallel faces either ≥ 0.02 m apart, or
+one part clearly embedded in the other with no face within 0.01 m of the other's face planes.
+Changes are a few cm, invisible in play.
 
-## Target file
-`scripts/van/look/van_chassis.gd` only: `build`, `_build_tank`, `_build_toolbox`, `_build_spare`.
-It is 302 lines: keep the change compact (no new file unless it passes 330).
+## Target files
+1. `scripts/van/look/van_chassis.gd` `_build_steps` (side step only; leave CabStep alone, no rows).
+2. `scripts/van/look/van_roof.gd` `_build_rack`, `_build_antennas`.
 
-## Symbols
-- `const SLOT_Z0 := 0.16` (## Front of the slot behind the open side door's rear edge (z 0.135).)
-- `const SLOT_GAP := 0.02` (## Gap between packed add-ons and before the flare (D12).)
-- `const TANK_LEN := 1.2` (## Saddle tank length, shortened from 1.5 to fit the slot (D30).)
-- `const TOOLBOX_LEN := 0.92` (the lid's z size), `const SPARE_LEN := 0.84` (tyre diameter).
-- `_build_tank(side, mat, z0)`, `_build_toolbox(side, mat, z0)`, `_build_spare(side, label, rubber, mat, z0)`:
-  `z0` is the part's front (most negative z) edge; each computes `zc := z0 + LEN * 0.5`.
-
-## Logic steps
-1. In `build`, after the steps loop: `slot_end := rear_axles[0] - (VanWheels.REAR_RADIUS + FLARE_GAP + FLARE_T) - SLOT_GAP`
-   (4-wheel: 2.30; 6-wheel: 1.60).
-2. Exhaust side (`exhaust_side`): z := SLOT_Z0; if `z + TOOLBOX_LEN <= slot_end` build the toolbox at z
-   and advance z by `TOOLBOX_LEN + SLOT_GAP`; then if that side's spare bit is set (bit 1 = L/-1.0,
-   bit 2 = R/+1.0, as today) and `z + SPARE_LEN <= slot_end`, build the spare at z.
-3. Other side (`-exhaust_side`): the same with the tank (`TANK_LEN`) first, then the spare.
-4. `_build_toolbox`: the three meshes keep their x/y/size; z = `zc` instead of 0.1.
-5. `_build_tank`: `tank_mesh.height = TANK_LEN`; tank, straps, brackets at `zc` with the ±0.5
-   offsets changed to ±0.4; the cap at `zc + 0.45`.
-6. `_build_spare`: every `-1.55` becomes `zc` (tyre, hub, mount, chain origin).
-7. `_build_exhaust` unchanged. Comment why at the packing: the sliding door passed through all three.
-
-## Edge cases
-- 6-wheel: slot 1.44 m: toolbox and tank fit, spares skip. 4-wheel: 2.14 m: both sides fit a spare.
-- Node names unchanged (`FuelTank`, `ToolBox`, `SpareL`...), so a skipped part simply is absent.
-
-## Do not touch
-Flares, wells, steps, exhaust, rear bumper, `van_wheels.gd`, x/y positions and sizes other than
-the tank length.
+## Facts
+- Sill (read only, `van_hull_patches.gd`): x 2.60..2.70 (outer face 2.70 = `SILL_OUT_X`), y -0.25..0.04,
+  chamfer top (2.62, 0.04) → (2.70, -0.02). The side skin's bottom edge is at y ≈ 0.02.
+- `SideStep<S>` box 0.30 × 0.05 × 2.2 at x SKIN_X+0.15 (x 2.56..2.86, y -0.085..-0.035);
+  `SideStepHanger<S><i>` 0.18 × 0.12 × 0.06 at x SKIN_X+0.09 (2.56..2.74, y -0.10..0.02). Rows:
+  step vs hanger (both inner faces at 2.56), SideSkin vs hanger (hanger top 0.02 on the skin's bottom).
+  Suggested: step x 2.62..2.86 (inner end inside the sill), hanger x 2.58..2.74, y -0.11..0.00.
+- Rack: rails `RackRailL/R` (0.06 bars at ±RACK_HALF_X, RACK_Y), slats 0.045 bars at the same RACK_Y
+  between the rails, legs 0.06 bars at x = ±RACK_HALF_X up to RACK_Y. Rows: rail vs slat (5 each
+  side), rail vs leg (6), slat vs leg (2), `RackRailL` vs `AntennaBase0` (16 pairs, the 0.08 base box
+  centred on the rail at RACK_Y). Suggested: slats end 0.02 inside each rail's inner face... no: slats
+  sit on top of the rails (y RACK_Y + 0.06 * 0.5 + 0.045 * 0.5 + 0.0 so their bottoms rest on
+  the rail top, or lift 0.02 above it and overlap in x) — pick one where no faces are within 0.01;
+  legs stop at the rail's bottom face (RACK_Y - 0.03) and are 0.04 thick so their side faces stay
+  0.01+ inside the rail's; the antenna base sits on top of the rail (base centre y RACK_Y + 0.03 + 0.04)
+  and the whip starts on the base top. Antenna 2 (x +RACK_HALF_X, z 1.2) likewise.
+- `Antenna0` vs itself, 321 pairs: a CylinderMesh whip 0.008..0.018 radius. Find out why one mesh
+  flickers with itself (e.g. the cap discs at top_radius 0.008: many tiny triangles; or the audit's
+  MIN_AREA) — if the cylinder's own caps are coplanar degenerate triangles, set `cap_top = false` /
+  `cap_bottom = false` where the end is buried (the bottom sits inside the base) or use `radial_segments`
+  8 and `rings` 1. Report what it was.
+- `van_roof.gd` has `fits(top_y, z_max, antenna)` and `_drop_misfits()`: keep every group's top under
+  the same cap (moving bases up by 0.07 must still pass `fits`; if `fits` reads fixed numbers, check them).
 
 ## Rules
-Tabs, typed everything, `##` doc on new consts, two blank lines between funcs, ~100 columns.
+GDScript: tabs, typed everything, `##` docs on new consts, two blank lines between funcs, ~100
+columns. Keep node names. Do not touch other files.
 
 ## Verification
 1. `py -3 tools/check.py 2>&1 | tail -5` → CHECK CLEAN.
-2. `py -3 tools/van_audit.py 2>&1 | tail -3`; `grep -E "Spare|FuelTank|Tank|ToolBox" .godot/van_audit/report.txt | cut -c1-200`:
-   no row pairs them with `SideDoors/*` or the flares; report the rows left and the SUMMARY line.
-3. `py -3 tools/smoke.py 2>&1 | tail -5` passes; `py -3 tools/scene_dump.py 2>&1 | tail -5`.
+2. `py -3 tools/van_audit.py 2>&1 | tail -3`; `grep -E "Rack|Antenna|SideStep" .godot/van_audit/report.txt | cut -c1-200`:
+   report what is left and the SUMMARY line.
+3. `py -3 tools/smoke.py 2>&1 | tail -5` smoke clean (report a fingerprint diff, do NOT bless).

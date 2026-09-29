@@ -15,7 +15,7 @@ const SILL_Z0 := -4.72
 const SILL_Z1 := 4.80
 ## The sill chamfer's inner top, where the rear corner strip starts.
 const SILL_TOP_Y := 0.04
-## Sill pieces between breaks shorter than this are skipped.
+## Sill pieces between arch breaks shorter than this are skipped.
 const SILL_MIN_SEGMENT := 0.05
 
 
@@ -23,8 +23,8 @@ func _init(hull: VanHull) -> void:
 	_hull = hull
 
 
-## Builds every patch for both sides of the van. `arch_spans` are the rear arches' z spans,
-## x = start, y = end, where the sill breaks.
+## Builds every patch for both sides of the van. `arch_spans` are the rear arches' z spans
+## (x = start, y = end), where the sill breaks.
 func build(walls: VanSideWall, arch_spans: Array[Vector2]) -> void:
 	for s: float in [-1.0, 1.0]:
 		_build_rear_corner(walls, s)
@@ -77,8 +77,7 @@ func _build_rear_corner(walls: VanSideWall, s: float) -> void:
 
 
 ## Rocker sill, an extruded closed chamfer-top/outer-face/bottom/inner-face ring running the length
-## of the body at the skin's floor position, replacing the old plain box. It breaks over each rear
-## wheel arch: the tyres passed through the old full-length sill, and real rockers stop at the arches.
+## of the body at the skin's floor position, replacing the old plain box.
 func _build_sill(walls: VanSideWall, s: float, arch_spans: Array[Vector2]) -> void:
 	var xs: float = walls.wall_x_at(0.0) + VanHull.SIDE_SKIN_OUTER_M
 	# Outer-to-inner ring: chamfer top, outer face, bottom.
@@ -89,18 +88,21 @@ func _build_sill(walls: VanSideWall, s: float, arch_spans: Array[Vector2]) -> vo
 		Vector2(xs - 0.04, -0.25),
 	]
 
+	# The tyres pass through a full-length sill; real rockers stop at the wheel arches, so the sill
+	# is cut into segments between the arch spans (sorted, disjoint).
+	var segments: Array[Vector2] = []
+	var za_next := SILL_Z0
+	for span in arch_spans:
+		var cut_a := maxf(span.x, SILL_Z0)
+		var cut_b := minf(span.y, SILL_Z1)
+		if cut_b <= cut_a:
+			continue
+		segments.append(Vector2(za_next, cut_a))
+		za_next = maxf(za_next, cut_b)
+	segments.append(Vector2(za_next, SILL_Z1))
+
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-
-	# Segments are the full extent minus each arch span (spans are sorted and disjoint).
-	var segments: Array[Vector2] = []
-	var z_cursor := SILL_Z0
-	for span in arch_spans:
-		if span.y <= z_cursor or span.x >= SILL_Z1:
-			continue
-		segments.append(Vector2(z_cursor, minf(span.x, SILL_Z1)))
-		z_cursor = maxf(z_cursor, span.y)
-	segments.append(Vector2(z_cursor, SILL_Z1))
 
 	for seg in segments:
 		var za: float = seg.x
