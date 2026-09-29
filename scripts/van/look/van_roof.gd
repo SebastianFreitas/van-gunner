@@ -1,11 +1,16 @@
 class_name VanRoof
 extends Node3D
-## The van's roof rack, antennas, dish and the always-on roof spotlight; the rack's junk is filled by a helper.
+## The van's roof rack, antennas, dish and the always-on roof spotlight; add-ons over the D24-D26 height caps are dropped, not built.
 
 const HULL_PATH := ^"../Hull"
+const INTERIOR_PATH := ^"../../Interior"
 const _Junk := preload("res://scripts/van/look/van_roof_junk.gd")
 
-## Cargo roof vault profile, VanLook-local: roof_y(x) = 3.11 + 0.38 * (1 - (x / 2.55)^2).
+const ROOF_CAP_M := 0.7 ## D24: add-on tops at most this far over the roof crown.
+const RACK_CLEAR_M := 0.12 ## D26: rack height over the crown; the rear zone's ceiling.
+const REAR_ZONE_M := 1.5 ## D25/D26: length of the rear roof zone, from the body's rear end.
+const FIT_EPS := 0.005
+
 const RACK_Y := 3.66 ## Top of the rack rails; junk (later) sits on it.
 const RACK_HALF_X := 1.9
 const RACK_Z_MIN := -4.3
@@ -20,6 +25,11 @@ const SPOT_LENS_GLOW := 1.2 ## Lens emission; a warm glow, not a white disc.
 
 var spotlight: SpotLight3D
 var rack_material: StandardMaterial3D
+var crown_y := 3.57 ## Outer roof crown height, from VanBodyProfile.
+var rear_zone_z := 3.2 ## Roof z past which D25/D26 apply.
+
+var _profile: VanBodyProfile
+var _group: StringName = &""
 
 
 func rebuild_look(look: VanLook) -> void:
@@ -27,6 +37,10 @@ func rebuild_look(look: VanLook) -> void:
 		remove_child(child)
 		child.queue_free()
 	spotlight = null
+
+	_profile = VanBodyProfile.from_interior(get_node_or_null(INTERIOR_PATH))
+	crown_y = _profile.outer_roof_y_at(0.0)
+	rear_zone_z = _profile.half_length() - REAR_ZONE_M
 
 	rack_material = StandardMaterial3D.new()
 	rack_material.albedo_color = Color(0.10, 0.095, 0.09)
@@ -45,13 +59,60 @@ func rebuild_look(look: VanLook) -> void:
 	_build_dish(hull_mat, rng)
 	_build_spotlight(hull_mat, rng)
 	_Junk.new(self).build(look.rng_for(&"roof_junk"))
+	_drop_misfits()
 
 
-static func roof_y(x: float) -> float:
-	return 3.11 + 0.38 * (1.0 - pow(x / 2.55, 2.0))
+func begin_group(group: StringName) -> void:
+	_group = group
+
+
+func end_group() -> void:
+	_group = &""
+
+
+## True when an add-on with this top height and rear extent may stand on the roof.
+func fits(top_y: float, z_max: float, antenna: bool = false) -> bool:
+	if antenna:
+		return z_max <= rear_zone_z + FIT_EPS
+	if top_y > crown_y + ROOF_CAP_M + FIT_EPS:
+		return false
+	if z_max > rear_zone_z and top_y > crown_y + RACK_CLEAR_M + FIT_EPS:
+		return false
+	return true
+
+
+## Frees every add-on that fails fits(), with the rest of its group (no orphan posts or straps).
+func _drop_misfits() -> void:
+	var bad_groups: Dictionary = {}
+	var doomed: Array[MeshInstance3D] = []
+	for child in get_children():
+		var mi := child as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var group: StringName = mi.get_meta(&"roof_group", &"")
+		if group == &"rack":
+			continue
+		var box := mi.transform * mi.mesh.get_aabb()
+		if fits(box.end.y, box.end.z, String(group).begins_with("antenna")):
+			continue
+		if group == &"":
+			doomed.append(mi)
+		else:
+			bad_groups[group] = true
+	for child in get_children():
+		var mi := child as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var group: StringName = mi.get_meta(&"roof_group", &"")
+		if bad_groups.has(group) and not doomed.has(mi):
+			doomed.append(mi)
+	for mi in doomed:
+		remove_child(mi)
+		mi.queue_free()
 
 
 func _build_rack(mat: Material) -> void:
+	begin_group(&"rack")
 	add_bar("RackRailL", Vector3(-RACK_HALF_X, RACK_Y, RACK_Z_MIN), Vector3(-RACK_HALF_X, RACK_Y, RACK_Z_MAX),
 			0.06, mat)
 	add_bar("RackRailR", Vector3(RACK_HALF_X, RACK_Y, RACK_Z_MIN), Vector3(RACK_HALF_X, RACK_Y, RACK_Z_MAX),
@@ -71,18 +132,21 @@ func _build_rack(mat: Material) -> void:
 	for side: float in [-1.0, 1.0]:
 		var x := side * RACK_HALF_X
 		for z: float in leg_zs:
-			add_bar("RackLeg%d" % leg_idx, Vector3(x, roof_y(x) - 0.04, z), Vector3(x, RACK_Y, z), 0.06, mat)
+			add_bar("RackLeg%d" % leg_idx, Vector3(x, _profile.outer_roof_y_at(x) - 0.04, z),
+					Vector3(x, RACK_Y, z), 0.06, mat)
 			leg_idx += 1
+	end_group()
 
 
 func _build_antennas(mat: Material, rng: RandomNumberGenerator) -> void:
 	var slots: Array[Vector2] = [
-		Vector2(-RACK_HALF_X, RACK_Z_MAX - 0.1),
-		Vector2(RACK_HALF_X, RACK_Z_MAX - 0.1),
+		Vector2(-RACK_HALF_X, rear_zone_z - 0.65),
+		Vector2(RACK_HALF_X, rear_zone_z - 0.65),
 		Vector2(RACK_HALF_X, 1.2),
 	]
 	var n := rng.randi_range(1, 3)
 	for i: int in range(n):
+		begin_group(StringName("antenna%d" % i))
 		var slot := slots[i]
 		var base := Vector3(slot.x, RACK_Y, slot.y)
 		var h := rng.randf_range(1.2, 2.2)
@@ -99,6 +163,7 @@ func _build_antennas(mat: Material, rng: RandomNumberGenerator) -> void:
 		var base_mesh := BoxMesh.new()
 		base_mesh.size = Vector3(0.08, 0.08, 0.08)
 		_add_mesh("AntennaBase%d" % i, base_mesh, mat, base)
+		end_group()
 
 
 func _build_dish(mat: Material, rng: RandomNumberGenerator) -> void:
@@ -107,6 +172,7 @@ func _build_dish(mat: Material, rng: RandomNumberGenerator) -> void:
 	if not has_dish:
 		return
 
+	begin_group(&"dish")
 	var post_top := Vector3(-RACK_HALF_X, RACK_Y + 0.45, 3.4)
 	add_bar("DishPost", Vector3(-RACK_HALF_X, RACK_Y, 3.4), post_top, 0.05, mat)
 
@@ -117,9 +183,11 @@ func _build_dish(mat: Material, rng: RandomNumberGenerator) -> void:
 	dish_mesh.radial_segments = 14
 	var dish := _add_mesh("Dish", dish_mesh, mat, post_top)
 	dish.basis = Basis(Vector3.UP, deg_to_rad(yaw)) * Basis(Vector3.RIGHT, deg_to_rad(-40.0))
+	end_group()
 
 
 func _build_spotlight(hull_mat: Material, rng: RandomNumberGenerator) -> void:
+	begin_group(&"spot")
 	var housing_mesh := CylinderMesh.new()
 	housing_mesh.top_radius = 0.17
 	housing_mesh.bottom_radius = 0.17
@@ -152,6 +220,7 @@ func _build_spotlight(hull_mat: Material, rng: RandomNumberGenerator) -> void:
 	cheek_mesh.size = Vector3(0.025, 0.14, 0.20)
 	_add_mesh("SpotVisorCheekL", cheek_mesh, hull_mat, Vector3(-0.19, RACK_Y + 0.28 + 0.10, SPOT_Z - 0.26))
 	_add_mesh("SpotVisorCheekR", cheek_mesh, hull_mat, Vector3(0.19, RACK_Y + 0.28 + 0.10, SPOT_Z - 0.26))
+	end_group()
 
 	var yaw := rng.randf_range(-20.0, 20.0)
 	var light := SpotLight3D.new()
@@ -192,6 +261,8 @@ func _add_mesh(mesh_name: String, mesh: Mesh, mat: Material, pos: Vector3) -> Me
 	mi.material_override = mat
 	mi.position = pos
 	mi.layers = 1
+	if _group != &"":
+		mi.set_meta(&"roof_group", _group)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
 	return mi

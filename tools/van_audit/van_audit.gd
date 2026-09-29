@@ -141,7 +141,7 @@ func collect() -> void:
 func check_height() -> void:
 	var started := Time.get_ticks_msec()
 	var profile := VanBodyProfile.from_interior(rig.get_node(^"Interior"))
-	var cap: float = profile.outer_roof_y_at(0.0)
+	var crown: float = profile.outer_roof_y_at(0.0)
 
 	var rear_z := -INF
 	for t in range(tris.count()):
@@ -159,12 +159,14 @@ func check_height() -> void:
 			max_y_by_node[idx] = maxf(float(max_y_by_node.get(idx, -INF)), p.y)
 			min_z_by_node[idx] = minf(float(min_z_by_node.get(idx, INF)), p.z)
 			max_z_by_node[idx] = maxf(float(max_z_by_node.get(idx, -INF)), p.z)
-			if p.y > cap + 0.02 and p.z > rear_z - 1.5:
+			if p.y > crown + VanRoof.RACK_CLEAR_M + 0.02 and p.z > rear_z - VanRoof.REAR_ZONE_M:
 				rear_vertex_by_node[idx] = maxf(float(rear_vertex_by_node.get(idx, -INF)), p.z)
 
 	var over_idx: Array[int] = []
 	for idx in max_y_by_node.keys():
-		if float(max_y_by_node[idx]) > cap + 0.02:
+		if String(tris.paths[idx]).get_file().begins_with("Antenna"):
+			continue
+		if float(max_y_by_node[idx]) > crown + VanRoof.ROOF_CAP_M + 0.02:
 			over_idx.append(idx)
 	over_idx.sort_custom(func(x: int, y: int) -> bool:
 		return float(max_y_by_node[x]) > float(max_y_by_node[y])
@@ -173,16 +175,24 @@ func check_height() -> void:
 	for idx in over_idx:
 		var top: float = max_y_by_node[idx]
 		add_finding("HEIGHT", "%s top=%.3f over=%.3f z=%.3f..%.3f" % [
-			tris.paths[idx], top, top - cap, min_z_by_node[idx], max_z_by_node[idx],
+			tris.paths[idx], top, top - crown, min_z_by_node[idx], max_z_by_node[idx],
 		])
-	for idx in over_idx:
-		if rear_vertex_by_node.has(idx):
-			add_finding("REAR_ROOF", "%s top=%.3f z=%.3f" % [
-				tris.paths[idx], max_y_by_node[idx], rear_vertex_by_node[idx],
-			])
+
+	var rear_idx: Array[int] = []
+	for idx in rear_vertex_by_node.keys():
+		rear_idx.append(idx)
+	rear_idx.sort_custom(func(x: int, y: int) -> bool:
+		return float(max_y_by_node[x]) > float(max_y_by_node[y])
+	)
+	for idx in rear_idx:
+		add_finding("REAR_ROOF", "%s top=%.3f z=%.3f" % [
+			tris.paths[idx], max_y_by_node[idx], rear_vertex_by_node[idx],
+		])
 
 	var elapsed := Time.get_ticks_msec() - started
-	print("AUDIT height cap=%.3f rear_z=%.3f (%d ms)" % [cap, rear_z, elapsed])
+	print("AUDIT height crown=%.3f cap=%.3f rear_z=%.3f (%d ms)" % [
+		crown, crown + VanRoof.ROOF_CAP_M, rear_z, elapsed,
+	])
 
 
 ## Each moving root's closed-state triangle AABB (the opening it leaves behind), from the

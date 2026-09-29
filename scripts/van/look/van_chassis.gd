@@ -7,7 +7,13 @@ const SKIN_X := 2.56
 const FLARE_GAP := 0.08
 const FLARE_OUT := 0.06
 const LIP_H := 0.07
+## Flare band and lip thickness (D12).
+const FLARE_T := 0.02
 const ARC_SEGMENTS := 10
+## Outer face of VanHullPatches' sill; the exhaust keeps 2 cm off it.
+const SILL_OUT_X := SKIN_X + 0.06
+## Half gap between the tandem arches' flares where they meet (D12: faces 2 cm apart).
+const TANDEM_GAP := 0.01
 
 var _wheels: VanWheels
 
@@ -28,10 +34,27 @@ func build(hull_mat: Material, rubber: Material, rear_axles: Array[float], exhau
 		_build_flare("Flare%s%d" % [label, idx], front_centre, VanWheels.FRONT_RADIUS, hull_mat)
 		_build_well("Well%s%d" % [label, idx], front_centre, VanWheels.FRONT_RADIUS, dark)
 		idx += 1
-		for z: float in rear_axles:
+		# Tandem arches meet at their midpoint, the flares 2 * TANDEM_GAP apart.
+		var tandem_min := 2.0 * (VanWheels.REAR_RADIUS + FLARE_GAP + FLARE_T) + 2.0 * TANDEM_GAP
+		for j: int in range(rear_axles.size()):
+			var z := rear_axles[j]
+			var flare_lo := -INF
+			var flare_hi := INF
+			var well_lo := -INF
+			var well_hi := INF
+			if j + 1 < rear_axles.size() and rear_axles[j + 1] - z < tandem_min:
+				var z_mid := (z + rear_axles[j + 1]) * 0.5
+				flare_hi = z_mid - TANDEM_GAP
+				well_hi = z_mid
+			if j > 0 and z - rear_axles[j - 1] < tandem_min:
+				var z_mid := (z + rear_axles[j - 1]) * 0.5
+				flare_lo = z_mid + TANDEM_GAP
+				well_lo = z_mid
 			var rear_centre := Vector3(side * VanWheels.WHEEL_X, VanWheels.ROAD_Y + VanWheels.REAR_RADIUS, z)
-			_build_flare("Flare%s%d" % [label, idx], rear_centre, VanWheels.REAR_RADIUS, hull_mat)
-			_build_well("Well%s%d" % [label, idx], rear_centre, VanWheels.REAR_RADIUS, dark)
+			_build_flare("Flare%s%d" % [label, idx], rear_centre, VanWheels.REAR_RADIUS, hull_mat,
+					flare_lo, flare_hi)
+			_build_well("Well%s%d" % [label, idx], rear_centre, VanWheels.REAR_RADIUS, dark,
+					well_lo, well_hi)
 			idx += 1
 		_build_steps(side, label, hull_mat)
 
@@ -47,56 +70,110 @@ func build(hull_mat: Material, rubber: Material, rear_axles: Array[float], exhau
 	_build_rear_bumper(hull_mat)
 
 
-func _build_flare(flare_name: String, centre: Vector3, radius: float, mat: Material) -> void:
+func _build_flare(flare_name: String, centre: Vector3, radius: float, mat: Material,
+		z_lo: float = -INF, z_hi: float = INF) -> void:
 	var side := signf(centre.x)
 	var r := radius + FLARE_GAP
-	var x_in := side * (SKIN_X + 0.01)
+	var x_in := side * (SKIN_X - 0.03)
 	var x_out := side * (VanWheels.WHEEL_X + VanWheels.TYRE_WIDTH * 0.5 + FLARE_OUT)
+	# L profile as (x, rho) pairs, plus each edge's outward direction: 0 = +rho, 1 = +x, 2 = -rho,
+	# 3 = -x, wrapping P0..P5.
+	var profile: Array[Vector2] = [
+		Vector2(x_in, r + FLARE_T), Vector2(x_out, r + FLARE_T), Vector2(x_out, r - LIP_H),
+		Vector2(x_out - side * FLARE_T, r - LIP_H), Vector2(x_out - side * FLARE_T, r),
+		Vector2(x_in, r)]
+	var edge_dirs: Array[int] = [0, 1, 2, 3, 2, 3]
+
+	# Angle a puts a profile point at z = centre.z + rho * cos(a), so a = 0 is the +z end.
+	var rho_out := r + FLARE_T
+	var a_min := 0.0
+	if z_hi - centre.z < rho_out:
+		a_min = acos(clampf((z_hi - centre.z) / rho_out, -1.0, 1.0))
+	var a_max := PI
+	if centre.z - z_lo < rho_out:
+		a_max = PI - acos(clampf((centre.z - z_lo) / rho_out, -1.0, 1.0))
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
 	for i: int in range(ARC_SEGMENTS):
-		var a0: float = PI * i / ARC_SEGMENTS
-		var a1: float = PI * (i + 1) / ARC_SEGMENTS
-		var p_in0 := Vector3(x_in, centre.y + r * sin(a0), centre.z + r * cos(a0))
-		var p_out0 := Vector3(x_out, centre.y + r * sin(a0), centre.z + r * cos(a0))
-		var p_out1 := Vector3(x_out, centre.y + r * sin(a1), centre.z + r * cos(a1))
-		var p_in1 := Vector3(x_in, centre.y + r * sin(a1), centre.z + r * cos(a1))
-		VanCab._add_quad(st, p_in0, p_out0, p_out1, p_in1, centre)
-		VanCab._add_quad(st, p_in0, p_out0, p_out1, p_in1, centre, true)
+		var a0 := lerpf(a_min, a_max, float(i) / ARC_SEGMENTS)
+		var a1 := lerpf(a_min, a_max, float(i + 1) / ARC_SEGMENTS)
+		var am :=(a0 + a1) * 0.5
+		var radial := Vector3(0.0, sin(am), cos(am))
+		for k: int in range(6):
+			var pa: Vector2 = profile[k]
+			var pb: Vector2 = profile[(k + 1) % 6]
+			var q0 := _flare_point(centre, pa, a0)
+			var q1 := _flare_point(centre, pb, a0)
+			var q2 := _flare_point(centre, pb, a1)
+			var q3 := _flare_point(centre, pa, a1)
+			var out_dir := Vector3.ZERO
+			match edge_dirs[k]:
+				0: out_dir = radial
+				1: out_dir = Vector3(side, 0.0, 0.0)
+				2: out_dir = -radial
+				_: out_dir = Vector3(-side, 0.0, 0.0)
+			var ref := (q0 + q1 + q2 + q3) * 0.25 - out_dir * 0.005
+			VanCab._add_quad(st, q0, q1, q2, q3, ref)
 
-		var lip_a := Vector3(x_out, centre.y + r * sin(a0), centre.z + r * cos(a0))
-		var lip_b := Vector3(x_out, centre.y + r * sin(a1), centre.z + r * cos(a1))
-		var lip_c := Vector3(x_out, centre.y + (r - LIP_H) * sin(a1), centre.z + (r - LIP_H) * cos(a1))
-		var lip_d := Vector3(x_out, centre.y + (r - LIP_H) * sin(a0), centre.z + (r - LIP_H) * cos(a0))
-		var lip_centre := Vector3(side * 1.0, centre.y, centre.z)
-		VanCab._add_quad(st, lip_a, lip_b, lip_c, lip_d, lip_centre)
-		VanCab._add_quad(st, lip_a, lip_b, lip_c, lip_d, lip_centre, true)
+	# End caps: the L as a quad (P0 P1 P4 P5) plus two triangles. Only the profile's own vertices,
+	# so every cap edge matches a side quad's edge (a split point mid-edge on P1P2 was a T-junction
+	# the audit reports as open edges).
+	for a_cap: float in [a_min, a_max]:
+		var a_ref := a_min + 0.05 if a_cap == a_min else a_max - 0.05
+		var sum := Vector3.ZERO
+		for p: Vector2 in profile:
+			sum += _flare_point(centre, p, a_ref)
+		var ref := sum / 6.0
+		var pt: Array[Vector3] = []
+		for p: Vector2 in profile:
+			pt.append(_flare_point(centre, p, a_cap))
+		VanCab._add_quad(st, pt[0], pt[1], pt[4], pt[5], ref)
+		VanCab._add_tri(st, pt[4], pt[1], pt[2], ref)
+		VanCab._add_tri(st, pt[4], pt[2], pt[3], ref)
 	st.generate_normals()
 	_wheels._add_mesh(flare_name, st.commit(), mat, Vector3.ZERO)
 
 
-func _build_well(well_name: String, centre: Vector3, radius: float, mat: Material) -> void:
+func _flare_point(centre: Vector3, p: Vector2, angle: float) -> Vector3:
+	return Vector3(p.x, centre.y + p.y * sin(angle), centre.z + p.y * cos(angle))
+
+
+## Clamping to a tandem limit collapses some triangles to slivers; skip those.
+func _add_tri_solid(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, ref: Vector3) -> void:
+	if (b - a).cross(c - a).length() * 0.5 < 1e-6:
+		return
+	VanCab._add_tri(st, a, b, c, ref)
+
+
+func _clamp_z(p: Vector3, z_lo: float, z_hi: float) -> Vector3:
+	return Vector3(p.x, p.y, clampf(p.z, z_lo, z_hi))
+
+
+func _build_well(well_name: String, centre: Vector3, radius: float, mat: Material,
+		z_lo: float = -INF, z_hi: float = INF) -> void:
 	var side := signf(centre.x)
 	var r := radius + FLARE_GAP
 	var x := side * (SKIN_X + 0.005)
-	var hub := Vector3(x, centre.y, centre.z)
+	var hub := _clamp_z(Vector3(x, centre.y, centre.z), z_lo, z_hi)
+	var ref := Vector3(0.0, centre.y, centre.z)
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i: int in range(ARC_SEGMENTS):
 		var a0: float = PI * i / ARC_SEGMENTS
 		var a1: float = PI * (i + 1) / ARC_SEGMENTS
-		var p0 := Vector3(x, centre.y + r * sin(a0), centre.z + r * cos(a0))
-		var p1 := Vector3(x, centre.y + r * sin(a1), centre.z + r * cos(a1))
-		VanCab._add_tri(st, hub, p0, p1, Vector3(0.0, centre.y, centre.z))
+		var p0 := _clamp_z(Vector3(x, centre.y + r * sin(a0), centre.z + r * cos(a0)), z_lo, z_hi)
+		var p1 := _clamp_z(Vector3(x, centre.y + r * sin(a1), centre.z + r * cos(a1)), z_lo, z_hi)
+		_add_tri_solid(st, hub, p0, p1, ref)
 
-	var left := Vector3(x, VanWheels.ROAD_Y, centre.z - r)
-	var right := Vector3(x, VanWheels.ROAD_Y, centre.z + r)
-	var top_left := Vector3(x, centre.y, centre.z - r)
-	var top_right := Vector3(x, centre.y, centre.z + r)
-	VanCab._add_tri(st, top_left, left, right, Vector3(0.0, centre.y, centre.z))
-	VanCab._add_tri(st, top_left, right, top_right, Vector3(0.0, centre.y, centre.z))
+	var left := _clamp_z(Vector3(x, VanWheels.ROAD_Y, centre.z - r), z_lo, z_hi)
+	var right := _clamp_z(Vector3(x, VanWheels.ROAD_Y, centre.z + r), z_lo, z_hi)
+	var top_left := _clamp_z(Vector3(x, centre.y, centre.z - r), z_lo, z_hi)
+	var top_right := _clamp_z(Vector3(x, centre.y, centre.z + r), z_lo, z_hi)
+	_add_tri_solid(st, top_left, left, right, ref)
+	_add_tri_solid(st, top_left, right, top_right, ref)
 	st.generate_normals()
 	var mi := _wheels._add_mesh(well_name, st.commit(), mat, Vector3.ZERO)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -164,20 +241,20 @@ func _build_exhaust(side: float, mat: Material) -> void:
 	pipe_mesh.top_radius = 0.06
 	pipe_mesh.bottom_radius = 0.06
 	pipe_mesh.height = 2.3
-	var pipe := _wheels._add_mesh("ExhaustPipe", pipe_mesh, mat, Vector3(side * (SKIN_X + 0.08), -0.09, 0.05))
+	var pipe := _wheels._add_mesh("ExhaustPipe", pipe_mesh, mat, Vector3(side * (SILL_OUT_X + 0.02 + 0.06), -0.09, 0.05))
 	pipe.rotation_degrees.x = 90.0
 
 	var tip_mesh := CylinderMesh.new()
 	tip_mesh.top_radius = 0.07
 	tip_mesh.bottom_radius = 0.07
 	tip_mesh.height = 0.3
-	var tip := _wheels._add_mesh("ExhaustTip", tip_mesh, mat, Vector3(side * (SKIN_X + 0.12), -0.12, 1.3))
+	var tip := _wheels._add_mesh("ExhaustTip", tip_mesh, mat, Vector3(side * (SILL_OUT_X + 0.12), -0.12, 1.3))
 	tip.rotation_degrees = Vector3(60.0, 0.0, side * 25.0)
 
 	for i: int in range(2):
 		var z: float = -0.6 if i == 0 else 0.7
 		_wheels._add_mesh("ExhaustHanger%d" % i, _wheels._box(Vector3(0.10, 0.08, 0.04)), mat,
-				Vector3(side * (SKIN_X + 0.04), -0.05, z))
+				Vector3(side * (SILL_OUT_X + 0.02), -0.05, z))
 
 
 func _build_spare(side: float, label: String, rubber: Material, mat: Material) -> void:
@@ -193,18 +270,23 @@ func _build_spare(side: float, label: String, rubber: Material, mat: Material) -
 	var hub_mesh := CylinderMesh.new()
 	hub_mesh.top_radius = 0.2
 	hub_mesh.bottom_radius = 0.2
-	hub_mesh.height = 0.04
+	hub_mesh.height = 0.08
 	var hub := _wheels._add_mesh("SpareHub%s" % label, hub_mesh, mat,
-			Vector3(side * (SKIN_X + 0.29), 0.55, -1.55))
+			Vector3(side * (SKIN_X + 0.30), 0.55, -1.55))
 	hub.rotation_degrees.z = 90.0
 
 	_wheels._add_mesh("SpareMount%s" % label, _wheels._box(Vector3(0.04, 0.5, 0.5)), mat,
 			Vector3(side * (SKIN_X + 0.02), 0.55, -1.55))
 
-	for i: int in range(2):
-		var chain := _wheels._add_mesh("SpareChain%s%d" % [label, i], _wheels._box(Vector3(0.04, 0.04, 0.8)),
-				mat, Vector3(side * (SKIN_X + 0.30), 0.55, -1.55))
-		chain.rotation_degrees.x = 45.0 if i == 0 else -45.0
+	# Two short segments per diagonal, ending inside the hub: the segments never cross, so no two
+	# chain faces overlap.
+	for k: int in range(4):
+		var angle := 45.0 if k < 2 else -45.0
+		var d := 0.29 if k % 2 == 0 else -0.29
+		var chain := _wheels._add_mesh("SpareChain%s%d" % [label, k], _wheels._box(Vector3(0.02, 0.04, 0.20)),
+				mat, Vector3(side * (SKIN_X + 0.31), 0.55, -1.55)
+				+ Basis(Vector3.RIGHT, deg_to_rad(angle)) * Vector3(0.0, 0.0, d))
+		chain.rotation_degrees.x = angle
 
 
 func _build_rear_bumper(mat: Material) -> void:

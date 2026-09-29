@@ -15,17 +15,20 @@ const SILL_Z0 := -4.72
 const SILL_Z1 := 4.80
 ## The sill chamfer's inner top, where the rear corner strip starts.
 const SILL_TOP_Y := 0.04
+## Sill pieces between breaks shorter than this are skipped.
+const SILL_MIN_SEGMENT := 0.05
 
 
 func _init(hull: VanHull) -> void:
 	_hull = hull
 
 
-## Builds every patch for both sides of the van.
-func build(walls: VanSideWall) -> void:
+## Builds every patch for both sides of the van. `arch_spans` are the rear arches' z spans,
+## x = start, y = end, where the sill breaks.
+func build(walls: VanSideWall, arch_spans: Array[Vector2]) -> void:
 	for s: float in [-1.0, 1.0]:
 		_build_rear_corner(walls, s)
-		_build_sill(walls, s)
+		_build_sill(walls, s, arch_spans)
 	var floor_node := walls.get_parent().get_node_or_null(^"Floor") as VanFloor
 	if floor_node == null:
 		push_warning("VanHullPatches: Floor node not found, belly skipped")
@@ -74,8 +77,9 @@ func _build_rear_corner(walls: VanSideWall, s: float) -> void:
 
 
 ## Rocker sill, an extruded closed chamfer-top/outer-face/bottom/inner-face ring running the length
-## of the body at the skin's floor position, replacing the old plain box.
-func _build_sill(walls: VanSideWall, s: float) -> void:
+## of the body at the skin's floor position, replacing the old plain box. It breaks over each rear
+## wheel arch: the tyres passed through the old full-length sill, and real rockers stop at the arches.
+func _build_sill(walls: VanSideWall, s: float, arch_spans: Array[Vector2]) -> void:
 	var xs: float = walls.wall_x_at(0.0) + VanHull.SIDE_SKIN_OUTER_M
 	# Outer-to-inner ring: chamfer top, outer face, bottom.
 	var section: Array[Vector2] = [
@@ -88,34 +92,49 @@ func _build_sill(walls: VanSideWall, s: float) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
-	# The four running faces (a closed ring, the last being the inner face), wound outward the same
-	# way as the rear corner's side strip.
-	for i in range(section.size()):
-		var a: Vector2 = section[i]
-		var b: Vector2 = section[(i + 1) % section.size()]
-		var a0 := Vector3(s * a.x, a.y, SILL_Z0)
-		var a1 := Vector3(s * a.x, a.y, SILL_Z1)
-		var b0 := Vector3(s * b.x, b.y, SILL_Z0)
-		var b1 := Vector3(s * b.x, b.y, SILL_Z1)
-		if s > 0.0:
-			st.add_vertex(a0)
-			st.add_vertex(b0)
-			st.add_vertex(a1)
-			st.add_vertex(b0)
-			st.add_vertex(b1)
-			st.add_vertex(a1)
-		else:
-			st.add_vertex(a0)
-			st.add_vertex(a1)
-			st.add_vertex(b0)
-			st.add_vertex(b0)
-			st.add_vertex(a1)
-			st.add_vertex(b1)
+	# Segments are the full extent minus each arch span (spans are sorted and disjoint).
+	var segments: Array[Vector2] = []
+	var z_cursor := SILL_Z0
+	for span in arch_spans:
+		if span.y <= z_cursor or span.x >= SILL_Z1:
+			continue
+		segments.append(Vector2(z_cursor, minf(span.x, SILL_Z1)))
+		z_cursor = maxf(z_cursor, span.y)
+	segments.append(Vector2(z_cursor, SILL_Z1))
 
-	# End caps, fanned from the ring's first point back around to it. Mirroring x flips the
-	# ring's winding, so which cap is "forward" (kept as given) flips with s too.
-	_add_sill_cap(st, section, s, SILL_Z0, s > 0.0)
-	_add_sill_cap(st, section, s, SILL_Z1, s < 0.0)
+	for seg in segments:
+		var za: float = seg.x
+		var zb: float = seg.y
+		if zb - za < SILL_MIN_SEGMENT:
+			continue
+		# The four running faces (a closed ring, the last being the inner face), wound outward the
+		# same way as the rear corner's side strip.
+		for i in range(section.size()):
+			var a: Vector2 = section[i]
+			var b: Vector2 = section[(i + 1) % section.size()]
+			var a0 := Vector3(s * a.x, a.y, za)
+			var a1 := Vector3(s * a.x, a.y, zb)
+			var b0 := Vector3(s * b.x, b.y, za)
+			var b1 := Vector3(s * b.x, b.y, zb)
+			if s > 0.0:
+				st.add_vertex(a0)
+				st.add_vertex(b0)
+				st.add_vertex(a1)
+				st.add_vertex(b0)
+				st.add_vertex(b1)
+				st.add_vertex(a1)
+			else:
+				st.add_vertex(a0)
+				st.add_vertex(a1)
+				st.add_vertex(b0)
+				st.add_vertex(b0)
+				st.add_vertex(a1)
+				st.add_vertex(b1)
+
+		# End caps, fanned from the ring's first point back around to it. Mirroring x flips the
+		# ring's winding, so which cap is "forward" (kept as given) flips with s too.
+		_add_sill_cap(st, section, s, za, s > 0.0)
+		_add_sill_cap(st, section, s, zb, s < 0.0)
 
 	st.generate_normals()
 	_hull._add_mesh("SillL" if s < 0.0 else "SillR", st.commit())

@@ -3,7 +3,9 @@
 Stage: running
 Started: 2026-09-28
 Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/vanfix.state.md` while running).
-Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15); window hinge pivot position (D16 auto); side skin layering against the wall (D17 auto); who owns the opening reveals and whether the buried casings go (D18 auto); side door slide path vs the belt line and rub rail (D19); whether the front audit calls for replacing the cab (D21 auto); front wheels moved out to clear the cab skin (D22 auto); audit speed-up, front windows posed apart from their doors and cross-mesh EDGE seams (D23 auto)
+Interview: done under the old procedure (no parts A/B/C); missed: audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15); window hinge pivot position (D16 auto); side skin layering against the wall (D17 auto); who owns the opening reveals and whether the buried casings go (D18 auto); side door slide path vs the belt line and rub rail (D19); whether the front audit calls for replacing the cab (D21 auto); front wheels moved out to clear the cab skin (D22 auto); audit speed-up, front windows posed apart from their doors and cross-mesh EDGE seams (D23 auto); roof height cap (D24), antennas (D25), rear roof (D26); roof place-or-drop grouping (D27 auto); flare and spare solids (D28 auto); arch trims, chain segments, exhaust and sill breaks (D29 auto); add-ons in the side door slide path (D30); phase 5 was too big for one context (split into 5, 5b, 5c, 5d, D31 auto)
+
+- **D31 · Phase 5 split (auto).** Phase 5 ran partial across several sessions, so the Progress table splits it: 5 finishes the roof, wheels, sill and chassis kit (spec-5-2), 5b the side add-ons, 5c interior FLICKER, 5d exemptions and `--strict`. Reason: the skill's rule for a phase too big for one context.
 
 ## Rebase note (2026-09-28, landed on main)
 
@@ -108,6 +110,13 @@ the night read. So:
 - **D21 · Cab sealing scope (auto).** The phase 4 audit shows no LEAK, CLIP or OPENING row at the front and the shots show a closed cab, so D5's reopened course stands: phase 4 keeps the real cab and only removes its coplanar trim (FLICKER) and closes the back wall from both sides. Reason: nothing in the audit says otherwise.
 - **D22 · Front wheels off the cab skin (auto).** The front wheels sit `VanWheels.FRONT_WHEEL_OUT` 0.04 m further out than the rear, the cab steps 3 cm out (inner face 2 cm off `CabSkin`) and the A-pillars 3 cm inside the outline (2 cm inside the bumper ends), because the tyre caps, treads and steps lay on the cab's bowed side plane and the pillars 1 cm off the bumper ends (FLICKER). Reason: a few cm, invisible in play; review at the end.
 - **D23 · Audit poses and seams (auto).** The audit visits each flicker pair once (padded-AABB min-corner cell, normal and moving-root rejects first; ~50 s whole run), poses the side doors with the rear windows (`half`, `open`) and the door-adjacent front windows alone (`win_half`, `win_open`) as the interlock allows in play, and closes an open edge whose ends and midpoint each lie within 1.5 cm of another mesh's edge. Reason: `--strict` in smoke needs a fast run with no rows play can never show; test tooling only.
+- **D24 · Roof height cap.** Roof add-ons may stand at most 0.7 m above the roof crown (`outer_roof_y_at(0)` 3.57, so tops at y ≤ ~4.27): rack, crates, tarps, straps, tyres and the spotlight stay; anything over (stacked piles such as the 4.44 tyre) is not built. The audit's HEIGHT check uses the same cap.
+- **D25 · Antennas.** Antennas are exempt from the D24 cap, but none stand in the rear 1.5 m of the roof.
+- **D26 · Rear roof.** In the rear 1.5 m of the roof nothing stands above rack height (0.12 m over the crown): crates and antennas there move forward, or are dropped if they don't fit. The audit's REAR_ROOF check uses the same rule.
+- **D27 · Roof place-or-drop (auto).** `VanRoof.fits` checks every roof mesh after the build (grouped parts drop together: dish, each antenna, each tarp with its straps; the rack is exempt), the rear antenna slots move to `rear_zone_z - 0.65`, and junk cells reaching the rear zone defer to free forward cells or drop; the rear zone starts at `profile.half_length() - 1.5`. Reason: one check shared with the audit's constants; the dish (top ~4.48) now never fits and is not built.
+- **D28 · Flare and spare solids (auto).** Wheel flares are one closed single-sided L sweep 2 cm thick buried 3 cm into the skin; hub bolts stand 2 cm proud; the spare hub is 8 cm thick and its chains 2 cm thin 2 cm off every face. Reason: the double-wound flare quads and 5 mm–1 cm stacks were FLICKER (D12).
+- **D29 · Arches and chains (auto).** Flare end caps use only profile vertices (quad P0P1P4P5 + two triangles); tandem rear arches trim their flares where they meet (1 cm each side of the mid z) and clamp their wells to the mid z; the spare chains are four 0.20 m segments that stop inside the hub; the exhaust pipe sits 2 cm off the sill; the sill breaks over the rear arches (spec-5-1). Reason: T-junctions, overlaps and buried faces the audit reports; invisible in play or a clear fix (the tyres ran through the sill).
+- **D30 · Add-ons behind the side door.** The spare wheel, saddle tank and toolbox move out of the side door's slide path into the slot behind the open door (z 0.16 to the first rear arch's flare, less 2 cm) and pack in order on each side: exhaust side toolbox then spare; other side the tank shortened to 1.2 m, then spare. Whatever doesn't fit is not built (D6), so six-wheel vans mostly lose their spares and four-wheel vans keep one. Reason: the sliding door passed through all three (owner, Q1).
 
 ## Constraints (every phase)
 
@@ -126,7 +135,10 @@ the night read. So:
 | 2 | Side doors and windows from inside | code | D7, D8, D10, audit | done cf9e65a |
 | 3 | One sealed outer body | code | D4, D7, audit | done a809f31 |
 | 4 | Sealed simple cab | code | D5, D4, audit | done 815948b |
-| 5 | Add-ons snapped and height-capped | code | D6, audit | todo |
+| 5 | Add-ons snapped and height-capped (roof, wheels, sill, chassis kit: spec-5-2 left) | code | D6, D24–D30, audit | partial |
+| 5b | Side add-ons (armour, rebar, spikes, signs, rear dressing) snapped clear of doors/windows; SillR vs ExhaustHanger rows | code | D6, audit | todo |
+| 5c | Interior FLICKER (Bulkhead, Props, InnerShell, Shell) | code | D7, audit | todo |
+| 5d | Audit exemptions (animated props, by-design single-sided EDGE), `--strict` wired into smoke | code | D3, audit | todo |
 
 ## Phases
 

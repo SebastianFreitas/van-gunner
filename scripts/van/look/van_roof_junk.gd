@@ -26,33 +26,48 @@ func build(rng: RandomNumberGenerator) -> void:
 
 	var empty_centers: Array[Vector3] = []
 	var filled := 0
+	var deferred: Array = [] # D26: kinds from cells in the rear zone, re-homed forward below.
 	var z := CELL_Z_MIN
 	while z + CELL_LEN <= CELL_Z_MAX + 0.001:
 		for lane: float in LANES:
 			var kind: StringName = KINDS[rng.randi_range(0, KINDS.size() - 1)]
 			var center := Vector3(lane, VanRoof.RACK_Y, z + CELL_LEN * 0.5)
-			match kind:
-				&"tyres":
-					_tyres(center, rng)
-					filled += 1
-				&"cans":
-					_cans(center, rng)
-					filled += 1
-				&"crate":
-					_crate(center, rng)
-					filled += 1
-				&"tarp":
-					_tarp(center, rng)
-					filled += 1
-				_:
-					empty_centers.append(center)
+			if z + CELL_LEN > _roof.rear_zone_z:
+				if kind != &"empty":
+					deferred.append([kind, lane])
+			elif _build_kind(kind, center, rng):
+				filled += 1
+			else:
+				empty_centers.append(center)
 		z += CELL_LEN
+
+	for entry: Array in deferred:
+		if empty_centers.is_empty():
+			break
+		var spot: Vector3 = empty_centers.pop_front()
+		if _build_kind(entry[0], spot, rng):
+			filled += 1
 
 	var i := 0
 	while filled < 4 and i < empty_centers.size():
 		_crate(empty_centers[i], rng)
 		filled += 1
 		i += 1
+
+
+func _build_kind(kind: StringName, center: Vector3, rng: RandomNumberGenerator) -> bool:
+	match kind:
+		&"tyres":
+			_tyres(center, rng)
+		&"cans":
+			_cans(center, rng)
+		&"crate":
+			_crate(center, rng)
+		&"tarp":
+			_tarp(center, rng)
+		_:
+			return false
+	return true
 
 
 func _tyres(center: Vector3, rng: RandomNumberGenerator) -> void:
@@ -100,6 +115,7 @@ func _crate(center: Vector3, rng: RandomNumberGenerator) -> void:
 
 
 func _tarp(center: Vector3, _rng: RandomNumberGenerator) -> void:
+	_roof.begin_group(StringName("tarp%d" % _count))
 	var mesh := CapsuleMesh.new()
 	mesh.radius = 0.28
 	mesh.height = 1.15
@@ -116,6 +132,7 @@ func _tarp(center: Vector3, _rng: RandomNumberGenerator) -> void:
 			0.03,
 			_roof.rack_material
 		)
+	_roof.end_group()
 
 
 func _mat(key: StringName, color: Color) -> StandardMaterial3D:

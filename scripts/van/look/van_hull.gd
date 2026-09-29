@@ -52,7 +52,7 @@ func rebuild_look(look: VanLook) -> void:
 	_build_roof(walls)
 	_build_rear(walls)
 	_build_front(walls)
-	_HullPatches.new(self).build(walls)
+	_HullPatches.new(self).build(walls, VanWheels.rear_arch_spans(look))
 	_HullLines.new(self).build(_profile, walls, material)
 
 	if is_inside_tree():
