@@ -164,8 +164,12 @@ the night read. So:
 | 9 | PcRig and CRT visible flicker | code | D12, D47, audit | done 649a98f |
 | 10 | Hopper, rack and leftover visible flicker | code | D12, D47, audit | done c842e91 |
 | 11 | Audit floor and exemptions | code | D45, D47, audit | done a92d1cb |
-| 12 | Leak and edge triage | code | audit | todo |
-| 13 | Audit strict in smoke | code | D23, D47, audit | todo |
+| 12 | Leak tracing and side window stop ring | code, research | D52, D53, audit | done 9f1eb2a |
+| 13 | Side door leaks and jamb exemptions | code | audit | todo |
+| 14 | Rear door centre seam and glass crack | code | audit | todo |
+| 15 | Window reveal and sill leak exemptions | code | audit | todo |
+| 16 | EDGE rows and FLICKER leftovers | code | D47, audit | todo |
+| 17 | Audit strict in smoke | code | D23, D47, audit | todo |
 
 ## Phases
 
@@ -221,11 +225,26 @@ Deliverables (tooling only, `tools/van_audit/`): `MIN_VISIBLE_AREA` 0.005 m²: F
 Verification: check, audit run twice gives identical counts; FLICKER (non-minor, non-exempt) at the phases 8–10 leftovers only.
 Notes: done a92d1cb (721fd76, a92d1cb). `van_audit_exempt.gd` holds the rules (FLICKER KickPlate/LeftWallPost/RightWallPost joints D45; EDGE Wells D29, ExteriorPane D41, SideSkin D17) and the OPENING exemptions (D39, D41); rows print as `FLICKER_MINOR`, `FLICKER_EXEMPT`, `EDGE_EXEMPT` and stay out of `AUDIT SUMMARY` (header `COUNTS`/`MINOR`/`EXEMPT`, tail `AUDIT INFO`). Visible area per D51. EDGE T-junction seams close in `van_audit_seams.gd` (only CabFace cleared). Two runs identical: EDGE 10, FLICKER 9 (the phase 8–10 leftovers exactly), LEAK_IN 1, LEAK_OUT 45; minor 417, exempt EDGE 12 / FLICKER 31.
 
-### 12 · Leak and edge triage
-Deliverables: LEAK_OUT 45 (`DoorJamb_L/R` rays, the rear-door centre-seam rows onto Bulkhead/CabDoor), LEAK_IN 1 at (2.706, 1.158, -1.382), the EDGE rows the phase 11 matching leaves: fix real holes, exempt by-design ones with a reason.
-Verification: check, smoke, audit LEAK_IN 0, LEAK_OUT 0, EDGE 0 (after exemptions).
+### 12 · Leak tracing and side window stop ring (D52, D53)
+Done across sessions 5-7 (autoplan stopped it after three partials; split 2026-09-29 into 12-16): every LEAK row carries its first ray's trace (5ffaddc), `tools/van_audit.py --probe` (7d0de6e, D52), side window stop ring (9f1eb2a, D53). Findings for 13-16 are in `.claude/plans/vanfix.state.md`.
 
-### 13 · Audit strict in smoke (D23, D47)
+### 13 · Side door leaks and jamb exemptions
+Deliverables: split `van_audit_gaps.gd` (399 lines) before adding; a LEAK_OUT rule in `van_audit_exempt.gd` (`rule_for("LEAK_OUT", ...)`, reason and D) for jamb lips and reveals seen through the side door openings (`DoorJamb_L/R`, `RightWallReveals`, `Right/CurvedBody` rear edge); seal the side door leaf where the probe shows see-through (`Left/CurvedBody` row at y 0.16: rays pass under the leaf; the closed leaf `DOOR_HALF_Z` 1.105 leaves ~13 cm at each end of the opening z -3.42 ± 1.235, check its frames first, D12 wants 2 cm).
+Verification: check, smoke, audit (side-door LEAK rows gone), shots of the side doors closed from inside and outside.
+
+### 14 · Rear door centre seam and glass crack
+Deliverables: split `rear_doors.gd` (400 lines) first; an overlap strip (astragal) on one rear leaf covering the centre seam (rays from `(0, 0.8|2.0, 5.052)` heading -z pass at x ≈ 0..0.12, ~25 LEAK_OUT rows); close the rear window glass-to-frame crack behind the last LEAK_IN.
+Verification: check, smoke, audit LEAK_IN 0 and no centre-seam rows, rear shots read (closed doors, inside and outside).
+
+### 15 · Window reveal and sill leak exemptions
+Deliverables: LEAK_OUT rules with reason and D for window reveals and the rear sill seen through openings; any leftover LEAK_OUT row fixed or exempted.
+Verification: check, smoke, audit LEAK_IN 0, LEAK_OUT 0.
+
+### 16 · EDGE rows and FLICKER leftovers
+Deliverables: each EDGE row in the state file's list (CabLiner, CabBackLip, RearSkin, CornerPostFL/FR, BellySkin, RearWall hinge CurvedBody, RearCornerL/R, Wells, ExteriorPane, SideSkin) fixed or exempted with reason and D (by-design single-sided plates exempt); the 9 FLICKER leftovers fixed in code.
+Verification: check, smoke, audit EDGE 0 and FLICKER 0 (after exemptions); shots only if a fix is visible.
+
+### 17 · Audit strict in smoke (D23, D47)
 Deliverables: every failing audit count 0 at seeds 1337 and two others (fix any leftover ≥ floor row); audit fast enough for smoke (carry-forward speed notes); door-adjacent window posed apart from its door; `--strict` wired into `tools/smoke.py` as a failure. Then Stage done, listing every `(auto, owner-delegated)` D under Look at.
 Verification: check, smoke (fails on a planted flicker, passes clean), `py -3 tools/smoke.py --shots DIR --van-seeds 3` rear and roof shots read, including the D40 ceiling cables, the rear-door bars and the generator pan.
 

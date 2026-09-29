@@ -1,4 +1,4 @@
-Status: partial
+Status: phase-done
 # Plan state: vanfix
 
 ## Plan
@@ -107,7 +107,10 @@ no smoke (tools/van_audit only), no shots (nothing visible).
 none
 
 ## Next phase
-Phase 12 continues (partial). Step (1) is done (D53). Order now: (2) LEAK_OUT exemption for jamb lips and
+Phase 12 was split on 2026-09-29 into 12 (done) and 13-16; phase 17 is the old 13. Next is
+phase 13 (side door leaks and jamb exemptions), which is step (2) below; steps (3), (4), (5) are
+phases 14, 15, 16. The old list, for reference:
+Phase 12 continued (partial). Step (1) is done (D53). Order now: (2) LEAK_OUT exemption for jamb lips and
 reveals seen through openings (`rule_for("LEAK_OUT", ...)`; `van_audit_gaps.gd` is at 399: split first) +
 side door leaf seal where the probe shows see-through (`Left/CurvedBody` y 0.16 row), (3) rear door centre
 seam strip plus the rear window glass-to-frame crack (the LEAK_IN above; split `rear_doors.gd` first),
