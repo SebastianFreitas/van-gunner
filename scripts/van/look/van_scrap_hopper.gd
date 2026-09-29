@@ -150,7 +150,7 @@ func _build_chute(steel: Material) -> void:
 	var lip_size := Vector3(0.02, 0.08, 0.36)
 	for x_sign: float in [-1.0, 1.0]:
 		var lip := _box(_chute, "Lip%s" % ("L" if x_sign < 0.0 else "R"), steel,
-				Vector3(0.46 * x_sign, -0.05, 0.12), lip_size)
+				Vector3(0.47 * x_sign, -0.05, 0.12), lip_size)
 		lip.rotation = Vector3(deg_to_rad(-20.0), 0.0, 0.0)
 
 

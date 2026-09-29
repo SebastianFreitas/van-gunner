@@ -96,9 +96,9 @@ func build_desk() -> void:
 	for crate_x: float in [-0.25, 0.55]:
 		_box(_rig, "Crate", _crate, Vector3(crate_x, -0.585, 0.24), Vector3(0.25, 0.73, 0.38))
 		for slat_y: float in [-0.45, -0.75]:
-			_box(_rig, "Slat", _wood, Vector3(crate_x, slat_y, 0.24), Vector3(0.26, 0.03, 0.39))
+			_box(_rig, "Slat", _wood, Vector3(crate_x, slat_y, 0.2275), Vector3(0.276, 0.03, 0.381))
 		for tilt: float in [0.35, -0.35]:
-			_box(_rig, "Brace", _wood, Vector3(crate_x, -0.585, 0.442), Vector3(0.03, 0.66, 0.015),
+			_box(_rig, "Brace", _wood, Vector3(crate_x, -0.585, 0.4505), Vector3(0.03, 0.66, 0.015),
 					Vector3(0.0, 0.0, tilt))
 	_box(_rig, "CleatL", _wood, Vector3(-0.077, -0.25, 0.24), Vector3(0.1, 0.03, 0.38))
 	_box(_rig, "CleatR", _wood, Vector3(0.38, -0.25, 0.24), Vector3(0.1, 0.03, 0.38))
@@ -124,10 +124,10 @@ func build_gear(screen: Material) -> void:
 			Vector3(0.014, 0.014, 0.006))
 	MachineParts.tower_pc(_rig, Vector3(0.15, -0.95, 0.26), _beige, _green)
 
-	_box(_rig, "StatsFoot", _steel, Vector3(-0.27, 0.25, 0.26), Vector3(0.16, 0.03, 0.14))
+	_box(_rig, "StatsFoot", _steel, Vector3(-0.27, 0.2615, 0.242), Vector3(0.16, 0.053, 0.06))
 
 	_box(_rig, "MainPlinth", _steel, Vector3(0.08, -0.165, 0.2), Vector3(0.26, 0.03, 0.26))
-	_box(_rig, "MainNeck", _steel, Vector3(0.08, -0.12, 0.22), Vector3(0.12, 0.06, 0.1))
+	_box(_rig, "MainNeck", _steel, Vector3(0.08, -0.108, 0.22), Vector3(0.12, 0.084, 0.1))
 	MachineParts.crt(_rig, Vector3(0.08, 0.07, 0.28), _beige, screen, 0.4)
 
 	_box(_rig, "SmallPlinth", _steel, Vector3(0.45, -0.165, 0.2), Vector3(0.18, 0.03, 0.18))
@@ -140,13 +140,13 @@ func build_gear(screen: Material) -> void:
 	_box(_rig, "DeadBoard", _wood, Vector3(0.45, 0.1475, 0.22), Vector3(0.26, 0.015, 0.2))
 	var dead := MachineParts.crt(_rig, Vector3(0.45, 0.265, 0.24), _steel, _glass, 0.2)
 	dead.rotation = Vector3(0.0, 0.15, 0.06)
-	_box(dead, "CrackA", _crack, Vector3(0.05, -0.04, 0.0625), Vector3(0.06, 0.003, 0.001),
+	_box(dead, "CrackA", _crack, Vector3(0.05, -0.04, 0.0495), Vector3(0.06, 0.003, 0.001),
 			Vector3(0.0, 0.0, 0.6))
-	_box(dead, "CrackB", _crack, Vector3(0.06, -0.025, 0.0625), Vector3(0.04, 0.003, 0.001),
+	_box(dead, "CrackB", _crack, Vector3(0.06, -0.025, 0.0495), Vector3(0.04, 0.003, 0.001),
 			Vector3(0.0, 0.0, -0.5))
-	_box(dead, "CrackC", _crack, Vector3(0.035, -0.05, 0.0625), Vector3(0.04, 0.003, 0.001),
+	_box(dead, "CrackC", _crack, Vector3(0.035, -0.05, 0.0495), Vector3(0.04, 0.003, 0.001),
 			Vector3(0.0, 0.0, 1.5))
-	_box(dead, "BrokenCorner", _rubber, Vector3(0.07, -0.05, 0.063), Vector3(0.03, 0.025, 0.002))
+	_box(dead, "BrokenCorner", _rubber, Vector3(0.07, -0.05, 0.05), Vector3(0.03, 0.025, 0.002))
 
 	var pivot := Node3D.new()
 	pivot.name = "Keyboard"
@@ -164,8 +164,7 @@ func build_gear(screen: Material) -> void:
 	_cable(PackedVector3Array([Vector3(-0.09, -0.172, 0.37), Vector3(-0.1, -0.175, 0.3),
 			Vector3(-0.165, -0.175, 0.2)]))
 
-	_box(_rig, "MouseMat", _rubber, Vector3(0.45, -0.175, 0.41), Vector3(0.17, 0.006, 0.16))
-	_box(_rig, "Mouse", _beige, Vector3(0.45, -0.165, 0.44), Vector3(0.045, 0.02, 0.07))
+	_box(_rig, "Mouse", _beige, Vector3(0.45, -0.17225, 0.44), Vector3(0.045, 0.0345, 0.07))
 	_cable(PackedVector3Array([Vector3(0.45, -0.17, 0.405), Vector3(0.42, -0.176, 0.365),
 			Vector3(0.35, -0.176, 0.33)]))
 
@@ -185,11 +184,12 @@ func build_clutter() -> void:
 			Vector3(0.012, 0.012, 0.004))
 	_cyl(_rig, "Antenna", _rubber, Vector3(tape_x + 0.045, 0.045, 0.14), 0.005, 0.09)
 
-	for i: int in range(5):
-		var sleeve_mat: Material = _rubber if i != 2 else _crate
-		_box(_rig, "Floppy%d" % i, sleeve_mat, Vector3(tape_x, -0.1755 + float(i) * 0.0045, 0.37),
-				Vector3(0.12, 0.004, 0.12), Vector3(0.0, 0.1 * float(i - 2), 0.0))
-	_box(_rig, "FloppyLabel", _paper, Vector3(tape_x, -0.1535, 0.39), Vector3(0.05, 0.001, 0.03))
+	# Two sleeve piles at different yaws, both sunk into the desk, their tops and bottoms kept
+	# apart so no two faces sit within the 1 cm the flicker audit counts as coplanar.
+	_box(_rig, "FloppyPile", _rubber, Vector3(tape_x, -0.1775, 0.37), Vector3(0.12, 0.046, 0.12),
+			Vector3(0.0, -0.1, 0.0))
+	_box(_rig, "FloppyLoose", _crate, Vector3(tape_x, -0.1775, 0.37), Vector3(0.12, 0.024, 0.12),
+			Vector3(0.0, 0.15, 0.0))
 
 	_cyl(_rig, "Mug", _beige, Vector3(tape_x, -0.14, 0.475), 0.035, 0.08)
 	_cyl(_rig, "Coffee", _wood_dark, Vector3(tape_x, -0.1005, 0.475), 0.03, 0.002)
@@ -223,7 +223,7 @@ func build_clutter() -> void:
 			Vector3(0.09, -0.05, 0.035)]))
 
 
-## Sticky notes on the partition and a crooked shelf with a clock-radio and paper stacks.
+## Curling sticky notes on the partition and a crooked shelf with a clock-radio and paper stacks.
 func build_wall() -> void:
 	var notes: Array[Array] = [
 		[Vector3(0.0, 0.42, 0.0), Color(0.4, 0.36, 0.16), 0.08],
@@ -235,8 +235,8 @@ func build_wall() -> void:
 		var pos: Vector3 = note[0]
 		var col: Color = note[1]
 		var tilt: float = note[2]
-		_box(_rig, "StickyNote", MachineParts.dark(col, 0.95), pos + Vector3(0.0, 0.0, 0.003),
-				Vector3(0.06, 0.06, 0.003), Vector3(0.0, 0.0, tilt))
+		_box(_rig, "StickyNote", MachineParts.dark(col, 0.95), pos + Vector3(0.0, 0.0, 0.012),
+				Vector3(0.06, 0.06, 0.003), Vector3(-0.3, 0.0, tilt))
 	var shelf := Node3D.new()
 	shelf.name = "Shelf"
 	shelf.position = Vector3(-0.22, 0.74, 0.08)

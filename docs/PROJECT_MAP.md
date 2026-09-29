@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-291 GDScript files, 44626 lines.
+294 GDScript files, 44984 lines.
 
 ### `scenes/corridor/`
 
@@ -632,7 +632,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `machine_damage.gd` | `MachineDamage` | 162 | Maps a VanVital's HP to healthy, hurt or dying, and drives its machine's motion speed, flicker, smoke puffs and sparks. |
 | `machine_motion.gd` | `MachineMotion` | 100 | Drives every moving part of one van machine (spin, pump, wobble, flicker) from a single _process, scaled by its damage state. |
-| `machine_parts.gd` | `MachineParts` | 328 | Static low-poly part builders (motor, flywheel, belt, fan, battery, can, gauge, switch, CRT, tower, keyboard, pipe, vent, cables) for the van's interior machin… |
+| `machine_parts.gd` | `MachineParts` | 375 | Static low-poly part builders (motor, flywheel, belt, fan, battery, can, gauge, switch, CRT, tower, keyboard, pipe, vent, cables) for the van's interior machin… |
 | `van_armour.gd` | `VanArmour` | 260 | The van's seeded outer armour: plates, rebar and spikes on the real hull skin, placed from slots clear of every opening and merged per material. |
 | `van_armour_pieces.gd` | — | 84 | Appends armour piece geometry (leaned plates, bars, spikes) into per-material SurfaceTools for VanArmour. |
 | `van_cab.gd` | `VanCab` | 176 | The van's cab-over cab on the body profile: shell, face, windshield, doors, a dark cab behind the glass, mirrors and two real headlights, rebuilt from the look… |
@@ -662,7 +662,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_roof.gd` | `VanRoof` | 279 | The van's roof rack, antennas, dish and the always-on roof spotlight; add-ons over the D24-D26 height caps are dropped, not built. |
 | `van_roof_junk.gd` | — | 154 | Fills VanRoof's rack with seeded junk: tyre stacks, jerry cans, crates and strapped tarp bundles. |
 | `van_scrap_hopper.gd` | `VanScrapHopper` | 235 | The loot hopper dressed as a scrap hopper (ochre frame, flared funnel, toothed crusher drum behind a guard cage, chute and catch bin, chain-driven motor, warni… |
-| `van_scrap_hopper_parts.gd` | — | 233 | Static dressing for the scrap hopper (frame, hazard band, cage, bin, chain drive, lamp mast, stop button, power port); built by van_scrap_hopper.gd. |
+| `van_scrap_hopper_parts.gd` | — | 239 | Static dressing for the scrap hopper (frame, hazard band, cage, bin, chain drive, lamp mast, stop button, power port); built by van_scrap_hopper.gd. |
 | `van_stats_crt.gd` | `VanStatsCrt` | 117 | A second PC-rig CRT stacked on the desk tower that prints live run stats (act and street, hull, gold and parts, gun) in green phosphor text, refreshed on the s… |
 | `van_stencil_font.gd` | — | 151 | A 5x7 pixel stencil font that renders worn, hand-painted text and tally marks into Images for the van's decals. |
 | `van_welding_bench.gd` | `VanWeldingBench` | 186 | The crafting-bench vital rebuilt as a welding bench (heavy steel bench, gas bottles, welder box, vice, grinder with shrouds, pegboard with tools and hood, roof… |
@@ -702,11 +702,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `van_audit.gd` | — | 288 | Headless van audit entry scene: collects every visible triangle of the van, checks it and writes a report. |
-| `van_audit_flicker.gd` | — | 194 | Coplanar-overlap (flicker) check over an AuditMesh triangle set, split off van_audit_overlap.gd (vanfix specs 1-2, 5-1). |
-| `van_audit_gaps.gd` | — | 371 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges and see-through leaks, found by raycasting temporary ConcavePolygonShape3D pr… |
+| `van_audit.gd` | — | 323 | Headless van audit entry scene: collects every visible triangle of the van, checks it and writes a report. |
+| `van_audit_exempt.gd` | — | 62 | Van audit exemption list: findings accepted on purpose, each with its reason and plan decision. |
+| `van_audit_flicker.gd` | — | 212 | Coplanar-overlap (flicker) check over an AuditMesh triangle set, split off van_audit_overlap.gd (vanfix specs 1-2, 5-1). |
+| `van_audit_gaps.gd` | — | 400 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges and see-through leaks, found by raycasting temporary ConcavePolygonShape3D pr… |
 | `van_audit_mesh.gd` | — | 137 | Collects every visible triangle under a rig into parallel arrays, all in rig-local space, for the van audit's checks (specs 1-2 and 1-3 add more consumers). |
-| `van_audit_overlap.gd` | — | 154 | Coplanar-overlap (flicker), moving-part interpenetration (clip) and door/window opening-blocked checks over an AuditMesh triangle set (vanfix spec 1-2). |
+| `van_audit_overlap.gd` | — | 145 | Coplanar-overlap (flicker), moving-part interpenetration (clip) and door/window opening-blocked checks over an AuditMesh triangle set (vanfix spec 1-2). |
+| `van_audit_probe.gd` | — | 62 | Brute-force ray probe for the van audit: lists every triangle a given rig-local ray crosses. |
+| `van_audit_seams.gd` | — | 108 | Seam tests for the van audit EDGE check: open edges that meet other meshes or collinear edges. |
 | `van_audit_states.gd` | — | 115 | Poses the side doors and windows into closed / half / open states directly, with no tweens and no gameplay calls, so the audit's flicker/clip/opening checks ca… |
 
 ## Scenes

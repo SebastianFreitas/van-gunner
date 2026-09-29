@@ -6456,7 +6456,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Button MeshInstance3
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.05, 0.28)
+  transform=Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.05, 0.265)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -6517,7 +6517,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/WindowPane MeshInsta
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#40{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.42, 0.55, 0.04), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#40{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.4, 0.55, 0.04), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null

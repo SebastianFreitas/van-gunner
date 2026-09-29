@@ -3,7 +3,9 @@ extends RefCounted
 ## see-through leaks, found by raycasting temporary ConcavePolygonShape3D proxies of every
 ## visible triangle. Stateful: build_proxies() must run first, the checks read what it built.
 
-const PROXY_LAYER := 1 << 19
+const AuditExempt := preload("res://tools/van_audit/van_audit_exempt.gd")
+const AuditSeams := preload("res://tools/van_audit/van_audit_seams.gd")
+const PROXY_LAYER :=1 << 19
 const EDGE_WELD := 0.001
 const EDGE_MIN_LEN := 0.05
 const EDGE_TOUCH_RADIUS := 0.015
@@ -104,44 +106,44 @@ func first_visible_hit(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vect
 	return {"back_nodes": back_nodes}
 
 
-## True when both ends and the midpoint of an edge each lie within 1.5 cm of some triangle edge
-## of a different mesh node (a seam where two meshes meet edge to edge).
-func _edge_meets_other_mesh(tris: RefCounted, grid: Dictionary, idx: int, p0: Vector3, p1: Vector3) -> bool:
-	for p: Vector3 in [p0, (p0 + p1) * 0.5, p1]:
-		var reach := Vector3(0.015, 0.015, 0.015)
-		var lo := Vector3i(((p - reach) / 0.25).floor())
-		var hi := Vector3i(((p + reach) / 0.25).floor())
-		var covered := false
-		for x in range(lo.x, hi.x + 1):
-			for y in range(lo.y, hi.y + 1):
-				for z in range(lo.z, hi.z + 1):
-					var list: PackedInt32Array = grid.get(Vector3i(x, y, z), PackedInt32Array())
-					for t in list:
-						if tris.owner_idx[t] == idx:
-							continue
-						if _point_near_tri_edge(p, tris.a[t], tris.b[t], tris.c[t]):
-							covered = true
-							break
-					if covered:
-						break
-				if covered:
-					break
-			if covered:
-				break
-		if not covered:
-			return false
-	return true
+## Every proxy hit along from->to (rig space), up to 8, restarting 0.002 m past each, as
+## "<node path>:<F|B>@(x, y, z)" joined by " > ". Never stops at a front hit; locates leaks.
+func trace_ray(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vector3) -> String:
+	var parts: Array[String] = []
+	var origin := from
+	var dir := (to - from).normalized()
+	var xform := _rig.global_transform
 
+	for _step in range(8):
+		var params := PhysicsRayQueryParameters3D.new()
+		params.from = xform * origin
+		params.to = xform * to
+		params.collision_mask = PROXY_LAYER
+		params.hit_back_faces = true
+		params.hit_from_inside = false
+		var hit: Dictionary = space.intersect_ray(params)
+		if hit.is_empty():
+			break
 
-func _point_near_tri_edge(p: Vector3, a: Vector3, b: Vector3, c: Vector3) -> bool:
-	for seg: Array in [[a, b], [b, c], [c, a]]:
-		var s0: Vector3 = seg[0]
-		var ab: Vector3 = (seg[1] as Vector3) - s0
-		var len_sq: float = ab.length_squared()
-		var f: float = 0.0 if len_sq < 1e-12 else clampf((p - s0).dot(ab) / len_sq, 0.0, 1.0)
-		if p.distance_to(s0 + ab * f) <= 0.015:
-			return true
-	return false
+		var body_id: int = hit.collider_id
+		var node_idx: int = int(_node_idx_by_body.get(body_id, -1))
+		var node_path: String = _tris.paths[node_idx] if node_idx >= 0 else "?"
+		var face_index: int = int(hit.get("face_index", -1))
+		var tri_normal: Vector3 = xform.basis.inverse() * (hit.normal as Vector3)
+		if face_index >= 0 and _tri_idx_by_body.has(body_id):
+			var tri_list: PackedInt32Array = _tri_idx_by_body[body_id]
+			if face_index < tri_list.size():
+				tri_normal = _tris.n[tri_list[face_index]]
+
+		var pos_rig: Vector3 = xform.affine_inverse() * (hit.position as Vector3)
+		var double_sided: bool = node_idx >= 0 and _tris.double_sided[node_idx] != 0
+		var front: bool = tri_normal.dot(dir) < 0.0 or double_sided
+		parts.append("%s:%s@(%.3f, %.3f, %.3f)" % [
+			node_path, "F" if front else "B", pos_rig.x, pos_rig.y, pos_rig.z,
+		])
+		origin = pos_rig + dir * 0.002
+
+	return " > ".join(parts)
 
 
 ## Open outer edges: exterior triangles (render layer 1) whose weld-1mm edge is used by exactly
@@ -184,7 +186,9 @@ func check_edges(tris: RefCounted, runner: Node) -> void:
 				continue
 			if _edge_meets_neighbour(space, own_rid, p0, p1):
 				continue
-			if _edge_meets_other_mesh(tris, grid, idx, p0, p1):
+			if AuditSeams.edge_meets_other_mesh(tris, grid, idx, p0, p1):
+				continue
+			if AuditSeams.edge_covered_by_collinear(tris, grid, p0, p1):
 				continue
 			open_count += 1
 			if longest.is_empty() or length > float(longest.length):
@@ -198,9 +202,15 @@ func check_edges(tris: RefCounted, runner: Node) -> void:
 	for idx: int in idx_list:
 		var row: Dictionary = agg[idx]
 		var at: Vector3 = row.at
-		runner.add_finding("EDGE", "node=%s open=%d length=%.3f at=(%.3f, %.3f, %.3f)" % [
-			tris.paths[idx], row.open, row.length, at.x, at.y, at.z,
-		])
+		var path: String = tris.paths[idx]
+		var rule: Dictionary = AuditExempt.rule_for("EDGE", path, "")
+		var text := "node=%s open=%d length=%.3f at=(%.3f, %.3f, %.3f)" % [
+			path, row.open, row.length, at.x, at.y, at.z,
+		]
+		if rule.is_empty():
+			runner.add_finding("EDGE", text)
+		else:
+			runner.add_finding("EDGE_EXEMPT", text + " rule=%s" % rule.d)
 	print("AUDIT edges (%d ms)" % (Time.get_ticks_msec() - started))
 
 
@@ -241,15 +251,24 @@ func check_leaks_inside(_tris_unused: RefCounted, runner: Node, profile: VanBody
 				if agg.has(through):
 					agg[through].rays = int(agg[through].rays) + 1
 				else:
-					agg[through] = {"through": through, "rays": 1, "at": _envelope_cross(p, d, profile)}
+					agg[through] = {
+						"through": through, "rays": 1, "at": _envelope_cross(p, d, profile),
+						"from": p, "dir": d, "trace": trace_ray(space, p, p + d * LEAK_RANGE),
+					}
 
 	var rows: Array = agg.values()
 	rows.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return int(x.rays) > int(y.rays))
 	for row: Dictionary in rows:
 		var at: Vector3 = row.at
-		runner.add_finding("LEAK_IN", "through=%s rays=%d at=(%.3f, %.3f, %.3f)" % [
-			row.through, row.rays, at.x, at.y, at.z,
-		])
+		var from: Vector3 = row.from
+		var dir: Vector3 = row.dir
+		runner.add_finding(
+			"LEAK_IN",
+			"through=%s rays=%d at=(%.3f, %.3f, %.3f) from=(%.3f, %.3f, %.3f) dir=(%.3f, %.3f, %.3f) trace=%s" % [
+				row.through, row.rays, at.x, at.y, at.z,
+				from.x, from.y, from.z, dir.x, dir.y, dir.z, row.trace,
+			]
+		)
 	print("AUDIT leaks_inside (%d ms)" % (Time.get_ticks_msec() - started))
 
 
@@ -302,15 +321,25 @@ func check_leaks_outside(tris: RefCounted, runner: Node) -> void:
 				if agg.has(key):
 					agg[key].rays = int(agg[key].rays) + 1
 				else:
-					agg[key] = {"sees": String(hit.node), "past": past, "rays": 1, "at": hit.pos}
+					agg[key] = {
+						"sees": String(hit.node), "past": past, "rays": 1, "at": hit.pos,
+						"from": origin, "dir": (target - origin).normalized(),
+						"trace": trace_ray(space, origin, target),
+					}
 
 	var rows: Array = agg.values()
 	rows.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return int(x.rays) > int(y.rays))
 	for row: Dictionary in rows:
 		var at: Vector3 = row.at
-		runner.add_finding("LEAK_OUT", "sees=%s past=%s rays=%d at=(%.3f, %.3f, %.3f)" % [
-			row.sees, row.past, row.rays, at.x, at.y, at.z,
-		])
+		var from: Vector3 = row.from
+		var dir: Vector3 = row.dir
+		runner.add_finding(
+			"LEAK_OUT",
+			"sees=%s past=%s rays=%d at=(%.3f, %.3f, %.3f) from=(%.3f, %.3f, %.3f) dir=(%.3f, %.3f, %.3f) trace=%s" % [
+				row.sees, row.past, row.rays, at.x, at.y, at.z,
+				from.x, from.y, from.z, dir.x, dir.y, dir.z, row.trace,
+			]
+		)
 	print("AUDIT leaks_outside (%d ms)" % (Time.get_ticks_msec() - started))
 
 

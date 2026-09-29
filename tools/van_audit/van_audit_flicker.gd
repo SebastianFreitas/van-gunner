@@ -6,7 +6,12 @@ const AuditOverlap := preload("res://tools/van_audit/van_audit_overlap.gd")
 const CELL := 0.25
 const NORMAL_DOT := 0.985
 const PLANE_EPS := 0.01
+const AuditExempt := preload("res://tools/van_audit/van_audit_exempt.gd")
 const MIN_AREA := 1e-4
+## Rows under this total area are slivers nobody sees in play (D47): reported as FLICKER_MINOR.
+const MIN_VISIBLE_AREA := 0.005
+## Per-pair floor: only numerical slivers, so the row-level MIN_AREA cut can't flip pair counts.
+const PAIR_EPS := 1e-6
 const DUP_EPS := 0.001
 
 
@@ -48,12 +53,22 @@ static func check_flicker(tris: RefCounted, runner: Node, state: String, only_mo
 					continue
 				_flicker_pair(tris, i, j, only_moving, node_root, agg)
 	var rows: Array = agg.values()
-	rows.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return float(x.area) > float(y.area))
+	rows.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return float(x.area) > float(y.area) \
+		or (float(x.area) == float(y.area) and float(x.total) > float(y.total)))
 	for row: Dictionary in rows:
+		if float(row.total) <= MIN_AREA:
+			continue
 		var at: Vector3 = row.at
-		runner.add_finding("FLICKER", "state=%s area=%.5f pairs=%d a=%s b=%s at=(%.3f, %.3f, %.3f)" % [
-			state, row.area, row.pairs, row.a, row.b, at.x, at.y, at.z,
-		])
+		var text := "state=%s area=%.5f total=%.5f pairs=%d a=%s b=%s at=(%.3f, %.3f, %.3f)" % [
+			state, row.area, row.total, row.pairs, row.a, row.b, at.x, at.y, at.z,
+		]
+		var rule: Dictionary = AuditExempt.rule_for("FLICKER", row.a, row.b)
+		if not rule.is_empty():
+			runner.add_finding("FLICKER_EXEMPT", text + " rule=%s" % rule.d)
+		elif float(row.area) < MIN_VISIBLE_AREA:
+			runner.add_finding("FLICKER_MINOR", text)
+		else:
+			runner.add_finding("FLICKER", text)
 	print("AUDIT flicker[%s] (%d ms)" % [state, Time.get_ticks_msec() - started])
 
 
@@ -71,17 +86,20 @@ static func _flicker_pair(tris: RefCounted, i: int, j: int, only_moving: Diction
 		if tris.n[i].dot(tris.n[j]) <= NORMAL_DOT or not _coplanar(tris, i, j):
 			return
 	var area: float = _tri_area(tris, i) if exact else _overlap_area(tris, i, j)
-	if area <= MIN_AREA:
+	if area <= PAIR_EPS:
 		return
 	var a_path: String = tris.path_of(i)
 	var b_path: String = tris.path_of(j)
 	var key: String = "%s|%s" % [a_path, b_path] if a_path <= b_path else "%s|%s" % [b_path, a_path]
 	var at: Vector3 = (tris.a[i] + tris.b[i] + tris.c[i]) / 3.0
-	var row: Dictionary = agg.get(key, {"area": 0.0, "pairs": 0, "a": a_path, "b": b_path, "at": at, "_best": 0.0})
+	## Sliver pairs keep a row present (total) but add no visible area (D47).
+	var row: Dictionary = agg.get(key, {"area": 0.0, "total": 0.0, "pairs": 0, "a": a_path, "b": b_path, "at": at, "_best": 0.0})
+	row.total = float(row.total) + area
+	if area > MIN_AREA:
+		row.area = float(row.area) + area
 	if area > float(row["_best"]):
 		row.at = at
 		row["_best"] = area
-	row.area = float(row.area) + area
 	row.pairs = int(row.pairs) + 1
 	agg[key] = row
 

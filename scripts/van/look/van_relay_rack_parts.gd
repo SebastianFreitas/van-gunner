@@ -86,16 +86,16 @@ func _build_frame() -> void:
 		var side := "L" if x_sign < 0.0 else "R"
 		_box("Upright" + side, Vector3(0.05, 1.17, 0.012),
 				Vector3(0.595 * x_sign, -0.465, -0.364), _steel)
-		_box("UprightFlange" + side, Vector3(0.012, 1.17, 0.04),
-				Vector3(0.614 * x_sign, -0.465, -0.35), _steel)
+		_box("UprightFlange" + side, Vector3(0.012, 1.17, 0.028),
+				Vector3(0.614 * x_sign, -0.465, -0.344), _steel)
 		_box("Hanger" + side, Vector3(0.025, 0.18, 0.025), Vector3(0.56 * x_sign, 0.21, -0.35),
 				_steel)
 		_box("HangerPlate" + side, Vector3(0.07, 0.01, 0.07),
 				Vector3(0.56 * x_sign, 0.305, -0.35), _steel)
 	_box("TopRail", Vector3(1.24, 0.04, 0.012), Vector3(0.0, 0.1, -0.364), _steel)
-	_box("TopRailFlange", Vector3(1.24, 0.012, 0.04), Vector3(0.0, 0.116, -0.35), _steel)
+	_box("TopRailFlange", Vector3(1.24, 0.012, 0.028), Vector3(0.0, 0.114, -0.344), _steel)
 	_box("Shelf", Vector3(0.78, 0.03, 0.26), Vector3(0.21, -0.02, -0.2), _steel)
-	_box("ShelfLip", Vector3(0.78, 0.05, 0.012), Vector3(0.21, 0.005, -0.076), _steel)
+	_box("ShelfLip", Vector3(0.78, 0.05, 0.012), Vector3(0.21, 0.005, -0.064), _steel)
 	var bracket_index := 0
 	for bx: float in [-0.12, 0.52]:
 		bracket_index += 1
@@ -150,7 +150,7 @@ func _build_batteries() -> void:
 	# Trunk cable from the last battery, down the right edge to the knife switch.
 	var cable := PackedVector3Array([out_r, Vector3(0.635, out_r.y - 0.02, -0.16),
 			Vector3(0.635, -0.1, -0.16), Vector3(0.635, -0.3, -0.3), Vector3(0.5, -0.72, -0.35),
-			Vector3(0.06, -0.78, -0.35)])
+			Vector3(0.06, -0.78, -0.325)])
 	MachineParts.cable_bundle(_rack, cable, _copper, 0.012, 2)
 
 
@@ -159,14 +159,14 @@ func _build_cabinet() -> void:
 	_box("Cabinet", Vector3(0.4, 0.74, 0.28), Vector3(cx, -0.23, -0.185), _green)
 	_box("CabinetTop", Vector3(0.41, 0.012, 0.29), Vector3(cx, 0.146, -0.185), _steel)
 	_box("Door", Vector3(0.37, 0.7, 0.012), Vector3(cx, -0.23, -0.039), _green)
-	_box("CutBack", Vector3(0.22, 0.2, 0.004), Vector3(cx, -0.06, -0.031), _dark)
+	_box("CutBack", Vector3(0.22, 0.2, 0.013), Vector3(cx, -0.06, -0.0275), _dark)
 	for fy: float in [-0.107, 0.107]:
-		_box("CutFrameH", Vector3(0.24, 0.014, 0.006), Vector3(cx, -0.06 + fy, -0.03), _steel)
+		_box("CutFrameH", Vector3(0.24, 0.014, 0.013), Vector3(cx, -0.06 + fy, -0.0155), _steel)
 	for fx: float in [-0.117, 0.117]:
-		_box("CutFrameV", Vector3(0.014, 0.214, 0.006), Vector3(cx + fx, -0.06, -0.03), _steel)
+		_box("CutFrameV", Vector3(0.014, 0.214, 0.013), Vector3(cx + fx, -0.06, -0.0155), _steel)
 	for kx: float in [-0.055, 0.055]:
-		_box("Contactor", Vector3(0.08, 0.13, 0.024), Vector3(cx + kx, -0.06, -0.017), _casing)
-		_box("ContactorCap", Vector3(0.07, 0.02, 0.02), Vector3(cx + kx, 0.015, -0.014), _steel)
+		_box("Contactor", Vector3(0.08, 0.13, 0.016), Vector3(cx + kx, -0.06, -0.013), _casing)
+		_box("ContactorCap", Vector3(0.07, 0.02, 0.02), Vector3(cx + kx, 0.015, -0.011), _steel)
 		_box("ContactBar", Vector3(0.05, 0.012, 0.008), Vector3(cx + kx, -0.08, -0.007), _copper)
 		for sx: float in [-0.02, 0.02]:
 			_cyl("Screw", 0.008, 0.008, Vector3(cx + kx + sx, -0.03, -0.007), _copper,
@@ -186,9 +186,9 @@ func _build_cabinet() -> void:
 
 
 func _build_board() -> void:
-	gauge_root = MachineParts.gauge(_rack, Vector3(0.38, -0.28, -0.37), _steel, _face)
+	gauge_root = MachineParts.gauge(_rack, Vector3(0.38, -0.28, -0.35), _steel, _face)
 	_box("RunLamp", Vector3(0.04, 0.04, 0.04), Vector3(0.52, -0.28, -0.355), run_lamp_mat)
-	switch_root = MachineParts.knife_switch(_rack, Vector3(0.0, -0.89, -0.37), _steel, _copper)
+	switch_root = MachineParts.knife_switch(_rack, Vector3(0.0, -0.89, -0.345), _steel, _copper)
 	var arm := switch_root.get_node_or_null("Blade/BladeArm") as MeshInstance3D
 	if arm:
 		arm.material_override = _copper
@@ -196,12 +196,12 @@ func _build_board() -> void:
 	if handle:
 		handle.material_override = _wood
 		handle.scale = Vector3(1.6, 1.8, 1.6)
-	_box("FusePlate", Vector3(0.39, 0.09, 0.02), Vector3(0.245, -0.55, -0.36), _steel)
+	_box("FusePlate", Vector3(0.39, 0.09, 0.02), Vector3(0.245, -0.55, -0.345), _steel)
 	for i: int in range(3):
 		var fx := 0.15 + 0.095 * float(i)
-		_box("Breaker", Vector3(0.07, 0.06, 0.03), Vector3(fx, -0.55, -0.335), _casing)
+		_box("Breaker", Vector3(0.07, 0.06, 0.03), Vector3(fx, -0.55, -0.325), _casing)
 		_box("Toggle", Vector3(0.014, 0.03, 0.014), Vector3(fx, -0.53 - 0.01 * float(i % 2),
-				-0.318), _face)
+				-0.305), _face)
 	var tri := PrismMesh.new()
 	tri.size = Vector3(0.11, 0.1, 0.012)
 	_add("WarningTriangle", tri, Vector3(-0.06, -0.5, -0.364), _ochre, Vector3.ZERO, null)

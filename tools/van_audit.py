@@ -38,6 +38,10 @@ def parse_args() -> argparse.Namespace:
         help="exit 1 when the summary counts any finding",
     )
     parser.add_argument("--timeout", type=int, default=600, help="timeout in seconds")
+    parser.add_argument(
+        "--probe", action="append", default=[], metavar="X,Y,Z:DX,DY,DZ",
+        help="rig-local ray to probe instead of the audit; repeatable",
+    )
     return parser.parse_args()
 
 
@@ -53,6 +57,7 @@ def main() -> int:
         "res://tools/van_audit/van_audit.tscn", "--", "--smoke-sandbox",
         "--audit-out=" + out.as_posix(),
     ]
+    args += ["--probe=" + probe for probe in opts.probe]
     print(
         "== van_audit: godot --headless --path . res://tools/van_audit/van_audit.tscn "
         "-- --smoke-sandbox --audit-out=" + out.as_posix()
@@ -92,6 +97,8 @@ def main() -> int:
     if proc.returncode != 0:
         print(f"VAN AUDIT FAILED: exit code {proc.returncode}")
         return 1
+    if opts.probe:
+        return 0
     if not any(line == "AUDIT DONE" for line in lines):
         print("VAN AUDIT FAILED: missing 'AUDIT DONE' line")
         return 1

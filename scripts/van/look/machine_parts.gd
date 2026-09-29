@@ -208,16 +208,63 @@ static func knife_switch(parent: Node3D, pos: Vector3, mat: Material,
 	return root
 
 
-## Boxy CRT with a tapered back and a front "Screen" quad.
+## Closed rectangular ring (a picture-frame lip) centred on the origin, facing +z: outer and inner
+## x/y sizes, depth along z.
+static func _frame_mesh(outer: Vector2, inner: Vector2, depth: float) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var ox := outer.x * 0.5
+	var oy := outer.y * 0.5
+	var ix := inner.x * 0.5
+	var iy := inner.y * 0.5
+	var h := depth * 0.5
+	var fo: Array[Vector3] = [Vector3(-ox, -oy, h), Vector3(ox, -oy, h),
+			Vector3(ox, oy, h), Vector3(-ox, oy, h)]
+	var fi: Array[Vector3] = [Vector3(-ix, -iy, h), Vector3(ix, -iy, h),
+			Vector3(ix, iy, h), Vector3(-ix, iy, h)]
+	var bo: Array[Vector3] = [Vector3(-ox, -oy, -h), Vector3(ox, -oy, -h),
+			Vector3(ox, oy, -h), Vector3(-ox, oy, -h)]
+	var bi: Array[Vector3] = [Vector3(-ix, -iy, -h), Vector3(ix, -iy, -h),
+			Vector3(ix, iy, -h), Vector3(-ix, iy, -h)]
+	var outward: Array[Vector3] = [Vector3.DOWN, Vector3.RIGHT, Vector3.UP, Vector3.LEFT]
+	for i: int in range(4):
+		var j := (i + 1) % 4
+		_frame_quad(st, fo[i], fo[j], fi[j], fi[i], Vector3.BACK)
+		_frame_quad(st, bo[i], bo[j], bi[j], bi[i], Vector3.FORWARD)
+		_frame_quad(st, bo[i], bo[j], fo[j], fo[i], outward[i])
+		_frame_quad(st, bi[i], bi[j], fi[j], fi[i], -outward[i])
+	st.generate_normals()
+	return st.commit()
+
+
+## One quad as two triangles, wound so its face looks along out_dir.
+static func _frame_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3,
+		out_dir: Vector3) -> void:
+	var facing := (b - a).cross(c - a).normalized().dot(out_dir)
+	if facing >= 0.0:
+		for v: Vector3 in [a, b, c, a, c, d]:
+			st.add_vertex(v)
+	else:
+		for v: Vector3 in [a, d, c, a, c, b]:
+			st.add_vertex(v)
+
+
+## Boxy CRT: a shell, a tapered back, a bezel lip ring and a "Screen" quad set 1.2 cm back inside it.
 static func crt(parent: Node3D, pos: Vector3, mat: Material, screen_mat: Material,
 		size: float = 0.4) -> Node3D:
 	var root := _root("CRT", pos)
-	_mesh(root, "Bezel", _box(Vector3(size, 0.8 * size, 0.12)), mat, Vector3.ZERO)
+	_mesh(root, "Shell", _box(Vector3(size - 0.024, 0.8 * size - 0.024, 0.096)), mat,
+			Vector3(0.0, 0.0, -0.012))
+	# Small CRTs keep the lip at least 2.4 cm wide so the shell sides stay 1.2 cm inside its opening.
+	var band := maxf(0.1 * size, 0.024)
+	var opening := Vector2(size - 2.0 * band, 0.8 * size - 2.0 * band)
+	_mesh(root, "Bezel", _frame_mesh(Vector2(size, 0.8 * size), opening, 0.036), mat,
+			Vector3(0.0, 0.0, 0.042))
 	_mesh(root, "Back", _cyl(0.3 * size, 0.45 * size, 4, 0.55 * size), mat,
 			Vector3(0.0, 0.0, -0.06 - 0.225 * size), Vector3(PI / 2.0, PI / 4.0, 0.0))
 	var quad := QuadMesh.new()
-	quad.size = Vector2(0.8 * size, 0.6 * size)
-	_mesh(root, "Screen", quad, screen_mat, Vector3(0.0, 0.0, 0.061))
+	quad.size = opening
+	_mesh(root, "Screen", quad, screen_mat, Vector3(0.0, 0.0, 0.048))
 	parent.add_child(root)
 	return root
 

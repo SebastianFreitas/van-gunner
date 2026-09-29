@@ -35,13 +35,15 @@ func build_frame() -> void:
 	for z: float in [-FZ, FZ]:
 		_box(hopper, "TopRail%d" % int(z > 0.0), _ochre, Vector3(CX, TOP + 0.03, z),
 				Vector3(span, 0.05, 0.05))
-	_box(hopper, "RearMidRail", _ochre, Vector3(CX, -0.9, -FZ), Vector3(span, 0.05, 0.05))
-	_box(hopper, "FrontMidRail", _ochre, Vector3(CX, -0.9, FZ), Vector3(span, 0.05, 0.05))
+	_box(hopper, "RearMidRail", _ochre, Vector3(CX, -0.9, -FZ),
+			Vector3(FX1 - FX0, 0.05, 0.036))
+	_box(hopper, "FrontMidRail", _ochre, Vector3(CX, -0.9, FZ),
+			Vector3(FX1 - FX0, 0.05, 0.036))
 	for x: float in [FX0, FX1]:
 		_box(hopper, "SideTopRail%d" % int(x > 1.0), _ochre, Vector3(x, TOP + 0.03, 0.0),
 				Vector3(0.05, 0.05, FZ * 2.0))
-	_link("BraceA", Vector3(FX0, -0.9, -FZ - 0.035), Vector3(FX1, 0.6, -FZ - 0.035))
-	_link("BraceB", Vector3(FX1, -0.9, -FZ - 0.035), Vector3(FX0, 0.6, -FZ - 0.035))
+	_link("BraceA", Vector3(FX0, -0.9, -FZ - 0.04), Vector3(FX1, 0.6, -FZ - 0.04))
+	_link("BraceB", Vector3(FX1, -0.9, -FZ - 0.04), Vector3(FX0, 0.6, -FZ - 0.04))
 	_box(hopper, "Throat", _ochre, Vector3(CX, 0.47, 0.0), Vector3(0.4, 0.26, 0.4))
 	_box(hopper, "Housing", _ochre_dark, Vector3(CX, -0.2, 0.0), Vector3(0.7, 0.5, 0.5))
 	_box(hopper, "WindowFrame", _steel, Vector3(CX, -0.2, 0.262), Vector3(0.3, 0.2, 0.024))
@@ -99,20 +101,24 @@ func build_bin() -> void:
 	hopper.add_child(bin)
 	_box(bin, "Base", _steel, Vector3(0.0, 0.015, 0.0), Vector3(0.76, 0.03, 0.4))
 	for z: float in [-0.185, 0.185]:
-		_box(bin, "Wall%d" % int(z > 0.0), _ochre_dark, Vector3(0.0, 0.15, z),
-				Vector3(0.76, 0.3, 0.03))
+		_box(bin, "Wall%d" % int(z > 0.0), _ochre_dark, Vector3(0.0, 0.165, z),
+				Vector3(0.76, 0.27, 0.03))
 	for x: float in [-0.365, 0.365]:
-		_box(bin, "End%d" % int(x > 0.0), _ochre_dark, Vector3(x, 0.15, 0.0),
-				Vector3(0.03, 0.3, 0.34))
+		_box(bin, "End%d" % int(x > 0.0), _ochre_dark, Vector3(x, 0.165, 0.0),
+				Vector3(0.03, 0.27, 0.34))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 90210
+	# Tilted so overlapping pieces don't share one flat bottom plane (it z-fought).
+	var tilt := RandomNumberGenerator.new()
+	tilt.seed = 4242
 	for i: int in 9:
 		var size := Vector3(rng.randf_range(0.05, 0.14), rng.randf_range(0.03, 0.09),
 				rng.randf_range(0.05, 0.12))
 		var pos := Vector3(rng.randf_range(-0.28, 0.28), 0.03 + size.y * 0.5,
 				rng.randf_range(-0.12, 0.12))
 		var heap := _box(bin, "Scrap%d" % i, _black if i % 3 == 0 else _steel, pos, size)
-		heap.rotation.y = rng.randf_range(0.0, PI)
+		heap.rotation = Vector3(tilt.randf_range(-0.3, 0.3), rng.randf_range(0.0, PI),
+				tilt.randf_range(-0.3, 0.3))
 
 
 ## Pedestal, chain drive with its guard, and the motor junction box with the power port.
@@ -135,7 +141,7 @@ func build_drive_extras() -> void:
 	for z: float in [-0.075, 0.075]:
 		_box(hopper, "Chain%d" % int(z > 0.0), _black, Vector3(1.16, -0.14, z),
 				Vector3(0.02, 0.68, 0.02))
-	for i: int in 7:
+	for i: int in range(1, 6):
 		_box(hopper, "Link%d" % i, _black, Vector3(1.16, -0.45 + 0.1 * float(i), 0.0),
 				Vector3(0.03, 0.025, 0.16))
 	_box(hopper, "ChainGuard", _ochre, Vector3(1.22, -0.14, 0.0), Vector3(0.02, 0.78, 0.24))
@@ -208,7 +214,7 @@ func build_lamp_and_stop() -> OmniLight3D:
 ## Steel bar between two hopper-local points.
 func _link(part_name: String, a: Vector3, b: Vector3) -> void:
 	var inst := _box(hopper, part_name, _ochre, (a + b) * 0.5,
-			Vector3(0.03, 0.03, a.distance_to(b)))
+			Vector3(0.044, 0.03, a.distance_to(b)))
 	inst.basis = Basis.looking_at((b - a).normalized(), Vector3.UP)
 
 

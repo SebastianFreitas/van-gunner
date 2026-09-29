@@ -32,7 +32,7 @@ roughness = 0.2
 metallic = 0.15
 
 [sub_resource type="BoxMesh" id="WindowMesh"]
-size = Vector3(0.42, 0.55, 0.04)
+size = Vector3(0.4, 0.55, 0.04)
 
 [node name="LootMachine" type="StaticBody3D"]
 collision_layer = 3
@@ -47,7 +47,7 @@ mesh = SubResource("BodyMesh")
 shape = SubResource("BodyShape")
 
 [node name="Button" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.05, 0.28)
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.05, 0.265)
 material_override = SubResource("ButtonMat")
 mesh = SubResource("ButtonMesh")
 

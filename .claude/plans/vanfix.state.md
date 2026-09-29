@@ -1,4 +1,4 @@
-Status: phase-done
+Status: partial
 # Plan state: vanfix
 
 ## Plan
@@ -6,6 +6,7 @@ Status: phase-done
 `.claude/worktrees/plan-vanfix`.
 
 ## Architecture now
+- Audit sections (phase 11): `van_audit_exempt.gd` `RULES` (glob pairs, reason, D) + `OPENING`; `FLICKER_MINOR` (visible `area` < `MIN_VISIBLE_AREA` 0.005, `area` sums pairs > 1 cm², `total` all pairs, D51), `FLICKER_EXEMPT`, `EDGE_EXEMPT` stay out of `AUDIT SUMMARY` (report header `COUNTS`/`MINOR`/`EXEMPT`, `AUDIT INFO` line). EDGE seam tests in `van_audit_seams.gd` (1.5 cm touch + collinear T-junction cover).
 - `tools/van_audit.py`: launcher (`--out`, `--strict`, `--timeout`), report-only (exit 0)
   until wired into smoke; report at `.godot/van_audit/report.txt` (~50 s, D23). States `closed`,
   `half`/`open` (side doors + rear windows), `win_half`/`win_open` (front windows alone).
@@ -41,32 +42,70 @@ Status: phase-done
 - Caps: `rear_doors.gd`, `van_side_wall_shell.gd` at 400 lines; split before adding.
 
 ## Completed phase
-8 (done). Commits: e820646 shared `machine_parts.gd` (fan blades pitched per arm, flywheel spokes
-0.024, hub >= 0.04, motor caps +>=1.5 cm, gauge face 0.027 thick 1.2 cm proud, needle z 0.029,
-`pipe(..., flange_a := true, flange_b := true)`, flange 0.03) and the audit freeze (D48:
-`van_audit.gd` `_freeze_machines()`, `MachineMotion.add_spin` stores `&"rest"`); 56351cb welder
-(panel, scorches, hood visor as slabs +-1.3 cm through their host, bottle bands +1.2 cm);
-471f24f generator (second exhaust pipe `flange_a = false`, skid web inside its flanges, cross
-members 1.3 cm short, rust slabs 1.35 cm proud, jerry cans y -0.502, gantry +z posts 0.208,
-gauge x 0.39). The kick plate's flat faces are its y-strip edges (y ~ k*0.0917) and z 0.96/1.04.
-Audit: EDGE 23, FLICKER 370 (identical over two runs), LEAK_IN 1, LEAK_OUT 45; no FuseBox or
-Welder row >= 0.005; 58 rows >= 0.005 left elsewhere. Scene dump identical. Optional ceiling ring
-step skipped: `Ceiling/Vault vs PatchCeil0_Ring` (0.0118) still open. No shots taken (changes are
-1-2 cm; scorches now read as 1.3 cm raised soot patches, fan blades pitched).
+11 (done). Commits 721fd76 (floor, exemptions, header), a92d1cb (EDGE collinear seams). Audit, two runs
+identical: EDGE 10, FLICKER 9, LEAK_IN 1, LEAK_OUT 45; MINOR 417; EXEMPT EDGE 12, FLICKER 31. Check clean;
+no smoke (tools/van_audit only), no shots (nothing visible).
+12 (partial, sessions 5-6; session 6: probe tool 7d0de6e). Commit 5ffaddc: every LEAK_IN/LEAK_OUT row now ends with
+`from=(...) dir=(...) trace=<node>:<F|B>@(x,y,z) > ...` (first ray of the row, up to 8 hits;
+`van_audit_gaps.gd` `trace_ray`, file now 399 lines: split before adding more). Counts unchanged
+(EDGE 10, FLICKER 9, LEAK_IN 1, LEAK_OUT 45). Triage from the traces (no fixes landed yet):
+- **Rear door centre seam** (≈25 LEAK_OUT rows, 1-4 rays each: Bulkhead KickPlate/MeshFwd/MeshBack/
+  BottomRail/TopRail, CabDoor Mesh/Bar1/Glass/TopRail, FrontWall/Slab, Ceiling/Vault, CeilRib2_3/3_4,
+  Hopper WarnLamp, Cables@355): rays from `(0, 0.8|2.0, 5.052)` heading -z pass the closed rear doors at
+  x ≈ 0..0.12 with no hit. Needs the leaves' inner-edge x in the closed pose and an overlap strip
+  (astragal) on one leaf; `rear_doors.gd` is at the 400 cap: split first. Visible change: shots.
+- **Side door gaps**: `RightWallReveals` (150) at the opening's front end z -4.616 and `DoorJamb_R` (86)
+  at the rear end z -2.275, `Right/CurvedBody` (20) hit on its rear edge at z -2.315 then the ray crosses
+  the van to the left door: the closed leaf (`DOOR_HALF_Z` 1.105) leaves ~13 cm uncovered at each end of
+  the opening (z -3.42 ± 1.235). `Left/CurvedBody` (34) at y 0.16: rays pass under the leaf into the cabin
+  (PcRig crate). Check the leaf's frames/outer pieces vs the opening before lengthening (D12 wants 2 cm).
+- **Session 6 (commit 7d0de6e, D52):** `py -3 tools/van_audit.py --probe x,y,z:dx,dy,dz` lists every
+  triangle a rig-local ray crosses (brute force, not the proxies) plus 8 rays offset 1/2 cm. Findings:
+  - LEAK_IN (22) is NOT a B-pillar hole: probe of `0,1,-3.5:0.787,0.046,0.616` crosses zero triangles,
+    while every offset ray hits `RightWall`/`RightWallReveals` (t ≈ 3.20) or `SideWindows/RightFront/
+    Hinge/CurvedFrame` (t ≈ 3.24). A seam between the window's closed frame and the wall cut at the cut's
+    front-bottom corner (≈ (2.52, 1.15, -1.53)). Probe points along the cut's rim to see whether the frame
+    ring's outline (`build_curved_frame_ring_mesh`, `van_side_wall_shell.gd`:160) matches
+    `WINDOW_CUT_POLY` there (rounded corner vs frame corner), then close it (frame overlaps cut ≥ 2 cm).
+  - Side door: opening `van_side_wall.gd`:43-46 (`door_half_length` 1.235, `door_center_z` -3.42,
+    y 0.02..3.05, `door_jamb_inset` 0.11); the leaf (`side_door_leaf.gd`:13 `DOOR_HALF_Z` 1.105,
+    `JAMB_CLEAR` 0.13 on all four sides, x on `wall_x_at(mid_y)`) sits 2 cm inside the jamb lip (D12).
+    Probe of `7,0.8,-1.948:-0.977,0.201,-0.073` (the `DoorJamb_R` row): jamb lip F at x 2.600, its back
+    at x 2.458, then the LEFT door's PanelFrame/CurvedBody (the proxy trace missed those). So the jamb
+    rows see the door frame's lip through the opening: by design (D18 put the reveals in street light).
+    Exempt `DoorJamb_*` and `*WallReveals` first hits on LEAK_OUT (rule + reason + D); then probe the
+    `Left/CurvedBody` y 0.16 row (`-6.062,0.8,1.552:0.577,-0.106,-0.810`), which continues into the
+    PcRig: a real see-through slot under the leaf needs a seal (a strip on the leaf's bottom/end
+    edges overlapping the jamb lip, 2 cm off it). `VanInnerShell.DOOR_Z_MIN/MAX` (-4.655/-2.185,
+    `van_inner_shell.gd`:18) duplicate the opening; `DOOR_LEAF_HALF_Z` 1.105 is copied in `van_armour.gd`,
+    `van_hull_lines.gd`, `van_marker_lights.gd`: keep in step if either changes.
+  - Upper-left rows (`DoorJamb_L` 96, `LeftWall` 13, CeilRibs) enter the left opening's rear-top corner
+    through the same slot: same exemption/seal question, probe one before deciding.
+- **Window reveals by design?** `LeftWallReveals` (144) at (-2.609, 1.575, 1.613) and `RightWall` (11)
+  at (2.478, 2.288, -1.586): rays enter a window cut's edge and hit the reveal/wall; D41 says the
+  frames surround the cut, so reveal faces seen inside a window opening can take a LEAK_OUT exemption
+  (needs `rule_for("LEAK_OUT", ...)` plus a hit-inside-window-cut test) once the B-pillar hole is fixed.
+- **Test geometry**: `Floor/Deck` (3), `RearEntryRamp` (3) come from ring origin (1.812, 2.0, 4.814),
+  0.2 m behind the rear doors, grazing the deck's end face under the doors: decide exempt (rear sill,
+  by design) or push ring origins out to half-extent + 2 m (changes every ray: re-baseline counts).
 
 ## Blocker
 none
 
 ## Next phase
-Phase 9 (PcRig and CRT visible flicker, D12, D47). Filter the report to FLICKER rows with area >=
-0.005 and fix `RequestBoard` (PcRig) rows (~18) incl. CRT Bezel vs Screen 0.0768 and StatsCrt
-Bezel vs Screen 0.0555 (screen set back >= 1.2 cm behind the bezel lip), and `FrontWall/Slab` vs
-PcRig. The CabRelay rack rows (Upright vs UprightFlange 0.0283, TopRail vs TopRailFlange 0.0274,
-FrontWall/Slab vs Gauge/Dial/Face/KnifeSwitch) are phase 10. No phase question stops.
+Phase 12 continues (partial). Order: (1) window frame vs cut seam (LEAK_IN, probe first), (2) LEAK_OUT
+exemption for jamb lips and reveals seen through openings + side door leaf seal where the probe shows
+see-through, (3) rear door seam strip (split `rear_doors.gd` first), (4) LEAK_OUT exemptions for window reveals and
+the rear sill, (5) EDGE rows below. Each fix: check, smoke, audit; shots for (2) and (3). Its EDGE input, after phase 11: `Cab/CabLiner` (78, bottom
+edge y -0.222 z -4.72, 5 m), `Cab/CabBackLip` (31), `Hull/RearSkin` (2), `Hull/CornerPostFL/FR` (12 each),
+`Hull/BellySkin` (2), `RearWall/Left|RightHinge/CurvedBody` (100 each), `Hull/RearCornerL/R` (1 each): fix
+holes, or add a rule with reason and D to `van_audit_exempt.gd`. The 9 FLICKER leftovers (CasingLeft/Right vs
+CasingHead, Vault vs PatchCeil0_Ring, Cables @366/@386, FrameRailL/R vs RearBumper, CatchBin Scrap2/Scrap8,
+VentDuct vs VentGrille, Bulkhead TopRail_9 vs MeshBack_322) are code fixes for phase 12 or 13. No phase
+question stops.
 
 ## Requirements / gotchas
-- Animated machine parts are frozen at rest in the audit (D48). A
-  PerimeterFrame vs SideSkin row in `half` flips 30/31 pairs on a MIN_AREA-borderline triangle.
+- Animated machine parts are frozen at rest in the audit (D48). Row presence uses `total`, not per-pair cuts (D51).
 - Remaining EDGE rows (CabLiner/BackLip/Face, 6 Wells (single plates, by design: exemption),
   RearSkin, CornerPostF L/R, BellySkin, RearWall hinge CurvedBody, 4 ExteriorPane, SideSkin L/R,
   RearCorner L/R) each need a look; by-design single-sided ones go on an audit exemption list.

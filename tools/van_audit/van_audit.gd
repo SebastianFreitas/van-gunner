@@ -8,6 +8,7 @@ const AuditStates := preload("res://tools/van_audit/van_audit_states.gd")
 const AuditOverlap := preload("res://tools/van_audit/van_audit_overlap.gd")
 const AuditGaps := preload("res://tools/van_audit/van_audit_gaps.gd")
 const AuditFlicker := preload("res://tools/van_audit/van_audit_flicker.gd")
+const AuditProbe := preload("res://tools/van_audit/van_audit_probe.gd")
 const RIG_PATH := ^"TravelPath/VanFollow/VanRig"
 
 var rig: Node3D
@@ -53,6 +54,20 @@ func _run() -> void:
 
 	_freeze_machines()
 	collect()
+	var probes: Array = []
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--probe="):
+			var halves := arg.trim_prefix("--probe=").split(":")
+			if halves.size() == 2:
+				var f := halves[0].split_floats(",")
+				var d := halves[1].split_floats(",")
+				if f.size() == 3 and d.size() == 3:
+					probes.append({"from": Vector3(f[0], f[1], f[2]), "dir": Vector3(d[0], d[1], d[2])})
+	if not probes.is_empty():
+		AuditProbe.run(tris, probes)
+		_done = true
+		get_tree().quit(0)
+		return
 	check_height()
 
 	var states := AuditStates.new(rig)
@@ -245,30 +260,50 @@ func write_report() -> void:
 	body.append("VAN AUDIT REPORT")
 	body.append("seed=%d" % seed_value)
 	body.append("triangles=%d" % tris.count())
-	body.append("")
-
-	for section in counts.keys():
-		for line in lines:
-			if line.begins_with("%s " % section):
-				body.append(line)
 
 	var section_names: Array[String] = []
 	for section in counts.keys():
 		section_names.append(String(section))
 	section_names.sort()
-	var summary_parts: PackedStringArray = []
+	var fail_parts: PackedStringArray = []
+	var minor_parts: PackedStringArray = []
+	var exempt_parts: PackedStringArray = []
+	var fail_sections: Array[String] = []
+	var info_sections: Array[String] = []
 	for section in section_names:
-		summary_parts.append("%s=%d" % [section, counts[section]])
-	var summary: String = " ".join(summary_parts)
+		var part := "%s=%d" % [section, counts[section]]
+		if section.ends_with("_MINOR"):
+			minor_parts.append(part)
+			info_sections.append(section)
+		elif section.ends_with("_EXEMPT"):
+			exempt_parts.append(part)
+			info_sections.append(section)
+		else:
+			fail_parts.append(part)
+			fail_sections.append(section)
+	var summary: String = " ".join(fail_parts)
+	var info: String = " ".join(minor_parts + exempt_parts)
+	body.append("COUNTS " + summary)
+	body.append("MINOR " + (" ".join(minor_parts) if not minor_parts.is_empty() else "none"))
+	body.append("EXEMPT " + (" ".join(exempt_parts) if not exempt_parts.is_empty() else "none"))
+	body.append("")
+
+	for group: Array[String] in [fail_sections, info_sections]:
+		for section in group:
+			for line in lines:
+				if line.begins_with("%s " % section):
+					body.append(line)
 
 	body.append("")
 	body.append("AUDIT SUMMARY " + summary)
+	body.append("AUDIT INFO " + info)
 
 	var f := FileAccess.open(out_path, FileAccess.WRITE)
 	f.store_string("\n".join(body) + "\n")
 	f.close()
 
 	print("AUDIT SUMMARY " + summary)
+	print("AUDIT INFO " + info)
 	print("AUDIT DONE")
 
 

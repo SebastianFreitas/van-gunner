@@ -3,18 +3,9 @@ extends RefCounted
 ## opening-blocked checks over an AuditMesh triangle set (vanfix spec 1-2). Every func is
 ## static: this is used as a namespace of pure checks, never instantiated.
 
+const AuditExempt := preload("res://tools/van_audit/van_audit_exempt.gd")
 const CELL := 0.25
 const TOUCH_EPS := 0.002
-## Opening label -> node path prefixes never reported: the PC rig stands in the left door bay
-## on purpose (D39), and window frames (wall, reveals, hull skin) surround their cut (D41).
-const _WIN_FRAME: Array = ["Interior/Shell/SideWalls/", "VanLook/Hull/SideSkin"]
-const OPENING_EXEMPT: Dictionary = {
-	&"door_left": ["Interior/Props/RequestBoard/PcRig"],
-	&"win_left_front": _WIN_FRAME,
-	&"win_left_rear": _WIN_FRAME,
-	&"win_right_front": _WIN_FRAME,
-	&"win_right_rear": _WIN_FRAME,
-}
 
 
 static func check_clip(tris: RefCounted, runner: Node, state: String, roots: Dictionary) -> void:
@@ -62,9 +53,9 @@ static func check_openings(tris: RefCounted, runner: Node, roots: Dictionary, cl
 			box.size + Vector3(0.16, -0.06, -0.06),
 		)
 		var exempt: Array = []
-		for exempt_label in OPENING_EXEMPT.keys():
+		for exempt_label in AuditExempt.OPENING.keys():
 			if String(exempt_label) == String(label):
-				exempt = OPENING_EXEMPT[exempt_label]
+				exempt = AuditExempt.OPENING[exempt_label]
 		for t in range(tris.count()):
 			if node_root.get(tris.owner_idx[t], &"") == label:
 				continue

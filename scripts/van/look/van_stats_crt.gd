@@ -21,8 +21,8 @@ func _ready() -> void:
 	var screen_node := crt.get_node_or_null("Screen") as Node3D
 	var label_parent: Node3D = screen_node if screen_node else crt
 	# Top-left of the 0.272 x 0.204 screen quad, inset by a 0.02 margin, nudged 0.004 toward the
-	# viewer along the +Z screen normal. When "Screen" is missing, fold in its own 0.061 offset.
-	var label_pos := Vector3(-0.116, 0.082, 0.004 if screen_node else 0.065)
+	# viewer along the +Z screen normal. When "Screen" is missing, fold in its own 0.048 offset.
+	var label_pos := Vector3(-0.116, 0.082, 0.004 if screen_node else 0.052)
 
 	_label = Label3D.new()
 	_label.name = "Text"
