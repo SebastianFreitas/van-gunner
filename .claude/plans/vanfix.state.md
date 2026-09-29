@@ -1,4 +1,4 @@
-Status: partial
+Status: phase-done
 # Plan state: vanfix
 
 ## Plan
@@ -66,14 +66,13 @@ Get the list: group `^FLICKER` rows by a=/b= prefix (awk over the report).
 none.
 
 ## Next phase
-Phase 5 continued: (e) the FLICKER groups above, two specs per session (next: the side-wall
-leftovers (jamb inner-face strip, floor seal) together with the cable strands, then one prop
-builder per spec: give each implementer the grep for its rows, the line ranges to read and the
-≥ 1.2 cm rule, parts must still touch, embed rather than float; keep implementer prompts narrow,
-the side-wall one ran past 60k); (f) LEAK_OUT/LEAK_IN triage and EDGE exemptions;
-(g) wire --strict into smoke once every count is 0; rear and roof shots, several van seeds
-(smoke.py --shots DIR --van-seeds 3). Nothing visible was shot in the last two sessions: look at
-the D40 ceiling cables, the rear-door bars and the generator pan in the next shots.
+Phase 5 was split (2026-09-29) into phases 6–11 in the plan; phase 5 is done. Next: phase 6,
+side-wall and cable flicker: the jamb inner-face strip and `DoorJamb_R` vs `FrontWall/Slab`,
+the floor seal rows, then the cable strands. Give each implementer the grep for its rows, the
+line ranges to read and the ≥ 1.2 cm rule, parts must still touch, embed rather than float; keep
+implementer prompts narrow (the side-wall one ran past 60k). Nothing visible was shot in the last
+three sessions: take `--shots` once in phase 6 and look at the D40 ceiling cables, the rear-door
+bars and the generator pan.
 
 ## Requirements / gotchas
 - The audit's `Interior/Props/FuseBox/Generator` and `CraftingTable/Welder` fan/flywheel/spoke

@@ -144,7 +144,13 @@ the night read. So:
 | 2 | Side doors and windows from inside | code | D7, D8, D10, audit | done cf9e65a |
 | 3 | One sealed outer body | code | D4, D7, audit | done a809f31 |
 | 4 | Sealed simple cab | code | D5, D4, audit | done 815948b |
-| 5 | Add-ons snapped and height-capped | code | D6, audit | todo |
+| 5 | Add-ons snapped and height-capped | code | D6, audit | done 32a481d |
+| 6 | Side-wall and cable flicker | code | D12, audit | todo |
+| 7 | Small structure flicker | code | D12, audit | todo |
+| 8 | Generator and welder flicker | code | D12, audit | todo |
+| 9 | PcRig, hopper and rack flicker | code | D12, audit | todo |
+| 10 | Leak and edge triage | code | audit | todo |
+| 11 | Audit strict in smoke | code | D23, audit | todo |
 
 ## Phases
 
@@ -171,6 +177,29 @@ Notes: done 815948b (session 11: fda7fad, 23f70b1, 815948b). Real cab kept (D21)
 ### 5 · Add-ons snapped and height-capped (D6)
 Deliverables: armour, rebar, spikes, signs, roof rack, roof junk, antennas, spares and rear dressing placed against the sealed body's surface; a placement check (touches the body, clear of openings, under the roof cap) drops any failure; the audit becomes a smoke failure.
 Verification: check, smoke (fingerprint/bless as the phase states), scene dump, audit fully clear across several `van` seeds, rear and roof shots.
+Notes: done 32a481d (split 2026-09-29 after three partial sessions: autoplan's "same phase partial 3 times"). Landed: armour slots and `_clear_of_openings` (D32/D33), chassis slot packing (D30), roof rack/junk/antennas on the rails, D38–D42, side rails and rear-door window flicker. Audit at the split: CLIP 0, OPENING 0, EDGE 23, FLICKER 508, LEAK_IN 1, LEAK_OUT 45. The rest is phases 6–11; the state file's "Completed phase" lists the FLICKER groups by name.
+
+Every phase 6–9: re-run `py -3 tools/van_audit.py`, group `^FLICKER` rows by a=/b= prefix, one spec per group or builder; faces ≥ 1.2 cm apart, parts still touch (embed rather than float); keep implementer prompts narrow (file, grep for the rows, line range). Verification: check, smoke, scene dump (bless if the tree changes, say so), the phase's groups gone from the audit, no new rows.
+
+### 6 · Side-wall and cable flicker (D12)
+Deliverables: `DoorJamb_L/R` vs Left/RightWall (drop the jamb's inner-face triangles where the wall panel runs into the bay at z -4.655..-4.616, not `x_shift`); `DoorJamb_R` vs `FrontWall/Slab`; `FloorSeal_L/R` vs `Bulkhead/*WallPost_0`, `RightWallReveals`, `RightHinge/CurvedBody`; cable strand pairs (`van_cable_runs.gd` / `van_cable_router.gd`).
+
+### 7 · Small structure flicker (D12)
+Deliverables: WallRib vs Plate, PatchWall/Ceil `_Ring` vs patch, Bulkhead TopRail vs TopRail_7..9 / MidPost, RearEntryRamp and RightHinge/CurvedBody vs BumperHanger, `CargoRail_R_0` vs `VanLook/Wheels/FlareR1/R2`, wheel `Hub` vs `Bolt%d` (2 cm bolt lift, `van_wheels.gd` `_build_wheel`).
+
+### 8 · Generator and welder flicker (D12)
+Deliverables: `Interior/Props/FuseBox/Generator` self rows and `KickPlate_0..5` vs Generator; `CraftingTable/Welder` self rows; animated fan/flywheel/spoke parts frozen or skipped by the audit so their rows are stable run to run.
+
+### 9 · PcRig, hopper and rack flicker (D12)
+Deliverables: PcRig self rows, Hopper self rows, CabRelay Rack self rows, `FrontWall/Slab` vs Rack and PcRig.
+
+### 10 · Leak and edge triage
+Deliverables: LEAK_OUT (incl. `DoorJamb_L/R` rays and the rear-door centre-seam rows), LEAK_IN 1 at (2.706, 1.158, -1.382), EDGE 23: fix real holes; edges matched across meshes in `van_audit_gaps.gd`; by-design single-sided pieces (Wells, ExteriorPane, SideSkin inner face D17) on an audit exemption list with the reason; the PerimeterFrame vs SideSkin MIN_AREA flip made stable.
+Verification: check, smoke, audit LEAK_IN 0, LEAK_OUT 0, EDGE 0.
+
+### 11 · Audit strict in smoke (D23)
+Deliverables: every audit count 0 at several `van` seeds; audit fast enough for smoke (carry-forward speed notes); door-adjacent window posed apart from its door; `--strict` wired into `tools/smoke.py` as a failure.
+Verification: check, smoke (fails on a planted flicker, passes clean), `py -3 tools/smoke.py --shots DIR --van-seeds 3` rear and roof shots read, including the D40 ceiling cables, the rear-door bars and the generator pan.
 
 ## Carry forward
 
