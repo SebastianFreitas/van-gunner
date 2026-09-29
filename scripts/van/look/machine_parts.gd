@@ -79,7 +79,7 @@ static func motor(parent: Node3D, pos: Vector3, mat: Material, length: float = 0
 	var by := radius + 0.04
 	var side := Vector3(0.0, 0.0, PI / 2.0)
 	_mesh(root, "Body", _cyl(radius, length, 10), mat, Vector3(0.0, by, 0.0), side)
-	var cap := _cyl(radius * 1.15, 0.03, 10)
+	var cap := _cyl(radius + maxf(radius * 0.15, 0.015), 0.03, 10)
 	_mesh(root, "CapA", cap, mat, Vector3(-length / 2.0, by, 0.0), side)
 	_mesh(root, "CapB", cap, mat, Vector3(length / 2.0, by, 0.0), side)
 	_mesh(root, "Foot", _box(Vector3(0.8 * length, 0.04, 1.4 * radius)), mat, Vector3(0.0, 0.02, 0.0))
@@ -100,10 +100,11 @@ static func flywheel(parent: Node3D, pos: Vector3, mat: Material, radius: float 
 	torus.rings = 12
 	torus.ring_segments = 6
 	_mesh(wheel, "Rim", torus, mat, Vector3.ZERO, Vector3(0.0, 0.0, PI / 2.0))
-	var spoke := _box(Vector3(0.03, radius * 2.0, 0.03))
+	var spoke := _box(Vector3(0.024, radius * 2.0, 0.03))
 	for i: int in range(4):
 		_mesh(wheel, "Spoke%d" % i, spoke, mat, Vector3.ZERO, Vector3(float(i) * PI / 4.0, 0.0, 0.0))
-	_mesh(wheel, "Hub", _cyl(radius * 0.15, 0.08, 8), mat, Vector3.ZERO, Vector3(0.0, 0.0, PI / 2.0))
+	_mesh(wheel, "Hub", _cyl(maxf(radius * 0.15, 0.04), 0.08, 8), mat, Vector3.ZERO,
+			Vector3(0.0, 0.0, PI / 2.0))
 	root.add_child(wheel)
 	parent.add_child(root)
 	return root
@@ -139,10 +140,13 @@ static func fan(parent: Node3D, pos: Vector3, mat: Material, radius: float = 0.1
 	_mesh(root, "FrameLeft", s, mat, Vector3(-radius, 0.0, 0.0))
 	_mesh(root, "FrameRight", s, mat, Vector3(radius, 0.0, 0.0))
 	var blades := _root("Blades", Vector3.ZERO)
-	var blade := _box(Vector3(radius, 0.07, 0.01))
+	var blade := _box(Vector3(radius * 0.8, 0.07, 0.01))
 	for i: int in range(4):
-		_mesh(blades, "Blade%d" % i, blade, mat, Vector3.ZERO,
-				Vector3(deg_to_rad(20.0), 0.0, float(i) * PI / 2.0))
+		# Pitched arms, not one shared plane: each spans 0.15r..0.95r and starts inside the hub.
+		var arm := Basis(Vector3.BACK, float(i) * PI / 2.0)
+		var mi := _mesh(blades, "Blade%d" % i, blade, mat, Vector3.ZERO)
+		mi.basis = arm * Basis(Vector3.RIGHT, deg_to_rad(20.0))
+		mi.position = arm * Vector3(radius * 0.55, 0.0, 0.0)
 	_mesh(blades, "Hub", _cyl(radius * 0.2, 0.05, 8), mat, Vector3.ZERO, Vector3(PI / 2.0, 0.0, 0.0))
 	root.add_child(blades)
 	parent.add_child(root)
@@ -179,8 +183,8 @@ static func gauge(parent: Node3D, pos: Vector3, mat: Material, face_mat: Materia
 	var root := _root("Gauge", pos)
 	var flat := Vector3(PI / 2.0, 0.0, 0.0)
 	_mesh(root, "Dial", _cyl(0.07, 0.03, 12), mat, Vector3.ZERO, flat)
-	_mesh(root, "Face", _cyl(0.062, 0.006, 12), face_mat, Vector3(0.0, 0.0, 0.018), flat)
-	var needle := _root("Needle", Vector3(0.0, 0.0, 0.021))
+	_mesh(root, "Face", _cyl(0.062, 0.027, 12), face_mat, Vector3(0.0, 0.0, 0.0135), flat)
+	var needle := _root("Needle", Vector3(0.0, 0.0, 0.029))
 	_mesh(needle, "NeedlePin", _box(Vector3(0.004, 0.055, 0.004)), mat, Vector3(0.0, 0.027, 0.0))
 	root.add_child(needle)
 	parent.add_child(root)
@@ -242,15 +246,17 @@ static func keyboard(parent: Node3D, pos: Vector3, mat: Material) -> Node3D:
 	return root
 
 
-## Straight pipe run between two points with a flange ring at each end.
+## Straight pipe run between two points with an optional flange ring at each end.
 static func pipe(parent: Node3D, from: Vector3, to: Vector3, mat: Material,
-		radius: float = 0.035) -> Node3D:
+		radius: float = 0.035, flange_a: bool = true, flange_b: bool = true) -> Node3D:
 	var root := _root("Pipe", from)
 	var local_to := to - from
 	_segment(root, Vector3.ZERO, local_to, mat, radius, "PipeBody")
-	var flange := _cyl(radius * 1.6, 0.02, 10)
-	_mesh(root, "FlangeA", flange, mat, Vector3.ZERO)
-	_mesh(root, "FlangeB", flange, mat, local_to)
+	var flange := _cyl(radius * 1.6, 0.03, 10)
+	if flange_a:
+		_mesh(root, "FlangeA", flange, mat, Vector3.ZERO)
+	if flange_b:
+		_mesh(root, "FlangeB", flange, mat, local_to)
 	parent.add_child(root)
 	return root
 

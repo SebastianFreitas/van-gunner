@@ -41,42 +41,31 @@ Status: phase-done
 - Caps: `rear_doors.gd`, `van_side_wall_shell.gd` at 400 lines; split before adding.
 
 ## Completed phase
-7 (done; Q1 answered as D45: joints left and exempted in phase 10). Commits:
-- c00ca93: inner shell plates/patches clear of the rib z bands, patch 2 cm proud of its ring.
-- 1881dd6: new helper `van_inner_shell_fit.gd` (RefCounted, `clear_of_ribs` now also clears the
-  bulkhead plane `BULKHEAD_Z` 1.0 ± 0.08, `clear_of_plates`, `GENERATOR_ZONE` Rect2(0.845, 0,
-  0.74, 1.3)); the shell keeps `_placed_plates` per side; wall patches skip plates, right plates
-  skip the generator.
-- e6f7e91: `van_bulkhead_mesh.gd` MidPost runs rail centre to rail centre (ends buried);
-  `RAIL_DEPTH_INSET` 0.07 (not 0.04: MidPost faces are ±0.068): TopRail even ±0.045, odd ±0.025.
-- e86ccb4: `van_chassis.gd` BumperHanger (0.06, 0.14, 0.18) at (±1.02, -0.10, 4.79); flare
-  `x_in` = `SKIN_X + 0.06` (2.62; 2.59 hit `Cab/CabLiner`); `van_floor.gd` RearEntryRamp visual
-  width 2.16 (collision still `RAMP_WIDTH` 2.2).
-- ac2db2c: `HEADER_DEPTH` 0.20 (DoorHeader, BottomRail, both inner ends 4 cm inside the opening
-  post), `KICK_DEPTH` 0.08 (visual only, collision keeps `panel_thickness`).
-- Wheel Hub vs Bolt: already 2 cm proud (bolt outer face hub_x+0.05, hub face +0.03), no change.
-Shots checked (01 interior, 03 outside): bulkhead and rear read as before.
-Audit now: EDGE 23, FLICKER 418, LEAK_IN 1, LEAK_OUT 45 (was 492 FLICKER).
-Left in phase 7 scope: Bulkhead `LeftWallPost_n/RightWallPost_n vs n+1` (0.0028 / 0.0009 each,
-all joints) and `KickPlate_n vs n+1` (~0.013 each: KickPlate joints may be new with `KICK_DEPTH`,
-unconfirmed); `Ceiling/Vault vs InnerShell/PatchCeil0_Ring` (0.0118 at x -1.5, ring 5 mm under
-the vault, Explore thinks borderline); TopRail vs MeshBack netting (out of scope).
+8 (done). Commits: e820646 shared `machine_parts.gd` (fan blades pitched per arm, flywheel spokes
+0.024, hub >= 0.04, motor caps +>=1.5 cm, gauge face 0.027 thick 1.2 cm proud, needle z 0.029,
+`pipe(..., flange_a := true, flange_b := true)`, flange 0.03) and the audit freeze (D48:
+`van_audit.gd` `_freeze_machines()`, `MachineMotion.add_spin` stores `&"rest"`); 56351cb welder
+(panel, scorches, hood visor as slabs +-1.3 cm through their host, bottle bands +1.2 cm);
+471f24f generator (second exhaust pipe `flange_a = false`, skid web inside its flanges, cross
+members 1.3 cm short, rust slabs 1.35 cm proud, jerry cans y -0.502, gantry +z posts 0.208,
+gauge x 0.39). The kick plate's flat faces are its y-strip edges (y ~ k*0.0917) and z 0.96/1.04.
+Audit: EDGE 23, FLICKER 370 (identical over two runs), LEAK_IN 1, LEAK_OUT 45; no FuseBox or
+Welder row >= 0.005; 58 rows >= 0.005 left elsewhere. Scene dump identical. Optional ceiling ring
+step skipped: `Ceiling/Vault vs PatchCeil0_Ring` (0.0118) still open. No shots taken (changes are
+1-2 cm; scorches now read as 1.3 cm raised soot patches, fan blades pitched).
 
 ## Blocker
 none
 
 ## Next phase
-Phase 8 (Generator and welder visible flicker; the plan was re-cut 2026-09-29 into phases 8–13,
-D46 questions auto, D47 visible floor 0.005 m²). Filter the report to FLICKER rows with area ≥
-0.005 (plan, above phase 8) and fix only the FuseBox/Generator and CraftingTable/Welder ones,
-plus freeze/skip animated fan/flywheel/spoke parts in the audit. First, optionally clear
-`Ceiling/Vault vs InnerShell/PatchCeil0_Ring` by keeping the ceiling patch ring 2 cm under
-`_ceiling_y` in `van_inner_shell.gd` `_build_ceiling_patch`. The bulkhead wall-post and kick-plate
-joint rows stay (D45) and are exempted in phase 11. No phase question stops: take Recommended.
+Phase 9 (PcRig and CRT visible flicker, D12, D47). Filter the report to FLICKER rows with area >=
+0.005 and fix `RequestBoard` (PcRig) rows (~18) incl. CRT Bezel vs Screen 0.0768 and StatsCrt
+Bezel vs Screen 0.0555 (screen set back >= 1.2 cm behind the bezel lip), and `FrontWall/Slab` vs
+PcRig. The CabRelay rack rows (Upright vs UprightFlange 0.0283, TopRail vs TopRailFlange 0.0274,
+FrontWall/Slab vs Gauge/Dial/Face/KnifeSwitch) are phase 10. No phase question stops.
 
 ## Requirements / gotchas
-- The audit's `Interior/Props/FuseBox/Generator` and `CraftingTable/Welder` fan/flywheel/spoke
-  rows are animated or run-to-run: freeze or skip animated parts before `--strict`. A
+- Animated machine parts are frozen at rest in the audit (D48). A
   PerimeterFrame vs SideSkin row in `half` flips 30/31 pairs on a MIN_AREA-borderline triangle.
 - Remaining EDGE rows (CabLiner/BackLip/Face, 6 Wells (single plates, by design: exemption),
   RearSkin, CornerPostF L/R, BellySkin, RearWall hinge CurvedBody, 4 ExteriorPane, SideSkin L/R,

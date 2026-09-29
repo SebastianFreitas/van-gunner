@@ -67,19 +67,22 @@ func _cyl(part_name: String, radius: float, height: float, mat: Material, pos: V
 
 
 ## Two channel rails, cross members, four rubber feet and the oil drip pan under the motor.
+## Every parallel face pair is 1.2 cm or more apart (web inside the flanges, cross members
+## ending short of the web) and clear of the bulkhead kick plate's strip edges.
 func _skid() -> void:
 	for s: float in [-1.0, 1.0]:
-		_box("RailWeb", Vector3(0.82, 0.08, 0.02), _steel, Vector3(0.29, -0.41, s * 0.27))
-		_box("RailFlangeTop", Vector3(0.82, 0.02, 0.05), _steel, Vector3(0.29, -0.38, s * 0.245))
-		_box("RailFlangeBottom", Vector3(0.82, 0.02, 0.05), _steel,
-				Vector3(0.29, -0.44, s * 0.245))
+		_box("RailWeb", Vector3(0.82, 0.06, 0.02), _steel, Vector3(0.29, -0.398, s * 0.27))
+		_box("RailFlangeTop", Vector3(0.82, 0.03, 0.062), _steel,
+				Vector3(0.29, -0.368, s * 0.264))
+		_box("RailFlangeBottom", Vector3(0.82, 0.03, 0.062), _steel,
+				Vector3(0.29, -0.428, s * 0.264))
 		for x: float in [0.0, 0.6]:
-			_box("Foot", Vector3(0.12, 0.04, 0.08), _rubber, Vector3(x, -0.47, s * 0.26))
+			_box("Foot", Vector3(0.12, 0.062, 0.1), _rubber, Vector3(x, -0.471, s * 0.26))
 	for x: float in [-0.09, 0.1, 0.34, 0.67]:
-		_box("CrossMember", Vector3(0.05, 0.04, 0.52), _steel, Vector3(x, -0.42, 0.0))
-	_box("PanFloor", Vector3(0.53, 0.03, 0.43), _steel, Vector3(0.2, -0.463, 0.0))
+		_box("CrossMember", Vector3(0.05, 0.04, 0.494), _steel, Vector3(x, -0.427, 0.0))
+	_box("PanFloor", Vector3(0.53, 0.03, 0.47), _steel, Vector3(0.2, -0.463, 0.0))
 	for s: float in [-1.0, 1.0]:
-		_box("PanRimSide", Vector3(0.47, 0.043, 0.03), _steel, Vector3(0.2, -0.4415, s * 0.185))
+		_box("PanRimSide", Vector3(0.47, 0.043, 0.03), _steel, Vector3(0.2, -0.4415, s * 0.205))
 		_box("PanRimEnd", Vector3(0.03, 0.043, 0.31), _steel, Vector3(0.2 + s * 0.235, -0.4415, 0.0))
 	_box("OilPuddle", Vector3(0.18, 0.03, 0.12), _rubber, Vector3(0.22, -0.448, 0.02))
 
@@ -116,10 +119,10 @@ func _radiator() -> void:
 ## Welded uprights, braces and two beams that carry the control box over the engine.
 func _gantry() -> void:
 	for x: float in [0.1, 0.34]:
-		for z: float in [-0.27, 0.2]:
+		for z: float in [-0.27, 0.208]:
 			_box("Post", Vector3(0.04, 0.86, 0.04), _steel, Vector3(x, 0.03, z))
 		_box("Beam", Vector3(0.04, 0.04, 0.51), _steel, Vector3(x, 0.48, -0.035))
-	for z: float in [-0.27, 0.2]:
+	for z: float in [-0.27, 0.208]:
 		_box("Brace", Vector3(0.26, 0.03, 0.03), _steel, Vector3(0.22, 0.1, z))
 
 
@@ -173,11 +176,13 @@ func _trouble_lamp() -> void:
 	_machine.add_child(trouble_light)
 
 
-## Thin dark-orange boxes laid on the flat faces of the paint and rails.
+## Dark-orange slabs laid on the flat faces of the paint and rails: backs buried in the host,
+## fronts 1.35 cm proud so no face sits within 1 cm of the host's.
 func _rust_patches() -> void:
-	_box("Rust", Vector3(0.006, 0.07, 0.1), _rust, Vector3(0.452, 0.13, 0.06))
-	_box("Rust", Vector3(0.1, 0.006, 0.07), _rust, Vector3(0.22, 0.192, 0.05))
-	_box("Rust", Vector3(0.14, 0.1, 0.006), _rust, Vector3(0.12, 0.66, 0.1325))
-	_box("Rust", Vector3(0.1, 0.006, 0.08), _rust, Vector3(0.24, 0.862, -0.03))
-	_box("Rust", Vector3(0.22, 0.05, 0.006), _rust, Vector3(0.3, -0.41, 0.281))
-	_box("Rust", Vector3(0.22, 0.05, 0.006), _rust, Vector3(0.5, -0.41, -0.281))
+	_box("Rust", Vector3(0.0235, 0.07, 0.1), _rust, Vector3(0.45175, 0.13, 0.06))
+	_box("Rust", Vector3(0.1, 0.0235, 0.07), _rust, Vector3(0.22, 0.19175, 0.05))
+	_box("Rust", Vector3(0.14, 0.1, 0.0235), _rust, Vector3(0.12, 0.66, 0.13175))
+	_box("Rust", Vector3(0.1, 0.0235, 0.08), _rust, Vector3(0.24, 0.86175, -0.03))
+	# Web-only height, so the fronts never share a plane with the flanges' faces.
+	_box("Rust", Vector3(0.22, 0.03, 0.0135), _rust, Vector3(0.3, -0.398, 0.2865))
+	_box("Rust", Vector3(0.22, 0.03, 0.0135), _rust, Vector3(0.5, -0.398, -0.2865))

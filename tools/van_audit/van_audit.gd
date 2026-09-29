@@ -51,6 +51,7 @@ func _run() -> void:
 		_fail("could not find van rig at %s" % String(RIG_PATH))
 		return
 
+	_freeze_machines()
 	collect()
 	check_height()
 
@@ -106,6 +107,25 @@ func _run() -> void:
 
 	write_report()
 	get_tree().quit(0)
+
+
+## Stops every MachineMotion and restores its parts to their rest pose; animated fan, flywheel
+## and needle poses made FLICKER rows vary from run to run.
+func _freeze_machines() -> void:
+	for node: Node in get_tree().current_scene.find_children("*", "MachineMotion", true, false):
+		node.set_process(false)
+		var entries: Array = node.get(&"_entries")
+		for e: Dictionary in entries:
+			var target := e.get(&"target") as Node3D
+			if target == null or not is_instance_valid(target) or not e.has(&"rest"):
+				continue
+			match e.get(&"kind"):
+				&"spin":
+					target.basis = e[&"rest"]
+				&"pump":
+					target.position = e[&"rest"]
+				&"wobble":
+					target.rotation = e[&"rest"]
 
 
 func _wait_for_van_ready() -> bool:

@@ -104,7 +104,7 @@ func _bottle(part_name: String, x: float, z: float, paint: Material) -> void:
 	var root := _root(part_name, Vector3(x, _SHELF_TOP, z))
 	_cyl(root, "Body", paint, Vector3(0.0, 0.26, 0.0), 0.075, 0.52)
 	_cyl(root, "Shoulder", paint, Vector3(0.0, 0.545, 0.0), 0.03, 0.05, Vector3.ZERO, 0.075)
-	_cyl(root, "Band", _steel, Vector3(0.0, 0.36, 0.0), 0.079, 0.02)
+	_cyl(root, "Band", _steel, Vector3(0.0, 0.36, 0.0), 0.087, 0.02)
 	_cyl(root, "Valve", _brass, Vector3(0.0, 0.585, 0.0), 0.02, 0.03)
 	_box(root, "Wheel", _brass, Vector3(0.0, 0.605, 0.0), Vector3(0.07, 0.01, 0.014))
 
@@ -124,7 +124,7 @@ func _build_welder_box() -> void:
 	_box(_bench, "WelderHandle", _steel, Vector3(0.15, 0.085, 0.46), Vector3(0.3, 0.02, 0.02))
 	_box(_bench, "WelderPost0", _steel, Vector3(0.02, 0.07, 0.46), Vector3(0.02, 0.03, 0.02))
 	_box(_bench, "WelderPost1", _steel, Vector3(0.28, 0.07, 0.46), Vector3(0.02, 0.03, 0.02))
-	_box(_bench, "Panel", _steel, Vector3(-0.155, -0.115, 0.46), Vector3(0.01, 0.24, 0.26))
+	_box(_bench, "Panel", _steel, Vector3(-0.1515, -0.115, 0.46), Vector3(0.027, 0.24, 0.26))
 	var side := Vector3(0.0, 0.0, PI / 2.0)
 	_cyl(_bench, "Dial", _steel, Vector3(-0.166, -0.06, 0.38), 0.04, 0.012, side)
 	_cyl(_bench, "DialFace", _face, Vector3(-0.1725, -0.06, 0.38), 0.033, 0.003, side)
@@ -197,8 +197,8 @@ func build_top_kit() -> void:
 		var at: Vector2 = s[0]
 		var span: Vector2 = s[1]
 		var turn: float = s[2]
-		_box(_bench, "Scorch%d" % i, _soot, Vector3(at.x, _TABLE_TOP + 0.002, at.y),
-				Vector3(span.x, 0.004, span.y), Vector3(0.0, turn, 0.0))
+		_box(_bench, "Scorch%d" % i, _soot, Vector3(at.x, _TABLE_TOP, at.y),
+				Vector3(span.x, 0.026, span.y), Vector3(0.0, turn, 0.0))
 
 
 func _build_anvil() -> void:
@@ -232,7 +232,7 @@ func build_mask() -> void:
 	var root := _root("HoodMask", Vector3(-0.12, 0.66, -0.53))
 	_box(root, "Shell", _dark, Vector3.ZERO, Vector3(0.2, 0.24, 0.05))
 	_box(root, "Crown", _dark, Vector3(0.0, 0.14, 0.0025), Vector3(0.18, 0.05, 0.055))
-	_box(root, "Visor", _soot, Vector3(0.0, 0.02, -0.0275), Vector3(0.13, 0.045, 0.005))
+	_box(root, "Visor", _soot, Vector3(0.0, 0.02, -0.025), Vector3(0.13, 0.045, 0.026))
 	_box(root, "Strap", _steel, Vector3(0.0, -0.13, 0.0), Vector3(0.12, 0.02, 0.03))
 
 

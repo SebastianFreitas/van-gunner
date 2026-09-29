@@ -17,6 +17,7 @@ func add_spin(target: Node3D, axis: Vector3, rad_per_sec: float) -> void:
 		&"target": target,
 		&"axis": axis.normalized(),
 		&"rate": rad_per_sec,
+		&"rest": target.basis,
 	})
 
 

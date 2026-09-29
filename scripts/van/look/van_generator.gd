@@ -45,15 +45,16 @@ func _build(steel: Material, paint: Material, rubber: Material, face: Material,
 	MachineParts.belt(self, Vector3(0.5, -0.17, 0.0), hub_pos, rubber, 0.06, 0.22)
 	var fan_root := MachineParts.fan(self, Vector3(0.2, 0.1, 0.27), steel, 0.16)
 	# The gauge sits on the control box's face plate, turned to face the aisle (+x).
-	var gauge_root := MachineParts.gauge(self, Vector3(0.375, 0.755, 0.0), steel, face)
+	var gauge_root := MachineParts.gauge(self, Vector3(0.39, 0.755, 0.0), steel, face)
 	gauge_root.rotation.y = PI / 2.0
-	var can_a := MachineParts.jerry_can(self, Vector3(0.83, -0.49, 0.13), paint)
-	var can_b := MachineParts.jerry_can(self, Vector3(0.83, -0.49, -0.22), paint)
+	var can_a := MachineParts.jerry_can(self, Vector3(0.83, -0.502, 0.13), paint)
+	var can_b := MachineParts.jerry_can(self, Vector3(0.83, -0.502, -0.22), paint)
 	can_a.rotation.y = PI / 2.0
 	can_b.rotation.y = PI / 2.0
 	# The exhaust leans off the bowed wall so neither pipe nor vent enters it.
 	MachineParts.pipe(self, Vector3(-0.15, 0.1, -0.2), Vector3(-0.15, 1.3, -0.2), steel, 0.05)
-	MachineParts.pipe(self, Vector3(-0.15, 1.3, -0.2), Vector3(0.2, 2.0, -0.2), steel, 0.05)
+	MachineParts.pipe(self, Vector3(-0.15, 1.3, -0.2), Vector3(0.2, 2.0, -0.2), steel, 0.05,
+			false)
 	MachineParts.vent(self, Vector3(0.2, 2.0, -0.2), steel, 0.28)
 
 	var run_lamp := MeshInstance3D.new()
