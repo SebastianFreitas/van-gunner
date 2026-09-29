@@ -8,7 +8,8 @@ Also enforces the owner-only path to `main`/origin: the owner lands
 branches with `py -3 tools/try.py <branch> --commit` and pushes with
 GitHub Desktop. Sessions never push (except a cloud session pushing its
 own non-main branch), never merge into `main`, never delete a branch or
-remove a worktree, and never run `gh pr merge`.
+remove a worktree (tools/cleanup.py does both once a branch has landed),
+and never run `gh pr merge`.
 
 In the main checkout (shared mode), `git checkout` / `git switch` are also
 refused: the owner's GitHub Desktop and other sessions rely on it staying
@@ -221,10 +222,10 @@ def main():
         deny("only the owner merges")
 
     if BRANCH_DELETE_RE.search(bare):
-        deny("the owner deletes branches")
+        deny("branches are deleted only by tools/cleanup.py (landed on main and idle); run that instead")
 
     if WORKTREE_REMOVE_RE.search(bare):
-        deny("the owner removes worktrees (archiving a session in the app does it)")
+        deny("worktrees are removed only by tools/cleanup.py (landed on main and idle) or by archiving the session in the app")
 
     m = PUSH_RE.search(bare)
     if m:

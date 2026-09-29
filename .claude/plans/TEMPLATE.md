@@ -3,7 +3,8 @@
 Stage: planning
 Started: <YYYY-MM-DD>
 Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/<name>.state.md` while running).
-Interview: A open   <- A/B/C open or done; missed: lines while running
+Interview: A open · 0 asked   <- A/B/C open or done, running total; missed: lines while running
+Questions: ask   <- or auto: phase questions never defer, the recommended option is taken (SKILL.md "Phase questions")
 
 ## Brief (owner's words, verbatim)
 
@@ -41,7 +42,7 @@ Interview: A open   <- A/B/C open or done; missed: lines while running
 <one to three pages; every sentence rests on a D or the Brief; guesses carry [?] until asked>
 
 ### Piece 1 · <name>
-<5 to 15 lines: what is on screen, what moves, what is heard, what the player does, in order>
+<5 to 15 lines: what is on screen, what moves, what is read or heard, what the user does, in order>
 
 ### Piece 2 · <name>
 ...
@@ -52,21 +53,23 @@ Interview: A open   <- A/B/C open or done; missed: lines while running
 
 ## Constraints (every phase)
 
-- <rules that hold for the whole plan: invariants, art-style values, the smoke fingerprint and scene dump unchanged unless a phase says bless, shot views `same` outside the phase's scope, research is for ideas never copying>
+- <rules that hold for the whole plan: invariants, art rules, perf, screenshots and baselines unchanged outside the phase's scope, research is for ideas never copying>
 
 ## Progress
 
-| # | Phase | Kind | Rests on | Status |
-|---|---|---|---|---|
-| 1 | <name> | research, doc | D1, D3 | todo |
-| 2 | <name> | code | D2 | todo |
+| # | Phase | Kind | Needs | Rests on | Status |
+|---|---|---|---|---|---|
+| 1 | <name> | research, doc | - | D1, D3 | todo |
+| 2 | <name> | code | 1 | D2 | todo |
+
+Needs: earlier phases whose output it builds on. Status: todo, done <sha>, deferred Q<k>.
 
 ## Phases
 
 ### 1 · <name>
-Research: <where things are: files, functions, rules files to read>.
+Research: <topics and where things are (files, functions, rules to read), then "go past the list">.
 Deliverable: <exact files / functions / docs>.
-Verification: <exact commands (check, smoke, scene dump, shots) and the views that must change / stay `same`>.
+Verification: <exact commands from CLAUDE.md § Verify, and the screenshots that must change / stay the same>.
 Reviewed: <Part C answers: delivers right / out list and verification agreed / splits, D<n>>
 Notes: <filled when done: research digest path, what changed>
 
@@ -75,4 +78,4 @@ Notes: <filled when done: research digest path, what changed>
 
 ## Carry forward
 
-- <facts later phases need: names, numbers measured, shot set names>
+- <facts later phases need: names, numbers measured, screenshot set names>

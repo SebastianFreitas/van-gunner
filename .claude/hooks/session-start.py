@@ -1,7 +1,8 @@
 """Session start: prints what a new context must know before its first move.
 
 1. The mode (cloud / worktree / shared) and that mode's rules from
-   .claude/modes/<mode>.md. CLAUDE.md keeps only the rules every mode
+   .claude/modes/<mode>.md plus the project's own additions from
+   .claude/project/modes/<mode>.md when present. CLAUDE.md keeps only the rules every mode
    shares, so each session loads one mode's rules instead of all three.
 2. On a fresh start or /clear: the branch, and the paths already
    uncommitted (made by another session, never by this one).
@@ -11,14 +12,9 @@
    also written to `<session dir>/foreign-paths.json`, which git-guard
    reads to refuse staging them.
 5. Every time: the active plans (Stage planning/ready/running in
-   .claude/plans/*.md). The one bound to this checkout
-   (.claude/plans/HERE, or the only active plan) prints as
-   `PLAN: <name> · <stage>`, with its state file's Status while running;
-   the others are listed, or `PLANS:` when none is bound.
-6. No Godot found: a warning line, since the check and smoke test cannot
-   run.
-7. After compaction: a reminder to re-read the active `docs/tasks/` file,
-   if any exist.
+   .claude/plans/*.md). The one bound to this checkout (.claude/plans/HERE,
+   or the only active plan) prints as `PLAN: <name> · <stage>`, with its
+   state file's Status while running; the others are listed.
 
 SessionStart also fires after compaction ("compact") and on resume; the
 mode rules and the handoff are printed again then (compaction drops
@@ -28,7 +24,6 @@ own edits.
 Plain stdout on SessionStart is added to the session's context.
 Never fails the hook: any error exits 0.
 """
-import glob
 import json
 import os
 import re
@@ -81,18 +76,18 @@ def mode_rules(root, mode):
         p = os.path.join(base, mode + ".md")
         if os.path.exists(p):
             with open(p, encoding="utf-8", errors="ignore") as f:
-                return f.read().strip()
-    return (f"(.claude/modes/{mode}.md not found: follow CLAUDE.md and say "
-            "in the report that the mode file is missing.)")
-
-
-def godot_missing(root: str) -> bool:
-    try:
-        sys.path.insert(0, os.path.join(root, "tools"))
-        import godot_env
-        return godot_env.find_godot() is None
-    except Exception:
-        return False
+                text = f.read().strip()
+            break
+    else:
+        text = (f"(.claude/modes/{mode}.md not found: follow CLAUDE.md and say "
+                "in the report that the mode file is missing.)")
+    p = os.path.join(root, ".claude", "project", "modes", mode + ".md")
+    if os.path.exists(p):
+        with open(p, encoding="utf-8", errors="ignore") as f:
+            extra = f.read().strip()
+        if extra:
+            text = text + "\n\n" + extra
+    return text
 
 
 def plan_lines(root):
@@ -105,11 +100,11 @@ def plan_lines(root):
         active = []
         for fname in os.listdir(plans):
             if (not fname.endswith(".md") or fname == "TEMPLATE.md"
-                    or fname.endswith(".state.md")):
+                    or fname.endswith(".state.md") or ".spec-" in fname):
                 continue
             path = os.path.join(plans, fname)
             try:
-                with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(path, encoding="utf-8", errors="ignore") as f:
                     text = f.read()
             except OSError:
                 continue
@@ -121,7 +116,7 @@ def plan_lines(root):
         here_path = os.path.join(plans, "HERE")
         here = ""
         try:
-            with open(here_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(here_path, encoding="utf-8", errors="ignore") as f:
                 here_text = f.read()
         except OSError:
             here_text = ""
@@ -140,8 +135,8 @@ def plan_lines(root):
 
         if not active:
             if here:
-                return [f"(.claude/plans/HERE names '{here}', which is not "
-                         "an active plan: delete HERE.)"]
+                return [f"(.claude/plans/HERE names '{here}', which is not an "
+                         "active plan: delete HERE.)"]
             return []
 
         here_note = None
@@ -151,44 +146,43 @@ def plan_lines(root):
 
         if bound:
             stage = dict(active)[bound]
+            rel = f".claude/plans/{bound}.md"
+            state_rel = f".claude/plans/{bound}.state.md"
             head = f"PLAN: {bound} · {stage}"
             if stage == "running":
                 state_path = os.path.join(plans, bound + ".state.md")
                 if os.path.isfile(state_path):
-                    with open(state_path, "r", encoding="utf-8",
-                               errors="ignore") as f:
+                    with open(state_path, encoding="utf-8",
+                              errors="ignore") as f:
                         state_line = f.readline().strip()
                     status = None
                     if state_line.startswith("Status:"):
                         status = state_line[len("Status:"):].strip()
                         head += f" · {status}"
-                    if status == "blocked":
-                        second = (f"Read .claude/skills/plan/SKILL.md, then "
-                                   f".claude/plans/{bound}.state.md (its Next "
-                                   f"phase) and .claude/plans/{bound}.md. A "
-                                   "bare 'go' continues it. Status blocked: "
-                                   "do the skill's Unblock, never the phase.")
+                    if status in ("blocked", "questions"):
+                        second = ("Read .claude/skills/plan/SKILL.md, then "
+                                  f"{state_rel} and {rel}. Status {status}: a "
+                                  "bare 'go' does the skill's Answer (asks the "
+                                  "waiting questions), never a phase.")
                     else:
-                        second = (f"Read .claude/skills/plan/SKILL.md, then "
-                                   f".claude/plans/{bound}.state.md (its Next "
-                                   f"phase) and .claude/plans/{bound}.md. A "
-                                   "bare 'go' continues it.")
+                        second = ("Read .claude/skills/plan/SKILL.md, then "
+                                  f"{state_rel} (its Next phase) and {rel}. A "
+                                  "bare 'go' continues it.")
                 else:
                     head += " · no state file"
-                    second = (f"Read .claude/skills/plan/SKILL.md, then "
-                               f".claude/plans/{bound}.md (no state file: "
-                               "take the first todo row in Progress). A "
-                               "bare 'go' continues it.")
+                    second = ("Read .claude/skills/plan/SKILL.md, then "
+                              f"{rel} (no state file: take the first "
+                              "runnable row in Progress). A bare 'go' "
+                              "continues it.")
             else:
-                second = (f"Read .claude/skills/plan/SKILL.md, then "
-                           f".claude/plans/{bound}.md: Interview, Brief, "
-                           "Decisions, Open items, Progress. A bare 'go' "
-                           "continues it.")
+                second = ("Read .claude/skills/plan/SKILL.md, then "
+                          f"{rel}: Interview, Brief, Decisions, Open items, "
+                          "Progress. A bare 'go' continues it.")
             lines = [head, second]
             others = [(n, s) for n, s in active if n != bound]
             if others:
-                lines.append("Other active plans (run in their own "
-                              "checkouts, do not touch their files): " +
+                lines.append("Other active plans (run in their own checkouts, "
+                              "do not touch their files): " +
                               ", ".join(f"{n} · {s}" for n, s in others))
             if here_note:
                 lines.append(here_note)
@@ -201,6 +195,25 @@ def plan_lines(root):
         if here_note:
             lines.append(here_note)
         return lines
+    except Exception:
+        return []
+
+
+def workflow_sync_lines(root):
+    """Prints the WORKFLOW SYNC drift line from the shared claude-workflow
+    master when this project has a workflow.lock."""
+    try:
+        lock = os.path.join(root, ".claude", "workflow.lock")
+        if not os.path.exists(lock):
+            return []
+        with open(lock, encoding="utf-8") as f:
+            master = json.load(f).get("master")
+        if not master or not os.path.exists(os.path.join(master, "sync.py")):
+            return []
+        r = subprocess.run([sys.executable, os.path.join(master, "sync.py"),
+                            "status", root, "--brief"],
+                           capture_output=True, text=True, timeout=20)
+        return [l.strip() for l in r.stdout.splitlines() if l.strip()]
     except Exception:
         return []
 
@@ -259,17 +272,10 @@ def main():
     lines.append(f"MODE: {mode} ({where}). "
                  + (head[0] if head else ""))
     lines.append(mode_rules(root, mode))
-    if godot_missing(root):
-        lines.append(
-            "NO GODOT: tools/godot_env.py found no Godot executable (GODOT "
-            "unset, no godot on PATH). tools/check.py and tools/smoke.py "
-            "cannot run: say so in the report. Cloud: the environment's "
-            "setup script must run `bash tools/cloud_setup.sh`.")
     lines.extend(plan_lines(root))
     lines.append("")
 
     hand_at = None
-    raw = ""
     if source in ("startup", "clear"):
         dirty = git("status", "--short")
         if dirty and mode == "shared":
@@ -289,8 +295,22 @@ def main():
             if mode == "shared":
                 write_foreign_paths(d.get("transcript_path"), [])
 
+    if source == "startup" and main_root:
+        script = os.path.join(main_root, "tools", "cleanup.py")
+        if os.path.exists(script):
+            try:
+                r = subprocess.run([sys.executable, script, "--quiet",
+                                    "--keep", branch], cwd=main_root,
+                                   capture_output=True, text=True, timeout=30)
+                lines.extend(l for l in r.stdout.splitlines() if l.strip())
+            except Exception:
+                pass
+
+    if source in ("startup", "clear"):
+        lines.extend(workflow_sync_lines(root))
+
     if source in ("startup", "clear", "compact"):
-        hand = os.path.join(root, ".claude", "handoff.md")
+        hand =os.path.join(root, ".claude", "handoff.md")
         if os.path.exists(hand):
             with open(hand, encoding="utf-8", errors="ignore") as f:
                 body = f.read().strip()
@@ -304,14 +324,6 @@ def main():
                          "and delete the file once absorbed:")
             hand_at = len(lines)
             lines.append(body)
-
-    if source == "compact":
-        names = sorted(
-            os.path.relpath(p, root).replace(os.sep, "/")
-            for p in glob.glob(os.path.join(root, "docs", "tasks", "*.md")))
-        if names:
-            lines.append("If you are working a task file, re-read it now "
-                         "(CLAUDE.md Active task): " + ", ".join(names))
 
     out = "\n".join(lines)
     if len(out) > LIMIT and hand_at is not None:

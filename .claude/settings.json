@@ -1,13 +1,17 @@
 {
   "env": {
-    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "200000",
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "65"
+    "DISABLE_AUTO_COMPACT": "1"
   },
   "worktree": {
     "baseRef": "head"
   },
   "permissions": {
     "allow": [
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git branch --show-current)",
       "Bash(py -3 tools/check.py*)",
       "Bash(py -3 tools/smoke.py*)",
       "Bash(py -3 tools/scene_dump.py*)",
@@ -16,26 +20,35 @@
       "Bash(python3 tools/check.py*)",
       "Bash(python3 tools/smoke.py*)",
       "Bash(python3 tools/scene_dump.py*)",
-      "Bash(python3 tools/gen_context.py*)",
-      "Bash(git status*)",
-      "Bash(git diff*)",
-      "Bash(git log*)",
-      "Bash(git show*)",
-      "Bash(git branch --show-current)"
+      "Bash(python3 tools/gen_context.py*)"
     ]
   },
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" session-start.py" }
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" session-start.py"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" godot-session.py"
+          }
         ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [
-          { "type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py" }
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py"
+          }
         ]
       }
     ],
@@ -43,47 +56,88 @@
       {
         "matcher": "Bash|PowerShell",
         "hooks": [
-          { "type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" git-guard.py" }
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" git-guard.py"
+          }
         ]
       },
       {
         "matcher": "Read|Write|Edit|MultiEdit|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" file-guard.py" }
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" file-guard.py"
+          }
         ]
       },
       {
         "hooks": [
-          { "type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py" }
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" tscn-guard.py"
+          }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" gd-lint.py" }
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py"
+          }
         ]
       },
       {
+        "matcher": "Write|Edit|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py" }
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" gd-lint.py"
+          }
         ]
       }
     ],
     "SubagentStop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py" }
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py"
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" stop-guard.py" }
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" stop-guard.py"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" verify-guard.py"
+          }
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "unity@unity-agent-plugin": false
   }
 }

@@ -1,47 +1,29 @@
-"""Play a session's branch, or land it on local main: the owner's Try and Commit.
+"""Try a session's branch locally, without touching the main checkout.
 
-    py -3 tools/try.py                          list session branches
-    py -3 tools/try.py <branch>                 play it
-    py -3 tools/try.py <branch> --editor        open it in the Godot editor
-    py -3 tools/try.py <branch> --scene res://path.tscn
-    py -3 tools/try.py <branch> --commit        land it (tools/try_commit.py)
-    py -3 tools/try.py main                     play the main checkout as it is
+    py -3 tools/try.py                                 list session branches
+    py -3 tools/try.py <branch> [project flags]        Try it
+    py -3 tools/try.py <branch> --commit               land it
+    py -3 tools/try.py main [project flags]            Try the main checkout as it is
 
-Playing checks the branch out (detached) into a sibling worktree,
-../van-gunner-try, whose .godot/ import cache is seeded from the main
-checkout the first time and stays warm, runs an import scan and launches
-the game with the console build, so its errors print here and are counted
-when the window closes (the full log goes to .godot/try-last.log there).
-user:// goes to a separate van-gunner-try profile through a gitignored
-override.cfg, so a branch never touches the owner's real saves or
-schematic (--real-saves skips that). Typing `commit` at the prompt lands
-the branch.
-
-`main` plays the main checkout itself with the real profile, without an
-import scan (the owner's editor may be open on it).
+Try checks the branch out (detached) into the sibling <repo>-try worktree and
+launches it through the project's tools/try_project.py, which may define
+setup(root), add_arguments(parser) and launch(tree, args, is_main) ->
+(Popen | None, url | None). Without it, try only checks the branch out.
+Commit is tools/try_commit.py.
 """
 
 from __future__ import annotations
 
 import argparse
-import pathlib
-import re
 import subprocess
 import sys
-import threading
+import time
+import webbrowser
+from pathlib import Path
 
-from godot_env import godot_exe, project_lock
-from try_commit import ROOT, TRY_DIR, ensure_tree, git, git_run, land
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-FAILURE = re.compile(r"SCRIPT ERROR|Parse Error|ERROR:")
-ANSI = re.compile(r"\x1b\[[0-9;]*m")
-OVERRIDE = """; Written by tools/try.py for this checkout only (gitignored): user:// goes
-; to a separate profile, so a branch never touches the real saves or schematic.
-[application]
-
-config/use_custom_user_dir=true
-config/custom_user_dir_name="van-gunner-try"
-"""
+from try_commit import ROOT, TRY_DIR, ensure_tree, git, git_run, hook, land  # noqa: E402
 
 
 def list_branches() -> None:
@@ -62,7 +44,7 @@ def list_branches() -> None:
             name, when, subject = line.split("|", 2)
             print(f"  {name:<44} {when:<16} {subject[:70]}")
     print()
-    print("Play one: py -3 tools/try.py <branch>    Land it: py -3 tools/try.py <branch> --commit")
+    print("Try one: py -3 tools/try.py <branch>    Land it: py -3 tools/try.py <branch> --commit")
 
 
 def resolve(name: str) -> tuple[str, str]:
@@ -98,174 +80,129 @@ def resolve(name: str) -> tuple[str, str]:
     sys.exit(1)
 
 
-def write_override(tree: pathlib.Path, real_saves: bool) -> None:
-    path = tree / "override.cfg"
-    if real_saves:
-        path.unlink(missing_ok=True)
-    else:
-        path.write_text(OVERRIDE, encoding="utf-8", newline="\n")
+def stop(proc: subprocess.Popen | None) -> None:
+    if proc is None or proc.poll() is not None:
+        return
+    proc.terminate()
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
 
 
-def import_scan(tree: pathlib.Path, exe: str) -> None:
-    print("== import scan (re-imports only what changed since the last try)")
-    with project_lock(tree):
+def wait_for(proc: subprocess.Popen | None) -> None:
+    """Block until proc exits; Ctrl+C stops it."""
+    if proc is None:
+        return
+    try:
+        proc.wait()
+    except KeyboardInterrupt:
+        stop(proc)
+        print("Stopped.")
+
+
+def prompt_loop(proc: subprocess.Popen | None, allow_commit: bool, on_commit) -> int:
+    """Enter stops proc; "commit" (if allowed) stops it and returns on_commit()."""
+    print(
+        "Enter = stop."
+        + ("  Type commit + Enter = squash it into main as one commit (nothing is pushed)."
+           if allow_commit else "")
+    )
+    while True:
         try:
-            r = subprocess.run(
-                [exe, "--headless", "--path", str(tree), "--import"],
-                cwd=tree, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                timeout=900,
-            )
-        except subprocess.TimeoutExpired:
-            print("   timed out after 900 s")
-            return
-    lines = [ANSI.sub("", line.rstrip()) for line in (r.stdout + r.stderr).splitlines()]
-    hits = [line for line in lines if FAILURE.search(line)]
-    for hit in hits[:10]:
-        print("   " + hit)
-    print(f"   {len(hits)} error line(s)")
-
-
-class Game:
-    """The running game or editor; tails the game's output into a log, echoing and
-    counting error lines."""
-
-    def __init__(self, exe: str, tree: pathlib.Path, scene: str | None, editor: bool) -> None:
-        self.errors: list[str] = []
-        self.log_path: pathlib.Path | None = None
-        self.thread: threading.Thread | None = None
-        self.summarised = False
-
-        if editor:
-            args = [exe, "--editor", "--path", str(tree)]
-            self.proc = subprocess.Popen(args, cwd=tree, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            ans = input("> ").strip().lower()
+        except EOFError:
+            # Nothing to read from (stdin at NUL reports isatty() on Windows): wait like the non-tty branch.
+            wait_for(proc)
+            return 0
+        except KeyboardInterrupt:
+            ans = ""
+        if ans == "commit" and allow_commit:
+            stop(proc)
+            return on_commit()
+        elif ans == "":
+            stop(proc)
+            print("Stopped.")
+            return 0
         else:
-            args = [exe, "--path", str(tree)] + ([scene] if scene else [])
-            self.log_path = tree / ".godot" / "try-last.log"
-            self.log_path.parent.mkdir(parents=True, exist_ok=True)
-            self.proc = subprocess.Popen(
-                args, cwd=tree, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                text=True, encoding="utf-8", errors="replace", bufsize=1,
-            )
-            self.thread = threading.Thread(target=self._pump, daemon=True)
-            self.thread.start()
-
-    def _pump(self) -> None:
-        with open(self.log_path, "w", encoding="utf-8", newline="\n") as log:
-            for line in self.proc.stdout:
-                log.write(line)
-                clean = ANSI.sub("", line)
-                if FAILURE.search(clean):
-                    self.errors.append(clean)
-                    print("   " + line.rstrip())
-        self.summary()
-
-    def summary(self) -> None:
-        if self.summarised:
-            return
-        self.summarised = True
-        if self.log_path is not None:
-            print(f"\nGame closed: {len(self.errors)} error line(s). Full log: {self.log_path}")
-
-    def stop(self) -> None:
-        if self.proc.poll() is None:
-            self.proc.terminate()
-            try:
-                self.proc.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                self.proc.kill()
-        if self.thread is not None:
-            self.thread.join(timeout=5)
-        self.summary()
-
-    def wait(self) -> None:
-        self.proc.wait()
-        if self.thread is not None:
-            self.thread.join(timeout=5)
-        self.summary()
+            print("Type commit or press Enter." if allow_commit else "Press Enter to stop.")
 
 
 def main() -> int:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # game logs and subjects hold non-ASCII
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # branch subjects can hold non-ASCII
+
+    setup = hook("setup")
+    if setup:
+        setup(ROOT)
+
     parser = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
     parser.add_argument("branch", nargs="?")
     parser.add_argument(
         "--commit", action="store_true",
-        help="land the branch on local main as one verified commit; nothing is pushed",
+        help="land the branch on local main as one commit; nothing is pushed",
     )
-    parser.add_argument(
-        "--smoke", action="store_true",
-        help="with --commit: always run the smoke test on the combined tree",
-    )
-    parser.add_argument(
-        "--editor", action="store_true",
-        help="open the Godot editor on the branch instead of playing",
-    )
-    parser.add_argument("--scene", help="a res:// scene to play instead of the main scene")
-    parser.add_argument(
-        "--real-saves", action="store_true",
-        help="use your real profile instead of the separate van-gunner-try one",
-    )
+    parser.add_argument("--no-open", action="store_true", help="do not open the url in a browser")
+    add_arguments = hook("add_arguments")
+    if add_arguments:
+        add_arguments(parser)
     args = parser.parse_args()
 
     if not args.branch:
         list_branches()
         return 0
 
+    launch = hook("launch")
+
     if args.branch == "main":
         if args.commit:
-            print("main is already main: a shared-mode session commits its own work.")
+            print("main is already main; nothing to commit.")
+            return 1
+        proc, url = launch(ROOT, args, True) if launch else (None, None)
+        print(f"Trying main (this checkout)  {git('log', '-1', '--format=%s', 'main')}")
+        print(f"Tree: {ROOT}")
+        if url:
+            print(f"Open: {url}")
+            print("Ctrl+C stops it.")
+            if not args.no_open:
+                time.sleep(0.8)
+                webbrowser.open(url)
+        if proc is None:
+            if not url:
+                print("No launcher (tools/try_project.py launch); open the tree yourself.")
             return 0
-        tree = ROOT
-        label = f"main (this checkout, your real profile)"
-        landable = False
-    else:
-        branch, ref = resolve(args.branch)
-        if args.commit:
-            return land(branch, ref, args.smoke)
-        ensure_tree(ref)
-        write_override(TRY_DIR, args.real_saves)
-        tree = TRY_DIR
-        label = f"{branch} @ {git('rev-parse', '--short', ref)}  {git('log', '-1', '--format=%s', ref)[:80]}"
-        landable = True
-
-    exe = godot_exe()
-    if tree != ROOT and not args.editor:
-        import_scan(tree, exe)
-
-    print(f"Trying {label}")
-    print(f"Tree:  {tree}")
-    if tree != ROOT and not args.real_saves:
-        print("Saves and the schematic go to the separate van-gunner-try profile.")
-
-    game = Game(exe, tree, args.scene, args.editor)
-
-    if not sys.stdin.isatty():
-        game.wait()
+        if sys.stdin.isatty():
+            return prompt_loop(proc, False, None)
+        wait_for(proc)
         return 0
 
-    print(
-        "Enter = stop."
-        + ("  commit + Enter = land it on main as one commit (nothing is pushed)." if landable else "")
-    )
-    while True:
-        try:
-            ans = input("> ")
-        except EOFError:
-            # Nothing to read from (stdin at NUL reports isatty() on Windows): let the game run to its end.
-            game.wait()
-            return 0
-        except KeyboardInterrupt:
-            ans = ""
-        ans = ans.strip().lower()
-        if ans == "commit" and landable:
-            game.stop()
-            return land(branch, ref, args.smoke)
-        elif ans == "":
-            game.stop()
-            print("Stopped.")
-            return 0
-        else:
-            print("Type commit or press Enter." if landable else "Press Enter to stop.")
+    branch, ref = resolve(args.branch)
+    if args.commit:
+        return land(branch, ref, args)
+
+    sha = git("rev-parse", "--short", ref)
+    subject = git("log", "-1", "--format=%s", ref)
+
+    ensure_tree(ref)
+
+    proc, url = launch(TRY_DIR, args, False) if launch else (None, None)
+
+    print(f"Trying {branch} @ {sha}  {subject}")
+    print(f"Tree: {TRY_DIR}")
+    if url:
+        print(f"Open: {url}")
+        print("Ctrl+C stops the server.")
+    if proc is None and url is None:
+        print("No launcher (tools/try_project.py launch); open the tree yourself.")
+
+    if url and not args.no_open:
+        time.sleep(0.8)
+        webbrowser.open(url)
+
+    if sys.stdin.isatty():
+        return prompt_loop(proc, True, lambda: land(branch, ref, args))
+    wait_for(proc)
+    return 0
 
 
 if __name__ == "__main__":

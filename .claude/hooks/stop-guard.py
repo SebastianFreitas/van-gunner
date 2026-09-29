@@ -4,13 +4,6 @@ may not end with work that the owner's Commit command would miss.
 - Worktree or cloud: uncommitted or untracked (not ignored) files -> block
   once, asking to commit them by path, or to say why they stay.
 - Cloud: commits not pushed to the branch's remote -> block once.
-- Worktree or cloud: Godot files changed on the branch (vs its merge-base
-  with main) after the last clean `tools/check.py` -> block once; runtime
-  files (under `scripts/`, `scenes/`, `resources/`, `tools/smoke/`, or
-  `project.godot`) also need a clean `tools/smoke.py`, and van scenes
-  (`scenes/van/`, `scenes/ui/run_hud.tscn`) a clean `tools/scene_dump.py`.
-  The tools record clean runs in `.godot/claude-verify.json`
-  (`tools/godot_env.py` `stamp_clean`).
 
 Shared mode is never checked: foreign edits make "uncommitted" meaningless
 there. A second stop in a row (stop_hook_active) always passes, so the
@@ -21,10 +14,6 @@ import json
 import os
 import subprocess
 import sys
-
-GODOT_EXT = (".gd", ".tscn", ".tres", ".gdshader", ".gdshaderinc")
-RUNTIME_PREFIXES = ("scripts/", "scenes/", "resources/", "tools/smoke/")
-VAN_SCENES = ("scenes/van/", "scenes/ui/run_hud.tscn")
 
 
 def git(*args, strip=True):
@@ -48,55 +37,6 @@ def mode():
     if common and top and not same(os.path.dirname(common), top):
         return "worktree"
     return "shared"
-
-
-def unverified(mode: str) -> list[str]:
-    root = git("rev-parse", "--show-toplevel")
-    if not root:
-        return []
-    base = git("merge-base", "HEAD", "main") or git("merge-base", "HEAD", "origin/main")
-    if not base:
-        return []
-    changed = (set(git("diff", "--name-only", base).splitlines())
-               | set(git("ls-files", "--others", "--exclude-standard").splitlines()))
-    changed.discard("")
-    godot = [p for p in changed if p.endswith(GODOT_EXT) or p == "project.godot"]
-    if not godot:
-        return []
-
-    def change_time(p):
-        full = os.path.join(root, p)
-        if os.path.exists(full):
-            return os.path.getmtime(full)
-        # deleted: walk up to the nearest surviving folder and use its
-        # mtime, which moves when an entry in it is deleted
-        d = os.path.dirname(full)
-        while d != root and not os.path.exists(d):
-            d = os.path.dirname(d)
-        return os.path.getmtime(d)
-
-    try:
-        with open(os.path.join(root, ".godot", "claude-verify.json"),
-                  encoding="utf-8") as f:
-            stamps = json.load(f)
-    except Exception:
-        stamps = {}
-
-    py = "python3" if mode == "cloud" else "py -3"
-    problems = []
-    for kind, paths, command in (
-        ("check", godot, "tools/check.py"),
-        ("smoke", [p for p in godot if p.startswith(RUNTIME_PREFIXES)
-                   or p == "project.godot"], "tools/smoke.py"),
-        ("scene_dump", [p for p in godot if p.startswith(VAN_SCENES)],
-         "tools/scene_dump.py"),
-    ):
-        if not paths:
-            continue
-        newest = max(paths, key=change_time)
-        if stamps.get(kind, 0) < change_time(newest):
-            problems.append(f"{newest} changed after the last clean {py} {command}")
-    return problems
 
 
 def main():
@@ -129,15 +69,15 @@ def main():
             base = git("rev-list", "--count", "origin/main..HEAD")
             if base and base != "0":
                 problems.append("the branch has never been pushed")
-    problems.extend(unverified(m))
     if not problems:
         return
     print(json.dumps({"decision": "block", "reason": (
-        f"Stop guard ({m} mode): " + "; ".join(problems) + ". Verify and "
-        "commit by path" + (" and push" if m == "cloud" else "")
+        f"Stop guard ({m} mode): " + "; ".join(problems) + ". Commit by path"
+        + (" and push" if m == "cloud" else "")
         + ", then end with the report. If you are stopping on purpose "
-        "(a question for the owner, a blocker, a check you deliberately "
-        "skipped), say so in one line and stop again.")}))
+        "(a question for the owner, a blocker, work left for a handoff, a check "
+        "you deliberately skipped), "
+        "say so in one line and stop again.")}))
 
 
 try:

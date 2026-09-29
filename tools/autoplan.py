@@ -1,6 +1,9 @@
-"""Run a van-gunner plan's phases unattended.
+"""Run a multi-phase plan (.claude/plans/<name>.md) unattended.
 
-    py -3 tools/autoplan.py [<plan>] [--dry-run] [...]
+    py -3 tools/autoplan.py heavylight-page  (from main: makes the plan worktree)
+    py -3 tools/autoplan.py --dry-run
+    py -3 tools/autoplan.py heavylight-page --here  (run in this checkout)
+    py -3 tools/autoplan.py heavylight-page --force  (kill a leftover session)
 
 Each loop iteration launches a FRESH headless Claude Code process
 (`claude -p ... --output-format stream-json`), which executes exactly one
@@ -9,14 +12,9 @@ live, kills it if it overflows, commits anything left uncommitted, reads
 the plan state, and starts the next session. A fresh process means a
 cleared context, so nobody has to type /clear or "go" between phases.
 
-Runs on the Max subscription only, never an API key: acquire_lock and
-child_env strip every billing env var before a child session starts, and
-the runner stops itself on a usage limit rather than spend API money (D17).
-
-Works in worktree .claude/worktrees/plan-<name> on branch
-claude/plan-<name>, reading .claude/plans/<name>.state.md for phase
-status; sessions read .claude/skills/plan/unattended.md for the
-unattended protocol.
+Runs on the Max subscription only, never an API key: child_env strips
+every billing env var before a child session starts, and the runner
+stops itself on a usage limit rather than spend API money.
 
 Meant to run in a worktree, not the main checkout other sessions are
 using (pass --here to override that check).
@@ -38,18 +36,32 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PLANS = ROOT / ".claude" / "plans"
 LOGS = ROOT / ".claude" / "autoplan"
-LOCK = LOGS / "run.lock"
+LOCK = ROOT / ".claude" / "autoplan" / "run.lock"
 
 ALLOWED_TOOLS = [
     "Read", "Glob", "Grep", "Edit", "Write", "Agent", "TodoWrite",
-    "Bash(git *)", "Bash(py -3 *)", "Bash(py -3 -m py_compile *)",
-    "Bash(ls *)", "Bash(wc *)", "Bash(grep *)", "Bash(sed -n *)",
-    "Bash(head *)", "Bash(tail *)", "Bash(mkdir *)",
-    "PowerShell(git *)", "PowerShell(py -3 *)",
+    "Bash(git add *)", "Bash(git commit *)", "Bash(git status *)",
+    "Bash(git diff *)", "Bash(git log *)", "Bash(git show *)",
+    "Bash(git rev-parse *)", "Bash(py -3 tools/*)",
+    "Bash(py -3 -m py_compile *)", "Bash(ls *)", "Bash(wc *)",
+    "Bash(grep *)", "Bash(sed -n *)", "Bash(head *)", "Bash(tail *)",
+    "Bash(mkdir *)", "PowerShell(git add *)", "PowerShell(git commit *)",
+    "PowerShell(git status *)", "PowerShell(git diff *)",
+    "PowerShell(git log *)", "PowerShell(py -3 tools/*)",
+    # Worktree sessions land their own phase and resolve merges.
+    "Bash(git merge *)", "Bash(git mv *)", "Bash(git rm *)",
+    "Bash(git branch --show-current)", "Bash(git grep *)",
+    "PowerShell(git merge *)", "PowerShell(git mv *)", "PowerShell(git rm *)",
+    "PowerShell(git branch --show-current)", "PowerShell(git grep *)",
 ]
+# Project-specific tools (e.g. an engine's CLI): .claude/project/autoplan.json {"allowedTools": [...]}
+try:
+    ALLOWED_TOOLS += json.loads((ROOT / ".claude" / "project" / "autoplan.json").read_text(encoding="utf-8")).get("allowedTools", [])
+except (OSError, ValueError, AttributeError):
+    pass
 
 # Env vars that would make a session spend API money instead of the Max
-# subscription; child_env pops all of these before launching claude (D17).
+# subscription; child_env pops all of these before launching claude.
 BILLING_ENV = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL",
                "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY",
                "AWS_BEARER_TOKEN_BEDROCK")
@@ -59,7 +71,7 @@ _PLAN_NAME = "?"  # set by main() before the loop; safety_commit's message needs
 
 
 def child_env(name: str, k: int, line: int) -> dict[str, str]:
-    """Build the child session's env: strip billing vars (Max subscription only, D17), set AUTOPLAN_*."""
+    """Build the child session's env: strip billing vars (Max subscription only), set AUTOPLAN_*."""
     env = os.environ.copy()
     for key in BILLING_ENV:
         env.pop(key, None)
@@ -138,6 +150,11 @@ def git(*args: str, check: bool = False) -> str:
         print(result.stderr, file=sys.stderr)
         sys.exit(1)
     return result.stdout.strip()
+
+
+def main_root() -> Path:
+    """The main checkout: parent of the git common dir (ROOT itself when run from main)."""
+    return Path(git("rev-parse", "--path-format=absolute", "--git-common-dir")).parent
 
 
 def mode() -> str:
@@ -246,7 +263,7 @@ def live_claude_here(name: str) -> list[int]:
             cmdline = entry.get("CommandLine") or ""
             if " -p " not in cmdline or "stream-json" not in cmdline:
                 continue
-            if f"[autoplan | plan {name} |" not in cmdline and f"[autoplan · plan {name} ·" not in cmdline:
+            if f"[autoplan | plan {name} |" not in cmdline and f"[autoplan \u00b7 plan {name} \u00b7" not in cmdline:
                 continue
             pid = entry.get("ProcessId")
             if pid is not None:
@@ -290,7 +307,7 @@ def acquire_lock(name: str, force: bool) -> None:
         encoding="utf-8",
     )
 
-    def release() -> None:
+    def release():
         try:
             info = json.loads(LOCK.read_text(encoding="utf-8"))
             if info.get("pid") == our_pid:
@@ -301,53 +318,87 @@ def acquire_lock(name: str, force: bool) -> None:
     atexit.register(release)
 
 
+def progress_rows(plan_lines: list[str]) -> list[dict]:
+    """Rows of the plan's ## Progress table: n, title, status, rests_on, needs (None: no Needs column)."""
+    rows = []
+    cols: dict[str, int] = {}
+    in_progress = False
+    for line in plan_lines:
+        if line.startswith("## Progress"):
+            in_progress = True
+            continue
+        if in_progress and line.startswith("## "):
+            break
+        if not in_progress or not line.startswith("| "):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if not cols:
+            if cells and cells[0] == "#":
+                cols = {c.lower(): i for i, c in enumerate(cells)}
+            continue
+        if not line[2:3].isdigit() or len(cells) < 2:
+            continue
+        rests_i = cols.get("rests on", len(cells) - 2)
+        needs_i = cols.get("needs")
+        rows.append({
+            "n": cells[0],
+            "title": cells[1],
+            "status": cells[-1].lower(),
+            "rests_on": cells[rests_i] if rests_i < len(cells) else "",
+            "needs": None if needs_i is None or needs_i >= len(cells)
+            else re.findall(r"\d+", cells[needs_i]),
+        })
+    return rows
+
+
+def next_runnable(rows: list[dict]) -> dict | None:
+    """First row that is not done and not held back (deferred, or needing a held phase), else None."""
+    held: set[str] = set()
+    for row in rows:
+        if row["status"].startswith("done"):
+            continue
+        needs = row["needs"]
+        is_held = (
+            row["status"].startswith("deferred")
+            or (needs is not None and any(x in held for x in needs))
+            or (needs is None and bool(held))
+        )
+        if is_held:
+            held.add(row["n"])
+            continue
+        return row
+    return None
+
+
 def read_plan(name: str) -> dict:
-    """Parse .claude/plans/<name>.md: stage, and todo/done counts from the Progress table."""
+    """Parse .claude/plans/<name>.md: stage, todo/done/deferred counts and the runnable phase."""
     text = (PLANS / f"{name}.md").read_text(encoding="utf-8")
     stage = ""
     for line in text.splitlines():
         if line.strip().startswith("Stage:"):
             stage = line.split("Stage:", 1)[1].strip().lower()
             break
-    todo = 0
-    done = 0
-    in_progress = False
-    for line in text.splitlines():
-        if line.startswith("## Progress"):
-            in_progress = True
-            continue
-        if in_progress and line.startswith("## "):
-            break
-        if not in_progress:
-            continue
-        if not line.startswith("| "):
-            continue
-        rest = line[2:]
-        if not rest[:1].isdigit():
-            continue
-        cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if not cells:
-            continue
-        last = cells[-1].lower()
-        if last.startswith("done"):
-            done += 1
-        else:
-            todo += 1
-    return {"stage": stage, "todo": todo, "done": done}
+    rows = progress_rows(text.splitlines())
+    done = sum(1 for r in rows if r["status"].startswith("done"))
+    deferred = sum(1 for r in rows if r["status"].startswith("deferred"))
+    return {
+        "stage": stage, "todo": len(rows) - done, "done": done,
+        "deferred": deferred, "runnable": next_runnable(rows),
+    }
 
 
 def read_state(name: str) -> dict:
-    """Parse .claude/plans/<name>.state.md: status (first line), Blocker section, Next phase section."""
+    """Parse .claude/plans/<name>.state.md: status, Blocker, Next phase and Questions sections."""
     sp = state_path(name)
     if not sp.exists():
-        return {"status": None}
-    text = sp.read_text(encoding="utf-8")
-    lines = text.splitlines()
+        return {"status": None, "blocker": None, "next_phase": None, "questions": None, "q_count": 0}
+    lines = sp.read_text(encoding="utf-8").splitlines()
     status = None
-    if lines:
-        m = re.match(r"status:\s*[`*]*([a-z-]+)", lines[0].strip(), re.I)
+    for line in lines:
+        m = re.match(r"status:\s*[`*]*([a-z-]+)", line.strip(), re.I)
         if m:
             status = m.group(1).lower()
+            break
 
     def section_after(is_heading) -> str | None:
         start = next((i for i, line in enumerate(lines) if is_heading(line)), None)
@@ -360,9 +411,27 @@ def read_state(name: str) -> dict:
                 break
         return "\n".join(lines[start + 1:end]).strip()
 
+    def one_line(label: str) -> str | None:
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith(f"- **{label}:**") or stripped.startswith(f"{label}:"):
+                return stripped.replace(f"- **{label}:**", "").replace(f"{label}:", "").strip("* ")
+        return None
+
     blocker = section_after(lambda line: line.strip() == "## Blocker")
+    if blocker is None:
+        blocker = one_line("Blocker")
     next_phase = section_after(lambda line: line.strip().startswith("## Next phase"))
-    return {"status": status, "blocker": blocker, "next_phase": next_phase}
+    if next_phase is None:
+        next_phase = one_line("Next phase")
+    questions = section_after(lambda line: line.strip() == "## Questions")
+    q_count = 0
+    if questions and questions.strip("`*_.- \n").lower() != "none":
+        q_count = len(set(re.findall(r"Q\d+", questions)))
+    return {
+        "status": status, "blocker": blocker, "next_phase": next_phase,
+        "questions": questions, "q_count": q_count,
+    }
 
 
 def resolve_plan(explicit: str | None) -> str:
@@ -417,63 +486,48 @@ def phase_brief(name: str) -> str:
     sp = state_path(name)
     if sp.exists():
         state_text = sp.read_text(encoding="utf-8")
-        parts.append(f"## {sp.relative_to(ROOT)}\n\n" + cut(state_text, 5000))
+        parts.append(f"## {sp.relative_to(ROOT).as_posix()}\n\n" + cut(state_text, 5000))
 
     plan_path = PLANS / f"{name}.md"
     plan_text = plan_path.read_text(encoding="utf-8")
     plan_lines = plan_text.splitlines()
 
-    n = None
-    rests_on = ""
-    in_progress = False
-    for line in plan_lines:
-        if line.startswith("## Progress"):
-            in_progress = True
-            continue
-        if in_progress and line.startswith("## "):
-            break
-        if not in_progress:
-            continue
-        if not line.startswith("| "):
-            continue
-        rest = line[2:]
-        if not rest[:1].isdigit():
-            continue
-        cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if not cells:
-            continue
-        if not cells[-1].lower().startswith("done"):
-            n = cells[0]
-            rests_on = cells[-2] if len(cells) >= 2 else ""
-            break
+    runnable = next_runnable(progress_rows(plan_lines))
+    n = runnable["n"] if runnable else None
 
     phase_section = ""
     if n is not None:
-        heading_prefix = f"### {n} ·"
-        start = next((i for i, line in enumerate(plan_lines) if line.startswith(heading_prefix)), None)
+        heading_re = re.compile(rf"^#{{2,4}} (?:.*Phase\s+{re.escape(n)}\b|{re.escape(n)}\s*·)", re.I)
+        base = next((i for i, line in enumerate(plan_lines) if line.startswith("## Phases")), 0)
+        start = next((i for i, line in enumerate(plan_lines) if i >= base and heading_re.match(line)), None)
         if start is not None:
             phase_section = extract_section(plan_lines, start)
         else:
             phase_section = f"Phase {n}: section not found; grep the plan for it."
     parts.append(f"## Phase {n} (from .claude/plans/{name}.md)\n\n" + cut(phase_section, 6000))
 
+    rests_on = runnable["rests_on"] if runnable else ""
     tokens = sorted(set(re.findall(r"D\d+", state_text + "\n" + phase_section + "\n" + rests_on)))
     decision_blocks = []
     i = 0
     while i < len(plan_lines):
         line = plan_lines[i]
         stripped = line.strip()
-        hit = any(re.match(rf"^- \*\*{re.escape(tok)}\b", stripped) for tok in tokens)
+        hit = any(re.match(rf"^(?:- \*\*|\| )?{re.escape(tok)}\b", stripped) for tok in tokens)
         if hit:
             block = [line]
             j = i + 1
-            while (
-                j < len(plan_lines)
-                and not plan_lines[j].strip().startswith("- **D")
-                and not plan_lines[j].startswith("## ")
-            ):
-                block.append(plan_lines[j])
-                j += 1
+            if stripped.startswith("- **"):
+                # a bullet runs until the next bullet or heading
+                while j < len(plan_lines) and not (
+                    plan_lines[j].strip().startswith("- **") or plan_lines[j].startswith("#")
+                ):
+                    block.append(plan_lines[j])
+                    j += 1
+            elif not stripped.startswith("| "):
+                while j < len(plan_lines) and plan_lines[j] and plan_lines[j][0] in (" ", "\t"):
+                    block.append(plan_lines[j])
+                    j += 1
             decision_blocks.append("\n".join(block))
             i = j
         else:
@@ -527,7 +581,9 @@ phase stale: trust git log over it, and treat the phase as partial."""
 
 
 def build_cmd(claude: str, prompt: str, args, budget: float | None) -> list[str]:
-    """Build the `claude -p ...` argv for a session, given its prompt and the parsed CLI args."""
+    # The absolute-path Commit command the mode file prints (main checkout's try.py).
+    try_py = f"py -3 {main_root().as_posix()}/tools/try.py *"
+    allowed = [*ALLOWED_TOOLS, f"Bash({try_py})", f"PowerShell({try_py})"]
     cmd = [
         claude, "-p", prompt,
         "--output-format", "stream-json", "--verbose",
@@ -535,7 +591,7 @@ def build_cmd(claude: str, prompt: str, args, budget: float | None) -> list[str]
         "--permission-mode", args.permission_mode,
         "--permission-prompts", "none",
         "--disallowedTools", "AskUserQuestion",
-        "--allowedTools", *ALLOWED_TOOLS,
+        "--allowedTools", *allowed,
         "--settings", json.dumps({"env": {
             "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "75",
             "AUTOPLAN_LINE": str(args.line),
@@ -585,12 +641,12 @@ def run_session(cmd: list[str], env: dict, log_path: Path, kill_at: int, label: 
     limit = False
     non_json_tail: list[str] = []  # last ~20 non-JSON lines, for a usage-limit check on a bad exit
 
-    def stop_child() -> None:
+    def stop_child():
         kill_tree(proc)
 
     try:
         for raw in proc.stdout:
-            line = raw.decode("utf-8", errors="replace").lstrip("﻿")
+            line = raw.decode("utf-8", errors="replace").lstrip("\ufeff")
             if log_file:
                 log_file.write(line)
             stripped = line.strip()
@@ -769,7 +825,7 @@ def main() -> int:
     """Parse args, run the mode/dirty/stage checks, then drive the main session loop."""
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-    parser = argparse.ArgumentParser(description="Run a plan's phases unattended.")
+    parser = argparse.ArgumentParser(description="Run a multi-phase plan unattended.")
     parser.add_argument("plan", nargs="?", default=None)
     parser.add_argument("--max-sessions", type=int, default=30)
     parser.add_argument("--budget", type=float, default=None)
@@ -804,7 +860,9 @@ def main() -> int:
         if plan_path in dirty_paths():
             print(f"Commit .claude/plans/{name}.md on main first; the worktree is cut from HEAD.")
             sys.exit(1)
-        if not args.dry_run:
+        if args.dry_run:
+            print(f"would use .claude/worktrees/plan-{name}")
+        else:
             guard_paths = ["tools/autoplan.py", ".claude/skills/plan/unattended.md"]
             guard_result = subprocess.run(
                 ["git", "status", "--porcelain", "--", *guard_paths],
@@ -838,6 +896,18 @@ def main() -> int:
     global _PLAN_NAME
     _PLAN_NAME = name
 
+    answer_msg = (
+        f"Answer in the app: open a Claude Code session on {ROOT.as_posix()}, type go, "
+        f"then rerun: py -3 {main_root().as_posix()}/tools/autoplan.py {name}"
+    )
+    if not args.dry_run:
+        pre_state = read_state(name)
+        if pre_state.get("status") in ("blocked", "questions") or (
+            plan["runnable"] is None and plan["deferred"] > 0
+        ):
+            print(answer_msg)
+            return 4
+
     first_cmd = build_cmd(
         claude, session_prompt(name, 1, None, args.line, args.kill), args, args.budget
     )
@@ -850,30 +920,11 @@ def main() -> int:
         print("command:")
         print(" ".join(json.dumps(c) if " " in c or c == "" else c for c in first_cmd))
 
-        # first Progress row not yet done: the phase this run would execute next
-        text = (PLANS / f"{name}.md").read_text(encoding="utf-8")
-        phase_num = "?"
-        phase_title = "?"
-        in_progress = False
-        for line in text.splitlines():
-            if line.startswith("## Progress"):
-                in_progress = True
-                continue
-            if in_progress and line.startswith("## "):
-                break
-            if not in_progress or not line.startswith("| "):
-                continue
-            rest = line[2:]
-            if not rest[:1].isdigit():
-                continue
-            cells = [c.strip() for c in line.strip().strip("|").split("|")]
-            if len(cells) < 2:
-                continue
-            if not cells[-1].lower().startswith("done"):
-                phase_num = cells[0]
-                phase_title = cells[1]
-                break
-        print(f"phase: {phase_num} \u00b7 {phase_title}")
+        runnable = plan["runnable"]
+        if runnable:
+            print(f"phase: {runnable['n']} · {runnable['title']}")
+        else:
+            print(f"phase: none runnable ({plan['deferred']} deferred)")
 
         state = read_state(name)
         print(f"state: {state.get('status') or 'no state file'}")
@@ -900,6 +951,9 @@ def main() -> int:
             if plan["stage"] == "done":
                 stop_reason = "plan done"
                 exit_code = 0
+                break
+            if plan["runnable"] is None and plan["deferred"] > 0:
+                stop_reason = f"questions: {plan['deferred']} deferred phase(s)"
                 break
             if args.budget is not None and spent >= args.budget:
                 stop_reason = "budget reached"
@@ -965,7 +1019,7 @@ def main() -> int:
                 f"done {plan['done']}/{plan['done'] + plan['todo']} | head {new_head[:7]}"
             )
 
-            if plan["stage"] == "done" or status == "plan-done":
+            if plan["stage"] == "done" or (status == "plan-done" and plan["todo"] == 0):
                 stop_reason = "plan done"
                 exit_code = 0
                 break
@@ -991,13 +1045,12 @@ def main() -> int:
             error_streak = 0
 
             if status == "blocked":
-                blocker = state.get("blocker")
-                print(f"Blocked: {blocker}")
-                print(
-                    f"Answer it in the app: open a Claude Code session on {ROOT}, type go, "
-                    f"then rerun: py -3 C:/Users/Traff/Documents/van-gunner/tools/autoplan.py {name}"
-                )
-                stop_reason = f"blocked: {blocker}"
+                blocker_lines = (state.get("blocker") or "").strip().splitlines()
+                stop_reason = f"blocked: {blocker_lines[0] if blocker_lines else ''}"
+                break
+
+            if status == "questions":
+                stop_reason = f"questions: {state.get('q_count', 0)} waiting"
                 break
 
             if res["killed"]:
@@ -1034,17 +1087,21 @@ def main() -> int:
     if stop_reason == "usage limit":
         print(
             "Usage limit reached: stopped without spending anything. The phase is resumable; "
-            f"when the limit resets run: py -3 C:/Users/Traff/Documents/van-gunner/tools/autoplan.py {name}"
+            f"when the limit resets run: py -3 {main_root().as_posix()}/tools/autoplan.py {name}"
         )
-        sys.exit(3)
+        return 3
     if m == "worktree":
         branch = git("rev-parse", "--abbrev-ref", "HEAD")
         print(
             "Each phase lands itself on local main. Anything left unlanded: "
-            f"py -3 C:/Users/Traff/Documents/van-gunner/tools/try.py {branch} --commit"
+            f"py -3 {main_root().as_posix()}/tools/try.py {branch} --commit"
         )
-    sys.exit(exit_code)
+    if stop_reason.startswith(("blocked", "questions")):
+        print(answer_msg)
+        return 4
+    return exit_code
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

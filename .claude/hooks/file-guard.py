@@ -1,27 +1,36 @@
 """File guard (PreToolUse on Read, Write, Edit, MultiEdit, NotebookEdit; runs
 in the main session and inside subagents alike): keeps agents inside the
-token and ownership rules that CLAUDE.md already states in prose.
+token and ownership rules that .claude/rules/workflow.md already states in
+prose. Project-neutral: the project root is the first folder above the file
+that holds a .git (file or folder, so worktrees work); a file outside any
+repo is allowed.
 
-- Read of a binary or cache file (images, audio fonts, .import, anything
-  under .godot/ or __pycache__/) never earns its cost back; the caller
-  should list the folder for names instead (CLAUDE.md Token budget).
-- Read of a text file over 300 lines without an offset and a limit of at
-  most 300 would load the whole thing into context; grep -n for the symbol
+- Read of a binary or cache file (images, audio, fonts, archives, anything
+  under __pycache__/ or node_modules/) never earns its cost back; the caller
+  should list the folder for names instead (workflow.md Token rules).
+- Read of a text file over 300 lines without a limit of at most 300 would
+  load the whole thing into context; grep -n for the symbol
   and read around it instead (same rule).
-- Generated and tool-owned files (the boon resources and icons, the
-  project map, the smoke fingerprint, the scene dump, anything Godot itself
-  writes, the owner's export presets, the try/smoke override.cfg) each have
-  a generator or an owner; a hand edit is either overwritten by the next
-  run or silently drifts from what reads it.
+- Generated and tool-owned files each have a generator or an owner; a hand
+  edit is either overwritten by the next run or silently drifts from what
+  reads it. The project lists them in its config (`generated`).
 - In the main session (no agent_id), source files are the implementer
-  subagent's job, built from a spec (CLAUDE.md Main session role); the main
-  session itself may still make a single-line Edit. A Fable session
-  implements directly (CLAUDE.md Main session role), so this rule skips
-  it; the model is read from the transcript's tail.
-- A Write or (Multi)Edit that changes an id=, unique_id= or uid:// value on
-  an existing .tscn/.tres header line is refused for every caller: those
-  values are referenced by id elsewhere in the file and by other files, and
-  renumbering one breaks every reference to it.
+  subagent's job, built from a spec (workflow.md Main session role); the main
+  session itself may still make a single-line Edit. A session whose model
+  the project exempts implements directly, so this rule skips it; the model
+  is read from the transcript's tail.
+
+The project tunes this through an optional .claude/project/file-guard.json
+(read once per call; missing or bad JSON means no config):
+- binary_suffixes: extra suffixes added to the default binary set.
+- cache_dirs: extra folder names added to the default cache folders.
+- source_suffixes: replaces the default source suffix set when present.
+- source_files: extra exact root-relative paths that count as source.
+- generated: list of {"glob": "...", "why": "..."}; fnmatch on the
+  root-relative path, first hit wins; a write to a hit is always refused
+  with "<path> is <why>." (a missing or empty why gets a default reason).
+- main_session_exempt_models: lowercase substrings; a session model that
+  contains one skips the main-session source rule.
 
 Never fails the hook: any error allows the call (exit 0).
 """
@@ -36,18 +45,23 @@ BINARY_SUFFIXES = {
     ".wav", ".ogg", ".mp3", ".import", ".ttf", ".otf", ".woff", ".woff2",
     ".glb", ".fbx", ".blend", ".res", ".scn", ".ctex", ".pck", ".zip",
     ".exe", ".dll", ".so", ".pyc",
+    ".gif", ".ico", ".mp4", ".webm", ".mov", ".m4a", ".flac", ".pdf",
+    ".psd", ".7z", ".gz", ".tar",
 }
-CACHE_DIR_NAMES = {".godot", "__pycache__"}
-SOURCE_SUFFIXES = {".gd", ".tscn", ".tres", ".gdshader", ".gdshaderinc", ".py", ".cfg"}
+CACHE_DIR_NAMES = {"__pycache__", "node_modules", ".git"}
+SOURCE_SUFFIXES = {
+    ".py", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".css", ".scss",
+    ".html", ".gd", ".tscn", ".tres", ".gdshader", ".gdshaderinc", ".cs",
+    ".cfg", ".sh",
+}
 WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
+CONFIG_PATH = ".claude/project/file-guard.json"
+DEFAULT_WHY = "generated or tool-owned (see .claude/project/file-guard.json)"
 
 MAX_LINES = 300
 MAX_READ_BYTES = 50 * 1024 * 1024
 TRANSCRIPT_TAIL_BYTES = 400_000
 
-# Matches an existing id=, unique_id= or uid:// value on a .tscn/.tres
-# header line, so two headers can be compared with those values masked out.
-TOKEN = re.compile(r'\b(?:id="[^"]*"|unique_id=\d+|uid="uid://[^"]*")')
 MODEL_RE = re.compile(r'"model"\s*:\s*"([^"]+)"')
 
 
@@ -56,16 +70,25 @@ def ext(path: str) -> str:
 
 
 def find_root(path: str) -> str | None:
-    # walk up from the file's folder to the first project.godot; a file
-    # outside any Godot checkout (scratchpad, another project) allows.
+    # walk up from the file's folder to the first .git (a file in a
+    # worktree); a file outside any repo (scratchpad) allows.
     d = os.path.dirname(path)
     while True:
-        if os.path.isfile(os.path.join(d, "project.godot")):
+        if os.path.exists(os.path.join(d, ".git")):
             return d
         parent = os.path.dirname(d)
         if parent == d:
             return None
         d = parent
+
+
+def load_config(root: str) -> dict:
+    try:
+        with open(os.path.join(root, CONFIG_PATH), encoding="utf-8") as f:
+            cfg = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return cfg if isinstance(cfg, dict) else {}
 
 
 def deny(reason: str) -> None:
@@ -76,11 +99,13 @@ def deny(reason: str) -> None:
     }}))
 
 
-def read_violation(path: str, rel: str, tool_input: dict) -> str | None:
+def read_violation(path: str, rel: str, tool_input: dict, cfg: dict) -> str | None:
+    binary = BINARY_SUFFIXES | {s.lower() for s in cfg.get("binary_suffixes") or []}
+    caches = CACHE_DIR_NAMES | set(cfg.get("cache_dirs") or [])
     parts = rel.split("/")
-    if ext(path) in BINARY_SUFFIXES or any(p in CACHE_DIR_NAMES for p in parts):
+    if ext(path) in binary or any(p in caches for p in parts):
         return (f"{rel} is a binary or cache file; list its folder for "
-                 "names only (CLAUDE.md Token budget).")
+                 "names only (.claude/rules/workflow.md Token rules).")
     if not os.path.isfile(path):
         return None
     if os.path.getsize(path) >= MAX_READ_BYTES:
@@ -92,42 +117,18 @@ def read_violation(path: str, rel: str, tool_input: dict) -> str | None:
         lines += 1
     limit = tool_input.get("limit")
     if lines > MAX_LINES and (limit is None or int(limit) > MAX_LINES):
-        return (f"{rel} has {lines} lines. Grep -n for the function, signal "
-                 "or node you need, then Read with offset and a limit of "
-                 "at most 300 (CLAUDE.md Token budget).")
+        return (f"{rel} has {lines} lines. Grep -n for the name you need, "
+                 "then Read with offset and a limit of at most 300 "
+                 "(.claude/rules/workflow.md Token rules).")
     return None
 
 
-def generated_reason(rel: str) -> str:
-    # First hit wins; the table is ordered because that's how the spec that
-    # produced it reads, not because any two patterns here can both match.
-    if (fnmatch.fnmatchcase(rel, "resources/items/boons/*.tres")
-            or rel in ("resources/items/pools/general_boon_pool.tres",
-                       "resources/items/pools/warehouse_rare_boon_pool.tres")):
-        return ("generated by tools/generate_boons.py: change the "
-                 "generator, then run py -3 tools/generate_boons.py")
-    if fnmatch.fnmatchcase(rel, "scenes/items/boons/*.svg"):
-        return ("generated by tools/generate_boon_icons.py: change it, "
-                 "then run py -3 tools/generate_boon_icons.py")
-    if rel == "docs/PROJECT_MAP.md":
-        return "generated: run py -3 tools/gen_context.py"
-    if rel in ("tools/smoke/fingerprint.txt", "tools/smoke/fingerprint.baseline.txt"):
-        return ("written by py -3 tools/smoke.py (--bless rewrites the "
-                 "baseline, only when a change is meant to alter the "
-                 "fingerprint)")
-    if rel in ("tools/scene_dump/van.txt", "tools/scene_dump/van.baseline.txt"):
-        return ("written by py -3 tools/scene_dump.py (--bless only when "
-                 "the van tree is meant to change)")
-    if (fnmatch.fnmatchcase(rel, "*.import") or fnmatch.fnmatchcase(rel, "*.uid")
-            or ".godot" in rel.split("/")):
-        return ("written by Godot: py -3 tools/check.py writes missing "
-                 ".gd.uid files; move a script together with its .gd.uid")
-    if rel == "export_presets.cfg":
-        return "the owner's local export settings; never touch it"
-    if rel == "override.cfg":
-        return ("written by tools/try.py and tools/smoke.py --shots for a "
-                 "single run; never edit or commit it")
-    return ""
+def generated_reason(rel: str, cfg: dict) -> str | None:
+    # First hit in the project's list wins; a hit without a why still denies.
+    for entry in cfg.get("generated") or []:
+        if isinstance(entry, dict) and fnmatch.fnmatchcase(rel, str(entry.get("glob", ""))):
+            return str(entry.get("why") or "") or DEFAULT_WHY
+    return None
 
 
 def session_model(transcript_path: str | None) -> str:
@@ -176,28 +177,6 @@ def main_session_violation(tool_name: str, tool_input: dict) -> bool:
     return False
 
 
-def header_lines(text: str) -> list[str]:
-    return [line for line in text.splitlines() if line.strip().startswith("[")]
-
-
-def scene_id_violation(old_string: str, new_string: str) -> str | None:
-    # A header line's id/unique_id/uid changed if, once those values are
-    # masked out, it matches another header that differs from it verbatim.
-    # A header whose path= also changed stays unequal after masking, so
-    # repointing a resource to a different file is still allowed.
-    for old in header_lines(old_string):
-        if not TOKEN.search(old):
-            continue
-        masked_old = TOKEN.sub("#", old)
-        for new in header_lines(new_string):
-            if TOKEN.sub("#", new) == masked_old and new != old:
-                return (f"This edit changes an id on an existing header line:\n"
-                         f"{old.strip()}\n-> {new.strip()}\nNever change or "
-                         "renumber existing id=, unique_id= or uid:// values; "
-                         "new ids must not collide with ids already in the file.")
-    return None
-
-
 def main() -> None:
     d = json.load(sys.stdin)
     tool_name = d.get("tool_name") or ""
@@ -214,9 +193,10 @@ def main() -> None:
     if root is None:
         return
     rel = os.path.relpath(path, root).replace("\\", "/")
+    cfg = load_config(root)
 
     if tool_name == "Read":
-        reason = read_violation(path, rel, tool_input)
+        reason = read_violation(path, rel, tool_input, cfg)
         if reason:
             deny(reason)
         return
@@ -224,27 +204,30 @@ def main() -> None:
     if tool_name not in WRITE_TOOLS:
         return
 
-    why = generated_reason(rel)
-    if why:
+    why = generated_reason(rel, cfg)
+    if why is not None:
         deny(f"{rel} is {why}.")
         return
 
-    if (not d.get("agent_id")
-            and (ext(path) in SOURCE_SUFFIXES or rel == "project.godot")
-            and "fable" not in session_model(d.get("transcript_path")).lower()
-            and main_session_violation(tool_name, tool_input)):
-        deny("Main session: source files (.gd .tscn .tres .gdshader .py "
-             ".cfg project.godot) are changed by the implementer subagent "
-             "from a spec (CLAUDE.md Main session role). The only "
-             "exception is a single-line Edit.")
+    if d.get("agent_id"):
         return
-
-    if tool_name in ("Edit", "MultiEdit") and ext(path) in (".tscn", ".tres"):
-        for old, new in edit_pairs(tool_name, tool_input):
-            reason = scene_id_violation(old, new)
-            if reason:
-                deny(reason)
-                return
+    suffixes = SOURCE_SUFFIXES
+    if "source_suffixes" in cfg:
+        suffixes = {s.lower() for s in cfg["source_suffixes"] or []}
+    source_files = list(cfg.get("source_files") or [])
+    if ext(path) not in suffixes and rel not in source_files:
+        return
+    if not main_session_violation(tool_name, tool_input):
+        return
+    exempt = [m.lower() for m in cfg.get("main_session_exempt_models") or []]
+    if exempt:
+        model = session_model(d.get("transcript_path")).lower()
+        if any(m in model for m in exempt):
+            return
+    listed = " ".join(sorted(suffixes) + source_files)
+    deny(f"Main session: source files ({listed}) are changed by the "
+         "implementer subagent from a spec (.claude/rules/workflow.md Main "
+         "session role). The only exception is a single-line Edit.")
 
 
 try:

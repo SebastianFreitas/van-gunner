@@ -37,11 +37,6 @@ branch that runs them; they reach `main` with that branch's
 `try.py --commit`. Two plans that would edit the same source files: say
 so at planning and record which runs first as a D.
 
-A plan is not a `docs/tasks/` file. A task is a short list of steps the
-owner points a session at; a plan is phases with an interview behind
-them. They never share a context: a session runs one plan phase or one
-task step, never both.
-
 Do **not** use Claude Code's built-in plan mode (Shift+Tab) for this: it
 blocks every file write, and planning here writes research digests and
 the plan itself into the repo. `/plan` is the plan mode.
@@ -62,18 +57,23 @@ interview from exactly there.
 
 ## The interview: how planning feels
 
-The goal, in the owner's words (D2 of workflow-port, 2026-09-28): *"the
-concept for the plan, is that during execution the LLM should never make
-decisions on its own. So the planning phase is there to ask all the
-specifics, if there's 100 questions so be it, if there's 5 then so be
-it. But the goal is to specify everything."* **The finished plan leaves
-zero choices to the LLM.** Questions are the tool, not the target: there
-is no minimum count, no word count. A plan is done when a review finds
-nothing left to choose. So planning is a loop:
+The goal, in the owner's words (2026-09-28): *"the concept for the plan
+is that during execution the LLM should never make decisions on its
+own. So the planning phase is there to ask all the specifics, if there's
+100 questions so be it, if there's 5 then so be it. But the goal is to
+specify everything."* **The finished plan leaves zero choices to the
+LLM.** Questions are the tool, not the target: there is no minimum
+count, no word count. A plan is done when a review finds nothing left
+to choose. So planning is a loop:
 
 > ask what is open → write it into the plan → review the plan → every
 > uncertainty the review finds becomes a new question → repeat until a
 > review finds none.
+
+Execution that stops or defers a phase for a question is a planning
+miss, not the plan working (owner, 2026-09-29: "stopping midway is not
+the goal, it should be a rare occurrence"). Ask here what a phase would
+otherwise have to ask.
 
 - **Every question goes through `AskUserQuestion`** (the UI), never as
   prose that ends the turn. Calls are consecutive in the **same turn**:
@@ -83,7 +83,7 @@ nothing left to choose. So planning is a loop:
   recorded as a D in Claude's words, marked `(owner: you decide)`.
 - **What counts as an open choice.** Any spot where the implementer
   would have to pick: a name, number, colour, count, order, timing,
-  caption or HUD text, a balance value, what the player sees, hears or
+  caption or HUD text, a tuning value, what the user sees, hears or
   feels in the first and last second, what happens when it fails, what
   stays exactly as is next to it. If two reasonable implementers could
   build it two different ways, it is open.
@@ -93,9 +93,9 @@ nothing left to choose. So planning is a loop:
   marked `(from <source>)`, not asked. Never ask to fill a count, never
   ask twice what a D settles, never ask a question whose every answer
   builds the same thing.
-- **Detail by detail.** Planning decides specifics now. Nothing is left
-  as `→ phase decides`: a phase's research while running only finds
-  where things are, never what they should be.
+- **Detail by detail.** Planning decides specifics now. A phase's
+  research while running only fills what planning explicitly left it,
+  marked `→ phase decides`, and only when the owner agreed to leave it.
 - **Never stop early.** Never end a planning turn to "let the owner
   think"; never write "ready when you are"; never skip an open choice
   because the answer seems obvious or the owner seems tired of questions.
@@ -137,19 +137,19 @@ empty list.
 ### Part A · Brief and direction
 
 1. **Intake.** Explore the current state through `Explore` (grep
-   `docs/PROJECT_MAP.md` first; `file:line` anchors, no code bodies).
-   Write it under Current state.
+   `.claude/MAP.md` first; `file:line` anchors, no code bodies). Write
+   it under Current state.
 2. **Research** the areas the brief touches, as wide as the choices
-   need (other games, films, painters, techniques, Godot docs). Load
-   `WebSearch`/`WebFetch`. Digest into
+   need (other games, films, painters, techniques, engine or library
+   docs). Load `WebSearch`/`WebFetch`. Digest into
    `.claude/plans/research/<name>-00-intake.md`: sources, what we take
    from each, in our own words. Never copy art or long text.
 3. **Option map.** For each area where the research found real
    alternatives, list them: one line each, with one precedent and what
    it would look like in *our* result. Include areas the brief did not
-   mention but the work forces (HUD text, performance, the smoke
-   fingerprint, the art rules, what stays as is) only where they are
-   actually open.
+   mention but the work forces (captions or HUD text, performance,
+   phones, reduced motion, the project's baselines and art rules, what
+   stays as is) only where they are actually open.
 4. **Open list.** Read the Brief clause by clause and list the choices it
    leaves open that shape the whole result (direction, scope, what it
    is), plus the option-map areas. Details that only matter inside one
@@ -162,11 +162,11 @@ empty list.
 
 1. **Write the Initial idea** under its section: the whole result in
    prose, beginning to end, as the owner will experience it (what is on
-   screen, what moves, what is heard, what the player does, in order).
-   Every sentence rests on a D, the Brief or a `(from <source>)` fact;
-   anything else is a guess and is marked `[?]`. Split it into numbered
-   **pieces** (a beat, a screen, a system, a rule), as many as the work
-   has, each a heading with its lines under it. Commit.
+   screen, what moves, what is read or heard, what the user does, in
+   order). Every sentence rests on a D, the Brief or a `(from <source>)`
+   fact; anything else is a guess and is marked `[?]`. Split it into
+   numbered **pieces** (a beat, a screen, a system, a rule), as many as
+   the work has, each a heading with its lines under it. Commit.
 2. **Show every piece to the owner.** One question per piece, up to 4
    pieces per call: *"Piece <n>, <name>: <the piece's lines, in full>.
    Right?"* with "That is it (Recommended) / Close, but change something
@@ -180,7 +180,7 @@ empty list.
    and review again until the list is empty and no `[?]` remains. Write
    `Interview: B done · <count> asked`.
 
-A plan with no player-facing result (tooling, workflow) may record
+A plan with no user-facing result (tooling, workflow) may record
 "Initial idea skipped" as a D the owner chose; its phases then carry
 every piece.
 
@@ -195,71 +195,84 @@ every piece.
    phases. A phase's section is self-contained (it names its D numbers
    and pieces), because an unattended session sees only that section.
    Verification names the check that actually sees the change (see
-   "Verify in a phase"). Fill Scope, Constraints, the Progress table.
-   Commit.
+   "Verify in a phase"). Fill Scope, Constraints, the Progress table,
+   including each phase's **Needs**: the earlier phases whose output it
+   builds on (`-` for none), so a deferred phase holds back only what
+   depends on it. Commit.
 2. **Show every phase to the owner.** One question per phase, up to 4
    per call: *"Phase <n>, <name>, delivers <deliverables>, must not touch
-   <Out list>, verified by <commands / views>. Right?"* with "Right
+   <Out list>, verified by <commands / screenshots>. Right?"* with "Right
    (Recommended) / Missing something (say what in Other) / Too big,
    split it / Merge with the previous phase". Splits and merges rewrite
    the Progress table and the changed phases are shown again. Record
    under each phase: `Reviewed: <answer, D numbers>`.
 3. **Review pass** over each phase as the session that will run it,
-   seeing only that section: every choice it would still have to make
-   becomes a question. Repeat until empty. Write
-   `Interview: C done · <count> asked`.
+   seeing only that section: draft its specs in your head (files,
+   functions, names, numbers, text, what the screenshot shows) and every
+   blank you would have to fill becomes a question. Repeat until empty.
+   Write `Interview: C done · <count> asked`.
 
 ### Ready gate (all true, or keep going)
 
-- **Everything specified.** Every choice execution will face is settled
-  by a D or a Brief line. No `[?]` anywhere, no `→ phase decides`, Open
-  items: none.
 - **Fresh-eyes review.** A `Plan` subagent that has not seen the
   interview reads the plan file (give it the path; it does not load
   CLAUDE.md) and lists, per phase, every choice it would have to make
   to build it and every line it could read two ways, with the line
   quoted. Each item is fixed from a source or asked; then a new fresh
   review runs. The gate needs one review that returns nothing.
-- `Interview` shows A, B and C done.
+- `Interview` shows A, B and C done. Open items: none. No `[?]` anywhere.
+  No `→ phase decides` the owner did not agree to.
 - Every piece has a Walk-through line; every phase has a `Reviewed:`
-  line, cites at least one D or Brief line, and is `todo` in the
-  Progress table. Constraints and Scope are filled.
+  line, cites at least one D or Brief line, has its Needs filled, and is
+  `todo` in the Progress table. Constraints and Scope are filled.
 
 Then set `Stage: ready`, commit the plan and research by path, and ask
-one last `AskUserQuestion`: "Start running the plan? (Recommended) /
-Change something first / Hold". Start → `Stage: running` and run the
+one last `AskUserQuestion` call with two questions: "Start running the
+plan? (Recommended) / Change something first / Hold", and "A question
+the plan missed, with no clear answer: park that phase for you to answer
+later (Recommended) / take the recommended option and keep going", which
+sets `Questions: ask` or `Questions: auto` in the header. Start →
+`Stage: running` and run the
 first phase in the same turn, ending with the Handoff protocol and the
 hard stop below (one phase, never two). Change → record the change as a
 D, show the pieces and phases it touches again, and run the gate again.
 
-Context: at `CONTEXT WATCH` commit the plan file as it stands, write
-`.claude/handoff.md` with the part and the open list still to ask, and
-keep going. The plan file *is* the handoff for everything settled; the
-interview continues after compaction from the same part.
+Context: auto-compact is off (owner's rule, 2026-09-29). At `CONTEXT
+WATCH`, ask no new question. Record the answer you already have as a D,
+make sure `Interview` names the open part and `Open items` lists every
+choice still to ask, and commit the plan by path. No
+`.claude/handoff.md`: the plan file *is* the handoff. Then hard-stop.
+The last line of the turn is this exact message, with nothing after it:
+
+> Interview paused (context full). Please run `/clear`, then prompt me
+> with `go` to continue the interview from the same part.
+
+`go` then resumes through "`/plan` or `go` while Stage is `planning`"
+in a fresh context.
 
 ## `go` while Stage is `running`: one phase per session
 
 Two ways to run it: the owner prompts each phase in the app (below), or
 `py -3 tools/autoplan.py <name>` runs every phase in a terminal, one
 fresh session each (see "Running unattended"). Planning, and answering
-a blocked phase's questions, always happen in the app.
+a run's questions, always happen in the app.
 
 The owner's rule (2026-09-26): *"we never do 2 continues work, we must
 always separate stuff."* A running plan is a chain of short, isolated
 sessions. Each prompt executes **exactly one phase**, then the session
 halts and the owner clears the context. Never run two phases in one
-turn, never "keep going with Next", never let auto-compaction carry a
-plan across phases.
+turn, never "keep going with Next".
 
 1. **Enter.** Read `.claude/plans/<name>.state.md` first. `Status:
-   blocked` → do "Unblock" below instead, never the phase. Otherwise its
-   "Next phase" section is the starting point and overrides guessing
-   from the Progress table; with no state file, read Progress and take
-   the first `todo` row. Read only that phase, its pieces of the Initial
-   idea, Brief, Decisions, Constraints, Carry forward, and any saved
-   spec files it names. Nothing from any other phase.
+   blocked` or `Status: questions` → do "Answer" below instead, never a
+   phase. Otherwise its "Next phase" section is the starting point and
+   overrides guessing from the Progress table; with no state file, take
+   the first runnable row (see "Which phase runs next"). Read only that
+   phase, its pieces of the Initial idea, Brief, Decisions, Constraints,
+   Carry forward, and any saved spec files it names. Nothing from any
+   other phase.
 2. **Phase questions** come before the first spec (rules below).
-3. **Execute that phase only:** research where things are (digest to
+3. **Execute that phase only:** research its topics (digest to
    `research/<name>-<NN>.md` when it is more than a few anchors), read
    the `.claude/rules/` files for every area it touches, design, specs,
    implementer, verify, and the `reviewer` over about 150 lines or more
@@ -268,123 +281,121 @@ plan across phases.
    into this session's work.
 4. **Handoff protocol** (every step, in this order, before anything
    else):
-   1. **Verify:** the phase's Verification line and every command
-      "Verify in a phase" requires pass. A phase that does not verify
-      is not complete: fix it, or stop with the blocker named in the
-      state file (`Status: blocked`).
+   1. **Verify:** the phase's Verification line and what "Verify in a
+      phase" requires pass. A phase that does not verify is not
+      complete: fix it, or stop with the failure under Blocker
+      (`Status: blocked`).
    2. **Commit** by path with a message that describes the phase, as the
       mode file says (cloud: also push and open or update the PR).
    3. **Write the state file** (format below), set the Progress row
-      `done <sha>`, fill the phase's Notes line, add Carry forward, and
-      commit those too (same path rules). The state file is committed: in
-      cloud mode the next session is a fresh clone and reads it from the
-      branch.
+      `done <sha>` (or `deferred Q<k>`), fill the phase's Notes line, add
+      Carry forward, and commit those too (same path rules). The state
+      file is committed: in cloud mode the next session is a fresh clone
+      and reads it from the branch.
 5. **Hard stop.** End the turn with the normal report, and its last
    line is this exact message (with the plan's name), nothing after it:
 
    > Phase complete. Please run `/clear` to flush the context window,
    > then prompt me with: 'Read .claude/plans/<name>.state.md and execute the next phase.'
 
-   Do not start the next phase. Do not ask whether to continue. The
-   mode files' "Context full" rule (auto-continue, never clear) does
-   not apply at a phase boundary: the clear is the owner's, on purpose.
+   With `Status: questions` the last line is instead: *"No phase can
+   run until the questions are answered. Please run `/clear`, then
+   prompt me with `go` to answer them."* Do not start the next phase. Do
+   not ask whether to continue.
 6. **The next prompt** ("Read .claude/plans/<name>.state.md and execute
    the next phase", or a bare "go") starts at step 1 in a fresh context.
 
+### Which phase runs next
+
+The first Progress row that is `todo` and whose Needs names no
+`deferred` row, directly or through another held row (its status stays
+`todo`: it runs once the answers are in). A plan with no Needs column
+treats every phase as needing all earlier ones. No runnable row left:
+every row `done` → "Stage done" below; some `deferred` → `Status:
+questions`.
+
 ### Verify in a phase
 
-The Verify section of `CLAUDE.md` decides which commands a change needs;
-a phase runs them all, once, on its finished change:
-
-- Any `.gd`, `.tscn`, `.tres`, `.gdshader` or `project.godot` change:
-  `py -3 tools/check.py`.
-- Anything under `scripts/`, `scenes/`, `resources/`, `tools/smoke/` or
-  `project.godot`: also `py -3 tools/smoke.py`.
-- The van's scenes: also `py -3 tools/scene_dump.py`.
-- Anything visible: `py -3 tools/smoke.py --shots <scratchpad>/shots`,
-  then Read the PNGs. Also
-  `tools/probe.py` (one scene headless, `--cmd`, `--eval`, `--shot`
-  with a frame sequence) and `tools/shots.py` (`capture <name>`,
-  `compare <a> <b>` printing `same`/`changed` per view). A visible phase's Verification names the views that must change and
-  says the rest stay `same`.
-- Panel UI the smoke's `speed` mode skips (act reveal, boon pick) is
-  reviewed by reading, and the report's Try line says where to look.
-- `--bless` only when the phase is meant to change the fingerprint or
-  the van tree, and the phase's Deliverable says so.
-
-A failure is any output line with `SCRIPT ERROR`, `Parse Error`,
-`ERROR:` or a GDScript warning, whatever the exit code.
+`CLAUDE.md` § Verify decides which commands a change needs; a phase runs
+every one of them for the areas it touched, once, on its finished
+change. A visible phase's Verification names the screenshots or views
+that must change and says the rest stay the same. A baseline is
+re-recorded (bless, update snapshots) only when the phase's Deliverable
+says so.
 
 ### The state file (`.claude/plans/<name>.state.md`; exists only while a plan is running)
 
 Under 80 lines, no code. The first line is `Status: <s>`, where `<s>`
-is `phase-done`, `partial`, `blocked` or `plan-done`
+is `phase-done`, `partial`, `questions`, `blocked` or `plan-done`
 (`tools/autoplan.py` reads it to decide what happens next). Then
-`# Plan state: <name>` and these headings in this order:
+`# Plan state: <name>` and these `## ` headings in this order:
 
 - **Plan:** `<name>` and the plan file path; branch and worktree
   (cloud: PR link).
-- **Architecture now:** the files, autoloads, scenes and signals this
+- **Architecture now:** the files, globals, entry points and wiring this
   plan has touched so far, one line each, as they are after this phase.
 - **Completed phase:** number, name, commit hash, what was verified
-  (exact commands, and the shot views read).
+  (exact commands, and the screenshots read).
 - **Next phase:** number, name, its deliverables and Verification line
   copied from the plan, the D numbers it rests on, and the exact first
   action (the file and function to open, the saved spec to send, or the
   rules file to read).
 - **Requirements / gotchas:** anything the next phase needs that is
-  not in the plan file or `docs/PROJECT_MAP.md`.
-- **Blocker:** `none`, or the questions only the owner can answer, each
-  written as a ready `AskUserQuestion`: the question, 2 to 4 options with
-  the recommended one first, and the line of the plan it is about.
+  not in the plan file or `.claude/MAP.md`.
+- **Questions:** `none`, or every deferred question so far, numbered
+  `Q1`, `Q2`… across the run, each written as a ready `AskUserQuestion`:
+  the phase, the plan line it is about, the question, 2 to 4 options
+  with the recommended one first, and one line on what the phase already
+  finished without it.
+- **Blocker:** `none`, or what stopped the run, with its questions in
+  the same ready form.
 
 It replaces `.claude/handoff.md` for plans: never write both at a phase
-boundary. The `handoff` skill still applies inside a phase that is run
-in the app (an error you cannot get past mid-step): that is a mid-phase
+boundary. The `handoff` skill still applies inside a phase run in the
+app (an error you cannot get past mid-step): that is a mid-phase
 continuation, not a phase boundary. When the last phase is done, delete
 the state file in the Stage-done commit.
 
-### Phase questions: the stop line
+### Phase questions: decide, defer, or stop
 
 A phase's research or design will sometimes force a decision the plan
-does not cover (something the interview missed). That is a phase
-question. Look for them on purpose: before the first spec of a phase,
-list every decision the phase forces that no `D`, piece or Brief line
-settles. Sort each by the **stop line** (D13 of workflow-port):
+does not cover (something the interview missed, or a `→ phase
+decides`). That is a phase question. Look for them on purpose: before
+the first spec of a phase, list every decision the phase forces that no
+`D`, piece or Brief line settles, and sort each one:
 
-- **On the stop line** (never decided alone): anything seen, heard or
-  felt in the game; a gameplay or balance number; a change outside the
-  phase's Scope; deleting files; code that contradicts the plan; two
-  decisions that conflict; a failing check you can't fix.
-- **Below it** (decided alone, recorded as `D<n> (auto)` with one line
-  of reason, listed at Stage done): internal names, file splits, helper
-  structure, test tooling.
+- **Decide** (the usual case). You would mark one option
+  "(Recommended)" with confidence, or the choice is cheap to change
+  later: internal names, file splits, helper structure, test tooling,
+  and most visible details a D or rule points toward. Take it, record
+  `D<n> (auto)` with one line of reason, keep going. Never asked, in the
+  app or unattended.
+- **Defer the phase** (rare). No option clearly wins, and the answer
+  changes what the owner sees, hears or feels, or a tuning number, in a
+  way that means redoing the phase to change later; or the phase would
+  change something outside its Scope, or delete files the plan does not
+  name. In the app, ask these in one `AskUserQuestion` round at the
+  **start** of the phase (never after the implementer has run) and
+  record the answers as D's. Unanswered (the owner is away, or the run
+  is unattended): finish and commit what the question does not touch,
+  write it under Questions, mark the row `deferred Q<k>` (plus `· partial
+  <sha>` when part landed), and hand off to the next runnable phase
+  (`Status: phase-done`), or `Status: questions` when none is left.
+- **Stop the run** (really broken, for every later phase too): the code
+  contradicts the plan, so later phases would build on a wrong premise;
+  two D's conflict; a failing check you can't fix; a step that would
+  lose work or spend money. Finish what can be finished, commit, write
+  it under Blocker, `Status: blocked`, hard stop.
 
-In the app, ask every on-the-line question in one `AskUserQuestion`
-round (same question rules as planning) at the **start** of the phase,
-never after the implementer has run, and record the answers as D's.
-Below-the-line choices are not asked: take the one you would have marked
-"(Recommended)" and record it as `D<n> (auto)`. The tool's
-`askUserQuestionTimeout` setting decides how long a question waits. A
-question that times out is never taken as `(auto)`: finish what can be
-finished without it, write the question into the state file's Blocker,
-set `Status: blocked`, commit, and end the turn with the normal report.
+**`Questions: auto` in the plan header** (the owner's standing choice
+for that plan, set at the ready gate's last question or any time; the
+default is `Questions: ask`) turns every defer into a decide, recorded as `D<n>
+(auto, owner-delegated)`; only "stop the run" still stops.
 
-Unattended (`AUTOPLAN=1`) nothing is asked: on-the-line questions block
-the same way at once; see `unattended.md`.
-
-**`Questions: auto` in the plan header** (the owner's standing choice,
-2026-09-29: "just let the map keep working") overrides the two
-paragraphs above, in the app and unattended: nothing is asked and no
-question blocks. On-the-line questions too take the option you would
-mark "(Recommended)", recorded as `D<n> (auto, owner-delegated)` with
-one line of reason; Stage done lists every owner-delegated D under Look
-at so the owner can reverse any of them. Only a failing check you can't
-fix still blocks.
-
-Every `(auto)` and every blocker names a question the interview should
-have asked: add it to the plan's `Interview` line as `missed:
-<question>` so the next plan's Part A list grows.
+Every `(auto)`, deferred question and blocker names a question the
+interview should have asked: add it to the plan's `Interview` line as
+`missed: <question>` so the next plan's Part A list grows. Stage done
+lists them all under Look at, where the owner can reverse any `(auto)`.
 
 Context inside one phase: a phase too big for one context was split
 wrong. At `CONTEXT WATCH` finish the atomic step, commit, and write the
@@ -393,50 +404,53 @@ and "Next phase" as the rest of it; then hard-stop. Next session, split
 the phase in the Progress table before continuing. A session that stops
 after designing saves each finished spec as
 `.claude/plans/<name>.spec-<phase>-<k>.md` (the Spec format in
-`.claude/playbook.md`, ready to send) and names them in Next phase; the next
-session sends them to the implementer instead of exploring again, and
-deletes each in the commit that lands its work.
+`.claude/playbook.md`, ready to send) and names them in Next phase; the
+next session sends them to the implementer instead of exploring again,
+and deletes each in the commit that lands its work.
 
-### Unblock (`go` in the app while `Status: blocked`)
+### Answer (`go` in the app while `Status: questions` or `blocked`)
 
-The owner reads a blocked run in the app, where the question UI works
-(D14 of workflow-port). A bare `go` (or `/plan`) on the plan's checkout
-that finds `Status: blocked`:
+The owner answers a run's questions in the app, where the question UI
+works. A bare `go` (or `/plan`) on the plan's checkout that finds either
+status:
 
-1. Asks every question under the state file's Blocker with
-   `AskUserQuestion`, as written there, by the question rules.
-2. Records each answer as a `D<n>` in the plan, adds the `missed:` line,
-   clears Blocker to `none`, and sets `Status:` back to `partial` when
-   "Completed phase" shows `(partial)` and `phase-done` otherwise.
+1. Asks every question under Questions and Blocker with
+   `AskUserQuestion`, as written there, up to 4 per call, by the
+   question rules.
+2. Records each answer as a `D<n>` in the plan, adds its `missed:` line,
+   sets every `deferred` row back to `todo` (keeping any `partial <sha>`
+   note), clears Questions and Blocker to `none`, and sets `Status:
+   phase-done` with Next phase = the first runnable row (for a partial
+   row, the part still to do).
 3. Commits the plan and state file by path.
 4. Ends with the normal report, whose last lines give the exact command
    to continue unattended, in a `bash` block:
-   `py -3 C:/Users/Traff/Documents/van-gunner/tools/autoplan.py <name>`,
+   `py -3 <main checkout, absolute, forward slashes>/tools/autoplan.py <name>`,
    or, to run it in the app instead, `/clear` and then 'Read
    .claude/plans/<name>.state.md and execute the next phase.'
 
-It never runs the phase itself.
+It never runs a phase itself.
 
 ### Running unattended (`AUTOPLAN=1`)
 
 `py -3 tools/autoplan.py <name>` runs the phases from a terminal, one
-fresh headless session per phase, on the Max subscription only: it
+fresh headless session per phase, on the owner's subscription only: it
 never uses an API key and stops the chain when the usage limit is hit.
 Started from the main checkout, it makes (or reuses) the worktree
 `.claude/worktrees/plan-<name>` on branch `claude/plan-<name>` and runs
-there; the owner lands it with
-`py -3 tools/try.py claude/plan-<name> --commit`. A session it starts
-has `AUTOPLAN=1` and a prompt that begins `[autoplan | ...]` and carries
-the phase brief: read `.claude/skills/plan/unattended.md` (short) and
-not the rest of this file.
+there; each phase lands itself with `try.py --commit` as the worktree
+mode file says. A session it starts has `AUTOPLAN=1` and a prompt that
+begins `[autoplan | ...]` and carries the phase brief: read
+`.claude/skills/plan/unattended.md` (short) and not the rest of this
+file.
 
 ## Last phase done → Stage done
 
-Set `Stage: done`, delete this checkout's HERE and the plan's state
-file, list every `D<n> (auto)` and every `missed:` line in the report
-under **Look at**, commit. The plan file stays as the record. This last
-phase ends with the hard-stop message too; the owner's next prompt is a
-fresh task.
+Only when every Progress row is `done`. Set `Stage: done`, delete this
+checkout's HERE and the plan's state file, list every `D<n> (auto)` and
+every `missed:` line in the report under **Look at**, commit. The plan
+file stays as the record. This last phase ends with the hard-stop
+message too; the owner's next prompt is a fresh task.
 
 ## `/plan` with no plan bound here
 

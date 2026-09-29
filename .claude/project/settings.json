@@ -1,0 +1,59 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(py -3 tools/check.py*)",
+      "Bash(py -3 tools/smoke.py*)",
+      "Bash(py -3 tools/scene_dump.py*)",
+      "Bash(py -3 tools/gen_context.py*)",
+      "Bash(py -3 .claude/hooks/gd-lint.py --scan*)",
+      "Bash(python3 tools/check.py*)",
+      "Bash(python3 tools/smoke.py*)",
+      "Bash(python3 tools/scene_dump.py*)",
+      "Bash(python3 tools/gen_context.py*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" godot-session.py"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" tscn-guard.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" gd-lint.py"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" verify-guard.py"
+          }
+        ]
+      }
+    ]
+  }
+}

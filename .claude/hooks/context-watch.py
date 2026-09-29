@@ -26,7 +26,7 @@ import json
 import os
 import sys
 
-LIMIT = int(os.environ.get("AUTOPLAN_LINE") or 120_000)  # main session: handoff line, under auto-compact at 130k (65% of 200k)
+LIMIT = int(os.environ.get("AUTOPLAN_LINE") or 120_000)  # main session: handoff line (auto-compact is off)
 SOFT = 0.8          # warn from this fraction of a line
 HARD = 1.5          # subagents: deny all tools from this multiple of the line
 
@@ -124,7 +124,7 @@ def report_line(used, limit, who):
                 f"{int(limit * HARD):,} every tool call will be refused, so "
                 "write your report soon and say in it that you hit the "
                 "context line.")
-    if used >= limit * SOFT:
+    if used >= limit * (SOFT if who else 0.9):
         if not who:
             return (f"CONTEXT WATCH: {used:,} tokens in context ({pct}% of "
                     "the handoff line). Prefer finishing over starting new "
