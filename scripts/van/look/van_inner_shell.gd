@@ -25,6 +25,21 @@ const PLATE_COUNT := 8
 const PLATE_TRIES := 20
 const PATCH_WALL_COUNT := 7
 const PATCH_CEIL_COUNT := 3
+## Half the rib box's 0.07 z depth (weld beads are 0.07 too).
+const RIB_HALF_DEPTH := 0.035
+## Gap (m) between a plate or patch edge and a rib or weld, the audit's 2 cm.
+const RIB_CLEAR := 0.02
+const PATCH_TRIES := 30
+## Weld ring's visible face, metres in from the liner.
+const RING_PROUD := 0.015
+## Weld ring's back face, 5 mm behind the liner; shallow so it stays clear of the vault/wall's
+## far face.
+const RING_BURY := 0.005
+## Patch face 2 cm proud of the ring face so it does not z-fight it.
+const PATCH_PROUD := 0.035
+## Patch back face, metres behind the liner (negative: it sits on the ring's front face, 2 cm
+## off the ring's back).
+const PATCH_BURY := -0.015
 
 var _wall: VanSideWall
 var _weld_bead_mesh: BoxMesh
@@ -54,9 +69,29 @@ func rebuild_look(look: VanLook) -> void:
 
 
 func _wall_x(side: float, y: float) -> float:
+	return _wall_inset(side, y, 0.015)
+
+
+## The x of a point d metres in from the liner (the liner is 0.015 outboard of _wall_x).
+func _wall_inset(side: float, y: float, d: float) -> float:
 	if _wall == null:
-		return side * 2.3
-	return side * (_wall.wall_x_at(y) - 0.015)
+		return side * (2.315 - d)
+	return side * (_wall.wall_x_at(y) - d)
+
+
+## The y of a point d metres in from the ceiling liner (0.015 above _ceiling_y).
+func _ceiling_inset(x: float, d: float) -> float:
+	return _ceiling_y(x) + 0.015 - d
+
+
+## False when the z span comes within a rib's half depth plus RIB_CLEAR of any rib.
+func _clear_of_ribs(z0: float, z1: float) -> bool:
+	var band := RIB_HALF_DEPTH + RIB_CLEAR
+	for i: int in range(RIB_COUNT):
+		var rz := RIB_Z0 + float(i) * RIB_STEP
+		if z1 > rz - band and z0 < rz + band:
+			return false
+	return true
 
 
 func _ceiling_y(x: float) -> float:
@@ -139,6 +174,10 @@ func _place_plate(rng: RandomNumberGenerator, side: float, idx: int, placed: Arr
 		var z := rng.randf_range(Z_MIN, Z_MAX)
 		if _in_span(z, DOOR_Z_MIN, DOOR_Z_MAX):
 			continue
+		if z - w * 0.5 < Z_MIN or z + w * 0.5 > Z_MAX - 0.1:
+			continue
+		if not _clear_of_ribs(z - w * 0.5, z + w * 0.5):
+			continue
 		var rect := Rect2(z - w * 0.5, y - h * 0.5, w, h)
 		var overlaps := false
 		for other: Rect2 in placed:
@@ -191,57 +230,75 @@ func _build_patches(rng: RandomNumberGenerator, patch_mat: Material, weld_mat: M
 
 func _build_wall_patch(rng: RandomNumberGenerator, idx: int, patch_mat: Material, weld_mat: Material) -> void:
 	var side := -1.0 if rng.randf() < 0.5 else 1.0
+	var r := rng.randf_range(0.04, 0.07)
 	var y := 0.3
 	var z := 0.0
-	for _try: int in range(30):
+	var found := false
+	for _try: int in range(PATCH_TRIES):
 		y = rng.randf_range(0.3, 2.6)
 		z = rng.randf_range(Z_MIN, Z_MAX)
 		if _in_span(z, DOOR_Z_MIN, DOOR_Z_MAX):
 			continue
 		if y > 1.05 and _in_window_span(z):
 			continue
+		if not _clear_of_ribs(z - (r + 0.015), z + (r + 0.015)):
+			continue
+		found = true
 		break
+	if not found:
+		return
 
-	var r := rng.randf_range(0.04, 0.07)
 	var angle := side * (PI * 0.5) + atan2(_wall_x(side, y + 0.1) - _wall_x(side, y - 0.1), 0.2)
 	var patch_name := "PatchWall%d" % idx
 
 	var ring_mesh := CylinderMesh.new()
 	ring_mesh.top_radius = r + 0.015
 	ring_mesh.bottom_radius = r + 0.015
-	ring_mesh.height = 0.004
+	ring_mesh.height = RING_BURY + RING_PROUD
 	ring_mesh.radial_segments = 8
-	_add_mesh("%s_Ring" % patch_name, ring_mesh, weld_mat, Vector3(_wall_x(side, y), y, z), angle)
+	var ring_x := _wall_inset(side, y, (RING_PROUD - RING_BURY) * 0.5)
+	_add_mesh("%s_Ring" % patch_name, ring_mesh, weld_mat, Vector3(ring_x, y, z), angle)
 
 	var disc_mesh := CylinderMesh.new()
 	disc_mesh.top_radius = r
 	disc_mesh.bottom_radius = r
-	disc_mesh.height = 0.008
+	disc_mesh.height = PATCH_BURY + PATCH_PROUD
 	disc_mesh.radial_segments = 8
-	var pos := Vector3(_wall_x(side, y) + side * 0.006, y, z)
+	var pos := Vector3(_wall_inset(side, y, (PATCH_PROUD - PATCH_BURY) * 0.5), y, z)
 	_add_mesh(patch_name, disc_mesh, patch_mat, pos, angle)
 
 
 func _build_ceiling_patch(rng: RandomNumberGenerator, idx: int, patch_mat: Material, weld_mat: Material) -> void:
-	var x := rng.randf_range(-1.8, 1.8)
-	var z := rng.randf_range(Z_MIN, Z_MAX)
 	var r := rng.randf_range(0.04, 0.07)
+	var x := 0.0
+	var z := 0.0
+	var found := false
+	for _try: int in range(PATCH_TRIES):
+		x = rng.randf_range(-1.8, 1.8)
+		z = rng.randf_range(Z_MIN, Z_MAX)
+		if _clear_of_ribs(z - (r + 0.015), z + (r + 0.015)):
+			found = true
+			break
+	if not found:
+		return
+
 	var angle := atan2(_ceiling_y(x + 0.1) - _ceiling_y(x - 0.1), 0.2)
 	var patch_name := "PatchCeil%d" % idx
 
 	var ring_mesh := CylinderMesh.new()
 	ring_mesh.top_radius = r + 0.015
 	ring_mesh.bottom_radius = r + 0.015
-	ring_mesh.height = 0.004
+	ring_mesh.height = RING_BURY + RING_PROUD
 	ring_mesh.radial_segments = 8
-	_add_mesh("%s_Ring" % patch_name, ring_mesh, weld_mat, Vector3(x, _ceiling_y(x), z), angle)
+	var ring_y := _ceiling_inset(x, (RING_PROUD - RING_BURY) * 0.5)
+	_add_mesh("%s_Ring" % patch_name, ring_mesh, weld_mat, Vector3(x, ring_y, z), angle)
 
 	var disc_mesh := CylinderMesh.new()
 	disc_mesh.top_radius = r
 	disc_mesh.bottom_radius = r
-	disc_mesh.height = 0.008
+	disc_mesh.height = PATCH_BURY + PATCH_PROUD
 	disc_mesh.radial_segments = 8
-	var pos := Vector3(x, _ceiling_y(x) - 0.006, z)
+	var pos := Vector3(x, _ceiling_inset(x, (PATCH_PROUD - PATCH_BURY) * 0.5), z)
 	_add_mesh(patch_name, disc_mesh, patch_mat, pos, angle)
 
 

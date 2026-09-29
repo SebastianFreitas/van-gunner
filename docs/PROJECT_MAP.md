@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-290 GDScript files, 44348 lines.
+290 GDScript files, 44536 lines.
 
 ### `scenes/corridor/`
 
@@ -620,8 +620,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_overlays.gd` | — | 238 | Modal overlays: bench, skill tree, class panel, debug console, pause menu, mouse passthrough. |
 | `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. |
 | `van_route_choice.gd` | — | 287 | Builds and refreshes the ROUTE_CHOICE panel: card art, stop labels, highlight state. |
-| `van_side_wall.gd` | `VanSideWall` | 363 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
-| `van_side_wall_jambs.gd` | — | 84 | Door jambs for VanSideWall: the frame ring's lip inside each side door bay, without the outer return the wall's reveal owns. |
+| `van_side_wall.gd` | `VanSideWall` | 365 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
+| `van_side_wall_jambs.gd` | — | 175 | Door jambs for VanSideWall: the frame ring's lip inside each side door bay, without the outer return the wall's reveal owns. |
 | `van_side_wall_panel.gd` | — | 401 | This wall's own side panel mesh: openings, reveals, returns, and the cut queries that decide which cells are punched for the side doors and windows. |
 | `van_side_wall_shell.gd` | — | 400 | Generic curved-shell / pane / frame-ring mesh builders for VanSideWall: the low-level lofting onto the cargo profile, shared by side walls, doors and windows. |
 | `van_vital.gd` | `VanVital` | 91 | One interior machine whose HP is a slice of van death hull. |
@@ -632,7 +632,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `machine_damage.gd` | `MachineDamage` | 162 | Maps a VanVital's HP to healthy, hurt or dying, and drives its machine's motion speed, flicker, smoke puffs and sparks. |
 | `machine_motion.gd` | `MachineMotion` | 99 | Drives every moving part of one van machine (spin, pump, wobble, flicker) from a single _process, scaled by its damage state. |
-| `machine_parts.gd` | `MachineParts` | 284 | Static low-poly part builders (motor, flywheel, belt, fan, battery, can, gauge, switch, CRT, tower, keyboard, pipe, vent, cables) for the van's interior machin… |
+| `machine_parts.gd` | `MachineParts` | 322 | Static low-poly part builders (motor, flywheel, belt, fan, battery, can, gauge, switch, CRT, tower, keyboard, pipe, vent, cables) for the van's interior machin… |
 | `van_armour.gd` | `VanArmour` | 260 | The van's seeded outer armour: plates, rebar and spikes on the real hull skin, placed from slots clear of every opening and merged per material. |
 | `van_armour_pieces.gd` | — | 84 | Appends armour piece geometry (leaned plates, bars, spikes) into per-material SurfaceTools for VanArmour. |
 | `van_cab.gd` | `VanCab` | 176 | The van's cab-over cab on the body profile: shell, face, windshield, doors, a dark cab behind the glass, mirrors and two real headlights, rebuilt from the look… |
@@ -648,7 +648,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_hull.gd` | `VanHull` | 335 | The van's outer skin: roof, sides, front face (the step to the cab skin), rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted fr… |
 | `van_hull_lines.gd` | — | 231 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
 | `van_hull_patches.gd` | — | 189 | Skin patches that close the gaps left in VanHull's outer shell: the rear corner strip behind the side skin, the rocker sill along both sides and the belly betw… |
-| `van_inner_shell.gd` | `VanInnerShell` | 259 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
+| `van_inner_shell.gd` | `VanInnerShell` | 316 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
 | `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |
 | `van_marker_lights.gd` | — | 139 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
 | `van_markings.gd` | `VanMarkings` | 73 | The van's seeded painted identity: a stencil name on both sides, a number on the cab doors and kill tallies, as exterior-only decals. |

@@ -3,7 +3,7 @@
 Stage: running
 Started: 2026-09-28
 Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/vanfix.state.md` while running).
-Interview: done under the old procedure (no parts A/B/C); missed: cable/lamp fix scope (D35 auto); generator vent route (D36 auto); audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15); window hinge pivot position (D16 auto); side skin layering against the wall (D17 auto); who owns the opening reveals and whether the buried casings go (D18 auto); side door slide path vs the belt line and rub rail (D19); whether the front audit calls for replacing the cab (D21 auto); front wheels moved out to clear the cab skin (D22 auto); audit speed-up, front windows posed apart from their doors and cross-mesh EDGE seams (D23 auto); roof height cap (D24), antennas (D25), rear roof (D26); roof place-or-drop grouping (D27 auto); flare and spare solids (D28 auto); arch trims, chain segments, exhaust and sill breaks (D29 auto); add-ons in the side door slide path (D30); low side armour vs the door path and chassis items (D32); side armour bands and plate lean (D33 auto); low chassis add-ons embedded (D34 auto); bulkhead grille and rib weld offsets (D37 auto); door frames vs the skin at the D13 recess (D38); props standing in a side door bay (D39); cable trunks across door bays (D40); window frame rows in the OPENING check (D41 auto); floor decal lift height (D42 auto)
+Interview: done under the old procedure (no parts A/B/C); missed: cable/lamp fix scope (D35 auto); generator vent route (D36 auto); audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15); window hinge pivot position (D16 auto); side skin layering against the wall (D17 auto); who owns the opening reveals and whether the buried casings go (D18 auto); side door slide path vs the belt line and rub rail (D19); whether the front audit calls for replacing the cab (D21 auto); front wheels moved out to clear the cab skin (D22 auto); audit speed-up, front windows posed apart from their doors and cross-mesh EDGE seams (D23 auto); roof height cap (D24), antennas (D25), rear roof (D26); roof place-or-drop grouping (D27 auto); flare and spare solids (D28 auto); arch trims, chain segments, exhaust and sill breaks (D29 auto); add-ons in the side door slide path (D30); low side armour vs the door path and chassis items (D32); side armour bands and plate lean (D33 auto); low chassis add-ons embedded (D34 auto); bulkhead grille and rib weld offsets (D37 auto); door frames vs the skin at the D13 recess (D38); props standing in a side door bay (D39); cable trunks across door bays (D40); window frame rows in the OPENING check (D41 auto); floor decal lift height (D42 auto); inner shell plates and patches vs ribs (D43 auto)
 
 ## Rebase note (2026-09-28, landed on main)
 
@@ -127,6 +127,8 @@ the night read. So:
 - **D41 · Window frames exempt from OPENING (auto).** The audit's OPENING check skips the side wall, its reveals and the side skin (`Interior/Shell/SideWalls/`, `VanLook/Hull/SideSkin`) for the four side windows: they frame the cut and always have triangles in its padded rectangular box at the rounded corners. Reason: test tooling; the rows can never mean an obstruction.
 - **D42 · Floor decal lift (auto).** The flat floor decals (mats, paper, cardboard, rag, tape, oil stains) sit `DECAL_LIFT` 1.2 cm above the deck instead of 3-7 mm, and small stacked prop parts embed 1.5 cm into what they sit on rather than lie flush, per D7/D12. Reason: the audit counts faces within 1 cm as coplanar; 1.2 cm is barely visible in play. Review at the end.
 
+- **D43 · Inner shell dressing fit (auto).** Scrap plates and weld patches are placed clear of the rib z bands (rib half depth 0.035 + 2 cm) and the patch disc stands 2 cm proud of its weld ring (ring 5 mm buried .. 1.5 cm proud, patch 1.5 .. 3.5 cm), so no rib, plate, ring or patch shares a face plane; a piece with no free spot is not built (D6). Reason: FLICKER rows; dressing positions only.
+
 ## Constraints (every phase)
 
 - Geometry only: no texture or shader-look work; exterior materials keep their recipe (`art-style.md`: procedural grime, metallic ≤ 0.3, roughness 0.78–0.95, always night).
@@ -145,7 +147,7 @@ the night read. So:
 | 3 | One sealed outer body | code | D4, D7, audit | done a809f31 |
 | 4 | Sealed simple cab | code | D5, D4, audit | done 815948b |
 | 5 | Add-ons snapped and height-capped | code | D6, audit | done 32a481d |
-| 6 | Side-wall and cable flicker | code | D12, audit | todo |
+| 6 | Side-wall and cable flicker | code | D12, audit | done 0dcc580 |
 | 7 | Small structure flicker | code | D12, audit | todo |
 | 8 | Generator and welder flicker | code | D12, audit | todo |
 | 9 | PcRig, hopper and rack flicker | code | D12, audit | todo |
@@ -183,6 +185,7 @@ Every phase 6–9: re-run `py -3 tools/van_audit.py`, group `^FLICKER` rows by a
 
 ### 6 · Side-wall and cable flicker (D12)
 Deliverables: `DoorJamb_L/R` vs Left/RightWall (drop the jamb's inner-face triangles where the wall panel runs into the bay at z -4.655..-4.616, not `x_shift`); `DoorJamb_R` vs `FrontWall/Slab`; `FloorSeal_L/R` vs `Bulkhead/*WallPost_0`, `RightWallReveals`, `RightHinge/CurvedBody`; cable strand pairs (`van_cable_runs.gd` / `van_cable_router.gd`).
+Notes: done 0dcc580 (74cfe3c, 0dcc580). `MachineParts.cable_bundle` offsets strands across the run (`_strand_sides`, mitered), not along world X: same-segment strand rows gone, cable FLICKER 36 → 25 rows all < 0.01 m². Jamb front return 1.7 cm into the slab (`JAMB_FRONT_OUT`), jamb cabin face clipped to the panel grid edge (`_front_overlap`, `_clip_front_strip`); floor seals y -0.03..0.05, inner face 1.5 cm further in, ends 0.10 short. Audit: EDGE 23, FLICKER 492, LEAK_IN 1, LEAK_OUT 45; no DoorJamb/FloorSeal row but LEAK_OUT (L 96, R 86 rays).
 
 ### 7 · Small structure flicker (D12)
 Deliverables: WallRib vs Plate, PatchWall/Ceil `_Ring` vs patch, Bulkhead TopRail vs TopRail_7..9 / MidPost, RearEntryRamp and RightHinge/CurvedBody vs BumperHanger, `CargoRail_R_0` vs `VanLook/Wheels/FlareR1/R2`, wheel `Hub` vs `Bolt%d` (2 cm bolt lift, `van_wheels.gd` `_build_wheel`).

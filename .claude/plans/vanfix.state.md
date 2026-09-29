@@ -1,4 +1,4 @@
-Status: phase-done
+Status: partial
 # Plan state: vanfix
 
 ## Plan
@@ -41,38 +41,44 @@ Status: phase-done
 - Caps: `rear_doors.gd`, `van_side_wall_shell.gd` at 400 lines; split before adding.
 
 ## Completed phase
-Phase 5 in progress. Session 3: 210c157 (side rails/tracks 1.5 cm into the liner, mid rails
-`BeltRail_*`, jamb ring `thickness - 0.024`), 32a481d (iron cross plate/pads `EndPadL/R/T/B` into
-the bars, rear glass 1.6 cm, frame `Outer` x ±1.04, dump blessed). Before: 5febd43, 06ed1ec.
-Audit now: CLIP 0, EDGE 23, FLICKER 508 (±4 run to run), LEAK_IN 1, LEAK_OUT 45, OPENING 0.
-FLICKER groups left (intra-prop ones are details of builders in `scripts/van/look/`):
-Generator self 78, Welder self 72, PcRig self 56, Hopper self 53, CabRelay Rack self 45,
-KickPlate_0..5 vs Generator 49, FrontWall/Slab vs Rack 11 / PcRig 4, cable strands (@375 Strand7,
-@448/@444/@418 strand pairs), WallRib vs Plate 16, PatchWall/Ceil _Ring vs patch 10, Bulkhead
-TopRail vs TopRail_7..9 / MidPost, RearEntryRamp and RightHinge/CurvedBody vs BumperHanger, new
-`CargoRail_R_0` vs `VanLook/Wheels/FlareR1/R2` (rail now reaches into the wall where the flare is).
-Side-wall leftovers: `DoorJamb_L/R` vs Left/RightWall (41 pairs: the wall panel's inner face runs
-3.9 cm into the bay at its front edge, z -4.655..-4.616, under the jamb lip's inner face; fix by
-dropping the jamb's inner-face triangles there, not by `x_shift`, which makes the jamb hit
-`SideDoors/*/CurvedBody`); `DoorJamb_R` vs `FrontWall/Slab` (narrowing `_inner_poly` hz hit the
-door leaves too); `FloorSeal_L/R` vs `Bulkhead/*WallPost_0`, vs `RightWallReveals`, vs
-`RightHinge/CurvedBody` (seal untouched so far).
+6 (done 0dcc580). 74cfe3c: `MachineParts.cable_bundle` offsets strands across the run
+(`_run_side`, `_strand_sides`, mitered), not along world X. 0dcc580: `van_side_wall_jambs.gd`
+`JAMB_FRONT_OUT` 0.017 (front inner return buried in `FrontWall/Slab`), `_front_overlap` +
+`_clip_front_strip` clip the jamb cabin face at the panel grid edge; `van_side_wall.gd`
+`_add_floor_seal_strips` seal y -0.03..0.05 (3 cm under the deck), inner face 1.5 cm further in,
+z ends 0.10 short of the van ends. Scene dump and fingerprint unchanged (no bless). Shots
+01/02 checked: cables side by side, nothing floating.
+Audit now: CLIP 0, EDGE 23, FLICKER 492, LEAK_IN 1, LEAK_OUT 45, OPENING 0.
+Cable FLICKER left: 25 rows, all < 0.01 m² (strand vs clamp/tape `@MeshInstance3D`, strands of
+different bundles e.g. `@355/Strand8_1` vs `@405/Strand1_2` 0.0011, `@366` vs `@386` 0.0098,
+`Battery/Body` vs `InnerShell/WallRibL2_1` 0.003, `Bulkhead/MeshBack_321` vs `@386`, jerry can
+`HandleR` vs `HandleTop`). One LEAK_OUT `@355/Strand4_0` (1 ray at (1.83, 2.78, 1.25)), maybe new.
+`DoorJamb_L/R` LEAK_OUT unchanged (96 / 86 rays): phase 10 (leak triage).
+FLICKER groups left for phases 7–9: Generator self 78, Welder self 72, PcRig self 56, Hopper
+self 53, CabRelay Rack self 45, KickPlate_0..5 vs Generator 49, FrontWall/Slab vs Rack 11 /
+PcRig 4, WallRib vs Plate 16, PatchWall/Ceil _Ring vs patch 10, Bulkhead TopRail vs
+TopRail_7..9 / MidPost, RearEntryRamp and RightHinge/CurvedBody vs BumperHanger,
+`CargoRail_R_0` vs `VanLook/Wheels/FlareR1/R2`.
 Get the list: group `^FLICKER` rows by a=/b= prefix (awk over the report).
-- LEAK_OUT 45 (was 40; the +5 are 1-3 ray rows through the rear-door centre seam at x ≈ 0 onto
-  Bulkhead/CabDoor, likely noise, check against the frame shrink), LEAK_IN 1 (through=nothing at
-  (2.706, 1.158, -1.382)), EDGE 23: not triaged yet; `DoorJamb_L/R` LEAK_OUT ~90 rays each.
+- LEAK_OUT 45 (1-3 ray rows through the rear-door centre seam at x ≈ 0 onto Bulkhead/CabDoor,
+  likely noise), LEAK_IN 1 (through=nothing at (2.706, 1.158, -1.382)), EDGE 23: not triaged.
 
 ## Blocker
 none.
 
 ## Next phase
-Phase 5 was split (2026-09-29) into phases 6–11 in the plan; phase 5 is done. Next: phase 6,
-side-wall and cable flicker: the jamb inner-face strip and `DoorJamb_R` vs `FrontWall/Slab`,
-the floor seal rows, then the cable strands. Give each implementer the grep for its rows, the
-line ranges to read and the ≥ 1.2 cm rule, parts must still touch, embed rather than float; keep
-implementer prompts narrow (the side-wall one ran past 60k). Nothing visible was shot in the last
-three sessions: take `--shots` once in phase 6 and look at the D40 ceiling cables, the rear-door
-bars and the generator pan.
+Phase 7 continues (partial). Done c00ca93: `van_inner_shell.gd` plates/patches clear of rib z
+bands (`_clear_of_ribs`), patch 2 cm proud of its ring (`RING_*`/`PATCH_*`), plates z -4.5..4.45.
+WallRib vs Plate and patch-vs-ring rows are gone; audit FLICKER 464 (was 492).
+1. Send `.claude/plans/vanfix.spec-7-2.md` (patches vs plates/bulkhead, plate vs generator).
+2. Send `.claude/plans/vanfix.spec-7-3.md` (bulkhead MidPost ends, TopRail depth/joints).
+3. Then explore and spec the rest (not designed yet): `Floor/RearEntryRamp` (van_floor.gd ~171)
+   and `RearWall/RightHinge/CurvedBody` and `FrameRailL/R` vs `VanLook/Wheels/BumperHangerL/R`
+   (van_chassis.gd ~316, size 0.12×0.16×0.2 at (±1.05, -0.06, 4.8)), `RearThreshold` vs
+   `RearEntryRamp`; `SideWalls/CargoRail_R_0` (van_side_wall.gd ~292) vs `Wheels/FlareR1/R2`;
+   wheel `Hub` vs `Bolt%d` (van_wheels.gd ~139-145: no audit row today, bolts < MIN_AREA; give
+   the bolt a 2 cm lift off the hub face per the deliverable). Explore's earlier numbers for
+   these were unreliable: read the ranges yourself (under 60 lines each).
 
 ## Requirements / gotchas
 - The audit's `Interior/Props/FuseBox/Generator` and `CraftingTable/Welder` fan/flywheel/spoke

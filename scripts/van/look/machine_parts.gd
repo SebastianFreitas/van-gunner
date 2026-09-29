@@ -267,17 +267,55 @@ static func vent(parent: Node3D, pos: Vector3, mat: Material, size: float = 0.3)
 	return root
 
 
-## Loose cable bundle strung through a run of points, each strand offset sideways along X.
+## Loose cable bundle strung through a run of points, strands side by side across the run.
 static func cable_bundle(parent: Node3D, points: PackedVector3Array, mat: Material,
 		radius: float = 0.02, strands: int = 3) -> Node3D:
 	var root := _root("CableBundle", Vector3.ZERO)
 	var count := maxi(strands, 1)
 	if points.size() >= 2:
+		var sides := _strand_sides(points)
 		for i: int in range(points.size() - 1):
 			for s: int in range(count):
 				var offset := (float(s) - float(count - 1) / 2.0) * radius * 2.2
-				var side := Vector3(offset, 0.0, 0.0)
-				_segment(root, points[i] + side, points[i + 1] + side, mat, radius,
+				_segment(root, points[i] + sides[i] * offset,
+						points[i + 1] + sides[i + 1] * offset, mat, radius,
 						"Strand%d_%d" % [i, s])
 	parent.add_child(root)
 	return root
+
+
+## Horizontal unit vector across a run direction (RIGHT for a mostly vertical run).
+static func _run_side(dir: Vector3) -> Vector3:
+	var h := Vector3(dir.x, 0.0, dir.z)
+	if h.length() < 0.2 * dir.length():
+		return Vector3.RIGHT
+	var side := Vector3(-h.z, 0.0, h.x).normalized()
+	if side.dot(Vector3.RIGHT + Vector3.BACK * 0.001) < 0.0:
+		side = -side
+	return side
+
+
+## One mitered side vector per point, so strands of neighbouring segments meet end to end.
+static func _strand_sides(points: PackedVector3Array) -> PackedVector3Array:
+	var sides := PackedVector3Array()
+	var n := points.size()
+	for k: int in range(n):
+		var has_before := k > 0 and not points[k].is_equal_approx(points[k - 1])
+		var has_after := k < n - 1 and not points[k].is_equal_approx(points[k + 1])
+		var before := Vector3.ZERO
+		var after := Vector3.ZERO
+		if has_before:
+			before = _run_side(points[k] - points[k - 1])
+		if has_after:
+			after = _run_side(points[k + 1] - points[k])
+		if has_before and has_after and after.dot(before) < 0.0:
+			after = -after
+		var side := before + after
+		if side.length() < 0.001:
+			side = before if has_before else after
+		if side == Vector3.ZERO:
+			side = Vector3.RIGHT
+		side = side.normalized()
+		var ref := before if has_before else after
+		sides.append(side / maxf(side.dot(ref), 0.5))
+	return sides
