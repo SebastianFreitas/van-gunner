@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-290 GDScript files, 44206 lines.
+290 GDScript files, 44341 lines.
 
 ### `scenes/corridor/`
 
@@ -607,7 +607,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van.gd` | — | 398 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
 | `van_body_profile.gd` | `VanBodyProfile` | 193 | One cross-section for the whole van body: the inner liner outline (floor, bowed sides, roof vault) and an outer skin offset from it, so inside and outside piec… |
 | `van_bulkhead.gd` | `VanBulkhead` | 202 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
-| `van_bulkhead_mesh.gd` | — | 225 | Builds the bulkhead's frame posts, headers, panels and diagonal mesh netting. |
+| `van_bulkhead_mesh.gd` | — | 231 | Builds the bulkhead's frame posts, headers, panels and diagonal mesh netting. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_driver_talk.gd` | — | 158 | The driver-talk panel: open/close, option refresh, and boost/slow shout handling. |
 | `van_floor.gd` | `VanFloor` | 340 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -633,24 +633,24 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `machine_damage.gd` | `MachineDamage` | 162 | Maps a VanVital's HP to healthy, hurt or dying, and drives its machine's motion speed, flicker, smoke puffs and sparks. |
 | `machine_motion.gd` | `MachineMotion` | 99 | Drives every moving part of one van machine (spin, pump, wobble, flicker) from a single _process, scaled by its damage state. |
 | `machine_parts.gd` | `MachineParts` | 284 | Static low-poly part builders (motor, flywheel, belt, fan, battery, can, gauge, switch, CRT, tower, keyboard, pipe, vent, cables) for the van's interior machin… |
-| `van_armour.gd` | `VanArmour` | 198 | The van's seeded outer armour: plates, rebar, spikes, road signs and a car-door shield, placed from slots clear of every opening and merged per material. |
-| `van_armour_pieces.gd` | — | 116 | Appends armour piece geometry (plates, bars, spikes, signs, a car door) into per-material SurfaceTools for VanArmour. |
+| `van_armour.gd` | `VanArmour` | 260 | The van's seeded outer armour: plates, rebar and spikes on the real hull skin, placed from slots clear of every opening and merged per material. |
+| `van_armour_pieces.gd` | — | 84 | Appends armour piece geometry (leaned plates, bars, spikes) into per-material SurfaceTools for VanArmour. |
 | `van_cab.gd` | `VanCab` | 176 | The van's cab-over cab on the body profile: shell, face, windshield, doors, a dark cab behind the glass, mirrors and two real headlights, rebuilt from the look… |
 | `van_cab_face.gd` | — | 205 | Dresses the cab-over face and sides: framed split windshield, A-pillar trims, grille, headlight housings and the two cab doors with windows. |
 | `van_cab_parts.gd` | — | 100 | The dark cab behind the windshield (dash, dash glow, seats, driver silhouette) and the mirrors. |
 | `van_cab_shell.gd` | — | 180 | Builds the cab-over shell on VanBodyProfile: skin, dark liner, back lip, back wall and the flat face with its windshield opening. |
-| `van_cable_router.gd` | — | 233 | Routes power cables around machine keep-out boxes inside the bowed shell and builds the small clamp, junction box, tape, plug and coil parts that VanCableRuns… |
-| `van_cable_runs.gd` | `VanCableRuns` | 376 | Seeded power tree: a thick generator-to-relay feed along the right trunk, relay drops to the PC rig, welding bench and hopper, ceiling lamp taps, then wall jun… |
-| `van_chassis.gd` | — | 323 | Builds the van's chassis kit around the wheels: arch flares and wells, side steps, saddle tank, toolbox, short exhaust, chained spares, rear rails and bumper. |
+| `van_cable_router.gd` | — | 281 | Routes power cables around machine keep-out boxes inside the bowed shell and builds the small clamp, junction box, tape, plug and coil parts that VanCableRuns… |
+| `van_cable_runs.gd` | `VanCableRuns` | 378 | Seeded power tree: a thick generator-to-relay feed along the right trunk, relay drops to the PC rig, welding bench and hopper, ceiling lamp taps, then wall jun… |
+| `van_chassis.gd` | — | 324 | Builds the van's chassis kit around the wheels: arch flares and wells, side steps, saddle tank, toolbox, short exhaust, chained spares, rear rails and bumper. |
 | `van_front_kit.gd` | — | 170 | Builds the van's seeded front kit (bumper, ram, windshield cage, lamp cages) onto a VanCab. |
-| `van_generator.gd` | `VanGenerator` | 117 | The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp… |
+| `van_generator.gd` | `VanGenerator` | 119 | The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp… |
 | `van_generator_parts.gd` | — | 184 | Builds the generator set's welded skid, oil pan, radiator, tank, manifold, control gantry, junction box, trouble lamp and rust patches; the core script keeps t… |
 | `van_hull.gd` | `VanHull` | 335 | The van's outer skin: roof, sides, front face (the step to the cab skin), rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted fr… |
 | `van_hull_lines.gd` | — | 231 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
 | `van_hull_patches.gd` | — | 189 | Skin patches that close the gaps left in VanHull's outer shell: the rear corner strip behind the side skin, the rocker sill along both sides and the belly betw… |
-| `van_inner_shell.gd` | `VanInnerShell` | 258 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
+| `van_inner_shell.gd` | `VanInnerShell` | 259 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
 | `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |
-| `van_marker_lights.gd` | — | 127 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
+| `van_marker_lights.gd` | — | 139 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
 | `van_markings.gd` | `VanMarkings` | 73 | The van's seeded painted identity: a stencil name on both sides, a number on the cab doors and kill tallies, as exterior-only decals. |
 | `van_paint_palette.gd` | `VanPaintPalette` | 78 | Seeded paint schemes for the war rig's exterior shader: base, accent, primer and lettering. |
 | `van_pc_rig.gd` | `VanPcRig` | 65 | The request board dressed as a scrap PC rig (plank desk on crates, towers, three CRTs, one on crt_screen.gdshader, keyboard, clutter, a desk lamp and a PowerPo… |
@@ -658,8 +658,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_rear_dressing.gd` | `VanRearDressing` | 175 | Seeded scrap dressing on the inside of the rear doors (lock bar, welded bars, chains) and on the cage bulkhead's lower corners (welded plates, rebar), parented… |
 | `van_relay_rack.gd` | `VanRelayRack` | 78 | The cab-relay vital rebuilt as an angle-iron relay rack (six batteries on a high shelf, a green relay cabinet, knife switch, fuses, gauge, a caged trouble lamp… |
 | `van_relay_rack_parts.gd` | — | 271 | Part builders for VanRelayRack: angle-iron frame, six car batteries, relay cabinet, fuse board, trouble lamp and the two power ports. |
-| `van_roof.gd` | `VanRoof` | 269 | The van's roof rack, antennas, dish and the always-on roof spotlight; add-ons over the D24-D26 height caps are dropped, not built. |
-| `van_roof_junk.gd` | — | 152 | Fills VanRoof's rack with seeded junk: tyre stacks, jerry cans, crates and strapped tarp bundles. |
+| `van_roof.gd` | `VanRoof` | 279 | The van's roof rack, antennas, dish and the always-on roof spotlight; add-ons over the D24-D26 height caps are dropped, not built. |
+| `van_roof_junk.gd` | — | 154 | Fills VanRoof's rack with seeded junk: tyre stacks, jerry cans, crates and strapped tarp bundles. |
 | `van_scrap_hopper.gd` | `VanScrapHopper` | 235 | The loot hopper dressed as a scrap hopper (ochre frame, flared funnel, toothed crusher drum behind a guard cage, chute and catch bin, chain-driven motor, warni… |
 | `van_scrap_hopper_parts.gd` | — | 233 | Static dressing for the scrap hopper (frame, hazard band, cage, bin, chain drive, lamp mast, stop button, power port); built by van_scrap_hopper.gd. |
 | `van_stats_crt.gd` | `VanStatsCrt` | 117 | A second PC-rig CRT stacked on the desk tower that prints live run stats (act and street, hull, gold and parts, gun) in green phosphor text, refreshed on the s… |
@@ -705,7 +705,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_audit_flicker.gd` | — | 194 | Coplanar-overlap (flicker) check over an AuditMesh triangle set, split off van_audit_overlap.gd (vanfix specs 1-2, 5-1). |
 | `van_audit_gaps.gd` | — | 371 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges and see-through leaks, found by raycasting temporary ConcavePolygonShape3D pr… |
 | `van_audit_mesh.gd` | — | 137 | Collects every visible triangle under a rig into parallel arrays, all in rig-local space, for the van audit's checks (specs 1-2 and 1-3 add more consumers). |
-| `van_audit_overlap.gd` | — | 133 | Coplanar-overlap (flicker), moving-part interpenetration (clip) and door/window opening-blocked checks over an AuditMesh triangle set (vanfix spec 1-2). |
+| `van_audit_overlap.gd` | — | 154 | Coplanar-overlap (flicker), moving-part interpenetration (clip) and door/window opening-blocked checks over an AuditMesh triangle set (vanfix spec 1-2). |
 | `van_audit_states.gd` | — | 115 | Poses the side doors and windows into closed / half / open states directly, with no tweens and no gameplay calls, so the audit's flicker/clip/opening checks ca… |
 
 ## Scenes

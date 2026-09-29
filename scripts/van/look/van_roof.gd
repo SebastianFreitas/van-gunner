@@ -13,6 +13,8 @@ const FIT_EPS := 0.005
 
 const RACK_Y := 3.66 ## Top of the rack rails; junk (later) sits on it.
 const RACK_HALF_X := 1.9
+const RACK_LEG_TOP_Y := RACK_Y - 0.01 ## Legs end inside the rail, clear of its and the slats' planes.
+const RACK_LEG_THICK := 0.035 ## Thinner than the 0.06 rail so the leg's sides sit 1.25 cm inside.
 const RACK_Z_MIN := -4.3
 const RACK_Z_MAX := 4.3
 
@@ -117,15 +119,19 @@ func _build_rack(mat: Material) -> void:
 			0.06, mat)
 	add_bar("RackRailR", Vector3(RACK_HALF_X, RACK_Y, RACK_Z_MIN), Vector3(RACK_HALF_X, RACK_Y, RACK_Z_MAX),
 			0.06, mat)
+	# End bars 2 cm inside the rails' top and bottom faces: closer faces flicker (D12).
 	add_bar("RackEndF", Vector3(-RACK_HALF_X, RACK_Y, RACK_Z_MIN), Vector3(RACK_HALF_X, RACK_Y, RACK_Z_MIN),
-			0.06, mat)
+			0.02, mat)
 	add_bar("RackEndB", Vector3(-RACK_HALF_X, RACK_Y, RACK_Z_MAX), Vector3(RACK_HALF_X, RACK_Y, RACK_Z_MAX),
-			0.06, mat)
+			0.02, mat)
 
 	var span := RACK_Z_MAX - RACK_Z_MIN
 	for i: int in range(5):
 		var z: float = RACK_Z_MIN + span * float(i + 1) / 6.0
-		add_bar("RackSlat%d" % i, Vector3(-RACK_HALF_X, RACK_Y, z), Vector3(RACK_HALF_X, RACK_Y, z), 0.045, mat)
+		# Centred on the rail's top face so no slat plane lies within 1 cm of a rail plane.
+		var slat_y := RACK_Y + 0.03
+		add_bar("RackSlat%d" % i, Vector3(-RACK_HALF_X, slat_y, z), Vector3(RACK_HALF_X, slat_y, z),
+				0.045, mat)
 
 	var leg_zs: Array[float] = [RACK_Z_MIN + 0.1, 0.0, RACK_Z_MAX - 0.1]
 	var leg_idx := 0
@@ -133,7 +139,7 @@ func _build_rack(mat: Material) -> void:
 		var x := side * RACK_HALF_X
 		for z: float in leg_zs:
 			add_bar("RackLeg%d" % leg_idx, Vector3(x, _profile.outer_roof_y_at(x) - 0.04, z),
-					Vector3(x, RACK_Y, z), 0.06, mat)
+					Vector3(x, RACK_LEG_TOP_Y, z), RACK_LEG_THICK, mat)
 			leg_idx += 1
 	end_group()
 
@@ -148,7 +154,9 @@ func _build_antennas(mat: Material, rng: RandomNumberGenerator) -> void:
 	for i: int in range(n):
 		begin_group(StringName("antenna%d" % i))
 		var slot := slots[i]
-		var base := Vector3(slot.x, RACK_Y, slot.y)
+		# The base box sits 2 cm into the rail's top; the whip starts on the base's top face.
+		var base_pos := Vector3(slot.x, RACK_Y + 0.05, slot.y)
+		var base := base_pos + Vector3(0.0, 0.04, 0.0)
 		var h := rng.randf_range(1.2, 2.2)
 		var tilt_rad := deg_to_rad(rng.randf_range(5.0, 15.0))
 		var dir := Vector3(0.0, cos(tilt_rad), sin(tilt_rad))
@@ -157,12 +165,14 @@ func _build_antennas(mat: Material, rng: RandomNumberGenerator) -> void:
 		whip_mesh.top_radius = 0.008
 		whip_mesh.bottom_radius = 0.018
 		whip_mesh.height = h
+		whip_mesh.radial_segments = 8 ## Default 64 segments x 4 rings: sliver triangles flag against each other.
+		whip_mesh.rings = 1
 		var whip := _add_mesh("Antenna%d" % i, whip_mesh, mat, base + dir * (h * 0.5))
 		whip.rotation = Vector3(tilt_rad, 0.0, 0.0)
 
 		var base_mesh := BoxMesh.new()
-		base_mesh.size = Vector3(0.08, 0.08, 0.08)
-		_add_mesh("AntennaBase%d" % i, base_mesh, mat, base)
+		base_mesh.size = Vector3(0.10, 0.08, 0.08)
+		_add_mesh("AntennaBase%d" % i, base_mesh, mat, base_pos)
 		end_group()
 
 

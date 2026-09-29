@@ -6,8 +6,8 @@ extends Node3D
 const Router := preload("res://scripts/van/look/van_cable_router.gd")
 
 const LIGHTING_PATH := ^"../../Lighting"
-const WALLS_PATH := ^"../Interior/Shell/SideWalls"
-const PROPS_PATH := ^"../Interior/Props"
+const WALLS_PATH := ^"../../Interior/Shell/SideWalls"
+const PROPS_PATH := ^"../../Interior/Props"
 const PORT_GROUP := &"machine_power_ports"
 const K_GEN := "generator_source"
 const K_HUB := "relay_rack_hub"
@@ -100,7 +100,7 @@ func _build_trunk(sx: float, rng: RandomNumberGenerator) -> PackedVector3Array:
 		if i > 0 and i < TRUNK_STEPS - 1:
 			sag = rng.randf_range(0.03, 0.08)
 		pts.append(Vector3(x, TRUNK_Y - sag, z))
-
+	pts = _router.hop_bays(pts, 0.0)
 	MachineParts.cable_bundle(self, pts, _insul[0], 0.018, 4)
 	_add_ties(rng, pts, side)
 	_add_splices(rng, pts, side)
@@ -114,7 +114,7 @@ func _add_ties(rng: RandomNumberGenerator, pts: PackedVector3Array, side: String
 		if _claim(&"tie", pts[0].x, z):
 			var mesh := BoxMesh.new()
 			mesh.size = Vector3(0.05, 0.05, 0.03)
-			_add_mesh("Tie%s%d" % [side, idx], mesh, _tie, Vector3(pts[0].x, _trunk_y(pts, z), z))
+			_add_mesh("Tie%s%d" % [side, idx], mesh, _tie, _trunk_at(pts, z))
 			idx += 1
 		z += rng.randf_range(0.7, 1.0)
 
@@ -125,17 +125,19 @@ func _add_splices(rng: RandomNumberGenerator, pts: PackedVector3Array, side: Str
 		if _claim(&"splice", pts[0].x, z):
 			var mesh := BoxMesh.new()
 			mesh.size = Vector3(0.07, 0.07, 0.14)
-			_add_mesh("Splice%s%d" % [side, i], mesh, _tape, Vector3(pts[0].x, _trunk_y(pts, z), z))
+			_add_mesh("Splice%s%d" % [side, i], mesh, _tape, _trunk_at(pts, z))
 
 
-## Linear height along a trunk's sampled points, used to anchor junctions and lamp taps.
-func _trunk_y(pts: PackedVector3Array, z: float) -> float:
+## Point along a trunk's sampled points at z (x and y follow the hops), used to anchor hardware.
+func _trunk_at(pts: PackedVector3Array, z: float) -> Vector3:
+	if z <= pts[0].z:
+		return pts[0]
 	for i: int in range(pts.size() - 1):
 		var a: Vector3 = pts[i]
 		var b: Vector3 = pts[i + 1]
 		if z >= a.z and z <= b.z:
-			return lerpf(a.y, b.y, (z - a.z) / (b.z - a.z))
-	return pts[pts.size() - 1].y
+			return a.lerp(b, (z - a.z) / maxf(b.z - a.z, 1e-6))
+	return pts[pts.size() - 1]
 
 
 ## True the first time hardware of this kind is placed at this z on this trunk side.
@@ -151,7 +153,7 @@ func _junction(sx: float, z: float) -> void:
 	if not _claim(&"junction", sx, z):
 		return
 	var pts := _trunk_r if sx > 0.0 else _trunk_l
-	var pos := Vector3(sx * _trunk_x(), _trunk_y(pts, z) - 0.06, z)
+	var pos := _trunk_at(pts, z) + Vector3(0.0, -0.06, 0.0)
 	_router.add_junction_box(self, pos, _steel, _insul[0])
 
 
@@ -171,10 +173,10 @@ func _build_feed(ports: Dictionary, keepouts: Array[AABB]) -> void:
 	var a := Vector3(g.x, g.y + 0.35, g.z)
 	var a2 := Vector3(g.x, a.y, minf(g.z + 0.25, GAP_Z_MAX - 0.1))
 	var mid := (a + a2) * 0.5 + Vector3(0.0, -0.12, 0.0)
-	var pts := _router.route(PackedVector3Array([
+	var pts := _router.route(_router.hop_bays(PackedVector3Array([
 		g, a, mid, a2, Vector3(tx, fy, a2.z), Vector3(tx, fy, FRONT_Z),
 		Vector3(h.x, fy, FRONT_Z), h,
-	]), keepouts)
+	]), 0.12), keepouts)
 	MachineParts.cable_bundle(self, pts, _colors[0], 0.032, 2)
 	_furnish(pts, 0.032, CLAMP_STEP, TAPE_STEP)
 	_splice_route(pts, 0.032, 0)
@@ -182,7 +184,7 @@ func _build_feed(ports: Dictionary, keepouts: Array[AABB]) -> void:
 	for corner: Vector3 in [Vector3(tx, fy, FRONT_Z), Vector3(h.x, fy, FRONT_Z)]:
 		var mesh := BoxMesh.new()
 		mesh.size = Vector3(0.11, 0.11, 0.11)
-		_add_mesh("Elbow", mesh, _steel, corner)
+		_add_mesh("Elbow", mesh, _steel, _router.lift(corner, 0.12))
 
 
 func _build_pc(ports: Dictionary, keepouts: Array[AABB]) -> void:
@@ -219,10 +221,10 @@ func _build_hopper(ports: Dictionary, keepouts: Array[AABB]) -> void:
 	var lx := -_trunk_x() + 0.05
 	var fy := TRUNK_Y - FEED_DROP
 	var hz := clampf(h.z, GAP_Z_MIN + 0.1, GAP_Z_MAX - 0.1)
-	var pts := _router.route(PackedVector3Array([
+	var pts := _router.route(_router.hop_bays(PackedVector3Array([
 		o, Vector3(lx, fy, o.z), Vector3(lx, fy, hz), _wall_pt(-1.0, 1.9, hz, 0.12),
 		_wall_pt(-1.0, h.y + 0.15, hz, 0.12), h,
-	]), keepouts)
+	]), 0.12), keepouts)
 	_lay(pts, 3, 0.022, 3)
 	_junction(-1.0, o.z)
 
@@ -289,7 +291,7 @@ func _build_lamp_drops() -> void:
 			continue
 		var sx := 1.0 if light.position.x >= 0.0 else -1.0
 		var trunk_pts := _trunk_r if sx > 0.0 else _trunk_l
-		var anchor := Vector3(sx * _trunk_x(), _trunk_y(trunk_pts, light.position.z), light.position.z)
+		var anchor := _trunk_at(trunk_pts, light.position.z)
 		var target := Vector3(light.position.x, minf(light.position.y + 0.05, 2.95), light.position.z)
 		MachineParts.cable_bundle(self, PackedVector3Array([anchor, target]), _insul[0], 0.015, 3)
 		_junction(sx, light.position.z)
@@ -304,15 +306,15 @@ func _build_junk(rng: RandomNumberGenerator) -> void:
 		batt.rotation.y = rng.randf_range(-0.3, 0.3)
 		tops.append(Vector3(bx, 0.25, z))
 	MachineParts.cable_bundle(self, tops, _insul[1], 0.015, 2)
-	# Jumper rides 0.26-0.3 m inside the wall so it clears the window frames, then ties into the trunk.
+	# Jumper jogs forward below the sills, rises ahead of the front window bay, then ties into the trunk.
 	var riser := PackedVector3Array([
-		Vector3(bx, 0.27, -1.05), Vector3(bx, 0.95, -1.05), _wall_pt(-1.0, 1.6, -1.05, 0.3),
-		_wall_pt(-1.0, 2.3, -1.05, 0.26),
-		Vector3(-_trunk_x(), _trunk_y(_trunk_l, -1.05) - 0.06, -1.05),
+		Vector3(bx, 0.27, -1.3), Vector3(bx, 0.95, -1.3), Vector3(bx, 0.95, -1.75),
+		_wall_pt(-1.0, 1.6, -1.75, 0.3), _wall_pt(-1.0, 2.3, -1.75, 0.26),
+		_trunk_at(_trunk_l, -1.75) + Vector3(0.0, -0.06, 0.0),
 	])
 	MachineParts.cable_bundle(self, riser, _insul[1], 0.015, 2)
 	_furnish(riser, 0.015, CLAMP_STEP, 0.0)
-	_junction(-1.0, -1.05)
+	_junction(-1.0, -1.75)
 	_router.add_coil(self, Vector3(-(_router.wall_x(0.72) - 0.11), 0.72, -0.45), _insul[2], _steel)
 
 	for z: float in [2.0, 2.35]:

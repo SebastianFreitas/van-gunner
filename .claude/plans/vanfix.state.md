@@ -11,9 +11,15 @@ Status: partial
   `half`/`open` (side doors + rear windows), `win_half`/`win_open` (front windows alone).
   FLICKER: parallel faces within `PLANE_EPS` 0.01 m (D12: gaps 2 cm, lifts 1 cm). EDGE: per-mesh
   open edge (`van_audit_gaps.gd`). Files `tools/van_audit/`; close-ups `smoke_shots_closeups.gd`.
-- Side door: opening z -3.42 ± 1.235, leaf `DOOR_HALF_Z` 1.105, recess 0.24 (D13), slides
+- Side door: opening z -3.42 ± 1.235, leaf `DOOR_HALF_Z` 1.105, recess 0.30 (D38), slides
   `slide_distance` 2.45 (`side_doors.gd`): the open leaf's rear edge is at z ≈ 0.135; the open
-  leaf spans x ≈ 2.64..2.9, so nothing low on the side fits under it.
+  leaf spans x ≈ 2.70..2.96, so nothing low on the side fits under it.
+- Cables (D40): `Router.hop_bays(pts, inset)` / `lift(p, inset)` in `van_cable_router.gd` lift any
+  upper-wall run (y > 2.2) inside the door bay band (`VanInnerShell.DOOR_Z_*` ± 0.05) to x ±1.5,
+  0.14 under the liner, with 0.3 m ramps; trunks (inset 0), feed and hopper (0.12) use it;
+  `_trunk_at(pts, z)` gives anchors. Battery jumper rises at z -1.75 (window bay is -1.60..0.85).
+- Audit `OPENING_EXEMPT` (`van_audit_overlap.gd`): PcRig in `door_left` (D39), wall/reveals/skin
+  for the four windows (D41).
 - Side windows y 1.775 ± 0.707 (bottom 1.07), centres z 2.835 / -0.375, hinge 0.32 out (D16).
 - Outer body `van_hull.gd` (334): `SideSkin<S>` 0.22 off the liner (D17), real skin x at y 0 is
   `wall_x_at(0)` 2.42 + 0.22 = 2.64. Sills in `van_hull_patches.gd` (`_build_sill(walls, s,
@@ -25,33 +31,36 @@ Status: partial
   (4-wheel 2.30, 6-wheel 1.60), packed with `ADDON_GAP` 0.02: exhaust side toolbox
   (`TOOLBOX_LEN` 0.92) then spare (`SPARE_LEN` 0.84), other side tank (`TANK_LEN` 1.2) then spare;
   a misfit is not built. Builders take a centre z.
-- `SKIN_X` 2.56 in `van_chassis.gd` and `VanArmour.FACE_X` / `_Pieces.FACE_X` 2.6 and
-  `VanArmour._skin_x` (`wall_x_at(y) + VanHull.SKIN_OFFSET_M` 0.06) all predate D17's 0.22 skin:
-  side add-ons sit partly inside the skin. Snapping them is part of (d).
+- Side armour (`van_armour.gd`, `van_armour_pieces.gd`, D32/D33): slots pillar, top, tail only;
+  `_skin_x` = `wall_x_at(y) + SIDE_SKIN_OUTER_M`; `_plate_x(y0, y1)` leans plates on the skin chord;
+  `_clear_of_openings` (door path, windows +0.03, `BELT_BAND_Y`, `DRIP_BAND_Y`, roof cap) drops
+  misfits; no signs or car door. `van_chassis.gd` `SKIN_X` 2.56 stays (D34: embedded, no rows).
+- Roof (spec-5-2): slats at `RACK_Y + 0.03` on the rails, legs to `RACK_LEG_TOP_Y`, antenna bases on
+  the rail top, whips 8 segments × 1 ring; junk at `van_roof_junk.gd` `BASE_Y` (`RACK_Y + 0.035`).
 - Cab (D21, D22): `van_cab_shell.gd` on `VanBodyProfile.section_points(steps, true)`.
 - Caps: `rear_doors.gd`, `van_side_wall_shell.gd` at 400 lines; split before adding.
 
 ## Completed phase
-Phase 5 in progress. This session: 732f874 sills break over the rear arches (spec-5-1, Tread vs
-Sill rows gone); fdfe328 D30 layout (no door CLIP vs ToolBox/Tank/Spare left) and exhaust hangers
-on the real sill face. check, smoke, scene dump clean (scene dump unchanged, nothing blessed).
-Audit: CLIP 57, EDGE 23, FLICKER 1603, OPENING 83, LEAK_OUT 47, LEAK_IN 1.
+Phase 5 in progress. Session 4 (autoplan) landed 06ed1ec: D38 recess 0.30, D39/D41 OPENING
+exemptions, D40 trunk/feed/hopper hop over the door bays, battery jumper moved ahead of the window
+bay; scene dump blessed (only recess_distance -0.24 -> -0.3). Earlier: D35-D37 (258d238..a937e13).
+Audit now: CLIP 0, EDGE 23, FLICKER 562, LEAK_IN 1, LEAK_OUT 40, OPENING 0 (was 6/23/572/1/40/46).
+Triage for what is left:
+- FLICKER (562): Welder props (bottle bands, scorch decals, gauge, spokes), Hopper chain links,
+  KickPlate vs Generator (34, re-check with the audit at=), wall posts, TopRail, cable strands
+  (bundle strands coplanar: @Node3D@375 Strand7 at the front ceiling z -4.32, 0.53 m2 = the hopped
+  feed/trunk; MachineParts.cable_bundle strand spacing), Plate vs WallRib; half/open rows ungrouped.
+- LEAK_OUT 40, LEAK_IN 1 (through=nothing at (2.706, 1.158, -1.382)), EDGE 23: not triaged yet.
 
 ## Blocker
-none (Q2 answered as D32: drop `low_front` and `low_mid`; the side keeps pillar,
-top and tail armour snapped to the real skin).
+none.
 
 ## Next phase
-Phase 5 continued: (a) send spec-5-2 (side-step hangers, roof rack, antenna FLICKER,
-`.claude/plans/vanfix.spec-5-2.md`) to the implementer; (b) D32 in `van_armour.gd`
-(remove the `low_front` and `low_mid` slots) and snap every remaining armour piece to the real skin (`VanHull.SIDE_SKIN_OUTER_M`,
-not `SKIN_OFFSET_M`/`FACE_X`; flat plates on the bowed skin: inner face at the max skin x over the
-plate's y span + `TRIM_LIFT`), also `SKIN_X` in `van_chassis.gd` (toolbox, tank, spare mount,
-steps) → the real skin, with a D6 placement check (touches, clear of openings, under the roof cap);
-(c) exterior `VanLook/Cables` vs side door CurvedBody CLIP (closed state, ~30 rows, y 2.81..2.92,
-z -2.6..-4.35) and vs side walls / bulkhead posts FLICKER; MarkerLights ClearanceL0/R0 OPENING;
-(d) rear dressing; (e) interior FLICKER (Bulkhead ~875 pairs, Props ~301 incl. CabRelay/Rack,
-InnerShell ~163, Shell ~49); (f) wire `--strict` into smoke once every count is 0.
+Phase 5 continued: (d) rear dressing; (e) the FLICKER groups above (start with cable strands and
+the Welder/Hopper props: one Explore per group, one spec each); (f) LEAK_OUT/LEAK_IN triage and
+EDGE exemptions; (g) wire --strict into smoke once every count is 0; rear and roof shots, several
+van seeds (smoke.py --shots DIR --van-seeds 3). Nothing visible was shot this session: D40 moves
+cables onto the ceiling over the door bays, look at them in the next shots.
 
 ## Requirements / gotchas
 - The audit's `Interior/Props/FuseBox/Generator` and `CraftingTable/Welder` fan/flywheel/spoke

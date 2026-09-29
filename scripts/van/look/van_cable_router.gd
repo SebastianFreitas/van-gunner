@@ -13,6 +13,16 @@ const DETOUR_X_MAX := 0.4
 const DETOUR_Y := 0.3
 const COIL_RADIUS := 0.12
 const COIL_SEGMENTS := 6
+## |x| a hopped run moves in to: the liner there is about 3.23, so the run clears the door top.
+const HOP_X := 1.5
+## How far below the liner a hopped run sits, so it passes under the ceiling ribs' lower edge.
+const HOP_DROP := 0.14
+## Z length of the ramp between the wall and the ceiling run.
+const HOP_RAMP := 0.3
+## Only points above this height (upper-wall runs) hop.
+const HOP_MIN_Y := 2.2
+## Z padding added each side of the side door bay.
+const HOP_PAD := 0.05
 
 var _walls: VanSideWall
 
@@ -30,6 +40,44 @@ func wall_x(y: float) -> float:
 
 func ceiling_y(x: float) -> float:
 	return 3.02 + 0.38 * (1.0 - pow(x / 2.36, 2.0)) - 0.015
+
+
+## Moves an upper-wall point inside the side door bay onto the ceiling; other points pass through.
+func lift(p: Vector3, inset: float) -> Vector3:
+	var z_min := VanInnerShell.DOOR_Z_MIN - HOP_PAD - 1e-4
+	var z_max := VanInnerShell.DOOR_Z_MAX + HOP_PAD + 1e-4
+	if p.z < z_min or p.z > z_max or p.y <= HOP_MIN_Y or absf(p.x) <= HOP_X - inset:
+		return p
+	var hx := HOP_X - inset
+	return Vector3(signf(p.x) * hx, ceiling_y(hx) - HOP_DROP, p.z)
+
+
+## Lifts every upper-wall stretch that crosses a side door bay onto the ceiling (D40).
+func hop_bays(points: PackedVector3Array, inset: float) -> PackedVector3Array:
+	var lo := VanInnerShell.DOOR_Z_MIN - HOP_PAD
+	var hi := VanInnerShell.DOOR_Z_MAX + HOP_PAD
+	var planes: Array[float] = [lo - HOP_RAMP, lo, hi, hi + HOP_RAMP]
+	var out := PackedVector3Array()
+	for i: int in range(points.size()):
+		if i > 0:
+			var a: Vector3 = points[i - 1]
+			var b: Vector3 = points[i]
+			var hits: Array[float] = []
+			for plane: float in planes:
+				if (a.z < plane and b.z > plane) or (a.z > plane and b.z < plane):
+					hits.append(plane)
+			# Walk the crossed planes in travel order.
+			hits.sort()
+			if b.z < a.z:
+				hits.reverse()
+			for plane: float in hits:
+				var s := a.lerp(b, (plane - a.z) / (b.z - a.z))
+				s.z = plane
+				out.append(s)
+		out.append(points[i])
+	for i: int in range(out.size()):
+		out[i] = lift(out[i], inset)
+	return out
 
 
 ## Inserts a detour vertex into every segment that crosses a keep-out box; gives up (returns the

@@ -2,6 +2,10 @@ extends RefCounted
 
 ## Builds the bulkhead's frame posts, headers, panels and diagonal mesh netting.
 
+## Fwd and Back strands sit this far either side of the grille plane so their faces, 2.4 cm
+## apart, never z-fight where they cross (the audit flags faces within 1 cm).
+const MESH_WEAVE_Z := 0.012
+
 var bulkhead: Node3D  # the owning VanBulkhead; reads/writes its fields when called
 
 
@@ -171,10 +175,12 @@ func add_diagonal_mesh(
 			var vault_ok := minf(limit0, limit1)
 			if y0 < vault_ok:
 				if y1 <= vault_ok + 0.03 and mesh_segment_ok(x0, y0, x1, y1, inset):
-					add_segment("MeshFwd_%d" % index, Vector3(x0, y0, 0.0), Vector3(x1, y1, 0.0), material)
+					add_segment("MeshFwd_%d" % index, Vector3(x0, y0, -MESH_WEAVE_Z),
+							Vector3(x1, y1, -MESH_WEAVE_Z), material)
 					index += 1
 				if y0 <= vault_ok + 0.03 and mesh_segment_ok(x0, y1, x1, y0, inset):
-					add_segment("MeshBack_%d" % index, Vector3(x0, y1, 0.0), Vector3(x1, y0, 0.0), material)
+					add_segment("MeshBack_%d" % index, Vector3(x0, y1, MESH_WEAVE_Z),
+							Vector3(x1, y0, MESH_WEAVE_Z), material)
 					index += 1
 
 

@@ -5,7 +5,13 @@ const INTERIOR_PATH := ^"../../Interior"
 
 const LAMP_Y := 2.93
 const SIDE_LAMP_Z: Array[float] = [-4.2, -2.1, 0.0, 2.1, 4.2]
-const SKIN_OUT := 0.06 ## hull skin offset outward from the inner liner
+const SIDE_WALLS_PATH := ^"../../Interior/Shell/SideWalls"
+
+## How far the side door leaf slides open along z. Keep in step with `slide_distance` in
+## side_doors.gd (neither script has a class_name to read it from).
+const DOOR_SLIDE_M := 2.45
+## Half length of the side door leaf. Keep in step with `DOOR_HALF_Z` in side_door_leaf.gd.
+const DOOR_LEAF_HALF_Z := 1.105
 
 const AMBER := Color(1.0, 0.55, 0.15)
 const RED := Color(0.9, 0.08, 0.05)
@@ -48,21 +54,27 @@ func rebuild_look(_look: VanLook) -> void:
 
 
 func _build_side_lamps(profile: VanBodyProfile, lens_mat: Material, housing_mat: Material) -> void:
-	var sx := profile.inner_x_at(LAMP_Y) + SKIN_OUT
+	var sx := profile.inner_x_at(LAMP_Y) + VanHull.SIDE_SKIN_OUTER_M
+	var walls := get_node_or_null(SIDE_WALLS_PATH) as VanSideWall
 	for sign_idx in 2:
 		var side := -1.0 if sign_idx == 0 else 1.0
 		var side_letter := "L" if sign_idx == 0 else "R"
 		for i in SIDE_LAMP_Z.size():
 			var z := SIDE_LAMP_Z[i]
+			if walls != null:
+				var door_z0 := walls.door_center_z - walls.door_half_length
+				var door_z1 := walls.door_center_z + DOOR_SLIDE_M + DOOR_LEAF_HALF_Z
+				if z + 0.08 + 0.02 > door_z0 and z - 0.08 - 0.02 < door_z1:
+					continue
 			var housing_mesh := BoxMesh.new()
 			housing_mesh.size = Vector3(0.05, 0.08, 0.16)
 			_add_mesh("Clearance%s%d" % [side_letter, i], housing_mesh, housing_mat,
 					Vector3(side * (sx + 0.025), LAMP_Y, z))
 
 			var lens_mesh := BoxMesh.new()
-			lens_mesh.size = Vector3(0.02, 0.05, 0.12)
+			lens_mesh.size = Vector3(0.03, 0.05, 0.12)
 			_add_mesh("Lens%s%d" % [side_letter, i], lens_mesh, lens_mat,
-					Vector3(side * (sx + 0.06), LAMP_Y, z))
+					Vector3(side * (sx + 0.05), LAMP_Y, z))
 
 		var glow := OmniLight3D.new()
 		glow.name = "ClearanceGlow%s" % side_letter

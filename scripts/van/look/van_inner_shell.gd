@@ -37,7 +37,8 @@ func rebuild_look(look: VanLook) -> void:
 
 	_wall = get_node_or_null(WALL_PATH) as VanSideWall
 	_weld_bead_mesh = BoxMesh.new()
-	_weld_bead_mesh.size = Vector3(0.05, 0.05, 0.05)
+	# 2 cm proud of the rib's 0.03 faces either way it runs, buried in its 0.07 depth
+	_weld_bead_mesh.size = Vector3(0.07, 0.07, 0.03)
 
 	var weld := MachineParts.dark(Color(0.2, 0.19, 0.17), 0.8)
 	var plate_a := MachineParts.dark(Color(0.24, 0.2, 0.15), 0.88)

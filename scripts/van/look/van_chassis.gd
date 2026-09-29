@@ -200,12 +200,13 @@ func _build_well(well_name: String, centre: Vector3, radius: float, mat: Materia
 
 
 func _build_steps(side: float, label: String, mat: Material) -> void:
-	_wheels._add_mesh("SideStep%s" % label, _wheels._box(Vector3(0.30, 0.05, 2.2)), mat,
-			Vector3(side * (SKIN_X + 0.15), -0.06, -3.485))
+	_wheels._add_mesh("SideStep%s" % label, _wheels._box(Vector3(0.22, 0.05, 2.2)), mat,
+			Vector3(side * (SKIN_X + 0.19), -0.06, -3.485))
+	# Hangers end 2 cm under the skin edge and 4 cm short of the step's inner end: no shared planes.
 	for i: int in range(2):
 		var offset: float = 0.95 if i == 0 else -0.95
-		_wheels._add_mesh("SideStepHanger%s%d" % [label, i], _wheels._box(Vector3(0.18, 0.12, 0.06)), mat,
-				Vector3(side * (SKIN_X + 0.09), -0.04, -3.485 + offset))
+		_wheels._add_mesh("SideStepHanger%s%d" % [label, i], _wheels._box(Vector3(0.16, 0.11, 0.06)), mat,
+				Vector3(side * (SKIN_X + 0.10), -0.055, -3.485 + offset))
 
 	# Centred 3 cm further out than the hangers so its inner face clears the cab skin's bowed side.
 	_wheels._add_mesh("CabStep%s" % label, _wheels._box(Vector3(0.28, 0.05, 1.2)), mat,

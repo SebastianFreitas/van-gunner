@@ -4,6 +4,8 @@ extends RefCounted
 const CELL_Z_MIN := -3.3
 const CELL_Z_MAX := 4.2
 const CELL_LEN := 1.25
+## Junk bottoms 1.75 cm into the slats and 2.75 cm off their undersides (D12).
+const BASE_Y := VanRoof.RACK_Y + 0.035
 const LANES: Array[float] = [-0.9, 0.9]
 
 const KINDS: Array[StringName] = [&"empty", &"tyres", &"cans", &"crate", &"tarp"]
@@ -31,7 +33,7 @@ func build(rng: RandomNumberGenerator) -> void:
 	while z + CELL_LEN <= CELL_Z_MAX + 0.001:
 		for lane: float in LANES:
 			var kind: StringName = KINDS[rng.randi_range(0, KINDS.size() - 1)]
-			var center := Vector3(lane, VanRoof.RACK_Y, z + CELL_LEN * 0.5)
+			var center := Vector3(lane, BASE_Y, z + CELL_LEN * 0.5)
 			if z + CELL_LEN > _roof.rear_zone_z:
 				if kind != &"empty":
 					deferred.append([kind, lane])
@@ -127,8 +129,8 @@ func _tarp(center: Vector3, _rng: RandomNumberGenerator) -> void:
 		var zs := center.z + sign_z
 		_roof.add_bar(
 			_next_name("JunkStrap"),
-			Vector3(center.x - 0.3, VanRoof.RACK_Y + 0.56, zs),
-			Vector3(center.x + 0.3, VanRoof.RACK_Y + 0.56, zs),
+			Vector3(center.x - 0.3, BASE_Y + 0.56, zs),
+			Vector3(center.x + 0.3, BASE_Y + 0.56, zs),
 			0.03,
 			_roof.rack_material
 		)

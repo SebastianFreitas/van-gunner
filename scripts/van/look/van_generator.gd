@@ -1,6 +1,6 @@
 class_name VanGenerator
 extends Node3D
-## The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp, jerry cans, exhaust to a roof vent) whose motion and smoke follow the vital's HP.
+## The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp, jerry cans, exhaust stack) whose motion and smoke follow the vital's HP.
 
 const _Parts := preload("res://scripts/van/look/van_generator_parts.gd")
 
@@ -51,8 +51,10 @@ func _build(steel: Material, paint: Material, rubber: Material, face: Material,
 	var can_b := MachineParts.jerry_can(self, Vector3(0.83, -0.49, -0.22), paint)
 	can_a.rotation.y = PI / 2.0
 	can_b.rotation.y = PI / 2.0
-	MachineParts.pipe(self, Vector3(-0.15, 0.1, -0.2), Vector3(-0.15, 2.4, -0.2), steel, 0.05)
-	MachineParts.vent(self, Vector3(-0.15, 2.4, -0.2), steel, 0.28)
+	# The exhaust leans off the bowed wall so neither pipe nor vent enters it.
+	MachineParts.pipe(self, Vector3(-0.15, 0.1, -0.2), Vector3(-0.15, 1.3, -0.2), steel, 0.05)
+	MachineParts.pipe(self, Vector3(-0.15, 1.3, -0.2), Vector3(0.2, 2.0, -0.2), steel, 0.05)
+	MachineParts.vent(self, Vector3(0.2, 2.0, -0.2), steel, 0.28)
 
 	var run_lamp := MeshInstance3D.new()
 	run_lamp.name = "RunLamp"
@@ -96,7 +98,7 @@ func _wire_motion(motor_root: Node3D, flywheel_root: Node3D, fan_root: Node3D,
 func _bind_damage(motion: MachineMotion) -> void:
 	var damage := MachineDamage.new()
 	damage.name = "Damage"
-	damage.smoke_offset = Vector3(-0.15, 2.3, -0.2)
+	damage.smoke_offset = Vector3(0.2, 2.2, -0.2)
 	add_child(damage)
 	damage.state_changed.connect(_on_state_changed)
 	var body := get_parent() as StaticBody3D

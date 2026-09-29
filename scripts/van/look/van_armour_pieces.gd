@@ -1,16 +1,14 @@
 extends RefCounted
-## Appends armour piece geometry (plates, bars, spikes, signs, a car door) into per-material SurfaceTools for VanArmour.
+## Appends armour piece geometry (leaned plates, bars, spikes) into per-material SurfaceTools for VanArmour.
 
-const FACE_X := 2.6
-
-## SurfaceTool per material key: &"plate", &"rebar", &"sign", &"glass".
+## SurfaceTool per material key: &"plate", &"rebar".
 var tools: Dictionary = {}
 ## Whether each key has received any geometry yet.
 var _used: Dictionary = {}
 
 
 func _init() -> void:
-	for key: StringName in [&"plate", &"rebar", &"sign", &"glass"]:
+	for key: StringName in [&"plate", &"rebar"]:
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
 		tools[key] = st
@@ -27,12 +25,21 @@ func add_box(key: StringName, size: Vector3, xform: Transform3D) -> void:
 	_used[key] = true
 
 
-func add_plate(side: float, z: float, y: float, w: float, h: float, tilt_deg: float, layer: int) -> void:
-	var x := side * (FACE_X + 0.035 * float(layer))
+## Plate whose inner face runs from x0 (at y - h/2) to x1 (at y + h/2), mirrored by side, then
+## tilted about X. Each layer stands 2 cm further out so stacked faces are 2 cm apart.
+func add_plate(side: float, z: float, y: float, w: float, h: float, tilt_deg: float, layer: int,
+		x0: float, x1: float) -> void:
+	var lift := 0.02 * float(layer)
+	var dx := side * (x1 - x0)
+	var length := sqrt(dx * dx + h * h)
+	var lean_rad := atan2(-dx, h)
+	var lean := Basis(Vector3.BACK, lean_rad)
+	var normal := side * Vector3(cos(lean_rad), sin(lean_rad), 0.0)
+	var mid := Vector3(side * (x0 + x1 + 2.0 * lift) * 0.5, y, z)
 	var m := BoxMesh.new()
-	m.size = Vector3(0.04, h, w)
-	var basis := Basis(Vector3.RIGHT, deg_to_rad(tilt_deg))
-	tools[&"plate"].append_from(m, 0, Transform3D(basis, Vector3(x, y, z)))
+	m.size = Vector3(0.04, length, w)
+	var basis := lean * Basis(Vector3.RIGHT, deg_to_rad(tilt_deg))
+	tools[&"plate"].append_from(m, 0, Transform3D(basis, mid + normal * 0.02))
 	_used[&"plate"] = true
 
 
@@ -74,42 +81,3 @@ func add_spike(side: float, pos: Vector3, length: float) -> void:
 	var origin := pos + dir * (length * 0.5)
 	tools[&"rebar"].append_from(cyl, 0, Transform3D(basis, origin))
 	_used[&"rebar"] = true
-
-
-func add_sign(side: float, z: float, y: float, size: float, shape: int) -> void:
-	var x := side * (FACE_X + 0.07)
-	match shape:
-		0:
-			var m := BoxMesh.new()
-			m.size = Vector3(0.03, size, size)
-			var basis := Basis(Vector3.RIGHT, deg_to_rad(45.0))
-			tools[&"sign"].append_from(m, 0, Transform3D(basis, Vector3(x, y, z)))
-		1:
-			var wide := BoxMesh.new()
-			wide.size = Vector3(0.03, size * 0.42, size)
-			tools[&"sign"].append_from(wide, 0, Transform3D(Basis(), Vector3(x, y, z)))
-			var tall := BoxMesh.new()
-			tall.size = Vector3(0.03, size, size * 0.42)
-			tools[&"sign"].append_from(tall, 0, Transform3D(Basis(), Vector3(x, y, z)))
-		_:
-			var rect := BoxMesh.new()
-			rect.size = Vector3(0.03, size * 0.7, size * 1.2)
-			tools[&"sign"].append_from(rect, 0, Transform3D(Basis(), Vector3(x, y, z)))
-	_used[&"sign"] = true
-	add_box(&"rebar", Vector3(0.04, 0.04, 0.04), Transform3D(Basis(), Vector3(x, y + size * 0.3, z)))
-	add_box(&"rebar", Vector3(0.04, 0.04, 0.04), Transform3D(Basis(), Vector3(x, y - size * 0.3, z)))
-
-
-func add_car_door(side: float, z: float, y: float) -> void:
-	var x := side * (FACE_X + 0.06)
-	var lower_y := y - 0.2
-	var window_bottom := lower_y + 0.225
-	var window_top := window_bottom + 0.4
-	var window_center := (window_bottom + window_top) * 0.5
-	var half_w := 0.55
-	add_box(&"plate", Vector3(0.05, 0.45, 1.1), Transform3D(Basis(), Vector3(x, lower_y, z)))
-	add_bar(&"plate", Vector3(x, window_bottom, z - half_w), Vector3(x, window_top, z - half_w), 0.05)
-	add_bar(&"plate", Vector3(x, window_bottom, z + half_w), Vector3(x, window_top, z + half_w), 0.05)
-	add_bar(&"plate", Vector3(x, window_top, z - half_w), Vector3(x, window_top, z + half_w), 0.05)
-	add_box(&"glass", Vector3(0.02, 0.36, 0.96), Transform3D(Basis(), Vector3(x, window_center, z)))
-	add_box(&"rebar", Vector3(0.03, 0.04, 0.14), Transform3D(Basis(), Vector3(x, lower_y, z + 0.4)))

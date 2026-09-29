@@ -5,6 +5,16 @@ extends RefCounted
 
 const CELL := 0.25
 const TOUCH_EPS := 0.002
+## Opening label -> node path prefixes never reported: the PC rig stands in the left door bay
+## on purpose (D39), and window frames (wall, reveals, hull skin) surround their cut (D41).
+const _WIN_FRAME: Array = ["Interior/Shell/SideWalls/", "VanLook/Hull/SideSkin"]
+const OPENING_EXEMPT: Dictionary = {
+	&"door_left": ["Interior/Props/RequestBoard/PcRig"],
+	&"win_left_front": _WIN_FRAME,
+	&"win_left_rear": _WIN_FRAME,
+	&"win_right_front": _WIN_FRAME,
+	&"win_right_rear": _WIN_FRAME,
+}
 
 
 static func check_clip(tris: RefCounted, runner: Node, state: String, roots: Dictionary) -> void:
@@ -51,6 +61,10 @@ static func check_openings(tris: RefCounted, runner: Node, roots: Dictionary, cl
 			box.position + Vector3(-0.08, 0.03, 0.03),
 			box.size + Vector3(0.16, -0.06, -0.06),
 		)
+		var exempt: Array = []
+		for exempt_label in OPENING_EXEMPT.keys():
+			if String(exempt_label) == String(label):
+				exempt = OPENING_EXEMPT[exempt_label]
 		for t in range(tris.count()):
 			if node_root.get(tris.owner_idx[t], &"") == label:
 				continue
@@ -58,6 +72,13 @@ static func check_openings(tris: RefCounted, runner: Node, roots: Dictionary, cl
 			var inside := wall.has_point(tris.a[t]) or wall.has_point(tris.b[t]) \
 				or wall.has_point(tris.c[t]) or wall.has_point(centroid)
 			if not inside:
+				continue
+			var exempted := false
+			for prefix: String in exempt:
+				if tris.path_of(t).contains(prefix):
+					exempted = true
+					break
+			if exempted:
 				continue
 			var key: String = "%s|%s" % [label, tris.path_of(t)]
 			var row: Dictionary = agg.get(key, {"label": label, "node": tris.path_of(t), "tris": 0, "sum": Vector3.ZERO})
