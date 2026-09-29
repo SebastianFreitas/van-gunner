@@ -41,26 +41,33 @@ Status: partial
 - Caps: `rear_doors.gd`, `van_side_wall_shell.gd` at 400 lines; split before adding.
 
 ## Completed phase
-Phase 5 in progress. Session 4 (autoplan) landed 06ed1ec: D38 recess 0.30, D39/D41 OPENING
-exemptions, D40 trunk/feed/hopper hop over the door bays, battery jumper moved ahead of the window
-bay; scene dump blessed (only recess_distance -0.24 -> -0.3). Earlier: D35-D37 (258d238..a937e13).
-Audit now: CLIP 0, EDGE 23, FLICKER 562, LEAK_IN 1, LEAK_OUT 40, OPENING 0 (was 6/23/572/1/40/46).
-Triage for what is left:
-- FLICKER (562): Welder props (bottle bands, scorch decals, gauge, spokes), Hopper chain links,
-  KickPlate vs Generator (34, re-check with the audit at=), wall posts, TopRail, cable strands
-  (bundle strands coplanar: @Node3D@375 Strand7 at the front ceiling z -4.32, 0.53 m2 = the hopped
-  feed/trunk; MachineParts.cable_bundle strand spacing), Plate vs WallRib; half/open rows ungrouped.
+Phase 5 in progress. Autoplan session 2 landed 5febd43: (d) rear dressing done (bars and beads
+0.08 at `BAR_Z` -0.09, 1.5 cm into the leaf, `BAR_Y_LOW` -1.12 below the Handle; one straddling
+box per lock bracket at `LOCK_BAR_Z` -0.10); floor decals at `DECAL_LIFT` 0.012 (D42); generator
+drip pan a flanged tray (`_skid`, rims 3 cm standing in it, puddle embedded; 1.5 cm open corners).
+Earlier: 06ed1ec (D38-D41), D35-D37 (258d238..a937e13).
+Audit now: CLIP 0, EDGE 23, FLICKER 525 (all `closed`), LEAK_IN 1, LEAK_OUT 40, OPENING 0.
+FLICKER groups (rows; intra-prop ones are details of builders in `scripts/van/look/`):
+Generator self 78, Welder self 72, PcRig self 56, Hopper self 53, CabRelay Rack self 45,
+KickPlate_0..5 vs Generator 49, FrontWall/Slab vs Rack 11 / PcRig 4, SideWalls self 8 (LeftWall
+vs CargoRail_L_*, Wall vs DoorJamb 82 pairs, DoorSlideTrack), RearWall IronCross (HorizontalBar
+vs CenterPlate/EndPad, in van_shell.tscn), CurvedBody vs WindowFrame, WindowFrame vs WindowGlass,
+cable strands (@Node3D@375 Strand7, @448/@444/@418 strand pairs), WallRib vs Plate 16,
+PatchWall/Ceil _Ring vs patch 10, wall posts vs CargoRail/FloorSeal, RearEntryRamp vs BumperHanger.
+Get the list: group `^FLICKER` rows by a=/b= prefix (awk over the report).
 - LEAK_OUT 40, LEAK_IN 1 (through=nothing at (2.706, 1.158, -1.382)), EDGE 23: not triaged yet.
 
 ## Blocker
 none.
 
 ## Next phase
-Phase 5 continued: (d) rear dressing; (e) the FLICKER groups above (start with cable strands and
-the Welder/Hopper props: one Explore per group, one spec each); (f) LEAK_OUT/LEAK_IN triage and
-EDGE exemptions; (g) wire --strict into smoke once every count is 0; rear and roof shots, several
-van seeds (smoke.py --shots DIR --van-seeds 3). Nothing visible was shot this session: D40 moves
-cables onto the ceiling over the door bays, look at them in the next shots.
+Phase 5 continued: (e) the FLICKER groups above, two specs per session (start with the SideWalls
+cargo rails / door jambs and the RearWall IronCross + window frame, then cable strands, then one
+prop builder per spec: give each implementer the grep for its rows and the ≥ 1.2 cm rule, parts
+must still touch, embed rather than float); (f) LEAK_OUT/LEAK_IN triage and EDGE exemptions;
+(g) wire --strict into smoke once every count is 0; rear and roof shots, several van seeds
+(smoke.py --shots DIR --van-seeds 3). Nothing visible was shot in the last two sessions: look at
+the D40 ceiling cables, the rear-door bars and the generator pan in the next shots.
 
 ## Requirements / gotchas
 - The audit's `Interior/Props/FuseBox/Generator` and `CraftingTable/Welder` fan/flywheel/spoke

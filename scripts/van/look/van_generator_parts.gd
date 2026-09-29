@@ -77,11 +77,11 @@ func _skid() -> void:
 			_box("Foot", Vector3(0.12, 0.04, 0.08), _rubber, Vector3(x, -0.47, s * 0.26))
 	for x: float in [-0.09, 0.1, 0.34, 0.67]:
 		_box("CrossMember", Vector3(0.05, 0.04, 0.52), _steel, Vector3(x, -0.42, 0.0))
-	_box("PanFloor", Vector3(0.5, 0.012, 0.38), _steel, Vector3(0.2, -0.484, 0.0))
+	_box("PanFloor", Vector3(0.53, 0.03, 0.43), _steel, Vector3(0.2, -0.463, 0.0))
 	for s: float in [-1.0, 1.0]:
-		_box("PanRimSide", Vector3(0.5, 0.035, 0.012), _steel, Vector3(0.2, -0.4635, s * 0.19))
-		_box("PanRimEnd", Vector3(0.012, 0.035, 0.38), _steel, Vector3(0.2 + s * 0.25, -0.4635, 0.0))
-	_box("OilPuddle", Vector3(0.18, 0.006, 0.12), _rubber, Vector3(0.15, -0.474, 0.02))
+		_box("PanRimSide", Vector3(0.47, 0.043, 0.03), _steel, Vector3(0.2, -0.4415, s * 0.185))
+		_box("PanRimEnd", Vector3(0.03, 0.043, 0.31), _steel, Vector3(0.2 + s * 0.235, -0.4415, 0.0))
+	_box("OilPuddle", Vector3(0.18, 0.03, 0.12), _rubber, Vector3(0.22, -0.448, 0.02))
 
 
 ## Cylinder head, three-stub manifold under the existing exhaust pipe, fuel tank and hose.

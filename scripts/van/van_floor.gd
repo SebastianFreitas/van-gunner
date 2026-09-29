@@ -3,6 +3,9 @@ extends Node3D
 
 ## Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape).
 
+## Height of flat floor decals above the deck: clears the geometry audit's 1 cm coplanar tolerance (D42).
+const DECAL_LIFT := 0.012
+
 @export var span_x := 4.8
 @export var span_z := 9.6
 @export var deck_thickness := 0.25
@@ -199,7 +202,7 @@ func _build_entrance_mats() -> void:
 	_add_flat(
 		"RearEntryMat",
 		Vector2(1.55, 0.95),
-		Vector3(0.0, 0.004, 3.95),
+		Vector3(0.0, DECAL_LIFT, 3.95),
 		0.0,
 		rear_mat
 	)
@@ -213,7 +216,7 @@ func _build_entrance_mats() -> void:
 	_add_flat(
 		"LeftSideMat",
 		Vector2(0.72, 1.15),
-		Vector3(-1.55, 0.004, -3.35),
+		Vector3(-1.55, DECAL_LIFT, -3.35),
 		8.0,
 		side_mat
 	)
@@ -228,12 +231,12 @@ func _build_scatter_props() -> void:
 	var tape := _mat_shader_or_standard(Color(0.55, 0.48, 0.22, 1.0), 0.55, 0.05, false)
 	var rag := _mat_shader_or_standard(Color(0.28, 0.22, 0.18, 1.0), 0.98, 0.0, true)
 
-	_add_flat("PaperReceipt", Vector2(0.18, 0.26), Vector3(-0.85, 0.006, 1.55), 22.0, paper_a)
-	_add_flat("PaperNote", Vector2(0.22, 0.16), Vector3(0.55, 0.006, -0.9), -14.0, paper_b)
-	_add_flat("PaperFolded", Vector2(0.14, 0.2), Vector3(-1.35, 0.006, 2.6), 41.0, paper_c)
-	_add_flat("CardboardScrap", Vector2(0.55, 0.4), Vector3(0.95, 0.005, 2.1), -28.0, cardboard)
-	_add_flat("DuctTapeStrip", Vector2(0.42, 0.045), Vector3(-0.2, 0.007, -2.15), 7.0, tape)
-	_add_flat("RagScrap", Vector2(0.38, 0.28), Vector3(1.35, 0.005, -1.75), 33.0, rag)
+	_add_flat("PaperReceipt", Vector2(0.18, 0.26), Vector3(-0.85, DECAL_LIFT, 1.55), 22.0, paper_a)
+	_add_flat("PaperNote", Vector2(0.22, 0.16), Vector3(0.55, DECAL_LIFT, -0.9), -14.0, paper_b)
+	_add_flat("PaperFolded", Vector2(0.14, 0.2), Vector3(-1.35, DECAL_LIFT, 2.6), 41.0, paper_c)
+	_add_flat("CardboardScrap", Vector2(0.55, 0.4), Vector3(0.95, DECAL_LIFT, 2.1), -28.0, cardboard)
+	_add_flat("DuctTapeStrip", Vector2(0.42, 0.045), Vector3(-0.2, DECAL_LIFT, -2.15), 7.0, tape)
+	_add_flat("RagScrap", Vector2(0.38, 0.28), Vector3(1.35, DECAL_LIFT, -1.75), 33.0, rag)
 
 	# Thin oil-stain decals (dark translucent plates).
 	var oil := StandardMaterial3D.new()
@@ -242,8 +245,8 @@ func _build_scatter_props() -> void:
 	oil.roughness = 0.35
 	oil.metallic = 0.15
 	oil.cull_mode = BaseMaterial3D.CULL_DISABLED
-	_add_flat("OilStainA", Vector2(0.55, 0.32), Vector3(-1.7, 0.003, 0.4), 18.0, oil)
-	_add_flat("OilStainB", Vector2(0.35, 0.5), Vector3(1.75, 0.003, 3.2), -40.0, oil)
+	_add_flat("OilStainA", Vector2(0.55, 0.32), Vector3(-1.7, DECAL_LIFT, 0.4), 18.0, oil)
+	_add_flat("OilStainB", Vector2(0.35, 0.5), Vector3(1.75, DECAL_LIFT, 3.2), -40.0, oil)
 
 
 func _add_flat(node_name: String, size: Vector2, pos: Vector3, yaw_deg: float, material: Material) -> void:

@@ -6,14 +6,16 @@ extends Node3D
 
 const BAR_LENGTH := 2.2
 const BAR_SIZE := 0.05
-const BAR_Y_LOW := -0.9
+const BAR_Y_LOW := -1.12
 const BAR_Y_HIGH := 0.7
 const LEAF_INNER_Z := -0.12
-const WELD_BEAD_SIZE := 0.06
+const WELD_BEAD_SIZE := 0.08
+## Bars embed 1.5 cm into the leaf (inner face at -0.08); the low bar rides below the Handle.
+const BAR_Z := -0.09
 
 const LOCK_BAR_LENGTH := 0.9
 const LOCK_BAR_SIZE := 0.07
-const LOCK_BAR_Z := -0.16
+const LOCK_BAR_Z := -0.10
 const LOCK_BRACKET_X := 0.3
 
 const CHAIN_LINKS := 7
@@ -103,12 +105,12 @@ func _add_horizontal_bar(hinge: Node3D, y: float, mirror: float, mat: Material) 
 	var bar_mesh := BoxMesh.new()
 	bar_mesh.size = Vector3(BAR_LENGTH, BAR_SIZE, BAR_SIZE)
 	var center_x := mirror * LEAF_CENTER_X
-	_spawn(hinge, bar_mesh, mat, Vector3(center_x, y, LEAF_INNER_Z))
+	_spawn(hinge, bar_mesh, mat, Vector3(center_x, y, BAR_Z))
 
 	var bead_mesh := BoxMesh.new()
 	bead_mesh.size = Vector3(WELD_BEAD_SIZE, WELD_BEAD_SIZE, WELD_BEAD_SIZE)
 	for sign_x: float in [-1.0, 1.0]:
-		_spawn(hinge, bead_mesh, mat, Vector3(center_x + sign_x * BAR_LENGTH * 0.5, y, LEAF_INNER_Z))
+		_spawn(hinge, bead_mesh, mat, Vector3(center_x + sign_x * BAR_LENGTH * 0.5, y, BAR_Z))
 
 
 func _add_lock_bar(hinge: Node3D, mirror: float, mat: Material) -> void:
@@ -117,13 +119,12 @@ func _add_lock_bar(hinge: Node3D, mirror: float, mat: Material) -> void:
 	bar_mesh.size = Vector3(LOCK_BAR_LENGTH, LOCK_BAR_SIZE, LOCK_BAR_SIZE)
 	_spawn(hinge, bar_mesh, mat, Vector3(free_edge_x, 0.0, LOCK_BAR_Z))
 
-	var piece_mesh := BoxMesh.new()
-	piece_mesh.size = Vector3(0.05, 0.12, 0.03)
+	# One box per bracket, straddling the bar with 1.5-2.5 cm clear of its faces (audit FLICKER).
+	var bracket_mesh := BoxMesh.new()
+	bracket_mesh.size = Vector3(0.08, 0.12, 0.10)
 	for sign_x: float in [-1.0, 1.0]:
-		var bracket_center := Vector3(free_edge_x - sign_x * LOCK_BRACKET_X, 0.0, LOCK_BAR_Z)
-		for part_offset: Vector3 in [Vector3(0.0, 0.0, 0.0), Vector3(0.04, 0.0, 0.02),
-				Vector3(-0.04, 0.0, 0.02)]:
-			_spawn(hinge, piece_mesh, mat, bracket_center + part_offset)
+		_spawn(hinge, bracket_mesh, mat,
+				Vector3(free_edge_x - sign_x * LOCK_BRACKET_X, 0.0, LOCK_BAR_Z))
 
 
 func _add_chain(hinge: Node3D, mirror: float, y_low: float, y_high: float, mat: Material) -> void:
@@ -138,7 +139,7 @@ func _add_chain(hinge: Node3D, mirror: float, y_low: float, y_high: float, mat: 
 		var y := lerpf(y_high, y_low, t)
 		var sag := sin(t * PI) * 0.08
 		var rot_z := 0.0 if i % 2 == 0 else PI * 0.5
-		_spawn(hinge, link_mesh, mat, Vector3(chain_x - sag, y, LEAF_INNER_Z - 0.04),
+		_spawn(hinge, link_mesh, mat, Vector3(chain_x - sag, y, BAR_Z - 0.04),
 				Vector3(0.0, 0.0, rot_z), Vector3(1.0, 1.0, 0.5))
 
 
