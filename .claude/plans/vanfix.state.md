@@ -39,13 +39,17 @@ Status: partial
 - Roof (spec-5-2): slats at `RACK_Y + 0.03` on the rails, legs to `RACK_LEG_TOP_Y`, antenna bases on
   the rail top, whips 8 segments × 1 ring; junk at `van_roof_junk.gd` `BASE_Y` (`RACK_Y + 0.035`).
 - Cab (D21, D22): `van_cab_shell.gd` on `VanBodyProfile.section_points(steps, true)`.
-- Caps: `rear_doors.gd`, `van_side_wall_shell.gd` at 400 lines; split before adding.
+- Caps: `rear_doors.gd`, `van_side_wall_shell.gd`, `side_windows.gd` at 400 lines; `van_audit_gaps.gd` 399;
+  split before adding.
+- Side window stop ring (D53): `side_windows.gd` `WindowStop` on each window root, `STOP_OUTER_POLY`
+  (cut +4 cm) / `STOP_INNER_POLY` (cut -5 cm), `STOP_LIFT` 0.015, `STOP_THICKNESS` 0.008, built with
+  `build_curved_frame_ring_mesh`; audit `OPENING` window prefixes include `/WindowStop`.
 
 ## Completed phase
 11 (done). Commits 721fd76 (floor, exemptions, header), a92d1cb (EDGE collinear seams). Audit, two runs
 identical: EDGE 10, FLICKER 9, LEAK_IN 1, LEAK_OUT 45; MINOR 417; EXEMPT EDGE 12, FLICKER 31. Check clean;
 no smoke (tools/van_audit only), no shots (nothing visible).
-12 (partial, sessions 5-6; session 6: probe tool 7d0de6e). Commit 5ffaddc: every LEAK_IN/LEAK_OUT row now ends with
+12 (partial, sessions 5-7; session 6: probe tool 7d0de6e). Commit 5ffaddc: every LEAK_IN/LEAK_OUT row now ends with
 `from=(...) dir=(...) trace=<node>:<F|B>@(x,y,z) > ...` (first ray of the row, up to 8 hits;
 `van_audit_gaps.gd` `trace_ray`, file now 399 lines: split before adding more). Counts unchanged
 (EDGE 10, FLICKER 9, LEAK_IN 1, LEAK_OUT 45). Triage from the traces (no fixes landed yet):
@@ -81,6 +85,16 @@ no smoke (tools/van_audit only), no shots (nothing visible).
     `van_hull_lines.gd`, `van_marker_lights.gd`: keep in step if either changes.
   - Upper-left rows (`DoorJamb_L` 96, `LeftWall` 13, CeilRibs) enter the left opening's rear-top corner
     through the same slot: same exemption/seal question, probe one before deciding.
+- **Session 7 (commit 9f1eb2a, D53):** the side window LEAK_IN was the 2 cm slot between the frame's outer
+  edge and the cut (ray slid along the bottom edge under the frame's outer vertex (-1.129, -0.62)): sealed
+  by the cabin-side `WindowStop` ring. Audit now: EDGE 10, FLICKER 9, LEAK_IN 1, LEAK_OUT 43; MINOR 425
+  (8 new tiny BeltRail vs WindowStop pairs, under the floor); EXEMPT unchanged. Check, smoke clean; shots
+  c18/c19 show the ring as window trim, the open sash clears it.
+  The remaining LEAK_IN (14 rays, `from=(0,1,-1.5) dir=(0.299,0.171,0.939)`) is a new face of the rear
+  doors: probe shows the ray grazing `RearWall/RightHinge/WindowGlass`'s edge at (1.975, 2.13, 4.702) with
+  the offset ray u-1 hitting nothing and u-2 hitting `WindowFrame`: a crack between the rear door's glass
+  edge and its frame's inner return. Fix it with the rear door work (step 3): glass larger than the
+  frame's hole by 2 cm and seated in the frame's depth, or the frame's inner return closed.
 - **Window reveals by design?** `LeftWallReveals` (144) at (-2.609, 1.575, 1.613) and `RightWall` (11)
   at (2.478, 2.288, -1.586): rays enter a window cut's edge and hit the reveal/wall; D41 says the
   frames surround the cut, so reveal faces seen inside a window opening can take a LEAK_OUT exemption
@@ -93,10 +107,12 @@ no smoke (tools/van_audit only), no shots (nothing visible).
 none
 
 ## Next phase
-Phase 12 continues (partial). Order: (1) window frame vs cut seam (LEAK_IN, probe first), (2) LEAK_OUT
-exemption for jamb lips and reveals seen through openings + side door leaf seal where the probe shows
-see-through, (3) rear door seam strip (split `rear_doors.gd` first), (4) LEAK_OUT exemptions for window reveals and
-the rear sill, (5) EDGE rows below. Each fix: check, smoke, audit; shots for (2) and (3). Its EDGE input, after phase 11: `Cab/CabLiner` (78, bottom
+Phase 12 continues (partial). Step (1) is done (D53). Order now: (2) LEAK_OUT exemption for jamb lips and
+reveals seen through openings (`rule_for("LEAK_OUT", ...)`; `van_audit_gaps.gd` is at 399: split first) +
+side door leaf seal where the probe shows see-through (`Left/CurvedBody` y 0.16 row), (3) rear door centre
+seam strip plus the rear window glass-to-frame crack (the LEAK_IN above; split `rear_doors.gd` first),
+(4) LEAK_OUT exemptions for window reveals and the rear sill, (5) EDGE rows below. Each fix: check, smoke,
+audit; shots for (2) and (3). Its EDGE input, after phase 11: `Cab/CabLiner` (78, bottom
 edge y -0.222 z -4.72, 5 m), `Cab/CabBackLip` (31), `Hull/RearSkin` (2), `Hull/CornerPostFL/FR` (12 each),
 `Hull/BellySkin` (2), `RearWall/Left|RightHinge/CurvedBody` (100 each), `Hull/RearCornerL/R` (1 each): fix
 holes, or add a rule with reason and D to `van_audit_exempt.gd`. The 9 FLICKER leftovers (CasingLeft/Right vs

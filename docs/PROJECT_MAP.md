@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-294 GDScript files, 44984 lines.
+294 GDScript files, 45011 lines.
 
 ### `scenes/corridor/`
 
@@ -603,7 +603,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `side_doors.gd` | — | 332 | Sliding cargo-style side doors. |
 | `side_window_exterior.gd` | — | 50 | Adds the dark-tinted exterior pane that rides a side cargo window's sash. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. |
-| `side_windows.gd` | — | 374 | Side cargo windows — top-hinged sashes that tip vertically outward. |
+| `side_windows.gd` | — | 401 | Side cargo windows — top-hinged sashes that tip vertically outward. |
 | `van.gd` | — | 398 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
 | `van_body_profile.gd` | `VanBodyProfile` | 193 | One cross-section for the whole van body: the inner liner outline (floor, bowed sides, roof vault) and an outer skin offset from it, so inside and outside piec… |
 | `van_bulkhead.gd` | `VanBulkhead` | 205 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |

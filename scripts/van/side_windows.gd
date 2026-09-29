@@ -75,6 +75,21 @@ var GLASS_POLY: PackedVector2Array = PackedVector2Array([
 	Vector2(1.1, -0.455), Vector2(1.017, -0.56), Vector2(0.861, -0.617),
 ])
 
+## Window stop: static ring covering the 2 cm frame-to-cut slot (D12 gap); its outboard face sits
+## STOP_LIFT inboard of the liner. Polys: the cut offset 4 cm out / 5 cm in (3 cm over the frame).
+const STOP_LIFT := 0.015
+const STOP_THICKNESS := 0.008
+var STOP_OUTER_POLY: PackedVector2Array = PackedVector2Array([
+	Vector2(-0.992, -0.747), Vector2(-1.169, -0.668), Vector2(-1.262, -0.531), Vector2(-1.262, 0.531),
+	Vector2(-1.169, 0.668), Vector2(-0.992, 0.747), Vector2(0.992, 0.747), Vector2(1.169, 0.668),
+	Vector2(1.262, 0.531), Vector2(1.262, -0.531), Vector2(1.169, -0.668), Vector2(0.992, -0.747),
+])
+var STOP_INNER_POLY: PackedVector2Array = PackedVector2Array([
+	Vector2(-0.972, -0.657), Vector2(-1.109, -0.596), Vector2(-1.172, -0.504), Vector2(-1.172, 0.504),
+	Vector2(-1.109, 0.596), Vector2(-0.972, 0.657), Vector2(0.972, 0.657), Vector2(1.109, 0.596),
+	Vector2(1.172, 0.504), Vector2(1.172, -0.504), Vector2(1.109, -0.596), Vector2(0.972, -0.657),
+])
+
 var _hinges: Dictionary = {}
 var _grips: Dictionary = {}
 var _mounts: Dictionary = {}
@@ -126,6 +141,7 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	_free_node(hinge, "WindowGlass")
 	_free_node(root, "CurvedBezel")
 	_free_node(hinge, "CurvedFrame")
+	_free_node(root, "WindowStop")
 
 	# No separate bezel — VanSideWall punches the rounded WindowCut so the liner
 	# itself is the surround (same as the rear door leaf around its pane).
@@ -145,6 +161,17 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	frame.layers = VanLighting.LAYER_STREET_AND_INTERIOR
 	frame.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	hinge.add_child(frame)
+	var stop := MeshInstance3D.new()
+	stop.name = "WindowStop"
+	stop.mesh = walls.build_curved_frame_ring_mesh(
+		wall_sign, STOP_OUTER_POLY, STOP_INNER_POLY, x_ref, y_hinge, z_center, mid_y, STOP_THICKNESS,
+		-wall_sign * (STOP_LIFT + STOP_THICKNESS), VanSideWall.WINDOW_EDGE_SUBDIV
+	)
+	stop.material_override = frame_mat
+	stop.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	stop.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+	stop.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
+	root.add_child(stop)
 
 	# Single-sided (facing the cabin): drop the duplicate backface triangles.
 	if glass_mat is BaseMaterial3D:
