@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-294 GDScript files, 45011 lines.
+295 GDScript files, 45078 lines.
 
 ### `scenes/corridor/`
 
@@ -702,10 +702,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `van_audit.gd` | — | 323 | Headless van audit entry scene: collects every visible triangle of the van, checks it and writes a report. |
-| `van_audit_exempt.gd` | — | 62 | Van audit exemption list: findings accepted on purpose, each with its reason and plan decision. |
+| `van_audit.gd` | — | 325 | Headless van audit entry scene: collects every visible triangle of the van, checks it and writes a report. |
+| `van_audit_exempt.gd` | — | 83 | Van audit exemption list: findings accepted on purpose, each with its reason and plan decision. |
 | `van_audit_flicker.gd` | — | 212 | Coplanar-overlap (flicker) check over an AuditMesh triangle set, split off van_audit_overlap.gd (vanfix specs 1-2, 5-1). |
-| `van_audit_gaps.gd` | — | 400 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges and see-through leaks, found by raycasting temporary ConcavePolygonShape3D pr… |
+| `van_audit_gaps.gd` | — | 245 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges, found by raycasting temporary ConcavePolygonShape3D proxies of every visible… |
+| `van_audit_leaks.gd` | — | 199 | See-through leak checks over the gap proxies: cabin rays that escape, street rays that land on interior-only faces. |
 | `van_audit_mesh.gd` | — | 137 | Collects every visible triangle under a rig into parallel arrays, all in rig-local space, for the van audit's checks (specs 1-2 and 1-3 add more consumers). |
 | `van_audit_overlap.gd` | — | 145 | Coplanar-overlap (flicker), moving-part interpenetration (clip) and door/window opening-blocked checks over an AuditMesh triangle set (vanfix spec 1-2). |
 | `van_audit_probe.gd` | — | 62 | Brute-force ray probe for the van audit: lists every triangle a given rig-local ray crosses. |

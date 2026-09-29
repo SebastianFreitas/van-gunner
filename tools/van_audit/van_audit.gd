@@ -7,6 +7,7 @@ const AuditMesh := preload("res://tools/van_audit/van_audit_mesh.gd")
 const AuditStates := preload("res://tools/van_audit/van_audit_states.gd")
 const AuditOverlap := preload("res://tools/van_audit/van_audit_overlap.gd")
 const AuditGaps := preload("res://tools/van_audit/van_audit_gaps.gd")
+const AuditLeaks := preload("res://tools/van_audit/van_audit_leaks.gd")
 const AuditFlicker := preload("res://tools/van_audit/van_audit_flicker.gd")
 const AuditProbe := preload("res://tools/van_audit/van_audit_probe.gd")
 const RIG_PATH := ^"TravelPath/VanFollow/VanRig"
@@ -116,8 +117,9 @@ func _run() -> void:
 	await get_tree().physics_frame
 	gaps.check_edges(tris, self)
 	var profile := VanBodyProfile.from_interior(rig.get_node(^"Interior"))
-	gaps.check_leaks_inside(tris, self, profile)
-	gaps.check_leaks_outside(tris, self)
+	var leaks := AuditLeaks.new(gaps, rig)
+	leaks.check_leaks_inside(tris, self, profile)
+	leaks.check_leaks_outside(tris, self, closed_boxes)
 	proxies.queue_free()
 
 	write_report()

@@ -1,7 +1,8 @@
 extends RefCounted
-## Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges and
-## see-through leaks, found by raycasting temporary ConcavePolygonShape3D proxies of every
-## visible triangle. Stateful: build_proxies() must run first, the checks read what it built.
+## Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges, found by
+## raycasting temporary ConcavePolygonShape3D proxies of every visible triangle. Stateful:
+## build_proxies() must run first, the checks read what it built. The see-through leak checks
+## live in van_audit_leaks.gd and query these proxies through first_visible_hit / trace_ray.
 
 const AuditExempt := preload("res://tools/van_audit/van_audit_exempt.gd")
 const AuditSeams := preload("res://tools/van_audit/van_audit_seams.gd")
@@ -9,9 +10,6 @@ const PROXY_LAYER :=1 << 19
 const EDGE_WELD := 0.001
 const EDGE_MIN_LEN := 0.05
 const EDGE_TOUCH_RADIUS := 0.015
-const LEAK_MARGIN := 0.05
-const LEAK_STEP := 0.02
-const LEAK_RANGE := 12.0
 
 var _rig: Node3D
 var _tris: RefCounted
@@ -214,135 +212,6 @@ func check_edges(tris: RefCounted, runner: Node) -> void:
 	print("AUDIT edges (%d ms)" % (Time.get_ticks_msec() - started))
 
 
-## from 8 cabin points, cast a Fibonacci sphere of rays; a leak is one with no front hit, or a
-## front hit outside the body envelope. Blamed on the last surface seen through on the way.
-func check_leaks_inside(_tris_unused: RefCounted, runner: Node, profile: VanBodyProfile) -> void:
-	var started := Time.get_ticks_msec()
-	var space: PhysicsDirectSpaceState3D = _rig.get_world_3d().direct_space_state
-	var xform := _rig.global_transform
-	var machine_mask: int = 0xFFFFFFFF & ~PROXY_LAYER
-
-	var dirs := _fibonacci_sphere(1500)
-	var agg: Dictionary = {}
-	for y in [1.0, 1.7]:
-		for z in [-3.5, -1.5, 0.5, 2.5]:
-			var p := Vector3(0.0, y, z)
-			var pt_params := PhysicsPointQueryParameters3D.new()
-			pt_params.position = xform * p
-			pt_params.collision_mask = machine_mask
-			if not space.intersect_point(pt_params, 1).is_empty():
-				continue
-
-			for d in dirs:
-				var hit: Dictionary = first_visible_hit(space, p, p + d * LEAK_RANGE)
-				var leaking := not hit.has("pos")
-				if hit.has("pos"):
-					var pos: Vector3 = hit.pos
-					leaking = (
-						absf(pos.x) > profile.outer_x_at(pos.y) + LEAK_MARGIN
-						or pos.y > profile.outer_roof_y_at(pos.x) + LEAK_MARGIN
-						or pos.y < -0.4
-					)
-				if not leaking:
-					continue
-
-				var back_nodes: Array = hit.get("back_nodes", [])
-				var through: String = String(back_nodes[-1]) if not back_nodes.is_empty() else "nothing"
-				if agg.has(through):
-					agg[through].rays = int(agg[through].rays) + 1
-				else:
-					agg[through] = {
-						"through": through, "rays": 1, "at": _envelope_cross(p, d, profile),
-						"from": p, "dir": d, "trace": trace_ray(space, p, p + d * LEAK_RANGE),
-					}
-
-	var rows: Array = agg.values()
-	rows.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return int(x.rays) > int(y.rays))
-	for row: Dictionary in rows:
-		var at: Vector3 = row.at
-		var from: Vector3 = row.from
-		var dir: Vector3 = row.dir
-		runner.add_finding(
-			"LEAK_IN",
-			"through=%s rays=%d at=(%.3f, %.3f, %.3f) from=(%.3f, %.3f, %.3f) dir=(%.3f, %.3f, %.3f) trace=%s" % [
-				row.through, row.rays, at.x, at.y, at.z,
-				from.x, from.y, from.z, dir.x, dir.y, dir.z, row.trace,
-			]
-		)
-	print("AUDIT leaks_inside (%d ms)" % (Time.get_ticks_msec() - started))
-
-
-## 72 camera points on rings around the van, each casting rays at random points inside the
-## triangle AABB; a leak is a first front hit on an interior-only node (VanInterior set, exterior
-## clear).
-func check_leaks_outside(tris: RefCounted, runner: Node) -> void:
-	var started := Time.get_ticks_msec()
-	var space: PhysicsDirectSpaceState3D = _rig.get_world_3d().direct_space_state
-
-	var idx_by_path: Dictionary = {}
-	for idx in range(tris.paths.size()):
-		idx_by_path[tris.paths[idx]] = idx
-
-	var box := AABB()
-	var box_started := false
-	for t in range(tris.count()):
-		var tb: AABB = tris.tri_aabb(t)
-		box = tb if not box_started else box.merge(tb)
-		box_started = true
-	var centre: Vector3 = box.get_center()
-
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 1337
-
-	var agg: Dictionary = {}
-	for h in [0.8, 2.0, 4.5]:
-		for az_i in range(24):
-			var angle: float = TAU * float(az_i) / 24.0
-			var origin := Vector3(centre.x + cos(angle) * 7.0, h, centre.z + sin(angle) * 7.0)
-			for _r in range(400):
-				var target := Vector3(
-					box.position.x + rng.randf() * box.size.x,
-					box.position.y + rng.randf() * box.size.y,
-					box.position.z + rng.randf() * box.size.z,
-				)
-				var hit: Dictionary = first_visible_hit(space, origin, target)
-				if not hit.has("pos"):
-					continue
-				var node_idx: int = int(idx_by_path.get(String(hit.node), -1))
-				if node_idx < 0:
-					continue
-				var layer_bits: int = int(tris.layers[node_idx])
-				if not (layer_bits & 2 and not (layer_bits & 1)):
-					continue
-
-				var back_nodes: Array = hit.get("back_nodes", [])
-				var past: String = String(back_nodes[-1]) if not back_nodes.is_empty() else "none"
-				var key: String = "%s|%s" % [String(hit.node), past]
-				if agg.has(key):
-					agg[key].rays = int(agg[key].rays) + 1
-				else:
-					agg[key] = {
-						"sees": String(hit.node), "past": past, "rays": 1, "at": hit.pos,
-						"from": origin, "dir": (target - origin).normalized(),
-						"trace": trace_ray(space, origin, target),
-					}
-
-	var rows: Array = agg.values()
-	rows.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return int(x.rays) > int(y.rays))
-	for row: Dictionary in rows:
-		var at: Vector3 = row.at
-		var from: Vector3 = row.from
-		var dir: Vector3 = row.dir
-		runner.add_finding(
-			"LEAK_OUT",
-			"sees=%s past=%s rays=%d at=(%.3f, %.3f, %.3f) from=(%.3f, %.3f, %.3f) dir=(%.3f, %.3f, %.3f) trace=%s" % [
-				row.sees, row.past, row.rays, at.x, at.y, at.z,
-				from.x, from.y, from.z, dir.x, dir.y, dir.z, row.trace,
-			]
-		)
-	print("AUDIT leaks_outside (%d ms)" % (Time.get_ticks_msec() - started))
-
-
 func _weld(p: Vector3, vert_key: Dictionary, vert_pos: Array[Vector3]) -> int:
 	var key := Vector3i((p / EDGE_WELD).round())
 	if vert_key.has(key):
@@ -373,27 +242,3 @@ func _edge_meets_neighbour(space: PhysicsDirectSpaceState3D, own_rid: RID, p0: V
 		if space.intersect_shape(params, 4).is_empty():
 			return false
 	return true
-
-
-func _envelope_cross(from: Vector3, dir: Vector3, profile: VanBodyProfile) -> Vector3:
-	var steps: int = int(LEAK_RANGE / LEAK_STEP)
-	for i in range(steps + 1):
-		var p: Vector3 = from + dir * (float(i) * LEAK_STEP)
-		if (
-			absf(p.x) > profile.outer_x_at(p.y) + LEAK_MARGIN
-			or p.y > profile.outer_roof_y_at(p.x) + LEAK_MARGIN
-			or p.y < -0.4
-		):
-			return p
-	return from + dir * LEAK_RANGE
-
-
-func _fibonacci_sphere(n: int) -> Array[Vector3]:
-	var pts: Array[Vector3] = []
-	var golden := PI * (3.0 - sqrt(5.0))
-	for i in range(n):
-		var y: float = 1.0 - (float(i) / float(n - 1)) * 2.0
-		var radius: float = sqrt(maxf(0.0, 1.0 - y * y))
-		var theta: float = golden * float(i)
-		pts.append(Vector3(cos(theta) * radius, y, sin(theta) * radius))
-	return pts

@@ -39,8 +39,10 @@ Status: phase-done
 - Roof (spec-5-2): slats at `RACK_Y + 0.03` on the rails, legs to `RACK_LEG_TOP_Y`, antenna bases on
   the rail top, whips 8 segments × 1 ring; junk at `van_roof_junk.gd` `BASE_Y` (`RACK_Y + 0.035`).
 - Cab (D21, D22): `van_cab_shell.gd` on `VanBodyProfile.section_points(steps, true)`.
-- Caps: `rear_doors.gd`, `van_side_wall_shell.gd`, `side_windows.gd` at 400 lines; `van_audit_gaps.gd` 399;
-  split before adding.
+- Caps: `rear_doors.gd`, `van_side_wall_shell.gd`, `side_windows.gd` at 400 lines; split before adding.
+  Leak checks live in `tools/van_audit/van_audit_leaks.gd` (`AuditLeaks.new(gaps, rig)`; gaps 243 lines);
+  `check_leaks_outside(tris, runner, closed_boxes)` sends D54 rule hits inside an `OPENING_PAD` box to
+  `LEAK_OUT_EXEMPT`; `rule_for("LEAK_OUT", sees, "")` matches `a` only.
 - Side window stop ring (D53): `side_windows.gd` `WindowStop` on each window root, `STOP_OUTER_POLY`
   (cut +4 cm) / `STOP_INNER_POLY` (cut -5 cm), `STOP_LIFT` 0.015, `STOP_THICKNESS` 0.008, built with
   `build_curved_frame_ring_mesh`; audit `OPENING` window prefixes include `/WindowStop`.
@@ -107,15 +109,17 @@ no smoke (tools/van_audit only), no shots (nothing visible).
 none
 
 ## Next phase
-Phase 12 was split on 2026-09-29 into 12 (done) and 13-16; phase 17 is the old 13. Next is
-phase 13 (side door leaks and jamb exemptions), which is step (2) below; steps (3), (4), (5) are
-phases 14, 15, 16. The old list, for reference:
-Phase 12 continued (partial). Step (1) is done (D53). Order now: (2) LEAK_OUT exemption for jamb lips and
-reveals seen through openings (`rule_for("LEAK_OUT", ...)`; `van_audit_gaps.gd` is at 399: split first) +
-side door leaf seal where the probe shows see-through (`Left/CurvedBody` y 0.16 row), (3) rear door centre
-seam strip plus the rear window glass-to-frame crack (the LEAK_IN above; split `rear_doors.gd` first),
-(4) LEAK_OUT exemptions for window reveals and the rear sill, (5) EDGE rows below. Each fix: check, smoke,
-audit; shots for (2) and (3). Its EDGE input, after phase 11: `Cab/CabLiner` (78, bottom
+Phase 12 was split on 2026-09-29 into 12 (done) and 13-16; phase 17 is the old 13. Phase 13 is done
+(session 8, commits d77b78e, 78e7b8e, D54): leak checks split into `van_audit_leaks.gd`, the D54 LEAK_OUT
+exemption; probes showed the side door rows are faces seen through the leaf's clearance, the
+`Left/CurvedBody` ray enters the leaf and exits into the jamb: no seal built, nothing visible changed, so
+no shots. Audit: EDGE 10, FLICKER 9, LEAK_IN 1, LEAK_OUT 31; EXEMPT adds LEAK_OUT_EXEMPT 12. Check clean.
+Next is phase 14 (rear door centre seam and glass crack): Explore `rear_doors.gd` for the leaves' closed
+inner-edge x and the glass/frame builders, split it first (likely 3 specs: save them as spec files if they
+won't fit); clears ~26 rear LEAK_OUT rows (Bulkhead, CabDoor, FrontWall, Vault, CeilRib2_3/3_4, Hopper,
+Cables) and the LEAK_IN. Phase 15 also takes the lone `CeilRib2_0` row at (-2.294, 3.010, -1.352) (rib end
+under `DripRailL`, 1 ray: trim or exempt); window reveals are already covered by D54. Phase 16 EDGE
+input, after phase 11: `Cab/CabLiner` (78, bottom
 edge y -0.222 z -4.72, 5 m), `Cab/CabBackLip` (31), `Hull/RearSkin` (2), `Hull/CornerPostFL/FR` (12 each),
 `Hull/BellySkin` (2), `RearWall/Left|RightHinge/CurvedBody` (100 each), `Hull/RearCornerL/R` (1 each): fix
 holes, or add a rule with reason and D to `van_audit_exempt.gd`. The 9 FLICKER leftovers (CasingLeft/Right vs

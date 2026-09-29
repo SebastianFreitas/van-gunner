@@ -12,7 +12,8 @@ const OPENING: Dictionary = {
 	&"win_right_rear": _WIN_FRAME,
 }
 
-## FLICKER rows match when (a, b) or the swap match both globs; EDGE rows use only "a".
+## FLICKER rows match when (a, b) or the swap match both globs; EDGE and LEAK_OUT rows use only "a";
+## LEAK_OUT rules also need the hit inside a side opening.
 ## Globs are String.match() patterns against the node path as printed in the report.
 const RULES: Array[Dictionary] = [
 	{
@@ -46,6 +47,26 @@ const RULES: Array[Dictionary] = [
 		"reason": "the side skin owns only the outer layer, no inner face; "
 			+ "its returns meet the wall's",
 	},
+	{
+		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/DoorJamb_*", "b": "", "d": "D54",
+		"reason": "the jamb lip lines the door opening; seen through the leaf's clearance gap",
+	},
+	{
+		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/*WallReveals", "b": "", "d": "D54",
+		"reason": "wall reveals line each side cut (D18); seen through the leaf or sash gap",
+	},
+	{
+		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/*Wall", "b": "", "d": "D54",
+		"reason": "the wall's own cut faces, seen through an opening's clearance gap",
+	},
+	{
+		"section": "LEAK_OUT", "a": "Interior/Shell/SideDoors/*/CurvedBody", "b": "", "d": "D54",
+		"reason": "the door leaf's edge band, seen past its outer skin at a grazing angle",
+	},
+	{
+		"section": "LEAK_OUT", "a": "VanLook/InnerShell/CeilRib*", "b": "", "d": "D54",
+		"reason": "ceiling rib ends at the wall top, seen through the top of an opening",
+	},
 ]
 
 
@@ -53,7 +74,7 @@ static func rule_for(section: String, a: String, b: String) -> Dictionary:
 	for rule: Dictionary in RULES:
 		if rule.section != section:
 			continue
-		if section == "EDGE":
+		if section == "EDGE" or section == "LEAK_OUT":
 			if a.match(rule.a):
 				return rule
 		elif (a.match(rule.a) and b.match(rule.b)) or (b.match(rule.a) and a.match(rule.b)):
