@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-295 GDScript files, 45078 lines.
+296 GDScript files, 45145 lines.
 
 ### `scenes/corridor/`
 
@@ -595,8 +595,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. |
 | `iron_cross.gd` | `IronCross` | 397 | Welded iron + on a window pane. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
+| `rear_door_leaf_build.gd` | — | 137 | Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55). |
 | `rear_door_lighting.gd` | — | 27 | Puts the rear leaves' outward-visible parts on layers 1+2 so street lights reach them (D15). |
-| `rear_doors.gd` | — | 401 | Truck-style rear double doors. |
+| `rear_doors.gd` | — | 305 | Truck-style rear double doors. |
 | `room_zone.gd` | `RoomZone` | 15 | Marks a van interior zone; tells GameSession which room the player is in. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. |
 | `side_door_leaf.gd` | — | 336 | Builds the side door leaf meshes (body, trim, frames, latch) onto SideDoors nodes. |
@@ -648,7 +649,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_hull.gd` | `VanHull` | 335 | The van's outer skin: roof, sides, front face (the step to the cab skin), rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted fr… |
 | `van_hull_lines.gd` | — | 231 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
 | `van_hull_patches.gd` | — | 189 | Skin patches that close the gaps left in VanHull's outer shell: the rear corner strip behind the side skin, the rocker sill along both sides and the belly betw… |
-| `van_inner_shell.gd` | `VanInnerShell` | 318 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
+| `van_inner_shell.gd` | `VanInnerShell` | 321 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
 | `van_inner_shell_fit.gd` | — | 38 | Keeps the inner shell's plates and patches clear of the ribs, the bulkhead frame and each other. |
 | `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |
 | `van_marker_lights.gd` | — | 139 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
@@ -703,10 +704,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `van_audit.gd` | — | 325 | Headless van audit entry scene: collects every visible triangle of the van, checks it and writes a report. |
-| `van_audit_exempt.gd` | — | 83 | Van audit exemption list: findings accepted on purpose, each with its reason and plan decision. |
+| `van_audit_exempt.gd` | — | 101 | Van audit exemption list: findings accepted on purpose, each with its reason and plan decision. |
 | `van_audit_flicker.gd` | — | 212 | Coplanar-overlap (flicker) check over an AuditMesh triangle set, split off van_audit_overlap.gd (vanfix specs 1-2, 5-1). |
 | `van_audit_gaps.gd` | — | 245 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges, found by raycasting temporary ConcavePolygonShape3D proxies of every visible… |
-| `van_audit_leaks.gd` | — | 199 | See-through leak checks over the gap proxies: cabin rays that escape, street rays that land on interior-only faces. |
+| `van_audit_leaks.gd` | — | 204 | See-through leak checks over the gap proxies: cabin rays that escape, street rays that land on interior-only faces. |
 | `van_audit_mesh.gd` | — | 137 | Collects every visible triangle under a rig into parallel arrays, all in rig-local space, for the van audit's checks (specs 1-2 and 1-3 add more consumers). |
 | `van_audit_overlap.gd` | — | 145 | Coplanar-overlap (flicker), moving-part interpenetration (clip) and door/window opening-blocked checks over an AuditMesh triangle set (vanfix spec 1-2). |
 | `van_audit_probe.gd` | — | 62 | Brute-force ray probe for the van audit: lists every triangle a given rig-local ray crosses. |

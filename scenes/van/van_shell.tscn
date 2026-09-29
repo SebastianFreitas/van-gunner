@@ -109,7 +109,7 @@ metallic = 0.7
 roughness = 0.45
 
 [sub_resource type="BoxMesh" id="RearWindowGlassMesh"]
-size = Vector3(1.8, 1.36, 0.016)
+size = Vector3(1.88, 1.45, 0.016)
 
 [sub_resource type="BoxShape3D" id="RearWindowGlassShape"]
 size = Vector3(1.88, 1.44, 0.22)

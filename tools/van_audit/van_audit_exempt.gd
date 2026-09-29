@@ -13,8 +13,11 @@ const OPENING: Dictionary = {
 }
 
 ## FLICKER rows match when (a, b) or the swap match both globs; EDGE and LEAK_OUT rows use only "a";
-## LEAK_OUT rules also need the hit inside a side opening.
+## LEAK_OUT rules need the hit inside a side opening, or inside the rule's own rig-local "box"
+## (an AABB) when it has one.
 ## Globs are String.match() patterns against the node path as printed in the report.
+## The rear sill: deck end and step ramp under the rear doors, rig-local (D57).
+const REAR_SILL := AABB(Vector3(-2.5, -0.4, 4.5), Vector3(5.0, 0.5, 0.9))
 const RULES: Array[Dictionary] = [
 	{
 		"section": "FLICKER", "a": "Interior/Bulkhead/KickPlate_*",
@@ -66,6 +69,21 @@ const RULES: Array[Dictionary] = [
 	{
 		"section": "LEAK_OUT", "a": "VanLook/InnerShell/CeilRib*", "b": "", "d": "D54",
 		"reason": "ceiling rib ends at the wall top, seen through the top of an opening",
+	},
+	{
+		"section": "LEAK_OUT", "a": "Interior/FrontWall/Slab", "b": "", "d": "D54",
+		"reason": "the front wall slab's side edge, seen through the side door's front "
+			+ "clearance gap",
+	},
+	{
+		"section": "LEAK_OUT", "a": "Interior/Shell/Floor/RearEntryRamp", "b": "", "d": "D57",
+		"box": REAR_SILL,
+		"reason": "the rear step ramp sits outside under the rear doors by design",
+	},
+	{
+		"section": "LEAK_OUT", "a": "Interior/Shell/Floor/Deck", "b": "", "d": "D57",
+		"box": REAR_SILL,
+		"reason": "the deck's end face is the rear sill under the rear doors",
 	},
 ]
 

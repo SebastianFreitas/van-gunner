@@ -43,6 +43,10 @@ Status: phase-done
   Leak checks live in `tools/van_audit/van_audit_leaks.gd` (`AuditLeaks.new(gaps, rig)`; gaps 243 lines);
   `check_leaks_outside(tris, runner, closed_boxes)` sends D54 rule hits inside an `OPENING_PAD` box to
   `LEAK_OUT_EXEMPT`; `rule_for("LEAK_OUT", sees, "")` matches `a` only.
+- Rear doors (phase 14): leaf body, liner material and the astragal build in `rear_door_leaf_build.gd`
+  (RefCounted statics, `build(doors, left, right)`, owns `DOOR_THICKNESS` 0.16, `CENTER_GAP` 0.012, `Y_MIN`,
+  `WINDOW_HOLE`); leaves span hinge-local z ±0.08 (cabin -z), hinges at x ±2.39, z 4.71. `LeftHinge/Astragal`
+  (D55) x -0.02..0.02, 2 cm off the cabin face; rear glass 1.88 x 1.45 (D56). `rear_doors.gd` 304 lines.
 - Side window stop ring (D53): `side_windows.gd` `WindowStop` on each window root, `STOP_OUTER_POLY`
   (cut +4 cm) / `STOP_INNER_POLY` (cut -5 cm), `STOP_LIFT` 0.015, `STOP_THICKNESS` 0.008, built with
   `build_curved_frame_ring_mesh`; audit `OPENING` window prefixes include `/WindowStop`.
@@ -105,27 +109,29 @@ no smoke (tools/van_audit only), no shots (nothing visible).
   0.2 m behind the rear doors, grazing the deck's end face under the doors: decide exempt (rear sill,
   by design) or push ring origins out to half-extent + 2 m (changes every ray: re-baseline counts).
 
+14 (done, session 2 of autoplan run). Commits f064a74 + uid: split, astragal (D55), glass (D56); scene dump
+re-blessed (glass size). Audit: EDGE 10, FLICKER 9, LEAK_IN 0, LEAK_OUT 4. Check, smoke clean; shots read (rear
+glass seated in its frame; no close-up of the rear doors' cabin face exists, so the astragal was not seen).
+
+15 (done, session 3 of autoplan run). Commit ef76179: `van_inner_shell.gd` `WALL_PATH` fixed (was one level
+short: ribs, plates and patches now follow the bowed wall) and ceiling ribs stop at the liner (D58); LEAK_OUT
+rules for the rear sill with a rule-owned `box` `REAR_SILL` (D57) and `Interior/FrontWall/Slab` (D54). Audit:
+EDGE 10, FLICKER 10, LEAK_IN 0, LEAK_OUT 0; MINOR 382. Check, smoke clean; shots read (02-idle-back: ribs hug
+the wall, nothing floating).
+
 ## Blocker
 none
 
 ## Next phase
-Phase 12 was split on 2026-09-29 into 12 (done) and 13-16; phase 17 is the old 13. Phase 13 is done
-(session 8, commits d77b78e, 78e7b8e, D54): leak checks split into `van_audit_leaks.gd`, the D54 LEAK_OUT
-exemption; probes showed the side door rows are faces seen through the leaf's clearance, the
-`Left/CurvedBody` ray enters the leaf and exits into the jamb: no seal built, nothing visible changed, so
-no shots. Audit: EDGE 10, FLICKER 9, LEAK_IN 1, LEAK_OUT 31; EXEMPT adds LEAK_OUT_EXEMPT 12. Check clean.
-Next is phase 14 (rear door centre seam and glass crack): Explore `rear_doors.gd` for the leaves' closed
-inner-edge x and the glass/frame builders, split it first (likely 3 specs: save them as spec files if they
-won't fit); clears ~26 rear LEAK_OUT rows (Bulkhead, CabDoor, FrontWall, Vault, CeilRib2_3/3_4, Hopper,
-Cables) and the LEAK_IN. Phase 15 also takes the lone `CeilRib2_0` row at (-2.294, 3.010, -1.352) (rib end
-under `DripRailL`, 1 ray: trim or exempt); window reveals are already covered by D54. Phase 16 EDGE
-input, after phase 11: `Cab/CabLiner` (78, bottom
-edge y -0.222 z -4.72, 5 m), `Cab/CabBackLip` (31), `Hull/RearSkin` (2), `Hull/CornerPostFL/FR` (12 each),
-`Hull/BellySkin` (2), `RearWall/Left|RightHinge/CurvedBody` (100 each), `Hull/RearCornerL/R` (1 each): fix
-holes, or add a rule with reason and D to `van_audit_exempt.gd`. The 9 FLICKER leftovers (CasingLeft/Right vs
-CasingHead, Vault vs PatchCeil0_Ring, Cables @366/@386, FrameRailL/R vs RearBumper, CatchBin Scrap2/Scrap8,
-VentDuct vs VentGrille, Bulkhead TopRail_9 vs MeshBack_322) are code fixes for phase 12 or 13. No phase
-question stops.
+Phase 16 (EDGE rows and FLICKER leftovers). EDGE input: `Cab/CabLiner` (78, bottom edge y -0.222 z -4.72,
+5 m), `Cab/CabBackLip` (31), `Hull/RearSkin` (2), `Hull/CornerPostFL/FR` (12 each), `Hull/BellySkin` (2),
+`RearWall/Left|RightHinge/CurvedBody` (100 each), `Hull/RearCornerL/R` (1 each). FLICKER leftovers:
+CasingLeft/Right vs CasingHead, Vault vs PatchCeil0_Ring, Cables @366/@386, FrameRailL/R vs RearBumper,
+CatchBin Scrap2/Scrap8, VentDuct vs VentGrille, Bulkhead TopRail_9 vs MeshBack_322, and new with D58
+`SideWalls/BeltRail_R_1` vs `InnerShell/WallRibR4_Weld3` (0.0052 m2 at y ~1.5, z 1.35: the weld bead is
+0.07 across a 0.03 rib, so it pokes 2 cm into the wall and meets the belt rail's horizontal faces; trim
+the bead's wall side or skip beads inside the belt rail band). Then 17 (strict in smoke).
+No phase question stops (Questions: auto).
 
 ## Requirements / gotchas
 - Animated machine parts are frozen at rest in the audit (D48). Row presence uses `total`, not per-pair cuts (D51).

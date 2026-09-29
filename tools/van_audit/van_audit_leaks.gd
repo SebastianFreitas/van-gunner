@@ -82,7 +82,7 @@ func check_leaks_inside(_tris_unused: RefCounted, runner: Node, profile: VanBody
 
 ## 72 camera points on rings around the van, each casting rays at random points inside the
 ## triangle AABB; a leak is a first front hit on an interior-only node (VanInterior set, exterior
-## clear). Hits on faces D54 exempts, inside a side opening's box, go to LEAK_OUT_EXEMPT.
+## clear). Hits on faces D54 exempts, inside a side opening's box (or the rule's own box), go to LEAK_OUT_EXEMPT.
 func check_leaks_outside(tris: RefCounted, runner: Node, opening_boxes: Dictionary) -> void:
 	var started := Time.get_ticks_msec()
 	var space: PhysicsDirectSpaceState3D = _rig.get_world_3d().direct_space_state
@@ -126,7 +126,12 @@ func check_leaks_outside(tris: RefCounted, runner: Node, opening_boxes: Dictiona
 
 				var rule: Dictionary = AuditExempt.rule_for("LEAK_OUT", String(hit.node), "")
 				var target_agg: Dictionary = agg
-				if not rule.is_empty() and _in_opening(hit.pos, opening_boxes):
+				var inside := false
+				if rule.has("box"):
+					inside = (rule.box as AABB).has_point(hit.pos)
+				else:
+					inside = _in_opening(hit.pos, opening_boxes)
+				if not rule.is_empty() and inside:
 					target_agg = exempt_agg
 				var back_nodes: Array = hit.get("back_nodes", [])
 				var past: String = String(back_nodes[-1]) if not back_nodes.is_empty() else "none"

@@ -3,7 +3,7 @@ extends Node3D
 ## Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower
 ## walls and welded patches over bullet holes, dressing the inside of the van shell.
 
-const WALL_PATH := ^"../Interior/Shell/SideWalls"
+const WALL_PATH := ^"../../Interior/Shell/SideWalls"
 
 const RIB_Z0 := -4.05
 const RIB_STEP := 1.35
@@ -114,10 +114,13 @@ func _build_ribs(weld_mat: Material) -> void:
 
 
 func _build_ceiling_rib(idx: int, z: float, mat: Material) -> void:
+	# the liner curves in near the roof: stop the rib where it meets it, not in the hull (D58)
+	var half := minf(CEIL_X_HALF, absf(_wall_inset(1.0, _ceiling_y(CEIL_X_HALF), 0.0)))
+	half = minf(half, absf(_wall_inset(1.0, _ceiling_y(half), 0.0)))
 	var pts := PackedVector3Array()
 	for s: int in range(CEIL_SEGMENTS + 1):
 		var t := float(s) / float(CEIL_SEGMENTS)
-		var x := lerpf(-CEIL_X_HALF, CEIL_X_HALF, t)
+		var x := lerpf(-half, half, t)
 		pts.append(Vector3(x, _ceiling_y(x), z))
 	_build_rib_chain(pts, "CeilRib%d" % idx, mat)
 

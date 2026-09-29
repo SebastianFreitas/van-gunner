@@ -4898,7 +4898,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/WindowGlass M
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#21{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(1.8, 1.36, 0.016), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#21{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(1.88, 1.45, 0.016), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
