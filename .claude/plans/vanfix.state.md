@@ -1,4 +1,4 @@
-Status: phase-done
+Status: blocked
 # Plan state: vanfix
 
 ## Plan
@@ -7,31 +7,23 @@ Status: phase-done
 
 ## Architecture now
 - `tools/van_audit.py`: launcher (`--out`, `--strict`, `--timeout`), report-only (exit 0)
-  until phase 5; report at `.godot/van_audit/report.txt` (~4 min, use `--timeout 600`).
-  FLICKER counts parallel faces within `PLANE_EPS` 0.01 m as coplanar (D12: edge-to-edge gaps
-  2 cm, stacked lifts 1 cm). EDGE is per mesh: an edge of one triangle, over 5 cm, with no
-  physics body within 1.5 cm (`van_audit_gaps.gd` ~107–159), so seams between meshes report.
-- `tools/van_audit/van_audit.tscn` + `van_audit.gd`; helpers `van_audit_mesh.gd`,
-  `van_audit_states.gd` (every door and window at the same fraction), `van_audit_overlap.gd`
-  (FLICKER/CLIP/OPENING), `van_audit_gaps.gd` (EDGE, LEAK_IN, LEAK_OUT cast from outside).
-- `tools/smoke/smoke_shots_closeups.gd`: close-ups `c01`..`c32`.
+  until wired into smoke; report at `.godot/van_audit/report.txt` (~50 s since 158e9cb, D23).
+  States `closed`, `half`/`open` (side doors + rear windows), `win_half`/`win_open` (front
+  windows alone). FLICKER: parallel faces within `PLANE_EPS` 0.01 m (D12: gaps 2 cm, lifts 1 cm),
+  in `van_audit_flicker.gd`. EDGE: per-mesh open edge, closed by a physics body within 1.5 cm or
+  another mesh's edge within 1.5 cm of its ends and midpoint (`van_audit_gaps.gd`, 370 lines).
+- Audit files `tools/van_audit/`: `van_audit.gd` (runner), `_mesh`, `_states`, `_overlap` (CLIP,
+  OPENING), `_flicker`, `_gaps` (EDGE, LEAKs). Close-ups `smoke_shots_closeups.gd` `c01`..`c32`.
 - Side door leaf (`scripts/van/side_door_leaf.gd`): opening half length 1.235 at z -3.42,
   recess 0.24 (D13), leaf `DOOR_HALF_Z` 1.105; outer parts on layers 1+2 (D15); port untouched.
 - Side windows (`scripts/van/side_windows.gd`): `Hinge` pivot `HINGE_OUT_M` 0.32 outboard of
   the liner (D16), past the skin's outer face 0.22. Iron cross `scripts/van/iron_cross.gd`.
-- Side walls: `VanSideWall._add_side` builds `<Left|Right>Wall` (faces, layer 2) and
-  `<Left|Right>WallReveals` (returns + reveals, liner to 0.16, layers 1+2; D18) from
-  `van_side_wall_panel.gd` (398 lines) / `van_side_wall_shell.gd` (at cap 400). Jambs:
-  `scripts/van/van_side_wall_jambs.gd`. Side door and window casings deleted.
-- Outer body (`scripts/van/look/van_hull.gd`, 334 lines): `SideSkin<S>` = wall grid and cuts
-  0.16 → `SIDE_SKIN_OUTER_M` 0.22, no inner face (D17); `RoofSkin` to z -4.70; `FrontSkin` at
-  z -4.70 (-Z facing) closes the step from the cab outline (`VanBodyProfile` outer, 0.12) up to
-  the roof skin and down the corners to the side returns' top; `RearSkin` a ring at z 4.78 around
-  the rear leaves 2 cm out, with a reveal back to the liner end z 4.70; sills (`SILL_TOP_Y`
-  0.04) and `BellySkin` (two strips from the deck edge x ±2.4 to the sills) to z 4.80 (D20).
-  Helpers `van_hull_patches.gd` (sills, belly, rear corners), `van_hull_lines.gd` (hull lines at
-  inner + 0.22 + `TRIM_LIFT` 0.01, breaking over the door slide, D19; corner posts, rails end
-  `POST_GAP` 2 cm short).
+- Side walls: `VanSideWall._add_side` (`<S>Wall`, `<S>WallReveals`, D18); `van_side_wall_panel.gd`
+  398 lines, `van_side_wall_shell.gd` 400 (cap); jambs `van_side_wall_jambs.gd`.
+- Outer body (`scripts/van/look/van_hull.gd`, 334 lines): `SideSkin<S>` 0.16 → 0.22 off the
+  liner, no inner face (D17); `RoofSkin`, `FrontSkin` at z -4.70, `RearSkin` ring at z 4.78, sills
+  and `BellySkin` (D20); helpers `van_hull_patches.gd`, `van_hull_lines.gd` (lines at 0.22 + 0.01,
+  breaking over the door slide, D19).
 - Rear doors: `scripts/van/rear_doors.gd` (400, cap) + `scripts/van/rear_door_lighting.gd`
   (leaf parts on layers 1+2).
 - Cab (real cab kept, D21): `scripts/van/look/van_cab_shell.gd` swept on
@@ -41,21 +33,29 @@ Status: phase-done
   `SKIN_X + 0.17`, A-pillars 3 cm inside the outline (D22).
 
 ## Completed phase
-Phase 4 · Sealed simple cab, done 815948b (sessions 10–11; fda7fad spec 4-1, 23f70b1 spec 4-2,
-815948b steps/wheels/pillars). Verified: check, smoke, scene dump clean (identical, not blessed);
-`py -3 tools/van_audit.py --timeout 600`: CLIP 102, EDGE 24, FLICKER 1683, HEIGHT 43, LEAK_IN 1,
-LEAK_OUT 44, OPENING 99, REAR_ROOF 8; `VanLook/Cab/` FLICKER 41 → 0, 3 cab EDGE rows left are tube
-ends and a CabFace windshield-corner seam (no holes). Shots v11, v13, c23 read: cab closed, front
-unchanged to the eye.
+Phase 4 · Sealed simple cab, done 815948b (see plan Progress). Phase 5 so far (session 6):
+158e9cb audit speed-up, front-window poses, cross-mesh seams (D23); check clean. Audit now:
+CLIP 70, EDGE 23, FLICKER 1699, HEIGHT 43, OPENING 83, REAR_ROOF 8, LEAK as before (44/1).
 
 ## Next phase
-Phase 5 · Add-ons snapped and height-capped (D6). Start: read the plan's phase 5 and Carry
-forward (audit speed-up before `--strict` goes into smoke; door-adjacent window poses; wheel
-Hub/Bolt FLICKER). Grep the audit report for REAR_ROOF, HEIGHT and the `VanLook/` add-on roots
-(Armour, Rebar, Spikes, Signs, RoofRack, Junk, Antennas, Spares) to size the work; expect to save
-specs (unattended.md) rather than fit it all in one session.
+Phase 5 · Add-ons snapped and height-capped (D6), continued. First ask the Blocker questions and
+record them as D24–D26. Then, one spec each: (1) roof add-ons (`van_roof.gd` rack/antennas/spot,
+`van_roof_junk.gd`) under the chosen cap with a place-or-drop check, and the audit's HEIGHT /
+REAR_ROOF using the same cap (today cap = roof crown `outer_roof_y_at(0)` 3.57, so the rack at
+3.66–3.69 always reports); (2) wheels: Hub/Bolt 2 cm lift and `Flare*` self-FLICKER (40 pairs
+each) in `van_wheels.gd`; (3) side add-ons (armour, rebar, spikes, signs, spares, rear dressing)
+snapped to the skin and clear of doors/windows (CLIP/OPENING rows vs `VanLook/`); (4) interior
+FLICKER named by the audit (Bulkhead 875 pairs, Props 301, InnerShell 163, Shell 49); (5) wire
+`--strict` into smoke once every count is 0. Save specs after (1)–(2) if the session runs long.
 
 ## Requirements / gotchas
+- The audit's `Interior/Props/FuseBox/Generator` fan/flywheel/blade rows change run to run
+  (animated): freeze or skip animated parts before `--strict` goes into smoke. A PerimeterFrame vs
+  SideSkin row in `half` flips 30/31 pairs on a MIN_AREA-borderline triangle.
+- The remaining EDGE rows (CabLiner/BackLip/Face, 6 wheel wells, RearSkin, CornerPostF L/R,
+  BellySkin, RearWall hinge CurvedBody, 4 ExteriorPane, SideSkin L/R, RearCorner L/R) are not
+  seams shared edge to edge: each needs a look (by-design single-sided ones need an audit
+  exemption list, not geometry).
 - The cab's back edge meets `FrontSkin` at z -4.70 (cab outline 0.12 off the liner): keep the
   cab's outer outline on `VanBodyProfile.section_points(steps, true)` or FrontSkin's inner edge
   (sampled at 16 steps across the cab top) must move with it.
@@ -63,4 +63,18 @@ specs (unattended.md) rather than fit it all in one session.
 - `rear_doors.gd`, `van_side_wall_shell.gd` are at 400 lines; split before adding.
 
 ## Blocker
-none
+Owner questions (D6 says "under a height cap above the roof" but gives no number; the plan's
+Add-ons line). Audit cap today is the roof crown y 3.57; tops: rack 3.66–3.69, single tyres 3.92,
+spotlight 4.14, crates/tyres 4.18–4.19, tarps/straps 4.22–4.24, a stacked tyre 4.44, antenna 5.76.
+1. How high may roof add-ons stand above the roof crown?
+   a) 0.7 m (y ~4.27) (recommended): rack, crates, tarps, straps, tyres and the spotlight stay;
+      only stacked piles (the 4.44 tyre) drop. b) 0.35 m (y ~3.92): rack and flat tyres stay;
+      crates, tarps, straps, spotlight drop. c) Rack height 0.12 m: all roof junk and the
+      spotlight drop.
+2. Antennas (thin whips 1.2–2.2 m tall)?
+   a) Exempt from the cap, but never in the rear 1.5 m of the roof (recommended). b) Shortened
+   to the cap. c) Dropped.
+3. The rear 1.5 m of the roof (your "weird vertical walls above the back"; REAR_ROOF rows: an
+   antenna, a crate, the rack's rear end and legs)?
+   a) Nothing above rack height there; crates and antennas move forward or drop (recommended).
+   b) Same cap as the rest of the roof. c) Nothing at all, the rack ends 1.5 m short.

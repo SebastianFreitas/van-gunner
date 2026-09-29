@@ -104,12 +104,53 @@ func first_visible_hit(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vect
 	return {"back_nodes": back_nodes}
 
 
+## True when both ends and the midpoint of an edge each lie within 1.5 cm of some triangle edge
+## of a different mesh node (a seam where two meshes meet edge to edge).
+func _edge_meets_other_mesh(tris: RefCounted, grid: Dictionary, idx: int, p0: Vector3, p1: Vector3) -> bool:
+	for p: Vector3 in [p0, (p0 + p1) * 0.5, p1]:
+		var reach := Vector3(0.015, 0.015, 0.015)
+		var lo := Vector3i(((p - reach) / 0.25).floor())
+		var hi := Vector3i(((p + reach) / 0.25).floor())
+		var covered := false
+		for x in range(lo.x, hi.x + 1):
+			for y in range(lo.y, hi.y + 1):
+				for z in range(lo.z, hi.z + 1):
+					var list: PackedInt32Array = grid.get(Vector3i(x, y, z), PackedInt32Array())
+					for t in list:
+						if tris.owner_idx[t] == idx:
+							continue
+						if _point_near_tri_edge(p, tris.a[t], tris.b[t], tris.c[t]):
+							covered = true
+							break
+					if covered:
+						break
+				if covered:
+					break
+			if covered:
+				break
+		if not covered:
+			return false
+	return true
+
+
+func _point_near_tri_edge(p: Vector3, a: Vector3, b: Vector3, c: Vector3) -> bool:
+	for seg: Array in [[a, b], [b, c], [c, a]]:
+		var s0: Vector3 = seg[0]
+		var ab: Vector3 = (seg[1] as Vector3) - s0
+		var len_sq: float = ab.length_squared()
+		var f: float = 0.0 if len_sq < 1e-12 else clampf((p - s0).dot(ab) / len_sq, 0.0, 1.0)
+		if p.distance_to(s0 + ab * f) <= 0.015:
+			return true
+	return false
+
+
 ## Open outer edges: exterior triangles (render layer 1) whose weld-1mm edge is used by exactly
 ## one triangle and doesn't meet another proxy body at 3 samples along its length.
 func check_edges(tris: RefCounted, runner: Node) -> void:
 	var started := Time.get_ticks_msec()
 	var space: PhysicsDirectSpaceState3D = _rig.get_world_3d().direct_space_state
 
+	var grid: Dictionary = tris.build_grid(0.25)
 	var agg: Dictionary = {}
 	for idx in range(tris.nodes.size()):
 		if not (int(tris.layers[idx]) & 1):
@@ -142,6 +183,8 @@ func check_edges(tris: RefCounted, runner: Node) -> void:
 			if length < EDGE_MIN_LEN:
 				continue
 			if _edge_meets_neighbour(space, own_rid, p0, p1):
+				continue
+			if _edge_meets_other_mesh(tris, grid, idx, p0, p1):
 				continue
 			open_count += 1
 			if longest.is_empty() or length > float(longest.length):

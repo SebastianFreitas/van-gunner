@@ -7,6 +7,7 @@ const AuditMesh := preload("res://tools/van_audit/van_audit_mesh.gd")
 const AuditStates := preload("res://tools/van_audit/van_audit_states.gd")
 const AuditOverlap := preload("res://tools/van_audit/van_audit_overlap.gd")
 const AuditGaps := preload("res://tools/van_audit/van_audit_gaps.gd")
+const AuditFlicker := preload("res://tools/van_audit/van_audit_flicker.gd")
 const RIG_PATH := ^"TravelPath/VanFollow/VanRig"
 
 var rig: Node3D
@@ -57,23 +58,40 @@ func _run() -> void:
 	var roots: Dictionary = states.moving_roots()
 	var closed_boxes: Dictionary = _closed_boxes(roots)
 
-	AuditOverlap.check_flicker(tris, self, "closed", {})
+	AuditFlicker.check_flicker(tris, self, "closed", {})
 	AuditOverlap.check_clip(tris, self, "closed", roots)
 
-	var fractions: PackedFloat32Array = [0.5, 1.0]
-	var names: PackedStringArray = ["half", "open"]
-	for i in range(fractions.size()):
-		var f: float = fractions[i]
-		var pose_name: String = names[i]
-		states.pose(f)
+	var door_roots: Dictionary = {}
+	var front_roots: Dictionary = {}
+	for label in roots.keys():
+		if AuditStates.FRONT_WINDOWS.has(label):
+			front_roots[label] = roots[label]
+		else:
+			door_roots[label] = roots[label]
+	var state_names: PackedStringArray = ["half", "open", "win_half", "win_open"]
+	var state_fractions: PackedFloat32Array = [0.5, 1.0, 0.5, 1.0]
+	for i in range(state_names.size()):
+		var pose_name: String = state_names[i]
+		var front: bool = pose_name.begins_with("win_")
+		states.pose(0.0)
+		states.pose_front(0.0)
+		if front:
+			states.pose_front(state_fractions[i])
+		else:
+			states.pose(state_fractions[i])
 		await get_tree().process_frame
 		collect()
-		AuditOverlap.check_flicker(tris, self, pose_name, roots)
-		AuditOverlap.check_clip(tris, self, pose_name, roots)
-		if pose_name == "open":
-			AuditOverlap.check_openings(tris, self, roots, closed_boxes)
+		var posed: Dictionary = front_roots if front else door_roots
+		AuditFlicker.check_flicker(tris, self, pose_name, posed)
+		AuditOverlap.check_clip(tris, self, pose_name, posed)
+		if pose_name == "open" or pose_name == "win_open":
+			var boxes: Dictionary = {}
+			for label in posed.keys():
+				boxes[label] = closed_boxes[label]
+			AuditOverlap.check_openings(tris, self, posed, boxes)
 
 	states.pose(0.0)
+	states.pose_front(0.0)
 	collect()
 
 	var gaps := AuditGaps.new()

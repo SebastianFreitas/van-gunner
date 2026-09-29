@@ -6,6 +6,8 @@ var a: PackedVector3Array
 var b: PackedVector3Array
 var c: PackedVector3Array
 var n: PackedVector3Array
+var tri_lo: PackedVector3Array  # per-triangle AABB corners
+var tri_hi: PackedVector3Array
 var owner_idx: PackedInt32Array
 
 var nodes: Array[Node3D] = []
@@ -129,4 +131,6 @@ func _add_tri(pa: Vector3, pb: Vector3, pc: Vector3, idx: int) -> void:
 	b.append(pb)
 	c.append(pc)
 	n.append(normal.normalized())
+	tri_lo.append(pa.min(pb).min(pc))
+	tri_hi.append(pa.max(pb).max(pc))
 	owner_idx.append(idx)

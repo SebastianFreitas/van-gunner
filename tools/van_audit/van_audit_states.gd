@@ -10,6 +10,7 @@ const WINDOW_NAMES: Dictionary = {
 	&"win_right_rear": "RightRear",
 	&"win_right_front": "RightFront",
 }
+const FRONT_WINDOWS: Array[StringName] = [&"win_left_front", &"win_right_front"]
 
 var _doors: Node3D  # untyped SideDoors owner; side_doors.gd has no class_name (cycle rule)
 var _windows: Node3D  # untyped SideWindows owner; side_windows.gd has no class_name
@@ -59,11 +60,19 @@ func moving_roots() -> Dictionary:
 	return roots
 
 
-## Sets every moving node's local transform directly. 0.0 is the recorded closed pose.
+## Sets the side doors and the two rear windows directly. 0.0 is the recorded closed pose.
+## The front windows stay put: play forbids one open while its door is.
 func pose(fraction: float) -> void:
 	for side in [&"left", &"right"]:
 		_pose_door(side, fraction)
 	for label in _win_hinge.keys():
+		if not FRONT_WINDOWS.has(label):
+			_pose_window(label, fraction)
+
+
+## Sets only the two front windows; doors and rear windows are left as they are.
+func pose_front(fraction: float) -> void:
+	for label in FRONT_WINDOWS:
 		_pose_window(label, fraction)
 
 

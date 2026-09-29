@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-289 GDScript files, 43864 lines.
+290 GDScript files, 43964 lines.
 
 ### `scenes/corridor/`
 
@@ -701,11 +701,12 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `van_audit.gd` | — | 240 | Headless van audit entry scene: collects every visible triangle of the van, checks it and writes a report. |
-| `van_audit_gaps.gd` | — | 328 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges and see-through leaks, found by raycasting temporary ConcavePolygonShape3D pr… |
-| `van_audit_mesh.gd` | — | 133 | Collects every visible triangle under a rig into parallel arrays, all in rig-local space, for the van audit's checks (specs 1-2 and 1-3 add more consumers). |
-| `van_audit_overlap.gd` | — | 301 | Coplanar-overlap (flicker), moving-part interpenetration (clip) and door/window opening-blocked checks over an AuditMesh triangle set (vanfix spec 1-2). |
-| `van_audit_states.gd` | — | 106 | Poses the side doors and windows into closed / half / open states directly, with no tweens and no gameplay calls, so the audit's flicker/clip/opening checks ca… |
+| `van_audit.gd` | — | 258 | Headless van audit entry scene: collects every visible triangle of the van, checks it and writes a report. |
+| `van_audit_flicker.gd` | — | 194 | Coplanar-overlap (flicker) check over an AuditMesh triangle set, split off van_audit_overlap.gd (vanfix specs 1-2, 5-1). |
+| `van_audit_gaps.gd` | — | 371 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges and see-through leaks, found by raycasting temporary ConcavePolygonShape3D pr… |
+| `van_audit_mesh.gd` | — | 137 | Collects every visible triangle under a rig into parallel arrays, all in rig-local space, for the van audit's checks (specs 1-2 and 1-3 add more consumers). |
+| `van_audit_overlap.gd` | — | 133 | Coplanar-overlap (flicker), moving-part interpenetration (clip) and door/window opening-blocked checks over an AuditMesh triangle set (vanfix spec 1-2). |
+| `van_audit_states.gd` | — | 115 | Poses the side doors and windows into closed / half / open states directly, with no tweens and no gameplay calls, so the audit's flicker/clip/opening checks ca… |
 
 ## Scenes
 
