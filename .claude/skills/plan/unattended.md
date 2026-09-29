@@ -82,6 +82,10 @@ question by the stop line in `SKILL.md`:
   ask: the question, 2 to 4 options with the recommended one first, and
   the plan line it is about. The owner answers it with `go` in an app
   session on this worktree and restarts the runner.
+- **`Questions: auto` in the plan header:** on-the-line questions don't
+  stop either. Take the recommended option, record it as `D<n> (auto,
+  owner-delegated)` with one line of reason, and keep going; Stage done
+  lists them under Look at. Only a failing check you can't fix blocks.
 
 Keep going until the session ends one of the three ways. Do not end with
 a progress update. The report and hard-stop message are still written;

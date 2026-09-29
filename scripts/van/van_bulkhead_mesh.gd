@@ -6,6 +6,17 @@ extends RefCounted
 ## apart, never z-fight where they cross (the audit flags faces within 1 cm).
 const MESH_WEAVE_Z := 0.012
 
+## Top rail segments are this much shallower than the frame, so their z faces sit clear of the
+## posts' (and MidPost's 0.85 depth); odd segments are a further 4 cm shallower so joint faces differ.
+const RAIL_DEPTH_INSET := 0.07
+
+## DoorHeader and BottomRail are deeper than the posts (0.16), wall posts (0.12 to 0.16), top
+## rail and mid posts, so their z faces sit 2 cm or more clear of every piece they touch.
+const HEADER_DEPTH := 0.20
+
+## Kick plate visual depth (collision keeps panel_thickness): 4 cm inside the wall posts' z faces.
+const KICK_DEPTH := 0.08
+
 var bulkhead: Node3D  # the owning VanBulkhead; reads/writes its fields when called
 
 
@@ -58,14 +69,16 @@ func add_curved_wall_post(node_name: String, wall_sign: float, material: Materia
 
 
 func add_panel_post(node_name: String, x: float, material: Material) -> void:
-	var top: float = bulkhead._vault_y(x)
-	var height: float = top - bulkhead.kick_height
+	# Ends are buried in the rails' boxes so no post face shares a plane with a rail face.
+	var y0: float = bulkhead.kick_height + bulkhead.frame_thickness * 0.5
+	var y1: float = bulkhead._vault_y(x) - bulkhead.frame_thickness * 0.45
+	var height: float = y1 - y0
 	if height < 0.05:
 		return
 	bulkhead._add_box(
 		node_name,
 		Vector3(bulkhead.frame_thickness * 0.75, height, bulkhead.frame_depth * 0.85),
-		Vector3(x, bulkhead.kick_height + height * 0.5, 0.0),
+		Vector3(x, (y0 + y1) * 0.5, 0.0),
 		material
 	)
 
@@ -120,9 +133,10 @@ func add_curved_header(inner_x: float, outer_x: float, material: Material) -> vo
 			continue
 		# Box local +X is the long axis for the rail — rotate from +X onto the vault tangent.
 		var angle := atan2(dy, dx)
+		var depth: float = bulkhead.frame_depth - RAIL_DEPTH_INSET - (0.04 if i % 2 == 1 else 0.0)
 		bulkhead._add_box(
 			"TopRail_%d" % i,
-			Vector3(length + 0.008, bulkhead.frame_thickness, bulkhead.frame_depth),
+			Vector3(length + 0.008, bulkhead.frame_thickness, depth),
 			Vector3((x0 + x1) * 0.5, (y0 + y1) * 0.5, 0.0),
 			material,
 			Vector3(0.0, 0.0, angle)

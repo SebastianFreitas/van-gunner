@@ -41,14 +41,20 @@ const PATCH_PROUD := 0.035
 ## off the ring's back).
 const PATCH_BURY := -0.015
 
+const _Fit := preload("res://scripts/van/look/van_inner_shell_fit.gd")
+
 var _wall: VanSideWall
 var _weld_bead_mesh: BoxMesh
+var _fit: RefCounted = _Fit.new(self)
+## Side (float) -> Array[Rect2] of the plate rects (z, y) placed on it.
+var _placed_plates: Dictionary = {}
 
 
 func rebuild_look(look: VanLook) -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
+	_placed_plates = {}
 
 	_wall = get_node_or_null(WALL_PATH) as VanSideWall
 	_weld_bead_mesh = BoxMesh.new()
@@ -82,16 +88,6 @@ func _wall_inset(side: float, y: float, d: float) -> float:
 ## The y of a point d metres in from the ceiling liner (0.015 above _ceiling_y).
 func _ceiling_inset(x: float, d: float) -> float:
 	return _ceiling_y(x) + 0.015 - d
-
-
-## False when the z span comes within a rib's half depth plus RIB_CLEAR of any rib.
-func _clear_of_ribs(z0: float, z1: float) -> bool:
-	var band := RIB_HALF_DEPTH + RIB_CLEAR
-	for i: int in range(RIB_COUNT):
-		var rz := RIB_Z0 + float(i) * RIB_STEP
-		if z1 > rz - band and z0 < rz + band:
-			return false
-	return true
 
 
 func _ceiling_y(x: float) -> float:
@@ -163,6 +159,7 @@ func _build_plates(rng: RandomNumberGenerator, mat_a: Material, mat_b: Material,
 		var placed: Array[Rect2] = []
 		for idx: int in range(PLATE_COUNT):
 			_place_plate(rng, side, idx, placed, mat_a, mat_b, bolt_mat)
+		_placed_plates[side] = placed
 
 
 func _place_plate(rng: RandomNumberGenerator, side: float, idx: int, placed: Array[Rect2],
@@ -176,9 +173,11 @@ func _place_plate(rng: RandomNumberGenerator, side: float, idx: int, placed: Arr
 			continue
 		if z - w * 0.5 < Z_MIN or z + w * 0.5 > Z_MAX - 0.1:
 			continue
-		if not _clear_of_ribs(z - w * 0.5, z + w * 0.5):
+		if not _fit.clear_of_ribs(z - w * 0.5, z + w * 0.5):
 			continue
 		var rect := Rect2(z - w * 0.5, y - h * 0.5, w, h)
+		if side > 0.0 and rect.grow(RIB_CLEAR).intersects(_Fit.GENERATOR_ZONE):
+			continue
 		var overlaps := false
 		for other: Rect2 in placed:
 			if rect.intersects(other):
@@ -241,7 +240,10 @@ func _build_wall_patch(rng: RandomNumberGenerator, idx: int, patch_mat: Material
 			continue
 		if y > 1.05 and _in_window_span(z):
 			continue
-		if not _clear_of_ribs(z - (r + 0.015), z + (r + 0.015)):
+		if not _fit.clear_of_ribs(z - (r + 0.015), z + (r + 0.015)):
+			continue
+		var prect := Rect2(z - (r + 0.015), y - (r + 0.015), 2.0 * (r + 0.015), 2.0 * (r + 0.015))
+		if not _fit.clear_of_plates(side, prect):
 			continue
 		found = true
 		break
@@ -276,7 +278,7 @@ func _build_ceiling_patch(rng: RandomNumberGenerator, idx: int, patch_mat: Mater
 	for _try: int in range(PATCH_TRIES):
 		x = rng.randf_range(-1.8, 1.8)
 		z = rng.randf_range(Z_MIN, Z_MAX)
-		if _clear_of_ribs(z - (r + 0.015), z + (r + 0.015)):
+		if _fit.clear_of_ribs(z - (r + 0.015), z + (r + 0.015)):
 			found = true
 			break
 	if not found:

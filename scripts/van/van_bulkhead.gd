@@ -112,10 +112,12 @@ func _build() -> void:
 	var door_header_y := edge_height - frame_thickness * 0.55
 	var door_wall_sign := -outer_sign
 	var door_outer := door_wall_sign * (_wall_half(door_header_y) - frame_thickness * 0.15)
+	# The inner end is buried 4 cm in the opening post so its end face isn't coplanar with the post's.
+	var door_inner := opening_inner + door_wall_sign * 0.04
 	_add_box(
 		"DoorHeader",
-		Vector3(absf(opening_inner - door_outer), frame_thickness, frame_depth),
-		Vector3((door_outer + opening_inner) * 0.5, door_header_y, 0.0),
+		Vector3(absf(door_inner - door_outer), frame_thickness, _VanBulkheadMesh.HEADER_DEPTH),
+		Vector3((door_outer + door_inner) * 0.5, door_header_y, 0.0),
 		steel
 	)
 
@@ -126,18 +128,19 @@ func _build() -> void:
 		outer_sign,
 		0.0,
 		kick_height,
-		panel_thickness,
+		_VanBulkheadMesh.KICK_DEPTH,
 		steel,
 		frame_thickness * 0.25
 	)
 
 	# Bottom rail along the mesh panel at kick height.
 	var bottom_outer := outer_sign * (kick_half - frame_thickness * 0.15)
-	var bottom_width := absf(bottom_outer - panel_inner)
+	var bottom_inner := panel_inner - outer_sign * 0.04  # buried in the opening post
+	var bottom_width := absf(bottom_outer - bottom_inner)
 	_add_box(
 		"BottomRail",
-		Vector3(bottom_width, frame_thickness, frame_depth),
-		Vector3((panel_inner + bottom_outer) * 0.5, kick_height + frame_thickness * 0.5, 0.0),
+		Vector3(bottom_width, frame_thickness, _VanBulkheadMesh.HEADER_DEPTH),
+		Vector3((bottom_inner + bottom_outer) * 0.5, kick_height + frame_thickness * 0.5, 0.0),
 		steel
 	)
 

@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-290 GDScript files, 44536 lines.
+291 GDScript files, 44593 lines.
 
 ### `scenes/corridor/`
 
@@ -606,8 +606,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `side_windows.gd` | — | 374 | Side cargo windows — top-hinged sashes that tip vertically outward. |
 | `van.gd` | — | 398 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
 | `van_body_profile.gd` | `VanBodyProfile` | 193 | One cross-section for the whole van body: the inner liner outline (floor, bowed sides, roof vault) and an outer skin offset from it, so inside and outside piec… |
-| `van_bulkhead.gd` | `VanBulkhead` | 202 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
-| `van_bulkhead_mesh.gd` | — | 231 | Builds the bulkhead's frame posts, headers, panels and diagonal mesh netting. |
+| `van_bulkhead.gd` | `VanBulkhead` | 205 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
+| `van_bulkhead_mesh.gd` | — | 245 | Builds the bulkhead's frame posts, headers, panels and diagonal mesh netting. |
 | `van_ceiling.gd` | `VanCeiling` | 380 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_driver_talk.gd` | — | 158 | The driver-talk panel: open/close, option refresh, and boost/slow shout handling. |
 | `van_floor.gd` | `VanFloor` | 343 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
@@ -648,7 +648,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_hull.gd` | `VanHull` | 335 | The van's outer skin: roof, sides, front face (the step to the cab skin), rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted fr… |
 | `van_hull_lines.gd` | — | 231 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
 | `van_hull_patches.gd` | — | 189 | Skin patches that close the gaps left in VanHull's outer shell: the rear corner strip behind the side skin, the rocker sill along both sides and the belly betw… |
-| `van_inner_shell.gd` | `VanInnerShell` | 316 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
+| `van_inner_shell.gd` | `VanInnerShell` | 318 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
+| `van_inner_shell_fit.gd` | — | 38 | Keeps the inner shell's plates and patches clear of the ribs, the bulkhead frame and each other. |
 | `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |
 | `van_marker_lights.gd` | — | 139 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
 | `van_markings.gd` | `VanMarkings` | 73 | The van's seeded painted identity: a stencil name on both sides, a number on the cab doors and kill tallies, as exterior-only decals. |

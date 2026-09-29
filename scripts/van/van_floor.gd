@@ -166,7 +166,7 @@ func _build_rear_entry_ramp() -> void:
 	var metal := _metal_mat(Color(0.1, 0.105, 0.1, 1.0), 0.7, 0.5)
 
 	var box := BoxMesh.new()
-	box.size = Vector3(RAMP_WIDTH, 0.06, RAMP_RUN)
+	box.size = Vector3(RAMP_WIDTH - 0.04, 0.06, RAMP_RUN)
 	var mesh := MeshInstance3D.new()
 	mesh.name = &"RearEntryRamp"
 	mesh.mesh = box

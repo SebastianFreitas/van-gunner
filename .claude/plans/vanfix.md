@@ -1,9 +1,10 @@
 # vanfix
 
 Stage: running
+Questions: auto (owner, 2026-09-29: D46)
 Started: 2026-09-28
 Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/vanfix.state.md` while running).
-Interview: done under the old procedure (no parts A/B/C); missed: cable/lamp fix scope (D35 auto); generator vent route (D36 auto); audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15); window hinge pivot position (D16 auto); side skin layering against the wall (D17 auto); who owns the opening reveals and whether the buried casings go (D18 auto); side door slide path vs the belt line and rub rail (D19); whether the front audit calls for replacing the cab (D21 auto); front wheels moved out to clear the cab skin (D22 auto); audit speed-up, front windows posed apart from their doors and cross-mesh EDGE seams (D23 auto); roof height cap (D24), antennas (D25), rear roof (D26); roof place-or-drop grouping (D27 auto); flare and spare solids (D28 auto); arch trims, chain segments, exhaust and sill breaks (D29 auto); add-ons in the side door slide path (D30); low side armour vs the door path and chassis items (D32); side armour bands and plate lean (D33 auto); low chassis add-ons embedded (D34 auto); bulkhead grille and rib weld offsets (D37 auto); door frames vs the skin at the D13 recess (D38); props standing in a side door bay (D39); cable trunks across door bays (D40); window frame rows in the OPENING check (D41 auto); floor decal lift height (D42 auto); inner shell plates and patches vs ribs (D43 auto)
+Interview: done under the old procedure (no parts A/B/C); missed: cable/lamp fix scope (D35 auto); generator vent route (D36 auto); audit tool layout and method (D11 auto); gap size where 1 cm meets the audit's 1 cm coplanar tolerance (D12 auto); side door slide clearance through the wall (D13); door front edge vs cab wall (D14); street lighting on door and window parts (D15); window hinge pivot position (D16 auto); side skin layering against the wall (D17 auto); who owns the opening reveals and whether the buried casings go (D18 auto); side door slide path vs the belt line and rub rail (D19); whether the front audit calls for replacing the cab (D21 auto); front wheels moved out to clear the cab skin (D22 auto); audit speed-up, front windows posed apart from their doors and cross-mesh EDGE seams (D23 auto); roof height cap (D24), antennas (D25), rear roof (D26); roof place-or-drop grouping (D27 auto); flare and spare solids (D28 auto); arch trims, chain segments, exhaust and sill breaks (D29 auto); add-ons in the side door slide path (D30); low side armour vs the door path and chassis items (D32); side armour bands and plate lean (D33 auto); low chassis add-ons embedded (D34 auto); bulkhead grille and rib weld offsets (D37 auto); door frames vs the skin at the D13 recess (D38); props standing in a side door bay (D39); cable trunks across door bays (D40); window frame rows in the OPENING check (D41 auto); floor decal lift height (D42 auto); inner shell plates and patches vs ribs (D43 auto); bulkhead, hanger, ramp and flare depths (D44 auto); bulkhead post and kick plate joints (D45)
 
 ## Rebase note (2026-09-28, landed on main)
 
@@ -128,6 +129,10 @@ the night read. So:
 - **D42 · Floor decal lift (auto).** The flat floor decals (mats, paper, cardboard, rag, tape, oil stains) sit `DECAL_LIFT` 1.2 cm above the deck instead of 3-7 mm, and small stacked prop parts embed 1.5 cm into what they sit on rather than lie flush, per D7/D12. Reason: the audit counts faces within 1 cm as coplanar; 1.2 cm is barely visible in play. Review at the end.
 
 - **D43 · Inner shell dressing fit (auto).** Scrap plates and weld patches are placed clear of the rib z bands (rib half depth 0.035 + 2 cm) and the patch disc stands 2 cm proud of its weld ring (ring 5 mm buried .. 1.5 cm proud, patch 1.5 .. 3.5 cm), so no rib, plate, ring or patch shares a face plane; a piece with no free spot is not built (D6). Reason: FLICKER rows; dressing positions only.
+- **D44 · Small structure depths (auto).** Bulkhead top rail segments step depth (inset 0.07, odd 4 cm less), mid posts run rail centre to rail centre, door header and bottom rail 0.20 deep with inner ends buried in the opening post, kick plate 0.08 deep; rear bumper hangers slimmed, entry ramp 2.16 wide, wheel flare inner face at `SKIN_X + 0.06`; wall-post and kick-strip joints left as they are (alternating them showed as steps, Q1). Reason: FLICKER rows at a few cm, invisible in play (shots 01/03).
+- **D45 · Bulkhead joint rows exempt (owner, Q1).** The bulkhead `LeftWallPost_n/RightWallPost_n vs n+1` and `KickPlate_n vs n+1` joint rows stay as built (tiny, hidden in the post corners; alternating segment depths showed as a saw-toothed post and a striped kick plate) and go on the audit's exemption list with that reason in phase 11.
+- **D46 · Questions auto (owner).** "the last 7 questions i just like awnsered the recomended one, just let the map keep working." From phase 8 on, every phase question, on the stop line or not, takes its Recommended option and is recorded as `D<n> (auto, owner-delegated)`; no phase blocks for a question. Only a check that fails and can't be fixed still blocks. Stage done lists every owner-delegated D under Look at for review.
+- **D47 · Visible flicker floor (owner-delegated plan review).** FLICKER rows under `MIN_VISIBLE_AREA` 0.005 m² (about 7×7 cm) are reported as `FLICKER_MINOR` and neither fixed nor failed. Reason: 311 of the 418 FLICKER rows after phase 7 are slivers nobody sees in play, and fixing them one by one was most of the plan's time. `--strict` fails on FLICKER rows at or above the floor that aren't exempt, plus CLIP, OPENING, LEAK_IN, LEAK_OUT and HEIGHT.
 
 ## Constraints (every phase)
 
@@ -148,11 +153,13 @@ the night read. So:
 | 4 | Sealed simple cab | code | D5, D4, audit | done 815948b |
 | 5 | Add-ons snapped and height-capped | code | D6, audit | done 32a481d |
 | 6 | Side-wall and cable flicker | code | D12, audit | done 0dcc580 |
-| 7 | Small structure flicker | code | D12, audit | todo |
-| 8 | Generator and welder flicker | code | D12, audit | todo |
-| 9 | PcRig, hopper and rack flicker | code | D12, audit | todo |
-| 10 | Leak and edge triage | code | audit | todo |
-| 11 | Audit strict in smoke | code | D23, audit | todo |
+| 7 | Small structure flicker | code | D12, audit | done 6c2de5c |
+| 8 | Generator and welder visible flicker | code | D12, D47, audit | todo |
+| 9 | PcRig and CRT visible flicker | code | D12, D47, audit | todo |
+| 10 | Hopper, rack and leftover visible flicker | code | D12, D47, audit | todo |
+| 11 | Audit floor and exemptions | code | D45, D47, audit | todo |
+| 12 | Leak and edge triage | code | audit | todo |
+| 13 | Audit strict in smoke | code | D23, D47, audit | todo |
 
 ## Phases
 
@@ -190,21 +197,32 @@ Notes: done 0dcc580 (74cfe3c, 0dcc580). `MachineParts.cable_bundle` offsets stra
 ### 7 · Small structure flicker (D12)
 Deliverables: WallRib vs Plate, PatchWall/Ceil `_Ring` vs patch, Bulkhead TopRail vs TopRail_7..9 / MidPost, RearEntryRamp and RightHinge/CurvedBody vs BumperHanger, `CargoRail_R_0` vs `VanLook/Wheels/FlareR1/R2`, wheel `Hub` vs `Bolt%d` (2 cm bolt lift, `van_wheels.gd` `_build_wheel`).
 
-### 8 · Generator and welder flicker (D12)
-Deliverables: `Interior/Props/FuseBox/Generator` self rows and `KickPlate_0..5` vs Generator; `CraftingTable/Welder` self rows; animated fan/flywheel/spoke parts frozen or skipped by the audit so their rows are stable run to run.
+Phases 8–10 fix only FLICKER rows with `area=` ≥ 0.005 m² (D47); smaller rows are left for the phase 11 floor. Filter: `awk '/^FLICKER/ { split($3,a,"="); if (a[2]+0 >= 0.005) print }'` over the report, then group by a=/b= prefix. Each phase is at most three specs; if a group is still open at the end, note it in the state file and move on (phase 11/13 pick up leftovers), don't go partial for it.
 
-### 9 · PcRig, hopper and rack flicker (D12)
-Deliverables: PcRig self rows, Hopper self rows, CabRelay Rack self rows, `FrontWall/Slab` vs Rack and PcRig.
+### 8 · Generator and welder visible flicker (D12, D47)
+Deliverables: `Interior/Props/FuseBox/*` (Generator) and `CraftingTable/Welder` rows ≥ 0.005 m² (FuseBox ~26, Welder ~12, incl. WelderBody vs Panel 0.0624); the audit freezes or skips animated fan/flywheel/spoke parts so their rows are stable run to run; optional first step: the ceiling patch ring 2 cm under `_ceiling_y` (`van_inner_shell.gd` `_build_ceiling_patch`, `Shell/Ceiling` rows).
 
-### 10 · Leak and edge triage
-Deliverables: LEAK_OUT (incl. `DoorJamb_L/R` rays and the rear-door centre-seam rows), LEAK_IN 1 at (2.706, 1.158, -1.382), EDGE 23: fix real holes; edges matched across meshes in `van_audit_gaps.gd`; by-design single-sided pieces (Wells, ExteriorPane, SideSkin inner face D17) on an audit exemption list with the reason; the PerimeterFrame vs SideSkin MIN_AREA flip made stable.
-Verification: check, smoke, audit LEAK_IN 0, LEAK_OUT 0, EDGE 0.
+### 9 · PcRig and CRT visible flicker (D12, D47)
+Deliverables: `RequestBoard` (PcRig) rows ≥ 0.005 m² (~18), incl. CRT Bezel vs Screen 0.0768 and the StatsCrt Bezel vs Screen 0.0555 (same builder: screen set back 1.2 cm or more behind the bezel lip); `FrontWall/Slab` vs PcRig.
 
-### 11 · Audit strict in smoke (D23)
-Deliverables: every audit count 0 at several `van` seeds; audit fast enough for smoke (carry-forward speed notes); door-adjacent window posed apart from its door; `--strict` wired into `tools/smoke.py` as a failure.
+### 10 · Hopper, rack and leftover visible flicker (D12, D47)
+Deliverables: `LootMachine` (Hopper) rows ≥ 0.005 m² (~16), `CabRelay` Rack (~8) and `FrontWall/Slab` vs Rack, then the single leftovers: `FrontWall/CasingLeft/Right`, `Bulkhead/TopRail_9`, `FrameRailL/R`, `Cables/@366`. Bulkhead `KickPlate_n` / `WallPost_n` joint rows are not touched (D45).
+
+### 11 · Audit floor and exemptions (D45, D47)
+Deliverables (tooling only, `tools/van_audit/`): `MIN_VISIBLE_AREA` 0.005 m²: FLICKER rows under it print as `FLICKER_MINOR` and never fail; an exemption list (one entry per rule, each with its reason and its D) holding D41 window reveals, D45 bulkhead joints, the 6 Wells (single plates), 4 ExteriorPane, SideSkin inner face (D17); EDGE edges matched across meshes in `van_audit_gaps.gd` so per-mesh seams stop counting; the PerimeterFrame vs SideSkin MIN_AREA flip in `half` made stable. The report header prints counts with minor and exempt rows split out.
+Verification: check, audit run twice gives identical counts; FLICKER (non-minor, non-exempt) at the phases 8–10 leftovers only.
+
+### 12 · Leak and edge triage
+Deliverables: LEAK_OUT 45 (`DoorJamb_L/R` rays, the rear-door centre-seam rows onto Bulkhead/CabDoor), LEAK_IN 1 at (2.706, 1.158, -1.382), the EDGE rows the phase 11 matching leaves: fix real holes, exempt by-design ones with a reason.
+Verification: check, smoke, audit LEAK_IN 0, LEAK_OUT 0, EDGE 0 (after exemptions).
+
+### 13 · Audit strict in smoke (D23, D47)
+Deliverables: every failing audit count 0 at seeds 1337 and two others (fix any leftover ≥ floor row); audit fast enough for smoke (carry-forward speed notes); door-adjacent window posed apart from its door; `--strict` wired into `tools/smoke.py` as a failure. Then Stage done, listing every `(auto, owner-delegated)` D under Look at.
 Verification: check, smoke (fails on a planted flicker, passes clean), `py -3 tools/smoke.py --shots DIR --van-seeds 3` rear and roof shots read, including the D40 ceiling cables, the rear-door bars and the generator pan.
 
 ## Carry forward
+
+- (Plan review 2026-09-29, owner-delegated) Phases 8–11 re-cut into 8–13 around D47: 311 of 418 FLICKER rows after phase 7 were under 0.005 m²; only the ~107 visible ones get fixed, the floor and the exemptions move into their own tooling phase (11) ahead of leaks (12) and strict (13). Questions auto from here on (D46).
 
 - (Phase 1) The audit takes ~4 min, nearly all in three FLICKER passes; phase 5 must speed it up (normal bucketing, or moving-roots-only flicker at half/open) before `--strict` goes into smoke.
 - (Phase 1) The side door leaf `CurvedBody` clips the jamb, casing and forward into the cab back wall (z to -4.74); fix the leaf length before triaging the door OPENING rows (props in the PcRig/CabRelay area).

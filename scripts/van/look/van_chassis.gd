@@ -94,7 +94,7 @@ func _build_flare(flare_name: String, centre: Vector3, radius: float, mat: Mater
 		z_lo: float = -INF, z_hi: float = INF) -> void:
 	var side := signf(centre.x)
 	var r := radius + FLARE_GAP
-	var x_in := side * (SKIN_X - 0.03)
+	var x_in := side * (SKIN_X + 0.06)
 	var x_out := side * (VanWheels.WHEEL_X + VanWheels.TYRE_WIDTH * 0.5 + FLARE_OUT)
 	# L profile as (x, rho) pairs, plus each edge's outward direction: 0 = +rho, 1 = +x, 2 = -rho,
 	# 3 = -x, wrapping P0..P5.
@@ -315,8 +315,8 @@ func _build_rear_bumper(mat: Material) -> void:
 		var letter := "L" if side < 0.0 else "R"
 		_wheels._add_mesh("FrameRail%s" % letter, _wheels._box(Vector3(0.16, 0.14, 1.0)), mat,
 				Vector3(side * 1.05, -0.12, 4.4))
-		_wheels._add_mesh("BumperHanger%s" % letter, _wheels._box(Vector3(0.12, 0.16, 0.2)), mat,
-				Vector3(side * 1.05, -0.06, 4.8))
+		_wheels._add_mesh("BumperHanger%s" % letter, _wheels._box(Vector3(0.06, 0.14, 0.18)), mat,
+				Vector3(side * 1.02, -0.10, 4.79))
 		_wheels._add_mesh("BumperCap%s" % letter, _wheels._box(Vector3(0.06, 0.2, 0.2)), mat,
 				Vector3(side * 2.33, -0.10, 4.92))
 

@@ -373,6 +373,15 @@ set `Status: blocked`, commit, and end the turn with the normal report.
 Unattended (`AUTOPLAN=1`) nothing is asked: on-the-line questions block
 the same way at once; see `unattended.md`.
 
+**`Questions: auto` in the plan header** (the owner's standing choice,
+2026-09-29: "just let the map keep working") overrides the two
+paragraphs above, in the app and unattended: nothing is asked and no
+question blocks. On-the-line questions too take the option you would
+mark "(Recommended)", recorded as `D<n> (auto, owner-delegated)` with
+one line of reason; Stage done lists every owner-delegated D under Look
+at so the owner can reverse any of them. Only a failing check you can't
+fix still blocks.
+
 Every `(auto)` and every blocker names a question the interview should
 have asked: add it to the plan's `Interview` line as `missed:
 <question>` so the next plan's Part A list grows.

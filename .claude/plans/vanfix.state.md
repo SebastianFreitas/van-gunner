@@ -1,4 +1,4 @@
-Status: partial
+Status: phase-done
 # Plan state: vanfix
 
 ## Plan
@@ -41,44 +41,38 @@ Status: partial
 - Caps: `rear_doors.gd`, `van_side_wall_shell.gd` at 400 lines; split before adding.
 
 ## Completed phase
-6 (done 0dcc580). 74cfe3c: `MachineParts.cable_bundle` offsets strands across the run
-(`_run_side`, `_strand_sides`, mitered), not along world X. 0dcc580: `van_side_wall_jambs.gd`
-`JAMB_FRONT_OUT` 0.017 (front inner return buried in `FrontWall/Slab`), `_front_overlap` +
-`_clip_front_strip` clip the jamb cabin face at the panel grid edge; `van_side_wall.gd`
-`_add_floor_seal_strips` seal y -0.03..0.05 (3 cm under the deck), inner face 1.5 cm further in,
-z ends 0.10 short of the van ends. Scene dump and fingerprint unchanged (no bless). Shots
-01/02 checked: cables side by side, nothing floating.
-Audit now: CLIP 0, EDGE 23, FLICKER 492, LEAK_IN 1, LEAK_OUT 45, OPENING 0.
-Cable FLICKER left: 25 rows, all < 0.01 m² (strand vs clamp/tape `@MeshInstance3D`, strands of
-different bundles e.g. `@355/Strand8_1` vs `@405/Strand1_2` 0.0011, `@366` vs `@386` 0.0098,
-`Battery/Body` vs `InnerShell/WallRibL2_1` 0.003, `Bulkhead/MeshBack_321` vs `@386`, jerry can
-`HandleR` vs `HandleTop`). One LEAK_OUT `@355/Strand4_0` (1 ray at (1.83, 2.78, 1.25)), maybe new.
-`DoorJamb_L/R` LEAK_OUT unchanged (96 / 86 rays): phase 10 (leak triage).
-FLICKER groups left for phases 7–9: Generator self 78, Welder self 72, PcRig self 56, Hopper
-self 53, CabRelay Rack self 45, KickPlate_0..5 vs Generator 49, FrontWall/Slab vs Rack 11 /
-PcRig 4, WallRib vs Plate 16, PatchWall/Ceil _Ring vs patch 10, Bulkhead TopRail vs
-TopRail_7..9 / MidPost, RearEntryRamp and RightHinge/CurvedBody vs BumperHanger,
-`CargoRail_R_0` vs `VanLook/Wheels/FlareR1/R2`.
-Get the list: group `^FLICKER` rows by a=/b= prefix (awk over the report).
-- LEAK_OUT 45 (1-3 ray rows through the rear-door centre seam at x ≈ 0 onto Bulkhead/CabDoor,
-  likely noise), LEAK_IN 1 (through=nothing at (2.706, 1.158, -1.382)), EDGE 23: not triaged.
+7 (done; Q1 answered as D45: joints left and exempted in phase 10). Commits:
+- c00ca93: inner shell plates/patches clear of the rib z bands, patch 2 cm proud of its ring.
+- 1881dd6: new helper `van_inner_shell_fit.gd` (RefCounted, `clear_of_ribs` now also clears the
+  bulkhead plane `BULKHEAD_Z` 1.0 ± 0.08, `clear_of_plates`, `GENERATOR_ZONE` Rect2(0.845, 0,
+  0.74, 1.3)); the shell keeps `_placed_plates` per side; wall patches skip plates, right plates
+  skip the generator.
+- e6f7e91: `van_bulkhead_mesh.gd` MidPost runs rail centre to rail centre (ends buried);
+  `RAIL_DEPTH_INSET` 0.07 (not 0.04: MidPost faces are ±0.068): TopRail even ±0.045, odd ±0.025.
+- e86ccb4: `van_chassis.gd` BumperHanger (0.06, 0.14, 0.18) at (±1.02, -0.10, 4.79); flare
+  `x_in` = `SKIN_X + 0.06` (2.62; 2.59 hit `Cab/CabLiner`); `van_floor.gd` RearEntryRamp visual
+  width 2.16 (collision still `RAMP_WIDTH` 2.2).
+- ac2db2c: `HEADER_DEPTH` 0.20 (DoorHeader, BottomRail, both inner ends 4 cm inside the opening
+  post), `KICK_DEPTH` 0.08 (visual only, collision keeps `panel_thickness`).
+- Wheel Hub vs Bolt: already 2 cm proud (bolt outer face hub_x+0.05, hub face +0.03), no change.
+Shots checked (01 interior, 03 outside): bulkhead and rear read as before.
+Audit now: EDGE 23, FLICKER 418, LEAK_IN 1, LEAK_OUT 45 (was 492 FLICKER).
+Left in phase 7 scope: Bulkhead `LeftWallPost_n/RightWallPost_n vs n+1` (0.0028 / 0.0009 each,
+all joints) and `KickPlate_n vs n+1` (~0.013 each: KickPlate joints may be new with `KICK_DEPTH`,
+unconfirmed); `Ceiling/Vault vs InnerShell/PatchCeil0_Ring` (0.0118 at x -1.5, ring 5 mm under
+the vault, Explore thinks borderline); TopRail vs MeshBack netting (out of scope).
 
 ## Blocker
-none.
+none
 
 ## Next phase
-Phase 7 continues (partial). Done c00ca93: `van_inner_shell.gd` plates/patches clear of rib z
-bands (`_clear_of_ribs`), patch 2 cm proud of its ring (`RING_*`/`PATCH_*`), plates z -4.5..4.45.
-WallRib vs Plate and patch-vs-ring rows are gone; audit FLICKER 464 (was 492).
-1. Send `.claude/plans/vanfix.spec-7-2.md` (patches vs plates/bulkhead, plate vs generator).
-2. Send `.claude/plans/vanfix.spec-7-3.md` (bulkhead MidPost ends, TopRail depth/joints).
-3. Then explore and spec the rest (not designed yet): `Floor/RearEntryRamp` (van_floor.gd ~171)
-   and `RearWall/RightHinge/CurvedBody` and `FrameRailL/R` vs `VanLook/Wheels/BumperHangerL/R`
-   (van_chassis.gd ~316, size 0.12×0.16×0.2 at (±1.05, -0.06, 4.8)), `RearThreshold` vs
-   `RearEntryRamp`; `SideWalls/CargoRail_R_0` (van_side_wall.gd ~292) vs `Wheels/FlareR1/R2`;
-   wheel `Hub` vs `Bolt%d` (van_wheels.gd ~139-145: no audit row today, bolts < MIN_AREA; give
-   the bolt a 2 cm lift off the hub face per the deliverable). Explore's earlier numbers for
-   these were unreliable: read the ranges yourself (under 60 lines each).
+Phase 8 (Generator and welder visible flicker; the plan was re-cut 2026-09-29 into phases 8–13,
+D46 questions auto, D47 visible floor 0.005 m²). Filter the report to FLICKER rows with area ≥
+0.005 (plan, above phase 8) and fix only the FuseBox/Generator and CraftingTable/Welder ones,
+plus freeze/skip animated fan/flywheel/spoke parts in the audit. First, optionally clear
+`Ceiling/Vault vs InnerShell/PatchCeil0_Ring` by keeping the ceiling patch ring 2 cm under
+`_ceiling_y` in `van_inner_shell.gd` `_build_ceiling_patch`. The bulkhead wall-post and kick-plate
+joint rows stay (D45) and are exempted in phase 11. No phase question stops: take Recommended.
 
 ## Requirements / gotchas
 - The audit's `Interior/Props/FuseBox/Generator` and `CraftingTable/Welder` fan/flywheel/spoke
