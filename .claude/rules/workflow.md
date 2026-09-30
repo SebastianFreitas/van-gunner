@@ -37,8 +37,8 @@ ones; sync leaves files it does not list alone.
 `tools/try_project.py` (`add_arguments` and `launch` for Try,
 `before_commit` for landing steps and `verify` for checks, both on the
 combined tree in the `-try` checkout). Every
-project gitignores `.claude/handoff.md`, `.claude/worktrees/`,
-`.claude/plans/HERE` and `.claude/autoplan/`.
+project gitignores `.claude/handoff.md`, `.claude/specs/`,
+`.claude/worktrees/`, `.claude/plans/HERE` and `.claude/autoplan/`.
 
 ## Session mode
 
@@ -76,32 +76,77 @@ restarts, and stops everything on any other problem. The owner never
 pastes a command or says `go` between phases. The runner sets `AUTOPLAN=1`: then read
 `.claude/skills/plan/unattended.md`.
 
-The same split applies outside plans: a prompt with two separable pieces
-of work gets the first finished, committed and reported, and the second
-named under "Look at".
+## One prompt: prepare, clear, run
 
-## One prompt, one finished result
+Owner, 2026-10-01: *"i send prompt -> it prepares whatever it needs -> i
+clear and tell it to run that prompt ... and it starts managing
+instances, with the goal of never reaching its own limit on the context
+window set by me"*. Work stays out of the window the owner talks to:
+one window prepares, a fresh one manages helpers that do the work.
+Sort each new prompt from its words and at most one `Explore` call:
 
-The owner sends one prompt and comes back to a finished, verified,
-committed change. Stopping at "ready to commit" costs them a whole turn.
+- **Quick fix:** one or two files, one clear change. Prepare and run in
+  this window, no clear: steps 1 to 7 below, straight through.
+- **Anything else:** **prepare** (steps 1 to 2), end the turn, the owner
+  runs `/clear` and says `go`, and the fresh window **runs** (steps 3 to
+  7). Unsure which: prepare.
+- **Too big for one run:** more than about 20 specs is a plan. Say so
+  and suggest `/plan new <name>: <prompt>`.
 
-1. **Explore** through the `Explore` subagent. Ask the owner only when
-   the answer changes what you build, always with the `AskUserQuestion`
-   tool (never a plain-text question), then keep working in the same
-   turn once they answer. A turn ends early only when something went
-   really wrong, never just to ask.
+A plan, a handoff or a plan's questions in this checkout are handled as
+their own files say, not sorted.
+
+**Obvious questions come before the work.** Anything two reasonable
+builders would do differently and the prompt, code, rules and memories
+do not settle (what it looks like, where it goes, what happens when it
+fails, what stays as it is next to it) is asked in one `AskUserQuestion`
+round in step 1, never a plain-text question. A choice with only one
+sensible answer is not asked: take it and name it under Look at. Once
+the run starts it never stops to ask what could have been asked here. A
+turn ends early only when something went really wrong, never just to
+ask.
+
+### Prepare
+
+1. **Explore** through the `Explore` subagent, then ask the obvious
+   questions (above) and keep working in the same turn once answered.
 2. **Spec** one per implementer call (format in `.claude/playbook.md`).
    A step with more than about three deliverables becomes several specs.
-3. **Implement** with the `implementer` subagent.
-4. **Verify**: the spec's command, then what `CLAUDE.md` § Verify asks
-   for the areas you touched.
+   Size each spec so its implementer stays under its line: name the
+   file, function and range. For a prepared run, save each spec as
+   `.claude/specs/<k>.md` (gitignored), then write `.claude/handoff.md`
+   (`handoff` skill) with `Run: prepared` as its first line and in Next
+   the spec files in order (which may run in parallel), the Verify
+   commands for the areas touched, whether a review is due (step 5) and
+   the screenshots the report needs. End the turn with what will be
+   built in two or three plain lines, then this as the last line:
+
+   > Ready. Please run `/clear`, then prompt me with `go` to build it.
+
+### Run
+
+A `go` whose printed handoff starts with `Run: prepared`. This window
+only manages: it never reads source, a spec or a diff, and never
+explores; each spec costs it about 3k tokens (the call, the report, a
+tailed check), so 20 specs fit well under its line (estimate from a
+~40k start: check it on the first real runs and fix this line).
+
+3. **Implement:** one `implementer` call per spec, the prompt saying
+   only "Your spec is `.claude/specs/<k>.md`: read it and implement it";
+   parallel where the handoff says so (playbook). A blocked implementer
+   gets a narrower spec from one `Explore` call and a fresh
+   implementer; still blocked, stop and tell the owner.
+4. **Verify**: each spec's command (the implementer ran it), then what
+   `CLAUDE.md` § Verify asks for the areas touched, output tailed.
 5. **Review**: over about 150 lines or three files, the `reviewer`
-   subagent (Sonnet, read-only, fresh context) gets the spec(s) and the
-   paths, checks `git diff` against them and reports only gaps that
-   break the spec or a flow.
+   subagent (Sonnet, read-only, fresh context) gets the spec paths and
+   the changed paths, checks `git diff` against them and reports only
+   gaps that break the spec or a flow. A gap gets a new spec file and
+   goes back to step 3.
 6. **Commit** by path, as your mode says, with a message that describes
    the work (a squash takes the branch tip's message). In worktree mode
-   run the mode's `try.py --commit` yourself once verified.
+   run the mode's `try.py --commit` yourself once verified. Delete
+   `.claude/specs/` and `.claude/handoff.md`.
 7. **Report**: end the turn with exactly this:
    1. **Name:** the feature in plain words, then the branch (and PR in cloud).
    2. **How it looks:** one or two screenshots of what changed (the
@@ -113,8 +158,9 @@ committed change. Stopping at "ready to commit" costs them a whole turn.
       already landed on local `main`.
    5. **Look at:** at most three bullets, plus anything left open.
 
-If the owner replies with changes, do another round on the same branch
-and end with the same report.
+If the owner replies with changes, sort the reply the same way (a
+quick fix is done here; anything else is prepared again) on the same
+branch, and end with the same report.
 
 ## Main session role
 
@@ -157,9 +203,13 @@ was too wide: next time name the file, function and range, or split.
   verify, commit, write `.claude/handoff.md` (`handoff` skill) and end
   the turn with the normal report plus your mode file's "Context full"
   extras. Look at's first bullet: "Context full: run `/clear` (or open
-  a new chat) and say `go`." Plans stop their own way (plan skill).
+  a new chat) and say `go`." Plans stop their own way (plan skill). In a
+  run, the handoff keeps `Run: prepared` and lists in Next the spec
+  files still to send, so `go` carries on managing.
 - A handoff printed at session start: restate the plan in two lines,
   continue from Next, never redo Done, delete the file once absorbed.
+  One that starts `Run: prepared` is a run ("Run" above): it stays
+  until the run's commit.
 
 ## Token rules (every agent)
 

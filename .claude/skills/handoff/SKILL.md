@@ -23,6 +23,13 @@ in this order:
   pending; screenshots already taken, with paths.
 - **Foreign edits:** uncommitted paths that were not yours (shared mode).
 
+**Prepared run** (`.claude/rules/workflow.md` "Prepare", step 2): the
+first line is `Run: prepared`, and Next lists the spec files in
+`.claude/specs/` in order (which run in parallel), the Verify commands,
+whether a review is due, and the screenshots the report needs. It ends
+the turn with the "Ready" line, not a "Context full" report, and stays
+until the run's commit.
+
 Then end the turn as your mode file's "Context full" rule says. The
 SessionStart hook prints the file into the next context (also after
 `/clear`), cut at 6,000 characters (less if the mode rules and dirty

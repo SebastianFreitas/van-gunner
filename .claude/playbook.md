@@ -19,6 +19,8 @@ read it too.
 - An implementer that reports "blocked" or "hit the context line": never
   resume it with SendMessage (that reloads its whole context); write a
   narrower spec for a fresh call.
+- A prepared run saves each spec as `.claude/specs/<k>.md` and the run
+  window sends only its path (`.claude/rules/workflow.md` "One prompt").
 - A plan phase that stops after designing saves each finished spec as
   `.claude/plans/<name>.spec-<phase>-<k>.md` in the format below (plan
   skill).

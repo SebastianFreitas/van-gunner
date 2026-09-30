@@ -19,6 +19,8 @@ open. Where it and this file disagree, it wins.
 
 ## Rules
 
+- A prompt that names a spec file (`.claude/specs/<k>.md`): read that
+  file first, whole; it is the spec.
 - Implement only from the spec you were given, with its paths, names and
   signatures exactly as written. Do not redesign; if the spec is ambiguous,
   contradicts itself or the code, stop and report it. Follow the spec's

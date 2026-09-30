@@ -17,6 +17,8 @@ open. Where it and this file disagree, it wins.
 
 ## Rules
 
+- A prompt that names a spec file (`.claude/specs/<k>.md`): read that
+  file first, whole; it is the spec.
 - Implement only from the spec you were given. It is your only source of
   requirements.
 - Use the spec's file paths, function names, method names and signatures

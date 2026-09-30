@@ -318,10 +318,18 @@ def main():
             if len(body) > HANDOFF_MAX:
                 body = raw + CUT
             lines.append("")
-            lines.append("HANDOFF from the previous context "
-                         "(.claude/handoff.md). Restate the plan in two "
-                         "lines, continue from 'Next', never redo 'Done', "
-                         "and delete the file once absorbed:")
+            if body.startswith("Run: prepared"):
+                lines.append("PREPARED RUN (.claude/handoff.md): on the "
+                             "owner's 'go', run it as .claude/rules/"
+                             "workflow.md 'Run' says: manage only, send "
+                             "each spec file to an implementer, never "
+                             "redo 'Done'; the file stays until the "
+                             "run's commit:")
+            else:
+                lines.append("HANDOFF from the previous context "
+                             "(.claude/handoff.md). Restate the plan in two "
+                             "lines, continue from 'Next', never redo 'Done', "
+                             "and delete the file once absorbed:")
             hand_at = len(lines)
             lines.append(body)
 

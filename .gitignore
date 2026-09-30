@@ -30,6 +30,7 @@ tools/scene_dump/van.txt
 # Claude Code: session worktrees and the context handoff stay local
 .claude/worktrees/
 .claude/handoff.md
+.claude/specs/
 
 # Plans: HERE binds this checkout's plan; autoplan keeps its run logs locally
 .claude/plans/HERE
