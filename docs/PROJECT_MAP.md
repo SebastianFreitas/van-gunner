@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-297 GDScript files, 45690 lines.
+298 GDScript files, 45826 lines.
 
 ### `scenes/corridor/`
 
@@ -610,7 +610,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_body_profile.gd` | `VanBodyProfile` | 193 | One cross-section for the whole van body: the inner liner outline (floor, bowed sides, roof vault) and an outer skin offset from it, so inside and outside piec… |
 | `van_bulkhead.gd` | `VanBulkhead` | 205 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
 | `van_bulkhead_mesh.gd` | — | 245 | Builds the bulkhead's frame posts, headers, panels and diagonal mesh netting. |
-| `van_ceiling.gd` | `VanCeiling` | 381 | Barrel-vault interior ceiling with headliner and cargo dressing. |
+| `van_ceiling.gd` | `VanCeiling` | 384 | Barrel-vault interior ceiling with headliner and cargo dressing. |
+| `van_ceiling_cove.gd` | — | 133 | Steel cove strips along the ceiling-to-wall join (vangapfix D33). |
 | `van_driver_talk.gd` | — | 158 | The driver-talk panel: open/close, option refresh, and boost/slow shout handling. |
 | `van_floor.gd` | `VanFloor` | 343 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
 | `van_front_wall.gd` | `VanFrontWall` | 207 | The cargo room's cab-end wall as one slab cut from VanBodyProfile's section, with a doorway notch that the CabDoor leaf fills, so its edges meet the bowed wall… |

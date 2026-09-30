@@ -3,6 +3,8 @@ extends Node3D
 
 ## Barrel-vault interior ceiling with headliner and cargo dressing.
 
+const _Cove := preload("res://scripts/van/van_ceiling_cove.gd")
+
 @export var span_x := 4.72
 @export var span_z := 9.4
 @export var edge_height := 3.02
@@ -42,6 +44,7 @@ func _build() -> void:
 	vault.layers = VanLighting.LAYER_VAN_INTERIOR
 	vault.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(vault)
+	_Cove.new(self).add_coves()
 
 	_build_wiring()
 	_build_vent_duct()
