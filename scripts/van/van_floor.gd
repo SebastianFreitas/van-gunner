@@ -136,7 +136,7 @@ func _build_threshold_strips() -> void:
 	_add_box(
 		"RearThreshold",
 		Vector3(2.2, 0.03, 0.08),
-		Vector3(0.0, 0.015, 4.58),
+		Vector3(0.0, 0.015, 4.56),
 		metal
 	)
 	# Cab doorway sill

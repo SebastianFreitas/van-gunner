@@ -15,7 +15,7 @@ const BAR_Z := -0.09
 
 const LOCK_BAR_LENGTH := 0.9
 const LOCK_BAR_SIZE := 0.07
-const LOCK_BAR_Z := -0.10
+const LOCK_BAR_Z := -0.104
 const LOCK_BRACKET_X := 0.3
 
 const CHAIN_LINKS := 7

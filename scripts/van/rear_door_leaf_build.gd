@@ -11,12 +11,12 @@ static var WINDOW_HOLE: PackedVector2Array = PackedVector2Array([
 	Vector2(0.79, 0.775), Vector2(0.92, 0.7), Vector2(0.99, 0.575),
 	Vector2(0.99, -0.575), Vector2(0.92, -0.7), Vector2(0.79, -0.775),
 ])
-## Astragal: a trim strip on the left leaf's cabin face covering the 2.4 cm centre seam (D55).
-## Half width leaves 2 cm clear of both handle mounts (inner edges at x +-0.04).
-const ASTRAGAL_HALF_W := 0.02
+## Astragal: a trim strip on the left leaf's cabin face covering the 2.4 cm centre seam, 10 cm wide
+## (vangapfix D24). The lift keeps its street face 1.1 cm clear of the handle mounts (D28).
+const ASTRAGAL_HALF_W := 0.05
 const ASTRAGAL_T := 0.012
-const ASTRAGAL_LIFT := 0.02
-const ASTRAGAL_END_GAP := 0.02
+const ASTRAGAL_LIFT := 0.036
+const ASTRAGAL_END_GAP := 0.0
 
 
 static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:

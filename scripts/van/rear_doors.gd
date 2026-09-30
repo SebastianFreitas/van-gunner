@@ -54,6 +54,7 @@ var _right_tween: Tween
 
 func _ready() -> void:
 	preload("res://scripts/van/rear_door_leaf_build.gd").build(self, _left_hinge, _right_hinge)
+	preload("res://scripts/van/rear_door_frame.gd").build(self, _left_hinge)
 	preload("res://scripts/van/rear_door_lighting.gd").apply(_left_hinge, _right_hinge)
 	_left_grip_closed = _left_grip.position
 	_left_mount_closed = _left_mount.position
