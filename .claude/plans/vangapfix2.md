@@ -5,7 +5,7 @@ Started: 2026-09-30
 Procedure: `.claude/skills/plan/interview.md` (the interview), then `run.md` (state in `.claude/plans/vangapfix2.state.md` while running).
 Path: light (D1, from Brief: four named seams in the van shell, no new design)
 Size: at most 10 KB (light path), each phase at most 2.5 KB (interview.md "Plan size")
-Interview: A done · 3 asked · Initial idea skipped (light path)
+Interview: A, C done · 4 asked · Initial idea skipped (light path)
 Questions: ask
 
 ## Brief (owner's words, verbatim)
@@ -63,41 +63,41 @@ A phase session reads its own section, the Brief, Constraints and Carry forward.
 Own views: `g30`, `g31`; the door-top part of `g08`, `g10`, `g14`, `g15`.
 Deliverable: one spec. New `scripts/van/side_door_header_seal.gd` (`## Side door header seal: dark steel strip closing the band between the side wall's outer top and the roof lip above each side door.`), `static func build(walls: VanSideWall, parent: Node3D) -> void`, called once from `van_side_wall.gd` beside `_add_door_slide_tracks`; nodes `DoorHeaderSeal_L` / `_R` over the door's z span plus 5 cm each end, street layer. → phase decides: measure the open band's y and x along the door bay (from `_build_roof` and `add_door_opening_reveals`, checked in `g31`), then apply the seal rule: 5 cm onto the roof lip's underside and the wall's outer skin, edges sunk 2 cm, 2 cm clear of the leaf closed and stepped out. Reads: `look/van_hull.gd`, `van_side_wall_panel.gd`.
 Verification: Order; own views 0; the door still opens (smoke).
-Reviewed:
+Reviewed: Right (owner, 2026-10-01)
 Notes:
 
 ### 2 · Side door slits
 Own views: `g19`, `g21`, `g29`, `g32`..`g37`; the slit part of `g12`, `g13`, `g16`, `g17`.
 Deliverable: one spec in `side_door_stops.gd` (the reveals only if the path runs through them). → phase decides: trace the street-to-cabin path through the leaf's rear, bottom and front slits, then close it cabin side by the seal rule: the stop (or a return from the reveal) overlaps the leaf's edge by 5 cm and stays 2 cm clear of the leaf closed, stepped out and sliding. Reads: `side_door_stops.gd`, `side_door_leaf.gd`.
 Verification: Order; own views 0; the door opens and closes with no clip (smoke).
-Reviewed:
+Reviewed: Right (owner, 2026-10-01)
 Notes:
 
 ### 3 · Rear window surrounds
 Own views: `g03`, `g23`, `g24`, `g25`.
 Deliverable: one spec. New `scripts/van/rear_window_lip.gd` (`## Rear window lip: dark lip riding on each rear leaf, closing the slot between the vaulted skin and the window's cabin frame.`), called once per leaf from `rear_door_leaf_build.gd`; node `WindowLip` under each leaf, the rear lips' material, street layer, rounded like `WINDOW_HOLE`. → phase decides: measure the slot between the vaulted skin and the cabin frame around the hole (widest at the outer vertical edge), then apply the seal rule: 5 cm onto the skin, at most 7 cm into the glass, sunk 2 cm; never past the leaf's inner edge. Reads: `van_hull_mesh.gd` `build_vaulted_xy_slab`, `rear_door_frame.gd`.
 Verification: Order; own views 0; the leaves swing 110° with no clip (smoke).
-Reviewed:
+Reviewed: Right (owner, 2026-10-01)
 Notes:
 
 ### 4 · Side window surrounds
 Own views: `g38`..`g41`; the window part of `g12`..`g17`.
 Deliverable: one spec in `side_windows.gd`: the frame ring's outer edge overlaps the liner around `WINDOW_CUT_POLY` instead of butting it. → phase decides: measure where the line shows (rear edge, `g39`), then apply the seal rule: 5 cm over the liner past the cut, sunk 2 cm, the glass opening unchanged. Reads: `side_windows.gd`, `van_side_wall_shell.gd` `build_curved_frame_ring_mesh`.
 Verification: Order; own views 0; the window reads the same size from inside (compare).
-Reviewed:
+Reviewed: Right (owner, 2026-10-01)
 Notes:
 
 ### 5 · Leftover pink sweep
 Own views: every `g` view still over 0 (Carry forward and a fresh check; known: hinge pinholes in `g06`, `g07`, ceiling-front specks in `g08`, `g10`).
 Deliverable: at most two specs. Each pink cluster: find the seam it shows through and close it by the seal rule in the file that builds that seam. A hinge pinhole is a seam like any other.
 Verification: Order; `gap_check.py --strict` passes, or each view left is in Carry forward with where it shows.
-Reviewed:
+Reviewed: Right (owner, 2026-10-01)
 Notes:
 
 ### 6 · Amber lamps, rules text, final check
 Deliverable: two specs. (a) `look/van_marker_lights.gd`: raise `id_y` so the row of three amber ID lamps sits fully above the top of `AstragalOuter` (`rear_door_lips.gd`) with 2 cm clear; the row moves together (D4, owner; one `id_y`, from code). (b) `van_audit_exempt.gd`: the five reasons ending `the gap-light views still show pink (vangapfix D77)` end `not see-through (vangapfix2)` instead. Then in the rules' seams paragraph drop the "Still open after vangapfix" sentence and name the new seals by node and file.
 Verification: Order; `gap_check.py --strict` passes on all 43 views; `v14` and `c31` show the lamps clear of the strip.
-Reviewed:
+Reviewed: Right (owner, 2026-10-01)
 Notes:
 
 ## Carry forward
