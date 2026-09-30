@@ -4,6 +4,7 @@ extends RefCounted
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 var _ghost_return_position := Vector3.ZERO
+var _gap_light: RefCounted = _GapLight.new()
 
 ## Debug inspection lights (torch, floodlight): render layers 1 (street, hull) and
 ## 2 (van interior), so they light everything the player can fly to.
@@ -19,6 +20,7 @@ const FLOOD_CORNERS: Array[Vector3] = [
 ]
 const FLOOD_ENERGY := 2.5
 const FLOOD_RANGE_M := 35.0
+const _GapLight := preload("res://scripts/debug/debug_gap_light.gd")
 
 
 func _init(owner: Node) -> void:
@@ -134,6 +136,14 @@ func cmd_floodlight(args: Array) -> String:
 	var on := _toggle_target(args, flood.visible)
 	flood.visible = on
 	return "floodlight %s" % ("on: work lights at the van's four corners" if on else "off")
+
+
+func cmd_gaplight(args: Array) -> String:
+	var van := host.get_tree().get_first_node_in_group(&"van_run")
+	var rig := van.get_node_or_null(^"TravelPath/VanFollow/VanRig") if van != null else null
+	if rig == null:
+		return "no van rig"
+	return _gap_light.run(rig as Node3D, args)
 
 
 ## Resolves "on" / "off" / bare toggle against the current state.

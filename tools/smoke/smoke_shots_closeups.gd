@@ -117,6 +117,140 @@ static func views(rig: Node3D) -> Array[Dictionary]:
 	return result
 
 
+## One row per gap-light view: {label, from, target, mode, doors}, all rig-local. Read with
+## gaplight on (`mode` "on": from the cabin) or out (`mode` "out": from the street). `doors`
+## lists the side doors to open (only the control opens one).
+static func gap_views(rig: Node3D) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var interior := rig.get_node_or_null(^"Interior")
+	var shell := rig.get_node_or_null(^"Interior/Shell")
+	if interior == null or shell == null:
+		return result
+	var side_doors := shell.get_node_or_null(^"SideDoors")
+	var hinge := shell.get_node_or_null(^"RearWall/LeftHinge") as Node3D
+	var ceiling := shell.get_node_or_null(^"Ceiling") as VanCeiling
+	if side_doors == null or hinge == null or ceiling == null:
+		return result
+	var sides: Array[StringName] = [_SideDoors.SIDE_LEFT, _SideDoors.SIDE_RIGHT]
+	var boxes: Dictionary = {}
+	for side in sides:
+		var door_node := side_doors.get_node_or_null(NodePath(String(side).capitalize()))
+		if door_node == null:
+			return result
+		boxes[side] = _merged_mesh_aabb(door_node, rig)
+	var profile := VanBodyProfile.from_interior(interior)
+	var rz := hinge.position.z - 0.08
+	var oz := hinge.position.z + 0.08
+	var vy := ceiling.vault_y_at(0.0)
+	var none: Array[StringName] = []
+	var left_box: AABB = boxes[_SideDoors.SIDE_LEFT]
+	result.append(_gap_view(
+		"gap-control-door-open", Vector3(-0.3, 1.6, left_box.get_center().z + 0.6),
+		left_box.get_center(), "on", [_SideDoors.SIDE_LEFT]
+	))
+	result.append(_gap_view("gap-rear-in-whole", Vector3(0, 1.6, rz - 4.0),
+		Vector3(0, 1.55, rz), "on", none))
+	result.append(_gap_view("gap-rear-in-header", Vector3(0, vy - 0.12, rz - 1.5),
+		Vector3(0, vy - 0.02, rz), "on", none))
+	result.append(_gap_view("gap-rear-in-sill", Vector3(0, 0.10, rz - 1.5),
+		Vector3(0, 0.015, rz), "on", none))
+	result.append(_gap_view("gap-rear-in-centre", Vector3(0, 1.6, rz - 1.2),
+		Vector3(0, 1.6, rz), "on", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		var ix := profile.inner_x_at(1.6)
+		result.append(_gap_view("gap-rear-in-hinge-%s" % side,
+			Vector3(s * (ix - 0.10), 1.6, rz - 1.2), Vector3(s * (ix - 0.025), 1.6, rz),
+			"on", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		var d1: Vector3 = (boxes[side] as AABB).end
+		for row in [["front", d1.z - 0.6], ["rear", 2.35]]:
+			var z: float = row[1]
+			result.append(_gap_view("gap-ceiling-%s-%s" % [side, row[0]],
+				Vector3(s * 2.25, 1.0, z), Vector3(s * profile.inner_x_at(3.05), 3.05, z),
+				"on", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		var box: AABB = boxes[side]
+		var dc := box.get_center()
+		result.append(_gap_view("gap-door-%s-in-whole" % side, Vector3(-s * 1.2, 1.6, dc.z),
+			dc, "on", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		var box: AABB = boxes[side]
+		var dc := box.get_center()
+		var d1 := box.end
+		result.append(_gap_view("gap-door-%s-in-header" % side,
+			Vector3(s * 0.8, d1.y + 0.01, dc.z), Vector3(dc.x, d1.y + 0.01, dc.z), "on", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		var box: AABB = boxes[side]
+		var dc := box.get_center()
+		var d0 := box.position
+		result.append(_gap_view("gap-door-%s-in-threshold" % side,
+			Vector3(s * 0.8, d0.y - 0.01, dc.z), Vector3(dc.x, d0.y - 0.01, dc.z), "on", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		var box: AABB = boxes[side]
+		var dc := box.get_center()
+		var d0 := box.position
+		var d1 := box.end
+		var ix := profile.inner_x_at(1.6)
+		result.append(_gap_view("gap-door-%s-in-jamb-front" % side,
+			Vector3(s * 0.8, 1.6, d0.z + 0.10), Vector3(s * ix, 1.6, d0.z - 0.005), "on", none))
+		result.append(_gap_view("gap-door-%s-in-jamb-rear" % side,
+			Vector3(s * 0.8, 1.6, d1.z + 0.01), Vector3(dc.x, 1.6, d1.z + 0.01), "on", none))
+	result.append(_gap_view("gap-rear-out-whole", Vector3(0, 1.7, oz + 5.0),
+		Vector3(0, 1.55, oz), "out", none))
+	result.append(_gap_view("gap-rear-out-header", Vector3(0, vy - 0.12, oz + 2.0),
+		Vector3(0, vy - 0.02, oz), "out", none))
+	result.append(_gap_view("gap-rear-out-sill", Vector3(0, 0.10, oz + 2.0),
+		Vector3(0, 0.015, oz), "out", none))
+	result.append(_gap_view("gap-rear-out-centre", Vector3(0, 1.6, oz + 1.5),
+		Vector3(0, 1.6, oz), "out", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		var ix := profile.inner_x_at(1.6)
+		result.append(_gap_view("gap-rear-out-hinge-%s" % side,
+			Vector3(s * (ix - 0.08), 1.6, oz + 1.5), Vector3(s * (ix - 0.02), 1.6, oz),
+			"out", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		var box: AABB = boxes[side]
+		var dc := box.get_center()
+		result.append(_gap_view("gap-door-%s-out-whole" % side,
+			Vector3(s * (profile.outer_x_at(1.7) + 2.2), 1.7, dc.z), dc, "out", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		var box: AABB = boxes[side]
+		var dc := box.get_center()
+		var d1 := box.end
+		var cx := s * (profile.outer_x_at(1.7) + 1.5)
+		result.append(_gap_view("gap-door-%s-out-header" % side,
+			Vector3(cx, d1.y + 0.01, dc.z), Vector3(dc.x, d1.y + 0.01, dc.z), "out", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		var box: AABB = boxes[side]
+		var dc := box.get_center()
+		var d0 := box.position
+		var cx := s * (profile.outer_x_at(1.7) + 1.5)
+		result.append(_gap_view("gap-door-%s-out-threshold" % side,
+			Vector3(cx, d0.y - 0.01, dc.z), Vector3(dc.x, d0.y - 0.01, dc.z), "out", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		var box: AABB = boxes[side]
+		var dc := box.get_center()
+		var d0 := box.position
+		var d1 := box.end
+		var cx := s * (profile.outer_x_at(1.7) + 1.5)
+		result.append(_gap_view("gap-door-%s-out-jamb-front" % side,
+			Vector3(cx, 1.6, d0.z - 0.01), Vector3(dc.x, 1.6, d0.z - 0.01), "out", none))
+		result.append(_gap_view("gap-door-%s-out-jamb-rear" % side,
+			Vector3(cx, 1.6, d1.z + 0.01), Vector3(dc.x, 1.6, d1.z + 0.01), "out", none))
+	return result
+
+
 ## A camera 2.5 m from `point`, tilted 30 degrees off straight-on toward the van's front
 ## (`z_sign` -1.0) or rear (`z_sign` 1.0).
 static func _seam_from(point: Vector3, side_sign: float, z_sign: float) -> Vector3:
@@ -131,6 +265,12 @@ static func _view(
 	windows: Array[StringName]
 ) -> Dictionary:
 	return {"label": label, "from": from, "target": target, "doors": doors, "windows": windows}
+
+
+static func _gap_view(
+	label: String, from: Vector3, target: Vector3, mode: String, doors: Array[StringName]
+) -> Dictionary:
+	return {"label": label, "from": from, "target": target, "mode": mode, "doors": doors}
 
 
 ## Merges every descendant MeshInstance3D's AABB into one AABB in `rig`-local space.

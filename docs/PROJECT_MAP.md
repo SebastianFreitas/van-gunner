@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-296 GDScript files, 45301 lines.
+297 GDScript files, 45690 lines.
 
 ### `scenes/corridor/`
 
@@ -367,13 +367,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
-| `debug_commands.gd` | — | 242 | Parses and runs debug console commands. |
+| `debug_commands.gd` | — | 244 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
 | `debug_facade_commands.gd` | — | 301 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
+| `debug_gap_light.gd` | — | 172 | Debug gap light: paints everything that is not van magenta, so a see-through seam shows pink. |
 | `debug_item_commands.gd` | — | 70 | Debug console commands: items. |
 | `debug_meta_commands.gd` | — | 55 | Debug console commands: meta. |
 | `debug_run_flow_commands.gd` | — | 54 | Debug console commands: run flow. |
-| `debug_van_commands.gd` | — | 168 | Debug console commands: van. |
+| `debug_van_commands.gd` | — | 178 | Debug console commands: van. |
 
 ### `scripts/dialogue/`
 
@@ -692,11 +693,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `smoke_driver.gd` | — | 374 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
+| `smoke_driver.gd` | — | 375 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 158 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
-| `smoke_shots.gd` | — | 270 | Screenshots for tools/smoke.py --shots. |
-| `smoke_shots_closeups.gd` | — | 151 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
+| `smoke_shots.gd` | — | 334 | Screenshots for tools/smoke.py --shots. |
+| `smoke_shots_closeups.gd` | — | 291 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 
 ### `tools/van_audit/`
@@ -938,4 +939,4 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `ghost`, `torch`, `floodlight`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `ghost`, `torch`, `floodlight`, `gaplight`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`

@@ -223,6 +223,70 @@ func van_views_closeups() -> void:
 		layer.visible = true
 
 
+## The gap-light views (g01-...): every seam of the rear and side doors and the ceiling join
+## from the cabin (gaplight on) and the street (gaplight out), under the floodlight. A magenta
+## pixel is a see-through gap (tools/gap_check.py counts them). Leaves both side doors closed
+## and the gap light off.
+func van_views_gaps() -> void:
+	var rig := _rig()
+	if rig == null:
+		return
+	var side_doors := rig.get_node_or_null(^"Interior/Shell/SideDoors")
+	var side_windows := rig.get_node_or_null(^"Interior/Shell/SideWindows")
+	if side_doors == null or side_windows == null:
+		return
+	var hidden := _hide_ui()
+	var previous := get_viewport().get_camera_3d()
+	print("SMOKE: " + DebugCommands.run("floodlight on"))
+	var player := get_tree().get_first_node_in_group(&"player") as Node3D
+	# The scripts' own tween durations, summed, plus a settle margin.
+	var settle: float = (
+		side_doors.recess_duration + side_doors.slide_duration
+		+ side_doors.grip_retract_duration + side_doors.mount_retract_duration
+		+ side_windows.open_duration + side_windows.grip_retract_duration
+		+ side_windows.mount_retract_duration + 0.3
+	)
+	# Called once, while the doors are closed (the close-ups leave them closed).
+	var views := _CloseupViews.gap_views(rig)
+	if views.is_empty():
+		print("SMOKE: " + DebugCommands.run("floodlight off"))
+		if previous != null:
+			previous.make_current()
+		for layer in hidden:
+			layer.visible = true
+		return
+	var open_doors: Array[StringName] = []
+	var mode := ""
+	for view in views:
+		var wanted_doors: Array[StringName] = view["doors"]
+		if wanted_doors != open_doors:
+			for side in [_SideDoors.SIDE_LEFT, _SideDoors.SIDE_RIGHT]:
+				if side in wanted_doors and not side in open_doors:
+					side_doors.open_door(side)
+				elif side in open_doors and not side in wanted_doors:
+					side_doors.close_door(side)
+			open_doors = wanted_doors
+			await get_tree().create_timer(settle).timeout
+		var from: Vector3 = view["from"]
+		var target: Vector3 = view["target"]
+		if player != null and rig.to_global(from).distance_to(player.global_position) < 0.5:
+			# Straight away from the target, so a camera on a slit's axis stays on it.
+			from += (from - target).normalized() * 0.6
+		if view["mode"] != mode:
+			mode = view["mode"]
+			print("SMOKE: " + DebugCommands.run("gaplight " + mode))
+		await _save_van_view(rig, from, view["label"], target, "g")
+	for side in [_SideDoors.SIDE_LEFT, _SideDoors.SIDE_RIGHT]:
+		side_doors.close_door(side)
+	await get_tree().create_timer(settle).timeout
+	print("SMOKE: " + DebugCommands.run("gaplight off"))
+	print("SMOKE: " + DebugCommands.run("floodlight off"))
+	if previous != null:
+		previous.make_current()
+	for layer in hidden:
+		layer.visible = true
+
+
 ## Points a temporary camera at the van from a rig-local spot, saves the shot and frees it.
 ## Defaults to looking at the van body's middle; interior audit spots pass their own target.
 ## The player's mesh is hidden throughout: these cameras sit close to the player's spot

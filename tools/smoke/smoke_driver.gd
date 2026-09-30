@@ -74,6 +74,7 @@ func _run() -> void:
 		await _shots.van_views("idle")
 		await _shots.van_views_lit("idle")
 		await _shots.van_views_closeups()
+		await _shots.van_views_gaps()
 
 	var van := get_tree().get_first_node_in_group(&"van_run")
 	var gun_stats: GunStatsController = get_tree().get_first_node_in_group(&"gun_stats")
