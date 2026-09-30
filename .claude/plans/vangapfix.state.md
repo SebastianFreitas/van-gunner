@@ -1,13 +1,12 @@
 Status: phase-done
 
-Phase 3 is done (commit 4e42932, landed by this session's `try.py --commit`). Phase 4 runs next.
+Phase 4 landed (f9465c8). Phase 5 runs next.
 
 # Plan state: vangapfix
-
 ## Plan
 
-`vangapfix`, `.claude/plans/vangapfix.md`. Branch `claude/van-gap-repair-plan-eccee1`, worktree
-`C:/Users/Traff/Documents/van-gunner/.claude/worktrees/van-gap-repair-plan-eccee1`. Run unattended
+`vangapfix`, `.claude/plans/vangapfix.md`. Branch `claude/plan-vangapfix`, worktree
+`C:/Users/Traff/Documents/van-gunner/.claude/worktrees/plan-vangapfix`. Run unattended
 with `tools/autoplan.py`; `Questions: auto`.
 
 ## Architecture now
@@ -22,22 +21,31 @@ with `tools/autoplan.py`; `Questions: auto`.
 - `rear_door_leaf_build.gd`: `ASTRAGAL_HALF_W` 0.05, `ASTRAGAL_LIFT` 0.036, `ASTRAGAL_END_GAP` 0.0
   (astragal x ±0.05, rig z 4.582..4.594). `van_floor.gd` `RearThreshold` z 4.56; `van_rear_dressing.gd`
   `LOCK_BAR_Z` -0.104 (D71).
+- `scripts/van/rear_door_lips.gd` (phase 4, about 190 lines, all static): `build(doors, left, right)`
+  makes `OuterLip` on each hinge (right one the left mesh at `scale.x = -1`; top strip 17 stations,
+  bottom strip outer y -0.01, D74) and `AstragalOuter` on the right hinge (plate z 4.855..4.867, stem
+  a closed box, D73); called from `rear_doors.gd` `_ready` on the line after the frame's.
 
 ## Completed phase
 
-3 · Rear frame, cabin side, commit 4e42932. Check, smoke (strict audit clean, no rule, no fingerprint
-move), plain scene dump clean. `gap_check`: rear-in whole/sill/centre 0, header 48, hinge-left 8,
-hinge-right 8 (D72, Carry forward lines written), ceiling-left-rear / -right-rear 0. Pictures in
-`C:/Users/Traff/AppData/Local/Temp/vgf3b/` (`shots/`, before|after pairs in `pairs/`). The closing
-capture `.godot/shots/before/` is phase 3's result.
+4 · Rear doors, street side, commit f9465c8. Check, smoke (strict audit clean, no rule, no
+fingerprint move), plain scene dump clean. `gap_check`: rear-out whole / hinge-left / hinge-right 0;
+header 408, sill 362, centre 3556, all identical to `before` and on the rear leaf windows' surrounds
+(Carry forward lines written). Lips and outer astragal shown in `-whole`, `-header`, `-sill`,
+`-centre`. The astragal plate covers the centre amber marker lamp (Carry forward). Pictures in
+`C:/Users/Traff/AppData/Local/Temp/vgf4/` (`shots2/`, before|after pairs in `pairs/`). The closing
+capture `.godot/shots/before/` is phase 4's result.
 
 ## Next phase
 
-4 · Rear doors, street side (Needs 1, 3: both done). First action: read phase 4's section and its D's
-in the plan, then write the spec for `scripts/van/rear_door_lips.gd`.
+5 · Side door stops, both views. First action: read phase 5's section and the Ds it cites (D73 and
+D75 included), then write the spec(s).
 
 ## Requirements / gotchas
 
+- D75 (owner): an audit row the phase's piece raises is fixed by the session (missing face, a
+  number moved, one number of a neighbouring piece, then one exact rule) and recorded as a D (auto);
+  old magenta goes to Carry forward. Block only when none of that makes the strict audit clean.
 - The flicker audit (`tools/van_audit/van_audit_flicker.gd`) reports two faces of different nodes
   that look the same way (normal dot over 0.985), lie within `PLANE_EPS` 1 cm of one plane and
   overlap by 0.005 m² or more. The right rear leaf is a `scale.x = -1` copy, and the audit sees its
@@ -64,8 +72,6 @@ none
 
 none
 
-Record of the answered block (phase 3, first build): rows `RearThreshold` vs `RearWall/Frame` and
-`LeftHinge/Astragal` vs the lock bar; with D71's numbers the audit and smoke ended clean and
-`gap_check.py` read (before -> with the frame) header 3106 -> 48, sill 1734 -> 0, hinge-left 4135 -> 8,
-hinge-right 3340 -> 8, ceiling-left-rear and -right-rear 546 -> 0; the 48 and 8s are D72's. Pictures
-in `C:/Users/Traff/AppData/Local/Temp/vgf3/`.
+Record of the answered block (phase 4, first build): `EDGE .../RightHinge/AstragalOuter open=1` (the
+stem's open street end, now D73) and `FLICKER .../RightHinge/OuterLip` vs `VanLook/Wheels/RearBumper`
+(the lip 5 mm behind the bumper's back face, now D74). No pictures were taken on it.

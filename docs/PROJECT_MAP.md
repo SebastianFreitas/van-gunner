@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-299 GDScript files, 45970 lines.
+300 GDScript files, 46164 lines.
 
 ### `scenes/corridor/`
 
@@ -599,7 +599,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
 | `rear_door_leaf_build.gd` | — | 137 | Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55). |
 | `rear_door_lighting.gd` | — | 27 | Puts the rear leaves' outward-visible parts on layers 1+2 so street lights reach them (D15). |
-| `rear_doors.gd` | — | 306 | Truck-style rear double doors. |
+| `rear_door_lips.gd` | — | 193 | Steel lips and the outer astragal on the rear leaves' street face, covering their slits from outside. |
+| `rear_doors.gd` | — | 307 | Truck-style rear double doors. |
 | `room_zone.gd` | `RoomZone` | 15 | Marks a van interior zone; tells GameSession which room the player is in. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. |
 | `side_door_leaf.gd` | — | 336 | Builds the side door leaf meshes (body, trim, frames, latch) onto SideDoors nodes. |
