@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-301 GDScript files, 46361 lines.
+301 GDScript files, 46349 lines.
 
 ### `scenes/corridor/`
 
@@ -701,7 +701,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 158 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
 | `smoke_shots.gd` | — | 334 | Screenshots for tools/smoke.py --shots. |
-| `smoke_shots_closeups.gd` | — | 291 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
+| `smoke_shots_closeups.gd` | — | 302 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 
 ### `tools/van_audit/`
@@ -709,7 +709,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `van_audit.gd` | — | 362 | Headless van audit entry scene: collects every visible triangle of the van, checks it and writes a report. |
-| `van_audit_exempt.gd` | — | 155 | Van audit exemption list: findings accepted on purpose, each with its reason and plan decision. |
+| `van_audit_exempt.gd` | — | 132 | Van audit exemption list: findings accepted on purpose, each with its reason and plan decision. |
 | `van_audit_flicker.gd` | — | 212 | Coplanar-overlap (flicker) check over an AuditMesh triangle set, split off van_audit_overlap.gd (vanfix specs 1-2, 5-1). |
 | `van_audit_gaps.gd` | — | 245 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges, found by raycasting temporary ConcavePolygonShape3D proxies of every visible… |
 | `van_audit_leaks.gd` | — | 214 | See-through leak checks over the gap proxies: cabin rays that escape, street rays that land on interior-only faces. |

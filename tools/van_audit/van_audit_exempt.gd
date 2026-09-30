@@ -22,21 +22,6 @@ const OPENING: Dictionary = {
 ## Globs are String.match() patterns against the node path as printed in the report.
 ## The rear sill: deck end and step ramp under the rear doors, rig-local (D57).
 const REAR_SILL := AABB(Vector3(-2.5, -0.4, 4.5), Vector3(5.0, 0.5, 0.9))
-## The side door's leaf-to-jamb slide clearance slits on both sides, padded 1 cm around the 2 cm
-## gap (D12, D61): the leaf (DOOR_HALF_Z 1.105 in side_door_leaf.gd, JAMB_CLEAR 0.02) sits inside
-## the jamb lip (van_side_wall.gd door_center_z -3.42, door_half_length 1.235, door_jamb_inset
-## 0.11: lip z -2.295 / -4.545, y 0.13 / 2.94). x spans the lip's outer face at +-2.60.
-## Order per side: rear, front, bottom, top.
-const DOOR_SLITS: Array[AABB] = [
-	AABB(Vector3(2.30, 0.02, -2.325), Vector3(0.5, 3.03, 0.04)),
-	AABB(Vector3(2.30, 0.02, -4.555), Vector3(0.5, 3.03, 0.04)),
-	AABB(Vector3(2.30, 0.12, -4.555), Vector3(0.5, 0.04, 2.27)),
-	AABB(Vector3(2.30, 2.91, -4.555), Vector3(0.5, 0.04, 2.27)),
-	AABB(Vector3(-2.80, 0.02, -2.325), Vector3(0.5, 3.03, 0.04)),
-	AABB(Vector3(-2.80, 0.02, -4.555), Vector3(0.5, 3.03, 0.04)),
-	AABB(Vector3(-2.80, 0.12, -4.555), Vector3(0.5, 0.04, 2.27)),
-	AABB(Vector3(-2.80, 2.91, -4.555), Vector3(0.5, 0.04, 2.27)),
-]
 const RULES: Array[Dictionary] = [
 	{
 		"section": "FLICKER", "a": "Interior/Bulkhead/KickPlate_*",
@@ -102,23 +87,23 @@ const RULES: Array[Dictionary] = [
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/DoorJamb_*", "b": "", "d": "D54",
-		"reason": "the jamb lip lines the door opening; seen through the leaf's clearance gap",
+		"reason": "the jamb lip lines the door opening; seen through the leaf's clearance gap"
+			+ "; re-earned (vangapfix D21); the gap-light views still show pink (vangapfix D77)",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/*WallReveals", "b": "", "d": "D54",
-		"reason": "wall reveals line each side cut (D18); seen through the leaf or sash gap",
+		"reason": "wall reveals line each side cut (D18); seen through the leaf or sash gap"
+			+ "; re-earned (vangapfix D21); the gap-light views still show pink (vangapfix D77)",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/*Wall", "b": "", "d": "D54",
-		"reason": "the wall's own cut faces, seen through an opening's clearance gap",
+		"reason": "the wall's own cut faces, seen through an opening's clearance gap"
+			+ "; re-earned (vangapfix D21); the gap-light views still show pink (vangapfix D77)",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/SideDoors/*/CurvedBody", "b": "", "d": "D54",
-		"reason": "the door leaf's edge band, seen past its outer skin at a grazing angle",
-	},
-	{
-		"section": "LEAK_OUT", "a": "VanLook/InnerShell/CeilRib*", "b": "", "d": "D54",
-		"reason": "ceiling rib ends at the wall top, seen through the top of an opening",
+		"reason": "the door leaf's edge band, seen past its outer skin at a grazing angle"
+			+ "; re-earned (vangapfix D21); the gap-light views still show pink (vangapfix D77)",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/FrontWall/Slab", "b": "", "d": "D54",
@@ -128,16 +113,8 @@ const RULES: Array[Dictionary] = [
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/Floor/RearEntryRamp", "b": "", "d": "D57",
 		"box": REAR_SILL,
-		"reason": "the rear step ramp sits outside under the rear doors by design",
-	},
-	{
-		"section": "LEAK_OUT", "a": "Interior/Shell/Floor/Deck", "b": "", "d": "D57",
-		"box": REAR_SILL,
-		"reason": "the deck's end face is the rear sill under the rear doors",
-	},
-	{
-		"section": "LEAK_OUT", "a": "*", "b": "", "d": "D61", "entry": DOOR_SLITS,
-		"reason": "ray enters through the side door's 2 cm leaf-to-jamb slide clearance (D12)",
+		"reason": "the rear step ramp sits outside under the rear doors by design"
+			+ "; re-earned (vangapfix D21); the gap-light views still show pink (vangapfix D77)",
 	},
 ]
 

@@ -248,6 +248,17 @@ static func gap_views(rig: Node3D) -> Array[Dictionary]:
 			Vector3(cx, 1.6, d0.z - 0.01), Vector3(dc.x, 1.6, d0.z - 0.01), "out", none))
 		result.append(_gap_view("gap-door-%s-out-jamb-rear" % side,
 			Vector3(cx, 1.6, d1.z + 0.01), Vector3(dc.x, 1.6, d1.z + 0.01), "out", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		for row in [["front", -0.375], ["rear", 2.835]]:
+			var wz: float = row[1]
+			result.append(_gap_view("gap-win-%s-%s" % [side, row[0]],
+				Vector3(-s * 0.6, 1.6, wz), Vector3(s * profile.inner_x_at(1.775), 1.775, wz),
+				"on", none))
+	for side in sides:
+		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
+		result.append(_gap_view("gap-floor-%s" % side, Vector3(s * 0.8, 1.2, 3.0),
+			Vector3(s * profile.inner_x_at(0.0), 0.0, 3.0), "on", none))
 	return result
 
 
