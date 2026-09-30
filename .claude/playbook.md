@@ -54,9 +54,10 @@ a design. The implementer sees only the spec and
   runs it itself once verified; cloud and shared print it.
 - **Autoplan:** `py -3 tools/autoplan.py [<name>] [--dry-run]
   [--max-sessions N] [--budget USD] [--effort medium] [--line 160000]
-  [--kill 185000] [--force]`. Started by the app session in the background
-(`run_in_background`), which supervises it; a terminal is only a
-fallback. Runs a plan's
+  [--kill 185000] [--force]`. Started by the app session in the
+  background (`run_in_background`) with `--max-sessions 1`, one phase
+  per launch, and relaunched by it after each phase (plan skill
+  `run.md`); a terminal is only a fallback. Runs a plan's
   phases unattended, one headless session each, in
   `.claude/worktrees/plan-<name>`, on the subscription only (no API key;
   stops at the usage limit), and stops when questions wait, on a

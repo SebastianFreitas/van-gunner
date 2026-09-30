@@ -15,7 +15,38 @@ the plan itself into the repo. `/plan` is the plan mode.
 Read `Interview` (which part is open) and `Open items`, and continue the
 interview from exactly there. While Stage is `ready`, a bare `go` runs
 no phase in this session: it starts the supervised run (`run.md`,
-"Supervising the run") and stops.
+"Supervising the run"), which belongs in a fresh session (Ready gate).
+
+## Who does what: the app session manages, writers write
+
+Owner, 2026-10-01: *"never make much logic yourself, you are a
+manager; use instances to make the plan, when they bump the limit they
+stop and you start a new one to finish the job."*
+
+- **The app session is the manager.** It never explores code,
+  researches, reads screenshots, works out numbers or drafts plan text.
+  It starts `plan-writer` subagents (foreground, one at a time), asks
+  the owner the questions they return through `AskUserQuestion`, writes
+  each answer into the plan as a `D<n>` (its words, one line), commits
+  the plan by path, and starts the next writer. It reads the plan file
+  only to write D's and check the Interview line.
+- **A `plan-writer` does one job per call** (its jobs: intake, idea,
+  phases, apply, continue) and commits what it wrote. Its prompt names
+  the plan path, the job, and "answers since your last job: D<a>-D<b>".
+  It returns what it wrote and questions ready to paste.
+- **Cut off:** a writer past its line (120k) is refused tools, so it
+  reports `context line: continue from <where>`. The manager starts a
+  fresh writer with job `continue`, never the same job from scratch.
+- **Which step is whose:** Part A 1-4 (or light path 1) = writer
+  `intake`; A5 = manager asks. B1 = writer `idea`; B2 = manager asks the
+  pieces question; B3 = writer `apply`, then the manager asks what it
+  returns. C1 = writer `phases`; C2 = manager asks the phases question;
+  C3 = writer `apply`. Ready gate: the manager starts the
+  `plan-reviewer`s; their findings go to a writer `apply`. The review
+  passes below are the writer's.
+- **Changes the owner asks for** mid-interview go to a writer `apply`
+  as a D; the manager asks again only the pieces or phases it returns
+  as changed.
 
 ## The interview: how planning feels
 
@@ -29,12 +60,9 @@ Narrowed by the owner, 2026-09-30: **everything the owner sees, hears or
 gets** is settled in planning, so a running phase never makes a choice
 the owner would have made. Two kinds of choice are **not** asked:
 
-- **Measurable.** Anything a run, a screenshot or a measurement can
-  settle (a clearance, an offset, a count that fits, whether a face
-  clips) is written as `→ phase decides: measure X, then apply rule Y`.
-  Planning names X and the rule; it does not calculate the number on
-  paper and does not ask the owner. The phase measures, applies the
-  rule and records the result as `D<n> (auto)`.
+- **Numbers the code can give.** A clearance, an offset, a count that
+  fits, a timing: the writer works it out from the code, with the
+  working in the plan ("Numbers and math", below). Not asked.
 - **Clear from the code.** When the code, a D or a rule makes one option
   clearly right, it is written as a D marked `(from code)`, not asked.
 
@@ -58,7 +86,8 @@ the goal, it should be a rare occurrence"). Ask here what a phase would
 otherwise have to ask.
 
 - **Every question goes through `AskUserQuestion`** (the UI), never as
-  prose that ends the turn. Calls are consecutive in the **same turn**:
+  prose that ends the turn. Writers return them ready; the manager asks
+  them as soon as it has them. Calls are consecutive in the **same turn**:
   ask, record, ask again. The turn ends only when the owner does not
   answer (the question stands, the handoff names it, the next "go" asks
   it again) or when the ready gate passes. A "you decide" answer is
@@ -77,8 +106,9 @@ otherwise have to ask.
   builds the same thing.
 - **Detail by detail.** Planning decides specifics now. A phase's
   research while running only fills what planning explicitly left it,
-  marked `→ phase decides`: a measurable choice with its rule (above),
-  or one the owner agreed to leave.
+  marked `→ phase decides`: what cannot be known before building, with
+  what to measure and the rule ("Numbers and math"), or one the owner
+  agreed to leave.
 - **Never stop early.** Never end a planning turn to "let the owner
   think"; never write "ready when you are"; never skip a real gap (above)
   because the owner seems tired of questions.
@@ -129,6 +159,30 @@ fixes changed. After the second round (or after the first, when it
 found nothing of that kind), anything left goes under Open items as
 `review leftover: <item>` and the part is done.
 
+### Numbers and math (owner, 2026-10-01)
+
+A plan is a design document with the math in it, complete enough to be
+the perfect prompt for each phase (owner, 2026-10-01: "turn an idea
+into a proper design document with math"). So the writer works out
+every size, offset, count, angle and timing the result needs, from the
+code, and writes it into the phase with its working on one line:
+
+> strip depth = gap 4.2 cm (`van_body.gd:212`) − lip 3.9 cm
+> (`van_doors.gd:88`) = 0.3 cm, so 0.5 cm with the 0.2 cm overlap rule
+> (D4). Check: `gap_check g31` = 0 px; else widen by the measured gap
+> + 0.2 cm.
+
+Every input names where it came from (`file:line`, a D, a rule); every
+number carries its **check** (what the phase measures once) and its
+**fallback** (what to do when the measurement disagrees). The phase
+builds with the number, measures once, and applies the fallback only
+when the check fails, recording it as `D<n> (auto)`.
+`→ phase decides: measure X, then apply rule Y` is left only for what
+cannot be known before building (the frame cost of a new effect, how a
+physics joint settles); it still names X and the rule. A number no code,
+rule or D gives (a feel, a look, a tuning value the owner will notice)
+is a question, never a guess.
+
 ### Plan size (owner, 2026-09-30)
 
 A phase session starts at about 40k and must fit its work under its
@@ -165,12 +219,14 @@ from the Brief at intake and record it as a D `(from Brief)`. Anything
 that adds a new thing the player or visitor sees or does takes the full
 path. The light path:
 
-1. **One `Explore` pass** over the area: Current state, `file:line`
-   anchors, what is broken and where. No research digest, no option map.
+1. **One writer `intake` (light)** over the area: Current state,
+   `file:line` anchors, what is broken and where, the numbers the fix
+   needs. No research digest, no option map.
 2. **One batch of questions** (one `AskUserQuestion` round, up to 4),
    only the real gaps. `Interview: A done`.
 3. **No Initial idea** (record `Initial idea skipped (light path)`).
-   Write the phases straight from the Brief and the answers, show them
+   A writer `phases` writes them straight from the Brief and the
+   answers, with their math; the manager shows them
    in one question (Part C step 2). `Interview: C done`.
 4. **One `plan-reviewer` build round**, the same cap as the ready gate;
    no design-fit or art-style check unless looks change.
@@ -179,8 +235,8 @@ Then the ready gate as usual. A light-path plan aims at 10 KB.
 
 ### Part A · Brief and direction
 
-1. **Intake.** Explore the current state through `Explore` (grep
-   `.claude/MAP.md` first; `file:line` anchors, no code bodies). Write
+1. **Intake.** Explore the current state (grep `.claude/MAP.md` first,
+   then read around the hits; `file:line` anchors, no code bodies). Write
    it under Current state.
 2. **Research** the areas the brief touches, as wide as the choices
    need (other games, films, painters, techniques, engine or library
@@ -228,7 +284,8 @@ every piece.
 
 1. **Write the phases** from the Initial idea. Each phase: kind
    (research/doc/code/review), the pieces it implements, research
-   topics, deliverables, verification, the D numbers it rests on. **No
+   topics, deliverables with their numbers worked out ("Numbers and
+   math"), verification, the D numbers it rests on. **No
    phase may be of kind "owner talk"**: every question is asked here,
    now. **Size:** a code phase is at most two implementer specs and at
    most two files it reads to design (name them); more than that is two
@@ -279,9 +336,10 @@ every piece.
   `.claude/rules/`, `.claude/project/`) and the look of what stands next
   to it? Skip both for tooling, workflow and invisible fixes.
 - `Interview` shows A, B and C done. Open items: none except `review
-  leftover` lines. No `[?]` anywhere. Every `→ phase decides` is either
-  measurable (it names what to measure and the rule to apply) or one
-  the owner agreed to leave.
+  leftover` lines. No `[?]` anywhere. Every number a phase builds with
+  has its working, check and fallback ("Numbers and math"); every `→
+  phase decides` names what to measure and the rule, or is one the owner
+  agreed to leave.
 - Every piece has a Walk-through line; every phase has a `Reviewed:`
   line, rests on at least one decision or Brief line, has its Needs
   filled, and is `todo` in the Progress table. Constraints and Scope are
@@ -294,25 +352,34 @@ Then ask one last `AskUserQuestion` with one question: "A question the
 plan missed, with no clear answer: park that phase for you to answer
 later (Recommended) / take the recommended option and keep going", which
 sets `Questions: ask` or `Questions: auto` in the header. Set `Stage:
-ready`, commit the plan and research by path, then start the run
-yourself (`run.md`, "Supervising the run": `autoplan.py` in the
-background with this checkout's absolute forward-slash path; from the
-main checkout the runner makes its own `plan-<name>` worktree). There is
-no "Start running the plan?" question, and no command for the owner to
-paste. **Never run a phase in the planning session**: each phase runs in
-its own fresh session under the runner (owner, 2026-09-28, workflow-port
-D25); this session only supervises (owner, 2026-09-30). A change the
-owner asks for later reopens the interview: record it as a D, show the
-pieces and phases it touches again, and run the gate again.
+ready`, commit the plan and research by path. **Do not start the run
+here**: the planning session is heavy, and the run is supervised from a
+fresh one that stays small (owner, 2026-10-01: "once the plan is made
+and ready to execute, tell me to clear the window and write the prompt
+to start the execution"). There is no "Start running the plan?"
+question. **Never run a phase in the planning session**: each phase runs
+in its own fresh session under the runner (owner, 2026-09-28,
+workflow-port D25). A change the owner asks for later reopens the
+interview: record it as a D, show the pieces and phases it touches
+again, and run the gate again.
 
-End the turn with one line: the plan is ready, the run has started, and
-you will report what each phase builds when it stops. If
-`tools/autoplan.py` does not exist in this checkout, say so and give the
-app fallback instead: `/clear`, then 'Read
-.claude/plans/<name>.state.md and execute the next phase.'
+End the turn with the plan in a few plain lines (what it builds, the
+phases), then this as the last line, nothing after it:
 
-Context: auto-compact is off (owner's rule, 2026-09-29). At `CONTEXT
-WATCH`, ask no new question. Record the answer you already have as a D,
+> Plan ready. Please run `/clear`, then prompt me with `go` to run it,
+> one phase at a time.
+
+If `tools/autoplan.py` does not exist in this checkout, the last line
+is instead: *"Plan ready. Please run `/clear`, then prompt me with:
+'Read .claude/plans/<name>.state.md and execute the next phase.'"*
+
+Context: auto-compact is off (owner's rule, 2026-09-29). The manager
+stays small because writers do the work, but in planning it may run
+past its line to finish what is in flight (owner, 2026-10-01: "on the
+interview phase and before it's ok if you go beyond the limit and ask
+me to clear and continue"): a question round already asked, or a writer
+already running. At `CONTEXT WATCH` start no new writer and ask no new
+question. Record the answers you already have as D's,
 make sure `Interview` names the open part and `Open items` lists every
 choice still to ask, and commit the plan by path. No
 `.claude/handoff.md`: the plan file *is* the handoff. Then hard-stop.

@@ -9,15 +9,16 @@ state files only change on the branch that runs them.
 ## `go` while Stage is `running`: one phase per session
 
 Execution is `tools/autoplan.py`: every phase in its own fresh headless
-session, clearing between phases by itself (see "Running unattended").
-The app session **starts and supervises it; the owner never opens a
-terminal, types `/clear` or says `go` between phases** (owner,
-2026-09-30: "couldn't you manage those instances ... instead of me doing
-this"). The app session itself never runs a phase: it stays the
-supervisor, see "Supervising the run" below. A phase runs in the app only
-when the owner's prompt says to run it there, or while
-`tools/autoplan.py` does not exist yet; then the steps below end with the
-`/clear` hard stop.
+session. The run is supervised from a **fresh app session** (the ready
+gate ends with `/clear`, then `go`) that stays small because it never
+does a phase's work (owner, 2026-10-01: *"I say go and you just
+basically say go phase 1, go phase 2, go phase 3, until it's done; if
+there's an error or problem stop it all and tell me what's up ... the
+execution window will never go above its threshold"*). The owner never
+opens a terminal and never says `go` between phases. A phase runs in the
+app only when the owner's prompt says to run it there, or while
+`tools/autoplan.py` does not exist yet; then the steps below end with
+the `/clear` hard stop.
 
 A bare `go` (or `/plan`) in the app while Stage is `ready`, or `running`
 with `Status` neither `blocked` nor `questions`: when no run is live
@@ -26,24 +27,43 @@ start one; when one is live, report where it is (below) and stop.
 
 ### Supervising the run (the app session)
 
-- **Start:** Bash with `run_in_background: true`:
-  `py -3 <main checkout, absolute, forward slashes>/tools/autoplan.py <name>`
-  (no `| tail`). Say in one line that it runs and you will report when
-  it stops. Do not poll or sleep: the harness notifies when it exits.
+- **One phase per launch:** Bash with `run_in_background: true`:
+  `py -3 <main checkout, absolute, forward slashes>/tools/autoplan.py <name> --max-sessions 1`
+  (no `| tail`). Say in one line which phase runs. Do not poll or sleep:
+  the harness notifies when it exits.
+- **When it exits:** read the run's last 12 lines of output (the
+  session row and `stop reason:`), the state file (`Status`, Completed
+  phase, Next phase) and `git log --oneline` of the new commits on
+  `claude/plan-<name>`, nothing else. A normal phase end is exit 0 with
+  `stop reason: max sessions reached · last session: phase-done` (or
+  `partial`, or `plan-done` after the last phase); a usage limit is
+  exit 3 with `stop reason: usage limit`. Report the phase in at most three
+  lines: what it built in plain words, the pictures' paths, every
+  `D<n> (auto)` as a Look at the owner can reverse. Then by `Status`:
+  - `phase-done` or `partial` → launch the next one at once, same turn,
+    no question to the owner. The same phase ending `partial` twice in a
+    row (the state file's Completed phase says `<n> (partial)` for the
+    same `<n>` as the last launch, or the Progress row has two partial
+    notes) is a problem (below).
+  - `plan-done` → "Last phase done → Stage done" below.
+  - `questions` / `blocked` → "Answer" below, which restarts the run.
+  - a usage-limit stop → say when it resets and that `go` restarts it.
+  - **anything else stops everything:** any other `stop reason:` (a
+    session killed at the kill line, errored twice, no progress, a
+    failed safety commit, not logged in), a crash with no summary, the
+    same phase `partial` twice. Launch nothing; tell the owner what happened
+    in plain words (the phase, what landed, the log's last lines) and
+    what you would do about it. The owner decides.
+- **Never** read a log whole, a picture, a diff, the plan's phase
+  sections or source; never run a phase or fix anything yourself.
+  Each phase costs this session a few thousand tokens, so a whole plan
+  fits under its line. Past the line anyway: finish the report and end
+  with "Please run `/clear`, then prompt me with `go` to carry on."
+  (the state file holds where the run is).
 - **Asked "where is it?"** Read only the state file's `Status` and Next
   phase, `git log --oneline -5` on `claude/plan-<name>`, and the newest
   `.claude/autoplan/<name>/<run>/s<k>.jsonl`'s last few assistant texts
-  and its context size (from `usage`). Never read a log whole or its
-  images: they cost the supervisor its context.
-- **When it exits:** read the state file and the new commits, then
-  report per phase that landed (what it built, in plain words; pictures'
-  paths; every `D<n> (auto)` as a Look at the owner can reverse). Then by
-  `Status`:
-  `plan-done` → "Last phase done → Stage done" below;
-  `questions` / `blocked` → "Answer" below, which restarts the run;
-  a usage-limit stop → say when it resets and that `go` restarts it;
-  anything else (killed, crashed) → say what the log's last lines show
-  and restart once; a second failure goes to the owner.
+  and its context size (from `usage`).
 - **Closed app:** the run dies with the session. The state file holds
   where it was: `go` in any new session starts it again (`--force` if a
   stale lock is reported). The terminal command stays a fallback the
@@ -111,7 +131,14 @@ questions`.
 
 `CLAUDE.md` § Verify decides which commands a change needs; a phase runs
 every one of them for the areas it touched, once, on its finished
-change. A visible phase's Verification names the screenshots or views
+change. **Pictures** (owner, 2026-10-01: "when we check images we
+shouldn't repeat it if we get text from it"): a view a tool measures (a
+pixel count, a compare against a baseline) is judged by its number, and
+its picture is not read, including views measured clean. Read a picture
+only for a look no tool measures, or when a number says a view changed
+and the question is how; read each one once, write one line on what it
+shows, and never re-read a picture an earlier phase or session already
+described. A visible phase's Verification names the screenshots or views
 that must change and says the rest stay the same. A baseline is
 re-recorded (bless, update snapshots) only when the phase's Deliverable
 says so.
@@ -128,7 +155,8 @@ is `phase-done`, `partial`, `questions`, `blocked` or `plan-done`
 - **Architecture now:** the files, globals, entry points and wiring this
   plan has touched so far, one line each, as they are after this phase.
 - **Completed phase:** number, name, commit hash, what was verified
-  (exact commands, and the screenshots read).
+  (exact commands with their numbers, and one line per picture read on
+  what it shows).
 - **Next phase:** number, name, its deliverables and Verification line
   copied from the plan, the D numbers it rests on, and the exact first
   action (the file and function to open, the saved spec to send, or the
@@ -185,6 +213,10 @@ for that plan, set at the ready gate's last question or any time; the
 default is `Questions: ask`) turns every defer into a decide, recorded as `D<n>
 (auto, owner-delegated)`; only "stop the run" still stops.
 
+A number the plan worked out (its working, check and fallback) is
+built as written: measure once, and apply the fallback only when the
+check fails, as `D<n> (auto)`; that is no question.
+
 Every `(auto)`, deferred question and blocker names a question the
 interview should have asked: add it to the plan's `Interview` line as
 `missed: <question>` so the next plan's Part A list grows. Stage done
@@ -216,8 +248,8 @@ status:
    phase-done` with Next phase = the first runnable row (for a partial
    row, the part still to do).
 3. Commits the plan and state file by path.
-4. Starts the run again ("Supervising the run", Start) and ends with the
-   normal report, saying it is running.
+4. Starts the run again ("Supervising the run", one phase per launch)
+   and ends with the normal report, saying it is running.
 
 It never runs a phase itself. When the answer came in the supervising
 session (the run stopped on questions), steps 1 to 4 happen there,

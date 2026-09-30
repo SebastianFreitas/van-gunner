@@ -942,6 +942,7 @@ def main() -> int:
     stop_reason = "max sessions reached"
     exit_code = 1
     error_streak = 0
+    last_outcome = None  # how the last session ended, for a --max-sessions stop
     run_dir = LOGS / name / time.strftime("%Y%m%d-%H%M%S")
 
     try:
@@ -1054,6 +1055,7 @@ def main() -> int:
                 break
 
             if res["killed"]:
+                last_outcome = f"killed at {res['peak'] // 1000}k"
                 rescue = {"tokens": res["peak"], "sha": sha}
                 k += 1
                 continue
@@ -1071,11 +1073,13 @@ def main() -> int:
                 if partial_streak >= 3:
                     stop_reason = "same phase partial 3 times: split it in the plan"
                     break
+                last_outcome = "partial"
                 rescue = None
                 k += 1
                 continue
 
             partial_streak = 0
+            last_outcome = status or "phase-done"
             rescue = None
             k += 1
     except KeyboardInterrupt:
@@ -1083,6 +1087,11 @@ def main() -> int:
         print_summary(sessions, "interrupted")
         sys.exit(130)
 
+    if stop_reason == "max sessions reached" and last_outcome:
+        # One phase per launch (--max-sessions 1) ends here normally: say how.
+        stop_reason = f"max sessions reached · last session: {last_outcome}"
+        if last_outcome in ("phase-done", "partial", "plan-done"):
+            exit_code = 0
     print_summary(sessions, stop_reason)
     if stop_reason == "usage limit":
         print(

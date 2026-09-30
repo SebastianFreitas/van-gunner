@@ -30,11 +30,14 @@ phase impossible to build, or make it build the wrong thing?* That is:
 - a line that contradicts a D, the Brief, Scope or another phase;
 - a number, file, function or node name the phase depends on that the
   code does not have (grep for the name; never read whole files);
-- a phase that needs an earlier phase's output its Needs does not name.
+- a phase that needs an earlier phase's output its Needs does not name;
+- a number the phase builds with that has no working (its inputs and
+  where they come from), no check, or no fallback, or whose arithmetic
+  is wrong (redo it; grep each input).
 
 Wording that could be read two ways but builds the same thing either
 way is **no finding**. Neither is a choice the plan leaves to the phase
-as `→ phase decides` with a rule to apply, style, taste, or how failures
+as `→ phase decides` with what to measure and a rule, style, taste, or how failures
 and pictures are judged when the text already says what passes.
 
 **Design fit.** Read the Brief, the Initial idea and the project's

@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Start, continue or run a many-phase plan in .claude/plans/. Planning is an interview through AskUserQuestion: ask → write → review, with one fresh-eyes review round (a second only for build-breaking findings, never a third; no question quota); the ready gate starts tools/autoplan.py in the background and this session supervises it, one fresh session per phase, reporting what each phase built (a bare `go` on a ready or running plan starts or reports the run). Owner-invoked only.
+description: Start, continue or run a many-phase plan in .claude/plans/. Planning is an interview the app session manages: plan-writer subagents explore, research, work out the math and write the plan; the app session asks the owner their questions through AskUserQuestion; one fresh-eyes review round (a second only for build-breaking findings). The ready gate ends with /clear then go; that fresh session runs tools/autoplan.py one phase at a time, reports each, and stops everything on a problem. Owner-invoked only.
 disable-model-invocation: true
 argument-hint: "new <name>: <brief>  |  (nothing: continue the plan bound here)"
 ---
@@ -62,11 +62,15 @@ the one for the plan's `Stage:` line, never both:
   questions, Answer, Stage done). A session started by
   `tools/autoplan.py` reads `.claude/skills/plan/unattended.md` instead.
 
-No phase runs in the app session: it starts `tools/autoplan.py` in the
-background and supervises it (the first section of `run.md`), so the
-owner never opens a terminal or types `/clear` between phases. A run
-that stops `blocked` or with `questions` is answered in the app, and the
-run restarts.
+The planning session is a manager: `plan-writer` subagents do the
+exploring, research, math and writing, and it asks the owner what they
+return (`interview.md`, "Who does what"). No phase runs in the app
+session: after the ready gate the owner clears, says `go`, and that
+fresh session runs `tools/autoplan.py` one phase at a time in the
+background, reporting each (the first section of `run.md`); the owner
+never opens a terminal or says `go` between phases. A run that stops
+`blocked` or with `questions` is answered in the app, and the run
+restarts; any other problem stops it and goes to the owner.
 
 ## `/plan` with no plan bound here
 

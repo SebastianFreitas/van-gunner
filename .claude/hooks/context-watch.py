@@ -5,7 +5,8 @@ Main session (UserPromptSubmit, PostToolUse): warns from SOFT x LIMIT and
 says to finish and hand off past LIMIT (CLAUDE.md "Context budget";
 format in .claude/skills/handoff).
 
-Subagents (Explore, Plan, implementer, implementer-wt, reviewer, plan-reviewer):
+Subagents (Explore, Plan, implementer, implementer-wt, reviewer, plan-reviewer,
+plan-writer):
 - PostToolUse: warns at SOFT x its line, says to stop reading past it.
   Advisory only; a model can ignore it.
 - PreToolUse: past HARD x its line, every further tool call is DENIED with
@@ -36,7 +37,7 @@ HARD = 1.5          # subagents: deny all tools from this multiple of the line
 # denied.
 SUB_LIMITS = {"Explore": 100_000, "Plan": 100_000,
               "implementer": 60_000, "implementer-wt": 60_000, "reviewer": 80_000,
-              "plan-reviewer": 80_000}
+              "plan-reviewer": 80_000, "plan-writer": 120_000}
 
 
 def usage_total(u):

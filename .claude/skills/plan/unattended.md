@@ -36,6 +36,15 @@ the runner's kill line above it. The phase has to fit between the
   needs them, and capture a "before" once per run, not per phase, if an
   earlier phase's capture is named in the brief. Never re-record a
   baseline unless the phase's Deliverable says so.
+- **Numbers before pictures.** A view a tool measures (a pixel count, a
+  compare against a baseline) is judged by its number; do not read its
+  picture, clean or not. Read a picture only for a look no tool
+  measures, or to see how a view the numbers flag has changed; once
+  each, with one line on what it shows, and never one an earlier
+  session already described (`run.md` "Verify in a phase").
+- **The plan's numbers are built as written:** measure once, and apply
+  the fallback written next to a number only when its check fails
+  (`D<n> (auto)`). Do not re-derive them.
 - Screenshots and scratch scripts go under `%TEMP%` (the session's
   scratchpad), never the repo.
 
