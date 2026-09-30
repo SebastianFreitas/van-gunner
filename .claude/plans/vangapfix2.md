@@ -4,8 +4,8 @@ Stage: planning
 Started: 2026-09-30
 Procedure: `.claude/skills/plan/interview.md` (the interview), then `run.md` (state in `.claude/plans/vangapfix2.state.md` while running).
 Path: light (D1, from Brief: four named seams in the van shell, no new design)
-Size: at most 10 KB (light path), each phase at most 2.5 KB (interview.md "Plan size")
-Interview: A, C done · 4 asked · Initial idea skipped (light path)
+Size: aims at 10 KB (light path), at most 20 KB, each phase at most 2.5 KB (interview.md "Plan size")
+Interview: A, C done · 6 asked · Initial idea skipped (light path)
 Questions: ask
 
 ## Brief (owner's words, verbatim)
@@ -52,7 +52,7 @@ Questions: ask
 | 2 | Side door slits | code | - | Brief | todo |
 | 3 | Rear window surrounds | code | - | Brief, D2 | todo |
 | 4 | Side window surrounds | code | - | Brief | todo |
-| 5 | Leftover pink sweep | code | 1, 2, 3, 4 | D3 | todo |
+| 5 | Leftover pink sweep | code | 1, 2, 3, 4 | D3, D7 | todo |
 | 6 | Amber lamps, rules text, final check | code, doc | 5 | D3, D4 | todo |
 
 ## Phases
@@ -82,21 +82,21 @@ Notes:
 
 ### 4 · Side window surrounds
 Own views: `g38`..`g41`; the window part of `g12`..`g17`.
-Deliverable: one spec in `side_windows.gd`: the frame ring's outer edge overlaps the liner around `WINDOW_CUT_POLY` instead of butting it. → phase decides: measure where the line shows (rear edge, `g39`), then apply the seal rule: 5 cm over the liner past the cut, sunk 2 cm, the glass opening unchanged. Reads: `side_windows.gd`, `van_side_wall_shell.gd` `build_curved_frame_ring_mesh`.
+Deliverable: one spec in `side_windows.gd`. The frame ring sits 2 cm inside the cut and the static `WindowStop` ring already covers that slot 4 cm past the cut, cabin side (from code), so the line is a gap in or beside one of those two rings. → phase decides: trace the line (rear edge, `g39`, a cabin view) to the ring it passes, then close it by the seal rule in that ring; the glass opening and the sash's size unchanged. Reads: `side_windows.gd`, `van_side_wall_shell.gd` `build_curved_frame_ring_mesh`.
 Verification: Order; own views 0; the window reads the same size from inside (compare).
 Reviewed: Right (owner, 2026-10-01)
 Notes:
 
 ### 5 · Leftover pink sweep
 Own views: every `g` view still over 0 (Carry forward and a fresh check; known: hinge pinholes in `g06`, `g07`, ceiling-front specks in `g08`, `g10`).
-Deliverable: at most two specs. Each pink cluster: find the seam it shows through and close it by the seal rule in the file that builds that seam. A hinge pinhole is a seam like any other.
-Verification: Order; `gap_check.py --strict` passes, or each view left is in Carry forward with where it shows.
+Deliverable: one spec at a time, as many as it takes (D7, owner: keep fixing, no stop). Each pink cluster: find the seam it shows through and close it by the seal rule in the file that builds that seam; after each spec run the shots and `gap_check.py` again. A hinge pinhole is a seam like any other. It stops only when a fix would break the seal rule or a door's motion; then it blocks with the views left and where they show.
+Verification: Order; `gap_check.py --strict` passes on all 43 views.
 Reviewed: Right (owner, 2026-10-01)
 Notes:
 
 ### 6 · Amber lamps, rules text, final check
-Deliverable: two specs. (a) `look/van_marker_lights.gd`: raise `id_y` so the row of three amber ID lamps sits fully above the top of `AstragalOuter` (`rear_door_lips.gd`) with 2 cm clear; the row moves together (D4, owner; one `id_y`, from code). (b) `van_audit_exempt.gd`: the five reasons ending `the gap-light views still show pink (vangapfix D77)` end `not see-through (vangapfix2)` instead. Then in the rules' seams paragraph drop the "Still open after vangapfix" sentence and name the new seals by node and file.
-Verification: Order; `gap_check.py --strict` passes on all 43 views; `v14` and `c31` show the lamps clear of the strip.
+Deliverable: two specs. (a) `look/van_marker_lights.gd`: the row of three amber ID lamps moves up onto the roof's rear rim above the doors, like a box van's ID lamps (D4, owner), spacing unchanged, the row together (one `id_y`, from code). → phase decides: measure the roof's rear rim (`look/van_hull.gd` `_build_roof`) and the top of `AstragalOuter` (`rear_door_lips.gd`, about y 3.44), then seat each housing on the rim face, sunk 2 cm, its bottom at least 2 cm above the strip's top; derive the heights from the profile and ceiling in code, not a hard-coded number. Reads: `van_marker_lights.gd`, `look/van_hull.gd`. (b) `van_audit_exempt.gd`: the five reasons ending `the gap-light views still show pink (vangapfix D77)` end `not see-through (vangapfix2)` instead. Then in the rules' seams paragraph drop the "Still open after vangapfix" sentence and name the new seals by node and file.
+Verification: Order; `gap_check.py --strict` still passes on all 43 views; `v14` and `c31` show the lamps on the rim, clear of the strip and not floating.
 Reviewed: Right (owner, 2026-10-01)
 Notes:
 
