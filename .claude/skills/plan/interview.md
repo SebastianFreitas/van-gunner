@@ -13,7 +13,9 @@ the plan itself into the repo. `/plan` is the plan mode.
 ## `/plan` or `go` while Stage is `planning`
 
 Read `Interview` (which part is open) and `Open items`, and continue the
-interview from exactly there.
+interview from exactly there. While Stage is `ready`, a bare `go` runs
+no phase in this session: it starts the supervised run (`run.md`,
+"Supervising the run") and stops.
 
 ## The interview: how planning feels
 
@@ -21,14 +23,34 @@ The goal, in the owner's words (2026-09-28): *"the concept for the plan
 is that during execution the LLM should never make decisions on its
 own. So the planning phase is there to ask all the specifics, if there's
 100 questions so be it, if there's 5 then so be it. But the goal is to
-specify everything."* **The finished plan leaves zero choices to the
-LLM.** Questions are the tool, not the target: there is no minimum
-count, no word count. A plan is done when a review finds nothing left
-to choose. So planning is a loop:
+specify everything."*
 
-> ask what is open → write it into the plan → review the plan → every
-> uncertainty the review finds becomes a new question → repeat until a
-> review finds none.
+Narrowed by the owner, 2026-09-30: **everything the owner sees, hears or
+gets** is settled in planning, so a running phase never makes a choice
+the owner would have made. Two kinds of choice are **not** asked:
+
+- **Measurable.** Anything a run, a screenshot or a measurement can
+  settle (a clearance, an offset, a count that fits, whether a face
+  clips) is written as `→ phase decides: measure X, then apply rule Y`.
+  Planning names X and the rule; it does not calculate the number on
+  paper and does not ask the owner. The phase measures, applies the
+  rule and records the result as `D<n> (auto)`.
+- **Clear from the code.** When the code, a D or a rule makes one option
+  clearly right, it is written as a D marked `(from code)`, not asked.
+
+**Ask only about gaps** (owner, 2026-09-30): a question is asked only
+when it is a real choice the owner said nothing about and should have,
+or something they missed. The owner takes the Recommended option on
+almost every design question, so a question whose Recommended option is
+obvious is not asked: write it as a D and move on. Questions are the
+tool, not the target: there is no minimum count, no word count. So
+planning is:
+
+> ask what is open → write it into the plan → review the plan once →
+> what the review finds becomes a question or a fix → a second review
+> only when the first found something that cannot be built or would
+> build the wrong thing (owner, 2026-09-30: vangapfix's 14 review rounds
+> cost 3h45; rounds 7 to 14 found only wording).
 
 Execution that stops or defers a phase for a question is a planning
 miss, not the plan working (owner, 2026-09-29: "stopping midway is not
@@ -55,10 +77,11 @@ otherwise have to ask.
   builds the same thing.
 - **Detail by detail.** Planning decides specifics now. A phase's
   research while running only fills what planning explicitly left it,
-  marked `→ phase decides`, and only when the owner agreed to leave it.
+  marked `→ phase decides`: a measurable choice with its rule (above),
+  or one the owner agreed to leave.
 - **Never stop early.** Never end a planning turn to "let the owner
-  think"; never write "ready when you are"; never skip an open choice
-  because the answer seems obvious or the owner seems tired of questions.
+  think"; never write "ready when you are"; never skip a real gap (above)
+  because the owner seems tired of questions.
   If the owner types "just build it" or "stop asking", record that
   verbatim as a D, ask one question ("Take Recommended for every open
   choice left?" with "No, keep going (Recommended)" first) and follow the
@@ -79,20 +102,80 @@ otherwise have to ask.
 - One question per decision. A question that needs research explained
   first puts the explanation in its own text: the owner has not read the
   research digest.
-- Every question quotes or points at the Brief line, the D, or the piece
-  of the Initial idea it is about, so the owner knows where they are.
+- Every question quotes the Brief line, or says in plain words the
+  decision or piece it is about, so the owner knows where they are.
+  **Never a bare number:** not "per D4" but "the 5 cm overlap rule (D4)".
+  The owner has not memorised the D list. The same holds for the report
+  at the end of a planning turn.
 - After each call: write every answer into the plan as `D<n>`, bump the
   count under `Interview`, commit the plan by path. Then the next call.
 
 ### The review pass (used after every part)
 
 Read the plan section (or the whole plan) **as the implementer who must
-build it from that text alone**, and list every open choice (above) you
-would have to make, plus every place two lines could be read two ways or
-contradict a D. Each item is either fixed from a source (write the D,
-`(from <source>)`) or becomes a question. Ask them all, apply the
-answers, then review again. The part is done when a review returns an
-empty list.
+build it from that text alone**, and ask one question: *what would make
+a phase impossible to build, or make it build the wrong thing?* That
+covers an open choice (above) two implementers would settle differently
+in a way the owner would notice, a line that contradicts a D, and a
+number or name the code does not have. Wording that could be read two
+ways but builds the same thing either way is no finding. Each item is
+either fixed from a source (write the D, `(from <source>)`) or becomes a
+question. Ask them all and apply the answers.
+
+**The cap: one round, a second only when needed, never a third.** A
+second review runs only when the first found something that cannot be
+built or would build the wrong thing, and it reads only what those
+fixes changed. After the second round (or after the first, when it
+found nothing of that kind), anything left goes under Open items as
+`review leftover: <item>` and the part is done.
+
+### Plan size (owner, 2026-09-30)
+
+A phase session starts at about 40k and must fit its work under its
+line, so the plan file is a budget, not a record. vangapfix reached
+130 KB with 68 decisions and left each session room for one small step.
+
+- **Budget:** the plan file at most **20 KB** for up to 6 phases (plus
+  3 KB per phase past 6); each phase section at most **2.5 KB**. Check
+  with `wc -c` (and the phase's lines) after Part C and at the ready
+  gate.
+- **Decisions fold into the phase that uses them.** While asking, every
+  answer goes into Decisions as `D<n>` (so each commit keeps it). When
+  Part C writes the phases, a D used by one phase is written into that
+  phase in plain words (keep `(D<n>)` after it) and taken out of the
+  list; a D used by several phases becomes one line under Constraints
+  and is taken out too. A decision that replaces or narrows another is
+  written over it: the old one is deleted, never kept as "narrowed by".
+  At the ready gate the Decisions list is empty or holds only what no
+  phase carries yet; while running it collects the `(auto)` ones.
+- **Cut, do not keep.** Current state holds only facts a phase needs
+  and does not state itself. The Option map is deleted at the ready gate
+  (its answers live in the phases). Research lives in
+  `.claude/plans/research/`, never pasted into the plan. Review records
+  are one line each (round, what it changed), never the prompts.
+- **Still over:** the plan is two plans. Ask the owner which half runs
+  first (a real choice), move the other half's Brief lines into a new
+  plan file with `Stage: planning`, and finish this one.
+
+### Light path (small briefs)
+
+A brief that touches **one area** and adds **no new user-facing design**
+(a fix, a seal, a tuning pass, tooling) takes the light path; decide it
+from the Brief at intake and record it as a D `(from Brief)`. Anything
+that adds a new thing the player or visitor sees or does takes the full
+path. The light path:
+
+1. **One `Explore` pass** over the area: Current state, `file:line`
+   anchors, what is broken and where. No research digest, no option map.
+2. **One batch of questions** (one `AskUserQuestion` round, up to 4),
+   only the real gaps. `Interview: A done`.
+3. **No Initial idea** (record `Initial idea skipped (light path)`).
+   Write the phases straight from the Brief and the answers, show them
+   in one question (Part C step 2). `Interview: C done`.
+4. **One `plan-reviewer` build round**, the same cap as the ready gate;
+   no design-fit or art-style check unless looks change.
+
+Then the ready gate as usual. A light-path plan aims at 10 KB.
 
 ### Part A · Brief and direction
 
@@ -127,18 +210,15 @@ empty list.
    fact; anything else is a guess and is marked `[?]`. Split it into
    numbered **pieces** (a beat, a screen, a system, a rule), as many as
    the work has, each a heading with its lines under it. Commit.
-2. **Show every piece to the owner.** One question per piece, up to 4
-   pieces per call: *"Piece <n>, <name>: <the piece's lines, in full>.
-   Right?"* with "That is it (Recommended) / Close, but change something
-   (say what in Other) / Different direction / Explain the choices
-   first". A change or new direction rewrites the piece and it is shown
-   again; "Explain" is answered in the next call's question text, then
-   the piece is shown again. Record each under `Walk-through` (piece,
-   answer, D numbers).
-3. **Review pass** over the pieces: every `[?]` and every open choice the
-   review finds becomes a question. Rewrite the prose with the answers
-   and review again until the list is empty and no `[?]` remains. Write
-   `Interview: B done · <count> asked`.
+2. **Show the pieces to the owner, once, together.** One question with
+   every piece in plain words (a line or two each, no bare D numbers):
+   *"This is what you will get: <pieces>. Right?"* with "That is it
+   (Recommended) / Change a piece (say which and what in Other) /
+   Different direction". Only a changed piece is shown again, on its
+   own. Record under `Walk-through` (pieces, answer, D numbers).
+3. **Review pass** over the pieces (the cap above): every `[?]` and
+   every finding becomes a question. Rewrite the prose with the answers;
+   no `[?]` may remain. Write `Interview: B done · <count> asked`.
 
 A plan with no user-facing result (tooling, workflow) may record
 "Initial idea skipped" as a D the owner chose; its phases then carry
@@ -152,51 +232,84 @@ every piece.
    phase may be of kind "owner talk"**: every question is asked here,
    now. **Size:** a code phase is at most two implementer specs and at
    most two files it reads to design (name them); more than that is two
-   phases. A phase's section is self-contained (it names its D numbers
-   and pieces), because an unattended session sees only that section.
+   phases. A phase's section is self-contained: the decisions it uses
+   are folded into it in plain words (Plan size, above), because an
+   unattended session sees only that section, Constraints and Carry
+   forward. At most 2.5 KB.
    Verification names the check that actually sees the change (see
    "Verify in a phase" in `run.md`; read only that section). Fill
    Scope, Constraints, the Progress table,
    including each phase's **Needs**: the earlier phases whose output it
    builds on (`-` for none), so a deferred phase holds back only what
    depends on it. Commit.
-2. **Show every phase to the owner.** One question per phase, up to 4
-   per call: *"Phase <n>, <name>, delivers <deliverables>, must not touch
-   <Out list>, verified by <commands / screenshots>. Right?"* with "Right
-   (Recommended) / Missing something (say what in Other) / Too big,
-   split it / Merge with the previous phase". Splits and merges rewrite
-   the Progress table and the changed phases are shown again. Record
-   under each phase: `Reviewed: <answer, D numbers>`.
+2. **Show the phases to the owner, once, together.** One question with
+   every phase in one plain line (what it delivers, what it must not
+   touch, how it is checked): *"The work runs in these phases: <list>.
+   Right?"* with "Right (Recommended) / Missing something (say what in
+   Other) / Split or merge a phase (say which in Other)". Splits and
+   merges rewrite the Progress table; only the changed phases are shown
+   again. Record under each phase: `Reviewed: <answer, D numbers>`.
 3. **Review pass** over each phase as the session that will run it,
    seeing only that section: draft its specs in your head (files,
-   functions, names, numbers, text, what the screenshot shows) and every
-   blank you would have to fill becomes a question. Repeat until empty.
-   Write `Interview: C done · <count> asked`.
+   functions, names, numbers, text, what the screenshot shows); every
+   blank that would make it build the wrong thing becomes a question.
+   Same cap as above. Write `Interview: C done · <count> asked`.
 
 ### Ready gate (all true, or keep going)
 
-- **Fresh-eyes review.** A `Plan` subagent that has not seen the
-  interview reads the plan file (give it the path; it does not load
-  CLAUDE.md) and lists, per phase, every choice it would have to make
-  to build it and every line it could read two ways, with the line
-  quoted. Each item is fixed from a source or asked; then a new fresh
-  review runs. The gate needs one review that returns nothing.
-- `Interview` shows A, B and C done. Open items: none. No `[?]` anywhere.
-  No `→ phase decides` the owner did not agree to.
+- **Fresh-eyes review, capped.** One `plan-reviewer` subagent (Sonnet,
+  read-only; never the built-in `Plan` agent, which has no pinned model)
+  reads the whole plan file: give it the path and "check: build". It
+  answers per phase *what would make this phase impossible to build, or
+  make it build the wrong thing?*, with the line quoted, and knows that
+  wording which builds the same thing either way is no finding. Each
+  item is fixed from a source or asked. A second
+  fresh review runs only when the first found such an item, and reads
+  only the lines those fixes changed. There is never a third: what is
+  left goes under Open items as `review leftover: <item>`, and the gate
+  passes with it.
+- **Two one-shot checks, only when the plan needs them** (one
+  `plan-reviewer` each, "check: design fit" or "check: art style", in
+  parallel with the build review; one round each, never repeated; findings are asked or become `review
+  leftover` lines). *Design fit*, when the plan changes what a user sees,
+  hears or does: does the result as planned make the game or portfolio
+  better for the people it is for, judged against the Brief and the
+  project's purpose in `CLAUDE.md`? *Art style*, when the plan changes
+  looks: does it match the project's art rules (`CLAUDE.md`,
+  `.claude/rules/`, `.claude/project/`) and the look of what stands next
+  to it? Skip both for tooling, workflow and invisible fixes.
+- `Interview` shows A, B and C done. Open items: none except `review
+  leftover` lines. No `[?]` anywhere. Every `→ phase decides` is either
+  measurable (it names what to measure and the rule to apply) or one
+  the owner agreed to leave.
 - Every piece has a Walk-through line; every phase has a `Reviewed:`
-  line, cites at least one D or Brief line, has its Needs filled, and is
-  `todo` in the Progress table. Constraints and Scope are filled.
+  line, rests on at least one decision or Brief line, has its Needs
+  filled, and is `todo` in the Progress table. Constraints and Scope are
+  filled.
+- **Within budget** (Plan size): decisions folded, superseded ones
+  deleted, the Option map gone, the file at most 20 KB and each phase at
+  most 2.5 KB.
 
-Then set `Stage: ready`, commit the plan and research by path, and ask
-one last `AskUserQuestion` call with two questions: "Start running the
-plan? (Recommended) / Change something first / Hold", and "A question
-the plan missed, with no clear answer: park that phase for you to answer
+Then ask one last `AskUserQuestion` with one question: "A question the
+plan missed, with no clear answer: park that phase for you to answer
 later (Recommended) / take the recommended option and keep going", which
-sets `Questions: ask` or `Questions: auto` in the header. Start →
-`Stage: running`, read `.claude/skills/plan/run.md` and run the first
-phase in the same turn, ending with its Handoff protocol and hard stop
-(one phase, never two). Change → record the change as a D, show the
+sets `Questions: ask` or `Questions: auto` in the header. Set `Stage:
+ready`, commit the plan and research by path, then start the run
+yourself (`run.md`, "Supervising the run": `autoplan.py` in the
+background with this checkout's absolute forward-slash path; from the
+main checkout the runner makes its own `plan-<name>` worktree). There is
+no "Start running the plan?" question, and no command for the owner to
+paste. **Never run a phase in the planning session**: each phase runs in
+its own fresh session under the runner (owner, 2026-09-28, workflow-port
+D25); this session only supervises (owner, 2026-09-30). A change the
+owner asks for later reopens the interview: record it as a D, show the
 pieces and phases it touches again, and run the gate again.
+
+End the turn with one line: the plan is ready, the run has started, and
+you will report what each phase builds when it stops. If
+`tools/autoplan.py` does not exist in this checkout, say so and give the
+app fallback instead: `/clear`, then 'Read
+.claude/plans/<name>.state.md and execute the next phase.'
 
 Context: auto-compact is off (owner's rule, 2026-09-29). At `CONTEXT
 WATCH`, ask no new question. Record the answer you already have as a D,

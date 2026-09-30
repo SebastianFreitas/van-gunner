@@ -8,10 +8,46 @@ state files only change on the branch that runs them.
 
 ## `go` while Stage is `running`: one phase per session
 
-Two ways to run it: the owner prompts each phase in the app (below), or
-`py -3 tools/autoplan.py <name>` runs every phase in a terminal, one
-fresh session each (see "Running unattended"). Planning, and answering
-a run's questions, always happen in the app.
+Execution is `tools/autoplan.py`: every phase in its own fresh headless
+session, clearing between phases by itself (see "Running unattended").
+The app session **starts and supervises it; the owner never opens a
+terminal, types `/clear` or says `go` between phases** (owner,
+2026-09-30: "couldn't you manage those instances ... instead of me doing
+this"). The app session itself never runs a phase: it stays the
+supervisor, see "Supervising the run" below. A phase runs in the app only
+when the owner's prompt says to run it there, or while
+`tools/autoplan.py` does not exist yet; then the steps below end with the
+`/clear` hard stop.
+
+A bare `go` (or `/plan`) in the app while Stage is `ready`, or `running`
+with `Status` neither `blocked` nor `questions`: when no run is live
+(`.claude/autoplan/` lock, or no `py` running `autoplan.py <name>`),
+start one; when one is live, report where it is (below) and stop.
+
+### Supervising the run (the app session)
+
+- **Start:** Bash with `run_in_background: true`:
+  `py -3 <main checkout, absolute, forward slashes>/tools/autoplan.py <name>`
+  (no `| tail`). Say in one line that it runs and you will report when
+  it stops. Do not poll or sleep: the harness notifies when it exits.
+- **Asked "where is it?"** Read only the state file's `Status` and Next
+  phase, `git log --oneline -5` on `claude/plan-<name>`, and the newest
+  `.claude/autoplan/<name>/<run>/s<k>.jsonl`'s last few assistant texts
+  and its context size (from `usage`). Never read a log whole or its
+  images: they cost the supervisor its context.
+- **When it exits:** read the state file and the new commits, then
+  report per phase that landed (what it built, in plain words; pictures'
+  paths; every `D<n> (auto)` as a Look at the owner can reverse). Then by
+  `Status`:
+  `plan-done` → "Last phase done → Stage done" below;
+  `questions` / `blocked` → "Answer" below, which restarts the run;
+  a usage-limit stop → say when it resets and that `go` restarts it;
+  anything else (killed, crashed) → say what the log's last lines show
+  and restart once; a second failure goes to the owner.
+- **Closed app:** the run dies with the session. The state file holds
+  where it was: `go` in any new session starts it again (`--force` if a
+  stale lock is reported). The terminal command stays a fallback the
+  owner may use, never a step you hand them.
 
 The owner's rule (2026-09-26): *"we never do 2 continues work, we must
 always separate stuff."* A running plan is a chain of short, isolated
@@ -59,7 +95,8 @@ turn, never "keep going with Next".
    prompt me with `go` to answer them."* Do not start the next phase. Do
    not ask whether to continue.
 6. **The next prompt** ("Read .claude/plans/<name>.state.md and execute
-   the next phase", or a bare "go") starts at step 1 in a fresh context.
+   the next phase") starts at step 1 in a fresh context. A bare "go"
+   starts or reports the supervised run instead (above).
 
 ### Which phase runs next
 
@@ -179,18 +216,18 @@ status:
    phase-done` with Next phase = the first runnable row (for a partial
    row, the part still to do).
 3. Commits the plan and state file by path.
-4. Ends with the normal report, whose last lines give the exact command
-   to continue unattended, in a `bash` block:
-   `py -3 <main checkout, absolute, forward slashes>/tools/autoplan.py <name>`,
-   or, to run it in the app instead, `/clear` and then 'Read
-   .claude/plans/<name>.state.md and execute the next phase.'
+4. Starts the run again ("Supervising the run", Start) and ends with the
+   normal report, saying it is running.
 
-It never runs a phase itself.
+It never runs a phase itself. When the answer came in the supervising
+session (the run stopped on questions), steps 1 to 4 happen there,
+without the owner typing `go`.
 
 ### Running unattended (`AUTOPLAN=1`)
 
-`py -3 tools/autoplan.py <name>` runs the phases from a terminal, one
-fresh headless session per phase, on the owner's subscription only: it
+`py -3 tools/autoplan.py <name>` runs the phases, started by the app
+session (or from a terminal as a fallback), one fresh headless session
+per phase, on the owner's subscription only: it
 never uses an API key and stops the chain when the usage limit is hit.
 Started from the main checkout, it makes (or reuses) the worktree
 `.claude/worktrees/plan-<name>` on branch `claude/plan-<name>` and runs
@@ -206,4 +243,6 @@ Only when every Progress row is `done`. Set `Stage: done`, delete this
 checkout's HERE and the plan's state file, list every `D<n> (auto)` and
 every `missed:` line in the report under **Look at**, commit. The plan
 file stays as the record. This last phase ends with the hard-stop
-message too; the owner's next prompt is a fresh task.
+message too; the owner's next prompt is a fresh task. The supervising
+session, on the run's `plan-done`, reports the whole plan: what each
+phase built, and Look at.

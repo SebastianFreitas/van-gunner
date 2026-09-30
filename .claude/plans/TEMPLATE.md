@@ -2,7 +2,9 @@
 
 Stage: planning
 Started: <YYYY-MM-DD>
-Procedure: `.claude/skills/plan/interview.md` (the interview), then `run.md` ("go"; state in `.claude/plans/<name>.state.md` while running).
+Procedure: `.claude/skills/plan/interview.md` (the interview), then `run.md` (state in `.claude/plans/<name>.state.md` while running).
+Path: full   <- or light: one area, no new user-facing design (interview.md "Light path")
+Size: at most 20 KB (10 KB on the light path), each phase at most 2.5 KB (interview.md "Plan size")
 Interview: A open · 0 asked   <- A/B/C open or done, running total; missed: lines while running
 Questions: ask   <- or auto: phase questions never defer, the recommended option is taken (run.md "Phase questions")
 
@@ -17,61 +19,55 @@ Questions: ask   <- or auto: phase questions never defer, the recommended option
 
 ## Current state (explored <date>; anchors drift, grep the names)
 
-- <file/function: what it does today, one line each>
+- <only facts a phase needs and does not state itself; file/function: what it does today, one line each>
 
-## Option map (planning only; struck lines are settled by a D)
+## Option map (full path, planning only; deleted at the ready gate)
 
 ### <Area 1>
 - <direction> · precedent: <real game / film / painter / technique> · in ours: <what it looks like> → D?
 - <direction> · precedent: … · in ours: …
 
-### <Area 2>
-- …
-
 ## Open items
 
-- <one line per question not yet asked, or answer not yet applied>
+- <one line per question not yet asked, or answer not yet applied; `review leftover:` lines may stay at ready>
 - none
 
-## Decisions (owner answers; `(auto)` = taken while running, review at the end)
+## Decisions (while asking; folded into the phases in Part C; `(auto)` = taken while running)
 
-- **D1 · <topic>.** <the answer, owner's words when written by them>. Settles: <option-map lines / piece n / phase n>.
+- **D1 · <topic>.** <the answer, owner's words when written by them>. Goes to: <phase n / Constraints>.
 
-## Initial idea (Part B; prose, beginning to end, as the owner experiences it)
+## Initial idea (full path, Part B; prose, beginning to end, as the owner experiences it)
 
-<one to three pages; every sentence rests on a D or the Brief; guesses carry [?] until asked>
+<a page at most; every sentence rests on a D or the Brief; guesses carry [?] until asked>
 
 ### Piece 1 · <name>
-<5 to 15 lines: what is on screen, what moves, what is read or heard, what the user does, in order>
+<3 to 8 lines: what is on screen, what moves, what is read or heard, what the user does, in order>
 
-### Piece 2 · <name>
-...
+## Walk-through (one line: the pieces were shown together)
 
-## Walk-through (one line per piece; every piece is shown to the owner)
-
-- Piece 1 · <That is it / changed: ...> · D<n>, D<m>
+- Pieces 1-<n> · <That is it / changed: ...> · D<n>
 
 ## Constraints (every phase)
 
-- <rules that hold for the whole plan: invariants, art rules, perf, screenshots and baselines unchanged outside the phase's scope, research is for ideas never copying>
+- <rules that hold for the whole plan, including decisions several phases use (D<n>): invariants, art rules, perf, screenshots and baselines unchanged outside the phase's scope>
 
 ## Progress
 
 | # | Phase | Kind | Needs | Rests on | Status |
 |---|---|---|---|---|---|
-| 1 | <name> | research, doc | - | D1, D3 | todo |
-| 2 | <name> | code | 1 | D2 | todo |
+| 1 | <name> | code | - | Brief | todo |
+| 2 | <name> | code | 1 | D5 | todo |
 
-Needs: earlier phases whose output it builds on. Status: todo, done <sha>, deferred Q<k>.
+Needs: earlier phases whose output it builds on. Rests on: decisions still in the list, or Brief. Status: todo, done <sha>, deferred Q<k>.
 
 ## Phases
 
 ### 1 · <name>
-Research: <topics and where things are (files, functions, rules to read), then "go past the list">.
-Deliverable: <exact files / functions / docs>.
+Research: <full path only, optional: topics and where things are, then "go past the list">.
+Deliverable: <what it delivers, with the decisions it uses written in plain words (D<n>); measurable ones as "→ phase decides: measure X, then apply rule Y">. Files: <exact files / functions; at most two it reads to design>.
 Verification: <exact commands from CLAUDE.md § Verify, and the screenshots that must change / stay the same>.
-Reviewed: <Part C answers: delivers right / out list and verification agreed / splits, D<n>>
-Notes: <filled when done: research digest path, what changed>
+Reviewed: <the owner's answer to the phases question>
+Notes: <filled when done: what changed, sha>
 
 ### 2 · <name>
 …
