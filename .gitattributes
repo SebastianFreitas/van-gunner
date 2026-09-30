@@ -1,2 +1,4 @@
 # Normalize EOL for all files that Git considers text files.
 * text=auto eol=lf
+# cmd.exe misreads labels and long lines in LF batch files.
+*.bat text eol=crlf

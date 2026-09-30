@@ -74,6 +74,7 @@ A task step, like a plan phase, is one context: verify it, commit it, tick it, a
 | Scene dump | `tools/scene_dump/`, `tools/scene_dump.py` |
 | Godot discovery, `.godot/` seeding, tool lock, verify stamps | `tools/godot_env.py` |
 | The owner's Try and Commit | `tools/try.py`, `tools/try_commit.py` (shared), `tools/try_project.py` (van-gunner's hooks: Godot launch, map, check, smoke) |
+| Double-click launch of the checkout it sits in (real saves, no editor) | `play.bat` |
 | Claude Code workflow | `.claude/rules/workflow.md` (shared rules), `.claude/playbook.md` + `.claude/project/playbook.md` (specs, delegation, tool commands), `.claude/modes/` + `.claude/project/modes/`, `.claude/hooks/`, `.claude/agents/`, `.claude/skills/`, `.claude/rules/tooling.md` |
 | Cloud session Godot install | `tools/cloud_setup.sh` |
 
