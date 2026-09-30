@@ -1,11 +1,11 @@
 # vangapfix2
 
-Stage: planning
+Stage: ready
 Started: 2026-09-30
 Procedure: `.claude/skills/plan/interview.md` (the interview), then `run.md` (state in `.claude/plans/vangapfix2.state.md` while running).
 Path: light (D1, from Brief: four named seams in the van shell, no new design)
 Size: aims at 10 KB (light path), at most 20 KB, each phase at most 2.5 KB (interview.md "Plan size")
-Interview: A, C done · 6 asked · Initial idea skipped (light path)
+Interview: A, C done · 7 asked · review: build 2 rounds, art style 1 · Initial idea skipped (light path)
 Questions: ask
 
 ## Brief (owner's words, verbatim)
@@ -37,7 +37,7 @@ Questions: ask
 
 - Geometry only; always night. Read `.claude/rules/van-shell-and-hud.md` and `.claude/rules/art-style.md` first. Axes: x across (left negative), y up, z along (cab -z, rear +z).
 - **Seal rule** (from rules): overlap about 5 cm, never over 7 cm into an opening, 2 cm clear of a moving leaf, an edge on a fixed surface sunk 2 cm; no parallel face within 1 cm (audit FLICKER). Both door kinds move away from the cabin (from code: side leaf `recess_distance -0.30`, rear leaves swing out), so a seal over a leaf's edge stands on the cabin side; a street-side piece rides on the leaf it covers (D5).
-- **Visible trim is fine (D2, owner):** a seal seen from the street is dark steel or the rear lips' material, no wider than the seal rule needs; street pieces take layer 1 via `VanLighting.GROUP_EXTERIOR_LAYER` as `rear_door_lips.gd` does, cabin pieces `LAYER_VAN_INTERIOR`, set before `add_child`.
+- **Visible trim is fine (D2, owner):** every seal seen from the street uses the rear lips' material (the steel `rear_door_lips.gd` `_material` picks, re-read from the same node it reads; flat, never `from_prop`), no wider than the seal rule needs; street pieces take layer 1 via `VanLighting.GROUP_EXTERIOR_LAYER` as `rear_door_lips.gd` does, cabin pieces `LAYER_VAN_INTERIOR`, set before `add_child`.
 - **Done bar (D3, owner):** zero pink. Each phase gets its own views to 0; phase 6 passes `gap_check.py --strict` on all 43.
 - **Own views only (D6, from vangapfix D75):** a phase fixes its own audit rows and its own views; pink elsewhere goes to Carry forward (view, px, where) for phase 5, never a block.
 - New helpers: `RefCounted`, no `class_name`, no `await`, under 300 lines, typed, tabs, `&"..."` StringNames, a one-line `##` summary after `extends`.
@@ -61,7 +61,7 @@ A phase session reads its own section, the Brief, Constraints and Carry forward.
 
 ### 1 · Roof edge above the side doors
 Own views: `g30`, `g31`; the door-top part of `g08`, `g10`, `g14`, `g15`.
-Deliverable: one spec. New `scripts/van/side_door_header_seal.gd` (`## Side door header seal: dark steel strip closing the band between the side wall's outer top and the roof lip above each side door.`), `static func build(walls: VanSideWall, parent: Node3D) -> void`, called once from `van_side_wall.gd` beside `_add_door_slide_tracks`; nodes `DoorHeaderSeal_L` / `_R` over the door's z span plus 5 cm each end, street layer. → phase decides: measure the open band's y and x along the door bay (from `_build_roof` and `add_door_opening_reveals`, checked in `g31`), then apply the seal rule: 5 cm onto the roof lip's underside and the wall's outer skin, edges sunk 2 cm, 2 cm clear of the leaf closed and stepped out. Reads: `look/van_hull.gd`, `van_side_wall_panel.gd`.
+Deliverable: one spec. New `scripts/van/side_door_header_seal.gd` (`## Side door header seal: dark steel strip closing the band between the side wall's outer top and the roof lip above each side door.`), `static func build(walls: VanSideWall, parent: Node3D) -> void`, called once from `van_side_wall.gd` beside `_add_door_slide_tracks`; nodes `DoorHeaderSeal_L` / `_R` over the door's z span plus 5 cm each end, street layer, the rear lips' material (Constraints). → phase decides: measure the open band's y and x along the door bay (from `_build_roof` and `add_door_opening_reveals`, checked in `g31`), then apply the seal rule: 5 cm onto the roof lip's underside and the wall's outer skin, edges sunk 2 cm, 2 cm clear of the leaf closed and stepped out. Reads: `look/van_hull.gd`, `van_side_wall_panel.gd`.
 Verification: Order; own views 0; the door still opens (smoke).
 Reviewed: Right (owner, 2026-10-01)
 Notes:
@@ -82,7 +82,7 @@ Notes:
 
 ### 4 · Side window surrounds
 Own views: `g38`..`g41`; the window part of `g12`..`g17`.
-Deliverable: one spec in `side_windows.gd`. The frame ring sits 2 cm inside the cut and the static `WindowStop` ring already covers that slot 4 cm past the cut, cabin side (from code), so the line is a gap in or beside one of those two rings. → phase decides: trace the line (rear edge, `g39`, a cabin view) to the ring it passes, then close it by the seal rule in that ring; the glass opening and the sash's size unchanged. Reads: `side_windows.gd`, `van_side_wall_shell.gd` `build_curved_frame_ring_mesh`.
+Deliverable: one spec in `side_windows.gd`. The frame ring sits 2 cm inside the cut and the static `WindowStop` ring already covers that slot 4 cm past the cut, cabin side (from code), so the line is a gap in or beside one of those two rings. → phase decides: trace the line (rear edge, `g39`, a cabin view) to the ring it passes, then close it by the seal rule in that ring; the glass opening and the sash's size unchanged. A gap at the frame ring (the moving sash) is closed by widening `WindowStop` (its inner poly reaching further over the frame), never by growing the frame. Reads: `side_windows.gd`, `van_side_wall_shell.gd` `build_curved_frame_ring_mesh`.
 Verification: Order; own views 0; the window reads the same size from inside (compare).
 Reviewed: Right (owner, 2026-10-01)
 Notes:
@@ -95,7 +95,7 @@ Reviewed: Right (owner, 2026-10-01)
 Notes:
 
 ### 6 · Amber lamps, rules text, final check
-Deliverable: two specs. (a) `look/van_marker_lights.gd`: the row of three amber ID lamps moves up onto the roof's rear rim above the doors, like a box van's ID lamps (D4, owner), spacing unchanged, the row together (one `id_y`, from code). → phase decides: measure the roof's rear rim (`look/van_hull.gd` `_build_roof`) and the top of `AstragalOuter` (`rear_door_lips.gd`, about y 3.44), then seat each housing on the rim face, sunk 2 cm, its bottom at least 2 cm above the strip's top; derive the heights from the profile and ceiling in code, not a hard-coded number. Reads: `van_marker_lights.gd`, `look/van_hull.gd`. (b) `van_audit_exempt.gd`: the five reasons ending `the gap-light views still show pink (vangapfix D77)` end `not see-through (vangapfix2)` instead. Then in the rules' seams paragraph drop the "Still open after vangapfix" sentence and name the new seals by node and file.
+Deliverable: two specs. (a) `look/van_marker_lights.gd`: the row of three amber ID lamps moves up onto the roof's rear rim above the doors, like a box van's ID lamps (D4, owner), spacing unchanged, the row together (one `id_y`, from code). → phase decides: measure the roof's rear rim (`look/van_hull.gd` `_build_roof`) and the top of `AstragalOuter` (`rear_door_lips.gd`, about y 3.44), then stand each housing on the rim's top, proud of the roof edge like box-van ID lamps (only about 4.5 cm of rear face is free above the lips, less than the 7 cm housing), its base sunk 2 cm into the rim, housing and lens sizes unchanged, clear of `OuterLip` and `AstragalOuter`; derive the heights from the profile and ceiling in code, not a hard-coded number. Reads: `van_marker_lights.gd`, `look/van_hull.gd`. (b) `van_audit_exempt.gd`: the five reasons ending `the gap-light views still show pink (vangapfix D77)` end `not see-through (vangapfix2)` instead. Then in the rules' seams paragraph drop the "Still open after vangapfix" sentence and name the new seals by node and file.
 Verification: Order; `gap_check.py --strict` still passes on all 43 views; `v14` and `c31` show the lamps on the rim, clear of the strip and not floating.
 Reviewed: Right (owner, 2026-10-01)
 Notes:
