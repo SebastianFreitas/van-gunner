@@ -1,7 +1,5 @@
 Status: phase-done
 
-Phase 4 landed (f9465c8). Phase 5 runs next.
-
 # Plan state: vangapfix
 ## Plan
 
@@ -25,21 +23,30 @@ with `tools/autoplan.py`; `Questions: auto`.
   makes `OuterLip` on each hinge (right one the left mesh at `scale.x = -1`; top strip 17 stations,
   bottom strip outer y -0.01, D74) and `AstragalOuter` on the right hinge (plate z 4.855..4.867, stem
   a closed box, D73); called from `rear_doors.gd` `_ready` on the line after the frame's.
+- `scripts/van/side_door_stops.gd` (phase 5, about 190 lines, RefCounted, built by `side_doors.gd`
+  `_fit_to_side_walls`): `DoorStop_L` / `DoorStop_R` under `SideWalls`, plate at depth 0.075..0.09 inboard of
+  the wall's cabin face, returns back at -0.035 (D76); O z -4.57..-2.245, y 0.08..cove underside; I z
+  -4.48..-2.365, y 0.20..2.87. `van_audit_exempt.gd` `OPENING` exempts `Interior/Shell/SideWalls/DoorStop_`
+  on both doors. `debug_gap_light.gd` body slab x_inset 0.10 (behind the stop's cabin face).
 
 ## Completed phase
 
-4 · Rear doors, street side, commit f9465c8. Check, smoke (strict audit clean, no rule, no
-fingerprint move), plain scene dump clean. `gap_check`: rear-out whole / hinge-left / hinge-right 0;
-header 408, sill 362, centre 3556, all identical to `before` and on the rear leaf windows' surrounds
-(Carry forward lines written). Lips and outer astragal shown in `-whole`, `-header`, `-sill`,
-`-centre`. The astragal plate covers the centre amber marker lamp (Carry forward). Pictures in
-`C:/Users/Traff/AppData/Local/Temp/vgf4/` (`shots2/`, before|after pairs in `pairs/`). The closing
-capture `.godot/shots/before/` is phase 4's result.
+5 · Side door stops, both views, commit 3e815d5. Check, smoke (strict audit clean, no rule, no
+fingerprint move), plain scene dump clean. The 20 door `g` views fell from 100,187 to 37,240 px; every
+pixel left (but one) was magenta in `before` in the same pixels (Carry forward lines written): header,
+threshold and front-jamb slits from the cabin closed; left over are a hairline at each stop's rear outer
+edge, the rear jamb slit seen at a slant from the street (unchanged with the gap light's slabs 30-40 cm
+inboard, so not through the stop; likely the side wall's cavity), the roof-edge band and the window
+surrounds. Closeups pass (rim round the open bay; strip up to the closed pictures' top). Pictures in
+`C:/Users/Traff/AppData/Local/Temp/vgf5b/` (`shots/`, `before/`, diff sheets in `sheets/`). The closing
+capture `.godot/shots/before/` is phase 5's result.
+Look at: D76 (plate 7.5 cm inboard, past the plan's 2 cm) stands; the owner can reverse it.
 
 ## Next phase
 
-5 · Side door stops, both views. First action: read phase 5's section and the Ds it cites (D73 and
-D75 included), then write the spec(s).
+6 · Honest audit and sweep: design from the plan's phase 6 section (its own order, two specs then the
+docs). The `before` set exists (phase 5's closing capture). Phase 6 judges every Carry forward magenta
+line, phase 5's four included.
 
 ## Requirements / gotchas
 
@@ -71,6 +78,8 @@ none
 ## Blocker
 
 none
+
+Record of the answered block (phase 5): the plate at the plan's depth 0.02..0.035 clipped the leaf's `PerimeterFrame` (CLIP hits=304 each side) and flickered against `DoorSlideTrack_L/R`; answered as D76 (option A). Pictures of option B's run: `C:/Users/Traff/AppData/Local/Temp/vgf5/`.
 
 Record of the answered block (phase 4, first build): `EDGE .../RightHinge/AstragalOuter open=1` (the
 stem's open street end, now D73) and `FLICKER .../RightHinge/OuterLip` vs `VanLook/Wheels/RearBumper`

@@ -15,6 +15,7 @@ const SIDE_RIGHT := &"right"
 
 ## Door-leaf mesh building (body, trim, frames, latch). RefCounted, bound to this node.
 const _SideDoorLeaf := preload("res://scripts/van/side_door_leaf.gd")
+const _SideDoorStops := preload("res://scripts/van/side_door_stops.gd")
 
 @export var grip_retract_duration := 0.1
 @export var mount_retract_duration := 0.14
@@ -85,6 +86,12 @@ func _fit_to_side_walls() -> void:
 		return
 	_leaf.fit_door_leaf(_left, -1.0, walls)
 	_leaf.fit_door_leaf(_right, 1.0, walls)
+	var fallback: Material = walls.door_jamb_material if walls.door_jamb_material != null \
+		else walls.wall_material
+	var stops := _SideDoorStops.new(walls)
+	var stop_mat: Material = _leaf.find_frame_material(fallback)
+	stops.add_door_stops(-1.0, stop_mat)
+	stops.add_door_stops(1.0, stop_mat)
 
 	gun_ports.clear()
 	var mid_y := (walls.door_y_min + walls.door_y_max) * 0.5

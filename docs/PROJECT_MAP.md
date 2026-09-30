@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-300 GDScript files, 46164 lines.
+301 GDScript files, 46361 lines.
 
 ### `scenes/corridor/`
 
@@ -604,7 +604,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `room_zone.gd` | `RoomZone` | 15 | Marks a van interior zone; tells GameSession which room the player is in. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. |
 | `side_door_leaf.gd` | — | 336 | Builds the side door leaf meshes (body, trim, frames, latch) onto SideDoors nodes. |
-| `side_doors.gd` | — | 332 | Sliding cargo-style side doors. |
+| `side_door_stops.gd` | — | 188 | Steel stop strips round each side door bay on the cabin side, covering the leaf's clearance. |
+| `side_doors.gd` | — | 339 | Sliding cargo-style side doors. |
 | `side_window_exterior.gd` | — | 50 | Adds the dark-tinted exterior pane that rides a side cargo window's sash. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. |
 | `side_windows.gd` | — | 401 | Side cargo windows — top-hinged sashes that tip vertically outward. |
@@ -708,7 +709,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `van_audit.gd` | — | 362 | Headless van audit entry scene: collects every visible triangle of the van, checks it and writes a report. |
-| `van_audit_exempt.gd` | — | 153 | Van audit exemption list: findings accepted on purpose, each with its reason and plan decision. |
+| `van_audit_exempt.gd` | — | 155 | Van audit exemption list: findings accepted on purpose, each with its reason and plan decision. |
 | `van_audit_flicker.gd` | — | 212 | Coplanar-overlap (flicker) check over an AuditMesh triangle set, split off van_audit_overlap.gd (vanfix specs 1-2, 5-1). |
 | `van_audit_gaps.gd` | — | 245 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges, found by raycasting temporary ConcavePolygonShape3D proxies of every visible… |
 | `van_audit_leaks.gd` | — | 214 | See-through leak checks over the gap proxies: cabin rays that escape, street rays that land on interior-only faces. |

@@ -116,7 +116,7 @@ func _build_inside(rig: Node3D) -> Node3D:
 	var zr := hinge.position.z - 0.08 if hinge != null else 4.63
 	# Rear slab just in front of the rear wall, and the body from the front wall back to it.
 	_add_slab_pair(inside, &"RearSlab", walls, ceiling, 0.0, 0.0, 0.0, zr - 0.12, zr - 0.10)
-	_add_slab_pair(inside, &"Body", walls, ceiling, 0.01, 0.06, 0.06,
+	_add_slab_pair(inside, &"Body", walls, ceiling, 0.01, 0.10, 0.06,
 		VanFrontWall.FACE_Z + 0.01, zr - 0.12)
 	return inside
 

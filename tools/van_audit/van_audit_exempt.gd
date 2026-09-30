@@ -2,10 +2,12 @@ extends RefCounted
 ## Van audit exemption list: findings accepted on purpose, each with its reason and plan decision.
 
 ## Opening label -> node path prefixes never reported: the PC rig stands in the left door bay
-## on purpose (D39), window frames (wall, reveals, skin, stop ring) surround their cut (D41, D53).
+## on purpose (D39), window frames (wall, reveals, skin, stop ring) surround their cut (D41, D53),
+## the side door stop strips reach 5 cm over each leaf on purpose (vangapfix D13).
 const _WIN_FRAME: Array = ["Interior/Shell/SideWalls/", "VanLook/Hull/SideSkin", "/WindowStop"]
 const OPENING: Dictionary = {
-	&"door_left": ["Interior/Props/RequestBoard/PcRig"],
+	&"door_left": ["Interior/Props/RequestBoard/PcRig", "Interior/Shell/SideWalls/DoorStop_"],
+	&"door_right": ["Interior/Shell/SideWalls/DoorStop_"],
 	&"win_left_front": _WIN_FRAME,
 	&"win_left_rear": _WIN_FRAME,
 	&"win_right_front": _WIN_FRAME,
