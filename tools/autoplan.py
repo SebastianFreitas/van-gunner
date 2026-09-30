@@ -553,7 +553,7 @@ def session_prompt(name: str, k: int, rescue: dict | None, line: int, kill: int)
     prompt = f"""[autoplan | plan {name} | session {k}]
 You are running unattended under tools/autoplan.py. Nobody answers:
 AskUserQuestion is disabled. Read .claude/skills/plan/unattended.md
-first; it replaces SKILL.md's unattended section. The phase brief below
+first; it replaces run.md's unattended section. The phase brief below
 is already loaded: do not re-read the plan's state file or the plan for it.
 
 Context: CONTEXT WATCH warns at {line // 1000}k; the runner kills this
@@ -832,8 +832,8 @@ def main() -> int:
     parser.add_argument("--model", default="claude-opus-5-5")
     parser.add_argument("--effort", default="medium")
     parser.add_argument("--permission-mode", default="auto")
-    parser.add_argument("--line", type=int, default=120000)
-    parser.add_argument("--kill", type=int, default=140000)
+    parser.add_argument("--line", type=int, default=160000)
+    parser.add_argument("--kill", type=int, default=185000)
     parser.add_argument("--claude", default=None)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--here", "--shared", dest="here", action="store_true")

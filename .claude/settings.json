@@ -5,6 +5,8 @@
   "worktree": {
     "baseRef": "head"
   },
+  "enableArtifact": false,
+  "disableWorkflows": true,
   "permissions": {
     "allow": [
       "Bash(git status*)",
@@ -21,6 +23,14 @@
       "Bash(python3 tools/smoke.py*)",
       "Bash(python3 tools/scene_dump.py*)",
       "Bash(python3 tools/gen_context.py*)"
+    ],
+    "deny": [
+      "Workflow",
+      "ScheduleWakeup",
+      "ReportFindings",
+      "SuggestSkills",
+      "mcp__visualize__show_widget",
+      "mcp__visualize__read_me"
     ]
   },
   "hooks": {

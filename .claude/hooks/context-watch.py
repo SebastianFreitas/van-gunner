@@ -26,7 +26,7 @@ import json
 import os
 import sys
 
-LIMIT = int(os.environ.get("AUTOPLAN_LINE") or 120_000)  # main session: handoff line (auto-compact is off)
+LIMIT = int(os.environ.get("AUTOPLAN_LINE") or 160_000)  # main session: handoff line (auto-compact is off)
 SOFT = 0.8          # warn from this fraction of a line
 HARD = 1.5          # subagents: deny all tools from this multiple of the line
 

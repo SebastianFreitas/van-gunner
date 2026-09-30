@@ -2,9 +2,9 @@
 
 Stage: planning
 Started: <YYYY-MM-DD>
-Procedure: `.claude/skills/plan/SKILL.md` (the interview, then "go"; state in `.claude/plans/<name>.state.md` while running).
+Procedure: `.claude/skills/plan/interview.md` (the interview), then `run.md` ("go"; state in `.claude/plans/<name>.state.md` while running).
 Interview: A open · 0 asked   <- A/B/C open or done, running total; missed: lines while running
-Questions: ask   <- or auto: phase questions never defer, the recommended option is taken (SKILL.md "Phase questions")
+Questions: ask   <- or auto: phase questions never defer, the recommended option is taken (run.md "Phase questions")
 
 ## Brief (owner's words, verbatim)
 

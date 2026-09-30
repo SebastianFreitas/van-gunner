@@ -7,13 +7,14 @@ limit). Your prompt starts with `[autoplan | plan <name> | session <k>]`
 and carries the **phase brief**: the state file
 `.claude/plans/<name>.state.md`, this phase's section of the plan, the
 Decisions it cites, Carry forward, and any saved spec files. Read this
-file once; do not open `SKILL.md`, the plan file or the state file for
-what the brief already holds. Open the plan only for a D, piece or
-Progress row the brief does not carry, by grep, never whole.
+file once; do not open `SKILL.md`, `run.md`, the plan file or the state
+file for what the brief already holds. Open the plan only for a D, piece
+or Progress row the brief does not carry, by grep, never whole.
 
-Everything in `SKILL.md` "one phase per session" still holds (one phase,
+Everything in `run.md` "one phase per session" still holds (one phase,
 Handoff protocol, Which phase runs next, Verify in a phase, state file
-format, commit by path). The differences:
+format, commit by path); open it by grep for one of those headings, never
+whole. The differences:
 
 ## Budget
 
@@ -69,7 +70,7 @@ is a fallback, not the plan.
 ## Nobody answers
 
 `AskUserQuestion` is disabled and nobody is watching. Sort every phase
-question as `SKILL.md` "Phase questions" says:
+question as `run.md` "Phase questions" says (summarised here):
 
 - **Decide** (the usual case): record `D<n> (auto)` with one line of
   reason, plus a `missed: <question>` on the plan's Interview line, and

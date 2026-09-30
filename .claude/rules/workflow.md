@@ -60,8 +60,10 @@ the report that the hook did not run. After `EnterWorktree`, read
 ## Plans
 
 Big work runs as a plan: `.claude/plans/<name>.md`, started with
-`/plan new <name>: <brief>` and driven by `.claude/skills/plan/SKILL.md`
-(read it before touching a plan); while it runs, its state lives in
+`/plan new <name>: <brief>` and driven by the plan skill. Before touching
+a plan read the file for its Stage in `.claude/skills/plan/`, only that
+one: `interview.md` (planning, ready) or `run.md` (running); `SKILL.md`
+is the index. While it runs, its state lives in
 `.claude/plans/<name>.state.md`. The hook prints `PLAN: <name> ·
 <stage>` when a plan is bound to this checkout, `PLANS:` when several
 are active and none is bound here. Planning is an interview in the app;
@@ -141,8 +143,8 @@ Auto-compact is off (`DISABLE_AUTO_COMPACT` in `.claude/settings.json`,
 owner's rule 2026-09-29): no session runs on past its line; it stops
 and the owner clears or opens a new chat. Never compact, never clear
 yourself. `.claude/hooks/context-watch.py` prints `CONTEXT WATCH` near
-each line: main and headless plan sessions 120k (the runner kills at
-140k), Explore and Plan 100k, implementer 60k, reviewer 80k. A subagent
+each line: main and headless plan sessions 160k (the runner kills at
+185k), Explore and Plan 100k, implementer 60k, reviewer 80k. A subagent
 at 1.5 times its line is denied further tools, which means the prompt
 was too wide: next time name the file, function and range, or split.
 

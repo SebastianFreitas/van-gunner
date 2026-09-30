@@ -53,8 +53,8 @@ a design. The implementer sees only the spec and
   belongs to the owner: print it, never run it. Commit: worktree mode
   runs it itself once verified; cloud and shared print it.
 - **Autoplan:** `py -3 tools/autoplan.py [<name>] [--dry-run]
-  [--max-sessions N] [--budget USD] [--effort medium] [--line 120000]
-  [--kill 140000] [--force]`. Owner-run from a terminal: runs a plan's
+  [--max-sessions N] [--budget USD] [--effort medium] [--line 160000]
+  [--kill 185000] [--force]`. Owner-run from a terminal: runs a plan's
   phases unattended, one headless session each, in
   `.claude/worktrees/plan-<name>`, on the subscription only (no API key;
   stops at the usage limit), and stops when questions wait, on a

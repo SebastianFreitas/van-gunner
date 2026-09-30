@@ -160,22 +160,22 @@ def plan_lines(root):
                         status = state_line[len("Status:"):].strip()
                         head += f" · {status}"
                     if status in ("blocked", "questions"):
-                        second = ("Read .claude/skills/plan/SKILL.md, then "
+                        second = ("Read .claude/skills/plan/run.md, then "
                                   f"{state_rel} and {rel}. Status {status}: a "
                                   "bare 'go' does the skill's Answer (asks the "
                                   "waiting questions), never a phase.")
                     else:
-                        second = ("Read .claude/skills/plan/SKILL.md, then "
+                        second = ("Read .claude/skills/plan/run.md, then "
                                   f"{state_rel} (its Next phase) and {rel}. A "
                                   "bare 'go' continues it.")
                 else:
                     head += " · no state file"
-                    second = ("Read .claude/skills/plan/SKILL.md, then "
+                    second = ("Read .claude/skills/plan/run.md, then "
                               f"{rel} (no state file: take the first "
                               "runnable row in Progress). A bare 'go' "
                               "continues it.")
             else:
-                second = ("Read .claude/skills/plan/SKILL.md, then "
+                second = ("Read .claude/skills/plan/interview.md, then "
                           f"{rel}: Interview, Brief, Decisions, Open items, "
                           "Progress. A bare 'go' continues it.")
             lines = [head, second]
