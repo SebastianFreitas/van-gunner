@@ -6,7 +6,7 @@ hangs forward below the shoulders, arms longer than the legs with the claws
 on the van floor, knobbed spine, hanging jaw, corpse-grey skin and black
 eye pits, nothing bright. The window raider (the low yellow crawler that
 fits through a side window) is still the first pass and waits for its own
-redraw. door_raider.png is a 8-frame 512 x 80 run sheet (a bounding charge,
+redraw. door_raider.png is a 13-frame 832 x 80 run sheet (a bounding charge,
 seen from the front); frame 0 is the still.
 
 Art rules (.claude/rules/art-style.md, pixel art): native size, one image
@@ -34,7 +34,7 @@ OUT = ROOT / "scenes" / "enemies"
 
 # Canvas sizes: the fat beast is 1.92 x 1.73 m, the crawler 1.92 x 1.15 m.
 LOPER_SIZE = (64, 80)
-LOPER_FRAMES = 8
+LOPER_FRAMES = 13
 LOPER_SHEET = (LOPER_SIZE[0] * LOPER_FRAMES, LOPER_SIZE[1])
 CRAWLER_SIZE = (80, 48)
 
@@ -305,14 +305,16 @@ def draw_sole(c: Canvas, cx: int, cy: int) -> None:
 # tail-bone knobs at x 32 (absolute rows, never shifted by by); soles: each leg's foot is
 # the ankle and a hind sole with its claws up is drawn 5 px above it, not the floor claws.
 # Frame 0 still. Frame 1 crouch: hips down, knees wide, head low. Frame 2 push: hind legs
-# straight under the body, hump at its highest, row 0, head up. Frame 3 lift-off: paws tuck
-# under the chest, left toes still on the floor, the rump starting to show over the dropped
-# hump. Frame 4 kick: airborne, claws 6 px off the floor, the head dropped 13 px to the
-# chest, the hump dropped so the two-lobed rump and tail-bone stand above it and both hind
-# feet show sole-on at the top corners, claws up. Frame 5 reach: paws spread wide, first
-# contact, rump sinking behind the hump, legs swinging forward. Frame 6 land: paws flat,
-# feet coming down behind the elbows. Frame 7 gather: toes land, the still's shape with the
-# body 1 px low.
+# straight under the body, hump at its highest, head up. Frame 3 paws-rise: both paws half
+# lifted, hind feet planted. Frame 4 lift-off: paws tuck under the chest, left toes still on
+# the floor, the rump starting to show over the dropped hump. Frame 5 tip-over: the left hind
+# foot pushes off the floor, the right leg swings up behind, the head dropping. Frame 6 kick:
+# airborne, the head dropped 13 px to the chest, the two-lobed rump and tail-bone above the
+# hump, both hind feet sole-on at the top corners, claws up. Frame 7 fall: still airborne,
+# the paws reaching down, the soles swinging lower. Frame 8 drop: claws 1 px off the floor,
+# the hind feet coming down under the rump. Frame 9 reach: first contact, paws wide, the rump
+# still high. Frame 10 rump-down: the rump sinks behind the hump onto the hind legs.
+# Frame 11 land: paws flat. Frame 12 gather: the still's shape with the body 1 px low.
 LOPER_POSES = [
 	dict(by=0, hump_dy=0, head_dy=0, shoulder_dx=0, lag=0,
 		left=((4, 43), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
@@ -326,24 +328,45 @@ LOPER_POSES = [
 		left=((5, 40), (8, 70), [(2, 79), (6, 79), (10, 79), (14, 78)]),
 		right=((59, 44), (57, 72), [(52, 78), (56, 79), (60, 79), (63, 77)]),
 		legs=(((22, 64), (20, 75)), ((42, 65), (44, 75)))),
-	dict(by=-6, hump_dy=5, head_dy=3, shoulder_dx=-1, lag=3,  # 3 lift-off
+	dict(by=-5, hump_dy=2, head_dy=1, shoulder_dx=0, lag=3,  # 3 paws-rise
+		left=((4, 37), (11, 61), [(6, 67), (9, 69), (13, 69), (16, 67)]),
+		right=((60, 40), (54, 63), [(49, 68), (52, 70), (55, 70), (58, 68)]),
+		legs=(((20, 63), (20, 75)), ((44, 62), (45, 75)))),
+	dict(by=-6, hump_dy=5, head_dy=3, shoulder_dx=-1, lag=3,  # 4 lift-off
 		left=((3, 34), (14, 52), [(10, 56), (13, 58), (16, 58), (18, 56)]),
 		right=((61, 36), (50, 54), [(46, 58), (49, 60), (52, 60), (54, 58)]),
 		legs=(((17, 62), (19, 75)), ((47, 58), (46, 67))), rump=(6, 7, 5, ())),
-	dict(by=-7, hump_dy=11, head_dy=13, shoulder_dx=0, lag=3,  # 4 kick, airborne
+	dict(by=-7, hump_dy=8, head_dy=8, shoulder_dx=-1, lag=3,  # 5 tip-over
+		left=((4, 39), (11, 59), [(6, 65), (9, 67), (13, 67), (16, 65)]),
+		right=((61, 41), (53, 61), [(48, 66), (51, 68), (54, 68), (57, 66)]),
+		legs=(((18, 62), (19, 75)), ((50, 45), (55, 34))), rump=(8, 8, 6, (4, 6))),
+	dict(by=-7, hump_dy=11, head_dy=13, shoulder_dx=0, lag=3,  # 6 kick, airborne
 		left=((5, 42), (9, 63), [(3, 71), (7, 72), (11, 72), (15, 70)]),
 		right=((61, 45), (56, 65), [(50, 72), (54, 73), (58, 73), (62, 71)]),
 		legs=(((10, 30), (5, 15)), ((54, 31), (59, 16))), rump=(10, 8, 7, (2, 4, 6)),
 		soles=True),
-	dict(by=-5, hump_dy=7, head_dy=9, shoulder_dx=3, lag=2,  # 5 reach
+	dict(by=-6, hump_dy=10, head_dy=12, shoulder_dx=1, lag=2,  # 7 fall, airborne
+		left=((4, 41), (8, 65), [(2, 73), (6, 74), (10, 74), (14, 72)]),
+		right=((62, 44), (57, 67), [(51, 74), (55, 75), (59, 75), (63, 73)]),
+		legs=(((9, 34), (7, 23)), ((55, 35), (57, 24))), rump=(10, 8, 7, (3, 5, 7)),
+		soles=True),
+	dict(by=-6, hump_dy=9, head_dy=11, shoulder_dx=2, lag=2,  # 8 drop, airborne
+		left=((2, 40), (7, 64), [(1, 74), (5, 75), (9, 76), (13, 75)]),
+		right=((63, 43), (58, 66), [(52, 75), (56, 76), (60, 76), (63, 75)]),
+		legs=(((9, 40), (10, 30)), ((55, 41), (54, 31))), rump=(10, 8, 7, (4, 6))),
+	dict(by=-5, hump_dy=7, head_dy=9, shoulder_dx=3, lag=2,  # 9 reach
 		left=((1, 40), (6, 68), [(1, 77), (4, 78), (8, 79), (12, 78)]),
 		right=((63, 43), (58, 70), [(53, 78), (57, 79), (61, 79), (63, 78)]),
 		legs=(((10, 46), (13, 56)), ((54, 47), (51, 57))), rump=(10, 8, 6, (5, 7))),
-	dict(by=-1, hump_dy=1, head_dy=4, shoulder_dx=2, lag=1,  # 6 land
+	dict(by=-3, hump_dy=4, head_dy=7, shoulder_dx=3, lag=2,  # 10 rump-down
+		left=((2, 43), (7, 70), [(1, 78), (5, 79), (9, 79), (13, 79)]),
+		right=((62, 47), (58, 72), [(52, 79), (56, 79), (60, 79), (63, 78)]),
+		legs=(((12, 52), (15, 62)), ((52, 53), (49, 63))), rump=(11, 8, 5, (7,))),
+	dict(by=-1, hump_dy=1, head_dy=4, shoulder_dx=2, lag=1,  # 11 land
 		left=((3, 46), (8, 72), [(2, 79), (6, 79), (10, 79), (14, 79)]),
 		right=((61, 50), (57, 74), [(52, 79), (56, 79), (60, 79), (63, 79)]),
 		legs=(((14, 58), (17, 68)), ((50, 59), (47, 69)))),
-	dict(by=1, hump_dy=-1, head_dy=2, shoulder_dx=1, lag=1,  # 7 gather
+	dict(by=1, hump_dy=-1, head_dy=2, shoulder_dx=1, lag=1,  # 12 gather
 		left=((3, 47), (8, 72), [(2, 79), (6, 79), (10, 79), (14, 78)]),
 		right=((61, 51), (57, 74), [(52, 78), (56, 79), (60, 79), (63, 78)]),
 		legs=(((14, 66), (19, 75)), ((50, 67), (45, 75)))),
@@ -357,8 +380,8 @@ def draw_loper(frame: int = 0) -> Canvas:
 	the floor, the legs crouch behind. Feet on the bottom row. The parts are drawn
 	at the still's coordinates on layers and blitted with the pose's bob, so every
 	frame is the approved drawing moved, never redrawn. The bound is
-	eight frames: still, crouch, push, lift-off, kick, reach, land, gather; frame 4
-	is airborne."""
+	13 frames: still, crouch, push, paws-rise, lift-off, tip-over, kick, fall, drop,
+	reach, rump-down, land, gather; frames 6, 7 and 8 are airborne (6 the kick)."""
 	p = LOPER_POSES[frame]
 	by = p["by"]
 	hy_ = by + p["hump_dy"]
@@ -472,7 +495,7 @@ def draw_loper(frame: int = 0) -> Canvas:
 
 
 def draw_loper_sheet() -> Canvas:
-	"""The four run frames side by side, each cell exactly LOPER_SIZE wide."""
+	"""The thirteen run frames side by side, each cell exactly LOPER_SIZE wide."""
 	sheet = Canvas(LOPER_SHEET)
 	for i in range(LOPER_FRAMES):
 		sheet.blit(draw_loper(i), i * LOPER_SIZE[0])

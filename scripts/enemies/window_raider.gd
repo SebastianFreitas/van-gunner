@@ -107,6 +107,7 @@ func _physics_process(delta: float) -> void:
 		moving = not _move_arrived
 	elif _attach_marker and is_instance_valid(_attach_marker):
 		_snap_to_marker(_attach_marker)
+		_motion.keep_feet_on_road()
 	_anim.step(delta, moving)
 
 

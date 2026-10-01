@@ -20,7 +20,7 @@ const CRAWLER_BAR_HEIGHT := 0.9
 static func fit_crawler(raider: WindowRaider) -> void:
 	raider.sprite.position = Vector3.ZERO
 	raider.sprite.offset = Vector2(CRAWLER_HEAD_SHIFT_PX, 0.0)
-	# agile_raider.png is a single 80 x 48 frame; the scene's hframes 8 is the loper's sheet.
+	# agile_raider.png is a single 80 x 48 frame; the scene's hframes 13 is the loper's sheet.
 	raider.sprite.hframes = 1
 	var body := CylinderShape3D.new()
 	body.radius = CRAWLER_BODY_RADIUS

@@ -2,11 +2,31 @@ extends RefCounted
 
 ## Per-frame chase math for WindowRaider. No await: called straight from _physics_process.
 
+## Origin above the feet: the sprite's bottom row sits this far under the raider's origin.
+const FEET_DROP := 1.62
+## Origin y that stands the loper's feet on the road (VanRig space) while it is outside.
+const ROAD_ORIGIN_Y := VanWheels.ROAD_Y + FEET_DROP
+## Horizontal metres over which the loper hops from the road up onto the van floor as it climbs in.
+const HOP_RUN := 1.3
+
 var raider: Node3D  # the WindowRaider; reads/writes its fields when called
 
 
 func _init(owner: Node3D) -> void:
 	raider = owner
+
+
+func _walks_on_road() -> bool:
+	return not raider.is_agile and not raider.is_boss
+
+
+## Outside, the loper runs and claws at the doors from the street.
+func keep_feet_on_road() -> void:
+	if not _walks_on_road():
+		return
+	var phase: int = raider.assault_phase
+	if phase == WindowRaider.AssaultPhase.APPROACH or phase == WindowRaider.AssaultPhase.BREACHING:
+		raider.position.y = ROAD_ORIGIN_Y
 
 
 func physics_chase_target(delta: float) -> void:
@@ -29,9 +49,14 @@ func physics_chase_target(delta: float) -> void:
 	if remaining <= 0.05:
 		if speed < 0.0:
 			# Van still pulling away — don't latch onto the marker yet.
+			keep_feet_on_road()
 			return
 		raider.position.x = target_local.x
 		raider.position.z = target_local.z
+		if _walks_on_road() and raider.assault_phase == WindowRaider.AssaultPhase.ENTERING:
+			raider.position.y = target_local.y
+		else:
+			keep_feet_on_road()
 		if raider._move_marker and is_instance_valid(raider._move_marker):
 			raider.global_transform.basis = raider._move_marker.global_transform.basis
 		raider._move_arrived = true
@@ -44,6 +69,12 @@ func physics_chase_target(delta: float) -> void:
 	elif speed < 0.0:
 		# Fall behind along the approach axis (ready for van-boost distance gains).
 		raider.position -= direction * (-speed) * delta
+	if _walks_on_road():
+		if raider.assault_phase == WindowRaider.AssaultPhase.ENTERING:
+			var hop := smoothstep(0.0, 1.0, 1.0 - clampf(remaining / HOP_RUN, 0.0, 1.0))
+			raider.position.y = lerpf(ROAD_ORIGIN_Y, target_local.y, hop)
+		else:
+			keep_feet_on_road()
 
 
 func physics_chase_player(delta: float) -> void:

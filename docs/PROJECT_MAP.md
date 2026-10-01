@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-325 GDScript files, 50494 lines.
+325 GDScript files, 50526 lines.
 
 ### `scenes/corridor/`
 
@@ -427,10 +427,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `enemy_spawn_pool.gd` | `EnemySpawnPool` | 48 | A weighted collection of enemies to roll spawns from. |
 | `enemy_spawn_pool_entry.gd` | `EnemySpawnPoolEntry` | 8 | A single weighted slot inside an EnemySpawnPool. |
 | `loot_drop_component.gd` | `LootDropComponent` | 62 | Drop-in component that gives any enemy a chance to drop loot on death. |
-| `window_raider.gd` | `WindowRaider` | 535 | A raider enemy: approaches, breaches a window or door, then attacks the bench or player. |
-| `window_raider_anim.gd` | — | 32 | Steps the door raider's eight-frame run sheet: Sprite3D.frame advances at RUN_FPS while the raider moves and rests on frame 0 (the still) when it stands. |
+| `window_raider.gd` | `WindowRaider` | 536 | A raider enemy: approaches, breaches a window or door, then attacks the bench or player. |
+| `window_raider_anim.gd` | — | 32 | Steps the door raider's thirteen-frame run sheet: Sprite3D.frame advances at RUN_FPS while the raider moves and rests on frame 0 (the still) when it stands. |
 | `window_raider_look.gd` | — | 37 | Fits the window crawler's sprite, hitboxes and health bar to its lower canvas. |
-| `window_raider_motion.gd` | — | 69 | Per-frame chase math for WindowRaider. |
+| `window_raider_motion.gd` | — | 100 | Per-frame chase math for WindowRaider. |
 | `window_raider_targeting.gd` | — | 112 | Target picking, cabin/breach queries and status math for WindowRaider. |
 
 ### `scripts/interactions/`

@@ -54,8 +54,8 @@ func _build() -> void:
 	_sprite = Sprite3D.new()
 	_sprite.name = "Sprite3D"
 	_sprite.texture = _SPRITE
-	# door_raider.png is the loper's 8-frame run sheet; the dummy shows frame 0, the still.
-	_sprite.hframes = 8
+	# door_raider.png is the loper's 13-frame run sheet; the dummy shows frame 0, the still.
+	_sprite.hframes = 13
 	_sprite.frame = 0
 	_sprite.pixel_size = 0.006
 	_sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
