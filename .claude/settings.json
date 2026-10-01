@@ -44,7 +44,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" session-start.py"
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" hooks.py"
           }
         ]
       },
@@ -62,35 +62,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py"
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" hooks.py"
           }
         ]
       }
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash|PowerShell",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" git-guard.py"
-          }
-        ]
-      },
-      {
-        "matcher": "Read|Write|Edit|MultiEdit|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" file-guard.py"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py"
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" hooks.py"
           }
         ]
       },
@@ -104,31 +86,12 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py"
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" gd-lint.py"
-          }
-        ]
-      }
-    ],
     "SubagentStop": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" context-watch.py"
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" hooks.py"
           }
         ]
       }
@@ -138,7 +101,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" stop-guard.py"
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" hooks.py"
           }
         ]
       },
@@ -147,6 +110,17 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" verify-guard.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run.sh\" gd-lint.py"
           }
         ]
       }

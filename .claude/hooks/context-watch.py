@@ -1,19 +1,36 @@
 """Context watch: keeps every context small, because quality drops as a
 context grows, long before the window is full.
 
-Main session (UserPromptSubmit, PostToolUse): warns from SOFT x LIMIT and
-says to finish and hand off past LIMIT (CLAUDE.md "Context budget";
-format in .claude/skills/handoff).
+Main session (PreToolUse, UserPromptSubmit): warns from 90% of its line
+and says to finish and hand off past it (rules in .claude/rules/
+workflow.md "Context budget"; handoff format in .claude/skills/handoff).
+The line depends on the window:
+- a headless plan session: AUTOPLAN_LINE from tools/autoplan.py;
+- a prepared run (.claude/handoff.md starts `Run: prepared`; remembered
+  for the window once seen, so deleting the handoff at the commit does
+  not move the line): RUN_LIMIT;
+- any other app window (a prepare, a quick fix, a plan interview or a
+  run's supervisor): LIMIT, lower, because what grows there is the
+  model's own output (specs, thinking), and two prepare windows went
+  from 42k to 140k with one Explore call each (review of 2026-10-01).
 
 Subagents (Explore, Plan, general-purpose, claude-code-guide, implementer,
 implementer-wt, reviewer, plan-reviewer, plan-writer):
-- PostToolUse: warns at SOFT x its line, says to stop reading past it.
+- PreToolUse: warns at SOFT x its line, says to stop reading past it.
   Advisory only; a model can ignore it.
 - PreToolUse: past HARD x its line, every further tool call is DENIED with
   an instruction to write the report now. This is the enforcement: a
   subagent cannot drift past 1.25x its line.
 - SubagentStop: logs the peak to a per-session ledger; the main session's
   next hook run reports it.
+
+Warnings are printed once per threshold crossing (90% / 80%, then the
+line), not on every tool call: past the line every call used to repeat
+the warning (one session got it 25 times), each one costing tokens in
+the window it was protecting. The crossing state is
+`<session dir>/context-watch.state.json`; a new prompt (UserPromptSubmit)
+repeats the current state once, so a fresh turn starts informed. The
+deny past HARD is not a warning and stays on every call.
 
 transcript_path is always the parent session's transcript; a subagent's
 own transcript is agent_transcript_path (SubagentStop) or derived from
@@ -27,9 +44,11 @@ import json
 import os
 import sys
 
-LIMIT = int(os.environ.get("AUTOPLAN_LINE") or 160_000)  # main session: handoff line (auto-compact is off)
-SOFT = 0.8          # warn from this fraction of a line
-HARD = 1.25         # subagents: deny all tools from this multiple of the line
+LIMIT = 100_000       # app windows that are not a prepared run
+RUN_LIMIT = 160_000   # a prepared run's window (`Run: prepared` handoff)
+SOFT = 0.8            # subagents: warn from this fraction of a line
+MAIN_SOFT = 0.9       # main session: warn from this fraction of its line
+HARD = 1.25           # subagents: deny all tools from this multiple of the line
 
 # Context line per subagent type. Explore and Plan carry a ~33k baseline
 # (system prompt and tools) before reading anything, so their line is
@@ -101,6 +120,35 @@ def ledger_path(transcript_path):
     return os.path.join(session_dir(transcript_path), "context-watch.jsonl")
 
 
+def state_path(transcript_path):
+    return os.path.join(session_dir(transcript_path), "context-watch.state.json")
+
+
+def read_state(transcript_path):
+    try:
+        with open(state_path(transcript_path), encoding="utf-8") as f:
+            s = json.load(f)
+    except (OSError, ValueError):
+        s = {}
+    if not isinstance(s, dict):
+        s = {}
+    s.setdefault("main", {})
+    s.setdefault("agents", {})
+    return s
+
+
+def write_state(transcript_path, s):
+    sp = state_path(transcript_path)
+    try:
+        os.makedirs(os.path.dirname(sp), exist_ok=True)
+        tmp = sp + f".{os.getpid()}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(s, f)
+        os.replace(tmp, sp)
+    except OSError:
+        pass
+
+
 def own_transcript(d):
     atp = d.get("agent_transcript_path")
     if atp and os.path.exists(atp):
@@ -112,26 +160,68 @@ def own_transcript(d):
     return cand if os.path.exists(cand) else None
 
 
-def report_line(used, limit, who):
-    pct = used * 100 // limit
+def tier_of(used, limit, soft):
     if used >= limit:
-        if not who:
+        return 2
+    if used >= limit * soft:
+        return 1
+    return 0
+
+
+def main_line(d, state):
+    """(limit, is_run) for this app window."""
+    env = os.environ.get("AUTOPLAN_LINE")
+    if env:
+        try:
+            return int(env), False
+        except ValueError:
+            pass
+    if state["main"].get("run"):
+        return RUN_LIMIT, True
+    try:
+        hand = os.path.join(d.get("cwd") or os.getcwd(), ".claude", "handoff.md")
+        with open(hand, encoding="utf-8", errors="ignore") as f:
+            if f.readline().strip() == "Run: prepared":
+                state["main"]["run"] = True
+                return RUN_LIMIT, True
+    except OSError:
+        pass
+    return LIMIT, False
+
+
+def main_message(used, limit, tier, is_run):
+    pct = used * 100 // limit
+    if tier == 2:
+        if is_run or os.environ.get("AUTOPLAN_LINE"):
             return (f"CONTEXT WATCH: {used:,} tokens in context, past the "
                     f"handoff line of {limit:,}. Finish only the current "
                     "atomic step (an implementer already running may "
                     "finish; start nothing new), verify, commit, then follow "
                     "your mode file's 'Context full' rule.")
+        return (f"CONTEXT WATCH: {used:,} tokens in context, past this "
+                f"window's line of {limit:,}. Finish only the spec or step "
+                "you are on, write .claude/handoff.md (handoff skill: Next "
+                "lists what is still to write or do, with the anchors you "
+                "already have), and end the turn as 'Context budget' says. "
+                "Read nothing more yourself.")
+    if tier == 1:
+        return (f"CONTEXT WATCH: {used:,} tokens in context ({pct}% of "
+                f"the line of {limit:,}). Prefer finishing over starting "
+                "new work; read nothing more yourself (Explore brings "
+                "anchors and excerpts).")
+    return None
+
+
+def sub_message(used, limit, tier, who):
+    pct = used * 100 // limit
+    if tier == 2:
         return (f"CONTEXT WATCH: {used:,} tokens in your context, past the "
                 f"subagent line of {limit:,}. Stop exploring: finish only "
                 "from what you already have. At "
                 f"{int(limit * HARD):,} every tool call will be refused, so "
                 "write your report soon and say in it that you hit the "
                 "context line.")
-    if used >= limit * (SOFT if who else 0.9):
-        if not who:
-            return (f"CONTEXT WATCH: {used:,} tokens in context ({pct}% of "
-                    "the handoff line). Prefer finishing over starting new "
-                    "work.")
+    if tier == 1:
         return (f"CONTEXT WATCH: {used:,} tokens in your context ({pct}% of "
                 "the subagent line). Read no more whole files; grep and "
                 "read small ranges only; pipe command output through tail.")
@@ -171,7 +261,8 @@ def on_subagent_stop(d):
 
 
 def on_subagent_tool(d, ev):
-    limit = SUB_LIMITS.get(d.get("agent_type") or "")
+    agent_type = d.get("agent_type") or ""
+    limit = SUB_LIMITS.get(agent_type)
     if limit is None:
         return
     own = own_transcript(d)
@@ -180,22 +271,30 @@ def on_subagent_tool(d, ev):
     used = context_tokens(own)
     if used is None:
         return
-    if ev == "PreToolUse":
-        if used >= limit * HARD:
-            print(json.dumps({"hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "deny",
-                "permissionDecisionReason": (
-                    f"CONTEXT WATCH: {used:,} tokens, past your hard line of "
-                    f"{int(limit * HARD):,}. No more tool calls. Write your "
-                    "report now from what you have (for the implementer: "
-                    "files changed, verification so far, what is left), and "
-                    "say you hit the context line so the task must be "
-                    "narrowed or split.")}}))
+    if ev == "PreToolUse" and used >= limit * HARD:
+        print(json.dumps({"hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": (
+                f"CONTEXT WATCH: {used:,} tokens, past your hard line of "
+                f"{int(limit * HARD):,}. No more tool calls. Write your "
+                "report now from what you have (for the implementer: "
+                "files changed, verification so far, what is left), and "
+                "say you hit the context line so the task must be "
+                "narrowed or split.")}}))
         return
-    msg = report_line(used, limit, f"{d.get('agent_type')} subagent")
+    tier = tier_of(used, limit, SOFT)
+    path, agent_id = d.get("transcript_path"), str(d.get("agent_id"))
+    if not path:
+        return
+    state = read_state(path)
+    if tier <= int(state["agents"].get(agent_id, 0)):
+        return
+    state["agents"][agent_id] = tier
+    write_state(path, state)
+    msg = sub_message(used, limit, tier, f"{agent_type} subagent")
     if msg:
-        emit("PostToolUse", msg)
+        emit(ev, msg)
 
 
 def ledger_messages(path):
@@ -236,6 +335,36 @@ def ledger_messages(path):
     return parts
 
 
+def on_main(d, ev, path):
+    parts = []
+    state = read_state(path)
+    if os.path.exists(path):
+        used = context_tokens(path)
+        if used is not None:
+            limit, is_run = main_line(d, state)
+            tier = tier_of(used, limit, MAIN_SOFT)
+            last = int(state["main"].get("tier", 0))
+            # a new prompt repeats the current state once; a tool call
+            # speaks only when a threshold is crossed
+            if tier > last or (ev == "UserPromptSubmit" and tier > 0):
+                m = main_message(used, limit, tier, is_run)
+                if m:
+                    parts.append(m)
+            state["main"]["tier"] = max(tier, last)
+            write_state(path, state)
+    try:
+        parts += ledger_messages(path)
+    except OSError:
+        pass
+    if not parts:
+        return
+    msg = "\n".join(parts)
+    if ev in ("PreToolUse", "PostToolUse"):
+        emit(ev, msg)
+    else:
+        print(msg)
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -252,27 +381,9 @@ def main():
         if ev in ("PreToolUse", "PostToolUse"):
             on_subagent_tool(d, ev)
         return
-    if ev == "PreToolUse" or not path:
-        return  # main session: PreToolUse never blocks
-
-    parts = []
-    if os.path.exists(path):
-        used = context_tokens(path)
-        if used is not None:
-            m = report_line(used, LIMIT, "")
-            if m:
-                parts.append(m)
-    try:
-        parts += ledger_messages(path)
-    except OSError:
-        pass
-    if not parts:
+    if not path:
         return
-    msg = "\n".join(parts)
-    if ev == "PostToolUse":
-        emit("PostToolUse", msg)
-    else:
-        print(msg)
+    on_main(d, ev, path)
 
 
 try:

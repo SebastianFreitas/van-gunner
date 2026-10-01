@@ -6,6 +6,10 @@ read it too.
 
 ## Delegation
 
+- Every subagent call is foreground (`run_in_background: false`;
+  `.claude/hooks/agent-guard.py` refuses the rest). Parallel calls are
+  several Agent calls in one message: they run together and return
+  together.
 - Parallel implementer calls only on completely separate files. Several
   tasks each adding one line to the same file (a `<script>` tag, a
   registry entry): each edits only its own line with one `Edit`,
@@ -24,14 +28,20 @@ read it too.
 - A plan phase that stops after designing saves each finished spec as
   `.claude/plans/<name>.spec-<phase>-<k>.md` in the format below (plan
   skill).
-- Over about 150 lines or three files: the `reviewer` gets the spec(s)
-  and the diff before you commit.
+- Over about 150 lines or three files (`.claude/` and `.md` files not
+  counted): the `reviewer` gets the spec(s) and the diff before you
+  commit. `.claude/hooks/review-guard.py` counts the diff at `git
+  commit` and `try.py --commit` and refuses the command until a
+  reviewer has run in this window.
 
 ## Spec format
 
 Complete enough that the implementer never chooses a name, a location or
 a design. The implementer sees only the spec and
-`.claude/project/implementer.md`, never `CLAUDE.md`. Every spec has:
+`.claude/project/implementer.md`, never `CLAUDE.md`. Under about 120
+lines, written once with one Write and never read back (the writer's
+window pays for every character twice over); longer means two specs.
+Every spec has:
 
 1. **Target files:** the exact path of every file to create, edit or
    delete, and the function names to grep so it reads only that region.

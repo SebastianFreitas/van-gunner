@@ -108,18 +108,33 @@ ask.
 
 ### Prepare
 
-1. **Explore** through the `Explore` subagent, then ask the obvious
-   questions (above) and keep working in the same turn once answered.
+This window's line is 100k (`.claude/hooks/context-watch.py`), and
+what fills it is its own output: two prepare windows went from 42k to
+140k with one Explore call each, writing four specs of 26k characters
+and reading five to eight files themselves (review, 2026-10-01). So:
+
+1. **Explore** through the `Explore` subagent, asking for `file:line`
+   anchors and the short excerpts a spec will quote (signatures, the
+   lines around each hit), then ask the obvious questions (above) and
+   keep working in the same turn once answered. **Read nothing
+   yourself:** what the first Explore missed goes to a second, narrower
+   Explore call, never to a Read in this window.
 2. **Spec** one per implementer call (format in `.claude/playbook.md`).
    A step with more than about three deliverables becomes several specs.
    Size each spec so its implementer stays under its line: name the
-   file, function and range. For a prepared run, save each spec as
+   file, function and range. A spec is under about 120 lines; one that
+   wants more is two specs. **Write each spec once**, with one Write,
+   and never read it back; an afterthought goes in the handoff's Next
+   line for that spec. For a prepared run, save each spec as
    `.claude/specs/<k>.md` (gitignored), then write `.claude/handoff.md`
    (`handoff` skill) with `Run: prepared` as its first line and in Next
    the spec files in order (which may run in parallel), the Verify
-   commands for the areas touched, whether a review is due (step 5) and
-   the screenshots the report needs. End the turn with what will be
-   built in two or three plain lines, then this as the last line:
+   commands for the areas touched, `Review:` with the number of
+   distinct target files across the specs (over three, or over about
+   150 lines expected: due; the commit guard counts the real diff
+   either way, step 5) and the screenshots the report needs. End the
+   turn with what will be built in two or three plain lines, then this
+   as the last line:
 
    > Ready. Please run `/clear`, then prompt me with `go` to build it.
 
@@ -128,21 +143,30 @@ ask.
 A `go` whose printed handoff starts with `Run: prepared`. This window
 only manages: it never reads source, a spec or a diff, and never
 explores; each spec costs it about 3k tokens (the call, the report, a
-tailed check), so 20 specs fit well under its line (estimate from a
-~40k start: check it on the first real runs and fix this line).
+tailed check), so 20 specs fit well under its 160k line (two clean runs
+went from 44k to 51k and 68k for three specs each, 2026-10-01).
 
 3. **Implement:** one `implementer` call per spec, the prompt saying
-   only "Your spec is `.claude/specs/<k>.md`: read it and implement it";
-   parallel where the handoff says so (playbook). A blocked implementer
+   only "Your spec is `.claude/specs/<k>.md`: read it and implement it",
+   **in the foreground** (`run_in_background: false`; the Agent guard
+   refuses anything else). This window has nothing else to do while it
+   waits, and a turn that ends while an implementer is still writing
+   trips the Stop guard on every hand-back (24 blocks in one session,
+   2026-10-01). Parallel specs, where the handoff says so (playbook),
+   are several foreground calls in one message. A blocked implementer
    gets a narrower spec from one `Explore` call and a fresh
    implementer; still blocked, stop and tell the owner.
 4. **Verify**: each spec's command (the implementer ran it), then what
    `CLAUDE.md` § Verify asks for the areas touched, output tailed.
-5. **Review**: over about 150 lines or three files, the `reviewer`
-   subagent (Sonnet, read-only, fresh context) gets the spec paths and
-   the changed paths, checks `git diff` against them and reports only
-   gaps that break the spec or a flow. A gap gets a new spec file and
-   goes back to step 3.
+5. **Review**: over about 150 lines or three files (`.claude/` and
+   `.md` files not counted), the `reviewer` subagent (Sonnet,
+   read-only, fresh context) gets the spec paths and the changed paths,
+   checks `git diff` against them and reports only gaps that break the
+   spec or a flow. A gap gets a new spec file and goes back to step 3.
+   This is not a judgement call: `.claude/hooks/review-guard.py`
+   counts the diff at `git commit` and at `try.py --commit` and refuses
+   the command until a reviewer has run in this window (a review from
+   an earlier window does not count; a fresh one is cheap).
 6. **Commit** by path, as your mode says, with a message that describes
    the work (a squash takes the branch tip's message). In worktree mode
    run the mode's `try.py --commit` yourself once verified. Delete
@@ -174,7 +198,9 @@ because the main context is paid again on every turn.
 - Docs, `.claude/MAP.md` rows, `.claude/handoff.md` and the markdown in
   `.claude/` are not source: edit those directly.
 - Before designing, grep `.claude/MAP.md`, then send code reading to
-  `Explore`. Read yourself only the range you are writing a spec against.
+  `Explore`. Read yourself only the range you are writing a spec
+  against, and in a prepare window nothing at all: Explore brings the
+  anchors and the excerpts ("Prepare" above).
 - Explore and Plan never load this file or `CLAUDE.md`: name the file,
   function or concept, tell them to grep `.claude/MAP.md` first, and ask
   for `file:line` anchors and a summary, not code bodies.
@@ -200,12 +226,19 @@ because the main context is paid again on every turn.
 Auto-compact is off (`DISABLE_AUTO_COMPACT` in `.claude/settings.json`,
 owner's rule 2026-09-29): no session runs on past its line; it stops
 and the owner clears or opens a new chat. Never compact, never clear
-yourself. `.claude/hooks/context-watch.py` prints `CONTEXT WATCH` near
-each line: main and headless plan sessions 160k (the runner kills at
-185k), Explore, Plan, general-purpose and claude-code-guide 100k,
-plan-writer 120k, implementer 60k, reviewer and plan-reviewer 80k. A
-subagent at 1.25 times its line is denied further tools, which means the prompt
+yourself. `.claude/hooks/context-watch.py` prints `CONTEXT WATCH` once
+when a window crosses 90% of its line and once when it passes it (and
+once more at each new prompt while it stays there), never on every
+tool call. The lines: a prepared run's window and headless plan
+sessions 160k (the runner kills at 185k); every other app window (a
+prepare, a quick fix, a plan interview, a run's supervisor) 100k;
+Explore, Plan, general-purpose and claude-code-guide 100k, plan-writer
+120k, implementer 60k, reviewer and plan-reviewer 80k. A subagent at
+1.25 times its line is denied further tools, which means the prompt
 was too wide: next time name the file, function and range, or split.
+Every subagent runs in the foreground (`.claude/hooks/agent-guard.py`
+refuses the rest): the window has nothing else to do, and a background
+subagent's hand-back lands in a new turn that the Stop guard fights.
 
 - Main session past its line: finish only the current atomic step,
   verify, commit, write `.claude/handoff.md` (`handoff` skill) and end

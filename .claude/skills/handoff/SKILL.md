@@ -26,7 +26,9 @@ in this order:
 **Prepared run** (`.claude/rules/workflow.md` "Prepare", step 2): the
 first line is `Run: prepared`, and Next lists the spec files in
 `.claude/specs/` in order (which run in parallel), the Verify commands,
-whether a review is due, and the screenshots the report needs. It ends
+a `Review:` line with the number of distinct target files across the
+specs (over three: due; the commit guard counts the real diff anyway),
+and the screenshots the report needs. It ends
 the turn with the "Ready" line, not a "Context full" report, and stays
 until the run's commit.
 
