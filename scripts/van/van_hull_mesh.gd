@@ -19,10 +19,9 @@ static func wall_half(walls: VanSideWall, y: float, fallback: float) -> float:
 	return fallback
 
 
-## Thick panel in the XY plane. `origin` is subtracted so the mesh sits in hinge-local
-## space. `interior_is_neg_z` true for rear doors (cabin looks toward -Z of the leaf).
-## When `x_outer_fixed` is finite, the outer X edge is that absolute value (signed by
-## wall_sign) instead of the side-wall profile — used for the front cab door slab.
+## Thick panel in the XY plane, `origin` subtracted (hinge-local). `interior_is_neg_z`: rear
+## doors. Finite `x_outer_fixed` replaces the side-wall profile (front cab door slab).
+## `flat_shaded`: per-face normals (smooth group 0xFFFFFFFF), else smoothed across shared verts.
 static func build_vaulted_xy_slab(
 	walls: VanSideWall,
 	ceiling: VanCeiling,
@@ -41,10 +40,12 @@ static func build_vaulted_xy_slab(
 	peak_rise_fallback: float = 0.38,
 	bottom_half_fallback: float = 2.42,
 	interior_is_neg_z: bool = true,
-	x_outer_fixed: float = INF
+	x_outer_fixed: float = INF,
+	flat_shaded: bool = false
 ) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(0xFFFFFFFF if flat_shaded else 0)
 
 	var y_peak := vault_y(ceiling, 0.0, edge_height_fallback, peak_rise_fallback) - y_inset
 	var half_z := thickness * 0.5

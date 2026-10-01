@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-327 GDScript files, 51100 lines.
+329 GDScript files, 51375 lines.
 
 ### `scenes/corridor/`
 
@@ -650,7 +650,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `iron_cross_geo.gd` | — | 298 | Mesh builder for IronCross: rods, boxes, bolts and weld blobs that follow the bowed side wall. |
 | `rear_door_frame.gd` | — | 143 | Fixed steel frame on the cabin side of the rear doors, covering the leaves' clearance slits. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
-| `rear_door_leaf_build.gd` | — | 140 | Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55). |
+| `rear_door_leaf_build.gd` | — | 117 | Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55). |
 | `rear_door_lighting.gd` | — | 27 | Puts the rear leaves' outward-visible parts on layers 1+2 so street lights reach them (D15). |
 | `rear_door_lips.gd` | — | 193 | Steel lips and the outer astragal on the rear leaves' street face, covering their slits from outside. |
 | `rear_doors.gd` | — | 307 | Truck-style rear double doors. |
@@ -677,7 +677,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_gun_port.gd` | `VanGunPort` | 198 | A slot gun port on a side door leaf: welded frame and a steel plate sliding in a track, seen from inside and outside. |
 | `van_gun_port_interact.gd` | — | 16 | Layer-2 hit target in front of a side door's gun port; E slides the port's plate open or shut. |
 | `van_hud.gd` | — | 183 | Combat HUD readouts: ammo, health, waves, prompts, item toasts, stop toasts. |
-| `van_hull_mesh.gd` | `VanHullMesh` | 400 | XY end-cap slabs that follow VanSideWall's bow and VanCeiling's barrel vault. |
+| `van_hull_mesh.gd` | `VanHullMesh` | 401 | XY end-cap slabs that follow VanSideWall's bow and VanCeiling's barrel vault. |
 | `van_lighting.gd` | `VanLighting` | 56 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) lights the corridor through openings without washing the cabin. |
 | `van_overlays.gd` | — | 238 | Modal overlays: bench, skill tree, class panel, debug console, pause menu, mouse passthrough. |
 | `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. |
@@ -715,12 +715,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_inner_shell.gd` | `VanInnerShell` | 338 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
 | `van_inner_shell_fit.gd` | — | 38 | Keeps the inner shell's plates and patches clear of the ribs, the bulkhead frame and each other. |
 | `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |
-| `van_marker_lights.gd` | — | 161 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
+| `van_marker_lights.gd` | — | 197 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
 | `van_markings.gd` | `VanMarkings` | 73 | The van's seeded painted identity: a stencil name on both sides, a number on the cab doors and kill tallies, as exterior-only decals. |
 | `van_paint_palette.gd` | `VanPaintPalette` | 78 | Seeded paint schemes for the war rig's exterior shader: base, accent, primer and lettering. |
 | `van_pc_rig.gd` | `VanPcRig` | 65 | The request board dressed as a scrap PC rig (plank desk on crates, towers, three CRTs, one on crt_screen.gdshader, keyboard, clutter, a desk lamp and a PowerPo… |
 | `van_pc_rig_parts.gd` | — | 299 | Part builders for VanPcRig (desk, PCs, CRTs, clutter, shelf, stool, lamp, power strip); rig-local metres, desk top y -0.18, partition face z 0, floor y -0.95. |
-| `van_rear_dressing.gd` | `VanRearDressing` | 180 | Seeded scrap dressing on the inside of the rear doors (lock bar, welded bars, chains) and on the cage bulkhead's lower corners (welded plates, rebar), parented… |
+| `van_rear_door_hardware.gd` | — | 122 | Scrap-built door hardware on the cabin face of one rear leaf: two strap hinges, a locking rod with guide brackets, cam lever and tip, and a bolted backing plat… |
+| `van_rear_door_plates.gd` | — | 179 | Seeded scrap plates (welded or bolted, some dented or torn) on the cabin face of one rear leaf. |
+| `van_rear_dressing.gd` | `VanRearDressing` | 140 | Seeded scrap dressing on the inside of the rear doors (rust patches, strap hinges, locking rod) and on the cage bulkhead's lower corners (welded plates, rebar)… |
 | `van_relay_rack.gd` | `VanRelayRack` | 78 | The cab-relay vital rebuilt as an angle-iron relay rack (six batteries on a high shelf, a green relay cabinet, knife switch, fuses, gauge, a caged trouble lamp… |
 | `van_relay_rack_parts.gd` | — | 271 | Part builders for VanRelayRack: angle-iron frame, six car batteries, relay cabinet, fuse board, trouble lamp and the two power ports. |
 | `van_roof.gd` | `VanRoof` | 279 | The van's roof rack, antennas, dish and the always-on roof spotlight; add-ons over the D24-D26 height caps are dropped, not built. |
@@ -831,7 +833,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Shaders
 
-`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/curb_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_prop_grime.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/paving_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/crt_screen.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_exterior.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`, `scenes/van/van_window_exterior.gdshader`
+`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/curb_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_prop_grime.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/paving_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/crt_screen.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_exterior.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_rear_door.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`, `scenes/van/van_window_exterior.gdshader`
 
 ## Balance sheet (`resources/balance/game_balance.tres`)
 

@@ -1,29 +1,14 @@
 class_name VanRearDressing
 extends Node3D
-## Seeded scrap dressing on the inside of the rear doors (lock bar, welded bars, chains) and on the
-## cage bulkhead's lower corners (welded plates, rebar), parented to the moving leaves so it swings
-## with them.
+## Seeded scrap dressing on the inside of the rear doors (rust patches, strap hinges, locking rod)
+## and on the cage bulkhead's lower corners (welded plates, rebar), parented to the moving leaves
+## so it swings with them.
 
-const BAR_LENGTH := 2.2
-const BAR_SIZE := 0.05
-const BAR_Y_LOW := -1.12
-const BAR_Y_HIGH := 0.7
+const _Hardware := preload("res://scripts/van/look/van_rear_door_hardware.gd")
+
+const _Plates := preload("res://scripts/van/look/van_rear_door_plates.gd")
+
 const LEAF_INNER_Z := -0.12
-const WELD_BEAD_SIZE := 0.08
-## Bars embed 1.5 cm into the leaf (inner face at -0.08); the low bar rides below the Handle.
-const BAR_Z := -0.09
-
-const LOCK_BAR_LENGTH := 0.9
-const LOCK_BAR_SIZE := 0.07
-const LOCK_BAR_Z := -0.104
-const LOCK_BRACKET_X := 0.3
-
-const CHAIN_LINKS := 7
-const CHAIN_INNER := 0.018
-const CHAIN_OUTER := 0.032
-
-const LEAF_CENTER_X := 1.19
-const LEAF_FREE_EDGE_X := 2.38
 
 const CORNER_X_MIN := 1.4
 const CORNER_X_MAX := 2.2
@@ -52,15 +37,18 @@ func rebuild_look(look: VanLook) -> void:
 
 	var bulkhead := get_node_or_null(^"../Interior/Bulkhead") as Node3D
 
-	var bar_mat := MachineParts.dark(Color(0.2, 0.19, 0.17), 0.8)
+	var steel_mat := MachineParts.dark(Color(0.24, 0.23, 0.21), 0.8)
+	var dark_mat := MachineParts.dark(Color(0.2, 0.19, 0.17), 0.8)
 	var plate_mat := MachineParts.dark(Color(0.26, 0.17, 0.11), 0.9)
-	var chain_mat := MachineParts.dark(Color(0.22, 0.21, 0.19), 0.8)
 	var rebar_mat := MachineParts.dark(Color(0.18, 0.13, 0.09), 0.88)
 
 	var rng := look.rng_for(&"rear_dressing")
+	var hardware_rng := look.rng_for(&"rear_door_hardware")
 
-	_build_leaf(left_hinge, 1.0, true, rng, bar_mat, plate_mat, chain_mat)
-	_build_leaf(right_hinge, -1.0, false, rng, bar_mat, plate_mat, chain_mat)
+	var plates_rng := look.rng_for(&"rear_door_plates")
+
+	_build_leaf(left_hinge, 1.0, rng, plate_mat, hardware_rng, steel_mat, dark_mat, plates_rng)
+	_build_leaf(right_hinge, -1.0, rng, plate_mat, hardware_rng, steel_mat, dark_mat, plates_rng)
 
 	if bulkhead != null:
 		_build_bulkhead_corner(bulkhead, 1.0, rng, plate_mat, rebar_mat)
@@ -82,65 +70,37 @@ func _spawn(parent: Node3D, mesh: Mesh, mat: Material, pos: Vector3, rot: Vector
 	_spawned.append(inst)
 
 
-func _build_leaf(hinge: Node3D, mirror: float, is_left_leaf: bool, rng: RandomNumberGenerator,
-		bar_mat: Material, plate_mat: Material, chain_mat: Material) -> void:
-	var y_low := BAR_Y_LOW + rng.randf_range(-0.05, 0.05)
-	var y_high := BAR_Y_HIGH + rng.randf_range(-0.05, 0.05)
+func _build_leaf(hinge: Node3D, mirror: float, rng: RandomNumberGenerator,
+		plate_mat: Material, hardware_rng: RandomNumberGenerator, steel_mat: Material,
+		dark_mat: Material, plates_rng: RandomNumberGenerator) -> void:
+	for node: Node3D in _Hardware.build(hinge, mirror, hardware_rng, steel_mat, dark_mat):
+		_spawned.append(node)
 
-	_add_horizontal_bar(hinge, y_low, mirror, bar_mat)
-	_add_horizontal_bar(hinge, y_high, mirror, bar_mat)
-
-	if is_left_leaf:
-		_add_lock_bar(hinge, mirror, bar_mat)
-
-	if rng.randf() < 0.7:
-		_add_chain(hinge, mirror, y_low, y_high, chain_mat)
+	for node: Node3D in _Plates.build(hinge, mirror, plates_rng, _plate_keep_out()):
+		_spawned.append(node)
 
 	var patch_count := rng.randi_range(0, 2)
 	for i: int in range(patch_count):
 		_add_rust_patch(hinge, mirror, rng, plate_mat, i)
 
 
-func _add_horizontal_bar(hinge: Node3D, y: float, mirror: float, mat: Material) -> void:
-	var bar_mesh := BoxMesh.new()
-	bar_mesh.size = Vector3(BAR_LENGTH, BAR_SIZE, BAR_SIZE)
-	var center_x := mirror * LEAF_CENTER_X
-	_spawn(hinge, bar_mesh, mat, Vector3(center_x, y, BAR_Z))
-
-	var bead_mesh := BoxMesh.new()
-	bead_mesh.size = Vector3(WELD_BEAD_SIZE, WELD_BEAD_SIZE, WELD_BEAD_SIZE)
-	for sign_x: float in [-1.0, 1.0]:
-		_spawn(hinge, bead_mesh, mat, Vector3(center_x + sign_x * BAR_LENGTH * 0.5, y, BAR_Z))
-
-
-func _add_lock_bar(hinge: Node3D, mirror: float, mat: Material) -> void:
-	var free_edge_x := mirror * LEAF_FREE_EDGE_X
-	var bar_mesh := BoxMesh.new()
-	bar_mesh.size = Vector3(LOCK_BAR_LENGTH, LOCK_BAR_SIZE, LOCK_BAR_SIZE)
-	_spawn(hinge, bar_mesh, mat, Vector3(free_edge_x, 0.0, LOCK_BAR_Z))
-
-	# One box per bracket, straddling the bar with 1.5-2.5 cm clear of its faces (audit FLICKER).
-	var bracket_mesh := BoxMesh.new()
-	bracket_mesh.size = Vector3(0.08, 0.12, 0.10)
-	for sign_x: float in [-1.0, 1.0]:
-		_spawn(hinge, bracket_mesh, mat,
-				Vector3(free_edge_x - sign_x * LOCK_BRACKET_X, 0.0, LOCK_BAR_Z))
-
-
-func _add_chain(hinge: Node3D, mirror: float, y_low: float, y_high: float, mat: Material) -> void:
-	var chain_x := mirror * (LEAF_FREE_EDGE_X - 0.3)
-	var link_mesh := TorusMesh.new()
-	link_mesh.inner_radius = CHAIN_INNER
-	link_mesh.outer_radius = CHAIN_OUTER
-	link_mesh.rings = 8
-	link_mesh.ring_segments = 6
-	for i: int in range(CHAIN_LINKS):
-		var t := float(i) / float(CHAIN_LINKS - 1)
-		var y := lerpf(y_high, y_low, t)
-		var sag := sin(t * PI) * 0.08
-		var rot_z := 0.0 if i % 2 == 0 else PI * 0.5
-		_spawn(hinge, link_mesh, mat, Vector3(chain_x - sag, y, BAR_Z - 0.04),
-				Vector3(0.0, 0.0, rot_z), Vector3(1.0, 1.0, 0.5))
+## Spec 4's hardware boxes (hinge-local, left leaf) plus the frame band, each grown 3 cm, so no
+## scrap plate covers them.
+func _plate_keep_out() -> Array[AABB]:
+	var raw: Array[AABB] = [
+		AABB(Vector3(0.0, -1.6, -0.16), Vector3(0.21, 3.2, 0.1)),
+		AABB(Vector3(0.05, 1.245, -0.092), Vector3(0.35, 0.07, 0.032)),
+		AABB(Vector3(0.05, -1.185, -0.092), Vector3(0.35, 0.07, 0.032)),
+		AABB(Vector3(0.03, 1.23, -0.15), Vector3(0.10, 0.10, 0.07)),
+		AABB(Vector3(0.03, -1.20, -0.15), Vector3(0.10, 0.10, 0.07)),
+		AABB(Vector3(2.13, -1.50, -0.123), Vector3(0.06, 0.50, 0.123)),
+		AABB(Vector3(2.165, -1.01, -0.135), Vector3(0.155, 0.11, 0.015)),
+		AABB(Vector3(2.18, -0.94, -0.09), Vector3(0.18, 0.24, 0.02)),
+	]
+	var grown: Array[AABB] = []
+	for box: AABB in raw:
+		grown.append(box.grow(0.03))
+	return grown
 
 
 ## Patch `index` sits 3 cm further out than the one before, so overlapping patches never share a

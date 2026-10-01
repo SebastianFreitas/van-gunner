@@ -2,6 +2,7 @@ extends RefCounted
 ## Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55).
 
 const _WindowLip := preload("res://scripts/van/rear_window_lip.gd")
+const DOOR_SHADER := preload("res://scenes/van/van_rear_door.gdshader")
 const DOOR_THICKNESS := 0.16
 const CENTER_GAP := 0.012
 const Y_MIN := 0.02
@@ -25,7 +26,7 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 	var ceiling := doors.get_parent().get_node_or_null("Ceiling") as VanCeiling
 	# One canonical left leaf — mirror for the right so bow/normals match.
 	var mesh := _build_left_leaf_mesh(left, walls, ceiling)
-	var mat := _door_body_material(doors, left, walls, ceiling)
+	var mat := _door_body_material(left, ceiling)
 	_apply_leaf(left, mesh, mat, false)
 	_apply_leaf(right, mesh, mat, true)
 	_WindowLip.build(left, left, false)
@@ -48,7 +49,7 @@ static func _build_left_leaf_mesh(
 		0.03, 0.025, 16, 32,
 		WINDOW_HOLE, hole_center,
 		3.05, 0.38, 2.42,
-		true
+		true, INF, true
 	)
 
 
@@ -76,38 +77,14 @@ static func _apply_leaf(hinge: Node3D, mesh: ArrayMesh, mat: Material, mirror_x:
 	hinge.move_child(body, 0)
 
 
-static func _door_body_material(
-		doors: Node3D, left: Node3D, walls: VanSideWall, ceiling: VanCeiling) -> Material:
-	# Same cargo-liner shader the side doors / walls use.
-	var source: Material = null
-	if walls != null and walls.wall_material != null:
-		source = walls.wall_material
-	else:
-		var side_doors := doors.get_parent().get_node_or_null("SideDoors")
-		if side_doors:
-			var side_body := side_doors.get_node_or_null("Left/Panel/Body")
-			if side_body and side_body.get("material") != null:
-				source = side_body.get("material") as Material
-	if source == null and left:
-		var body := left.get_node_or_null("Panel/Body")
-		if body and body.get("material") != null:
-			source = body.get("material") as Material
-
+static func _door_body_material(left: Node3D, ceiling: VanCeiling) -> ShaderMaterial:
 	var hinge_x := absf(left.position.x) if left else 2.39
-	var door_width := hinge_x - CENTER_GAP
 	var y_peak := VanHullMesh.vault_y(ceiling, 0.0, 3.05, 0.38)
-	var door_height := y_peak - Y_MIN
-
-	if source is ShaderMaterial:
-		var mat := (source as ShaderMaterial).duplicate()
-		mat.set_shader_parameter("wall_size_m", Vector2(door_width, door_height))
-		mat.set_shader_parameter("panel_spacing_m", 0.85)
-		mat.set_shader_parameter("rib_spacing_m", 0.28)
-		mat.set_shader_parameter("kick_height_m", 0.32)
-		mat.set_shader_parameter("belt_y_m", 1.42)
-		mat.set_shader_parameter("waist_y_m", 2.05)
-		return mat
-	return source
+	var mat := ShaderMaterial.new()
+	mat.shader = DOOR_SHADER
+	mat.set_shader_parameter("leaf_width_m", hinge_x - CENTER_GAP)
+	mat.set_shader_parameter("leaf_height_m", y_peak - Y_MIN)
+	return mat
 
 
 static func _add_astragal(left: Node3D, ceiling: VanCeiling) -> void:
