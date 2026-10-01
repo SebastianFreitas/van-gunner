@@ -13,6 +13,38 @@ func _init(owner: Node3D) -> void:
 	road = owner
 
 
+## Gutter boxes along each sidewalk; collision-only when the wreck band draws the gutter.
+func build_gutters(
+	gutter_inner: float,
+	slab_bottom: float,
+	walk_len: float,
+	walk_cz: float,
+	mat: Material,
+	visual: bool
+) -> void:
+	var gutter_top: float = road.road_surface_y - road.gutter_depth
+	var gutter_thickness := gutter_top - slab_bottom
+	var gutter_center_x: float = gutter_inner + road.gutter_width * 0.5
+	if road.sidewalk_left:
+		road._add_box_centered(
+			"GutterLeft",
+			Vector3(road.gutter_width, gutter_thickness, walk_len),
+			Vector3(-gutter_center_x, slab_bottom + gutter_thickness * 0.5, walk_cz),
+			mat,
+			true,
+			visual
+		)
+	if road.sidewalk_right:
+		road._add_box_centered(
+			"GutterRight",
+			Vector3(road.gutter_width, gutter_thickness, walk_len),
+			Vector3(gutter_center_x, slab_bottom + gutter_thickness * 0.5, walk_cz),
+			mat,
+			true,
+			visual
+		)
+
+
 func build_drains(
 	gutter_inner: float,
 	grate_mat: Material,

@@ -26,8 +26,10 @@ uniform float scorches : hint_range(0.0, 2.0) = 1.0;
 uniform float washout : hint_range(0.0, 1.0) = 0.35;
 uniform float trash : hint_range(0.0, 1.0) = 0.95;
 uniform float roughness_value : hint_range(0.0, 1.0) = 0.94;
+uniform float vertex_wreck : hint_range(0.0, 1.0) = 0.0;
 
 varying vec3 v_world_pos;
+varying float v_wreck;
 
 // Rotated, warped fbm: the include's lattice is axis-aligned and shows as a grid.
 vec2 rot2(vec2 p, float a) {
@@ -51,6 +53,8 @@ float fbm_r(vec2 p) {
 
 void vertex() {
 	v_world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	// A BoxMesh has no colour array and reads COLOR as 1.0, so the uniform gates it.
+	v_wreck = clamp(COLOR.r, 0.0, 1.0) * vertex_wreck;
 }
 
 // Rare tyre skids — two swerving rubber bands, patchy and streaked.
@@ -353,12 +357,20 @@ void fragment() {
 	float luma = dot(color, vec3(0.299, 0.587, 0.114));
 	color = mix(color, vec3(luma), washout * 0.12);
 
+	// Broken road-edge asphalt: dust film plus crumbled dark patches (vertex_wreck gated).
+	float crumble = v_wreck * smoothstep(0.4, 0.75, fbm_r(pos * 6.0 + 11.0));
+	color = mix(color, vec3(0.10, 0.09, 0.075), v_wreck * 0.35);
+	color = mix(color, crack_color, crumble * 0.6);
+	rough = min(rough + v_wreck * 0.04, 0.95);
+
 	ALBEDO = color;
 	METALLIC = metal;
 	ROUGHNESS = clamp(rough, 0.3, 1.0);
 
-	float n_x = (grit_n - 0.5) * 0.55 + cracks * 0.7 + oil * 0.15;
-	float n_y = (fbm_r(pos * 3.5 + 3.0) - 0.5) * 0.45 + cracks * 0.4;
+	float n_x = (grit_n - 0.5) * 0.55 + cracks * 0.7 + oil * 0.15
+		+ crumble * 0.4;
+	float n_y = (fbm_r(pos * 3.5 + 3.0) - 0.5) * 0.45 + cracks * 0.4
+		+ crumble * 0.25;
 	n_x += (paper + can + plastic) * 0.35;
 	NORMAL_MAP = normalize(vec3(n_x, n_y, 1.0)) * 0.5 + 0.5;
 	NORMAL_MAP_DEPTH = 0.75;

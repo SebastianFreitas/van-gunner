@@ -189,6 +189,13 @@ func _tri(
 		_colors.append(Color(wreck, tone, up, 1.0))
 
 
+## One loose quad in mesh space; winding is fixed against `normal`.
+func add_quad(
+		a: Vector3, b: Vector3, c: Vector3, d: Vector3, normal: Vector3,
+		wreck: float, tone: float, up: float) -> void:
+	_quad(a, b, c, d, normal, Vector4(up, up, up, up), wreck, tone, Transform3D.IDENTITY)
+
+
 ## Emits (a, b, c) and (a, c, d). The winding is fixed against the world normal, so every
 ## face is front-facing (Godot front faces are clockwise) however the corners were listed.
 func _quad(

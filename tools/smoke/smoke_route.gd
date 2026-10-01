@@ -97,6 +97,15 @@ func _assert_walk_wreck_share(travel: TravelController) -> bool:
 	if share < _WreckMap.DESTROYED_SHARE - 0.18 or share > _WreckMap.DESTROYED_SHARE + 0.20:
 		driver._fail("walk destroyed share %.2f is outside the target band" % share)
 		return false
+	var gone_cells := 0
+	for node: Node in travel.corridor_root.find_children("*", "Node3D", true, false):
+		for key: StringName in [&"road_gone_0", &"road_gone_1"]:
+			if node.has_meta(key):
+				gone_cells += int(node.get_meta(key))
+	driver._log("road edge gone cells %d" % gone_cells)
+	if gone_cells == 0 and m.y >= 40.0:
+		driver._fail("road edge wreck built no gone cells")
+		return false
 	return true
 
 
