@@ -230,16 +230,29 @@ func _build() -> void:
 	var dark_mat := RoadFloorMaterials.std(Color(0.04, 0.042, 0.038, 1.0), 0.96, 0.08)
 
 	# --- Primary slabs -------------------------------------------------------
+	var wreck := sidewalk_material == null
+	var edge := wreck and road_material == null
 	_add_box_centered(
 		"Carriageway",
 		Vector3(carriage_width, slab_thickness, span_z),
 		Vector3(carriage_center, road_surface_y - slab_thickness * 0.5, 0.0),
 		road_mat,
-		true
+		true,
+		not edge
 	)
+	if edge:
+		# The wreck band draws the road edge, so the plain surface stops short of it.
+		var core_l := left_bound if not sidewalk_left else -(road_half - RoadFloorWreck.ROAD_BAND)
+		var core_r := right_bound if not sidewalk_right else road_half - RoadFloorWreck.ROAD_BAND
+		_add_box_centered(
+			"CarriagewayCore",
+			Vector3(maxf(0.5, core_r - core_l), slab_thickness, span_z),
+			Vector3((core_l + core_r) * 0.5, road_surface_y - slab_thickness * 0.5, 0.0),
+			road_mat,
+			false
+		)
 
 	# Wrecked walk: the boxes become a soil bed under the helper's slabs.
-	var wreck := sidewalk_material == null
 	var walk_thickness := sidewalk_top - slab_bottom
 	if wreck:
 		walk_thickness -= RoadFloorWreck.PIT_DEPTH
@@ -261,25 +274,8 @@ func _build() -> void:
 			not wreck
 		)
 
-	var gutter_top := road_surface_y - gutter_depth
-	var gutter_thickness := gutter_top - slab_bottom
-	var gutter_center_x := gutter_inner + gutter_width * 0.5
-	if sidewalk_left:
-		_add_box_centered(
-			"GutterLeft",
-			Vector3(gutter_width, gutter_thickness, walk_len),
-			Vector3(-gutter_center_x, slab_bottom + gutter_thickness * 0.5, walk_cz),
-			gutter_mat,
-			true
-		)
-	if sidewalk_right:
-		_add_box_centered(
-			"GutterRight",
-			Vector3(gutter_width, gutter_thickness, walk_len),
-			Vector3(gutter_center_x, slab_bottom + gutter_thickness * 0.5, walk_cz),
-			gutter_mat,
-			true
-		)
+	var details := RoadFloorDetails.new(self)
+	details.build_gutters(gutter_inner, slab_bottom, walk_len, walk_cz, gutter_mat, not edge)
 
 	var curb_w := curb_face_depth
 	var curb_h := curb_height + 0.02
@@ -301,7 +297,6 @@ func _build() -> void:
 			false
 		)
 
-	var details := RoadFloorDetails.new(self)
 	details.build_drains(gutter_inner, grate_mat, metal_mat, dark_mat)
 	details.build_manholes(carriage_width, carriage_center, metal_mat, dark_mat)
 	details.build_sidewalk_dressing(half_x, sidewalk_top, metal_mat, curb_mat, dark_mat)

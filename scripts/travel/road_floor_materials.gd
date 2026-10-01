@@ -14,6 +14,18 @@ static func asphalt_mat(_surface_size_m: Vector2) -> ShaderMaterial:
 	return mat
 
 
+static var _asphalt_wreck_cache: ShaderMaterial = null
+
+
+## The road-edge wreck band's asphalt: same look as the carriageway plus the vertex wreck tint.
+static func asphalt_wreck_mat() -> ShaderMaterial:
+	if _asphalt_wreck_cache == null:
+		var mat := asphalt_mat(Vector2.ZERO)
+		mat.set_shader_parameter("vertex_wreck", 1.0)
+		_asphalt_wreck_cache = mat
+	return _asphalt_wreck_cache
+
+
 static func sidewalk_mat(surface_size_m: Vector2) -> ShaderMaterial:
 	var shader := load("res://scenes/corridor/sidewalk_surface.gdshader") as Shader
 	var mat := ShaderMaterial.new()

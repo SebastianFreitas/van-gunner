@@ -6,6 +6,9 @@ const _PavingMesh := preload("res://scripts/travel/road_floor_paving_mesh.gd")
 const _WreckCurb := preload("res://scripts/travel/road_floor_wreck_curb.gd")
 const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
 const _WreckGround = preload("res://scripts/travel/road_floor_wreck_ground.gd")
+const _WreckRoad := preload("res://scripts/travel/road_floor_wreck_road.gd")
+
+const ROAD_BAND := _WreckRoad.ROAD_BAND ## road_floor.gd reads it
 
 const PIT_DEPTH := 0.12 ## collision bed top sits this far under the walk top, under the dirt
 const JOINT := 0.03
@@ -75,10 +78,18 @@ func build(side_idx: int, walk_len: float, walk_cz: float, walk_inner_x: float,
 	var rng_ground := RandomNumberGenerator.new()
 	rng_ground.seed = road._seed_value(497 + side_idx * 1000)
 	_WreckGround.new().build(self, rng_ground, _soil, _rubble, _tiles)
+	var tag := "Left" if side_idx == 0 else "Right"
+	if road.road_material == null:
+		var rng_road := RandomNumberGenerator.new()
+		rng_road.seed = road._seed_value(597 + side_idx * 1000)
+		var asphalt := _PavingMesh.new()
+		var gutter := _PavingMesh.new()
+		_WreckRoad.new().build(self, rng_road, _soil, asphalt, gutter)
+		asphalt.commit(road, "RoadEdge" + tag, RoadFloorMaterials.asphalt_wreck_mat())
+		gutter.commit(road, "RoadGutter" + tag, RoadFloorMaterials.gutter_mat())
 	var rng_curb := RandomNumberGenerator.new()
 	rng_curb.seed = road._seed_value(297 + side_idx * 1000)
 	_WreckCurb.new().build(self, side_idx, _sign, rng_curb, _curb, _rubble)
-	var tag := "Left" if side_idx == 0 else "Right"
 	_soil.commit(road, "WalkSoil" + tag,
 			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_SOIL))
 	_rubble.commit(road, "WalkRubble" + tag,

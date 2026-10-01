@@ -40,23 +40,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `enum Opening { NONE, SIDE_STREET, BAY }`
 
-**`scripts/acts/act_card_definition.gd`**
-
-- `enum Polarity { BLESSING = 0, DANGER = 1, }`
-
-**`scripts/acts/act_deck_controller.gd`**
-
-- `signal reveal_resolved`
-- `signal boss_pick_resolved`
-
-**`scripts/acts/boon_reward_controller.gd`**
-
-- `signal rest_resolved`
-
-**`scripts/classes/class_definition.gd`**
-
-- `enum Family { BASIC, SHOTGUN, MACHINEGUN, SNIPER }`
-
 **`scripts/combat/grenade.gd`**
 
 - `signal exploded(world_position: Vector3)`
@@ -81,141 +64,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 **`scripts/combat/stat_modifier.gd`**
 
 - `enum Mode { ADD, MULTIPLY, }`
-
-**`scripts/core/game_session.gd`**
-
-- `signal phase_changed(phase: RunPhase)`
-- `signal van_health_changed(current: float, maximum: float)`
-- `signal player_health_changed(current: float, maximum: float)`
-- `signal route_chosen(direction: StringName, step: int)`
-- `signal wave_changed(wave: int)`
-- `signal room_changed(room: StringName)`
-- `signal coins_changed(total: int)`
-- `signal enemy_defeated(enemy: Node)`
-- `signal session_loaded`
-- `signal chill_mode_changed(enabled: bool)`
-- `signal class_changed(class_id: StringName)`
-- `enum RunPhase { IDLE, TRAVELLING, COMBAT, ROUTE_CHOICE, TURNING, GAME_OVER, REST, PARKING, STOP, ACT_REVEAL, BOSS_PICK, }`
-
-**`scripts/core/loot_collector.gd`**
-
-- `signal queue_changed`
-
-**`scripts/core/meta_progression.gd`**
-
-- `signal van_speed_changed(level: int, speed: float)`
-- `signal rare_parts_changed(total: int)`
-- `signal tree_changed`
-
-**`scripts/enemies/biker_boss.gd`**
-
-- `enum BikePhase { IDLE, CHARGE, WINDUP, PEEL, WEAVE, ENTERING, BENCH }`
-
-**`scripts/enemies/breach_point.gd`**
-
-- `signal breached`
-- `signal health_changed(current: float, maximum: float)`
-- `enum Kind { REAR_DOOR, SIDE_DOOR, WINDOW, SIDE_DOOR_WINDOW }`
-
-**`scripts/enemies/cabin_nav.gd`**
-
-- `enum Room { BACK, CABIN }`
-
-**`scripts/enemies/window_raider.gd`**
-
-- `signal attack_landed(amount: float)`
-- `signal defeated`
-- `signal assault_finished`
-- `enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH, ATTACKING_PLAYER }`
-
-**`scripts/interactions/class_board.gd`**
-
-- `signal opened`
-
-**`scripts/interactions/crafting_table.gd`**
-
-- `signal opened`
-
-**`scripts/interactions/request_board.gd`**
-
-- `signal opened`
-
-**`scripts/items/item_definition.gd`**
-
-- `enum ItemKind { MONEY = 0, BOON = 1, TOOL = 2, CONSUMABLE = 3, }`
-
-**`scripts/items/item_usable_config.gd`**
-
-- `enum RechargeMode { NONE, COOLDOWN, ON_KILL, }`
-
-**`scripts/items/pickup.gd`**
-
-- `enum _AnimState { SPIN, FACE }`
-
-**`scripts/meta/skill_node_definition.gd`**
-
-- `enum Branch { ORIGIN = 0, UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, }`
-
-**`scripts/player/boon_traits.gd`**
-
-- `signal traits_changed`
-
-**`scripts/player/fps_player.gd`**
-
-- `signal interaction_prompt_changed(text: String)`
-- `signal shot_fired(hit: bool)`
-
-**`scripts/player/usables_controller.gd`**
-
-- `signal slots_changed`
-- `signal boons_changed`
-- `signal item_acquired(item: ItemDefinition, charges: int, slot_index: int)`
-- `signal usable_activated(item: ItemDefinition, success: bool)`
-
-**`scripts/stops/side_stop_definition.gd`**
-
-- `enum Arrival { REAR_PARK = 0, ELEVATOR = 1, }`
-
-**`scripts/stops/warehouse_hide.gd`**
-
-- `signal triggered`
-- `enum Reveal { BURST, FALL, PEEL }`
-
-**`scripts/stops/warehouse_laser.gd`**
-
-- `signal sprung`
-
-**`scripts/travel/road_floor_wreck.gd`**
-
-- `enum Piece { FLAT, MISSING_PIECE, TILTED, SUNK, FRAGMENT }`
-
-**`scripts/travel/road_floor_wreck_map.gd`**
-
-- `enum Zone { GOOD, ROUGH, FRAGMENT, GONE }`
-
-**`scripts/travel/travel_controller.gd`**
-
-- `enum TurnState { NONE, APPROACHING, TURNING, PARKING, LEAVING_STOP, ELEVATING, }`
-
-**`scripts/travel/facades/facade_lamp_flicker.gd`**
-
-- `enum Phase { ON, STUTTER, OFF }`
-
-**`scripts/travel/facades/facade_wreck.gd`**
-
-- `enum Kind { NONE, SIGN, AWNING, FURNITURE }`
-
-**`scripts/travel/facades/street_art/street_art_graffiti.gd`**
-
-- `enum Kind { TAG, THROW_UP, SYMBOL, SLOGAN }`
-
-**`scripts/travel/facades/street_art/street_art_pool.gd`**
-
-- `enum Family { GRAFFITI, POSTER }`
-
-**`scripts/travel/facades/street_art/street_art_posters.gd`**
-
-- `enum Kind { WANTED, FESTIVAL, NOTICE }`
 
 **`scripts/ui/act_reveal_panel.gd`**
 
@@ -255,6 +103,18 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 **`scripts/ui/skill_tree_hud.gd`**
 
 - `signal closed`
+
+**`scripts/items/item_definition.gd`**
+
+- `enum ItemKind { MONEY = 0, BOON = 1, TOOL = 2, CONSUMABLE = 3, }`
+
+**`scripts/items/item_usable_config.gd`**
+
+- `enum RechargeMode { NONE, COOLDOWN, ON_KILL, }`
+
+**`scripts/items/pickup.gd`**
+
+- `enum _AnimState { SPIN, FACE }`
 
 **`scripts/van/breakable_glass.gd`**
 
@@ -301,10 +161,150 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `signal look_rebuilt(seed_value: int)`
 
+**`scripts/meta/skill_node_definition.gd`**
+
+- `enum Branch { ORIGIN = 0, UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, }`
+
+**`scripts/classes/class_definition.gd`**
+
+- `enum Family { BASIC, SHOTGUN, MACHINEGUN, SNIPER }`
+
+**`scripts/enemies/biker_boss.gd`**
+
+- `enum BikePhase { IDLE, CHARGE, WINDUP, PEEL, WEAVE, ENTERING, BENCH }`
+
+**`scripts/enemies/breach_point.gd`**
+
+- `signal breached`
+- `signal health_changed(current: float, maximum: float)`
+- `enum Kind { REAR_DOOR, SIDE_DOOR, WINDOW, SIDE_DOOR_WINDOW }`
+
+**`scripts/enemies/cabin_nav.gd`**
+
+- `enum Room { BACK, CABIN }`
+
+**`scripts/enemies/window_raider.gd`**
+
+- `signal attack_landed(amount: float)`
+- `signal defeated`
+- `signal assault_finished`
+- `enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH, ATTACKING_PLAYER }`
+
+**`scripts/interactions/class_board.gd`**
+
+- `signal opened`
+
+**`scripts/interactions/crafting_table.gd`**
+
+- `signal opened`
+
+**`scripts/interactions/request_board.gd`**
+
+- `signal opened`
+
+**`scripts/acts/act_card_definition.gd`**
+
+- `enum Polarity { BLESSING = 0, DANGER = 1, }`
+
+**`scripts/acts/act_deck_controller.gd`**
+
+- `signal reveal_resolved`
+- `signal boss_pick_resolved`
+
+**`scripts/acts/boon_reward_controller.gd`**
+
+- `signal rest_resolved`
+
+**`scripts/player/boon_traits.gd`**
+
+- `signal traits_changed`
+
+**`scripts/player/fps_player.gd`**
+
+- `signal interaction_prompt_changed(text: String)`
+- `signal shot_fired(hit: bool)`
+
+**`scripts/player/usables_controller.gd`**
+
+- `signal slots_changed`
+- `signal boons_changed`
+- `signal item_acquired(item: ItemDefinition, charges: int, slot_index: int)`
+- `signal usable_activated(item: ItemDefinition, success: bool)`
+
+**`scripts/core/game_session.gd`**
+
+- `signal phase_changed(phase: RunPhase)`
+- `signal van_health_changed(current: float, maximum: float)`
+- `signal player_health_changed(current: float, maximum: float)`
+- `signal route_chosen(direction: StringName, step: int)`
+- `signal wave_changed(wave: int)`
+- `signal room_changed(room: StringName)`
+- `signal coins_changed(total: int)`
+- `signal enemy_defeated(enemy: Node)`
+- `signal session_loaded`
+- `signal chill_mode_changed(enabled: bool)`
+- `signal class_changed(class_id: StringName)`
+- `enum RunPhase { IDLE, TRAVELLING, COMBAT, ROUTE_CHOICE, TURNING, GAME_OVER, REST, PARKING, STOP, ACT_REVEAL, BOSS_PICK, }`
+
+**`scripts/core/loot_collector.gd`**
+
+- `signal queue_changed`
+
+**`scripts/core/meta_progression.gd`**
+
+- `signal van_speed_changed(level: int, speed: float)`
+- `signal rare_parts_changed(total: int)`
+- `signal tree_changed`
+
+**`scripts/stops/side_stop_definition.gd`**
+
+- `enum Arrival { REAR_PARK = 0, ELEVATOR = 1, }`
+
+**`scripts/stops/warehouse_hide.gd`**
+
+- `signal triggered`
+- `enum Reveal { BURST, FALL, PEEL }`
+
+**`scripts/stops/warehouse_laser.gd`**
+
+- `signal sprung`
+
+**`scripts/travel/road_floor_wreck.gd`**
+
+- `enum Piece { FLAT, MISSING_PIECE, TILTED, SUNK, FRAGMENT }`
+
+**`scripts/travel/road_floor_wreck_map.gd`**
+
+- `enum Zone { GOOD, ROUGH, FRAGMENT, GONE }`
+
+**`scripts/travel/travel_controller.gd`**
+
+- `enum TurnState { NONE, APPROACHING, TURNING, PARKING, LEAVING_STOP, ELEVATING, }`
+
+**`scripts/travel/facades/facade_lamp_flicker.gd`**
+
+- `enum Phase { ON, STUTTER, OFF }`
+
+**`scripts/travel/facades/facade_wreck.gd`**
+
+- `enum Kind { NONE, SIGN, AWNING, FURNITURE }`
+
+**`scripts/travel/facades/street_art/street_art_graffiti.gd`**
+
+- `enum Kind { TAG, THROW_UP, SYMBOL, SLOGAN }`
+
+**`scripts/travel/facades/street_art/street_art_pool.gd`**
+
+- `enum Family { GRAFFITI, POSTER }`
+
+**`scripts/travel/facades/street_art/street_art_posters.gd`**
+
+- `enum Kind { WANTED, FESTIVAL, NOTICE }`
+
 
 ## Script index
 
-325 GDScript files, 50471 lines.
+326 GDScript files, 50755 lines.
 
 ### `scenes/corridor/`
 
@@ -535,14 +535,15 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `road_floor.gd` | `RoadFloor` | 398 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
-| `road_floor_details.gd` | — | 213 | Street furniture/detail builders for RoadFloor: drains, manholes and sidewalk dressing. |
-| `road_floor_materials.gd` | — | 108 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
-| `road_floor_paving_mesh.gd` | — | 212 | Packs RoadFloor's paving pieces (chamfered blocks) into one ArrayMesh per material. |
-| `road_floor_wreck.gd` | — | 347 | Builds RoadFloor's wrecked paving: tiles and setts graded by the destruction map and set into a raised dirt floor, each side as merged meshes. |
+| `road_floor.gd` | `RoadFloor` | 393 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
+| `road_floor_details.gd` | — | 245 | Street furniture/detail builders for RoadFloor: drains, manholes and sidewalk dressing. |
+| `road_floor_materials.gd` | — | 120 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
+| `road_floor_paving_mesh.gd` | — | 219 | Packs RoadFloor's paving pieces (chamfered blocks) into one ArrayMesh per material. |
+| `road_floor_wreck.gd` | — | 358 | Builds RoadFloor's wrecked paving: tiles and setts graded by the destruction map and set into a raised dirt floor, each side as merged meshes. |
 | `road_floor_wreck_curb.gd` | — | 107 | Builds the wrecked paving's granite curb: 1 m blocks, knocked, missing or toppled in gone stretches. |
 | `road_floor_wreck_ground.gd` | — | 164 | Builds a sidewalk side's ground: a near-flush soil heightfield under the paving with shallow dips where the destruction map is worst, and sparse half-buried sh… |
 | `road_floor_wreck_map.gd` | — | 130 | The street's destruction map: one smooth world-space field saying how wrecked the sidewalk is at a point, continuous across corridor tiles and calibrated so DE… |
+| `road_floor_wreck_road.gd` | — | 218 | Builds the carriageway's broken edge beside a wrecked sidewalk: asphalt cells cut where the destruction map reaches past the curb, a dirt floor continuous with… |
 | `travel_controller.gd` | `TravelController` | 607 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
 | `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
 | `travel_stops.gd` | — | 203 | Owns the stop fork, side-stop placement, elevator pad ride and stop-state cleanup. |
@@ -756,7 +757,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `smoke_driver.gd` | — | 375 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
-| `smoke_route.gd` | — | 181 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
+| `smoke_route.gd` | — | 190 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
 | `smoke_shots.gd` | — | 334 | Screenshots for tools/smoke.py --shots. |
 | `smoke_shots_closeups.gd` | — | 303 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
@@ -780,7 +781,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | Scene | Nodes | Root type |
 |---|---|---|
-| `scenes/boot/boot.tscn` | 3 | Control |
 | `scenes/combat/projectile.tscn` | 4 | Area3D |
 | `scenes/corridor/act_statue.tscn` | 5 | Node3D |
 | `scenes/corridor/corridor_crossroads.tscn` | 21 | Node3D |
@@ -794,11 +794,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/corridor/stop_elevator.tscn` | 1 | Node3D |
 | `scenes/corridor/stop_vestibule.tscn` | 4 | Node3D |
 | `scenes/corridor/warehouse_bay.tscn` | 1 | Node3D |
-| `scenes/enemies/biker_boss.tscn` | 7 |  |
-| `scenes/enemies/window_raider.tscn` | 9 | Node3D |
-| `scenes/items/pickup.tscn` | 3 | Area3D |
-| `scenes/player/player.tscn` | 13 | CharacterBody3D |
-| `scenes/shop/shop_offer.tscn` | 3 | StaticBody3D |
 | `scenes/ui/bench_screen.tscn` | 24 | Control |
 | `scenes/ui/damage_number.tscn` | 1 | Label |
 | `scenes/ui/debug_console.tscn` | 8 | Control |
@@ -809,6 +804,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/run_hud.tscn` | 43 | CanvasLayer |
 | `scenes/ui/skill_tree_hud.tscn` | 19 | Control |
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
+| `scenes/boot/boot.tscn` | 3 | Control |
+| `scenes/items/pickup.tscn` | 3 | Area3D |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/class_board.tscn` | 4 | StaticBody3D |
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
@@ -822,6 +819,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/van/van_shell.tscn` | 184 | StaticBody3D |
 | `scenes/van/van_side_wall.tscn` | 1 | Node3D |
 | `scenes/van/van_vital_dummy.tscn` | 5 | StaticBody3D |
+| `scenes/enemies/biker_boss.tscn` | 7 |  |
+| `scenes/enemies/window_raider.tscn` | 9 | Node3D |
+| `scenes/shop/shop_offer.tscn` | 3 | StaticBody3D |
+| `scenes/player/player.tscn` | 13 | CharacterBody3D |
 | `tools/probe/probe_runner.tscn` | 1 | Node |
 | `tools/scene_dump/scene_dump.tscn` | 1 | Node |
 | `tools/smoke/smoke_test.tscn` | 1 | Node |
