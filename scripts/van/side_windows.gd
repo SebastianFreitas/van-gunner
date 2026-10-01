@@ -37,14 +37,17 @@ const DOOR_ADJACENT_WINDOWS: Array[StringName] = [
 
 ## Original CSG glass sat this far into the cabin from the liner face.
 const GLASS_INSET := 0.06
-## Original iron / breakable collider inset (into cabin).
-const IRON_INSET := 0.035
+## IronCross origin on the liner (into_cabin 0 after glass_outward_bump): its 0.002..0.05 band
+## sits between WindowGlass (-0.01) and ExteriorPane (+0.055).
+const IRON_INSET := 0.05
+## Original breakable collider inset (into cabin).
 const BREAKABLE_INSET := 0.04
 ## Exterior pane stand-off from the liner: clear of the IronCross bars' outer face,
 ## capped so it doesn't poke past the hull skin.
 const EXTERIOR_PANE_PROUD_M := 0.055
 
 const _Exterior := preload("res://scripts/van/side_window_exterior.gd")
+const _Fixtures := preload("res://scripts/van/side_window_fixtures.gd")
 
 ## Matches original CSG sash (half extents).
 const SASH_HALF_H := 0.74
@@ -57,7 +60,8 @@ const CASING_BACK_REF := 0.04
 const FRAME_THICKNESS := CASING_BACK_REF - TRIM_LIFT
 ## The pivot sits outboard of all wall material: the hull skin's outer face is 0.22 out (panel
 ## 0.16 + SKIN_OFFSET_M 0.06), casing 0.13. At 0.32 the open sash stays below the cut's rounded
-## top corners (y 0.519), so the frame stiles never pass through the skin's corner material.
+## top corners (y 0.519), so the frame stiles never pass through the skin's corner material. The
+## strap hinges and rail (`side_window_fixtures.gd`) carry the sash at this pivot.
 const HINGE_OUT_M := 0.32
 
 ## 2 cm (every edge offset inward, mitred corners) inside VanSideWall.WINDOW_CUT_POLY,
@@ -80,21 +84,6 @@ const PANE_OVERLAP_M := 0.02
 ## GLASS_POLY grown by PANE_OVERLAP_M (set in _ready, winding matched): both panes' outline.
 var PANE_POLY: PackedVector2Array = PackedVector2Array()
 
-## Window stop: static ring covering the 2 cm frame-to-cut slot (D12 gap); its outboard face sits
-## STOP_LIFT inboard of the liner. Polys: the cut offset 4 cm out / 5 cm in (3 cm over the frame).
-const STOP_LIFT := 0.015
-const STOP_THICKNESS := 0.008
-var STOP_OUTER_POLY: PackedVector2Array = PackedVector2Array([
-	Vector2(-0.992, -0.747), Vector2(-1.169, -0.668), Vector2(-1.262, -0.531), Vector2(-1.262, 0.531),
-	Vector2(-1.169, 0.668), Vector2(-0.992, 0.747), Vector2(0.992, 0.747), Vector2(1.169, 0.668),
-	Vector2(1.262, 0.531), Vector2(1.262, -0.531), Vector2(1.169, -0.668), Vector2(0.992, -0.747),
-])
-var STOP_INNER_POLY: PackedVector2Array = PackedVector2Array([
-	Vector2(-0.972, -0.657), Vector2(-1.109, -0.596), Vector2(-1.172, -0.504), Vector2(-1.172, 0.504),
-	Vector2(-1.109, 0.596), Vector2(-0.972, 0.657), Vector2(0.972, 0.657), Vector2(1.109, 0.596),
-	Vector2(1.172, 0.504), Vector2(1.172, -0.504), Vector2(1.109, -0.596), Vector2(0.972, -0.657),
-])
-
 var _hinges: Dictionary = {}
 var _grips: Dictionary = {}
 var _mounts: Dictionary = {}
@@ -113,6 +102,17 @@ func _ready() -> void:
 	_bind_window(WIN_LEFT_FRONT, "LeftFront")
 	_bind_window(WIN_RIGHT_REAR, "RightRear")
 	_bind_window(WIN_RIGHT_FRONT, "RightFront")
+	_connect_side_doors.call_deferred()
+
+
+func _connect_side_doors() -> void:
+	var doors := get_tree().get_first_node_in_group(&"side_doors")
+	if doors != null and doors.has_signal(&"door_changed"):
+		doors.door_changed.connect(_on_side_door_changed)
+
+
+func _on_side_door_changed(side: StringName, is_open: bool) -> void:
+	set_front_hinges_visible(side, not is_open)
 
 
 func _fit_to_side_walls() -> void:
@@ -168,17 +168,7 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	frame.layers = VanLighting.LAYER_STREET_AND_INTERIOR
 	frame.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	hinge.add_child(frame)
-	var stop := MeshInstance3D.new()
-	stop.name = "WindowStop"
-	stop.mesh = walls.build_curved_frame_ring_mesh(
-		wall_sign, STOP_OUTER_POLY, STOP_INNER_POLY, x_ref, y_hinge, z_center, mid_y, STOP_THICKNESS,
-		-wall_sign * (STOP_LIFT + STOP_THICKNESS), VanSideWall.WINDOW_EDGE_SUBDIV
-	)
-	stop.material_override = frame_mat
-	stop.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	stop.layers = VanLighting.LAYER_STREET_AND_INTERIOR
-	stop.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
-	root.add_child(stop)
+	_Fixtures.add_stop(root, walls, wall_sign, x_ref, y_hinge, z_center, mid_y, frame_mat)
 
 	# Single-sided (facing the cabin): drop the duplicate backface triangles.
 	if glass_mat is BaseMaterial3D:
@@ -223,6 +213,7 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	for child in hinge.get_children():
 		if child is Node3D:
 			(child as Node3D).position -= pivot
+	_Fixtures.add_hinges(root, hinge, walls, wall_sign, x_ref, y_hinge, HINGE_OUT_M)
 
 
 func _place_on_curve(
@@ -356,6 +347,12 @@ func is_blocked_by_door(window_id: StringName) -> bool:
 		return false
 	var side := &"left" if _is_left(window_id) else &"right"
 	return doors.is_door_open(side)
+
+
+## Shows or hides the outside hinge hardware of `side`'s front window (`&"left"`/`&"right"`):
+## hidden while that side's sliding door is open, since the open leaf parks over it.
+func set_front_hinges_visible(side: StringName, on: bool) -> void:
+	_Fixtures.set_hinges_visible(get_node_or_null("LeftFront" if side == &"left" else "RightFront"), on)
 
 
 func _into_sash_axis(window_id: StringName) -> Vector3:

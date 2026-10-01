@@ -8,10 +8,10 @@ extends Node3D
 
 @export var span_width := 2.2
 @export var span_height := 1.23
-@export var bar_width := 0.09
-@export var bar_depth := 0.055
-@export var rivet_size := 0.045
-@export var end_pad_size := 0.16
+@export var bar_width := 0.055
+@export var bar_depth := 0.018
+@export var rivet_size := 0.02
+@export var end_pad_size := 0.11
 @export var curve_segments := 14
 @export var rebuild_on_ready := true
 
@@ -61,54 +61,42 @@ func _build() -> void:
 	else:
 		_rng.randomize()
 
-	var iron := _iron_material()
-	var rivet_mat := _rivet_material()
-	var z := bar_depth * 0.5
-	var pad_depth := bar_depth * 1.15
-	var pad_z := 0.015 + pad_depth * 0.5
-	var half_w := span_width * 0.5 - end_pad_size * 0.15
-	var half_h := span_height * 0.5 - end_pad_size * 0.15
+	var iron := IronCross.iron_material()
+	# Same depth layout as the intact cross: vertical bar at zv, horizontal bar TRIM_LIFT out.
+	var zv := IronCross.BACK_Z + bar_depth * 0.5
+	var zh := zv + IronCross.TRIM_LIFT
+	# The intact plate's front face (its default plate_depth is 0.018): pads and rivets end there.
+	var plate_front := IronCross.BACK_Z + 2.0 * IronCross.TRIM_LIFT + 0.018
+	var half_w := span_width * 0.5 - IronCross.PAD_END_CLEAR - end_pad_size * 0.5
+	var half_h := span_height * 0.5 - IronCross.PAD_END_CLEAR - end_pad_size * 0.5
 
 	# Frame mounts stay — bars snap off inward of these.
-	_add_box("EndPadR", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(half_w, 0.0, pad_z), iron)
-	_add_box("EndPadL", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(-half_w, 0.0, pad_z), iron)
-	_add_box(
-		"EndPadT",
-		Vector3(end_pad_size * 0.85, end_pad_size, pad_depth),
-		Vector3(0.0, half_h, pad_z + _curve_z(half_h)),
-		iron
-	)
-	_add_box(
-		"EndPadB",
-		Vector3(end_pad_size * 0.85, end_pad_size, pad_depth),
-		Vector3(0.0, -half_h, pad_z + _curve_z(-half_h)),
-		iron
-	)
+	var pad_h := Vector3(end_pad_size, end_pad_size * 0.85, plate_front - IronCross.BACK_Z)
+	var pad_v := Vector3(end_pad_size * 0.85, end_pad_size, pad_h.z - IronCross.TRIM_LIFT)
+	var z_h := plate_front - pad_h.z * 0.5
+	var z_v := plate_front - pad_v.z * 0.5
+	_add_box("EndPadR", pad_h, Vector3(half_w, 0.0, z_h), iron)
+	_add_box("EndPadL", pad_h, Vector3(-half_w, 0.0, z_h), iron)
+	_add_box("EndPadT", pad_v, Vector3(0.0, half_h, z_v + _curve_z(half_h)), iron)
+	_add_box("EndPadB", pad_v, Vector3(0.0, -half_h, z_v + _curve_z(-half_h)), iron)
 
-	var tip_rivet := rivet_size * 0.75
-	var tip_z := pad_z + pad_depth * 0.5 + tip_rivet * 0.3
-	for tip in [
-		Vector3(half_w, 0.0, tip_z),
-		Vector3(-half_w, 0.0, tip_z),
-		Vector3(0.0, half_h, tip_z + _curve_z(half_h)),
-		Vector3(0.0, -half_h, tip_z + _curve_z(-half_h)),
-	]:
-		_add_box("TipRivet", Vector3(tip_rivet, tip_rivet, tip_rivet * 0.65), tip, rivet_mat)
+	for tip in [Vector2(half_w, 0.0), Vector2(-half_w, 0.0), Vector2(0.0, half_h), Vector2(0.0, -half_h)]:
+		_add_rivet(tip, plate_front + _curve_z(tip.y))
 
 	# Four stubs: inward from each pad, center gap left open.
 	# inward = direction from frame toward window center.
-	_add_stub("StubRight", Vector3(half_w, 0.0, z), Vector3(-1.0, 0.0, 0.0), half_w, iron)
-	_add_stub("StubLeft", Vector3(-half_w, 0.0, z), Vector3(1.0, 0.0, 0.0), half_w, iron)
+	_add_stub("StubRight", Vector3(half_w, 0.0, zh), Vector3(-1.0, 0.0, 0.0), half_w, iron)
+	_add_stub("StubLeft", Vector3(-half_w, 0.0, zh), Vector3(1.0, 0.0, 0.0), half_w, iron)
 	_add_stub(
 		"StubTop",
-		Vector3(0.0, half_h, z + _curve_z(half_h)),
+		Vector3(0.0, half_h, zv + _curve_z(half_h)),
 		_curved_inward(half_h, -1.0),
 		half_h,
 		iron
 	)
 	_add_stub(
 		"StubBottom",
-		Vector3(0.0, -half_h, z + _curve_z(-half_h)),
+		Vector3(0.0, -half_h, zv + _curve_z(-half_h)),
 		_curved_inward(-half_h, 1.0),
 		half_h,
 		iron
@@ -261,17 +249,19 @@ func _add_box_to(
 	parent.add_child(mi)
 
 
-func _iron_material() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.07, 0.075, 0.08, 1.0)
-	mat.metallic = 0.72
-	mat.roughness = 0.48
-	return mat
-
-
-func _rivet_material() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.18, 0.17, 0.15, 1.0)
-	mat.metallic = 0.85
-	mat.roughness = 0.35
-	return mat
+## Cone rivet head on a face at local z `base_z`, same shape as IronCross._add_rivet.
+func _add_rivet(pos_xy: Vector2, base_z: float) -> void:
+	var mesh := CylinderMesh.new()
+	mesh.bottom_radius = rivet_size * 0.5
+	mesh.top_radius = IronCross.RIVET_TOP_RADIUS
+	mesh.height = IronCross.RIVET_HEIGHT
+	mesh.radial_segments = 8
+	mesh.rings = 0
+	var mi := MeshInstance3D.new()
+	mi.name = "TipRivet"
+	mi.mesh = mesh
+	mi.rotation = Vector3(deg_to_rad(90.0), 0.0, 0.0)
+	mi.position = Vector3(pos_xy.x, pos_xy.y, base_z + IronCross.RIVET_HEIGHT * 0.5 - 0.001)
+	mi.material_override = IronCross.rivet_material()
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	add_child(mi)

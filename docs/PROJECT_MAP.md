@@ -284,7 +284,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-311 GDScript files, 47787 lines.
+312 GDScript files, 47958 lines.
 
 ### `scenes/corridor/`
 
@@ -606,8 +606,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). |
-| `broken_iron_cross.gd` | `BrokenIronCross` | 278 | Blown-out iron + after a window breach. |
-| `iron_cross.gd` | `IronCross` | 397 | Welded iron + on a window pane. |
+| `broken_iron_cross.gd` | `BrokenIronCross` | 268 | Blown-out iron + after a window breach. |
+| `iron_cross.gd` | `IronCross` | 401 | Welded iron + on a window pane. |
 | `rear_door_frame.gd` | — | 143 | Fixed steel frame on the cabin side of the rear doors, covering the leaves' clearance slits. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
 | `rear_door_leaf_build.gd` | — | 140 | Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55). |
@@ -622,8 +622,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `side_door_stops.gd` | — | 188 | Steel stop strips round each side door bay on the cabin side, covering the leaf's clearance. |
 | `side_doors.gd` | — | 339 | Sliding cargo-style side doors. |
 | `side_window_exterior.gd` | — | 50 | Adds the dark-tinted exterior pane that rides a side cargo window's sash. |
+| `side_window_fixtures.gd` | — | 178 | Side window hardware: the fixed stop ring and hinge rail on the wall, and the two gooseneck strap hinges riding each sash. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. |
-| `side_windows.gd` | — | 400 | Side cargo windows — top-hinged sashes that tip vertically outward. |
+| `side_windows.gd` | — | 397 | Side cargo windows — top-hinged sashes that tip vertically outward. |
 | `van.gd` | — | 398 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
 | `van_body_profile.gd` | `VanBodyProfile` | 193 | One cross-section for the whole van body: the inner liner outline (floor, bowed sides, roof vault) and an outer skin offset from it, so inside and outside piec… |
 | `van_bulkhead.gd` | `VanBulkhead` | 205 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
@@ -719,7 +720,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 158 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
 | `smoke_shots.gd` | — | 334 | Screenshots for tools/smoke.py --shots. |
-| `smoke_shots_closeups.gd` | — | 302 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
+| `smoke_shots_closeups.gd` | — | 303 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 
 ### `tools/van_audit/`
@@ -735,7 +736,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_audit_overlap.gd` | — | 145 | Coplanar-overlap (flicker), moving-part interpenetration (clip) and door/window opening-blocked checks over an AuditMesh triangle set (vanfix spec 1-2). |
 | `van_audit_probe.gd` | — | 62 | Brute-force ray probe for the van audit: lists every triangle a given rig-local ray crosses. |
 | `van_audit_seams.gd` | — | 108 | Seam tests for the van audit EDGE check: open edges that meet other meshes or collinear edges. |
-| `van_audit_states.gd` | — | 115 | Poses the side doors and windows into closed / half / open states directly, with no tweens and no gameplay calls, so the audit's flicker/clip/opening checks ca… |
+| `van_audit_states.gd` | — | 116 | Poses the side doors and windows into closed / half / open states directly, with no tweens and no gameplay calls, so the audit's flicker/clip/opening checks ca… |
 
 ## Scenes
 

@@ -9,23 +9,32 @@ const BrokenIronCrossScene := preload("res://scenes/van/broken_iron_cross.tscn")
 
 @export var span_width := 2.2
 @export var span_height := 1.23
-@export var bar_width := 0.09
-@export var bar_depth := 0.055
-@export var plate_size := 0.28
-@export var plate_depth := 0.07
-@export var rivet_size := 0.045
-@export var end_pad_size := 0.16
+@export var bar_width := 0.055
+@export var bar_depth := 0.018
+@export var plate_size := 0.18
+@export var plate_depth := 0.018
+@export var rivet_size := 0.02
+@export var end_pad_size := 0.11
 @export var curve_segments := 14
 @export var rebuild_on_ready := true
 
-## D7: the two crossing bars sit TRIM_LIFT apart in depth so they don't share a plane.
-const TRIM_LIFT := 0.01
+## D7: the crossing bars, plate and pads step TRIM_LIFT apart in depth, over the audit's 1 cm FLICKER rule.
+const TRIM_LIFT := 0.012
 
 ## D12: each end pad's outer edge stops 2 cm inside the bar span, so it stays inside the frame opening (which is >= the span) and never shares a plane with a bar's end face.
 const PAD_END_CLEAR := 0.02
 
 ## D12: each bar ends 2 cm inside its end pad (4 cm inside the span), so its end face is buried in the pad and sits over 2 cm from both the pad's face and the frame opening.
 const BAR_END_CLEAR := 0.04
+
+## Back face of the inboard (vertical) bar: 1.2 cm outboard of the cabin glass at z -0.01.
+const BACK_Z := 0.002
+## Rivet head: a low cone, so no flat face over 1 cm² sits parallel to the exterior pane.
+const RIVET_TOP_RADIUS := 0.004
+const RIVET_HEIGHT := 0.006
+
+static var _iron_mat: StandardMaterial3D = null
+static var _rivet_mat: StandardMaterial3D = null
 
 var _built := false
 var _broken := false
@@ -126,64 +135,36 @@ func _build() -> void:
 		return
 	_built = true
 
-	var iron := _iron_material()
-	var rivet_mat := _rivet_material()
+	# Parts sit in z 0.002..0.044 (rivet tips 0.049): behind the exterior pane (0.055), before the glass.
+	var zv := BACK_Z + bar_depth * 0.5
+	var iron := iron_material()
+	_add_horizontal_bar(zv + TRIM_LIFT, iron)  # D7: TRIM_LIFT apart so the bars share no plane.
+	_add_vertical_bar(zv, iron)
 
-	# Slight outward bias so bars sit on the exterior glass face.
-	var z := bar_depth * 0.5
-
-	_add_horizontal_bar(z, iron)
-	# D7: the vertical bar crosses in front — push it TRIM_LIFT further inboard so the two
-	# bars don't share a depth plane where they overlap.
-	_add_vertical_bar(z - TRIM_LIFT, iron)
-
-	# Center weld plate — thicker, sits proud of the bars.
-	# Back face 2 cm inside both bars so it never shares a depth plane with either.
-	var plate_z := 0.02 + plate_depth * 0.5
-	_add_center_plate(plate_z, iron)
+	# Center weld plate: back 2 * TRIM_LIFT out, 1.2 cm clear of the horizontal bar's faces.
+	var plate_front := BACK_Z + 2.0 * TRIM_LIFT + plate_depth
+	_add_center_plate(plate_front - plate_depth * 0.5, iron)
 
 	# Four rivets on the plate corners.
-	var rivet_spread := plate_size * 0.28
-	var rivet_z := plate_z + plate_depth * 0.5 + rivet_size * 0.35
-	for offset in [
-		Vector3(rivet_spread, rivet_spread, rivet_z + _curve_z(rivet_spread)),
-		Vector3(-rivet_spread, rivet_spread, rivet_z + _curve_z(rivet_spread)),
-		Vector3(rivet_spread, -rivet_spread, rivet_z + _curve_z(-rivet_spread)),
-		Vector3(-rivet_spread, -rivet_spread, rivet_z + _curve_z(-rivet_spread)),
-	]:
-		_add_box("Rivet", Vector3(rivet_size, rivet_size, rivet_size * 0.7), offset, rivet_mat)
+	var rs := plate_size * 0.28
+	for corner in [Vector2(rs, rs), Vector2(-rs, rs), Vector2(rs, -rs), Vector2(-rs, -rs)]:
+		_add_rivet("Rivet", corner, plate_front + _curve_z(corner.y), rivet_material())
 
-	# Mounting pads where bars meet the frame.
-	var pad_depth := bar_depth * 1.15
-	# Back face 1.5 cm inside the bar's back face, so the pad's faces clear the bar's.
-	var pad_z := 0.015 + pad_depth * 0.5
+	# Mounting pads where bars meet the frame, reaching from the bar's back to the plate's front.
 	var half_w := span_width * 0.5 - PAD_END_CLEAR - end_pad_size * 0.5
 	var half_h := span_height * 0.5 - PAD_END_CLEAR - end_pad_size * 0.5
-	_add_box("EndPadR", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(half_w, 0.0, pad_z), iron)
-	_add_box("EndPadL", Vector3(end_pad_size, end_pad_size * 0.85, pad_depth), Vector3(-half_w, 0.0, pad_z), iron)
-	_add_box(
-		"EndPadT",
-		Vector3(end_pad_size * 0.85, end_pad_size, pad_depth),
-		Vector3(0.0, half_h, pad_z + _curve_z(half_h)),
-		iron
-	)
-	_add_box(
-		"EndPadB",
-		Vector3(end_pad_size * 0.85, end_pad_size, pad_depth),
-		Vector3(0.0, -half_h, pad_z + _curve_z(-half_h)),
-		iron
-	)
+	var pad_h := Vector3(end_pad_size, end_pad_size * 0.85, plate_front - BACK_Z)
+	var pad_v := Vector3(end_pad_size * 0.85, end_pad_size, plate_front - BACK_Z - TRIM_LIFT)
+	var z_h := plate_front - pad_h.z * 0.5
+	var z_v := plate_front - pad_v.z * 0.5
+	_add_box("EndPadR", pad_h, Vector3(half_w, 0.0, z_h), iron)
+	_add_box("EndPadL", pad_h, Vector3(-half_w, 0.0, z_h), iron)
+	_add_box("EndPadT", pad_v, Vector3(0.0, half_h, z_v + _curve_z(half_h)), iron)
+	_add_box("EndPadB", pad_v, Vector3(0.0, -half_h, z_v + _curve_z(-half_h)), iron)
 
-	# Small corner rivets on each end pad.
-	var tip_rivet := rivet_size * 0.75
-	var tip_z := pad_z + pad_depth * 0.5 + tip_rivet * 0.3
-	for tip in [
-		Vector3(half_w, 0.0, tip_z),
-		Vector3(-half_w, 0.0, tip_z),
-		Vector3(0.0, half_h, tip_z + _curve_z(half_h)),
-		Vector3(0.0, -half_h, tip_z + _curve_z(-half_h)),
-	]:
-		_add_box("TipRivet", Vector3(tip_rivet, tip_rivet, tip_rivet * 0.65), tip, rivet_mat)
+	# One rivet at the centre of each end pad, on the pad's front face.
+	for tip in [Vector2(half_w, 0.0), Vector2(-half_w, 0.0), Vector2(0.0, half_h), Vector2(0.0, -half_h)]:
+		_add_rivet("TipRivet", tip, plate_front + _curve_z(tip.y), rivet_material())
 
 
 func _add_vertical_bar(z: float, iron: Material) -> void:
@@ -204,11 +185,11 @@ func _add_vertical_bar(z: float, iron: Material) -> void:
 	for i in range(segs + 1):
 		var y := lerpf(-half_h, half_h, float(i) / float(segs))
 		var cz := z + _curve_z(y)
-		rings.append([
-			Vector3(-half_w, y, cz - half_d),
+		rings.append([  # x mirrored vs the horizontal bar: lofting along +y flips handedness.
 			Vector3(half_w, y, cz - half_d),
-			Vector3(half_w, y, cz + half_d),
+			Vector3(-half_w, y, cz - half_d),
 			Vector3(-half_w, y, cz + half_d),
+			Vector3(half_w, y, cz + half_d),
 		])
 	_commit_lofted_bar("VerticalBar", rings, iron)
 
@@ -277,12 +258,12 @@ func _add_center_plate(plate_z: float, iron: Material) -> void:
 			var f10: Vector3 = front[iy][ix + 1]
 			var f11: Vector3 = front[iy + 1][ix + 1]
 			var f01: Vector3 = front[iy + 1][ix]
-			_add_quad(st, f00, f10, f11, f01)
+			_add_quad(st, f00, f01, f11, f10)  # Clockwise from outside (Godot's front face).
 			var b00: Vector3 = back[iy][ix]
 			var b10: Vector3 = back[iy][ix + 1]
 			var b11: Vector3 = back[iy + 1][ix + 1]
 			var b01: Vector3 = back[iy + 1][ix]
-			_add_quad(st, b00, b01, b11, b10)
+			_add_quad(st, b00, b10, b11, b01)
 
 	for ix in range(segs):
 		_add_quad(st, front[0][ix], front[0][ix + 1], back[0][ix + 1], back[0][ix])
@@ -380,17 +361,40 @@ func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material
 	add_child(mi)
 
 
-func _iron_material() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.07, 0.075, 0.08, 1.0)
-	mat.metallic = 0.72
-	mat.roughness = 0.48
-	return mat
+## Adds one cone rivet head whose base sits on a face at local z `base_z` (1 mm sunk).
+func _add_rivet(node_name: String, pos_xy: Vector2, base_z: float, material: Material) -> void:
+	var mesh := CylinderMesh.new()
+	mesh.bottom_radius = rivet_size * 0.5
+	mesh.top_radius = RIVET_TOP_RADIUS
+	mesh.height = RIVET_HEIGHT
+	mesh.radial_segments = 8
+	mesh.rings = 0
+	var mi := MeshInstance3D.new()
+	mi.name = node_name
+	mi.mesh = mesh
+	mi.rotation = Vector3(deg_to_rad(90.0), 0.0, 0.0)
+	mi.position = Vector3(pos_xy.x, pos_xy.y, base_z + RIVET_HEIGHT * 0.5 - 0.001)
+	mi.material_override = material
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	_apply_street_lit(mi)
+	add_child(mi)
 
 
-func _rivet_material() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.18, 0.17, 0.15, 1.0)
-	mat.metallic = 0.85
-	mat.roughness = 0.35
-	return mat
+## Shared matte dark steel for every bar, plate and pad (intact and broken crosses).
+static func iron_material() -> StandardMaterial3D:
+	if _iron_mat == null:
+		_iron_mat = StandardMaterial3D.new()
+		_iron_mat.albedo_color = Color(0.07, 0.075, 0.08, 1.0)
+		_iron_mat.metallic = 0.3
+		_iron_mat.roughness = 0.75
+	return _iron_mat
+
+
+## Shared rivet steel.
+static func rivet_material() -> StandardMaterial3D:
+	if _rivet_mat == null:
+		_rivet_mat = StandardMaterial3D.new()
+		_rivet_mat.albedo_color = Color(0.16, 0.15, 0.13, 1.0)
+		_rivet_mat.metallic = 0.3
+		_rivet_mat.roughness = 0.7
+	return _rivet_mat

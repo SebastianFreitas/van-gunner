@@ -77,6 +77,7 @@ func pose_front(fraction: float) -> void:
 
 
 func _pose_door(side: StringName, fraction: float) -> void:
+	_windows.set_front_hinges_visible(side, fraction <= 0.0)  # Mirrors play: hidden while its door is open.
 	var leaf: Node3D = _door_leaf[side]
 	var grip: Node3D = _door_grip[side]
 	var mount: Node3D = _door_mount[side]

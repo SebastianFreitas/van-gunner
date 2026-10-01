@@ -77,7 +77,8 @@ static func views(rig: Node3D) -> Array[Dictionary]:
 		var outer_x := profile.outer_x_at(centre.y + 0.6)
 		result.append(_view(
 			"win-%s-out-open" % id,
-			Vector3(s * (outer_x + 1.6), centre.y + 0.6, centre.z + 0.8), centre, [], [id]
+			Vector3(s * (outer_x + 2.6), centre.y + 1.5, centre.z + 1.6),
+			Vector3(s * outer_x, centre.y + 0.4, centre.z), [], [id]
 		))
 
 	for side in [_SideDoors.SIDE_LEFT, _SideDoors.SIDE_RIGHT]:
