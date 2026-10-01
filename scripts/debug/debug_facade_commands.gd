@@ -8,6 +8,7 @@ const _FacadeSetPieces := preload("res://scripts/travel/facades/facade_set_piece
 const _FacadeAudit := preload("res://scripts/travel/facades/facade_audit.gd")
 const _CorridorSegmentScene := preload("res://scenes/corridor/corridor_segment.tscn")
 const _DebugStreetArt := preload("res://scripts/debug/debug_street_art_commands.gd")
+const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
 
 const OPENING_NONE := 0  # mirrors corridor_segment.gd's Opening enum
 const OPENING_SIDE_STREET := 1
@@ -143,6 +144,36 @@ func _cmd_reseed(args: Array) -> String:
 		count += 1
 		child_index += 1
 	return "reseeded %d tiles" % count
+
+
+## walk_wreck [share]: print or set the obliterated sidewalk share and rebuild the street.
+func cmd_walk_wreck(args: Array) -> String:
+	var travel: TravelController = host._find_travel_controller()
+	if travel == null or travel.corridor_root == null:
+		return "walk_wreck: no street"
+	var root: Node = travel.corridor_root
+	if args.is_empty():
+		var now: Vector2 = _WreckMap.measure(root)
+		var head := "walk wreck share %.2f (default %.2f), " % [
+			_WreckMap.share, _WreckMap.DESTROYED_SHARE
+		]
+		if now.y <= 0.0:
+			return head + "measured n/a"
+		return head + "measured %.2f over %d m" % [now.x / now.y, int(now.y)]
+	if not String(args[0]).is_valid_float():
+		return "usage: walk_wreck [share 0..1]"
+	_WreckMap.share = clampf(String(args[0]).to_float(), 0.0, 1.0)
+	var rebuilt := 0
+	for tile in root.get_children():
+		var floor_node := tile.get_node_or_null(^"RoadFloor")
+		if floor_node != null and floor_node.has_method(&"rebuild"):
+			floor_node.rebuild()
+			rebuilt += 1
+	var m: Vector2 = _WreckMap.measure(root)
+	var measured := "n/a" if m.y <= 0.0 else "%.2f" % (m.x / m.y)
+	return "walk wreck share %.2f, rebuilt %d floors, measured %s over %d m" % [
+		_WreckMap.share, rebuilt, measured, int(m.y)
+	]
 
 
 func _cmd_stats(_args: Array) -> String:

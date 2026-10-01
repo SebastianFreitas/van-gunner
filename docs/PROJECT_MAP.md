@@ -187,7 +187,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 **`scripts/travel/road_floor_wreck.gd`**
 
-- `enum Piece { FLAT, MISSING_PIECE, TILTED, SUNK, TUMBLED }`
+- `enum Piece { FLAT, MISSING_PIECE, TILTED, SUNK, FRAGMENT }`
+
+**`scripts/travel/road_floor_wreck_map.gd`**
+
+- `enum Zone { GOOD, ROUGH, FRAGMENT, GONE }`
 
 **`scripts/travel/travel_controller.gd`**
 
@@ -300,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-321 GDScript files, 49918 lines.
+323 GDScript files, 50395 lines.
 
 ### `scenes/corridor/`
 
@@ -391,9 +395,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
-| `debug_commands.gd` | — | 244 | Parses and runs debug console commands. |
+| `debug_commands.gd` | — | 246 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
-| `debug_facade_commands.gd` | — | 305 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
+| `debug_facade_commands.gd` | — | 336 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
 | `debug_gap_light.gd` | — | 175 | Debug gap light: paints everything that is not van magenta, so a see-through seam shows pink. |
 | `debug_item_commands.gd` | — | 70 | Debug console commands: items. |
 | `debug_meta_commands.gd` | — | 55 | Debug console commands: meta. |
@@ -529,12 +533,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `road_floor.gd` | `RoadFloor` | 401 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
+| `road_floor.gd` | `RoadFloor` | 398 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
 | `road_floor_details.gd` | — | 213 | Street furniture/detail builders for RoadFloor: drains, manholes and sidewalk dressing. |
-| `road_floor_materials.gd` | — | 101 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
-| `road_floor_paving_mesh.gd` | — | 111 | Packs RoadFloor's paving pieces (chamfered blocks) into one ArrayMesh per material. |
-| `road_floor_wreck.gd` | — | 348 | Builds RoadFloor's wrecked paving: tiles, setts and gone stretches over a soil pit, each side as merged meshes. |
-| `road_floor_wreck_curb.gd` | — | 97 | Builds the wrecked paving's granite curb: 1 m blocks, knocked, missing or toppled in gone stretches. |
+| `road_floor_materials.gd` | — | 107 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
+| `road_floor_paving_mesh.gd` | — | 212 | Packs RoadFloor's paving pieces (chamfered blocks) into one ArrayMesh per material. |
+| `road_floor_wreck.gd` | — | 347 | Builds RoadFloor's wrecked paving: tiles and setts graded by the destruction map over a soil pit, each side as merged meshes. |
+| `road_floor_wreck_curb.gd` | — | 108 | Builds the wrecked paving's granite curb: 1 m blocks, knocked, missing or toppled in gone stretches. |
+| `road_floor_wreck_ground.gd` | — | 176 | Builds a sidewalk side's ground: the soil heightfield under the paving, sunk into craters where the destruction map is worst, with rubble, shards and leaning s… |
+| `road_floor_wreck_map.gd` | — | 130 | The street's destruction map: one smooth world-space field saying how wrecked the sidewalk is at a point, continuous across corridor tiles and calibrated so DE… |
 | `travel_controller.gd` | `TravelController` | 607 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
 | `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
 | `travel_stops.gd` | — | 203 | Owns the stop fork, side-stop placement, elevator pad ride and stop-state cleanup. |
@@ -561,7 +567,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `facade_registry.gd` | — | 104 | Loads the facade data folders once: districts (sorted by index) and set-pieces (sorted by id). |
 | `facade_ruin.gd` | — | 223 | Rolls each street building's ruin condition and the column/hole data that later geometry cuts the facade with, and clips the plan that the prop families see so… |
 | `facade_ruin_body.gd` | — | 154 | Builds a ruined street building's body from its plan's ruin columns and holes: stepped tops, wall caps or roof plates, hole reveals over a dark back wall, then… |
-| `facade_ruin_debris.gd` | — | 219 | Debris for ruined street buildings: hanging slabs, rebar and sill chunks on the body, and the rubble heaps on the sidewalk below a collapse. |
+| `facade_ruin_debris.gd` | — | 220 | Debris for ruined street buildings: hanging slabs, rebar and sill chunks on the body, and the rubble heaps on the sidewalk below a collapse. |
 | `facade_set_piece.gd` | `FacadeSetPiece` | 46 | One rare street set-piece: eligibility data plus the hooks a subclass overrides. |
 | `facade_set_pieces.gd` | — | 84 | Rolls which rare set-piece (if any) a tile gets and on which side, and drives the piece's hooks from corridor_facades. |
 | `facade_signs.gd` | — | 285 | Street signage for one building: a backlit box sign over a storefront, a neon strip, a perpendicular blade sign, a cloth banner, or a torn poster on a boarded… |
@@ -748,7 +754,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `smoke_driver.gd` | — | 375 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
-| `smoke_route.gd` | — | 158 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
+| `smoke_route.gd` | — | 181 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
 | `smoke_shots.gd` | — | 334 | Screenshots for tools/smoke.py --shots. |
 | `smoke_shots_closeups.gd` | — | 303 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
@@ -992,4 +998,4 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `ghost`, `torch`, `floodlight`, `gaplight`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `ghost`, `torch`, `floodlight`, `gaplight`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`, `walk_wreck`

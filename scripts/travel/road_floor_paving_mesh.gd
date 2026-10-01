@@ -61,6 +61,88 @@ func add_block(
 				Vector3(-hx, -hy, hz), Vector3.DOWN, Vector4.ZERO, wreck, tone, xform)
 
 
+## Adds a prism over a convex `footprint` (local x/z, either winding), spanning local y
+## -height/2..+height/2 and moved by `xform`. Sharp edges: these are broken tile fragments.
+func add_prism(
+		footprint: PackedVector2Array, height: float, xform: Transform3D, wreck: float,
+		tone: float, with_bottom: bool) -> void:
+	if footprint.size() < 3:
+		push_warning("add_prism: footprint needs at least 3 points")
+		return
+	if height <= 0.0:
+		push_warning("add_prism: height must be positive")
+		return
+	var hy := height * 0.5
+	var count := footprint.size()
+	var centroid := Vector2.ZERO
+	for p: Vector2 in footprint:
+		centroid += p
+	centroid /= float(count)
+	var up_world := (xform.basis * Vector3.UP).normalized()
+	var tops := PackedVector3Array()
+	var bottoms := PackedVector3Array()
+	for p: Vector2 in footprint:
+		tops.append(xform * Vector3(p.x, hy, p.y))
+		bottoms.append(xform * Vector3(p.x, -hy, p.y))
+	for i: int in range(1, count - 1):
+		_tri(tops[0], tops[i], tops[i + 1], up_world, wreck, tone, 1.0)
+	for i: int in count:
+		var j := (i + 1) % count
+		var edge := footprint[j] - footprint[i]
+		if edge.length_squared() < 1e-12:
+			continue
+		var out := Vector2(edge.y, -edge.x)
+		if out.dot((footprint[i] + footprint[j]) * 0.5 - centroid) < 0.0:
+			out = -out
+		var n_world := (xform.basis * Vector3(out.x, 0.0, out.y)).normalized()
+		_tri(bottoms[i], bottoms[j], tops[j], n_world, wreck, tone, 0.0)
+		_tri(bottoms[i], tops[j], tops[i], n_world, wreck, tone, 0.0)
+	if with_bottom:
+		for i: int in range(1, count - 1):
+			_tri(bottoms[0], bottoms[i], bottoms[i + 1], -up_world, wreck, tone, 0.0)
+
+
+## Adds a ground heightfield from row-major `points` (index = iz * nx + ix, the emitter's
+## local space) with per-vertex `wreck`. Normals are central differences, so it shades smooth.
+func add_grid(
+		points: PackedVector3Array, nx: int, nz: int, wreck: PackedFloat32Array,
+		tone: float) -> void:
+	if nx < 2 or nz < 2 or points.size() != nx * nz or wreck.size() != points.size():
+		push_warning("add_grid: needs nx >= 2, nz >= 2 and matching point and wreck counts")
+		return
+	var normals := PackedVector3Array()
+	normals.resize(points.size())
+	for iz: int in nz:
+		for ix: int in nx:
+			var dx := points[iz * nx + mini(ix + 1, nx - 1)] - points[iz * nx + maxi(ix - 1, 0)]
+			var dz := points[mini(iz + 1, nz - 1) * nx + ix] - points[maxi(iz - 1, 0) * nx + ix]
+			var n := dx.cross(dz)
+			if n.y < 0.0:
+				n = -n
+			normals[iz * nx + ix] = n.normalized() if n.length() > 1e-8 else Vector3.UP
+	for iz: int in nz - 1:
+		for ix: int in nx - 1:
+			var a := iz * nx + ix
+			var b := a + 1
+			var c := a + nx
+			var d := c + 1
+			for tri: Array in [[a, b, d], [a, d, c]]:
+				var i0: int = tri[0]
+				var i1: int = tri[1]
+				var i2: int = tri[2]
+				var face := (points[i1] - points[i0]).cross(points[i2] - points[i0])
+				if face.length() < 1e-8:
+					continue
+				if face.dot(Vector3.UP) > 0.0:
+					var swap := i1
+					i1 = i2
+					i2 = swap
+				for i: int in [i0, i1, i2]:
+					_verts.append(points[i])
+					_normals.append(normals[i])
+					_colors.append(Color(wreck[i], tone, normals[i].y))
+
+
 func is_empty() -> bool:
 	return _verts.is_empty()
 
@@ -86,6 +168,25 @@ func commit(parent: Node3D, node_name: String, material: Material) -> MeshInstan
 	_normals = PackedVector3Array()
 	_colors = PackedColorArray()
 	return mi
+
+
+## Emits one triangle, already in emitter space, wound against the world `normal` by the same
+## oracle as `_quad`. Zero-area triangles are skipped.
+func _tri(
+		a: Vector3, b: Vector3, c: Vector3, normal: Vector3, wreck: float, tone: float,
+		up: float) -> void:
+	var face := (b - a).cross(c - a)
+	if face.length() < 1e-8:
+		return
+	var p1 := b
+	var p2 := c
+	if face.dot(normal) > 0.0:
+		p1 = c
+		p2 = b
+	for p: Vector3 in [a, p1, p2]:
+		_verts.append(p)
+		_normals.append(normal)
+		_colors.append(Color(wreck, tone, up, 1.0))
 
 
 ## Emits (a, b, c) and (a, c, d). The winding is fixed against the world normal, so every

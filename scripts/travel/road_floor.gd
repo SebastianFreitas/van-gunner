@@ -247,24 +247,18 @@ func _build() -> void:
 	var walk_span := _sidewalk_span_z()
 	var walk_len: float = walk_span.x
 	var walk_cz: float = walk_span.y
-	var walk_mat: Material = sidewalk_material
-	if wreck:
-		walk_mat = RoadFloorMaterials.sidewalk_pit_mat(Vector2(sidewalk_width, walk_len))
-	if sidewalk_left:
+	# Wrecked: the bed keeps its collision but draws nothing; the soil grid replaces it.
+	for side_idx in 2:
+		if not (sidewalk_left if side_idx == 0 else sidewalk_right):
+			continue
 		_add_box_centered(
-			"SidewalkLeft",
+			"SidewalkLeft" if side_idx == 0 else "SidewalkRight",
 			Vector3(sidewalk_width, walk_thickness, walk_len),
-			Vector3(-walk_center_x, slab_bottom + walk_thickness * 0.5, walk_cz),
-			walk_mat,
-			true
-		)
-	if sidewalk_right:
-		_add_box_centered(
-			"SidewalkRight",
-			Vector3(sidewalk_width, walk_thickness, walk_len),
-			Vector3(walk_center_x, slab_bottom + walk_thickness * 0.5, walk_cz),
-			walk_mat,
-			true
+			Vector3((-1.0 if side_idx == 0 else 1.0) * walk_center_x,
+				slab_bottom + walk_thickness * 0.5, walk_cz),
+			sidewalk_material,
+			true,
+			not wreck
 		)
 
 	var gutter_top := road_surface_y - gutter_depth
@@ -327,9 +321,10 @@ func _add_box_centered(
 	size: Vector3,
 	pos: Vector3,
 	material: Material,
-	collide: bool
+	collide: bool,
+	visual := true
 ) -> void:
-	_add_box_centered_to(self, node_name, size, pos, material, collide, _body)
+	_add_box_centered_to(self, node_name, size, pos, material, collide, _body, visual)
 
 
 func _add_box_centered_to(
@@ -339,17 +334,19 @@ func _add_box_centered_to(
 	pos: Vector3,
 	material: Material,
 	collide: bool,
-	collision_body: StaticBody3D = null
+	collision_body: StaticBody3D = null,
+	visual := true
 ) -> void:
-	var box := BoxMesh.new()
-	box.size = size
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = box
-	mi.material_override = material
-	mi.position = pos
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	host.add_child(mi)
+	if visual:
+		var box := BoxMesh.new()
+		box.size = size
+		var mi := MeshInstance3D.new()
+		mi.name = node_name
+		mi.mesh = box
+		mi.material_override = material
+		mi.position = pos
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		host.add_child(mi)
 
 	var body := collision_body
 	if body == null and collide and include_collision:

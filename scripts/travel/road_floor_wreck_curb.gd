@@ -2,6 +2,7 @@ extends RefCounted
 ## Builds the wrecked paving's granite curb: 1 m blocks, knocked, missing or toppled in gone stretches.
 
 const _PavingMesh := preload("res://scripts/travel/road_floor_paving_mesh.gd")
+const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
 
 const CURB_LEN := 1.0
 const JOINT := 0.03
@@ -37,35 +38,45 @@ func build(wreck, side_idx: int, side_sign: float, rng: RandomNumberGenerator, c
 		var r_knock := rng.randf()
 		var tone := rng.randf()
 		var tier: int = wreck.tier_at(side_idx, z)
-		var gone: float = wreck._gone_at(z)
-		var edge: float = wreck._edge_near(z)
-		var tint := 1.0 if gone > 0.0 else tier / 3.0
-		var chance := MISSING[tier] + 0.2 * edge
-		if gone > 0.0:
-			chance = lerpf(MISSING[tier], 0.6, gone)
-		if r_miss < chance:
+		var e: float = wreck.damage_at(inner - 0.06, z)
+		var tint := maxf(tier / 3.0, _WreckMap.wreck_tint(e))
+		var t := _WreckMap.band_t(e)
+		var missing := false
+		var knocked := false
+		var scale := 0.35 + 0.3 * t
+		match _WreckMap.zone(e):
+			_WreckMap.Zone.GONE:
+				if r_knock < 0.7:
+					_add_chunks(wreck, side_sign, rng, rubble, z0, z1)
+				continue
+			_WreckMap.Zone.FRAGMENT:
+				missing = r_miss < 0.2 + 0.4 * t
+				knocked = not missing
+				scale = 0.5 + 0.5 * t
+			_WreckMap.Zone.ROUGH:
+				missing = r_miss < MISSING[tier]
+				knocked = r_knock < KNOCKED[tier] + 0.1 + 0.2 * t
+			_:
+				missing = r_miss < MISSING[tier] * 0.5
+				knocked = r_knock < KNOCKED[tier] * 0.5
+		if missing:
 			_add_chunks(wreck, side_sign, rng, rubble, z0, z1)
 			continue
 		var size := Vector3(curb_depth, height, z1 - z0 - JOINT)
 		var centre := Vector3(side_sign * cx, y_bot + height * 0.5, z)
-		if gone <= 0.0 and r_knock >= KNOCKED[tier] + 0.3 * edge:
+		if not knocked:
 			var sides := _PavingMesh.SIDE_NEG_X | _PavingMesh.SIDE_POS_X \
 					| _PavingMesh.SIDE_NEG_Z | _PavingMesh.SIDE_POS_Z
 			curb.add_block(size, Transform3D(Basis(), centre), tint, tone, CHAMFER, sides, false)
 			continue
-		var yaw_deg := rng.randf_range(2.0, 6.0)
-		var shift := rng.randf_range(0.01, 0.04)
-		var drop := rng.randf_range(0.01, 0.03)
-		if gone > 0.0:
-			yaw_deg = rng.randf_range(4.0, 12.0)
-			shift = rng.randf_range(0.03, 0.10)
-			drop = rng.randf_range(0.03, 0.10)
+		var yaw_deg := rng.randf_range(4.0, 12.0) * scale
+		var shift := rng.randf_range(0.03, 0.10) * scale
+		var drop := rng.randf_range(0.03, 0.10) * scale
 		if rng.randf() < 0.5:
 			yaw_deg = -yaw_deg
-		var basis := Basis(Vector3.UP, deg_to_rad(yaw_deg))
-		if gone > 0.0:
-			# The top leans toward the road, pivoting on the bottom edge.
-			basis = basis * Basis(Vector3.BACK, side_sign * deg_to_rad(rng.randf_range(4.0, 14.0)))
+		# The top leans toward the road, pivoting on the bottom edge.
+		var basis := Basis(Vector3.UP, deg_to_rad(yaw_deg)) \
+				* Basis(Vector3.BACK, side_sign * deg_to_rad(rng.randf_range(4.0, 14.0) * scale))
 		var pivot := Vector3(centre.x, y_bot, z)
 		var origin := pivot + basis * Vector3(0.0, height * 0.5, 0.0)
 		origin += Vector3(-side_sign * shift, -drop, 0.0)

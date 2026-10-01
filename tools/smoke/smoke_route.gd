@@ -5,6 +5,8 @@ extends RefCounted
 ## driver node it wraps outlives the helper for the whole run, so it's safe
 ## to hold onto and await through.
 
+const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
+
 var driver: Node
 
 
@@ -24,6 +26,9 @@ func fork_pass() -> bool:
 	driver._log(stress)
 	if not stress.begins_with("OK"):
 		driver._fail("facade stress: " + stress)
+		return false
+
+	if not _assert_walk_wreck_share(travel):
 		return false
 
 	if not await drive_side_stop(travel, "stop elevator shop", "elevator"):
@@ -74,6 +79,24 @@ func drive_side_stop(travel: TravelController, stop_command: String, label: Stri
 		)
 		return false
 	driver._log("phase %s" % driver._phase_name())
+	return true
+
+
+## Measures the obliterated sidewalk share over the built street and fails when it drifts far
+## from the target (the console command may have changed the live share, so reset it first).
+func _assert_walk_wreck_share(travel: TravelController) -> bool:
+	_WreckMap.share = _WreckMap.DESTROYED_SHARE
+	var m: Vector2 = _WreckMap.measure(travel.corridor_root)
+	if m.y < 40.0:
+		driver._log("walk destroyed share skipped: only %d m built" % int(m.y))
+		return true
+	var share := m.x / m.y
+	driver._log(
+		"walk destroyed share %.2f over %d m (target %.2f)" % [share, int(m.y), _WreckMap.DESTROYED_SHARE]
+	)
+	if share < _WreckMap.DESTROYED_SHARE - 0.18 or share > _WreckMap.DESTROYED_SHARE + 0.20:
+		driver._fail("walk destroyed share %.2f is outside the target band" % share)
+		return false
 	return true
 
 

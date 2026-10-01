@@ -1,28 +1,30 @@
 extends RefCounted
-## Builds RoadFloor's wrecked paving: tiles, setts and gone stretches over a soil pit, each side as merged meshes.
+## Builds RoadFloor's wrecked paving: tiles and setts graded by the destruction map over a soil pit, each side as merged meshes.
 
 const RoadFloorMaterials = preload("res://scripts/travel/road_floor_materials.gd")
 const _PavingMesh := preload("res://scripts/travel/road_floor_paving_mesh.gd")
 const _WreckCurb := preload("res://scripts/travel/road_floor_wreck_curb.gd")
+const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
+const _WreckGround = preload("res://scripts/travel/road_floor_wreck_ground.gd")
 
 const PIT_DEPTH := 0.25 ## soil bed top sits this far under the walk top
 const JOINT := 0.03
-const CHAMFER := 0.025
+const CHAMFER := 0.012
 const TILE_PITCH := 0.5
 const SETT_PITCH := 0.25
 const MIN_PIECE := 0.12
-const GONE_MISSING := 0.9 ## chance a piece is missing in the middle of a gone stretch
-const EDGE_REACH := 0.6 ## damage leaks this far out of a gone stretch
-const RAMP := 0.75 ## a gone stretch thickens over this distance from its ends
 const MISSING: Array[float] = [0.0, 0.03, 0.08, 0.14]
 const MISSING_SETT: Array[float] = [0.0, 0.04, 0.10, 0.18]
 const TILT: Array[float] = [0.02, 0.08, 0.16, 0.25]
 const TILT_DEG: Array[float] = [3.0, 6.0, 10.0, 14.0]
 const SINK: Array[float] = [0.03, 0.08, 0.12, 0.16]
 
-enum Piece { FLAT, MISSING_PIECE, TILTED, SUNK, TUMBLED }
+enum Piece { FLAT, MISSING_PIECE, TILTED, SUNK, FRAGMENT }
 
 var road: RoadFloor
+var _xform := Transform3D.IDENTITY
+var _side_idx := 0
+var _soil := _PavingMesh.new()
 var _tiles := _PavingMesh.new()
 var _setts := _PavingMesh.new()
 var _rubble := _PavingMesh.new()
@@ -42,8 +44,6 @@ var _sett_rows := 0
 var _sett_w := SETT_PITCH
 ## Dressing z values (drains, hydrants...) on this side: their pieces stay flat.
 var _kept: Array[float] = []
-## Gone stretches, as tile-local z ranges.
-var _gone: Array[Vector2] = []
 
 
 func _init(owner_road: RoadFloor) -> void:
@@ -67,14 +67,20 @@ func build(side_idx: int, walk_len: float, walk_cz: float, walk_inner_x: float,
 	if road.dressing_z.size() == 2:
 		for dz: float in road.dressing_z[side_idx]:
 			_kept.append(dz)
+	_side_idx = side_idx
+	_xform = road.global_transform if road.is_inside_tree() else Transform3D.IDENTITY
 	_layout()
-	_pick_gone(side_idx)
 	_build_tiles(side_idx)
 	_build_setts(side_idx)
+	var rng_ground := RandomNumberGenerator.new()
+	rng_ground.seed = road._seed_value(497 + side_idx * 1000)
+	_WreckGround.new().build(self, rng_ground, _soil, _rubble, _tiles)
 	var rng_curb := RandomNumberGenerator.new()
 	rng_curb.seed = road._seed_value(297 + side_idx * 1000)
 	_WreckCurb.new().build(self, side_idx, _sign, rng_curb, _curb, _rubble)
 	var tag := "Left" if side_idx == 0 else "Right"
+	_soil.commit(road, "WalkSoil" + tag,
+			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_SOIL))
 	_rubble.commit(road, "WalkRubble" + tag,
 			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_RUBBLE))
 	_curb.commit(road, "WalkCurb" + tag,
@@ -83,6 +89,26 @@ func build(side_idx: int, walk_len: float, walk_cz: float, walk_inner_x: float,
 			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_TILE))
 	_setts.commit(road, "WalkSetts" + tag,
 			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_SETT))
+	var samples := 0
+	var count := 0
+	var z := _z_start + 0.125
+	while z < _z_end:
+		samples += 1
+		if damage_at(_inner + _width * 0.5, z) > 0.0:
+			count += 1
+		z += 0.25
+	road.set_meta(StringName("walk_gone_%d" % side_idx), Vector2(count * 0.25, samples * 0.25))
+
+
+## Tile-local (x_abs outward from the road axis, z along the walk) to world XZ.
+func world_xz(x_abs: float, z: float) -> Vector2:
+	var p := _xform * Vector3(_sign * x_abs, _top, z)
+	return Vector2(p.x, p.z)
+
+
+## The destruction map's wreck value at a walk point (positive: obliterated).
+func damage_at(x_abs: float, z: float) -> float:
+	return _WreckMap.damage(world_xz(x_abs, z), tier_at(_side_idx, z))
 
 
 func tier_at(side_idx: int, z: float) -> int:
@@ -105,58 +131,6 @@ func _layout() -> void:
 		_tile_w = _width / _tile_cols
 
 
-## Picks the gone stretches: about half the walk, favouring the worst-ruined buildings.
-func _pick_gone(side_idx: int) -> void:
-	_gone.clear()
-	if road.wreck_spans.size() != 2:
-		return
-	var rng := RandomNumberGenerator.new()
-	rng.seed = road._seed_value(497 + side_idx * 1000)
-	var target := rng.randf_range(0.40, 0.60) * (_z_end - _z_start)
-	var cands: Array[Vector3] = []
-	for v: Vector3 in road.wreck_spans[side_idx]:
-		var z0 := maxf(v.x, _z_start)
-		var z1 := minf(v.y, _z_end)
-		var tier := clampi(int(v.z), 0, 3)
-		var score := tier + rng.randf() * 1.5
-		if z1 - z0 < 1.0 or tier == 0:
-			continue
-		cands.append(Vector3(z0, z1, score))
-	cands.sort_custom(func(a: Vector3, b: Vector3) -> bool: return a.z > b.z)
-	var total := 0.0
-	for c in cands:
-		if total >= target:
-			break
-		_gone.append(Vector2(c.x, c.y))
-		total += c.y - c.x
-
-
-## 0 outside the gone stretches; inside, how deep into one (0.3 at its ends, 1 beyond RAMP).
-func _gone_at(z: float) -> float:
-	for r in _gone:
-		if z >= r.x and z <= r.y:
-			var d := INF
-			if r.x > _z_start + 0.01:
-				d = minf(d, z - r.x)
-			if r.y < _z_end - 0.01:
-				d = minf(d, r.y - z)
-			return clampf(d / RAMP, 0.3, 1.0)
-	return 0.0
-
-
-## Outside the gone stretches, how close to one (1 at its end, 0 at EDGE_REACH).
-func _edge_near(z: float) -> float:
-	var d := INF
-	for r in _gone:
-		if z >= r.x and z <= r.y:
-			return 0.0
-		if r.x > _z_start + 0.01:
-			d = minf(d, absf(z - r.x))
-		if r.y < _z_end - 0.01:
-			d = minf(d, absf(z - r.y))
-	return maxf(0.0, 1.0 - d / EDGE_REACH)
-
-
 func _is_kept(z0: float, z1: float) -> bool:
 	for dz in _kept:
 		if z1 >= dz - 0.4 and z0 <= dz + 0.4:
@@ -165,24 +139,37 @@ func _is_kept(z0: float, z1: float) -> bool:
 
 
 ## Draw order is fixed (miss, move, kind) so the other outcomes never shift the stream.
-func _piece_state(rng: RandomNumberGenerator, tier: int, gone: float, edge: float,
-		kept: bool, miss_table: Array[float]) -> int:
+func _piece_state(rng: RandomNumberGenerator, tier: int, e: float, kept: bool,
+		is_tile: bool) -> int:
 	var r_miss := rng.randf()
 	var r_move := rng.randf()
 	var r_kind := rng.randf()
 	if kept:
 		return Piece.FLAT
-	var p_miss := miss_table[tier] + 0.35 * edge
-	if gone > 0.0:
-		p_miss = lerpf(miss_table[tier], GONE_MISSING, gone)
-	if r_miss < p_miss:
+	var zone := _WreckMap.zone(e)
+	if zone == _WreckMap.Zone.GONE:
 		return Piece.MISSING_PIECE
-	if gone > 0.0:
-		return Piece.TUMBLED if r_kind < 0.75 else Piece.TILTED
-	var p_tilt := TILT[tier] + 0.3 * edge
-	if r_move < p_tilt:
+	var t := _WreckMap.band_t(e)
+	var miss: Array[float] = MISSING if is_tile else MISSING_SETT
+	if zone == _WreckMap.Zone.FRAGMENT:
+		if r_miss < 0.15 + 0.55 * t + (0.0 if is_tile else 0.1):
+			return Piece.MISSING_PIECE
+		if r_kind < 0.4 + 0.5 * t:
+			return Piece.FRAGMENT
+		return Piece.TILTED if r_move < 0.5 else Piece.SUNK
+	if zone == _WreckMap.Zone.ROUGH:
+		if r_miss < miss[tier] * 0.5 + 0.06 * t:
+			return Piece.MISSING_PIECE
+		if r_move < 0.15 + 0.35 * t:
+			return Piece.TILTED
+		if r_move < 0.4 + 0.6 * t:
+			return Piece.SUNK
+		return Piece.FLAT
+	if r_miss < miss[tier] * 0.25:
+		return Piece.MISSING_PIECE
+	if r_move < TILT[tier] * 0.5:
 		return Piece.TILTED
-	if r_move < p_tilt + SINK[tier]:
+	if r_move < (TILT[tier] + SINK[tier]) * 0.5:
 		return Piece.SUNK
 	return Piece.FLAT
 
@@ -204,26 +191,29 @@ func _build_columns(side_idx: int, salt: int, is_tile: bool) -> void:
 	var pitch := TILE_PITCH if is_tile else SETT_PITCH
 	var w := _tile_w if is_tile else _sett_w
 	var x0 := _inner if is_tile else _inner + _tile_cols * _tile_w
-	var miss_table := MISSING if is_tile else MISSING_SETT
 	var rng := RandomNumberGenerator.new()
 	rng.seed = road._seed_value(salt + side_idx * 1000)
 	var cells: Array = []
 	var states: Array = []
 	var tones: Array = []
+	var damages: Array = []
 	for c in cols:
 		var shift := 0.0 if is_tile else (c % 2) * SETT_PITCH * 0.5
 		var col_cells := _cells(pitch, shift)
 		var col_states: Array[int] = []
 		var col_tones: Array[float] = []
+		var col_damages: Array[float] = []
 		for cell in col_cells:
 			var zm := (cell.x + cell.y) * 0.5
-			var gone := _gone_at(zm)
-			col_states.append(_piece_state(rng, tier_at(side_idx, zm), gone,
-					_edge_near(zm), _is_kept(cell.x, cell.y), miss_table))
+			var e := damage_at(x0 + (c + 0.5) * w, zm)
+			col_damages.append(e)
+			col_states.append(_piece_state(rng, tier_at(side_idx, zm), e,
+					_is_kept(cell.x, cell.y), is_tile))
 			col_tones.append(rng.randf())
 		cells.append(col_cells)
 		states.append(col_states)
 		tones.append(col_tones)
+		damages.append(col_damages)
 	var out := _tiles if is_tile else _setts
 	for c in cols:
 		var cx := x0 + (c + 0.5) * w
@@ -233,15 +223,14 @@ func _build_columns(side_idx: int, salt: int, is_tile: bool) -> void:
 			var cell := col_cells[r]
 			var zm := (cell.x + cell.y) * 0.5
 			var tier := tier_at(side_idx, zm)
-			var gone := _gone_at(zm)
-			var wreck := 1.0 if gone > 0.0 else tier / 3.0
+			var e: float = damages[c][r]
 			var tone: float = tones[c][r]
 			var state := col_states[r]
 			var sides := 0
 			if state == Piece.FLAT:
 				sides = _flat_sides(states, c, r, cols, is_tile)
 			_emit(rng, out, state, Vector2(cx, zm), Vector2(w, cell.y - cell.x), tier,
-					gone, wreck, tone, sides, is_tile)
+					e, tone, sides)
 
 
 ## Cells of one grid line along z: [k * pitch + shift, (k + 1) * pitch + shift] clipped to the walk.
@@ -284,18 +273,23 @@ func _flat_sides(states: Array, c: int, r: int, cols: int, is_tile: bool) -> int
 
 
 func _emit(rng: RandomNumberGenerator, out: _PavingMesh, state: int, at: Vector2, cell: Vector2,
-		tier: int, gone: float, wreck: float, tone: float, sides: int, is_tile: bool) -> void:
+		tier: int, e: float, tone: float, sides: int) -> void:
 	var w := cell.x
 	var length := cell.y
-	var size := Vector3(w - JOINT, PIT_DEPTH + 0.02, length - JOINT)
+	var zone := _WreckMap.zone(e)
+	var wreck := clampf(_WreckMap.wreck_tint(e) + 0.1 * tier, 0.0, 1.0)
+	var joint := JOINT * (0.7 + 0.6 * fposmod(tone * 7.31, 1.0))
+	var size := Vector3(w - joint, PIT_DEPTH + 0.02, length - joint)
 	var centre := Vector3(_sign * at.x, _top - size.y * 0.5, at.y)
 	match state:
 		Piece.FLAT:
 			out.add_block(size, Transform3D(Basis(), centre), wreck, tone, CHAMFER, sides, false)
 		Piece.TILTED:
-			var deg := rng.randf_range(0.4, 1.0) * TILT_DEG[tier]
-			if gone > 0.0:
-				deg = rng.randf_range(8.0, 20.0)
+			var deg := rng.randf_range(0.4, 1.0) * TILT_DEG[tier] * 0.5
+			if zone == _WreckMap.Zone.FRAGMENT:
+				deg = rng.randf_range(4.0, 14.0)
+			elif zone == _WreckMap.Zone.ROUGH:
+				deg = rng.randf_range(1.0, 5.0)
 			var a := deg_to_rad(deg)
 			var on_x := rng.randf() < 0.5
 			var s := 1.0 if rng.randf() < 0.5 else -1.0
@@ -311,26 +305,31 @@ func _emit(rng: RandomNumberGenerator, out: _PavingMesh, state: int, at: Vector2
 					* Transform3D(Basis(), -hinge) * Transform3D(Basis(), centre)
 			out.add_block(size, xf, wreck, tone, CHAMFER, _PavingMesh.SIDE_ALL, false)
 		Piece.SUNK:
-			centre.y -= rng.randf_range(0.015, 0.05)
+			var drop := rng.randf_range(0.015, 0.05)
+			var tilt := rng.randf_range(0.0, 3.0)
+			if zone == _WreckMap.Zone.FRAGMENT:
+				drop = rng.randf_range(0.02, 0.08)
+				tilt = rng.randf_range(0.0, 4.0)
+			elif zone == _WreckMap.Zone.ROUGH:
+				drop = rng.randf_range(0.005, 0.03)
+				tilt = rng.randf_range(0.0, 2.0)
+			centre.y -= drop
 			var t := rng.randf() * TAU
-			var basis := Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 3.0)))
+			var basis := Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(tilt))
 			out.add_block(size, Transform3D(basis, centre), wreck, tone, CHAMFER,
 					_PavingMesh.SIDE_ALL, false)
-		Piece.TUMBLED:
-			var thin := Vector3((w - JOINT) * rng.randf_range(0.6, 1.0),
-					0.08 if is_tile else 0.10, (length - JOINT) * rng.randf_range(0.6, 1.0))
-			var pos := Vector3(centre.x, _bed_y + thin.y * 0.5 + rng.randf_range(0.0, 0.06),
-					centre.z)
+		Piece.FRAGMENT:
+			var fp := _WreckGround.fragment_footprint(rng, w - joint, length - joint)
+			var drop := rng.randf_range(0.02, 0.08)
+			var height := PIT_DEPTH + 0.02 - drop
 			var t := rng.randf() * TAU
-			var basis := Basis(Vector3.UP, rng.randf_range(-0.3, 0.3)) \
-					* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(8.0, 28.0)))
-			out.add_block(thin, Transform3D(basis, pos), wreck, tone, CHAMFER,
-					_PavingMesh.SIDE_ALL, true)
+			var basis := Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 10.0)))
+			var pos := Vector3(centre.x, _top - drop - height * 0.5, centre.z)
+			out.add_prism(fp, height, Transform3D(basis, pos), wreck, tone, false)
+			if rng.randf() < 0.4:
+				_add_chunk(rng, at)
 		Piece.MISSING_PIECE:
-			var chance := 0.6 if is_tile else 0.25
-			if gone <= 0.0:
-				chance = 0.5 if is_tile else 0.2
-			if rng.randf() < chance:
+			if zone == _WreckMap.Zone.FRAGMENT and rng.randf() < 0.5:
 				_add_chunk(rng, at)
 
 

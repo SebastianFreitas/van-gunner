@@ -155,6 +155,7 @@ func _register_commands() -> void:
 		"parts": _meta.cmd_parts,
 		"tree_reset": _meta.cmd_tree_reset,
 		"facade": _facade.cmd_facade,
+		"walk_wreck": _facade.cmd_walk_wreck,
 	}
 
 
@@ -199,6 +200,7 @@ func _cmd_help(_args: Array) -> String:
 		+ "  parts [n]       add Rare Parts (meta schematic currency)\n"
 		+ "  tree_reset      wipe the schematic back to origin (keeps parts)\n"
 		+ "  facade [sub]    street facade debug (try facade help)\n"
+		+ "  walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street\n"
 		+ "  Tab            autocomplete command or item id"
 	) % ", ".join(names)
 

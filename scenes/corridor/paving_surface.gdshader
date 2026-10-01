@@ -16,6 +16,8 @@ uniform float crack_width_m = 0.035;
 uniform float crack_amount = 1.0;
 uniform float litter = 0.5;
 uniform float roughness_value = 0.9;
+// How far wreck pulls the albedo toward dirt_color.
+uniform float wreck_dirt = 0.6;
 
 varying vec3 v_world;
 varying vec3 v_wnormal;
@@ -57,12 +59,16 @@ void fragment() {
 	float w = fbm(p * 1.3 + 4.0);
 	col *= 1.0 + 0.08 * top * smoothstep(0.6, 0.75, w);
 
+	// Damaged paving grades from fair to dirty as it nears an obliterated zone.
+	col = mix(col, dirt_color, clamp(wreck, 0.0, 1.0) * wreck_dirt);
+
 	// Cracks on tops, only on wrecked pieces; crack_field returns an edge distance in
 	// cell units, and the cells are 1/1.8 m.
 	float edge_m = crack_field(p * 1.8 + vec2(tone * 31.0)) / 1.8;
 	float line = 1.0 - smoothstep(crack_width_m * 0.5, crack_width_m, edge_m);
 	float cfade = 1.0 - smoothstep(0.02, 0.05, fw);
-	float crack = line * crack_amount * top * smoothstep(0.15, 0.6, wreck + tone * 0.3) * cfade;
+	float crack = line * crack_amount * top * smoothstep(0.15, 0.6, wreck + tone * 0.3) * cfade
+			* (0.35 + 0.65 * wreck);
 	col = mix(col, dirt_color * 0.6, clamp(crack, 0.0, 1.0));
 
 	// Wreck darkening and dirt toward the foot of the sides.
@@ -71,7 +77,7 @@ void fragment() {
 
 	// Litter on tops.
 	vec2 cell = floor(v_world.xz / 0.6);
-	if (hash21(cell) < 0.04 * litter && top > 0.5) {
+	if (hash21(cell) < 0.04 * litter * (0.5 + wreck) && top > 0.5) {
 		vec2 centre = cell * 0.6 + 0.3 + (hash22(cell) - 0.5) * 0.3;
 		vec2 half_size = vec2(0.04 + 0.04 * hash21(cell + 3.1), 0.03 + 0.03 * hash21(cell + 5.7));
 		vec2 d = abs(v_world.xz - centre);
@@ -83,5 +89,12 @@ void fragment() {
 	ALBEDO = col;
 	ROUGHNESS = roughness_value;
 	METALLIC = 0.0;
-	SPECULAR = 0.4;
+
+	// Far away the chamfers and tops must not glow as a grid: lean their normals up and
+	// dull the specular.
+	float far = smoothstep(18.0, 45.0, length(VERTEX));
+	if (up > 0.5) {
+		NORMAL = normalize(mix(NORMAL, (VIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xyz, far * 0.8));
+	}
+	SPECULAR = 0.4 * (1.0 - far * 0.7);
 }

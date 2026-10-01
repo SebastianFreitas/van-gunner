@@ -25,7 +25,6 @@ uniform vec3 scorch_color : source_color = vec3(0.012, 0.010, 0.009);
 uniform float breakage : hint_range(0.0, 1.0) = 0.5;
 uniform float litter : hint_range(0.0, 1.0) = 0.6;
 uniform float weeds : hint_range(0.0, 1.0) = 0.6;
-uniform bool pit_fill = false; // soil bed under the slabs: draw only the missing-slab fill
 
 // Voronoi on the sidewalk's cell layout (crack_field_h21's), returning x = gap to the
 // second-nearest site and y = the nearest site's hash, so one shard can be picked by id.
@@ -110,11 +109,6 @@ void fragment() {
 	float pebble = mix(0.3, step(0.7, hash21(floor(uv_m * 14.0))), pebble_fade);
 	float hole_rim = interior * (1.0 - smoothstep(0.06, 0.09, edge_m));
 	vec3 hole_col = (fill_color + 0.03 * pebble) * mix(1.0, 0.6, hole_rim);
-	if (pit_fill) {
-		// Soil bed under the slabs: the hole colour covers base and seams everywhere.
-		missing = 1.0;
-		shattered = 0.0;
-	}
 	color = mix(color, hole_col, missing);
 	vec2 shard = shard_cells(uv_m / 0.6 + slab_h * 37.0);
 	float gap_vis = smoothstep(0.5, 1.5, 0.015 / fw_m);
@@ -141,10 +135,8 @@ void fragment() {
 	color = mix(color, crack_color, cracks * 0.8);
 
 	// Weeds in the seams, the cracks and the wall-side dirt band.
-	// Pits under missing slabs are always weedy.
-	float weeds_eff = pit_fill ? 1.0 : weeds;
-	float weed_cond = step(0.001, weeds_eff)
-		* smoothstep(0.59 - 0.2 * weeds_eff, 0.65 - 0.2 * weeds_eff, fbm(pos * 2.0));
+	float weed_cond = step(0.001, weeds)
+		* smoothstep(0.59 - 0.2 * weeds, 0.65 - 0.2 * weeds, fbm(pos * 2.0));
 	float weed_rag = mix(0.5, noise21(pos * 25.0), 1.0 - smoothstep(0.02, 0.04, fw_m));
 	float weed_spread = mix(0.02, 0.06, weed_rag);
 	float weed_m = max(1.0 - smoothstep(0.0, weed_spread, edge_m), cracks);
@@ -236,7 +228,7 @@ void fragment() {
 	ROUGHNESS = mix(rough, 0.25, speck);
 
 	float n_x = (fbm(uv_m * 8.0) - 0.5) * 0.3 + cracks * 0.35;
-	float n_y = (slab_phase - 0.5) * seams * 0.4 * (pit_fill ? 0.0 : 1.0) +(grain - 0.5) * 0.15;
+	float n_y = (slab_phase - 0.5) * seams * 0.4 + (grain - 0.5) * 0.15;
 	NORMAL_MAP = vec3(n_x, n_y, 1.0) * 0.5 + 0.5;
 	NORMAL_MAP_DEPTH = 0.4;
 }
