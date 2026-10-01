@@ -755,9 +755,12 @@ mesh = SubResource("RearWindowGlassMesh")
 
 [node name="IronCross" parent="RearWall/LeftHinge" unique_id=2045646296 instance=ExtResource("22")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.315, 0.225, 0.03)
-span_width = 1.96
-span_height = 1.53
 mount_z = 0.065
+end_style = 1
+frame_half = Vector2(1.04, 0.825)
+clear_half = Vector2(0.97, 0.75)
+skin_z = 0.05
+skin_reach = Vector2(1.12, 0.9)
 
 [node name="BreakableGlass" type="Area3D" parent="RearWall/LeftHinge" unique_id=1233106595]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.315, 0.225, -0.06)
@@ -841,9 +844,12 @@ mesh = SubResource("RearWindowGlassMesh")
 
 [node name="IronCross" parent="RearWall/RightHinge" unique_id=628526038 instance=ExtResource("22")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.315, 0.225, 0.03)
-span_width = 1.96
-span_height = 1.53
 mount_z = 0.065
+end_style = 1
+frame_half = Vector2(1.04, 0.825)
+clear_half = Vector2(0.97, 0.75)
+skin_z = 0.05
+skin_reach = Vector2(1.12, 0.9)
 
 [node name="BreakableGlass" type="Area3D" parent="RearWall/RightHinge" unique_id=755178602]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.315, 0.225, -0.06)

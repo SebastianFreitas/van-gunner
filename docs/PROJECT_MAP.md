@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-326 GDScript files, 50789 lines.
+327 GDScript files, 51100 lines.
 
 ### `scenes/corridor/`
 
@@ -644,9 +644,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). |
-| `broken_iron_cross.gd` | `BrokenIronCross` | 260 | Blown-out iron + after a window breach. |
-| `iron_cross.gd` | `IronCross` | 261 | Welded iron + outside a window pane. |
-| `iron_cross_geo.gd` | — | 268 | Mesh builder for IronCross: bars, plate, pads and rivets that follow the bowed side wall. |
+| `broken_iron_cross.gd` | `BrokenIronCross` | 209 | Blown-out rebar bars after a window breach. |
+| `iron_cross.gd` | `IronCross` | 246 | Scrap rebar + outside a window pane: two bent bars, often one in a pipe sleeve, welded and lashed. |
+| `iron_cross_build.gd` | — | 347 | Builds IronCross's scrap +: two bent rebar bars, a pipe sleeve, blobby welds, a seeded centre. |
+| `iron_cross_geo.gd` | — | 298 | Mesh builder for IronCross: rods, boxes, bolts and weld blobs that follow the bowed side wall. |
 | `rear_door_frame.gd` | — | 143 | Fixed steel frame on the cabin side of the rear doors, covering the leaves' clearance slits. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
 | `rear_door_leaf_build.gd` | — | 140 | Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55). |

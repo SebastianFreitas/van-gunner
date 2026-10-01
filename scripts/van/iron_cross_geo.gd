@@ -1,9 +1,5 @@
 extends RefCounted
-## Mesh builder for IronCross: bars, plate, pads and rivets that follow the bowed side wall.
-
-## Rivet head: a low cone, so no flat face over 1 cm² sits parallel to the exterior pane.
-const RIVET_TOP_RADIUS := 0.004
-const RIVET_HEIGHT := 0.006
+## Mesh builder for IronCross: rods, boxes, bolts and weld blobs that follow the bowed side wall.
 
 const BOLT_RADIUS := 0.011
 ## Hex top under 1 cm² so it never trips the audit's FLICKER rule.
@@ -71,29 +67,6 @@ func add_box(
 	return mi
 
 
-## One cone rivet head whose base sits `z_base` off the surface (1 mm sunk).
-func add_rivet(
-	parent: Node3D, node_name: String, at: Vector2, z_base: float, size: float, mat: Material
-) -> MeshInstance3D:
-	var mesh := CylinderMesh.new()
-	mesh.bottom_radius = size * 0.5
-	mesh.top_radius = RIVET_TOP_RADIUS
-	mesh.height = RIVET_HEIGHT
-	mesh.radial_segments = 8
-	mesh.rings = 0
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = mesh
-	var b := basis_at(at.x, at.y) * Basis(Vector3.RIGHT, PI / 2.0)
-	var pos := Vector3(at.x, at.y, surface_z(at.x, at.y))
-	pos += basis_at(at.x, at.y).z * (z_base + RIVET_HEIGHT * 0.5 - 0.001)
-	mi.transform = Transform3D(b, pos)
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	_commit(parent, mi)
-	return mi
-
-
 ## One hex bolt head on the surface at `at`; z_base is its base height off the surface (2 mm sunk).
 func add_bolt(
 	parent: Node3D, node_name: String, at: Vector2, z_base: float, mat: Material
@@ -119,128 +92,185 @@ func add_bolt(
 	return mi
 
 
-## Eight points, counter-clockwise from +Z, of a rectangle with its corners cut by `chamfer`.
-static func chamfered_rect(half_x: float, half_y: float, chamfer: float) -> PackedVector2Array:
-	var hx := half_x
-	var hy := half_y
-	var c := chamfer
-	return PackedVector2Array([
-		Vector2(hx - c, -hy), Vector2(hx, -hy + c), Vector2(hx, hy - c), Vector2(hx - c, hy),
-		Vector2(-hx + c, hy), Vector2(-hx, hy - c), Vector2(-hx, -hy + c), Vector2(-hx + c, -hy),
-	])
-
-
-## Prism of `poly` (counter-clockwise from +Z), z 0 to `depth`, its back `z_back` off the surface.
-func add_prism(
-	parent: Node3D, node_name: String, poly: PackedVector2Array, at: Vector2,
-	z_back: float, depth: float, mat: Material
+## Sweeps a round section along `path` (local x, y, z before the wall bow; each point is mapped to
+## (x, y, z + surface_z(x, y))). `radii` has one radius per path point. `rib_step` > 0 adds rebar ribs.
+func add_rod(
+	parent: Node3D, part_name: String, path: PackedVector3Array, radii: PackedFloat32Array,
+	sides: int, rib_step: float, mat: Material, closed: bool = false
 ) -> MeshInstance3D:
+	if path.size() < 2 or radii.size() != path.size():
+		push_warning("add_rod %s: need 2+ points and one radius per point" % part_name)
+		return null
+	var ring_sides := maxi(sides, 3)
+	var clean_pts := PackedVector3Array()
+	var clean_rad := PackedFloat32Array()
+	for i in range(path.size()):
+		if clean_pts.size() > 0 and clean_pts[clean_pts.size() - 1].is_equal_approx(path[i]):
+			continue
+		clean_pts.append(path[i])
+		clean_rad.append(radii[i])
+	if clean_pts.size() < 2:
+		push_warning("add_rod %s: path has no length" % part_name)
+		return null
+	var dense := _densify_with_radii(clean_pts, clean_rad, rib_step * 0.5 if rib_step > 0.0 else 0.04)
+	var pts: PackedVector3Array = dense[0]
+	var rads: PackedFloat32Array = dense[1]
+	var count := pts.size()
+	for i in range(count):
+		if rib_step > 0.0 and i > 0 and i < count - 2 and i % 2 == 1:
+			rads[i] *= 1.14
+		pts[i].z += surface_z(pts[i].x, pts[i].y)
+
+	# Parallel-transport frames.
+	var tangents: Array[Vector3] = []
+	for i in range(count):
+		var prev := i - 1
+		var next := i + 1
+		if closed:
+			prev = (i - 1 + count) % count
+			next = (i + 1) % count
+		else:
+			prev = maxi(prev, 0)
+			next = mini(next, count - 1)
+		tangents.append((pts[next] - pts[prev]).normalized())
+	var normals: Array[Vector3] = []
+	var n0 := tangents[0].cross(Vector3.UP)
+	if n0.length() < 0.001:
+		n0 = tangents[0].cross(Vector3.RIGHT)
+	normals.append(n0.normalized())
+	for i in range(1, count):
+		var n := normals[i - 1] - tangents[i] * normals[i - 1].dot(tangents[i])
+		normals.append(n.normalized())
+
+	var rings: Array[PackedVector3Array] = []
+	for i in range(count):
+		var bin := tangents[i].cross(normals[i])
+		var ring := PackedVector3Array()
+		for j in range(ring_sides):
+			var a := TAU * float(j) / float(ring_sides)
+			ring.append(pts[i] + rads[i] * (cos(a) * normals[i] + sin(a) * bin))
+		rings.append(ring)
+
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_smooth_group(-1)
-	var n := poly.size()
-	var centroid := Vector2.ZERO
-	for p in poly:
-		centroid += p
-	centroid /= float(n)
-	var cf := Vector3(centroid.x, centroid.y, depth)
-	var cb := Vector3(centroid.x, centroid.y, 0.0)
-	for i in range(n):
-		var p0 := poly[i]
-		var p1 := poly[(i + 1) % n]
-		var f0 := Vector3(p0.x, p0.y, depth)
-		var f1 := Vector3(p1.x, p1.y, depth)
-		var b0 := Vector3(p0.x, p0.y, 0.0)
-		var b1 := Vector3(p1.x, p1.y, 0.0)
-		_add_tri(st, cf, f1, f0)
-		_add_tri(st, cb, b0, b1)
-		_add_tri(st, f0, f1, b1)
-		_add_tri(st, f0, b1, b0)
+	var spans := count if closed else count - 1
+	for i in range(spans):
+		var ra := rings[i]
+		var rb := rings[(i + 1) % count]
+		for j in range(ring_sides):
+			var k := (j + 1) % ring_sides
+			_add_quad(st, ra[j], rb[j], rb[k], ra[k])
+	if not closed:
+		var start := rings[0]
+		var end := rings[count - 1]
+		for j in range(ring_sides):
+			var k := (j + 1) % ring_sides
+			_add_tri(st, pts[0], start[j], start[k])
+			_add_tri(st, pts[count - 1], end[k], end[j])
 	st.generate_normals()
+	st.generate_tangents()
 	var mi := MeshInstance3D.new()
-	mi.name = node_name
+	mi.name = part_name
 	mi.mesh = st.commit()
-	var b := basis_at(at.x, at.y)
-	var pos := Vector3(at.x, at.y, surface_z(at.x, at.y)) + b.z * z_back
-	mi.transform = Transform3D(b, pos)
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	_commit(parent, mi)
 	return mi
 
 
-## Square tube `size` wide and deep, edges cut by `chamfer`, centred `z_center` off the surface.
-func add_tube(
-	parent: Node3D, node_name: String, vertical: bool, half_len: float, size: float,
-	chamfer: float, z_center: float, mat: Material
-) -> void:
-	var h := size * 0.5
-	var c := chamfer if chamfer < h else size * 0.25
-	# Corners as (across, depth), in the rotational order of the old 4-point bars.
-	var corners: Array[Vector2]
-	if vertical:
-		corners = [Vector2(h, -h), Vector2(-h, -h), Vector2(-h, h), Vector2(h, h)]
-	else:
-		corners = [Vector2(-h, -h), Vector2(h, -h), Vector2(h, h), Vector2(-h, h)]
-	var section: Array[Vector2] = []
-	for k in range(4):
-		var corner := corners[k]
-		var prev := corners[(k + 3) % 4]
-		var next := corners[(k + 1) % 4]
-		section.append(corner + (prev - corner).normalized() * c)
-		section.append(corner + (next - corner).normalized() * c)
-	var segs := maxi(segments, 2)
-	var rings: Array = []
-	for i in range(segs + 1):
-		var along := lerpf(-half_len, half_len, float(i) / float(segs))
-		var ring: Array = []
-		for s in section:
-			var x := s.x if vertical else along
-			var y := along if vertical else s.x
-			ring.append(Vector3(x, y, z_center + s.y + surface_z(x, y)))
-		rings.append(ring)
-	_commit_lofted_bar(parent, node_name, rings, mat)
+## A lumpy weld blob: a squashed low-poly ball at `center` (local, bow-mapped), `size` = full extents.
+func add_blob(
+	parent: Node3D, part_name: String, center: Vector3, size: Vector3,
+	rng: RandomNumberGenerator, mat: Material
+) -> MeshInstance3D:
+	var mesh := SphereMesh.new()
+	mesh.radial_segments = 6
+	mesh.rings = 3
+	mesh.radius = 0.5
+	mesh.height = 1.0
+	var mi := MeshInstance3D.new()
+	mi.name = part_name
+	mi.mesh = mesh
+	var jitter := Vector3(
+		rng.randf_range(0.8, 1.2), rng.randf_range(0.8, 1.2), rng.randf_range(0.8, 1.2)
+	)
+	var b := basis_at(center.x, center.y) * Basis(Vector3.BACK, rng.randf_range(0.0, TAU))
+	b = b.scaled_local(size * jitter)
+	mi.transform = Transform3D(b, Vector3(center.x, center.y, center.z + surface_z(center.x, center.y)))
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	_commit(parent, mi)
+	return mi
+
+
+## Points of a helix of `turns` turns around the segment a..b (local space), radius `r`,
+## `steps_per_turn` points per turn, starting at angle `phase`.
+static func helix_path(
+	a: Vector3, b: Vector3, r: float, turns: float, steps_per_turn: int, phase: float
+) -> PackedVector3Array:
+	var d := b - a
+	var uv := _perp_pair(d)
+	var n := maxi(2, int(turns * steps_per_turn))
+	var out := PackedVector3Array()
+	for i in range(n + 1):
+		var ang := phase + TAU * turns * float(i) / float(n)
+		out.append(a + d * (float(i) / float(n)) + r * (cos(ang) * uv[0] + sin(ang) * uv[1]))
+	return out
+
+
+## A closed ring of `steps` points of radius `r` around `center`, in the plane normal to `axis`.
+static func ring_path(center: Vector3, axis: Vector3, r: float, steps: int) -> PackedVector3Array:
+	var uv := _perp_pair(axis)
+	var out := PackedVector3Array()
+	for i in range(steps):
+		var ang := TAU * float(i) / float(steps)
+		out.append(center + r * (cos(ang) * uv[0] + sin(ang) * uv[1]))
+	return out
+
+
+## Resamples `path` so no segment is longer than `max_len` (keeps every original point). Used so a
+## long straight bar still bends with the wall bow and gets rib rings.
+static func densify(path: PackedVector3Array, max_len: float) -> PackedVector3Array:
+	var radii := PackedFloat32Array()
+	radii.resize(path.size())
+	var res := _densify_with_radii(path, radii, max_len)
+	return res[0]
+
+
+## Two unit vectors perpendicular to `axis` and to each other.
+static func _perp_pair(axis: Vector3) -> Array[Vector3]:
+	var dir := axis.normalized()
+	var u := dir.cross(Vector3.UP)
+	if u.length() < 0.001:
+		u = dir.cross(Vector3.RIGHT)
+	u = u.normalized()
+	return [u, dir.cross(u)]
+
+
+## `densify` that interpolates a radius per point too; returns [points, radii].
+static func _densify_with_radii(
+	path: PackedVector3Array, radii: PackedFloat32Array, max_len: float
+) -> Array:
+	var pts := PackedVector3Array()
+	var rads := PackedFloat32Array()
+	for i in range(path.size()):
+		pts.append(path[i])
+		rads.append(radii[i])
+		if i == path.size() - 1:
+			break
+		var extra := int(ceil(path[i].distance_to(path[i + 1]) / max_len)) - 1
+		for k in range(1, extra + 1):
+			var f := float(k) / float(extra + 1)
+			pts.append(path[i].lerp(path[i + 1], f))
+			rads.append(lerpf(radii[i], radii[i + 1], f))
+	return [pts, rads]
 
 
 func _commit(parent: Node3D, mi: MeshInstance3D) -> void:
 	if on_mesh.is_valid():
 		on_mesh.call(mi)
 	parent.add_child(mi)
-
-
-func _commit_lofted_bar(parent: Node3D, node_name: String, rings: Array, mat: Material) -> void:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	st.set_smooth_group(-1)
-	var segs := rings.size() - 1
-	var n: int = (rings[0] as Array).size()
-
-	for i in range(segs):
-		var a: Array = rings[i]
-		var b: Array = rings[i + 1]
-		# Each consecutive point pair is one face; the second half of the ring is the same
-		# quad turned one corner, which keeps the 4-point bars' original quad order.
-		for j in range(n):
-			var k := (j + 1) % n
-			if j < n >> 1:
-				_add_quad(st, a[j], b[j], b[k], a[k])
-			else:
-				_add_quad(st, a[k], a[j], b[j], b[k])
-
-	var start: Array = rings[0]
-	var end: Array = rings[segs]
-	for k in range(1, n - 2, 2):
-		_add_quad(st, start[0], start[k], start[k + 1], start[k + 2])
-		_add_quad(st, end[0], end[k + 2], end[k + 1], end[k])
-
-	st.generate_normals()
-	st.generate_tangents()
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = st.commit()
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	_commit(parent, mi)
 
 
 func _add_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
