@@ -2,9 +2,9 @@
 
 Owner's design (2026-10-01, second pass): creepy, not cute, Darkest Dungeon
 dark. The door raider is a humanoid gone feral: a hunched loper whose head
-hangs forward below the shoulders, arms longer than the legs with the claws
-on the van floor, knobbed spine, hanging jaw, corpse-grey skin and black
-eye pits, nothing bright. The window raider (the low yellow crawler that
+hangs forward out of a furred ruff, tapered arms longer than the legs with
+the claws on the van floor, hair that trails every bob, knobbed spine,
+hanging jaw, corpse-grey skin and black eye pits, nothing bright. The window raider (the low yellow crawler that
 fits through a side window) is still the first pass and waits for its own
 redraw. door_raider.png is a 13-frame 832 x 80 run sheet (a bounding charge,
 seen from the front); frame 0 is the still.
@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import random
 from pathlib import Path
 
 from PIL import Image
@@ -57,6 +58,10 @@ BLOOD = (96, 20, 16)
 BLOOD_DARK = (54, 10, 8)
 CLAW = (26, 23, 21)
 CLAW_TIP = (112, 44, 30)
+# soot black-brown fur: base, shadow, highlight, inside the albedo budget
+FUR_HI = (64, 53, 42)
+FUR = (42, 34, 28)
+FUR_SH = (25, 21, 18)
 
 YEL_HI = (222, 204, 136)
 YEL = (204, 186, 114)
@@ -180,6 +185,58 @@ def both(a, b):
 	return lambda x, y: a(x, y) and b(x, y)
 
 
+def either(*preds):
+	"""Union of predicates."""
+	return lambda x, y: any(p(x, y) for p in preds)
+
+
+def minus(a, b):
+	"""Points in a that are not in b."""
+	return lambda x, y: a(x, y) and not b(x, y)
+
+
+def taper(points, radii):
+	"""Muscle that thins toward the wrist or ankle, so a limb is one tapered shape,
+	not a ball on a stick."""
+	return either(*[capsule(*points[i], *points[i + 1], radii[i], radii[i + 1])
+		for i in range(len(points) - 1)])
+
+
+def fur_fringe(c: Canvas, m, seed, sway=(0, 0), length=3, density=0.55,
+		up_only=False) -> None:
+	"""Hair tufts along the outside edge of mask m: dark jagged hair on the outline.
+
+	The same seed draws the same tuft roots and lengths every frame; only sway moves
+	the tips."""
+	rng = random.Random(seed)
+	cx = sum(p[0] for p in m) / len(m)
+	cy = sum(p[1] for p in m) / len(m)
+	for x, y in sorted(m):
+		outs = [(dx, dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+			if (x + dx, y + dy) not in m and not (up_only and dy == 1)]
+		if not outs:
+			continue
+		if rng.random() >= density:
+			continue
+		n = max(1, length + rng.randint(-1, 1))
+		d = outs[rng.randrange(len(outs))]
+		ox, oy = x - cx, y - cy
+		norm = math.hypot(ox, oy) or 1.0
+		nx = (ox / norm + d[0]) / 2
+		ny = (oy / norm + d[1]) / 2
+		prev = (x, y)
+		for i in range(1, n + 1):
+			t = i / n
+			px = round(x + nx * i * 1.5 + sway[0] * t)
+			py = round(y + ny * i * 1.5 + sway[1] * t)
+			if (px, py) in m or (px, py) == prev:
+				continue
+			c.set(px, py, OUTLINE if i == n else FUR_SH)
+			prev = (px, py)
+		if (x, y) in m:
+			c.set(x, y, FUR_SH)
+
+
 def light(cx, cy, rx, ry, kx=0.75, ky=0.65):
 	"""Signed position along the upper-left light: negative is lit."""
 	return lambda x, y: (x - cx) / rx * kx + (y - cy) / ry * ky
@@ -271,11 +328,13 @@ def draw_strand(c: Canvas, x0: int, y0: int, x1: int, y1: int) -> None:
 	c.fill(c.mask(capsule(x0, y0, x1, y1, 0.6)), OUTLINE)
 
 
-def draw_rump(c: Canvas, cy: int, rx: float, ry: float, tail) -> None:
-	"""Two haunch lobes and the tail-bone knobs, seen over the dropped hump."""
+def draw_rump(c: Canvas, cy: int, rx: float, ry: float, tail, sway=(0, 0),
+		flare: int = 0) -> None:
+	"""Two furred haunch lobes and the tail-bone knobs, seen over the dropped hump."""
 	for cx in (27, 37):
 		lobe = c.mask(ellipse(cx, cy, rx, ry))
-		c.part(lobe, SKIN, SKIN_SH, SKIN_HI, light(cx, cy, rx, ry), 0.25, -1.0)
+		c.part(lobe, FUR, FUR_SH, FUR_HI, light(cx, cy, rx, ry), 0.25, -1.0)
+		fur_fringe(c, lobe, seed=41, sway=sway, length=2 + flare, up_only=True)
 	for r in tail:
 		knob = c.mask(ellipse(32, r, 1.6, 1.4))
 		c.outline(knob)
@@ -298,86 +357,95 @@ def draw_sole(c: Canvas, cx: int, cy: int) -> None:
 # by: the body's rise (negative is up; it carries the torso, shoulders, arms, head and
 # drips); hump_dy / head_dy: extra y for the spine hump and the skull on top of by (the
 # hump may rise at most 5 px net, its top knob sits on row 5); shoulder_dx: how far the
-# shoulder balls, the arms' roots and the tear spread apart; lag: extra y for the hanging
+# shoulders, the arms' roots and the tear spread apart; lag: extra y for the hanging
 # jaw, the chin blood and the strand ends, which trail the head; left/right: (elbow, wrist,
 # claw tips) per arm; legs: ((knee, foot) left, (knee, foot) right) as absolute points.
 # rump: (cy, rx, ry, tail), two lobes at x 27 and x 37 on row cy, tail the rows of the
 # tail-bone knobs at x 32 (absolute rows, never shifted by by); soles: each leg's foot is
 # the ankle and a hind sole with its claws up is drawn 5 px above it, not the floor claws.
 # Frame 0 still. Frame 1 crouch: hips down, knees wide, head low. Frame 2 push: hind legs
-# straight under the body, hump at its highest, head up. Frame 3 paws-rise: both paws half
-# lifted, hind feet planted. Frame 4 lift-off: paws tuck under the chest, left toes still on
-# the floor, the rump starting to show over the dropped hump. Frame 5 tip-over: the left hind
-# foot pushes off the floor, the right leg swings up behind, the head dropping. Frame 6 kick:
-# airborne, the head dropped 13 px to the chest, the two-lobed rump and tail-bone above the
-# hump, both hind feet sole-on at the top corners, claws up. Frame 7 fall: still airborne,
-# the paws reaching down, the soles swinging lower. Frame 8 drop: claws 1 px off the floor,
-# the hind feet coming down under the rump. Frame 9 reach: first contact, paws wide, the rump
-# still high. Frame 10 rump-down: the rump sinks behind the hump onto the hind legs.
-# Frame 11 land: paws flat. Frame 12 gather: the still's shape with the body 1 px low.
+# straight under the body, hump at its highest, the head still low (it trails the body).
+# Frame 3 paws-rise: both paws half lifted, hind feet planted. Frame 4 lift-off: paws tuck
+# under the chest, left toes still on the floor, the rump starting to show over the dropped
+# hump. Frame 5 tip-over: the left hind foot pushes off the floor, the right leg swings up
+# behind, the head dropping. Frame 6 kick: airborne but low, the head dropped 14 px to the
+# chest, the two-lobed rump and tail-bone above the hump, both hind feet sole-on at the top
+# corners, claws up. Frame 7 fall: still airborne, the head still dropping, the paws reaching
+# down. Frame 8 drop: claws 2 px off the floor, the hind feet coming down under the rump.
+# Frame 9 reach: first contact, paws wide, the rump still high, the body barely down. Frame 10
+# rump-down: the lowest body and head, the rump sinks behind the hump onto the hind legs, the
+# shoulders spread and the elbows bowed out. Frame 11 land: paws flat, the body settling, the
+# head recovering. Frame 12 gather: the still's shape with the body 2 px low.
 LOPER_POSES = [
 	dict(by=0, hump_dy=0, head_dy=0, shoulder_dx=0, lag=0,
 		left=((4, 43), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
 		right=((60, 48), (57, 73), [(52, 78), (56, 79), (60, 79), (63, 77)]),
 		legs=(((16, 66), (19, 75)), ((48, 67), (45, 75)))),
-	dict(by=2, hump_dy=-1, head_dy=2, shoulder_dx=1, lag=1,  # 1 crouch
-		left=((2, 48), (9, 72), [(3, 79), (7, 79), (11, 79), (15, 78)]),
-		right=((62, 52), (56, 74), [(51, 78), (55, 79), (59, 79), (63, 78)]),
-		legs=(((12, 68), (19, 75)), ((52, 69), (45, 75)))),
-	dict(by=-3, hump_dy=-2, head_dy=-1, shoulder_dx=0, lag=2,  # 2 push
-		left=((5, 40), (8, 70), [(2, 79), (6, 79), (10, 79), (14, 78)]),
-		right=((59, 44), (57, 72), [(52, 78), (56, 79), (60, 79), (63, 77)]),
-		legs=(((22, 64), (20, 75)), ((42, 65), (44, 75)))),
-	dict(by=-5, hump_dy=2, head_dy=1, shoulder_dx=0, lag=3,  # 3 paws-rise
-		left=((4, 37), (11, 61), [(6, 67), (9, 69), (13, 69), (16, 67)]),
-		right=((60, 40), (54, 63), [(49, 68), (52, 70), (55, 70), (58, 68)]),
-		legs=(((20, 63), (20, 75)), ((44, 62), (45, 75)))),
-	dict(by=-6, hump_dy=5, head_dy=3, shoulder_dx=-1, lag=3,  # 4 lift-off
-		left=((3, 34), (14, 52), [(10, 56), (13, 58), (16, 58), (18, 56)]),
-		right=((61, 36), (50, 54), [(46, 58), (49, 60), (52, 60), (54, 58)]),
-		legs=(((17, 62), (19, 75)), ((47, 58), (46, 67))), rump=(6, 7, 5, ())),
-	dict(by=-7, hump_dy=8, head_dy=8, shoulder_dx=-1, lag=3,  # 5 tip-over
-		left=((4, 39), (11, 59), [(6, 65), (9, 67), (13, 67), (16, 65)]),
-		right=((61, 41), (53, 61), [(48, 66), (51, 68), (54, 68), (57, 66)]),
+	dict(by=3, hump_dy=-1, head_dy=3, shoulder_dx=1, lag=1,  # 1 crouch
+		left=((2, 49), (9, 72), [(3, 79), (7, 79), (11, 79), (15, 78)]),
+		right=((62, 53), (56, 74), [(51, 78), (55, 79), (59, 79), (63, 78)]),
+		legs=(((12, 69), (19, 75)), ((52, 70), (45, 75)))),
+	dict(by=-2, hump_dy=-2, head_dy=2, shoulder_dx=0, lag=1,  # 2 push
+		left=((5, 41), (8, 70), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((59, 45), (57, 72), [(52, 78), (56, 79), (60, 79), (63, 77)]),
+		legs=(((22, 65), (20, 75)), ((42, 66), (44, 75)))),
+	dict(by=-4, hump_dy=2, head_dy=2, shoulder_dx=0, lag=2,  # 3 paws-rise
+		left=((4, 38), (11, 61), [(6, 67), (9, 69), (13, 69), (16, 67)]),
+		right=((60, 41), (54, 63), [(49, 68), (52, 70), (55, 70), (58, 68)]),
+		legs=(((20, 64), (20, 75)), ((44, 63), (45, 75)))),
+	dict(by=-5, hump_dy=5, head_dy=4, shoulder_dx=-1, lag=2,  # 4 lift-off
+		left=((3, 35), (14, 52), [(10, 56), (13, 58), (16, 58), (18, 56)]),
+		right=((61, 37), (50, 54), [(46, 58), (49, 60), (52, 60), (54, 58)]),
+		legs=(((17, 63), (19, 75)), ((47, 59), (46, 67))), rump=(6, 7, 5, ())),
+	dict(by=-5, hump_dy=7, head_dy=9, shoulder_dx=-1, lag=3,  # 5 tip-over
+		left=((4, 40), (11, 59), [(6, 65), (9, 67), (13, 67), (16, 65)]),
+		right=((61, 42), (53, 61), [(48, 66), (51, 68), (54, 68), (57, 66)]),
 		legs=(((18, 62), (19, 75)), ((50, 45), (55, 34))), rump=(8, 8, 6, (4, 6))),
-	dict(by=-7, hump_dy=11, head_dy=13, shoulder_dx=0, lag=3,  # 6 kick, airborne
-		left=((5, 42), (9, 63), [(3, 71), (7, 72), (11, 72), (15, 70)]),
-		right=((61, 45), (56, 65), [(50, 72), (54, 73), (58, 73), (62, 71)]),
+	dict(by=-5, hump_dy=10, head_dy=14, shoulder_dx=0, lag=4,  # 6 kick, airborne
+		left=((5, 44), (9, 65), [(3, 72), (7, 74), (11, 74), (15, 72)]),
+		right=((61, 47), (56, 67), [(50, 72), (54, 74), (58, 74), (62, 72)]),
 		legs=(((10, 30), (5, 15)), ((54, 31), (59, 16))), rump=(10, 8, 7, (2, 4, 6)),
 		soles=True),
-	dict(by=-6, hump_dy=10, head_dy=12, shoulder_dx=1, lag=2,  # 7 fall, airborne
-		left=((4, 41), (8, 65), [(2, 73), (6, 74), (10, 74), (14, 72)]),
-		right=((62, 44), (57, 67), [(51, 74), (55, 75), (59, 75), (63, 73)]),
+	dict(by=-4, hump_dy=9, head_dy=14, shoulder_dx=1, lag=4,  # 7 fall, airborne
+		left=((4, 44), (8, 66), [(2, 73), (6, 75), (10, 75), (14, 73)]),
+		right=((62, 47), (57, 68), [(51, 73), (55, 75), (59, 75), (63, 73)]),
 		legs=(((9, 34), (7, 23)), ((55, 35), (57, 24))), rump=(10, 8, 7, (3, 5, 7)),
 		soles=True),
-	dict(by=-6, hump_dy=9, head_dy=11, shoulder_dx=2, lag=2,  # 8 drop, airborne
-		left=((2, 40), (7, 64), [(1, 74), (5, 75), (9, 76), (13, 75)]),
-		right=((63, 43), (58, 66), [(52, 75), (56, 76), (60, 76), (63, 75)]),
-		legs=(((9, 40), (10, 30)), ((55, 41), (54, 31))), rump=(10, 8, 7, (4, 6))),
-	dict(by=-5, hump_dy=7, head_dy=9, shoulder_dx=3, lag=2,  # 9 reach
-		left=((1, 40), (6, 68), [(1, 77), (4, 78), (8, 79), (12, 78)]),
-		right=((63, 43), (58, 70), [(53, 78), (57, 79), (61, 79), (63, 78)]),
-		legs=(((10, 46), (13, 56)), ((54, 47), (51, 57))), rump=(10, 8, 6, (5, 7))),
-	dict(by=-3, hump_dy=4, head_dy=7, shoulder_dx=3, lag=2,  # 10 rump-down
-		left=((2, 43), (7, 70), [(1, 78), (5, 79), (9, 79), (13, 79)]),
-		right=((62, 47), (58, 72), [(52, 79), (56, 79), (60, 79), (63, 78)]),
-		legs=(((12, 52), (15, 62)), ((52, 53), (49, 63))), rump=(11, 8, 5, (7,))),
-	dict(by=-1, hump_dy=1, head_dy=4, shoulder_dx=2, lag=1,  # 11 land
-		left=((3, 46), (8, 72), [(2, 79), (6, 79), (10, 79), (14, 79)]),
-		right=((61, 50), (57, 74), [(52, 79), (56, 79), (60, 79), (63, 79)]),
-		legs=(((14, 58), (17, 68)), ((50, 59), (47, 69)))),
-	dict(by=1, hump_dy=-1, head_dy=2, shoulder_dx=1, lag=1,  # 12 gather
-		left=((3, 47), (8, 72), [(2, 79), (6, 79), (10, 79), (14, 78)]),
-		right=((61, 51), (57, 74), [(52, 78), (56, 79), (60, 79), (63, 78)]),
-		legs=(((14, 66), (19, 75)), ((50, 67), (45, 75)))),
+	dict(by=-3, hump_dy=8, head_dy=13, shoulder_dx=2, lag=3,  # 8 drop, airborne
+		left=((2, 43), (7, 65), [(1, 74), (5, 76), (9, 76), (13, 75)]),
+		right=((63, 46), (58, 67), [(52, 74), (56, 76), (60, 76), (63, 75)]),
+		legs=(((9, 41), (10, 30)), ((55, 42), (54, 31))), rump=(10, 8, 7, (4, 6))),
+	dict(by=-1, hump_dy=5, head_dy=12, shoulder_dx=3, lag=3,  # 9 reach
+		left=((1, 43), (6, 68), [(1, 77), (4, 78), (8, 79), (12, 78)]),
+		right=((63, 46), (58, 70), [(53, 78), (57, 79), (61, 79), (63, 78)]),
+		legs=(((10, 48), (13, 57)), ((54, 49), (51, 58))), rump=(10, 8, 6, (5, 7))),
+	dict(by=3, hump_dy=2, head_dy=10, shoulder_dx=4, lag=4,  # 10 rump-down
+		left=((0, 49), (7, 70), [(1, 78), (5, 79), (9, 79), (13, 79)]),
+		right=((63, 52), (58, 72), [(52, 79), (56, 79), (60, 79), (63, 78)]),
+		legs=(((12, 55), (15, 63)), ((52, 56), (49, 64))), rump=(11, 8, 5, (7,))),
+	dict(by=4, hump_dy=0, head_dy=8, shoulder_dx=3, lag=3,  # 11 land
+		left=((2, 50), (8, 72), [(2, 79), (6, 79), (10, 79), (14, 79)]),
+		right=((62, 53), (57, 74), [(52, 79), (56, 79), (60, 79), (63, 79)]),
+		legs=(((14, 61), (17, 69)), ((50, 62), (47, 70)))),
+	dict(by=2, hump_dy=-1, head_dy=4, shoulder_dx=1, lag=2,  # 12 gather
+		left=((3, 48), (8, 72), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((61, 52), (57, 74), [(52, 78), (56, 79), (60, 79), (63, 78)]),
+		legs=(((14, 67), (19, 75)), ((50, 68), (45, 75)))),
 ]
 assert len(LOPER_POSES) == LOPER_FRAMES
 
 
+def fur_sway(frame: int) -> tuple[int, int]:
+	"""Overlap and follow-through: the hair lags the body by a frame."""
+	vy = LOPER_POSES[frame]["by"] - LOPER_POSES[frame - 1]["by"]
+	return 0, max(-3, min(3, -vy))
+
+
 def draw_loper(frame: int = 0) -> Canvas:
 	"""The door raider, seen from the front as it comes through the doors: the
-	hump of the back rises above and behind the hanging head, the arms reach
-	the floor, the legs crouch behind. Feet on the bottom row. The parts are drawn
+	furred mantle rises above and behind the head, which hangs from a hair ruff,
+	tapered arms with fur sleeves reach the floor, the tapered legs crouch behind,
+	and the hair trails each bob (fur_sway). Feet on the bottom row. The parts are drawn
 	at the still's coordinates on layers and blitted with the pose's bob, so every
 	frame is the approved drawing moved, never redrawn. The bound is
 	13 frames: still, crouch, push, paws-rise, lift-off, tip-over, kick, fall, drop,
@@ -388,67 +456,93 @@ def draw_loper(frame: int = 0) -> Canvas:
 	hd = by + p["head_dy"]
 	sdx = p["shoulder_dx"]
 	jy = hd + p["lag"]
+	sway = fur_sway(frame)
+	flare = 1 if frame in (10, 11) else 0  # the coat flares when the weight lands
 	c = Canvas(LOPER_SIZE)
 	# Legs first, crouched behind everything: knees out, shins down, toes on the floor.
 	# The pose holds each knee and foot as absolute points; only the hips ride the body.
 	for hip, (knee, foot) in (((27, 56 + by), p["legs"][0]), ((37, 57 + by), p["legs"][1])):
-		leg = c.mask(polyline([hip, knee, foot], 3.2))
-		c.part(leg, SKIN, SKIN_SH, SKIN_HI, light(knee[0], knee[1], 12, 12), 0.2, -0.9)
+		leg = c.mask(taper([hip, knee, foot], [4.5, 3.0, 2.2]))
+		c.part(leg, SKIN_SH, SKIN_DEEP, SKIN, light(knee[0], knee[1], 12, 12), 0.2, -0.9)
+		tuft = c.mask(ellipse(hip[0], hip[1] + 2, 4.5, 4.0))
+		c.fill(tuft, FUR)
+		fur_fringe(c, tuft, seed=31 + (hip[0] > 30), sway=sway, length=2 + flare,
+			density=0.4)
 		if p.get("soles"):
 			draw_sole(c, foot[0], foot[1] - 5)
 		else:
 			draw_claws(c, foot[0], foot[1], [(foot[0] - 4, foot[1] + 4),
 				(foot[0], foot[1] + 4), (foot[0] + 4, foot[1] + 4)])
-	if "rump" in p:
-		draw_rump(c, *p["rump"])
-	# The back: the shoulders as two balls either side of a spine hump that rises
-	# above the head, the vertebrae knobbing its top, the hollow the head hangs
-	# from in shadow.
-	for sx, sy in ((17 - sdx, 24 + by), (47 + sdx, 25 + by)):
-		ball = c.mask(ellipse(sx, sy, 9, 8))
-		c.part(ball, SKIN, SKIN_SH, SKIN_HI, light(sx, sy, 9, 8), 0.25, -1.0)
-	hump_c = Canvas(LOPER_SIZE)
-	hx, hy, hrx, hry = 32, 17, 13, 10
-	hump = hump_c.mask(ellipse(hx, hy, hrx, hry))
-	hump_c.part(hump, SKIN, SKIN_SH, SKIN_HI, light(hx, hy, hrx, hry), 0.25, -1.0)
-	hump_c.fill({p for p in hump if 15 <= p[1] <= 18 and abs(p[0] - 32) <= 7}, SKIN_SH)
+	# The chest and belly in one shape from shoulder to hip, under the mantle: sparse
+	# fur on the ribs, the belly bare and sunk.
+	chest = c.mask(polygon([(22, 34 + by), (42, 34 + by), (40, 46 + by), (39, 58 + by),
+		(25, 58 + by), (24, 46 + by)]))
+	c.part(chest, FUR, FUR_SH, FUR_HI, light(32, 40 + by, 12, 14), 0.1, -1.0)
+	c.fill({q for q in chest if q[1] >= 47 + by}, SKIN_SH)
+	c.fill({q for q in chest if q[1] >= 56 + by}, SKIN_DEEP)
+	for y in range(48 + by, 58 + by):
+		c.set(32, y, SKIN_DEEP)
+	for ry in (49, 53):
+		for dx in range(1, 7):
+			c.set(32 - dx, ry + by + dx // 4, SKIN_DEEP)
+			c.set(32 + dx, ry + by + dx // 4, SKIN_DEEP)
+	fur_fringe(c, chest, seed=12, sway=sway, length=2 + flare, density=0.35)
+	# The mantle: shoulders, neck and the spine hump as one furred mass, the crest
+	# above the head riding the hump, the shoulders the body, the right one lower.
+	mantle_pts = [(5 - sdx, 28 + by), (7 - sdx, 21 + by), (14, 15 + hy_), (20, 10 + hy_),
+		(27, 8 + hy_), (34, 8 + hy_), (44, 10 + hy_), (51, 15 + hy_), (58 + sdx, 23 + by),
+		(60 + sdx, 31 + by), (50 + sdx, 34 + by), (44, 37 + by), (20, 36 + by),
+		(14 - sdx, 34 + by)]
+	mantle = c.mask(polygon(mantle_pts))
+	c.part(mantle, FUR, FUR_SH, FUR_HI, light(32, 24 + by, 28, 16), 0.3, -0.9)
+	# Mange: patches torn out of the coat, grey skin showing.
+	for patch, tone in (
+			([(16, 16 + hy_), (20, 15 + hy_), (21, 19 + hy_), (17, 20 + hy_)], SKIN),
+			([(24, 14 + hy_), (28, 13 + hy_), (27, 17 + hy_)], SKIN_SH),
+			([(10 - sdx, 26 + by), (14 - sdx, 25 + by), (15 - sdx, 29 + by),
+				(11 - sdx, 30 + by)], SKIN_SH)):
+		c.fill(c.mask(polygon(patch)), tone)
+	fur_fringe(c, mantle, seed=11, sway=sway, length=3 + flare, up_only=True)
+	# Vertebrae poking through the fur along the crest.
+	crest = ((20, 10), (27, 8), (34, 8), (44, 10))
 	for kx, kr in ((22, 1.4), (26, 1.8), (31, 2.0), (36, 1.8), (41, 1.5)):
-		u = (kx - hx) / hrx
-		ky = hy - hry * math.sqrt(1.0 - u * u) + 0.5
-		knob = hump_c.mask(ellipse(kx, ky, kr, kr * 0.85))
-		hump_c.outline(knob)
-		hump_c.fill(knob, BONE)
-		hump_c.fill({p for p in knob if p[0] <= kx - 1 and p[1] <= ky}, BONE_HI)
-	c.blit(hump_c, 0, hy_)
-	# The torso hangs under the hump: a long ribcage over a sunken belly.
-	torso_c = Canvas(LOPER_SIZE)
-	tx, ty, trx, try_ = 32, 44, 11, 16
-	torso = torso_c.mask(ellipse(tx, ty, trx, try_))
-	torso_c.part(torso, SKIN, SKIN_SH, SKIN_HI, light(tx, ty, trx, try_), 0.15, -1.05)
-	torso_c.fill({p for p in torso if p[1] >= 52}, SKIN_SH)
-	torso_c.fill({p for p in torso if p[1] >= 57}, SKIN_DEEP)
-	for y in range(45, 58):
-		torso_c.set(32, y, SKIN_DEEP)
-	for ry in (49, 53, 57):
-		for dx in range(1, 10):
-			torso_c.set(32 - dx, ry + dx // 4, SKIN_DEEP)
-			torso_c.set(32 + dx, ry + dx // 4, SKIN_DEEP)
-	c.blit(torso_c, 0, by)
-	# Skin torn open on the right shoulder, riding with the shoulder ball.
+		i = 0 if kx < 27 else 1 if kx < 34 else 2
+		(ax, ay), (bx, bby) = crest[i], crest[i + 1]
+		ky = ay + (bby - ay) * (kx - ax) / (bx - ax) + 1.0 + hy_
+		knob = c.mask(ellipse(kx, ky, kr, kr * 0.85))
+		c.outline(knob)
+		c.fill(knob, BONE)
+		c.fill({q for q in knob if q[0] <= kx - 1 and q[1] <= ky}, BONE_HI)
+	# Skin torn open on the right shoulder, the fur ragged around it.
 	tear = c.mask(polygon([(x + sdx, y + by) for x, y in
 		((44, 20), (50, 18), (53, 23), (48, 27), (43, 24))]))
 	c.fill(tear, BLOOD_DARK)
-	c.fill({p for p in tear if p[0] < 47 + sdx and p[1] < 22 + by}, BLOOD)
-	# Arms: out from the shoulders to elbows wider than the body, then down to the floor.
-	for shoulder, (elbow, wrist, tips) in (((14 - sdx, 27 + by), p["left"]),
-			((50 + sdx, 29 + by), p["right"])):
-		upper = c.mask(capsule(*shoulder, *elbow, 3.4, 2.8))
-		c.part(upper, SKIN, SKIN_SH, SKIN_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
-		fore = c.mask(capsule(*elbow, *wrist, 2.8, 2.2))
-		c.part(fore, SKIN, SKIN_SH, SKIN_HI, light(wrist[0], wrist[1], 10, 28), 0.2, -0.95)
+	c.fill({q for q in tear if q[0] < 47 + sdx and q[1] < 22 + by}, BLOOD)
+	fur_fringe(c, tear, seed=13, sway=sway, length=1, density=0.5)
+	# The haunches show over the dropped crest, so they are drawn after the mantle.
+	if "rump" in p:
+		draw_rump(c, *p["rump"], sway, flare)
+	# Arms: one tapered limb from inside the mantle out to elbows wider than the body,
+	# then down to the floor; bare skin forearm, a furred sleeve over the upper arm whose
+	# hair hangs off the back of the arm.
+	for shoulder, (elbow, wrist, tips), seed in (((14 - sdx, 27 + by), p["left"], 21),
+			((50 + sdx, 29 + by), p["right"], 22)):
+		arm = c.mask(taper([shoulder, elbow, wrist], [5.0, 3.4, 2.2]))
+		c.part(arm, SKIN, SKIN_SH, SKIN_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
+		past = (elbow[0] + (wrist[0] - elbow[0]) * 0.2, elbow[1] + (wrist[1] - elbow[1]) * 0.2)
+		sleeve = c.mask(taper([shoulder, elbow, past], [5.5, 4.0, 3.2]))
+		c.part(sleeve, FUR, FUR_SH, FUR_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
+		back = {q for q in sleeve if (q[0] <= shoulder[0]) == (shoulder[0] < 32)}
+		fur_fringe(c, back, seed=seed, sway=sway, length=3 + flare)
 		draw_claws(c, wrist[0], wrist[1], tips)
 	# The head hangs forward below the shoulders, tilted, in front of the chest:
 	# a gaunt skull, a brow over black pits that look up at you, cheeks fallen in.
+	# A ruff of hair behind and around the top of the skull, so the head hangs out of
+	# the coat instead of floating on it.
+	ruff = c.mask(polygon([(17, 34 + by), (18, 24 + hd), (22, 15 + hd), (32, 11 + hd),
+		(42, 15 + hd), (46, 24 + hd), (47, 34 + by)]))
+	c.fill(ruff, FUR_SH)
+	fur_fringe(c, ruff, seed=51, sway=sway, length=2 + flare, density=0.45, up_only=True)
 	head = Canvas(LOPER_SIZE)
 	kx, ky, krx, kry = 32, 29, 9, 11
 	skull_oval = ellipse(kx, ky, krx, kry)
@@ -472,10 +566,10 @@ def draw_loper(frame: int = 0) -> Canvas:
 		for y in range(35, 35 + depth):
 			head.set(x, y, TEETH)
 	c.blit(head, 0, hd)
-	# Lank hair from the head, the ends trailing the bob.
+	# Matted hair from the ruff past the cheeks, the ends trailing the bob and flicking.
 	for x0, y0, x1, y1 in ((25, 19, 20, 31), (23, 23, 17, 32), (28, 18, 27, 21),
 			(40, 20, 44, 29)):
-		draw_strand(c, x0, y0 + hd, x1, y1 + jy)
+		draw_strand(c, x0, y0 + hd, x1, y1 + jy + sway[1])
 	# The jaw hangs open and off to one side, swinging a beat behind the head.
 	jaw = Canvas(LOPER_SIZE)
 	jaw_m = jaw.mask(both(ellipse(30, 48, 7.5, 5.5), lambda x, y: y >= 44))

@@ -42,6 +42,17 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
   is a cylinder (r 0.7, h 1.75 at y -0.75: floor to the top of the hump) and the
   head a sphere (r 0.36 at y -0.5: the skull and the hanging jaw), both
   orientation-free because the sprite is a billboard and the node is not.
+  The billboard is Y-only (`billboard = 2`): a full billboard tips toward the camera and
+  the claws slide up and down as the player looks up or down (the owner saw it "swimming"
+  in the van). Inside the cabin (ATTACKING_*) the anim loops `GROUNDED_FRAMES`, skipping
+  the airborne 6 to 8, so it prowls instead of hopping. The 1.54 m card swings to face the
+  camera, so `window_raider_motion.gd` keeps the loper's centre `CLEARANCE` 0.85 m off
+  anything it could cut through. Outside, `clear_point`/`_push_out` keep it off
+  `OUTSIDE_KEEP_OUT`: the body, both open rear-door leaves' swing, and the wheels. That
+  puts it at z 5.85 at the rear doors, x ±3.6 at the side doors and x ±4.15 at the rear
+  corners. Inside, `_clamp_in` holds it in the cabin shrunk by 0.85. ENTERING is exempt,
+  and the crawler and the boss are never cleared. The bulkhead passage (1.55 m wide) is
+  not cleared, so a brief clip there is expected.
   `EnemyHealthBar.height` sets the bar's height per scene.
 - The window crawler (`agile_raider.png`, 80 x 48) is fitted at `_ready` by
   `window_raider_look.gd`: sprite centred on the node (at a window the node

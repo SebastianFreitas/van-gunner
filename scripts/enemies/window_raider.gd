@@ -415,6 +415,7 @@ func _snap_to_marker(marker: Node3D) -> void:
 		return
 	position = parent_3d.to_local(marker.global_position)
 	global_transform.basis = marker.global_transform.basis
+	position = _motion.clear_point(position)
 
 
 func _clear_motion() -> void:

@@ -8,6 +8,21 @@ const FEET_DROP := 1.62
 const ROAD_ORIGIN_Y := VanWheels.ROAD_Y + FEET_DROP
 ## Horizontal metres over which the loper hops from the road up onto the van floor as it climbs in.
 const HOP_RUN := 1.3
+## Half the loper's 1.54 m card plus 8 cm: the card faces the camera, so it can swing
+## this far toward any wall.
+const CLEARANCE := 0.85
+## Van parts the loper's card may not swing into, as xz rects (Rect2 x = van x,
+## Rect2 y = van z): the body from the front bumper to the rear bumper, both rear-door
+## leaves' swing (open 110 degrees), the rear and front wheels.
+const OUTSIDE_KEEP_OUT: Array[Rect2] = [
+	Rect2(-2.75, -8.6, 5.5, 13.6), Rect2(-3.3, 4.6, 1.0, 2.4),
+	Rect2(2.3, 4.6, 1.0, 2.4), Rect2(-3.15, 1.1, 6.3, 3.5), Rect2(-3.2, -8.1, 6.4, 1.7),
+]
+## The cabin interior shrunk by CLEARANCE: walls at x +/-2.42, cab wall z -4.7, rear
+## doors' inner face z 4.63.
+const INTERIOR_HALF_X := 1.57
+const INTERIOR_MIN_Z := -3.85
+const INTERIOR_MAX_Z := 3.78
 
 var raider: Node3D  # the WindowRaider; reads/writes its fields when called
 
@@ -27,6 +42,59 @@ func keep_feet_on_road() -> void:
 	var phase: int = raider.assault_phase
 	if phase == WindowRaider.AssaultPhase.APPROACH or phase == WindowRaider.AssaultPhase.BREACHING:
 		raider.position.y = ROAD_ORIGIN_Y
+		raider.position = _push_out(raider.position)
+
+
+## Where the loper may stand for its phase: outside it stays off the van's body, door leaves
+## and wheels, inside it stays off the cabin walls. Other phases and the other beasts pass.
+func clear_point(p: Vector3) -> Vector3:
+	if not _walks_on_road():
+		return p
+	var phase: int = raider.assault_phase
+	if phase == WindowRaider.AssaultPhase.APPROACH or phase == WindowRaider.AssaultPhase.BREACHING:
+		return _push_out(p)
+	if (
+		phase == WindowRaider.AssaultPhase.ATTACKING_BENCH
+		or phase == WindowRaider.AssaultPhase.ATTACKING_PLAYER
+	):
+		return _clamp_in(p)
+	return p
+
+
+func _push_out(p: Vector3) -> Vector3:
+	for _pass in 4:
+		var moved := false
+		for rect in OUTSIDE_KEEP_OUT:
+			var grown := rect.grow(CLEARANCE)
+			# Strictly inside: a point on the border already counts as clear.
+			if (
+				p.x <= grown.position.x or p.x >= grown.end.x
+				or p.z <= grown.position.y or p.z >= grown.end.y
+			):
+				continue
+			var to_left := p.x - grown.position.x
+			var to_right := grown.end.x - p.x
+			var to_front := p.z - grown.position.y
+			var to_back := grown.end.y - p.z
+			var best := minf(minf(to_left, to_right), minf(to_front, to_back))
+			if best == to_left:
+				p.x = grown.position.x
+			elif best == to_right:
+				p.x = grown.end.x
+			elif best == to_front:
+				p.z = grown.position.y
+			else:
+				p.z = grown.end.y
+			moved = true
+		if not moved:
+			break
+	return p
+
+
+func _clamp_in(p: Vector3) -> Vector3:
+	p.x = clampf(p.x, -INTERIOR_HALF_X, INTERIOR_HALF_X)
+	p.z = clampf(p.z, INTERIOR_MIN_Z, INTERIOR_MAX_Z)
+	return p
 
 
 func physics_chase_target(delta: float) -> void:
@@ -37,6 +105,7 @@ func physics_chase_target(delta: float) -> void:
 	var target_local: Vector3 = raider._move_target_local
 	if raider._move_marker and is_instance_valid(raider._move_marker):
 		target_local = parent_3d.to_local(raider._move_marker.global_position)
+	target_local = clear_point(target_local)
 	var to_target := target_local - raider.position
 	to_target.y = 0.0
 	var remaining := to_target.length()
@@ -85,6 +154,7 @@ func physics_chase_player(delta: float) -> void:
 		return
 	var target_local := parent_3d.to_local(player.global_position)
 	target_local.y = raider.position.y
+	target_local = clear_point(target_local)
 	var to_target := target_local - raider.position
 	to_target.y = 0.0
 	var remaining := to_target.length()

@@ -247,8 +247,13 @@ standing above the dropped hump and both hind feet sole-on at the top corners
 with the claws up, while every other frame keeps a claw row on the floor row;
 the hump may rise at most 5 px since its top knob is on row 5, the head drops
 up to 13 px on the kick, and the jaw and strands trail the bob),
-hunched so the skull hangs forward below two shoulder balls and a knobbed
-spine hump, arms longer than the legs with the claws on the floor, a tilted
+a hyena-ape hunched so the skull hangs forward from a furred ruff below one
+furred mantle (shoulders, neck and spine hump in a single polygon, bone spine
+knobs poking through), in a mangy soot-black coat (sRGB 42,34,28 fur, 25,21,18
+shadow, 64,53,42 highlight, bare skin patches), never balls joined by
+ellipses: tapered limbs with fur sleeves and hip tufts, a furred rump, and hair
+tufts on every edge that trail the bob by a frame and flare on landing; arms
+longer than the legs with the claws on the floor, a tilted
 gaunt skull with a dark brow over black eye pits (one pale pixel each, looking
 up), a round hanging jaw with uneven teeth over a dark red throat, a torn
 shoulder and blood down the belly. Corpse grey-green skin (sRGB 72,78,68 base,
@@ -258,7 +263,7 @@ Asymmetry (the tilted head, one arm lower, uneven teeth) is what keeps a
 sprite from reading as cute. The window raider is still the first-pass
 yellow cat crawler (80 x 48, 1.15 m tall, so it fits a side window) and waits
 for its own redraw to this rule. Both are drawn by `tools/gen_enemy_sprites.py`
-(16 and 19 flat colours, outlined, lit from the upper left) and shown at
+(19 flat colours each, outlined, lit from the upper left) and shown at
 `pixel_size 0.024`, `texture_filter 0`, `alpha_cut 1`; re-run the script
 after changing a colour or a shape, never paint over the PNGs.
 
