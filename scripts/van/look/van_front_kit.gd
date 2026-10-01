@@ -97,12 +97,14 @@ func _ram(kind: StringName, mat: Material, rng: RandomNumberGenerator) -> void:
 
 
 func _cage(kind: StringName, mat: Material) -> void:
-	var face_z := VanCab.NOSE_Z
 	var half_w := VanCab.WS_HALF_W + 0.05
-	var top_l := Vector3(-half_w, VanCab.WS_TOP_Y, face_z - 0.10)
-	var top_r := Vector3(half_w, VanCab.WS_TOP_Y, face_z - 0.10)
-	var bot_l := Vector3(-half_w, VanCab.WS_BOT_Y, face_z - 0.10)
-	var bot_r := Vector3(half_w, VanCab.WS_BOT_Y, face_z - 0.10)
+	## The glass leans back, so the cage lies on the raked plane 10 cm in front of it.
+	var top_z := VanCab.front_z_at(VanCab.WS_TOP_Y) - 0.10
+	var bot_z := VanCab.front_z_at(VanCab.WS_BOT_Y) - 0.10
+	var top_l := Vector3(-half_w, VanCab.WS_TOP_Y, top_z)
+	var top_r := Vector3(half_w, VanCab.WS_TOP_Y, top_z)
+	var bot_l := Vector3(-half_w, VanCab.WS_BOT_Y, bot_z)
+	var bot_r := Vector3(half_w, VanCab.WS_BOT_Y, bot_z)
 	var i := 0
 	match kind:
 		&"bars":
@@ -128,19 +130,22 @@ func _cage(kind: StringName, mat: Material) -> void:
 		&"slit_plate":
 			var ws_h := VanCab.WS_TOP_Y - VanCab.WS_BOT_Y
 			var lower_size := Vector3(2.0 * VanCab.WS_HALF_W + 0.2, 0.6 * ws_h, 0.04)
-			var lower_pos := Vector3(0.0, VanCab.WS_BOT_Y + 0.3 * ws_h, face_z - 0.10)
-			_cab._add_mesh("CagePlate%d" % i, _cab._box(lower_size), mat, lower_pos)
+			var plate_rot := Vector3(deg_to_rad(VanCab.RAKE_DEG), 0.0, 0.0)
+			var lower_y := VanCab.WS_BOT_Y + 0.3 * ws_h
+			var lower_pos := Vector3(0.0, lower_y, VanCab.front_z_at(lower_y) - 0.10)
+			_cab._add_mesh("CagePlate%d" % i, _cab._box(lower_size), mat, lower_pos, plate_rot)
 			i += 1
 			var upper_size := Vector3(2.0 * VanCab.WS_HALF_W + 0.2, 0.25 * ws_h, 0.04)
-			var upper_pos := Vector3(0.0, VanCab.WS_TOP_Y - 0.125 * ws_h, face_z - 0.10)
-			_cab._add_mesh("CagePlate%d" % i, _cab._box(upper_size), mat, upper_pos)
+			var upper_y := VanCab.WS_TOP_Y - 0.125 * ws_h
+			var upper_pos := Vector3(0.0, upper_y, VanCab.front_z_at(upper_y) - 0.10)
+			_cab._add_mesh("CagePlate%d" % i, _cab._box(upper_size), mat, upper_pos, plate_rot)
 
 	## Weld the cage to the windshield frame at all four corners.
 	var corners: Array[Vector3] = [top_l, top_r, bot_l, bot_r]
 	for c: int in range(4):
 		var corner: Vector3 = corners[c]
 		_cab._add_mesh("CageTab%d" % c, _cab._box(Vector3(0.08, 0.08, 0.08)), mat,
-				Vector3(corner.x, corner.y, face_z - 0.06))
+				Vector3(corner.x, corner.y, VanCab.front_z_at(corner.y) - 0.06))
 
 
 func _lamp_cages(mat: Material) -> void:

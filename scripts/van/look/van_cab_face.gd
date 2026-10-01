@@ -1,6 +1,6 @@
 extends RefCounted
-## Dresses the cab-over face and sides: framed split windshield, A-pillar trims, grille,
-## headlight housings and the two cab doors with windows.
+## Dresses the cab body's face and sides: grille, headlight housings and the two cab doors with
+## windows.
 
 var _cab: VanCab
 
@@ -11,70 +11,9 @@ func _init(cab: VanCab) -> void:
 
 func build(mat: Material, _rng: RandomNumberGenerator) -> void:
 	var f := VanCab.NOSE_Z
-	_build_windshield(f, mat)
-	_build_frame(f, mat)
-	_build_a_pillars(f, mat)
 	_build_grille(f, mat)
 	_build_headlight_housings(f, mat)
 	_build_doors(mat)
-
-
-func _build_windshield(f: float, mat: Material) -> void:
-	var glass_mat := VanCab.glass_material()
-	var z := f + VanCab.WS_REVEAL
-	var centre := Vector3(0.0, 1.5, -6.46)
-	for s: float in [-1.0, 1.0]:
-		var suffix := "L" if s < 0.0 else "R"
-		var x_in := s * 0.04
-		var x_out := s * VanCab.WS_HALF_W
-		var x0 := minf(x_in, x_out)
-		var x1 := maxf(x_in, x_out)
-		var st := SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		VanCab._add_quad(st,
-				Vector3(x0, VanCab.WS_BOT_Y, z), Vector3(x1, VanCab.WS_BOT_Y, z),
-				Vector3(x1, VanCab.WS_TOP_Y, z), Vector3(x0, VanCab.WS_TOP_Y, z), centre)
-		st.generate_normals()
-		var pane := _cab._add_mesh("Windshield%s" % suffix, st.commit(), glass_mat)
-		pane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-
-	var mid_y := (VanCab.WS_BOT_Y + VanCab.WS_TOP_Y) * 0.5
-	_cab._add_mesh("WindshieldPost",
-			_cab._box(Vector3(0.08, VanCab.WS_TOP_Y - VanCab.WS_BOT_Y + 0.04, VanCab.WS_REVEAL)),
-			mat,
-			Vector3(0.0, mid_y, f + VanCab.WS_REVEAL * 0.5))
-
-
-func _build_frame(f: float, mat: Material) -> void:
-	# Back faces sit 2 cm behind the flat face and the pieces butt instead of overlapping, so
-	# no two faces share a plane.
-	var hw := VanCab.WS_HALF_W
-	var ov := 0.02
-	var z := f - 0.02
-	_cab._add_mesh("WindshieldFrameTop", _cab._box(Vector3(2.0 * hw + 0.14, 0.07 + ov, 0.08)), mat,
-			Vector3(0.0, VanCab.WS_TOP_Y + 0.025, z))
-	_cab._add_mesh("WindshieldFrameBottom",
-			_cab._box(Vector3(2.0 * hw + 0.14, 0.07 + ov, 0.08)), mat,
-			Vector3(0.0, VanCab.WS_BOT_Y - 0.025, z))
-	var h := VanCab.WS_TOP_Y - VanCab.WS_BOT_Y - 2.0 * ov
-	var mid_y := (VanCab.WS_BOT_Y + VanCab.WS_TOP_Y) * 0.5
-	_cab._add_mesh("WindshieldFrameL", _cab._box(Vector3(0.07 + ov, h, 0.08)), mat,
-			Vector3(-(hw + 0.025), mid_y, z))
-	_cab._add_mesh("WindshieldFrameR", _cab._box(Vector3(0.07 + ov, h, 0.08)), mat,
-			Vector3(hw + 0.025, mid_y, z))
-
-
-func _build_a_pillars(f: float, mat: Material) -> void:
-	var bottom := VanCab.BASE_Y + 0.3
-	var top := _cab.profile.wall_height()
-	var mid_y := (bottom + top) * 0.5
-	var h := top - bottom
-	for s: float in [-1.0, 1.0]:
-		var suffix := "L" if s < 0.0 else "R"
-		# Outer face 3 cm inside the outline, so it clears the bumper's end face (x 2.55).
-		var x := s * (_cab.profile.outer_x_at(VanCab.WS_BOT_Y) - 0.08)
-		_cab._add_mesh("APillar%s" % suffix, _cab._box(Vector3(0.10, h, 0.12)), mat,
-				Vector3(x, mid_y, f + 0.02))
 
 
 func _build_grille(f: float, mat: Material) -> void:

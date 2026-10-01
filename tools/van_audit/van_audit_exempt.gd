@@ -55,15 +55,6 @@ const RULES: Array[Dictionary] = [
 			+ "its returns meet the wall's",
 	},
 	{
-		"section": "EDGE", "a": "VanLook/Cab/CabLiner", "b": "", "d": "D59",
-		"reason": "the cab liner's back rim ends inside the cab back wall at the body seam",
-	},
-	{
-		"section": "EDGE", "a": "VanLook/Cab/CabBackLip", "b": "", "d": "D59",
-		"reason": "the back lip is a single-sided trim band; its rims sit on the body and "
-			+ "cab skins",
-	},
-	{
 		"section": "EDGE", "a": "VanLook/Hull/RearSkin", "b": "", "d": "D59",
 		"reason": "the rear skin's bottom seam sits below the sill, closed by the rear corners",
 	},
@@ -84,6 +75,11 @@ const RULES: Array[Dictionary] = [
 	{
 		"section": "EDGE", "a": "VanLook/Hull/RearCorner*", "b": "", "d": "D59",
 		"reason": "the rear corner strip's end sits on the sill top under the rear skin",
+	},
+	{
+		"section": "EDGE", "a": "VanLook/Hull/FrontSkin", "b": "", "d": "cabrebuild",
+		"reason": "the front step plate's inner edge stands 2.5 cm behind the cab body's "
+			+ "closed back cap (a bolted-on donor cab, seam on purpose); no ray sees through",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/DoorJamb_*", "b": "", "d": "D54",

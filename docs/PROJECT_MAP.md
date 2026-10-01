@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-301 GDScript files, 46349 lines.
+301 GDScript files, 46355 lines.
 
 ### `scenes/corridor/`
 
@@ -641,14 +641,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `machine_parts.gd` | `MachineParts` | 375 | Static low-poly part builders (motor, flywheel, belt, fan, battery, can, gauge, switch, CRT, tower, keyboard, pipe, vent, cables) for the van's interior machin… |
 | `van_armour.gd` | `VanArmour` | 260 | The van's seeded outer armour: plates, rebar and spikes on the real hull skin, placed from slots clear of every opening and merged per material. |
 | `van_armour_pieces.gd` | — | 84 | Appends armour piece geometry (leaned plates, bars, spikes) into per-material SurfaceTools for VanArmour. |
-| `van_cab.gd` | `VanCab` | 176 | The van's cab-over cab on the body profile: shell, face, windshield, doors, a dark cab behind the glass, mirrors and two real headlights, rebuilt from the look… |
-| `van_cab_face.gd` | — | 205 | Dresses the cab-over face and sides: framed split windshield, A-pillar trims, grille, headlight housings and the two cab doors with windows. |
-| `van_cab_parts.gd` | — | 100 | The dark cab behind the windshield (dash, dash glow, seats, driver silhouette) and the mirrors. |
-| `van_cab_shell.gd` | — | 180 | Builds the cab-over shell on VanBodyProfile: skin, dark liner, back lip, back wall and the flat face with its windshield opening. |
+| `van_cab.gd` | `VanCab` | 189 | The van's cab-over cab on the body profile: one closed body with a raked windshield, grille, headlights, doors, mirrors and two real headlights, rebuilt from t… |
+| `van_cab_body.gd` | — | 311 | One closed cab body lofted from VanBodyProfile's section: a vertical lower face, a raked windshield face with its glass in a sealed pocket, bevelled front corn… |
+| `van_cab_face.gd` | — | 144 | Dresses the cab body's face and sides: grille, headlight housings and the two cab doors with windows. |
+| `van_cab_parts.gd` | — | 22 | The cab's side mirrors, on seeded arms off the body's sides. |
 | `van_cable_router.gd` | — | 289 | Routes power cables around machine keep-out boxes inside the bowed shell and builds the small clamp, junction box, tape, plug and coil parts that VanCableRuns… |
 | `van_cable_runs.gd` | `VanCableRuns` | 397 | Seeded power tree: a thick generator-to-relay feed along the right trunk, relay drops to the PC rig, welding bench and hopper, ceiling lamp taps, then wall jun… |
 | `van_chassis.gd` | — | 324 | Builds the van's chassis kit around the wheels: arch flares and wells, side steps, saddle tank, toolbox, short exhaust, chained spares, rear rails and bumper. |
-| `van_front_kit.gd` | — | 171 | Builds the van's seeded front kit (bumper, ram, windshield cage, lamp cages) onto a VanCab. |
+| `van_front_kit.gd` | — | 176 | Builds the van's seeded front kit (bumper, ram, windshield cage, lamp cages) onto a VanCab. |
 | `van_generator.gd` | `VanGenerator` | 120 | The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp… |
 | `van_generator_parts.gd` | — | 189 | Builds the generator set's welded skid, oil pan, radiator, tank, manifold, control gantry, junction box, trouble lamp and rust patches; the core script keeps t… |
 | `van_hull.gd` | `VanHull` | 335 | The van's outer skin: roof, sides, front face (the step to the cab skin), rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted fr… |
@@ -709,7 +709,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `van_audit.gd` | — | 362 | Headless van audit entry scene: collects every visible triangle of the van, checks it and writes a report. |
-| `van_audit_exempt.gd` | — | 132 | Van audit exemption list: findings accepted on purpose, each with its reason and plan decision. |
+| `van_audit_exempt.gd` | — | 128 | Van audit exemption list: findings accepted on purpose, each with its reason and plan decision. |
 | `van_audit_flicker.gd` | — | 212 | Coplanar-overlap (flicker) check over an AuditMesh triangle set, split off van_audit_overlap.gd (vanfix specs 1-2, 5-1). |
 | `van_audit_gaps.gd` | — | 245 | Physics-proxy gap checks on the closed van (vanfix spec 1-3 D3): open outer edges, found by raycasting temporary ConcavePolygonShape3D proxies of every visible… |
 | `van_audit_leaks.gd` | — | 214 | See-through leak checks over the gap proxies: cabin rays that escape, street rays that land on interior-only faces. |

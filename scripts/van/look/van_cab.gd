@@ -1,16 +1,15 @@
 class_name VanCab
 extends Node3D
 
-## The van's cab-over cab on the body profile: shell, face, windshield, doors, a dark cab behind
-## the glass, mirrors and two real headlights, rebuilt from the look seed.
+## The van's cab-over cab on the body profile: one closed body with a raked windshield, grille,
+## headlights, doors, mirrors and two real headlights, rebuilt from the look seed.
 
 const HULL_PATH := ^"../Hull"
 const VanCabParts := preload("res://scripts/van/look/van_cab_parts.gd")
 const _FrontKit := preload("res://scripts/van/look/van_front_kit.gd")
-const VanCabShell := preload("res://scripts/van/look/van_cab_shell.gd")
+const VanCabBody := preload("res://scripts/van/look/van_cab_body.gd")
 const VanCabFace := preload("res://scripts/van/look/van_cab_face.gd")
 
-const CAB_BACK_Z := -4.72
 const NOSE_Z := -8.2
 const BASE_Y := -0.25
 
@@ -21,12 +20,22 @@ const HEADLIGHT_ANGLE := 30.0
 const INTERIOR_PATH := ^"../../Interior"
 ## Segments per body-profile section outline; matches the shell and floor cross-sections.
 const SECTION_STEPS := 12
-const CAB_FLOOR_Y := 0.9
-const WS_BOT_Y := 1.85
-const WS_TOP_Y := 2.95
-const WS_HALF_W := 1.85
-## Glass depth behind the flat face, where the windshield sits inside its opening.
-const WS_REVEAL := 0.12
+const WS_BOT_Y := 1.95
+const WS_TOP_Y := 2.9
+const WS_HALF_W := 1.6
+## Depth of the windshield pocket behind the raked face, along +z.
+const WS_REVEAL := 0.07
+## Where the front breaks from the vertical lower face to the raked windshield face.
+const BELT_Y := 1.75
+## Windshield face lean back from vertical.
+const RAKE_DEG := 20.0
+## Bevel on the front's vertical corners and roof edge (the bottom edge is not bevelled).
+const CHAMFER := 0.22
+## Back end of the solid body: 2.5 cm ahead of the hull's front-face step (z -4.70), clear of
+## it, the cab door leaf (-4.67) and the wall reveals (-4.655) (audit FLICKER). The cab is a
+## front off another vehicle bolted on, so a visible seam at the join is on purpose; its back
+## cap is what the cab door window shows from the cargo room.
+const BODY_BACK_Z := -4.725
 const GRILLE_HALF_W := 1.2
 const GRILLE_BOT_Y := 0.35
 const GRILLE_TOP_Y := 1.25
@@ -69,12 +78,16 @@ func rebuild_look(look: VanLook) -> void:
 	profile = VanBodyProfile.from_interior(get_node_or_null(INTERIOR_PATH))
 	var rng := look.rng_for(&"cab")
 	var parts := VanCabParts.new(self)
-	VanCabShell.new(self).build(hull.material)
+	VanCabBody.new(self).build(hull.material)
 	VanCabFace.new(self).build(hull.material, rng)
-	parts.build_interior()
 	parts.build_mirrors(hull.material, rng)
 	_build_headlight_spots()
 	_FrontKit.new(self).build(hull.material, look.rng_for(&"front_kit"))
+
+
+## The raked face plane's z at height y (the front kit and mirrors call it).
+static func front_z_at(y: float) -> float:
+	return NOSE_Z + maxf(0.0, y - BELT_Y) * tan(deg_to_rad(RAKE_DEG))
 
 
 func _build_headlight_spots() -> void:
