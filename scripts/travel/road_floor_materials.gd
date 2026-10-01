@@ -26,6 +26,21 @@ static func sidewalk_mat(surface_size_m: Vector2) -> ShaderMaterial:
 	return mat
 
 
+## Sidewalk shader for the real slab mesh: COLOR.r carries the wreck amount. The mesh writes
+## UV.x 0..1 across the walk and UV.y in metres along it, hence size (width, 1).
+static func sidewalk_wreck_mat(width: float) -> ShaderMaterial:
+	var m := sidewalk_mat(Vector2(width, 1.0))
+	m.set_shader_parameter(&"vertex_wreck", true)
+	return m
+
+
+## Sidewalk shader for the soil bed under the slabs: only the missing-slab fill is drawn.
+static func sidewalk_pit_mat(surface_size_m: Vector2) -> ShaderMaterial:
+	var m := sidewalk_mat(surface_size_m)
+	m.set_shader_parameter(&"pit_fill", true)
+	return m
+
+
 ## Worn concrete kerb with joints, chips, scuffs and faded paint (box long side along z).
 static func curb_mat() -> ShaderMaterial:
 	var mat := ShaderMaterial.new()

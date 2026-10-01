@@ -146,10 +146,12 @@ func build_sidewalk_dressing(
 			var bw := rng.randf_range(0.35, 0.55)
 			var bh := rng.randf_range(0.55, 0.85)
 			var bd := rng.randf_range(0.28, 0.4)
+			var bz := z + rng.randf_range(-0.3, 0.3)
+			road.dressing_z[0 if side < 0.0 else 1].append(bz)
 			road._add_box_centered(
 				"UtilityBox_%d_%s" % [i, "L" if side < 0.0 else "R"],
 				Vector3(bw, bh, bd),
-				Vector3(bx, sidewalk_top + bh * 0.5, z + rng.randf_range(-0.3, 0.3)),
+				Vector3(bx, sidewalk_top + bh * 0.5, bz),
 				metal_mat,
 				false
 			)
@@ -169,6 +171,7 @@ func build_sidewalk_dressing(
 				continue
 			var bx := side * (walk_inner + 0.28)
 			var h := 0.55
+			road.dressing_z[0 if side < 0.0 else 1].append(z)
 			road._add_box_centered(
 				"Bollard_%d_%s" % [i, "L" if side < 0.0 else "R"],
 				Vector3(0.14, h, 0.14),
@@ -186,7 +189,9 @@ func build_sidewalk_dressing(
 		z += rng.randf_range(5.5, 8.0)
 		i += 1
 
-	# Sidewalk slab seams (visual only).
+	# Sidewalk slab seams (visual only). The wrecked walk has real slab gaps instead.
+	if road.sidewalk_material == null:
+		return
 	var seam_spacing := 1.2
 	var sz := z_min + seam_spacing * 0.5
 	i = 0

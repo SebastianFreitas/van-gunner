@@ -17,10 +17,13 @@ const _CorridorFacades := preload("res://scripts/travel/facades/corridor_facades
 @onready var _side_street_right: Node3D = $SideStreets/Right
 
 var _facades: _CorridorFacades
+var _tile_seed := 0
+var _has_tile_seed := false
 
 
 func _ready() -> void:
 	_ensure_facades()
+	_push_sidewalk_wreck()
 
 
 func _ensure_facades() -> void:
@@ -30,9 +33,13 @@ func _ensure_facades() -> void:
 
 func configure(tile_seed: int, district_idx: int, neighborhood_seed: int, allow_rare: bool) -> bool:
 	_ensure_facades()
-	return _facades.configure(
+	var has_rare := _facades.configure(
 		tile_seed, clampi(district_idx, 0, DISTRICT_COUNT - 1), neighborhood_seed, allow_rare
 	)
+	_tile_seed = tile_seed
+	_has_tile_seed = true
+	_push_sidewalk_wreck()
+	return has_rare
 
 
 func apply_side_streets(left: bool, right: bool) -> void:
@@ -116,6 +123,30 @@ func _sync_road_openings() -> void:
 	_road_floor.set_side_openings(left_open, right_open)
 	_sync_side_street_branch_trims(left_open, right_open)
 	_build_side_street_corner_returns(left_open, right_open)
+	_push_sidewalk_wreck()
+
+
+## Hand the floor each side's building ruin spans (tile-local z; RoadFloor sits at the segment
+## origin, unrotated) so the wrecked sidewalk matches the buildings beside it. Facade side 0
+## (Left, built at x < 0) maps to the floor's left, side 1 (Right, x > 0) to its right.
+func _push_sidewalk_wreck() -> void:
+	if _road_floor == null or not _has_tile_seed:
+		return
+	var spans: Array[Array] = [[], []]
+	for side_idx in 2:
+		var out: Array[Vector3] = []
+		for plan: Dictionary in _facades.plans(side_idx):
+			if plan.has(&"mouth") or not (
+				plan.has(&"z0") and plan.has(&"z1") and plan.has(&"ruin")
+			):
+				continue
+			out.append(Vector3(plan[&"z0"], plan[&"z1"], plan[&"ruin"]))
+		spans[side_idx] = out
+	var left: Array[Vector3] = []
+	left.assign(spans[0])
+	var right: Array[Vector3] = []
+	right.assign(spans[1])
+	_road_floor.set_sidewalk_wreck(_tile_seed, left, right)
 
 
 func _sync_side_street_branch_trims(left_open: bool, right_open: bool) -> void:

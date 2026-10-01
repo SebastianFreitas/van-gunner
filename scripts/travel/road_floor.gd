@@ -12,6 +12,7 @@ extends Node3D
 
 const RoadFloorDetails = preload("res://scripts/travel/road_floor_details.gd")
 const RoadFloorMaterials = preload("res://scripts/travel/road_floor_materials.gd")
+const RoadFloorWreck := preload("res://scripts/travel/road_floor_wreck.gd")
 
 @export var span_x := 18.0
 @export var span_z := 20.0
@@ -32,6 +33,9 @@ const RoadFloorMaterials = preload("res://scripts/travel/road_floor_materials.gd
 @export var sidewalk_trim_z_neg := 0.0
 @export var include_collision := true
 @export var detail_seed := 0
+## Ruin tier (0 intact .. 3 gutted) for sidewalk no building plan covers (junctions,
+## branches, tiles never configured).
+@export_range(0, 3) var default_wreck_tier := 1
 @export var rebuild_on_ready := true
 
 ## Optional overrides — leave empty to use procedural street shaders.
@@ -39,6 +43,12 @@ const RoadFloorMaterials = preload("res://scripts/travel/road_floor_materials.gd
 @export var sidewalk_material: Material
 @export var curb_material: Material
 @export var metal_material: Material
+
+## Per side (0 = left, x < 0; 1 = right) an Array[Vector3] of (z0, z1, ruin tier) in
+## tile-local z, from the facade plans; read by road_floor_wreck.gd.
+var wreck_spans: Array = [[], []]
+## Per side the z of every bollard and utility box on the walk, so no slab under one goes missing.
+var dressing_z: Array = [[], []]
 
 var _built := false
 var _body: StaticBody3D
@@ -74,6 +84,13 @@ func _set_tree_walkable(root: Node, walkable: bool) -> void:
 		(root as CollisionShape3D).disabled = not walkable
 	for child in root.get_children():
 		_set_tree_walkable(child, walkable)
+
+
+## Seed the floor's details and hand it the buildings' ruin spans, then rebuild.
+func set_sidewalk_wreck(tile_seed: int, left: Array[Vector3], right: Array[Vector3]) -> void:
+	detail_seed = tile_seed if tile_seed != 0 else 1
+	wreck_spans = [left.duplicate(), right.duplicate()]
+	rebuild()
 
 
 ## Open a side to continuous road (drops sidewalk/curb/gutter on that edge).
@@ -175,6 +192,7 @@ func _build() -> void:
 	if _built:
 		return
 	_built = true
+	dressing_z = [[], []]
 
 	if include_collision:
 		_body = StaticBody3D.new()
@@ -195,9 +213,6 @@ func _build() -> void:
 
 	var road_mat := road_material if road_material else RoadFloorMaterials.asphalt_mat(
 		Vector2(carriage_width, span_z)
-	)
-	var walk_mat := sidewalk_material if sidewalk_material else RoadFloorMaterials.sidewalk_mat(
-		Vector2(sidewalk_width, span_z)
 	)
 	var curb_mat := curb_material if curb_material else RoadFloorMaterials.std(
 		Color(0.3, 0.29, 0.265, 1.0), 0.9, 0.02
@@ -220,11 +235,18 @@ func _build() -> void:
 		true
 	)
 
+	# Wrecked walk: the boxes become a soil bed under the helper's slabs.
+	var wreck := sidewalk_material == null
 	var walk_thickness := sidewalk_top - slab_bottom
+	if wreck:
+		walk_thickness -= RoadFloorWreck.BED_DROP
 	var walk_center_x := half_x - sidewalk_width * 0.5
 	var walk_span := _sidewalk_span_z()
 	var walk_len: float = walk_span.x
 	var walk_cz: float = walk_span.y
+	var walk_mat: Material = sidewalk_material
+	if wreck:
+		walk_mat = RoadFloorMaterials.sidewalk_pit_mat(Vector2(sidewalk_width, walk_len))
 	if sidewalk_left:
 		_add_box_centered(
 			"SidewalkLeft",
@@ -265,7 +287,7 @@ func _build() -> void:
 	var curb_w := curb_face_depth
 	var curb_h := curb_height + 0.02
 	var curb_x := road_half - curb_w * 0.5
-	if sidewalk_left:
+	if not wreck and sidewalk_left:
 		_add_box_centered(
 			"CurbLeft",
 			Vector3(curb_w, curb_h, walk_len),
@@ -273,7 +295,7 @@ func _build() -> void:
 			curb_strip_mat,
 			false
 		)
-	if sidewalk_right:
+	if not wreck and sidewalk_right:
 		_add_box_centered(
 			"CurbRight",
 			Vector3(curb_w, curb_h, walk_len),
@@ -286,6 +308,16 @@ func _build() -> void:
 	details.build_drains(gutter_inner, grate_mat, metal_mat, dark_mat)
 	details.build_manholes(carriage_width, carriage_center, metal_mat, dark_mat)
 	details.build_sidewalk_dressing(half_x, sidewalk_top, metal_mat, curb_mat, dark_mat)
+
+	if wreck:
+		var wreck_slab_mat := RoadFloorMaterials.sidewalk_wreck_mat(sidewalk_width)
+		for side_idx in 2:
+			if (side_idx == 0 and not sidewalk_left) or (side_idx == 1 and not sidewalk_right):
+				continue
+			RoadFloorWreck.new(self).build(
+				side_idx, walk_len, walk_cz, road_half, sidewalk_top, curb_x,
+				road_surface_y, road_surface_y + curb_h, curb_w, wreck_slab_mat, curb_strip_mat
+			)
 
 
 func _add_box_centered(

@@ -296,13 +296,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-318 GDScript files, 49239 lines.
+319 GDScript files, 49552 lines.
 
 ### `scenes/corridor/`
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `corridor_segment.gd` | — | 174 | A single corridor tile: road floor, wall collision, procedural facades on both sides, and the side-street / stop-bay openings that carve them. |
+| `corridor_segment.gd` | — | 205 | A single corridor tile: road floor, wall collision, procedural facades on both sides, and the side-street / stop-bay openings that carve them. |
 | `corridor_t_junction.gd` | — | 132 | Fills sidewalk corners where stem / branch / optional through-road meet the open junction slab. |
 | `side_street_branch.gd` | — | 57 | A side-street branch tile; mirrors its children when attached on the right side. |
 
@@ -525,9 +525,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `road_floor.gd` | `RoadFloor` | 367 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
-| `road_floor_details.gd` | — | 208 | Street furniture/detail builders for RoadFloor: drains, manholes and sidewalk dressing. |
-| `road_floor_materials.gd` | — | 52 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
+| `road_floor.gd` | `RoadFloor` | 399 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
+| `road_floor_details.gd` | — | 213 | Street furniture/detail builders for RoadFloor: drains, manholes and sidewalk dressing. |
+| `road_floor_materials.gd` | — | 67 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
+| `road_floor_wreck.gd` | — | 230 | Builds RoadFloor's wrecked sidewalk: real slab boxes on a soil bed and a curb in pieces, each side as one merged mesh. |
 | `travel_controller.gd` | `TravelController` | 607 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
 | `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
 | `travel_stops.gd` | — | 203 | Owns the stop fork, side-stop placement, elevator pad ride and stop-state cleanup. |
