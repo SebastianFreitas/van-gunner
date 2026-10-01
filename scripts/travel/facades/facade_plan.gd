@@ -5,6 +5,7 @@ extends RefCounted
 
 
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
+const _FacadeRuin := preload("res://scripts/travel/facades/facade_ruin.gd")
 
 const TILE_HALF_Z := 10.0
 const BASE_Y := -0.4
@@ -114,6 +115,7 @@ static func plan_length(
 			&"rare": &"",
 			&"district_id": district.id,
 		})
+		_FacadeRuin.apply(plans[plans.size() - 1], district)
 		z += width
 	return plans
 

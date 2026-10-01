@@ -7,6 +7,8 @@ const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
 const _FacadeBody := preload("res://scripts/travel/facades/facade_body.gd")
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
 const _FacadeMeshKit := preload("res://scripts/travel/facades/facade_mesh_kit.gd")
+const _FacadeRuin := preload("res://scripts/travel/facades/facade_ruin.gd")
+const _FacadeRuinBody := preload("res://scripts/travel/facades/facade_ruin_body.gd")
 
 
 ## Builds one wall's worth of buildings on the plane through face_mid with outward normal
@@ -25,7 +27,10 @@ static func build_span(
 	parent.add_child(host)
 	var plans := _FacadePlan.plan_length(rng, district, length, neighborhood_seed)
 	for i in plans.size():
-		_FacadeBody.build(host, plans[i], 1.0, i)
+		if _FacadeRuin.is_shaped(plans[i]):
+			_FacadeRuinBody.build(host, plans[i], 1.0, i, null)
+		else:
+			_FacadeBody.build(host, plans[i], 1.0, i)
 	for child in host.get_children():
 		if child is GeometryInstance3D:
 			(child as GeometryInstance3D).visibility_range_end = 64.0

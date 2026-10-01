@@ -189,6 +189,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `enum TurnState { NONE, APPROACHING, TURNING, PARKING, LEAVING_STOP, ELEVATING, }`
 
+**`scripts/travel/facades/facade_lamp_flicker.gd`**
+
+- `enum Phase { ON, STUTTER, OFF }`
+
+**`scripts/travel/facades/facade_wreck.gd`**
+
+- `enum Kind { NONE, SIGN, AWNING, FURNITURE }`
+
 **`scripts/ui/act_reveal_panel.gd`**
 
 - `signal reveal_finished`
@@ -276,7 +284,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-305 GDScript files, 46857 lines.
+310 GDScript files, 47752 lines.
 
 ### `scenes/corridor/`
 
@@ -516,24 +524,29 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `corridor_facades.gd` | — | 249 | Owns a corridor tile's two facade sides: their openings, plans and built nodes. |
+| `corridor_facades.gd` | — | 259 | Owns a corridor tile's two facade sides: their openings, plans and built nodes. |
 | `facade_audit.gd` | — | 122 | Shared keep-out audits for a corridor tile's built facades: the bay-mouth clearance check (nothing built in front of a stop-bay opening) and the raider-lane cl… |
-| `facade_body.gd` | — | 261 | Builds one building's body: SurfaceTool quads with UV in metres (u along the facade, v up), end returns, a roof plate, the stop-bay header / flank cut, and the… |
-| `facade_district.gd` | `FacadeDistrict` | 55 | One neighborhood look: skin presets, height range, ground-floor kinds, window state ratios and prop chances. |
-| `facade_fixtures.gd` | — | 107 | Wall lamp fixtures and their SpotLight3D pools for one facade side: district colour, dead lamps, the world-wide light cap, and the layer-1 cull mask that keeps… |
+| `facade_body.gd` | — | 268 | Builds one building's body: SurfaceTool quads with UV in metres (u along the facade, v up), end returns, a roof plate, the stop-bay header / flank cut, and the… |
+| `facade_district.gd` | `FacadeDistrict` | 57 | One neighborhood look: skin presets, height range, ground-floor kinds, window state ratios and prop chances. |
+| `facade_fixtures.gd` | — | 170 | Wall lamp fixtures and their SpotLight3D pools for one facade side: district colour, dead lamps, the world-wide light cap, and the layer-1 cull mask that keeps… |
 | `facade_grime_materials.gd` | — | 31 | Cached grime ShaderMaterials for large facade props, one per flat prop material, so big slabs (awnings, lintels, docks, set-piece bodies) share the road's grim… |
 | `facade_keep_out.gd` | — | 163 | Keep-out volumes for one facade side: the gate every facade placer passes an AABB through, so nothing ever stands in the raider lane, hangs over the road below… |
+| `facade_lamp_flicker.gd` | — | 71 | Drives one broken wall lamp's flicker: long on stretches, bursts of fast stutters and the odd blackout, on the light and its head's emission together. |
 | `facade_materials.gd` | — | 328 | Static material factories for the facade system: a ShaderMaterial per building from a parameter dictionary, cached StandardMaterial3D props by key, and named s… |
-| `facade_mesh_kit.gd` | — | 121 | Box-and-quad helpers shared by every facade prop builder: gated boxes into a SurfaceTool, committing an ArrayMesh node, and single BoxMesh nodes for props that… |
+| `facade_mesh_kit.gd` | — | 149 | Box-and-quad helpers shared by every facade prop builder: gated boxes into a SurfaceTool, committing an ArrayMesh node, and single BoxMesh nodes for props that… |
 | `facade_overheads.gd` | — | 149 | Cross-street industrial dressing (pipe bridges, catwalks, ribs) built under Facades/Overhead when both sides are plain; it never reaches below 9 m over the roa… |
-| `facade_plan.gd` | — | 191 | Plans one facade side: splits the 20 m tile edge into buildings and gives each a skin preset, height, floors, ground kind and setback. |
+| `facade_plan.gd` | — | 193 | Plans one facade side: splits the 20 m tile edge into buildings and gives each a skin preset, height, floors, ground kind and setback. |
 | `facade_props_ground.gd` | — | 335 | Ground-floor props for one building (storefront frames, awnings, roll-up lintels, loading docks, arcade pilasters, stoops, sidewalk furniture). |
 | `facade_props_upper.gd` | — | 354 | Upper-facade props for one building: trim (parapet cap, cornice, string-course ledges, downspout), AC units, a fire escape, balconies, roof clutter and wall pi… |
 | `facade_registry.gd` | — | 104 | Loads the facade data folders once: districts (sorted by index) and set-pieces (sorted by id). |
+| `facade_ruin.gd` | — | 223 | Rolls each street building's ruin condition and the column/hole data that later geometry cuts the facade with, and clips the plan that the prop families see so… |
+| `facade_ruin_body.gd` | — | 154 | Builds a ruined street building's body from its plan's ruin columns and holes: stepped tops, wall caps or roof plates, hole reveals over a dark back wall, then… |
+| `facade_ruin_debris.gd` | — | 215 | Debris for ruined street buildings: hanging slabs, rebar and sill chunks on the body, and the rubble heaps on the sidewalk below a collapse. |
 | `facade_set_piece.gd` | `FacadeSetPiece` | 46 | One rare street set-piece: eligibility data plus the hooks a subclass overrides. |
 | `facade_set_pieces.gd` | — | 84 | Rolls which rare set-piece (if any) a tile gets and on which side, and drives the piece's hooks from corridor_facades. |
 | `facade_signs.gd` | — | 285 | Street signage for one building: a backlit box sign over a storefront, a neon strip, a perpendicular blade sign, a cloth banner, or a torn poster on a boarded… |
-| `facade_spans.gd` | — | 50 | Facade spans for walls that are not corridor tile sides (junction stems, branches, the T far wall, side-street flanks): a host node maps the tile body builder'… |
+| `facade_spans.gd` | — | 55 | Facade spans for walls that are not corridor tile sides (junction stems, branches, the T far wall, side-street flanks): a host node maps the tile body builder'… |
+| `facade_wreck.gd` | — | 115 | Wreck pass: bends signs, sags awnings and tips street furniture on worn and ruined buildings. |
 
 ### `scripts/travel/facades/set_pieces/`
 

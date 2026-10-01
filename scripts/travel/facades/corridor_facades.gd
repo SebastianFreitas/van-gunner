@@ -7,6 +7,9 @@ extends RefCounted
 const _FacadeKeepOut := preload("res://scripts/travel/facades/facade_keep_out.gd")
 const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
 const _FacadeBody := preload("res://scripts/travel/facades/facade_body.gd")
+const _FacadeRuin := preload("res://scripts/travel/facades/facade_ruin.gd")
+const _FacadeRuinBody := preload("res://scripts/travel/facades/facade_ruin_body.gd")
+const _FacadeWreck := preload("res://scripts/travel/facades/facade_wreck.gd")
 const _FacadeRegistry := preload("res://scripts/travel/facades/facade_registry.gd")
 const _FacadePropsUpper := preload("res://scripts/travel/facades/facade_props_upper.gd")
 const _FacadePropsGround := preload("res://scripts/travel/facades/facade_props_ground.gd")
@@ -134,18 +137,25 @@ func rebuild_side(side_idx: int) -> void:
 		# darkens both sides even though the roll only picked one side to "own" it.
 		(_rare[&"piece"] as FacadeSetPiece).apply_plans(plans_out, rng)
 	for i in plans_out.size():
-		_FacadeBody.build(root, plans_out[i], SIDE_SIGNS[side_idx], i)
+		if _FacadeRuin.is_shaped(plans_out[i]):
+			_FacadeRuinBody.build(root, plans_out[i], SIDE_SIGNS[side_idx], i, keep_out)
+		else:
+			_FacadeBody.build(root, plans_out[i], SIDE_SIGNS[side_idx], i)
 		if plans_out[i].get(&"mouth", false):
 			_FacadeBody.build_flank_collision(root, SIDE_SIGNS[side_idx])
+		var prop_plan := _FacadeRuin.props_plan(plans_out[i])
+		var first_child := root.get_child_count()
 		_FacadePropsUpper.build(
-			root, plans_out[i], SIDE_SIGNS[side_idx], keep_out, rng, district_res
+			root, prop_plan, SIDE_SIGNS[side_idx], keep_out, rng, district_res
 		)
 		_FacadePropsGround.build(
-			root, plans_out[i], SIDE_SIGNS[side_idx], keep_out, rng, district_res
+			root, prop_plan, SIDE_SIGNS[side_idx], keep_out, rng, district_res
 		)
 		_FacadeSigns.build(
-			root, plans_out[i], SIDE_SIGNS[side_idx], keep_out, rng, district_res
+			root, prop_plan, SIDE_SIGNS[side_idx], keep_out, rng, district_res
 		)
+		_FacadeRuinBody.build_rubble(root, plans_out[i], SIDE_SIGNS[side_idx], i, keep_out)
+		_FacadeWreck.wreck(root, first_child, plans_out[i], SIDE_SIGNS[side_idx], keep_out)
 	var force_dead := rare_id() == &"power_outage"
 	_FacadeFixtures.build_fixtures(
 		root, plans_out, SIDE_SIGNS[side_idx], keep_out, rng, district_res, force_dead

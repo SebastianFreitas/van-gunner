@@ -47,6 +47,34 @@ static func add_box_ungated(st: SurfaceTool, center: Vector3, size: Vector3) -> 
 		)
 
 
+## Emits a box of `size` centred on the origin, carried by `xf` (rotated debris, leaning bars),
+## if its world AABB clears the keep-out; a null keep-out emits ungated (spans have none).
+static func add_box_xf(
+	st: SurfaceTool, xf: Transform3D, size: Vector3, keep_out: RefCounted
+) -> bool:
+	if keep_out != null and not keep_out.allows(xf * AABB(-size * 0.5, size)):
+		return false
+	add_box_xf_ungated(st, xf, size)
+	return true
+
+
+## add_box_ungated with the corners and face normals carried through `xf`.
+static func add_box_xf_ungated(st: SurfaceTool, xf: Transform3D, size: Vector3) -> void:
+	var h := size * 0.5
+	var pts: Array[Vector3] = []
+	for i in 8:
+		pts.append(xf * Vector3(
+			h.x * (2.0 * float((i >> 2) & 1) - 1.0), h.y * (2.0 * float((i >> 1) & 1) - 1.0),
+			h.z * (2.0 * float(i & 1) - 1.0)
+		))
+	var uv := [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
+	for f: Array in _BOX_FACES:
+		_FacadeBody.add_quad(
+			st, pts[f[0]], pts[f[1]], pts[f[2]], pts[f[3]], uv[0], uv[1], uv[2], uv[3],
+			(xf.basis * Vector3(f[4], f[5], f[6])).normalized()
+		)
+
+
 ## Commits a SurfaceTool into a shadow-tagged, range-culled MeshInstance3D under host.
 static func commit(
 	host: Node3D, st: SurfaceTool, node_name: String, material: Material, shadows: bool

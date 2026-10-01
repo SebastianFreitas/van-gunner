@@ -7,6 +7,7 @@ const _FacadeKeepOut := preload("res://scripts/travel/facades/facade_keep_out.gd
 const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
 const _FacadeMeshKit := preload("res://scripts/travel/facades/facade_mesh_kit.gd")
+const _FacadeLampFlicker := preload("res://scripts/travel/facades/facade_lamp_flicker.gd")
 
 const MAX_WORLD_LIGHTS := 12
 const LIGHT_GROUP := &"facade_lights"
@@ -56,6 +57,18 @@ static func build_fixtures(
 				x_face = _FacadePlan.face_x(plan, side_sign)
 				break
 		var dead := force_dead or rng.randf() < district.dead_lamp_chance
+		# Wreck state on its own stream, so the tile rng's draw order stays as it was.
+		var lr := RandomNumberGenerator.new()
+		lr.seed = hash([rng.seed, i, side_sign, &"lamp_wreck"])
+		var wreck: StringName = &"steady"
+		var bend := 0.0
+		if dead:
+			wreck = [&"droop", &"smashed", &"stub"][lr.randi_range(0, 2)]
+		else:
+			if lr.randf() < 0.35:
+				wreck = &"flicker"
+			if lr.randf() < 0.5:
+				bend = lr.randf_range(0.12, 0.35)
 		# Bracket and head share the same 0.45 m protrusion: the head sits at the bracket's end.
 		var arm_center := Vector3(_out_x(x_face, side_sign, 0.45), LAMP_Y, z)
 		var head_size := Vector3(0.25, 0.15, 0.5)
@@ -69,15 +82,55 @@ static func build_fixtures(
 				StringName("lamp_" + String(district.id)), district.lamp_color * 0.35, 0.6, 0.2,
 				district.lamp_color, 2.5
 			)
+		if wreck == &"flicker":
+			lamp_material = lamp_material.duplicate() as StandardMaterial3D
+		var arm_len := 0.45
+		var cable_len := 0.0
+		var head_tilt := 0.0
+		match wreck:
+			&"droop":
+				bend = lr.randf_range(0.3, 0.6)
+				cable_len = lr.randf_range(0.3, 0.6)
+				head_tilt = lr.randf_range(1.1, 1.5)
+			&"smashed":
+				bend = lr.randf_range(0.15, 0.45)
+			&"stub":
+				arm_len = lr.randf_range(0.15, 0.3)
+				bend = lr.randf_range(0.2, 0.7)
 		var mesh := ArrayMesh.new()
 		var st_bracket := SurfaceTool.new()
 		st_bracket.begin(Mesh.PRIMITIVE_TRIANGLES)
-		_FacadeMeshKit.add_box_ungated(st_bracket, arm_center, Vector3(0.45, 0.06, 0.06))
-		st_bracket.commit(mesh)
-		mesh.surface_set_material(0, _FacadeMaterials.iron_material())
 		var st_head := SurfaceTool.new()
 		st_head.begin(Mesh.PRIMITIVE_TRIANGLES)
-		_FacadeMeshKit.add_box_ungated(st_head, arm_center, head_size)
+		if bend > 0.0:
+			# Rotate about Z, pivoting at the wall: side_sign * bend drops the outer end on both sides.
+			var wall_end := Vector3(x_face, LAMP_Y, z)
+			var out_vec := Vector3(-side_sign * arm_len, 0.0, 0.0)
+			var arm_basis := Basis(Vector3.BACK, side_sign * bend)
+			var arm_end := wall_end + arm_basis * out_vec
+			var arm_xf := Transform3D(arm_basis, wall_end + arm_basis * (out_vec * 0.5))
+			_FacadeMeshKit.add_box_xf_ungated(st_bracket, arm_xf, Vector3(arm_len, 0.06, 0.06))
+			var head_xf := Transform3D(arm_basis, arm_end)
+			if wreck == &"droop":
+				_FacadeMeshKit.add_box_ungated(
+					st_bracket, arm_end + Vector3(0.0, -cable_len * 0.5, 0.0),
+					Vector3(0.02, cable_len, 0.02)
+				)
+				head_xf = Transform3D(
+					Basis(Vector3.BACK, side_sign * head_tilt),
+					arm_end + Vector3(0.0, -cable_len - 0.08, 0.0)
+				)
+			var head_box := head_size
+			if wreck == &"smashed":
+				head_box = Vector3(0.18, 0.08, 0.22)
+			elif wreck == &"stub":
+				head_box = Vector3(0.04, 0.04, 0.04)
+			_FacadeMeshKit.add_box_xf_ungated(st_head, head_xf, head_box)
+		else:
+			_FacadeMeshKit.add_box_ungated(st_bracket, arm_center, Vector3(0.45, 0.06, 0.06))
+			_FacadeMeshKit.add_box_ungated(st_head, arm_center, head_size)
+		st_bracket.commit(mesh)
+		mesh.surface_set_material(0, _FacadeMaterials.iron_material())
 		st_head.commit(mesh)
 		mesh.surface_set_material(1, lamp_material)
 		var mi := MeshInstance3D.new()
@@ -86,21 +139,31 @@ static func build_fixtures(
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.visibility_range_end = _FacadeMeshKit.VISIBILITY_RANGE
 		host.add_child(mi)
-		if dead or not host.is_inside_tree():
+		if dead:
 			continue
-		if host.get_tree().get_nodes_in_group(LIGHT_GROUP).size() >= MAX_WORLD_LIGHTS:
-			continue
-		var light := SpotLight3D.new()
-		light.name = "Light%d" % i
-		light.light_color = district.lamp_color
-		light.light_energy = district.lamp_energy * POOL_ENERGY_SCALE
-		light.spot_range = POOL_RANGE
-		light.spot_angle = POOL_ANGLE
-		light.spot_attenuation = 1.0
-		light.spot_angle_attenuation = 2.0
-		light.shadow_enabled = false
-		light.light_cull_mask = 1
-		light.position = Vector3(x_face - side_sign * LIGHT_OUT, LAMP_Y - 0.2, z)
-		light.rotation = Vector3(-PI * 0.5, 0.0, 0.0)
-		light.add_to_group(LIGHT_GROUP)
-		host.add_child(light)
+		var light: SpotLight3D = null
+		if (
+			host.is_inside_tree()
+			and host.get_tree().get_nodes_in_group(LIGHT_GROUP).size() < MAX_WORLD_LIGHTS
+		):
+			light = SpotLight3D.new()
+			light.name = "Light%d" % i
+			light.light_color = district.lamp_color
+			light.light_energy = district.lamp_energy * POOL_ENERGY_SCALE
+			light.spot_range = POOL_RANGE
+			light.spot_angle = POOL_ANGLE
+			light.spot_attenuation = 1.0
+			light.spot_angle_attenuation = 2.0
+			light.shadow_enabled = false
+			light.light_cull_mask = 1
+			light.position = Vector3(x_face - side_sign * LIGHT_OUT, LAMP_Y - 0.2, z)
+			light.rotation = Vector3(-PI * 0.5, 0.0, 0.0)
+			light.add_to_group(LIGHT_GROUP)
+			host.add_child(light)
+		if wreck == &"flicker":
+			var flicker := _FacadeLampFlicker.new()
+			flicker.name = "Flicker%d" % i
+			flicker.light = light
+			flicker.head = lamp_material
+			flicker.seed_value = lr.randi()
+			host.add_child(flicker)

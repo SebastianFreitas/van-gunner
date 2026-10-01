@@ -159,6 +159,13 @@ static func _add_end_return(
 	)
 
 
+## Public door to _commit_body for the ruined body, so it gets the same tangents and shadows.
+static func commit_body(
+	host: Node3D, st: SurfaceTool, node_name: String, material: ShaderMaterial
+) -> MeshInstance3D:
+	return _commit_body(host, st, node_name, material)
+
+
 ## Commits a SurfaceTool into a shadow-casting MeshInstance3D under host.
 static func _commit_body(
 	host: Node3D, st: SurfaceTool, node_name: String, material: ShaderMaterial

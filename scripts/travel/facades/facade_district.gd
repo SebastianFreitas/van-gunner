@@ -22,6 +22,8 @@ extends Resource
 @export var boarded_ratio := 0.0
 @export var broken_ratio := 0.03
 @export var damage := 0.05
+## Condition weights per building: intact, worn, broken, gutted (facade_ruin.gd).
+@export var ruin_weights: Array[float] = [0.12, 0.38, 0.32, 0.18]
 @export var band_every: Array[float] = [0.0, 2.0, 3.0]
 
 ## Prop chances (0..1).
