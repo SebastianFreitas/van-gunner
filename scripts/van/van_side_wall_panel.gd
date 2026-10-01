@@ -9,6 +9,9 @@ var wall: Node3D  # the VanSideWall; reads its exports and profile when called
 var _x_from := 0.0  ## Offset off the liner of the mesh's inner face for the current build.
 var _x_to := 0.0  ## Offset off the liner of the mesh's outer face for the current build.
 var _inner_face := true  ## Whether the current build emits the cabin-side face.
+## How far a reveal's cabin edge stands proud of the liner face (cabin side) when the build
+## emits that face, so the reveal overlaps the face's flat grid rows instead of meeting them edge to edge.
+const REVEAL_LIP_M := 0.004
 
 
 func _init(owner: Node3D) -> void:
@@ -134,7 +137,6 @@ func build_side_mesh(
 
 ## Cross-section faces on each window cut perimeter — visible when the sash is open.
 func add_window_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
-	var half_span: float = wall.span_z * 0.5
 	const EDGE_SUBDIV := 16
 	var n_poly: int = wall.WINDOW_CUT_POLY.size()
 	if n_poly < 3:
@@ -147,21 +149,38 @@ func add_window_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
 			for s in range(EDGE_SUBDIV):
 				var la := a.lerp(b, float(s) / float(EDGE_SUBDIV))
 				var lb := a.lerp(b, float(s + 1) / float(EDGE_SUBDIV))
-				var ya: float = wall.window_center_y + la.y
-				var yb: float = wall.window_center_y + lb.y
-				var za: float = cz + la.x
-				var zb: float = cz + lb.x
-				var xi_a: float = wall_sign * (wall._profile_x(ya) + _x_from)
-				var xo_a: float = xi_a + wall_sign * (_x_to - _x_from)
-				var xi_b: float = wall_sign * (wall._profile_x(yb) + _x_from)
-				var xo_b: float = xi_b + wall_sign * (_x_to - _x_from)
-				var i_a := Vector3(xi_a, ya, za)
-				var o_a := Vector3(xo_a, ya, za)
-				var i_b := Vector3(xi_b, yb, zb)
-				var o_b := Vector3(xo_b, yb, zb)
-				var uva := Vector2((za + half_span) / wall.span_z, ya / wall.wall_height)
-				var uvb := Vector2((zb + half_span) / wall.span_z, yb / wall.wall_height)
-				add_reveal_quad(st, i_a, o_a, i_b, o_b, uva, uvb, inward_2d)
+				var wy: float = wall.window_center_y
+				add_reveal_edge(
+					st, wall_sign, Vector2(wy + la.y, cz + la.x), Vector2(wy + lb.y, cz + lb.x), inward_2d
+				)
+
+
+## Liner x offset of a reveal's cabin edge at y: the lesser of the curve and the face grid's
+## flat row chord, less REVEAL_LIP_M when this build emits the cabin face (an outer-layer
+## build keeps the curve so its reveals never overlap the liner's coplanar ones).
+func reveal_inner_profile_x(y: float) -> float:
+	var exact: float = wall._profile_x(y)
+	if not _inner_face:
+		return exact + _x_from
+	var h: float = wall.wall_height / float(wall.y_segments)
+	var i := clampi(int(floor(y / h)), 0, wall.y_segments - 1)
+	var t := clampf((y - float(i) * h) / h, 0.0, 1.0)
+	var chord := lerpf(wall._profile_x(float(i) * h), wall._profile_x(float(i + 1) * h), t)
+	return minf(exact, chord) + _x_from - REVEAL_LIP_M
+
+
+## One reveal quad between two (y, z) points on an opening's edge, cabin edge lipped.
+func add_reveal_edge(
+	st: SurfaceTool, wall_sign: float, a: Vector2, b: Vector2, inward_2d: Vector2
+) -> void:
+	var half_span: float = wall.span_z * 0.5
+	var i_a := Vector3(wall_sign * reveal_inner_profile_x(a.x), a.x, a.y)
+	var o_a := Vector3(wall_sign * (wall._profile_x(a.x) + _x_to), a.x, a.y)
+	var i_b := Vector3(wall_sign * reveal_inner_profile_x(b.x), b.x, b.y)
+	var o_b := Vector3(wall_sign * (wall._profile_x(b.x) + _x_to), b.x, b.y)
+	var uva := Vector2((a.y + half_span) / wall.span_z, a.x / wall.wall_height)
+	var uvb := Vector2((b.y + half_span) / wall.span_z, b.x / wall.wall_height)
+	add_reveal_quad(st, i_a, o_a, i_b, o_b, uva, uvb, inward_2d)
 
 
 ## Quad bridging inner→outer along an opening edge; normal faces into the hole.
@@ -187,7 +206,6 @@ func add_reveal_quad(
 func add_door_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
 	var z0: float = wall.door_center_z - wall.door_half_length
 	var z1: float = wall.door_center_z + wall.door_half_length
-	var half_span: float = wall.span_z * 0.5
 	var segs_z := 32
 	var segs_y := 32
 
@@ -195,69 +213,27 @@ func add_door_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
 		var za := lerpf(z0, z1, float(iz) / float(segs_z))
 		var zb := lerpf(z0, z1, float(iz + 1) / float(segs_z))
 		var y_top: float = wall.door_y_max
-		var xi: float = wall_sign * (wall._profile_x(y_top) + _x_from)
-		var xo: float = xi + wall_sign * (_x_to - _x_from)
-		var i_a := Vector3(xi, y_top, za)
-		var o_a := Vector3(xo, y_top, za)
-		var i_b := Vector3(xi, y_top, zb)
-		var o_b := Vector3(xo, y_top, zb)
-		var uva := Vector2((za + half_span) / wall.span_z, y_top / wall.wall_height)
-		var uvb := Vector2((zb + half_span) / wall.span_z, y_top / wall.wall_height)
 		# Top lintel — normal points down into the opening.
-		_Shell.add_tri(st, i_a, uva, o_a, uva, o_b, uvb)
-		_Shell.add_tri(st, i_a, uva, o_b, uvb, i_b, uvb)
+		add_reveal_edge(st, wall_sign, Vector2(y_top, za), Vector2(y_top, zb), Vector2(0.0, -1.0))
 
 	for iz in range(segs_z):
 		var za := lerpf(z0, z1, float(iz) / float(segs_z))
 		var zb := lerpf(z0, z1, float(iz + 1) / float(segs_z))
 		var y_bot: float = wall.door_y_min
-		var xi: float = wall_sign * (wall._profile_x(y_bot) + _x_from)
-		var xo: float = xi + wall_sign * (_x_to - _x_from)
-		var i_a := Vector3(xi, y_bot, za)
-		var o_a := Vector3(xo, y_bot, za)
-		var i_b := Vector3(xi, y_bot, zb)
-		var o_b := Vector3(xo, y_bot, zb)
-		var uva := Vector2((za + half_span) / wall.span_z, y_bot / wall.wall_height)
-		var uvb := Vector2((zb + half_span) / wall.span_z, y_bot / wall.wall_height)
 		# Bottom sill — normal points up into the opening.
-		_Shell.add_tri(st, i_a, uva, i_b, uvb, o_b, uvb)
-		_Shell.add_tri(st, i_a, uva, o_b, uvb, o_a, uva)
+		add_reveal_edge(st, wall_sign, Vector2(y_bot, za), Vector2(y_bot, zb), Vector2(0.0, 1.0))
 
 	for iy in range(segs_y):
 		var ya: float = lerpf(wall.door_y_min, wall.door_y_max, float(iy) / float(segs_y))
 		var yb: float = lerpf(wall.door_y_min, wall.door_y_max, float(iy + 1) / float(segs_y))
-		var z_fwd := z1
-		var xi_a: float = wall_sign * (wall._profile_x(ya) + _x_from)
-		var xo_a: float = xi_a + wall_sign * (_x_to - _x_from)
-		var xi_b: float = wall_sign * (wall._profile_x(yb) + _x_from)
-		var xo_b: float = xi_b + wall_sign * (_x_to - _x_from)
-		var i_a := Vector3(xi_a, ya, z_fwd)
-		var o_a := Vector3(xo_a, ya, z_fwd)
-		var i_b := Vector3(xi_b, yb, z_fwd)
-		var o_b := Vector3(xo_b, yb, z_fwd)
-		var uva := Vector2((z_fwd + half_span) / wall.span_z, ya / wall.wall_height)
-		var uvb := Vector2((z_fwd + half_span) / wall.span_z, yb / wall.wall_height)
 		# Forward jamb — normal points into the opening (-Z).
-		_Shell.add_tri(st, i_a, uva, i_b, uvb, o_b, uvb)
-		_Shell.add_tri(st, i_a, uva, o_b, uvb, o_a, uva)
+		add_reveal_edge(st, wall_sign, Vector2(ya, z1), Vector2(yb, z1), Vector2(-1.0, 0.0))
 
 	for iy in range(segs_y):
 		var ya: float = lerpf(wall.door_y_min, wall.door_y_max, float(iy) / float(segs_y))
 		var yb: float = lerpf(wall.door_y_min, wall.door_y_max, float(iy + 1) / float(segs_y))
-		var z_rear := z0
-		var xi_a: float = wall_sign * (wall._profile_x(ya) + _x_from)
-		var xo_a: float = xi_a + wall_sign * (_x_to - _x_from)
-		var xi_b: float = wall_sign * (wall._profile_x(yb) + _x_from)
-		var xo_b: float = xi_b + wall_sign * (_x_to - _x_from)
-		var i_a := Vector3(xi_a, ya, z_rear)
-		var o_a := Vector3(xo_a, ya, z_rear)
-		var i_b := Vector3(xi_b, yb, z_rear)
-		var o_b := Vector3(xo_b, yb, z_rear)
-		var uva := Vector2((z_rear + half_span) / wall.span_z, ya / wall.wall_height)
-		var uvb := Vector2((z_rear + half_span) / wall.span_z, yb / wall.wall_height)
 		# Rear jamb — normal points into the opening (+Z).
-		_Shell.add_tri(st, i_a, uva, o_a, uva, o_b, uvb)
-		_Shell.add_tri(st, i_a, uva, o_b, uvb, i_b, uvb)
+		add_reveal_edge(st, wall_sign, Vector2(ya, z0), Vector2(yb, z0), Vector2(1.0, 0.0))
 
 
 func add_opening_returns(
@@ -280,7 +256,7 @@ func add_opening_returns(
 					inner[iy][iz + 1], outer[iy][iz + 1],
 					inner[iy + 1][iz + 1], outer[iy + 1][iz + 1],
 					uvs[iy][iz + 1], uvs[iy + 1][iz + 1],
-					s00
+					not s00  # the edge runs along y, not z, which flips add_return_quad's winding
 				)
 			# Horizontal edge along +Y of cell when solidity changes across y.
 			if s00 != s01:

@@ -7,6 +7,8 @@ extends Node3D
 const _Shell := preload("res://scripts/van/van_side_wall_shell.gd")
 const _Panel := preload("res://scripts/van/van_side_wall_panel.gd")
 const _Jambs := preload("res://scripts/van/van_side_wall_jambs.gd")
+## Steel strip closing the band under the roof lip along each long edge.
+const _RoofEdgeSeal := preload("res://scripts/van/roof_edge_seal.gd")
 
 @export var wall_height := 3.08
 @export var span_z := 9.4
@@ -205,6 +207,7 @@ func _build() -> void:
 	_Jambs.new(self).add_door_jambs(-1.0, jamb_mat)
 	_Jambs.new(self).add_door_jambs(1.0, jamb_mat)
 	_add_door_slide_tracks(jamb_mat)
+	_RoofEdgeSeal.build(self, self)
 	_add_cargo_rails(mat)
 	_add_floor_seal_strips(jamb_mat)
 

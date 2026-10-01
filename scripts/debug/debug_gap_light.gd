@@ -52,7 +52,10 @@ func _paint_glass(rig: Node3D) -> void:
 	for parent in parents:
 		if parent == null:
 			continue
-		for node in parent.find_children("WindowGlass", "MeshInstance3D", true, false):
+		# The street pane too: a sightline past the inner pane's edge ends on its culled back.
+		var panes := parent.find_children("WindowGlass", "MeshInstance3D", true, false)
+		panes.append_array(parent.find_children("ExteriorPane", "MeshInstance3D", true, false))
+		for node in panes:
 			var glass := node as MeshInstance3D
 			if not _glass.has(glass):
 				_glass[glass] = glass.material_override

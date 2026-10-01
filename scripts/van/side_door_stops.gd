@@ -38,7 +38,7 @@ func add_door_stops(wall_sign: float, mat: Material) -> void:
 	if ceiling != null:
 		yb = _Cove.join(_walls, ceiling).y - 0.05
 	var zo0 := face_z - 0.02
-	var zo1 := cz + hl - ji + 0.05
+	var zo1 := cz + hl + 0.05  # onto the liner: the wall's hole snaps to its grid past z1
 	var yo0 := y0 + ji - 0.05
 	var yo1 := yb
 	var zi0 := face_z + 0.07

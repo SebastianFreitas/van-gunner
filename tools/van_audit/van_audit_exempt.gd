@@ -87,22 +87,22 @@ const RULES: Array[Dictionary] = [
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/DoorJamb_*", "b": "", "d": "D54",
 		"reason": "the jamb lip lines the door opening; seen through the leaf's clearance gap"
-			+ "; re-earned (vangapfix D21); the gap-light views still show pink (vangapfix D77)",
+			+ "; re-earned (vangapfix D21); not see-through (vangapfix2)",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/*WallReveals", "b": "", "d": "D54",
 		"reason": "wall reveals line each side cut (D18); seen through the leaf or sash gap"
-			+ "; re-earned (vangapfix D21); the gap-light views still show pink (vangapfix D77)",
+			+ "; re-earned (vangapfix D21); not see-through (vangapfix2)",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/*Wall", "b": "", "d": "D54",
 		"reason": "the wall's own cut faces, seen through an opening's clearance gap"
-			+ "; re-earned (vangapfix D21); the gap-light views still show pink (vangapfix D77)",
+			+ "; re-earned (vangapfix D21); not see-through (vangapfix2)",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/SideDoors/*/CurvedBody", "b": "", "d": "D54",
 		"reason": "the door leaf's edge band, seen past its outer skin at a grazing angle"
-			+ "; re-earned (vangapfix D21); the gap-light views still show pink (vangapfix D77)",
+			+ "; re-earned (vangapfix D21); not see-through (vangapfix2)",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/FrontWall/Slab", "b": "", "d": "D54",
@@ -120,7 +120,7 @@ const RULES: Array[Dictionary] = [
 		"section": "LEAK_OUT", "a": "Interior/Shell/Floor/RearEntryRamp", "b": "", "d": "D57",
 		"box": REAR_SILL,
 		"reason": "the rear step ramp sits outside under the rear doors by design"
-			+ "; re-earned (vangapfix D21); the gap-light views still show pink (vangapfix D77)",
+			+ "; re-earned (vangapfix D21); not see-through (vangapfix2)",
 	},
 ]
 

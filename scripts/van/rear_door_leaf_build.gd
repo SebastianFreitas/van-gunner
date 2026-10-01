@@ -1,6 +1,7 @@
 extends RefCounted
 ## Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55).
 
+const _WindowLip := preload("res://scripts/van/rear_window_lip.gd")
 const DOOR_THICKNESS := 0.16
 const CENTER_GAP := 0.012
 const Y_MIN := 0.02
@@ -27,6 +28,8 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 	var mat := _door_body_material(doors, left, walls, ceiling)
 	_apply_leaf(left, mesh, mat, false)
 	_apply_leaf(right, mesh, mat, true)
+	_WindowLip.build(left, left, false)
+	_WindowLip.build(left, right, true)
 	_add_astragal(left, ceiling)
 
 

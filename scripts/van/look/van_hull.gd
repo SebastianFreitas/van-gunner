@@ -16,9 +16,15 @@ const _HullPatches := preload("res://scripts/van/look/van_hull_patches.gd")
 ## phase 5). Roof, rear, sills, belly and hull lines meet `SIDE_SKIN_OUTER_M` instead.
 const SKIN_OFFSET_M := 0.06
 
+## How far the roof crown rises above its edge at x = 0.
+const ROOF_RISE_M := 0.38
+
 ## How far the side skin's outer face stands off the liner: the side wall's 0.16 plus 0.06.
 ## `side_windows.gd` `HINGE_OUT_M` is sized against it.
 const SIDE_SKIN_OUTER_M := 0.22
+
+## Rear end of the roof skin along z; the roof edge seal spans the same range.
+const ROOF_Z_MAX := 4.78
 
 ## The fill stands this far in front of the interior front wall's cab-side face and this far
 ## outside its outline, so the slab never shows and no face lies within the audit's 2 cm.
@@ -80,7 +86,7 @@ func _build_sides(walls: VanSideWall) -> void:
 func _build_roof(walls: VanSideWall) -> void:
 	var w: float = walls.wall_x_at(walls.wall_height) + SIDE_SKIN_OUTER_M
 	var z_min := -walls.span_z * 0.5
-	var z_max := 4.78
+	var z_max := ROOF_Z_MAX
 	var x_segments := 20
 	var z_segments := 24
 
@@ -144,9 +150,14 @@ func _build_roof(walls: VanSideWall) -> void:
 	_add_mesh("RoofSkin", st.commit())
 
 
+## Outer roof height at lateral `x`, for a roof of half width `half_w` over walls `wall_height` tall.
+static func roof_y_at(x: float, half_w: float, wall_height: float) -> float:
+	var t := x / half_w
+	return wall_height + SKIN_OFFSET_M + ROOF_RISE_M * (1.0 - t * t)
+
+
 func _roof_y(x: float, w: float, walls: VanSideWall) -> float:
-	var t := x / w
-	return walls.wall_height + SKIN_OFFSET_M + 0.38 * (1.0 - t * t)
+	return roof_y_at(x, w, walls.wall_height)
 
 
 ## The rear face is a closed ring around the door opening. The opening follows the rear door

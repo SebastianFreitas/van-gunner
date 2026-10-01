@@ -155,8 +155,7 @@ func build_curved_pane_from_poly(
 
 ## Thin CSG-style frame ring: loft outer→inner polys onto the wall curve.
 ## Matches the extruded WindowFrame (Outer − InnerCut) silhouette.
-## Each spoke keeps a flat cross-section (same face X for outer+inner) so the
-## border reads like rear CSG — slim, sharp — not a bowed "inflated tire".
+## Each spoke keeps a flat cross-section (same face X for outer+inner): slim, sharp, not bowed.
 func build_curved_frame_ring_mesh(
 	wall_sign: float,
 	outer_poly: PackedVector2Array,
@@ -180,6 +179,8 @@ func build_curved_frame_ring_mesh(
 	var count := mini(outer_2.size(), inner_2.size())
 	if count < 3:
 		return st.commit()
+	# Clockwise (z, y) polys (side windows) flip the caps and get per-wall returns.
+	var cw := Geometry2D.is_polygon_clockwise(outer_poly)
 
 	var half_span: float = wall.span_z * 0.5
 	var oi: Array[Vector3] = []
@@ -210,7 +211,7 @@ func build_curved_frame_ring_mesh(
 		var n := (k + 1) % count
 		# Cabin face — smooth along the curve, hard edge vs returns.
 		st.set_smooth_group(0)
-		if wall_sign > 0.0:
+		if (wall_sign > 0.0) != cw:
 			add_tri(st, oi[k], ouv[k], ii[k], iuv[k], oi[n], ouv[n])
 			add_tri(st, oi[n], ouv[n], ii[k], iuv[k], ii[n], iuv[n])
 		else:
@@ -218,7 +219,7 @@ func build_curved_frame_ring_mesh(
 			add_tri(st, oi[n], ouv[n], ii[n], iuv[n], ii[k], iuv[k])
 		# Exterior face.
 		st.set_smooth_group(1)
-		if wall_sign > 0.0:
+		if (wall_sign > 0.0) != cw:
 			add_tri(st, oo[k], ouv[k], oo[n], ouv[n], io[k], iuv[k])
 			add_tri(st, oo[n], ouv[n], io[n], iuv[n], io[k], iuv[k])
 		else:
@@ -228,10 +229,10 @@ func build_curved_frame_ring_mesh(
 		st.set_smooth_group(-1)
 		var panel: Variant = wall._panel_helper()
 		panel.add_return_quad(
-			st, wall_sign, oi[k], oo[k], oi[n], oo[n], ouv[k], ouv[n], wall_sign < 0.0
+			st, wall_sign, oi[k], oo[k], oi[n], oo[n], ouv[k], ouv[n], cw or wall_sign < 0.0
 		)
 		panel.add_return_quad(
-			st, wall_sign, ii[k], io[k], ii[n], io[n], iuv[k], iuv[n], wall_sign > 0.0
+			st, wall_sign, ii[k], io[k], ii[n], io[n], iuv[k], iuv[n], not cw and wall_sign > 0.0
 		)
 
 	st.index()

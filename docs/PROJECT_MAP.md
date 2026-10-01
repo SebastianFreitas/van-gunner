@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-301 GDScript files, 46352 lines.
+303 GDScript files, 46620 lines.
 
 ### `scenes/corridor/`
 
@@ -370,7 +370,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `debug_commands.gd` | — | 244 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
 | `debug_facade_commands.gd` | — | 301 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
-| `debug_gap_light.gd` | — | 172 | Debug gap light: paints everything that is not van magenta, so a see-through seam shows pink. |
+| `debug_gap_light.gd` | — | 175 | Debug gap light: paints everything that is not van magenta, so a see-through seam shows pink. |
 | `debug_item_commands.gd` | — | 70 | Debug console commands: items. |
 | `debug_meta_commands.gd` | — | 55 | Debug console commands: meta. |
 | `debug_run_flow_commands.gd` | — | 54 | Debug console commands: run flow. |
@@ -597,10 +597,12 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `iron_cross.gd` | `IronCross` | 397 | Welded iron + on a window pane. |
 | `rear_door_frame.gd` | — | 143 | Fixed steel frame on the cabin side of the rear doors, covering the leaves' clearance slits. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
-| `rear_door_leaf_build.gd` | — | 137 | Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55). |
+| `rear_door_leaf_build.gd` | — | 140 | Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55). |
 | `rear_door_lighting.gd` | — | 27 | Puts the rear leaves' outward-visible parts on layers 1+2 so street lights reach them (D15). |
 | `rear_door_lips.gd` | — | 193 | Steel lips and the outer astragal on the rear leaves' street face, covering their slits from outside. |
 | `rear_doors.gd` | — | 307 | Truck-style rear double doors. |
+| `rear_window_lip.gd` | — | 157 | Rear window lip: dark lip riding on each rear leaf, closing the slot between the vaulted skin and the window's cabin frame. |
+| `roof_edge_seal.gd` | — | 93 | Roof edge seal: dark steel strip closing the band between the side skin's top and the roof lip along each long edge. |
 | `room_zone.gd` | `RoomZone` | 15 | Marks a van interior zone; tells GameSession which room the player is in. |
 | `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. |
 | `side_door_leaf.gd` | — | 336 | Builds the side door leaf meshes (body, trim, frames, latch) onto SideDoors nodes. |
@@ -608,7 +610,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `side_doors.gd` | — | 339 | Sliding cargo-style side doors. |
 | `side_window_exterior.gd` | — | 50 | Adds the dark-tinted exterior pane that rides a side cargo window's sash. |
 | `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. |
-| `side_windows.gd` | — | 401 | Side cargo windows — top-hinged sashes that tip vertically outward. |
+| `side_windows.gd` | — | 400 | Side cargo windows — top-hinged sashes that tip vertically outward. |
 | `van.gd` | — | 398 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
 | `van_body_profile.gd` | `VanBodyProfile` | 193 | One cross-section for the whole van body: the inner liner outline (floor, bowed sides, roof vault) and an outer skin offset from it, so inside and outside piec… |
 | `van_bulkhead.gd` | `VanBulkhead` | 205 | Mid/rear cargo bulkhead: metal frame + diagonal mesh, side doorway. |
@@ -626,10 +628,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_overlays.gd` | — | 238 | Modal overlays: bench, skill tree, class panel, debug console, pause menu, mouse passthrough. |
 | `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. |
 | `van_route_choice.gd` | — | 287 | Builds and refreshes the ROUTE_CHOICE panel: card art, stop labels, highlight state. |
-| `van_side_wall.gd` | `VanSideWall` | 365 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
+| `van_side_wall.gd` | `VanSideWall` | 368 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
 | `van_side_wall_jambs.gd` | — | 175 | Door jambs for VanSideWall: the frame ring's lip inside each side door bay, without the outer return the wall's reveal owns. |
-| `van_side_wall_panel.gd` | — | 401 | This wall's own side panel mesh: openings, reveals, returns, and the cut queries that decide which cells are punched for the side doors and windows. |
-| `van_side_wall_shell.gd` | — | 400 | Generic curved-shell / pane / frame-ring mesh builders for VanSideWall: the low-level lofting onto the cargo profile, shared by side walls, doors and windows. |
+| `van_side_wall_panel.gd` | — | 377 | This wall's own side panel mesh: openings, reveals, returns, and the cut queries that decide which cells are punched for the side doors and windows. |
+| `van_side_wall_shell.gd` | — | 401 | Generic curved-shell / pane / frame-ring mesh builders for VanSideWall: the low-level lofting onto the cargo profile, shared by side walls, doors and windows. |
 | `van_vital.gd` | `VanVital` | 91 | One interior machine whose HP is a slice of van death hull. |
 
 ### `scripts/van/look/`
@@ -651,13 +653,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_front_kit.gd` | — | 182 | Builds the van's seeded front kit (bumper, ram, windshield cage, lamp cages) onto a VanCab. |
 | `van_generator.gd` | `VanGenerator` | 120 | The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp… |
 | `van_generator_parts.gd` | — | 189 | Builds the generator set's welded skid, oil pan, radiator, tank, manifold, control gantry, junction box, trouble lamp and rust patches; the core script keeps t… |
-| `van_hull.gd` | `VanHull` | 389 | The van's outer skin: roof, sides, front face (the step to the cab skin), rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted fr… |
+| `van_hull.gd` | `VanHull` | 400 | The van's outer skin: roof, sides, front face (the step to the cab skin), rear face, sills and belly, all meeting the side skin's 0.22 m outer face, painted fr… |
 | `van_hull_lines.gd` | — | 231 | Truck-body lines molded onto VanHull's outer skin: rub rails, belt line, drip rail and corner posts, all clear of the windows and side door so raiders can stil… |
 | `van_hull_patches.gd` | — | 189 | Skin patches that close the gaps left in VanHull's outer shell: the rear corner strip behind the side skin, the rocker sill along both sides and the belly betw… |
 | `van_inner_shell.gd` | `VanInnerShell` | 338 | Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower walls and welded patches over bullet holes, dressing the inside o… |
 | `van_inner_shell_fit.gd` | — | 38 | Keeps the inner shell's plates and patches clear of the ribs, the bulkhead frame and each other. |
 | `van_look.gd` | `VanLook` | 72 | Owns the van's look seed (derived from the run seed) and rebuilds its child look generators. |
-| `van_marker_lights.gd` | — | 139 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
+| `van_marker_lights.gd` | — | 161 | Truck clearance and tail lamps on the cargo box: small emissive fixtures, each with a faint light that washes the body. |
 | `van_markings.gd` | `VanMarkings` | 73 | The van's seeded painted identity: a stencil name on both sides, a number on the cab doors and kill tallies, as exterior-only decals. |
 | `van_paint_palette.gd` | `VanPaintPalette` | 78 | Seeded paint schemes for the war rig's exterior shader: base, accent, primer and lettering. |
 | `van_pc_rig.gd` | `VanPcRig` | 65 | The request board dressed as a scrap PC rig (plank desk on crates, towers, three CRTs, one on crt_screen.gdshader, keyboard, clutter, a desk lamp and a PowerPo… |

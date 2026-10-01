@@ -74,6 +74,11 @@ var GLASS_POLY: PackedVector2Array = PackedVector2Array([
 	Vector2(0.861, 0.617), Vector2(1.017, 0.56), Vector2(1.1, 0.455),
 	Vector2(1.1, -0.455), Vector2(1.017, -0.56), Vector2(0.861, -0.617),
 ])
+## How far the panes reach past the frame ring's inner edge (GLASS_POLY), under the frame, so
+## no oblique ray slips between a pane's edge and the frame.
+const PANE_OVERLAP_M := 0.02
+## GLASS_POLY grown by PANE_OVERLAP_M (set in _ready, winding matched): both panes' outline.
+var PANE_POLY: PackedVector2Array = PackedVector2Array()
 
 ## Window stop: static ring covering the 2 cm frame-to-cut slot (D12 gap); its outboard face sits
 ## STOP_LIFT inboard of the liner. Polys: the cut offset 4 cm out / 5 cm in (3 cm over the frame).
@@ -100,6 +105,9 @@ var _tweens: Dictionary = {}
 
 
 func _ready() -> void:
+	PANE_POLY = Geometry2D.offset_polygon(GLASS_POLY, PANE_OVERLAP_M, Geometry2D.JOIN_MITER)[0]
+	if Geometry2D.is_polygon_clockwise(PANE_POLY) != Geometry2D.is_polygon_clockwise(GLASS_POLY):
+		PANE_POLY.reverse()
 	_fit_to_side_walls()
 	_bind_window(WIN_LEFT_REAR, "LeftRear")
 	_bind_window(WIN_LEFT_FRONT, "LeftFront")
@@ -147,7 +155,6 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	# itself is the surround (same as the rear door leaf around its pane).
 
 	var glass_x := wall_sign * (glass_outward_bump - GLASS_INSET)
-	var iron_inset := IRON_INSET - glass_outward_bump
 	var breakable_inset := BREAKABLE_INSET - glass_outward_bump
 
 	var frame := MeshInstance3D.new()
@@ -181,8 +188,7 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	var glass := MeshInstance3D.new()
 	glass.name = "WindowGlass"
 	glass.mesh = walls.build_curved_pane_from_poly(
-		wall_sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, glass_x,
-		VanSideWall.WINDOW_EDGE_SUBDIV, false
+		wall_sign, PANE_POLY, x_ref, y_hinge, z_center, mid_y, glass_x, VanSideWall.WINDOW_EDGE_SUBDIV, false
 	)
 	glass.material_override = glass_mat
 	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -190,9 +196,8 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 	glass.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	hinge.add_child(glass)
 
-	var exterior_x_shift := wall_sign * EXTERIOR_PANE_PROUD_M
 	_Exterior.add_exterior_pane(
-		glass, walls, wall_sign, GLASS_POLY, x_ref, y_hinge, z_center, mid_y, exterior_x_shift
+		glass, walls, wall_sign, PANE_POLY, x_ref, y_hinge, z_center, mid_y, wall_sign * EXTERIOR_PANE_PROUD_M
 	)
 
 	var breakable := hinge.get_node_or_null("BreakableGlass")
@@ -200,7 +205,7 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 		breakable.bind_glass_visual(glass)
 
 	var iron_cross := hinge.get_node_or_null("IronCross") as IronCross
-	_place_on_curve(iron_cross, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, iron_inset)
+	_place_on_curve(iron_cross, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, IRON_INSET - glass_outward_bump)
 	if iron_cross:
 		iron_cross.set_street_lit(true)
 		iron_cross.follow_side_wall_curve(walls, mid_y)
@@ -221,14 +226,8 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 
 
 func _place_on_curve(
-	node: Node3D,
-	walls: VanSideWall,
-	wall_sign: float,
-	x_ref: float,
-	y_ref: float,
-	world_y: float,
-	local_z: float,
-	into_cabin: float
+	node: Node3D, walls: VanSideWall, wall_sign: float, x_ref: float, y_ref: float,
+	world_y: float, local_z: float, into_cabin: float
 ) -> void:
 	if node == null:
 		return

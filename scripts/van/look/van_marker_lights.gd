@@ -21,7 +21,21 @@ const SIDE_LIGHT_RANGE := 3.0
 const TAIL_LIGHT_ENERGY := 0.55
 const TAIL_LIGHT_RANGE := 3.2
 
+## The amber ID row stands on the roof's rear rim: only about 4.5 cm of rear face is free above
+## the rear doors' OuterLip/AstragalOuter (top about y 3.475), less than the housing is tall.
 const ID_LAMP_X: Array[float] = [-0.35, 0.0, 0.35]
+
+## ID lamp housing box size.
+const ID_HOUSING_SIZE := Vector3(0.10, 0.07, 0.05)
+
+## ID lamp lens box size.
+const ID_LENS_SIZE := Vector3(0.07, 0.045, 0.02)
+
+## How far the ID housing base is sunk into the roof.
+const ID_LAMP_SINK_M := 0.02
+
+## How far the ID housing's rear face stands proud of the roof's rear rim.
+const ID_LAMP_OVERHANG_M := 0.02
 
 
 func rebuild_look(_look: VanLook) -> void:
@@ -90,7 +104,15 @@ func _build_side_lamps(profile: VanBodyProfile, lens_mat: Material, housing_mat:
 func _build_rear_lamps(profile: VanBodyProfile, red_lens_mat: Material, amber_lens_mat: Material,
 		housing_mat: Material) -> void:
 	var rear := profile.half_length() + 0.08
-	var id_y := profile.wall_height() + 0.14
+	var rim_z := VanHull.ROOF_Z_MAX
+	var roof_w := profile.inner_x_at(profile.wall_height()) + VanHull.SIDE_SKIN_OUTER_M
+	var max_x := 0.0
+	for lamp_x in ID_LAMP_X:
+		max_x = maxf(max_x, absf(lamp_x))
+	var edge_x := max_x + ID_HOUSING_SIZE.x * 0.5
+	var base_y := VanHull.roof_y_at(edge_x, roof_w, profile.wall_height()) - ID_LAMP_SINK_M
+	var id_y := base_y + ID_HOUSING_SIZE.y * 0.5
+	var id_z := rim_z + ID_LAMP_OVERHANG_M - ID_HOUSING_SIZE.z * 0.5
 
 	for side_idx in 2:
 		var side := -1.0 if side_idx == 0 else 1.0
@@ -118,12 +140,12 @@ func _build_rear_lamps(profile: VanBodyProfile, red_lens_mat: Material, amber_le
 	for i in ID_LAMP_X.size():
 		var x := ID_LAMP_X[i]
 		var housing_mesh := BoxMesh.new()
-		housing_mesh.size = Vector3(0.10, 0.07, 0.05)
-		_add_mesh("IdLamp%d" % i, housing_mesh, housing_mat, Vector3(x, id_y, rear + 0.025))
+		housing_mesh.size = ID_HOUSING_SIZE
+		_add_mesh("IdLamp%d" % i, housing_mesh, housing_mat, Vector3(x, id_y, id_z))
 
 		var lens_mesh := BoxMesh.new()
-		lens_mesh.size = Vector3(0.07, 0.045, 0.02)
-		_add_mesh("IdLens%d" % i, lens_mesh, amber_lens_mat, Vector3(x, id_y, rear + 0.06))
+		lens_mesh.size = ID_LENS_SIZE
+		_add_mesh("IdLens%d" % i, lens_mesh, amber_lens_mat, Vector3(x, id_y, id_z + 0.035))
 
 
 func _add_mesh(mesh_name: String, mesh: Mesh, mat: Material, pos: Vector3) -> MeshInstance3D:
