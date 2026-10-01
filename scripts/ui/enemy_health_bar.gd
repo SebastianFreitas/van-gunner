@@ -5,13 +5,16 @@ extends Node3D
 const BAR_WIDTH := 120
 const BAR_HEIGHT := 14
 
+## Metres above the enemy's origin; each enemy scene sets it to clear its sprite.
+@export var height := 1.52
+
 var _fill: ColorRect
 var _revealed := false
 
 
 func _ready() -> void:
 	visible = false
-	position = Vector3(0, 1.52, 0)
+	position = Vector3(0, height, 0)
 
 	var viewport := SubViewport.new()
 	viewport.size = Vector2i(BAR_WIDTH + 4, BAR_HEIGHT + 4)

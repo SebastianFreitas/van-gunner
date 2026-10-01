@@ -231,12 +231,23 @@ target; its grid is not (it is upscaled about 3.2x off any exact grid).
   characters and pickups. Sprites are unshaded on purpose: in a dark world
   they are what the eye finds first.
 
-Off-style today, to redraw to this rule (not to copy from): the mechanic,
-door raider, agile raider and Wanjna PNGs (painted, 10,000+ colours,
-soft red outline), every world sprite's `pixel_size` (0.006 NPCs, 0.005
-pickups), the shopkeeper's linear filtering, the boss's 1.5x node scale,
-and the boon icons (`tools/generate_boon_icons.py` draws anti-aliased
-128 px SVG strokes with round caps). The pixel-art pass is a later task.
+**Beasts, not humans** (owner, 2026-10-01): the raiders are cat-like beasts
+in washed yellow with a big lolling tongue, a red stripe centred on the face
+that runs up the back in white and onto a full white tail. The door raider
+is the fat big-headed one (80 x 72 canvas, 1.92 x 1.73 m, feet on the van
+floor); the window raider is the low crawler (80 x 48, 1.15 m tall, so it
+fits a side window). Both are drawn by `tools/gen_enemy_sprites.py` (19
+flat colours each, outlined, lit from the upper left) and shown at
+`pixel_size 0.024`, `texture_filter 0`, `alpha_cut 1`; re-run the script
+after changing a colour or a shape, never paint over the PNGs. The two
+base sprites are the first on this rule and the model for the rest.
+
+Off-style today, to redraw to this rule (not to copy from): the mechanic
+and Wanjna PNGs (painted, 10,000+ colours, soft red outline), the other
+world sprites' `pixel_size` (0.006 NPCs and Wanjna, 0.005 pickups), the
+shopkeeper's linear filtering, the boss's 1.5x node scale, and the boon
+icons (`tools/generate_boon_icons.py` draws anti-aliased 128 px SVG
+strokes with round caps). The pixel-art pass is a later task.
 
 ## Checking it
 

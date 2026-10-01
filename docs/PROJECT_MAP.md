@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-323 GDScript files, 50395 lines.
+324 GDScript files, 50436 lines.
 
 ### `scenes/corridor/`
 
@@ -427,7 +427,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `enemy_spawn_pool.gd` | `EnemySpawnPool` | 48 | A weighted collection of enemies to roll spawns from. |
 | `enemy_spawn_pool_entry.gd` | `EnemySpawnPoolEntry` | 8 | A single weighted slot inside an EnemySpawnPool. |
 | `loot_drop_component.gd` | `LootDropComponent` | 62 | Drop-in component that gives any enemy a chance to drop loot on death. |
-| `window_raider.gd` | `WindowRaider` | 523 | A raider enemy: approaches, breaches a window or door, then attacks the bench or player. |
+| `window_raider.gd` | `WindowRaider` | 526 | A raider enemy: approaches, breaches a window or door, then attacks the bench or player. |
+| `window_raider_look.gd` | — | 35 | Fits the window crawler's sprite, hitboxes and health bar to its lower canvas. |
 | `window_raider_motion.gd` | — | 69 | Per-frame chase math for WindowRaider. |
 | `window_raider_targeting.gd` | — | 112 | Target picking, cabin/breach queries and status math for WindowRaider. |
 
@@ -628,7 +629,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `debug_console.gd` | `DebugConsole` | 259 | In-game debug terminal. |
 | `dialogue_hud.gd` | `DialogueHud` | 270 | Hover-to-highlight NPC talk, Slay-the-Spire style. |
 | `driver_shout_hud.gd` | `DriverShoutHud` | 109 | Always-on GO / EASY shouts. |
-| `enemy_health_bar.gd` | `EnemyHealthBar` | 60 | A billboard health bar shown above an enemy while it is damaged. |
+| `enemy_health_bar.gd` | `EnemyHealthBar` | 63 | A billboard health bar shown above an enemy while it is damaged. |
 | `item_hud.gd` | — | 88 | Hotbar for tools and a row of collected boon icons. |
 | `main_menu.gd` | — | 128 | The main menu screen: save slot selection, settings panel and starting a run. |
 | `pause_menu.gd` | `PauseMenu` | 93 | Esc overlay. |
@@ -792,7 +793,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/corridor/stop_elevator.tscn` | 1 | Node3D |
 | `scenes/corridor/stop_vestibule.tscn` | 4 | Node3D |
 | `scenes/corridor/warehouse_bay.tscn` | 1 | Node3D |
-| `scenes/enemies/biker_boss.tscn` | 2 |  |
+| `scenes/enemies/biker_boss.tscn` | 7 |  |
 | `scenes/enemies/window_raider.tscn` | 9 | Node3D |
 | `scenes/items/pickup.tscn` | 3 | Area3D |
 | `scenes/player/player.tscn` | 13 | CharacterBody3D |

@@ -17,7 +17,7 @@ enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH, ATTACK
 @export var is_elite := false
 ## Act-1 boss portrait. Swapped in by `mark_as_boss`.
 const _BOSS_SPRITE := preload("res://scenes/enemies/wanjna.png")
-## Window climbers get their own sprite; the scene default is the door goon.
+## Window crawlers get their own canvas; the scene default is the fat door beast.
 const _AGILE_SPRITE := preload("res://scenes/enemies/agile_raider.png")
 const _MELEE_RANGE := 1.2
 const _RETARGET_SECS := 0.5
@@ -27,6 +27,8 @@ const _PLAYER_BIAS := 0.4
 ## Per-frame chase math and target-picking helpers. RefCounted, bound to this node.
 const _RaiderMotion := preload("res://scripts/enemies/window_raider_motion.gd")
 const _RaiderTargeting := preload("res://scripts/enemies/window_raider_targeting.gd")
+## Fits the crawler's sprite, hitboxes and health bar to its lower canvas.
+const _RaiderLook := preload("res://scripts/enemies/window_raider_look.gd")
 
 ## Derived world chase speed for this act. Closing = mob_world_speed - live van speed.
 var mob_world_speed := 0.0
@@ -80,6 +82,7 @@ func _ready() -> void:
 		add_to_group(&"agile")
 		sprite.texture = _AGILE_SPRITE
 		sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+		_RaiderLook.fit_crawler(self)
 	health = max_health
 	# After TravelController (-100) so we see the van's updated PathFollow transform.
 	process_physics_priority = -50

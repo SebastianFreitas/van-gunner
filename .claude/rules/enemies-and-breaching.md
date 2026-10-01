@@ -28,6 +28,27 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
 - `window_raider.gd` keeps its state, every `await` chain (assault, breach, attack loop, interior combat, retreat, death) and every method `BikerBoss` inherits or overrides. It stays over 400 lines for that reason. Per-frame chase math is in `window_raider_motion.gd`; targeting, lookups and the hit flash are in `window_raider_targeting.gd`. Helpers pass the raider node, never themselves, to `BreachPoint`, `CabinNav` and `BreachController`.
 - **`BikerBoss extends WindowRaider`** and calls `_snap_to_marker`, `_clear_motion`, `_current_van_speed`, `_apply_status_move_speed`, `_outgoing_damage`, `_release_breach` and `_breach_controller` as inherited methods. Moving or renaming any of them breaks the boss.
 
+## Beast sprites and hitboxes
+
+- `scenes/enemies/window_raider.tscn` holds the fat door beast: `Sprite3D` at
+  `pixel_size 0.024` on the 80 x 72 `door_raider.png`, centred 0.756 m
+  below the node so its feet sit at -1.62, the van floor under the 1.62 m
+  breach markers; the body hitbox is a cylinder (r 0.85, h 1.3 at y -0.95)
+  and the head a sphere (r 0.5 at y -0.8), both orientation-free because the
+  sprite is a billboard and the node is not. `EnemyHealthBar.height` sets the
+  bar's height per scene.
+- The window crawler (`agile_raider.png`, 80 x 48) is fitted at `_ready` by
+  `window_raider_look.gd`: sprite centred on the node (at a window the node
+  is in the opening) with a 16 px `Sprite3D.offset` so the head drawn on the
+  left sits over the origin (a node offset would not follow the billboard),
+  a cylinder body (r 0.75, h 0.65) and a head sphere (r 0.36). The body and
+  tail trailing to the right have no hitbox yet.
+- `biker_boss.tscn` overrides the sprite back to `pixel_size 0.006`, zero
+  offset and the old capsule plus sphere, so Wanjna is unchanged until the
+  pixel-art pass redraws it.
+- Both PNGs come from `py -3 tools/gen_enemy_sprites.py` (`--out`,
+  `--preview` to draft outside the repo); never paint over them.
+
 ## Encounters
 
 `EncounterDirector` runs waves as `_sequence_id`-guarded `await` chains (see `run-loop-and-acts.md`); spawning, enemy queries, despawns and the danger bump are in `encounter_spawner.gd`. `spawn_debug_raider` (console `summon enemy`) and `spawn_agile_raider` (BikerBoss) stay on the director. An enemy is a `.tres` in `resources/enemies/` plus a spawn pool entry, picked by `GameBalance.pick_spawn_enemy`.
