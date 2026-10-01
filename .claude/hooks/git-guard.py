@@ -2,7 +2,9 @@
 tree at the same time, so blanket git commands are blocked (exit 2, the
 reason goes back to the session). A plain `git commit` passes through (the
 normal permission prompt still applies) and gets a note listing the
-unstaged files that are staying out of it.
+unstaged files that are staying out of it; paths matching the project's
+`quiet_dirty` globs (.claude/project/file-guard.json) are counted in one
+item instead of listed.
 
 Also enforces the owner-only path to `main`/origin: the owner lands
 branches with `py -3 tools/try.py <branch> --commit`, which pushes main
@@ -38,6 +40,9 @@ import re
 import shlex
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from guard_config import load_config, matches_any, quiet_globs, quiet_line  # noqa: E402
 
 QUOTED = re.compile(r'"[^"]*"|\'[^\']*\'')
 
@@ -333,10 +338,16 @@ def main():
         unstaged = git("diff", "--name-only")
         untracked = git("ls-files", "--others", "--exclude-standard")
         left = [l for l in (unstaged + "\n" + untracked).splitlines() if l]
+        # Paths matching quiet_dirty are counted, not listed.
+        top = git("rev-parse", "--show-toplevel")
+        quiet = quiet_globs(load_config(top)) if top else []
+        shown = [l for l in left if not (quiet and matches_any(l, quiet))]
+        if len(shown) < len(left):
+            shown.append(quiet_line(len(left) - len(shown), quiet))
         if left:
             note = ("Unstaged files staying out of this commit (foreign "
                     "edits unless you made them; if yours, stage them by "
-                    "path first): " + ", ".join(left))
+                    "path first): " + ", ".join(shown))
             print(json.dumps({"hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "additionalContext": note}}))

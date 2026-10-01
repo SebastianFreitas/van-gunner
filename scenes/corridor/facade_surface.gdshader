@@ -33,6 +33,8 @@ uniform float grime : hint_range(0.0, 1.0) = 0.5;
 uniform float damage : hint_range(0.0, 1.0) = 0.0;
 uniform float soot : hint_range(0.0, 1.0) = 0.0;
 uniform float overgrowth : hint_range(0.0, 1.0) = 0.0;
+uniform float growth_height = 0.5;     // metres the foot growth reaches (plan param)
+uniform float ivy : hint_range(0.0, 1.0) = 0.0;   // share of wall columns with ivy curtains
 uniform float collapse_y = 0.0;        // 0 = intact; else discard above a noisy edge at this height
 uniform float flicker = 0.0;           // 1 = lit windows flicker with TIME (fire)
 uniform int ground_kind = 0;           // 0 blank, 1 storefront, 2 boarded, 3 roll-up, 4 loading dock, 5 arcade
@@ -478,6 +480,30 @@ void apply_overlays(vec2 p, inout vec3 albedo, inout vec3 emission, inout float 
 	float soot_amt = max(soot * head_soot, max(soot, grime * 0.35) * roof_soot * 0.7);
 	albedo = mix(albedo, vec3(0.02), soot_amt);
 
+	// Per-building offset for the 2D lookups below, so no two buildings share a pattern.
+	vec2 so = vec2(fract(seed * 0.1731) * 97.0, fract(seed * 0.3127) * 89.0);
+
+	// Soot wash: broad sheets of wall that was never cleaned.
+	float sheet = smoothstep(0.35, 0.75, fbm(p * 0.35 + so));
+	albedo *= mix(1.0, 0.45, soot * sheet);
+
+	// Soot runs: streaks hanging below each floor line and the roof edge, 0.8 m columns.
+	if (p.y >= ground_height && p.y <= facade_height) {
+		float run_d = facade_height - p.y;
+		if (floor_height > 0.0) {
+			run_d = min(run_d, floor_height - mod(p.y - ground_height, floor_height));
+		}
+		float rcx = floor(p.x / 0.8);
+		if (hash11(rcx + so.x) < 0.35 + 0.4 * soot) {
+			float run_len = mix(0.6, 1.5, hash11(rcx + 17.0 + so.x));
+			float run_w = mix(0.25, 0.6, hash11(rcx + 31.0 + so.x));
+			float run_dx = abs(p.x - (rcx + 0.5) * 0.8);
+			float run_k = clamp(1.0 - run_d / run_len, 0.0, 1.0)
+				* (1.0 - smoothstep(run_w * 0.25, run_w * 0.5, run_dx));
+			albedo *= 1.0 - 0.5 * soot * run_k * (1.0 - pattern_fade(0.8, fw.x));
+		}
+	}
+
 	float foot_edge = 0.9 + (fbm(vec2(p.x * 1.5, 3.0) + seed + 13.0) - 0.5) * 0.5;
 	float foot = 1.0 - smoothstep(0.0, foot_edge, p.y);
 	foot *= 0.4 + 0.6 * fbm(vec2(p.x * 4.0, p.y * 3.0) + seed + 7.0);
@@ -493,9 +519,25 @@ void apply_overlays(vec2 p, inout vec3 albedo, inout vec3 emission, inout float 
 	albedo = mix(albedo, mortar_color * 0.4, cracks * 0.8);
 
 	if (fbm(p * 0.6 + seed + 23.0) > 1.0 - overgrowth * 0.5 && p.y < facade_height * 0.7) {
-		albedo = vec3(0.08, 0.12, 0.05) * (0.7 + 0.6 * noise21(p * 6.0));
+		albedo = vec3(0.05, 0.075, 0.035) * (0.7 + 0.6 * noise21(p * 6.0));
 		rough = 0.95;
 	}
+	// Foot growth: moss and dry grass in 0.25 m clumps, thinning out up to growth_height.
+	float grow_top = growth_height * mix(0.6, 1.4, fbm(vec2(p.x * 0.8, 3.7) + so));
+	float grow_dens = pow(1.0 - smoothstep(0.0, max(grow_top, 0.05), p.y), 0.7);
+	// Soft round blobs (one per cell, jittered) so the band reads as moss, not square pixels.
+	vec2 grow_c = floor(p / 0.25);
+	vec2 grow_f = fract(p / 0.25);
+	vec2 blob_mid = 0.5 + (vec2(hash21(grow_c + so), hash21(grow_c + so + 17.0)) - 0.5) * 0.6;
+	float blob_r = 0.35 + 0.2 * hash21(grow_c + so + 31.0);
+	float blob = 1.0 - smoothstep(blob_r * 0.6, blob_r, length(grow_f - blob_mid));
+	float blob_v = blob * (0.8 + 0.2 * fbm(p * 3.0 + so));
+	float grow_t = 1.0 - grow_dens;
+	float clump = smoothstep(grow_t, grow_t + 0.15, blob_v);
+	clump = mix(grow_dens * 0.6, clump, 1.0 - pattern_fade(0.25, fwm));
+	vec3 grow_col = mix(vec3(0.05, 0.075, 0.035), vec3(0.08, 0.08, 0.04),
+		smoothstep(0.35, 0.65, fbm(p * 1.5 + so)));
+	albedo = mix(albedo, grow_col, clump * 0.85);
 	if (fbm(p * 1.3 + seed + 41.0) > 1.0 - damage * 0.45) {
 		albedo = mix(base_color * 0.5, mortar_color, 0.5);
 	}
@@ -558,6 +600,12 @@ void apply_overlays(vec2 p, inout vec3 albedo, inout vec3 emission, inout float 
 			albedo *= 1.0 + 0.15 * rim * amt - 0.2 * shadow * amt;
 			rough = mix(rough, 0.9, peel_m);
 		}
+	}
+	// Brick has no top coat to lift: scraps of old paint cling to it instead.
+	if (style == 0) {
+		float p_lo = 1.0 - peel * 0.3;
+		float paint_m = smoothstep(p_lo, p_lo + 0.03, fbm(p * 0.6 + so));
+		albedo = mix(albedo, min(under_color, vec3(0.22)), paint_m * 0.85);
 	}
 
 	// 3. Ghost sign: one pale, bolted rectangle per building where a sign used to hang.
@@ -626,6 +674,25 @@ void apply_overlays(vec2 p, inout vec3 albedo, inout vec3 emission, inout float 
 	rough = mix(rough, 0.8, damp);
 	float salt = p.y < tide_top ? soft_line(tide_top - p.y, 0.02, 1.0, fwm) : 0.0;
 	albedo *= 1.0 + 0.12 * salt;
+
+	// 6. Ivy curtains: ragged-sided columns of leaves climbing from the foot, in 2.5 m cells.
+	if (ivy > 0.0) {
+		float ci = floor(p.x / 2.5);
+		if (hash11(ci + 5.0 + so.x) < ivy) {
+			float iw = mix(1.2, 2.5, hash11(ci + 9.0 + so.x));
+			float ic = (ci + 0.5) * 2.5 + (hash11(ci + 13.0 + so.x) - 0.5) * 0.4;
+			float edge = abs(p.x - ic) + (fbm(vec2(p.y * 1.5, ci) + so) - 0.5) * 0.6;
+			float reach = growth_height + ivy * mix(3.0, 6.0, hash11(ci + 21.0 + so.x))
+				+ (fbm(vec2(p.x * 2.0, 1.3) + so) - 0.5) * 1.2;
+			if (edge < iw * 0.5 && p.y >= 0.0 && p.y < reach) {
+				float leaf = hash21(floor(p / 0.25) + ci + so);
+				float lfade = pattern_fade(0.25, fwm);
+				float cover = mix(leaf < 0.15 ? 0.0 : 1.0, 0.85, lfade);
+				float bright = mix(mix(0.7, 1.2, leaf), 0.95, lfade);
+				albedo = mix(albedo, vec3(0.04, 0.07, 0.03) * bright, cover);
+			}
+		}
+	}
 
 	float lum = dot(albedo, vec3(0.2126, 0.7152, 0.0722));
 	if (lum > 0.4) {

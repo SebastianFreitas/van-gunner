@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-338 GDScript files, 52690 lines.
+345 GDScript files, 54253 lines.
 
 ### `scenes/corridor/`
 
@@ -556,7 +556,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `road_floor_wreck.gd` | — | 347 | Builds RoadFloor's wrecked paving: tiles and setts graded by the destruction map and set into a raised dirt floor, each side as merged meshes. |
 | `road_floor_wreck_curb.gd` | — | 107 | Builds the wrecked paving's granite curb: 1 m blocks, knocked, missing or toppled in gone stretches. |
 | `road_floor_wreck_ground.gd` | — | 183 | Builds a sidewalk side's ground: a worn soil heightfield under the paving (a foot path just under tile height ramping down to road level at the curb line, with… |
-| `road_floor_wreck_map.gd` | — | 130 | The street's destruction map: one smooth world-space field saying how wrecked the sidewalk is at a point, continuous across corridor tiles and calibrated so DE… |
+| `road_floor_wreck_map.gd` | — | 137 | The street's destruction map: one smooth world-space field saying how wrecked the sidewalk is at a point, continuous across corridor tiles and calibrated so DE… |
 | `travel_controller.gd` | `TravelController` | 607 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
 | `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
 | `travel_stops.gd` | — | 203 | Owns the stop fork, side-stop placement, elevator pad ride and stop-state cleanup. |
@@ -566,24 +566,31 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `corridor_facades.gd` | — | 263 | Owns a corridor tile's two facade sides: their openings, plans and built nodes. |
+| `corridor_facades.gd` | — | 279 | Owns a corridor tile's two facade sides: their openings, plans and built nodes. |
 | `facade_audit.gd` | — | 122 | Shared keep-out audits for a corridor tile's built facades: the bay-mouth clearance check (nothing built in front of a stop-bay opening) and the raider-lane cl… |
-| `facade_body.gd` | — | 268 | Builds one building's body: SurfaceTool quads with UV in metres (u along the facade, v up), end returns, a roof plate, the stop-bay header / flank cut, and the… |
+| `facade_body.gd` | — | 287 | Builds one building's body: SurfaceTool quads with UV in metres (u along the facade, v up), end returns, a roof plate, the stop-bay header / flank cut, and the… |
 | `facade_district.gd` | `FacadeDistrict` | 62 | One neighborhood look: skin presets, height range, ground-floor kinds, window state ratios and prop chances. |
-| `facade_fixtures.gd` | — | 170 | Wall lamp fixtures and their SpotLight3D pools for one facade side: district colour, dead lamps, the world-wide light cap, and the layer-1 cull mask that keeps… |
+| `facade_fixtures.gd` | — | 188 | Wall lamp fixtures and their SpotLight3D pools for one facade side: district colour, dead lamps, the world-wide light cap, and the layer-1 cull mask that keeps… |
 | `facade_grime_materials.gd` | — | 31 | Cached grime ShaderMaterials for large facade props, one per flat prop material, so big slabs (awnings, lintels, docks, set-piece bodies) share the road's grim… |
+| `facade_infill.gd` | — | 244 | Fills the gaps between street buildings: yard, party wall and a fence or wall on the face line. |
+| `facade_infill_extra.gd` | — | 210 | Hoarding, corrugated fence and street furniture for street gaps. |
+| `facade_infill_wall.gd` | — | 93 | Brick gap wall with pillars and a rusted sheet gate. |
 | `facade_keep_out.gd` | — | 163 | Keep-out volumes for one facade side: the gate every facade placer passes an AABB through, so nothing ever stands in the raider lane, hangs over the road below… |
 | `facade_lamp_flicker.gd` | — | 79 | Drives one broken wall lamp's flicker: long on stretches, bursts of fast stutters and the odd blackout, on the light and its head's emission together. |
 | `facade_materials.gd` | — | 328 | Static material factories for the facade system: a ShaderMaterial per building from a parameter dictionary, cached StandardMaterial3D props by key, and named s… |
-| `facade_mesh_kit.gd` | — | 149 | Box-and-quad helpers shared by every facade prop builder: gated boxes into a SurfaceTool, committing an ArrayMesh node, and single BoxMesh nodes for props that… |
+| `facade_mesh_kit.gd` | — | 157 | Box-and-quad helpers shared by every facade prop builder: gated boxes into a SurfaceTool, committing an ArrayMesh node, and single BoxMesh nodes for props that… |
+| `facade_overgrowth.gd` | — | 196 | Weeds along building feet and gaps, ivy strands from broken tops, saplings on gutted ruins. |
 | `facade_overheads.gd` | — | 149 | Cross-street industrial dressing (pipe bridges, catwalks, ribs) built under Facades/Overhead when both sides are plain; it never reaches below 9 m over the roa… |
-| `facade_plan.gd` | — | 193 | Plans one facade side: splits the 20 m tile edge into buildings and gives each a skin preset, height, floors, ground kind and setback. |
-| `facade_props_ground.gd` | — | 335 | Ground-floor props for one building (storefront frames, awnings, roll-up lintels, loading docks, arcade pilasters, stoops, sidewalk furniture). |
+| `facade_plan.gd` | — | 248 | Plans one facade side: splits the 20 m tile edge into buildings and gives each a skin preset, height, floors, ground kind and setback. |
+| `facade_props_ground.gd` | — | 310 | Ground-floor props for one building (storefront frames, awnings, roll-up lintels, loading docks, arcade pilasters, stoops, sidewalk furniture). |
 | `facade_props_upper.gd` | — | 354 | Upper-facade props for one building: trim (parapet cap, cornice, string-course ledges, downspout), AC units, a fire escape, balconies, roof clutter and wall pi… |
 | `facade_registry.gd` | — | 104 | Loads the facade data folders once: districts (sorted by index) and set-pieces (sorted by id). |
-| `facade_ruin.gd` | — | 223 | Rolls each street building's ruin condition and the column/hole data that later geometry cuts the facade with, and clips the plan that the prop families see so… |
-| `facade_ruin_body.gd` | — | 154 | Builds a ruined street building's body from its plan's ruin columns and holes: stepped tops, wall caps or roof plates, hole reveals over a dark back wall, then… |
+| `facade_ruin.gd` | — | 256 | Rolls each street building's ruin condition and the column/hole data that later geometry cuts the facade with, and clips the plan that the prop families see so… |
+| `facade_ruin_body.gd` | — | 183 | Builds a ruined street building's body from its plan's ruin columns and holes: stepped tops, wall caps or roof plates, hole reveals over a dark back wall, then… |
+| `facade_ruin_clutter.gd` | — | 310 | Rubble, partitions, a broken stair, pipes, planks and weeds inside a deep ruined body. |
 | `facade_ruin_debris.gd` | — | 224 | Debris for ruined street buildings: hanging slabs, rebar and sill chunks on the body, and the rubble heaps on the sidewalk below a collapse. |
+| `facade_ruin_interior.gd` | — | 235 | Floor slabs, broken stubs, rebar and joists inside a deep ruined body. |
+| `facade_ruin_shell.gd` | — | 115 | Back wall and inner end walls of a deep ruined body, seen through its holes and collapsed tops. |
 | `facade_set_piece.gd` | `FacadeSetPiece` | 46 | One rare street set-piece: eligibility data plus the hooks a subclass overrides. |
 | `facade_set_pieces.gd` | — | 84 | Rolls which rare set-piece (if any) a tile gets and on which side, and drives the piece's hooks from corridor_facades. |
 | `facade_signs.gd` | — | 285 | Street signage for one building: a backlit box sign over a storefront, a neon strip, a perpendicular blade sign, a cloth banner, or a torn poster on a boarded… |

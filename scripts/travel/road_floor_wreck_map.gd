@@ -29,6 +29,13 @@ static func damage(world_xz: Vector2, tier: int) -> float:
 	return u + bias - (1.0 - share)
 
 
+## Unbiased wreck value at a world point: above 0 the walk is gone; about -0.7..+0.3.
+static func raw(world_xz: Vector2) -> float:
+	_ensure(_run_seed())
+	var u := _to_uniform(_noise.get_noise_2d(world_xz.x, world_xz.y))
+	return u - (1.0 - share)
+
+
 ## The damage band a wreck value falls in.
 static func zone(e: float) -> Zone:
 	if e > 0.0:

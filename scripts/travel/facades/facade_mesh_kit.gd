@@ -89,6 +89,14 @@ static func commit(
 	return mi
 
 
+## True when the tool holds at least one vertex; reads the arrays without building a mesh.
+static func has_geometry(st: SurfaceTool) -> bool:
+	var arrays := st.commit_to_arrays()
+	return arrays.size() > Mesh.ARRAY_VERTEX \
+		and arrays[Mesh.ARRAY_VERTEX] != null \
+		and (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() > 0
+
+
 ## A single BoxMesh node for a prop that needs its own rotation (an awning's pitch). A pitch
 ## about Z swaps the box's x/y extents, so the gate AABB is widened conservatively for that case.
 static func add_box_node(

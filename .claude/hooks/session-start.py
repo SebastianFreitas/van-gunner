@@ -10,7 +10,9 @@
    previous context (.claude/handoff.md), if any.
 4. In shared mode on a fresh start or /clear: the uncommitted paths are
    also written to `<session dir>/foreign-paths.json`, which git-guard
-   reads to refuse staging them.
+   reads to refuse staging them. Paths matching the project's
+   `quiet_dirty` globs (.claude/project/file-guard.json) are recorded
+   there too, but printed as one count line instead of listed.
 5. On a fresh start or /clear, outside cloud: WORKTREE BEHIND MAIN when
    local main has commits this worktree's branch lacks (the app cuts
    worktrees from origin/main, owner 2026-10-01), and MAIN NOT PUSHED when
@@ -36,6 +38,8 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+from guard_config import load_config, matches_any, quiet_globs, quiet_line  # noqa: E402
 
 LIMIT = 9500          # hook output over 10,000 chars becomes a 2,000-char preview
 HANDOFF_MAX = 6000
@@ -285,7 +289,18 @@ def main():
     lines = []
 
     def add_dirty(dirty):
-        rows = dirty.splitlines()
+        # Rows whose paths all match quiet_dirty (files a tool rewrites all
+        # the time) are counted, not listed; foreign-paths.json still gets
+        # them.
+        quiet = quiet_globs(load_config(root))
+        rows, n_quiet = [], 0
+        for row in dirty.splitlines():
+            if quiet and all(matches_any(p, quiet) for p in dirty_paths(row)):
+                n_quiet += 1
+            else:
+                rows.append(row)
+        if n_quiet:
+            lines.append("  " + quiet_line(n_quiet, quiet))
         lines.extend("  " + l for l in rows[:DIRTY_MAX])
         if len(rows) > DIRTY_MAX:
             lines.append(f"  ... and {len(rows) - DIRTY_MAX} more "

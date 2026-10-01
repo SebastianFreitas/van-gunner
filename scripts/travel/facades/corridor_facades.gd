@@ -18,6 +18,9 @@ const _FacadeFixtures := preload("res://scripts/travel/facades/facade_fixtures.g
 const _FacadeSetPieces := preload("res://scripts/travel/facades/facade_set_pieces.gd")
 const _FacadeOverheads := preload("res://scripts/travel/facades/facade_overheads.gd")
 const _FacadeStreetArt := preload("res://scripts/travel/facades/facade_street_art.gd")
+const _FacadeInfill := preload("res://scripts/travel/facades/facade_infill.gd")
+const _FacadeOvergrowth := preload("res://scripts/travel/facades/facade_overgrowth.gd")
+const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
 
 const SIDE_NAMES: Array[String] = ["Left", "Right"]
 const SIDE_SIGNS: Array[float] = [-1.0, 1.0]
@@ -121,8 +124,15 @@ func rebuild_side(side_idx: int) -> void:
 	var keep_out := _FacadeKeepOut.new(SIDE_SIGNS[side_idx], _openings[side_idx])
 	_keep_outs[side_idx] = keep_out
 	var district_res: FacadeDistrict = _FacadeRegistry.district(district)
+	var wreck_at := Callable()
+	if segment != null and segment.is_inside_tree():
+		var xf: Transform3D = segment.global_transform
+		var x_line: float = SIDE_SIGNS[side_idx] * _FacadePlan.FACE_X
+		wreck_at = func(z: float) -> float:
+			var p := xf * Vector3(x_line, 0.0, z)
+			return _WreckMap.raw(Vector2(p.x, p.z))
 	var plans_out: Array[Dictionary] = _FacadePlan.plan_side(
-		rng, district_res, _openings[side_idx], neighborhood_seed
+		rng, district_res, _openings[side_idx], neighborhood_seed, wreck_at
 	)
 	_plans[side_idx] = plans_out
 	if _rare_targets(side_idx):
@@ -175,6 +185,12 @@ func rebuild_side(side_idx: int) -> void:
 			&"plan": plans_out[_rare_plan_index],
 			&"tile_seed": tile_seed,
 		})
+	var infill_rng := RandomNumberGenerator.new()
+	infill_rng.seed = hash([tile_seed, side_idx, &"infill"])
+	_FacadeInfill.build(root, plans_out, SIDE_SIGNS[side_idx], keep_out, infill_rng, district_res)
+	var growth_rng := RandomNumberGenerator.new()
+	growth_rng.seed = hash([tile_seed, side_idx, &"growth"])
+	_FacadeOvergrowth.build(root, plans_out, SIDE_SIGNS[side_idx], keep_out, growth_rng)
 	for inst: GeometryInstance3D in root.find_children("*", "GeometryInstance3D", true, false):
 		# Fog ends at 56 m; tiles beyond that need not render.
 		inst.visibility_range_end = 64.0

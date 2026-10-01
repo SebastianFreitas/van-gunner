@@ -8,6 +8,8 @@ const _FacadeMeshKit := preload("res://scripts/travel/facades/facade_mesh_kit.gd
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
 const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
 const _FacadeRuinDebris := preload("res://scripts/travel/facades/facade_ruin_debris.gd")
+const _FacadeRuinShell := preload("res://scripts/travel/facades/facade_ruin_shell.gd")
+const _FacadeRuinInterior := preload("res://scripts/travel/facades/facade_ruin_interior.gd")
 
 const WALL_T := 0.35
 const ROOF_DEPTH := 1.2
@@ -34,6 +36,12 @@ static func build(
 	var full := y0 + float(plan[&"height"])
 	var z0 := float(plan[&"z0"])
 	var z1 := float(plan[&"z1"])
+	var body_depth := float(plan.get(&"depth", 0.0))
+	var deep := body_depth > 0.0
+	var x_back := s * (absf(x_face) + body_depth) if deep else s * 9.6
+	# A deep body's holes open onto the shell's real interior: a thin reveal, no dark back quad.
+	var hole_d := WALL_T if deep else HOLE_DEPTH
+	var roof_d := maxf(ROOF_DEPTH, absf(x_back) - absf(x_face)) if deep else ROOF_DEPTH
 	var st := _begin()
 	var st_dark := _begin()
 	var n_dark := 0
@@ -43,35 +51,37 @@ static func build(
 		var u_b := _u(c.y, z0, z1, s)
 		if hole_of.has(i):
 			var h: Vector3 = hole_of[i]
-			var xd := x_face + s * HOLE_DEPTH
+			var xd := x_face + s * hole_d
 			_front(st, x_face, s, c.x, c.y, u_a, u_b, 0.0, h.y - y0)
 			_front(st, x_face, s, c.x, c.y, u_a, u_b, h.z - y0, c.z - y0)
 			# Sill and head, then the two jambs (v runs along the depth, u is the wall's).
 			_quad(st, Vector3(x_face, h.y, c.x), Vector3(x_face, h.y, c.y), Vector3(xd, h.y, c.y),
-				Vector3(xd, h.y, c.x), Vector3.UP, u_a, u_b, 0.0, HOLE_DEPTH)
+				Vector3(xd, h.y, c.x), Vector3.UP, u_a, u_b, 0.0, hole_d)
 			_quad(st, Vector3(x_face, h.z, c.x), Vector3(x_face, h.z, c.y), Vector3(xd, h.z, c.y),
-				Vector3(xd, h.z, c.x), Vector3.DOWN, u_a, u_b, 0.0, HOLE_DEPTH)
+				Vector3(xd, h.z, c.x), Vector3.DOWN, u_a, u_b, 0.0, hole_d)
 			_quad(st, Vector3(x_face, h.y, c.x), Vector3(xd, h.y, c.x), Vector3(xd, h.z, c.x),
-				Vector3(x_face, h.z, c.x), Vector3.BACK, u_a, u_a + HOLE_DEPTH, h.y - y0, h.z - y0)
+				Vector3(x_face, h.z, c.x), Vector3.BACK, u_a, u_a + hole_d, h.y - y0, h.z - y0)
 			_quad(st, Vector3(x_face, h.y, c.y), Vector3(xd, h.y, c.y), Vector3(xd, h.z, c.y),
-				Vector3(x_face, h.z, c.y), Vector3.FORWARD, u_b, u_b + HOLE_DEPTH, h.y - y0,
+				Vector3(x_face, h.z, c.y), Vector3.FORWARD, u_b, u_b + hole_d, h.y - y0,
 				h.z - y0)
-			_quad(st_dark, Vector3(xd, h.y, c.x), Vector3(xd, h.y, c.y), Vector3(xd, h.z, c.y),
-				Vector3(xd, h.z, c.x), Vector3(-s, 0.0, 0.0), 0.0, 1.0, 0.0, 1.0)
-			n_dark += 1
+			if not deep:
+				_quad(st_dark, Vector3(xd, h.y, c.x), Vector3(xd, h.y, c.y),
+					Vector3(xd, h.z, c.y), Vector3(xd, h.z, c.x), Vector3(-s, 0.0, 0.0),
+					0.0, 1.0, 0.0, 1.0)
+				n_dark += 1
 		else:
 			_front(st, x_face, s, c.x, c.y, u_a, u_b, 0.0, c.z - y0)
 		# A roofed column keeps its roof plate; a collapsed one only a thin wall-top cap.
-		var depth := ROOF_DEPTH if full - c.z < ROOFED_DROP else WALL_T
+		var depth := roof_d if full - c.z < ROOFED_DROP else WALL_T
 		var x_in := x_face + s * depth
 		_quad(st, Vector3(x_face, c.z, c.x), Vector3(x_face, c.z, c.y), Vector3(x_in, c.z, c.y),
 			Vector3(x_in, c.z, c.x), Vector3.UP, 0.0, c.y - c.x, 0.0, depth)
 		if i + 1 < cols.size():
-			_step_face(st, x_face, s, y0, full, c, cols[i + 1] as Vector3)
+			_step_face(st, x_face, s, y0, full, roof_d, c, cols[i + 1] as Vector3)
 	var first: Vector3 = cols[0]
 	var last: Vector3 = cols[cols.size() - 1]
-	_end_return(st, x_face, s * 9.6, z0, y0, first.z, z1 - z0, -1.0)
-	_end_return(st, x_face, s * 9.6, z1, y0, last.z, z1 - z0, 1.0)
+	_end_returns(st, x_face, x_back, deep, z0, y0, first.z, z1 - z0, -1.0)
+	_end_returns(st, x_face, x_back, deep, z1, y0, last.z, z1 - z0, 1.0)
 	var mi := _FacadeBody.commit_body(
 		host, st, "Body%d" % index, _FacadeMaterials.facade_material(plan[&"params"])
 	)
@@ -80,6 +90,9 @@ static func build(
 			&"ruin_interior", Color(0.016, 0.015, 0.014), 0.95, 0.0
 		)
 		_FacadeMeshKit.commit(host, st_dark, "Body%dInterior" % index, dark, false)
+	if deep:
+		_FacadeRuinShell.build(host, plan, side_sign, index, x_face, x_back, y0, false)
+		_FacadeRuinInterior.build(host, plan, side_sign, index, x_face, x_back, y0, keep_out)
 	_FacadeRuinDebris.build_body_debris(host, plan, side_sign, index, keep_out)
 	return mi
 
@@ -94,13 +107,14 @@ static func build_rubble(
 ## The step where column `c` meets the next one: a face from the lower top to the higher, deep
 ## as the taller column's roof plate or wall cap.
 static func _step_face(
-	st: SurfaceTool, x_face: float, s: float, y0: float, full: float, c: Vector3, nx: Vector3
+	st: SurfaceTool, x_face: float, s: float, y0: float, full: float, roof_d: float, c: Vector3,
+	nx: Vector3
 ) -> void:
 	if absf(c.z - nx.z) <= 0.05:
 		return
 	var c_taller := c.z > nx.z
 	var taller_top := maxf(c.z, nx.z)
-	var depth := ROOF_DEPTH if full - taller_top < ROOFED_DROP else WALL_T
+	var depth := roof_d if full - taller_top < ROOFED_DROP else WALL_T
 	var x_in := x_face + s * depth
 	var lo := minf(c.z, nx.z)
 	_quad(st, Vector3(x_face, lo, c.y), Vector3(x_in, lo, c.y), Vector3(x_in, taller_top, c.y),
@@ -117,6 +131,21 @@ static func _front(
 	_quad(st, Vector3(x_face, y0 + v_a, z_a), Vector3(x_face, y0 + v_a, z_b),
 		Vector3(x_face, y0 + v_b, z_b), Vector3(x_face, y0 + v_b, z_a), Vector3(-s, 0.0, 0.0),
 		u_a, u_b, v_a, v_b)
+
+
+## An end return at z; a deep body keeps the old one to the 9.6 wall plane at a tile edge (|z| 10,
+## where the neighbour's side-street flank plate lies) and continues to its deep back 5 cm inside.
+static func _end_returns(
+	st: SurfaceTool, x_face: float, x_back: float, deep: bool, z: float, y0: float, top: float,
+	w: float, normal_z: float
+) -> void:
+	if not deep or absf(z) < 9.99:
+		_end_return(st, x_face, x_back, z, y0, top, w, normal_z)
+		return
+	var x_wall := signf(x_back) * 9.6
+	_end_return(st, x_face, x_wall, z, y0, top, w, normal_z)
+	_end_return(st, x_wall, x_back, z - normal_z * 0.05, y0, top, w + absf(x_wall - x_face),
+		normal_z)
 
 
 ## End return from the face to the wall plane at z, up to `top`; same UV as facade_body's.

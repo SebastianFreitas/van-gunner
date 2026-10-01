@@ -18,6 +18,10 @@ const MAX_HEIGHT := 40.0
 const BAY_HEADER_Y := 7.9
 const BAY_FLANK_HALF_Z := 4.5
 const SETBACKS: Array[float] = [0.0, 0.15, 0.3]
+## Narrowest a building may get once its edge gaps are trimmed off (metres).
+const GAP_MIN_BUILDING := 4.0
+## Building depth behind the face on plain sides, read by the bodies.
+const PLAIN_DEPTH := 3.5
 
 ## Opening codes mirror the tile's enum (same values as facade_keep_out.gd).
 const OPENING_NONE := 0
@@ -45,7 +49,8 @@ const SPLITS := [
 const SPLIT_WEIGHTS := [0.34, 0.15, 0.15, 0.16, 0.07, 0.07, 0.06]
 
 static func plan_side(
-	rng: RandomNumberGenerator, district: FacadeDistrict, opening: int, neighborhood_seed: int
+	rng: RandomNumberGenerator, district: FacadeDistrict, opening: int, neighborhood_seed: int,
+	wreck_at: Callable = Callable()
 ) -> Array[Dictionary]:
 	var plans: Array[Dictionary] = []
 	if opening == OPENING_SIDE_STREET:
@@ -74,33 +79,63 @@ static func plan_side(
 			&"district_id": district.id,
 		})
 		return plans
-	return plan_length(rng, district, 20.0, neighborhood_seed)
+	return plan_length(rng, district, 20.0, neighborhood_seed, wreck_at, true)
 
 
 ## Splits a `length` metre span into buildings the same way a 20 m tile edge is split, scaling
 ## each `SPLITS` row to fit; used for tile sides (length 20.0, bit-identical to the old code) and
 ## for junction stems, branches and side-street flanks of any other length.
 static func plan_length(
-	rng: RandomNumberGenerator, district: FacadeDistrict, length: float, neighborhood_seed: int
+	rng: RandomNumberGenerator, district: FacadeDistrict, length: float, neighborhood_seed: int,
+	wreck_at: Callable = Callable(), with_gaps: bool = false
 ) -> Array[Dictionary]:
 	var plans: Array[Dictionary] = []
+	# Gap decisions never draw from `rng`, so its sequence is the same with or without gaps.
+	var gap_rng := RandomNumberGenerator.new()
+	gap_rng.seed = hash([rng.state, &"gaps"])
 	var split_index := _weighted_index(rng, SPLIT_WEIGHTS)
 	var scale := length / 20.0
 	var widths: Array = SPLITS[split_index]
 	var z := -length / 2.0
-	for base_width: float in widths:
+	var prev: Dictionary = {}
+	for k in widths.size():
+		var base_width: float = widths[k]
 		var width: float = base_width * scale
 		var preset: StringName = _pick(rng, district.presets)
+		var lo := 0.0
+		var hi := 0.0
+		var joined := false
+		if with_gaps:
+			if k == 0:
+				if gap_rng.randf() < 0.45:
+					lo = gap_rng.randf_range(0.6, 1.5)
+			elif preset == prev[&"preset"]:
+				joined = true
+			elif gap_rng.randf() < 0.7:
+				lo = gap_rng.randf_range(1.0, 1.5)
+			else:
+				lo = gap_rng.randf_range(1.5, 3.0)
+			if k == widths.size() - 1 and gap_rng.randf() < 0.45:
+				hi = gap_rng.randf_range(0.6, 1.5)
+			if width - lo - hi < GAP_MIN_BUILDING:
+				hi = 0.0
+				if width - lo < GAP_MIN_BUILDING:
+					lo = 0.0
 		var height: float = _pick_height(rng, district)
 		var floors := maxi(MIN_FLOORS, roundi((height - GROUND_HEIGHT - PARAPET) / FLOOR_HEIGHT))
 		var setback: float = SETBACKS[rng.randi() % SETBACKS.size()]
+		if joined:
+			height = float(prev[&"height"])
+			floors = int(prev[&"floors"])
+			setback = float(prev[&"setback"])
 		var ground_kind: int = _pick(rng, district.ground_kinds)
-		var ground_units: int = clampi(roundi(width / 5.0), 1, 4)
+		var w_eff := width - lo - hi
+		var ground_units: int = clampi(roundi(w_eff / 5.0), 1, 4)
 		var tags: Array[StringName] = []
 		plans.append({
-			&"z0": z,
-			&"z1": z + width,
-			&"width": width,
+			&"z0": z + lo,
+			&"z1": z + width - hi,
+			&"width": w_eff,
 			&"height": height,
 			&"floors": floors,
 			&"setback": setback,
@@ -109,12 +144,21 @@ static func plan_length(
 			&"ground_units": ground_units,
 			&"mouth": false,
 			&"params": _params_for(
-				rng, district, preset, width, height, ground_kind, ground_units, neighborhood_seed
+				rng, district, preset, w_eff, height, ground_kind, ground_units, neighborhood_seed
 			),
 			&"tags": tags,
 			&"rare": &"",
 			&"district_id": district.id,
 		})
+		if with_gaps:
+			plans[-1][&"depth"] = PLAIN_DEPTH
+			plans[-1][&"gap_lo"] = lo
+			plans[-1][&"gap_hi"] = hi
+		prev = plans[-1]
+		if wreck_at.is_valid():
+			plans[-1][&"walk_wreck"] = float(wreck_at.call(
+				(float(plans[-1][&"z0"]) + float(plans[-1][&"z1"])) * 0.5
+			))
 		_FacadeRuin.apply(plans[plans.size() - 1], district)
 		z += width
 	return plans
@@ -164,6 +208,17 @@ static func _params_for(
 		if p.has(key):
 			var c: Color = p[key]
 			p[key] = Color.from_hsv(fposmod(c.h + hue, 1.0), c.s, clampf(c.v * value, 0.0, 1.0), c.a)
+	# Nothing pristine: every plan carries soot, peeling paint and foot growth. Own rng, so
+	# no later building's draws shift.
+	var age := RandomNumberGenerator.new()
+	age.seed = hash([float(p[&"seed"]), &"age"])
+	p[&"soot"] = 0.45
+	p[&"peel"] = 0.55
+	p[&"overgrowth"] = 0.15
+	p[&"ivy"] = 0.0
+	p[&"growth_height"] = 0.5 + age.randf_range(-0.15, 0.15)
+	p[&"grime"] = maxf(float(p[&"grime"]), 0.55)
+	p[&"damage"] = maxf(float(p[&"damage"]), 0.15)
 	return p
 
 

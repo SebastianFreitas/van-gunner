@@ -11,8 +11,9 @@ mechanically, at the commit:
   worktree mode): the staged diff; when the same command also runs
   `git add`, the whole tree against HEAD plus untracked files.
 
-Paths under `.claude/` and `*.md` files do not count (docs, specs, MAP
-rows). Over LINES changed lines or FILES files, the command is refused
+Paths under `.claude/`, `*.md` files (docs, specs, MAP rows) and the
+project's `generated` globs (.claude/project/file-guard.json: written by a
+tool, not by hand) do not count. Over LINES changed lines or FILES files, the command is refused
 unless this session has already run the `reviewer` subagent: the
 context-watch ledger (`<session dir>/context-watch.jsonl`, written on
 SubagentStop) has an entry whose agent_type is `reviewer`. A review in
@@ -29,6 +30,9 @@ import os
 import re
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from guard_config import generated_globs, load_config, matches_any  # noqa: E402
 
 LINES = 150
 FILES = 3
@@ -55,11 +59,12 @@ def session_dir(transcript_path):
     return os.path.splitext(p)[0]
 
 
-def counts(path):
-    return not (path.startswith(SKIP_PREFIXES) or path.endswith(SKIP_SUFFIXES))
+def counts(path, skip_globs):
+    return not (path.startswith(SKIP_PREFIXES) or path.endswith(SKIP_SUFFIXES)
+                or matches_any(path, skip_globs))
 
 
-def numstat(*diff_args):
+def numstat(skip_globs, *diff_args):
     files, lines = set(), 0
     for row in git("diff", "--numstat", *diff_args).splitlines():
         parts = row.split("\t")
@@ -68,7 +73,7 @@ def numstat(*diff_args):
         add, rem, path = parts
         if " => " in path:
             path = path.split(" => ", 1)[1].rstrip("}")
-        if not counts(path):
+        if not counts(path, skip_globs):
             continue
         files.add(path)
         if add.isdigit() and rem.isdigit():
@@ -76,11 +81,11 @@ def numstat(*diff_args):
     return files, lines
 
 
-def untracked():
+def untracked(skip_globs):
     files, lines = set(), 0
     for path in git("ls-files", "--others", "--exclude-standard").splitlines():
         path = path.strip()
-        if not path or not counts(path):
+        if not path or not counts(path, skip_globs):
             continue
         files.add(path)
         try:
@@ -93,17 +98,19 @@ def untracked():
 
 def change_size(cmd):
     """(files, lines, what) of the change this command would land, or None."""
+    top = git("rev-parse", "--show-toplevel").strip()
+    skip = generated_globs(load_config(top)) if top else []
     if LAND_RE.search(cmd):
         if not git("rev-parse", "--verify", "--quiet", "main").strip():
             return None
-        files, lines = numstat("main...HEAD")
+        files, lines = numstat(skip, "main...HEAD")
         return files, lines, "the branch against main"
     if COMMIT_RE.search(cmd):
         if ADD_RE.search(cmd):
-            files, lines = numstat("HEAD")
-            uf, ul = untracked()
+            files, lines = numstat(skip, "HEAD")
+            uf, ul = untracked(skip)
             return files | uf, lines + ul, "the tree against HEAD"
-        files, lines = numstat("--cached")
+        files, lines = numstat(skip, "--cached")
         return files, lines, "the staged diff"
     return None
 

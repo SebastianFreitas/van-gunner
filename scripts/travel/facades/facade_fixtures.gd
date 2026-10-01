@@ -52,10 +52,28 @@ static func build_fixtures(
 	for i in zs.size():
 		var z: float = zs[i]
 		var x_face := side_sign * _FacadePlan.FACE_X
+		var found := false
 		for plan: Dictionary in plans:
 			if z >= float(plan[&"z0"]) and z <= float(plan[&"z1"]):
 				x_face = _FacadePlan.face_x(plan, side_sign)
+				found = true
 				break
+		if not found:
+			# A lamp over a gap between buildings snaps onto the nearest building's front.
+			var nearest: Dictionary = {}
+			var best := INF
+			for plan: Dictionary in plans:
+				if bool(plan.get(&"mouth", false)):
+					continue
+				var d := maxf(maxf(float(plan[&"z0"]) - z, z - float(plan[&"z1"])), 0.0)
+				if d < best:
+					best = d
+					nearest = plan
+			if not nearest.is_empty():
+				var n0 := float(nearest[&"z0"])
+				var n1 := float(nearest[&"z1"])
+				z = (n0 + n1) * 0.5 if n1 - n0 < 1.2 else clampf(z, n0 + 0.6, n1 - 0.6)
+				x_face = _FacadePlan.face_x(nearest, side_sign)
 		var dead := force_dead or rng.randf() < district.dead_lamp_chance
 		# Wreck state on its own stream, so the tile rng's draw order stays as it was.
 		var lr := RandomNumberGenerator.new()

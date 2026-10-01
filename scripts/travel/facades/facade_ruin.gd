@@ -25,8 +25,17 @@ const FLOOR_HEIGHT := 3.2
 const PARAPET := 0.6
 
 const _DEFAULT_WEIGHTS: Array[float] = [0.12, 0.38, 0.32, 0.18]
+## Per-tier multiplier on the ruin weights in front of a destroyed walk, blended in by walk_wreck.
+const _WALK_TIER_MULT: Array[float] = [0.1, 0.5, 1.5, 3.0]
 const _MIN_EDGE_GAP := 0.8
 const _MIN_HOLE_COL_W := 1.2
+const _SKIN_SOOT: Array[float] = [0.45, 0.6, 0.75, 0.9]
+const _SKIN_PEEL: Array[float] = [0.55, 0.7, 0.85, 1.0]
+const _SKIN_GROWTH: Array[float] = [0.15, 0.3, 0.55, 0.8]
+const _SKIN_DAMAGE: Array[float] = [0.15, 0.3, 0.5, 0.7]
+const _SKIN_GRIME: Array[float] = [0.55, 0.65, 0.75, 0.85]
+const _SKIN_GROWTH_HEIGHT: Array[float] = [0.5, 0.9, 1.6, 2.2]
+const _SKIN_IVY: Array[float] = [0.0, 0.1, 0.35, 0.7]
 
 
 ## Rolls the building's condition and writes the ruin keys into `plan`. Uses its own rng so the
@@ -38,7 +47,13 @@ static func apply(plan: Dictionary, district: FacadeDistrict) -> void:
 	var weights: Array[float] = _DEFAULT_WEIGHTS
 	if district.ruin_weights.size() == 4:
 		weights = district.ruin_weights
-	var tier := _pick_tier(rng, weights)
+	# A building in front of a destroyed walk rolls a worse tier (walk_wreck is -1 when unknown).
+	var walk_t := smoothstep(-0.30, 0.10, float(plan.get(&"walk_wreck", -1.0)))
+	var w: Array[float] = weights.duplicate()
+	if walk_t > 0.0:
+		for i in 4:
+			w[i] = lerpf(w[i], w[i] * _WALK_TIER_MULT[i], walk_t)
+	var tier := _pick_tier(rng, w)
 	var z0 := float(plan[&"z0"])
 	var z1 := float(plan[&"z1"])
 	var height := float(plan[&"height"])
@@ -89,6 +104,11 @@ static func apply(plan: Dictionary, district: FacadeDistrict) -> void:
 	plan[&"ruin_holes"] = holes
 	plan[&"ruin_side"] = side
 	_wear_windows(params, tier)
+	_wear_skin(params, tier, rng)
+	if walk_t > 0.5:
+		params[&"ivy"] = minf(1.0, float(params[&"ivy"]) + 0.3 * walk_t)
+		params[&"growth_height"] = float(params[&"growth_height"]) + 1.5 * walk_t
+		params[&"overgrowth"] = minf(1.0, float(params[&"overgrowth"]) + 0.2 * walk_t)
 
 
 ## The plan the prop families should see: cornices, fire escapes and balconies stop under the
@@ -212,6 +232,19 @@ static func _wear_windows(params: Dictionary, tier: int) -> void:
 		_set_windows(params, 0.4, 0.3, 0.15)
 	elif tier == GUTTED:
 		_set_windows(params, 0.0, 0.55, 0.2)
+
+
+## Soot, peeling paint and foot growth by tier (shader inputs); even INTACT is not pristine.
+## Draws last on the ruin rng so the ruin shapes keep their output.
+static func _wear_skin(params: Dictionary, tier: int, rng: RandomNumberGenerator) -> void:
+	var t := clampi(tier, 0, 3)
+	params[&"soot"] = _SKIN_SOOT[t]
+	params[&"peel"] = _SKIN_PEEL[t]
+	params[&"overgrowth"] = _SKIN_GROWTH[t]
+	params[&"ivy"] = _SKIN_IVY[t]
+	params[&"damage"] = maxf(float(params.get(&"damage", 0.0)), _SKIN_DAMAGE[t])
+	params[&"grime"] = maxf(float(params.get(&"grime", 0.0)), _SKIN_GRIME[t])
+	params[&"growth_height"] = _SKIN_GROWTH_HEIGHT[t] * rng.randf_range(0.75, 1.25)
 
 
 static func _set_windows(

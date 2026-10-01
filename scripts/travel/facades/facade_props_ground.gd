@@ -40,7 +40,7 @@ static func build(
 	_build_rollups(host, plan, side_sign, keep_out, rng, district)
 	_build_dock(host, plan, side_sign, keep_out, rng, district)
 	_build_arcade(host, plan, side_sign, keep_out, rng, district)
-	_build_stoop(host, plan, side_sign, keep_out, rng, district)
+	_skip_stoop_draws(plan, rng, district)
 	if not suppress.has(&"furniture"):
 		_build_furniture(host, plan, side_sign, keep_out, rng, district)
 
@@ -94,7 +94,6 @@ static func _build_storefront(
 		boxes.append([Vector3(_out_x(xf, ss, 0.35), _BASE_Y + 2.1, _z_at(plan, ss, u1)), pier_size])
 		var zc := _z_at(plan, ss, _u_c(i, unit_w))
 		boxes.append([Vector3(_out_x(xf, ss, 0.3), _BASE_Y + 3.8, zc), Vector3(0.3, 0.8, unit_w - 1.0)])
-		boxes.append([Vector3(_out_x(xf, ss, 0.2), _BASE_Y + 0.25, zc), Vector3(0.2, 0.5, unit_w - 1.0)])
 	var material := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.trim_material(plan[&"preset"]))
 	_emit(host, "Storefront", material, true, boxes, ko)
 
@@ -166,27 +165,14 @@ static func _build_dock(
 		return
 	var xf := _FacadePlan.face_x(plan, ss)
 	var width: float = plan[&"width"]
-	var z0: float = plan[&"z0"]
-	var z1: float = plan[&"z1"]
-	var boxes := [[
-		Vector3(_out_x(xf, ss, 0.9), _BASE_Y + 0.6, _z_at(plan, ss, width * 0.5)),
-		Vector3(0.9, 1.2, width - 0.4),
-	]]
-	# Three steps descending from the platform to grade at one end, chosen at random.
-	var dir := 1.0 if rng.randf() < 0.5 else -1.0
-	var edge_z := z1 if dir > 0.0 else z0
-	for k in 3:
-		var sz := edge_z + dir * (0.45 + float(k) * 0.9)
-		var sy := _BASE_Y + 0.9 - 0.3 * float(k)
-		boxes.append([Vector3(_out_x(xf, ss, 0.9), sy, sz), Vector3(0.9, 0.3, 0.9)])
-	var material := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.concrete_material())
-	_emit(host, "DockPlatform", material, true, boxes, ko)
-	# Bumpers every 2 m along the platform's outer face (same pitch-cell math as a window column).
+	# The platform and steps are gone; the old step-side draw stays so later families keep their output.
+	var _step_dir := rng.randf()
+	# Bumpers every 2 m on the wall (same pitch-cell math as a window column).
 	var bumpers := []
 	var bumper_n := maxi(0, floori((width - 0.4) / 2.0))
 	for u in bumper_n:
 		var bz := _z_at(plan, ss, (float(u) + 0.5) * 2.0 + 0.2)
-		bumpers.append([Vector3(xf - ss * 1.05, _BASE_Y + 0.9, bz), Vector3(0.3, 0.3, 0.3)])
+		bumpers.append([Vector3(_out_x(xf, ss, 0.3), _BASE_Y + 0.9, bz), Vector3(0.3, 0.3, 0.3)])
 	_emit(host, "DockBumpers", _FacadeMaterials.iron_material(), false, bumpers, ko)
 
 
@@ -209,27 +195,16 @@ static func _build_arcade(
 	_emit(host, "Pilasters", material, true, boxes, ko)
 
 
-static func _build_stoop(
-	host: Node3D, plan: Dictionary, ss: float, ko: RefCounted, rng: RandomNumberGenerator,
-	dist: FacadeDistrict
+## The entry stoops are gone, but their rng draws stay (the roll and the position) so every later
+## family keeps its output.
+static func _skip_stoop_draws(
+	plan: Dictionary, rng: RandomNumberGenerator, dist: FacadeDistrict
 ) -> void:
 	var kind: int = plan[&"ground_kind"]
 	var ok_kind := kind == _FacadePlan.GROUND_BLANK or kind == _FacadePlan.GROUND_STOREFRONT
 	if not ok_kind or not _STOOP_DISTRICTS.has(dist.id) or rng.randf() >= 0.4:
 		return
-	var xf := _FacadePlan.face_x(plan, ss)
-	var width: float = plan[&"width"]
-	var z := _z_at(plan, ss, 1.2 + rng.randf() * (width - 2.4))
-	var sizes := [Vector3(0.9, 0.18, 1.4), Vector3(0.6, 0.18, 1.4), Vector3(0.3, 0.18, 1.4)]
-	var boxes := []
-	for k in 3:
-		var size: Vector3 = sizes[k]
-		boxes.append([Vector3(_out_x(xf, ss, size.x), _BASE_Y + 0.09 + 0.18 * float(k), z), size])
-	var material := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.concrete_material())
-	_emit(host, "Stoop", material, true, boxes, ko)
-	# Outer corner of the bottom (widest) step.
-	var post := Vector3(_out_x(xf, ss, 0.9) - ss * 0.45, _BASE_Y + 0.45, z - 0.7)
-	_emit(host, "StoopRail", _FacadeMaterials.iron_material(), false, [[post, Vector3(0.05, 0.9, 0.05)]], ko)
+	var _stoop_z := rng.randf()
 
 
 static func _build_furniture(

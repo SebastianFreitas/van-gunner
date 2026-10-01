@@ -17,7 +17,9 @@ const FLANK_COLLISION_THICKNESS := 0.4
 ## opening; returns the header node for a mouth body so callers keep a single MeshInstance3D.
 static func build(host: Node3D, plan: Dictionary, side_sign: float, index: int) -> MeshInstance3D:
 	var x_face := _FacadePlan.face_x(plan, side_sign)
-	var x_back := side_sign * 9.6
+	var depth := float(plan.get(&"depth", 0.0))
+	var deep := depth > 0.0
+	var x_back := side_sign * (absf(x_face) + depth) if deep else side_sign * 9.6
 	var y0 := _FacadePlan.BASE_Y
 	var y1 := y0 + float(plan[&"height"])
 	var z0 := float(plan[&"z0"])
@@ -38,10 +40,10 @@ static func build(host: Node3D, plan: Dictionary, side_sign: float, index: int) 
 			Vector2(_u(z1, z0, z1, side_sign), y1 - y0), Vector2(_u(z0, z0, z1, side_sign), y1 - y0),
 			n_face
 		)
-		_add_end_return(st, x_face, x_back, z0, y0, y1, y0, w, -1.0)
-		_add_end_return(st, x_face, x_back, z1, y0, y1, y0, w, 1.0)
+		_add_ends(st, x_face, x_back, deep, z0, y0, y1, y0, w, -1.0)
+		_add_ends(st, x_face, x_back, deep, z1, y0, y1, y0, w, 1.0)
 		if float(plan[&"params"].get(&"collapse_y", 0.0)) <= 0.0:  # roof UV isn't height: no discard
-			_add_roof(st, x_face, side_sign, y1, z0, z1)
+			_add_roof(st, x_face, side_sign, y1, z0, z1, depth)
 		return _commit_body(host, st, "Body%d" % index, material)
 
 	# The mouth needs three separate AABBs (header, flank, flank) so the smoke test's keep-out
@@ -71,9 +73,9 @@ static func build(host: Node3D, plan: Dictionary, side_sign: float, index: int) 
 		Vector2(flank_half_z * 2.0, absf(x_reveal - x_face)), Vector2(0.0, absf(x_reveal - x_face)),
 		Vector3(0.0, -1.0, 0.0)
 	)
-	_add_roof(st_header, x_face, side_sign, y1, z0, z1)
-	_add_end_return(st_header, x_face, x_back, z0, header_y, y1, y0, w, -1.0)
-	_add_end_return(st_header, x_face, x_back, z1, header_y, y1, y0, w, 1.0)
+	_add_roof(st_header, x_face, side_sign, y1, z0, z1, depth)
+	_add_ends(st_header, x_face, x_back, deep, z0, header_y, y1, y0, w, -1.0)
+	_add_ends(st_header, x_face, x_back, deep, z1, header_y, y1, y0, w, 1.0)
 	var header_node := _commit_body(host, st_header, "Body%dHeader" % index, material)
 
 	var st_flank_neg := SurfaceTool.new()
@@ -98,7 +100,7 @@ static func build(host: Node3D, plan: Dictionary, side_sign: float, index: int) 
 		Vector2(w + absf(x_reveal - x_face), header_y - y0), Vector2(w + 0.0, header_y - y0),
 		Vector3(0.0, 0.0, 1.0)
 	)
-	_add_end_return(st_flank_neg, x_face, x_back, z0, y0, header_y, y0, w, -1.0)
+	_add_ends(st_flank_neg, x_face, x_back, deep, z0, y0, header_y, y0, w, -1.0)
 	_commit_body(host, st_flank_neg, "Body%dFlankNeg" % index, material)
 
 	var st_flank_pos := SurfaceTool.new()
@@ -122,17 +124,18 @@ static func build(host: Node3D, plan: Dictionary, side_sign: float, index: int) 
 		Vector2(w + absf(x_reveal - x_face), header_y - y0), Vector2(w + 0.0, header_y - y0),
 		Vector3(0.0, 0.0, -1.0)
 	)
-	_add_end_return(st_flank_pos, x_face, x_back, z1, y0, header_y, y0, w, 1.0)
+	_add_ends(st_flank_pos, x_face, x_back, deep, z1, y0, header_y, y0, w, 1.0)
 	_commit_body(host, st_flank_pos, "Body%dFlankPos" % index, material)
 
 	return header_node
 
 
-## Roof plate from the face out to ROOF_DEPTH, at a body's top.
+## Roof plate from the face out to ROOF_DEPTH (or a deep body's depth), at a body's top.
 static func _add_roof(
-	st: SurfaceTool, x_face: float, side_sign: float, y1: float, z0: float, z1: float
+	st: SurfaceTool, x_face: float, side_sign: float, y1: float, z0: float, z1: float,
+	depth: float = 0.0
 ) -> void:
-	var x_roof := side_sign * (absf(x_face) + ROOF_DEPTH)
+	var x_roof := side_sign * (absf(x_face) + maxf(ROOF_DEPTH, depth))
 	add_quad(
 		st,
 		Vector3(x_face, y1, z0), Vector3(x_face, y1, z1),
@@ -140,6 +143,22 @@ static func _add_roof(
 		Vector2(0.0, 0.0), Vector2(z1 - z0, 0.0),
 		Vector2(z1 - z0, absf(x_roof - x_face)), Vector2(0.0, absf(x_roof - x_face)),
 		Vector3(0.0, 1.0, 0.0)
+	)
+
+
+## An end return at z; a deep body keeps the old one to the 9.6 wall plane at a tile edge (|z| 10,
+## where the neighbour's side-street flank plate lies) and continues to its deep back 5 cm inside.
+static func _add_ends(
+	st: SurfaceTool, x_face: float, x_back: float, deep: bool, z: float, y_a: float, y_b: float,
+	y0: float, w: float, normal_z: float
+) -> void:
+	if not deep or absf(z) < 9.99:
+		_add_end_return(st, x_face, x_back, z, y_a, y_b, y0, w, normal_z)
+		return
+	var x_wall := signf(x_back) * 9.6
+	_add_end_return(st, x_face, x_wall, z, y_a, y_b, y0, w, normal_z)
+	_add_end_return(
+		st, x_wall, x_back, z - normal_z * 0.05, y_a, y_b, y0, w + absf(x_wall - x_face), normal_z
 	)
 
 

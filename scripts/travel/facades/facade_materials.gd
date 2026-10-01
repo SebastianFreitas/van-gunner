@@ -171,27 +171,27 @@ static func preset(name: StringName) -> Dictionary:
 		&"brick_red":
 			return {
 				&"style": 0,
-				&"base_color": Color(0.36, 0.17, 0.12),
-				&"accent_color": Color(0.24, 0.21, 0.18),
-				&"mortar_color": Color(0.17, 0.155, 0.135),
+				&"base_color": Color(0.234, 0.111, 0.078),
+				&"accent_color": Color(0.156, 0.137, 0.117),
+				&"mortar_color": Color(0.111, 0.101, 0.088),
 				&"lit_color": Color(1.0, 0.72, 0.42),
 				&"grime": 0.5,
 			}
 		&"brick_brown":
 			return {
 				&"style": 0,
-				&"base_color": Color(0.28, 0.19, 0.13),
-				&"accent_color": Color(0.2, 0.18, 0.15),
-				&"mortar_color": Color(0.15, 0.14, 0.12),
+				&"base_color": Color(0.182, 0.124, 0.085),
+				&"accent_color": Color(0.13, 0.117, 0.098),
+				&"mortar_color": Color(0.098, 0.091, 0.078),
 				&"lit_color": Color(1.0, 0.75, 0.5),
 				&"grime": 0.55,
 			}
 		&"concrete_grey":
 			return {
 				&"style": 1,
-				&"base_color": Color(0.30, 0.31, 0.30),
-				&"accent_color": Color(0.2, 0.21, 0.2),
-				&"mortar_color": Color(0.12, 0.13, 0.13),
+				&"base_color": Color(0.195, 0.202, 0.195),
+				&"accent_color": Color(0.13, 0.137, 0.13),
+				&"mortar_color": Color(0.078, 0.085, 0.085),
 				&"lit_color": Color(0.85, 0.9, 1.0),
 				&"grime": 0.5,
 				&"window_pitch": 3.0,
@@ -201,27 +201,27 @@ static func preset(name: StringName) -> Dictionary:
 		&"plaster_tan":
 			return {
 				&"style": 2,
-				&"base_color": Color(0.42, 0.36, 0.26),
-				&"accent_color": Color(0.26, 0.22, 0.17),
-				&"mortar_color": Color(0.18, 0.16, 0.13),
+				&"base_color": Color(0.273, 0.234, 0.169),
+				&"accent_color": Color(0.169, 0.143, 0.111),
+				&"mortar_color": Color(0.117, 0.104, 0.085),
 				&"lit_color": Color(1.0, 0.78, 0.5),
 				&"grime": 0.45,
 			}
 		&"plaster_green":
 			return {
 				&"style": 2,
-				&"base_color": Color(0.24, 0.31, 0.25),
-				&"accent_color": Color(0.16, 0.18, 0.15),
-				&"mortar_color": Color(0.12, 0.14, 0.12),
+				&"base_color": Color(0.156, 0.202, 0.163),
+				&"accent_color": Color(0.104, 0.117, 0.098),
+				&"mortar_color": Color(0.078, 0.091, 0.078),
 				&"lit_color": Color(1.0, 0.8, 0.55),
 				&"grime": 0.5,
 			}
 		&"glass_blue":
 			return {
 				&"style": 3,
-				&"base_color": Color(0.05, 0.08, 0.11),
-				&"accent_color": Color(0.16, 0.18, 0.2),
-				&"mortar_color": Color(0.1, 0.1, 0.1),
+				&"base_color": Color(0.033, 0.052, 0.072),
+				&"accent_color": Color(0.104, 0.117, 0.13),
+				&"mortar_color": Color(0.065, 0.065, 0.065),
 				&"glass_color": Color(0.04, 0.06, 0.08),
 				&"lit_color": Color(0.8, 0.88, 1.0),
 				&"grime": 0.15,
@@ -230,9 +230,9 @@ static func preset(name: StringName) -> Dictionary:
 		&"corrugated_green":
 			return {
 				&"style": 4,
-				&"base_color": Color(0.16, 0.22, 0.18),
-				&"accent_color": Color(0.14, 0.15, 0.14),
-				&"mortar_color": Color(0.08, 0.09, 0.08),
+				&"base_color": Color(0.104, 0.143, 0.117),
+				&"accent_color": Color(0.091, 0.098, 0.091),
+				&"mortar_color": Color(0.052, 0.059, 0.052),
 				&"lit_color": Color(0.9, 0.95, 1.0),
 				&"grime": 0.6,
 				&"windows_on": 0.0,
@@ -240,9 +240,9 @@ static func preset(name: StringName) -> Dictionary:
 		&"corrugated_rust":
 			return {
 				&"style": 4,
-				&"base_color": Color(0.28, 0.17, 0.11),
-				&"accent_color": Color(0.16, 0.13, 0.11),
-				&"mortar_color": Color(0.1, 0.08, 0.07),
+				&"base_color": Color(0.182, 0.111, 0.072),
+				&"accent_color": Color(0.104, 0.085, 0.072),
+				&"mortar_color": Color(0.065, 0.052, 0.046),
 				&"lit_color": Color(0.9, 0.95, 1.0),
 				&"grime": 0.7,
 				&"windows_on": 0.0,
@@ -250,9 +250,9 @@ static func preset(name: StringName) -> Dictionary:
 		&"stone_grey":
 			return {
 				&"style": 5,
-				&"base_color": Color(0.34, 0.33, 0.30),
-				&"accent_color": Color(0.26, 0.25, 0.22),
-				&"mortar_color": Color(0.14, 0.14, 0.13),
+				&"base_color": Color(0.221, 0.215, 0.195),
+				&"accent_color": Color(0.169, 0.163, 0.143),
+				&"mortar_color": Color(0.091, 0.091, 0.085),
 				&"lit_color": Color(1.0, 0.8, 0.5),
 				&"grime": 0.4,
 				&"window_pitch": 3.2,
@@ -262,9 +262,9 @@ static func preset(name: StringName) -> Dictionary:
 		&"bare_frame":
 			return {
 				&"style": 6,
-				&"base_color": Color(0.3, 0.3, 0.29),
-				&"accent_color": Color(0.2, 0.2, 0.2),
-				&"mortar_color": Color(0.1, 0.1, 0.1),
+				&"base_color": Color(0.195, 0.195, 0.189),
+				&"accent_color": Color(0.13, 0.13, 0.13),
+				&"mortar_color": Color(0.065, 0.065, 0.065),
 				&"lit_color": Color(1.0, 0.8, 0.5),
 				&"grime": 0.3,
 				&"windows_on": 0.0,
