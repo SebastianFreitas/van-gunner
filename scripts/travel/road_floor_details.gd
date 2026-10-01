@@ -1,8 +1,8 @@
 extends RefCounted
 
-## Street furniture/detail builders for RoadFloor: expansion joints, drains,
-## manholes and sidewalk dressing. Reads the owning RoadFloor's exports and
-## uses its box primitive so built geometry parents/collides the same way.
+## Street furniture/detail builders for RoadFloor: drains, manholes and
+## sidewalk dressing. Reads the owning RoadFloor's exports and uses its box
+## primitive so built geometry parents/collides the same way.
 
 const RoadFloorMaterials = preload("res://scripts/travel/road_floor_materials.gd")
 
@@ -11,30 +11,6 @@ var road: Node3D  # the RoadFloor; reads its exports and uses its box primitive
 
 func _init(owner: Node3D) -> void:
 	road = owner
-
-
-func build_expansion_joints(
-	carriage_width: float,
-	carriage_center: float,
-	dark_mat: Material
-) -> void:
-	# Shallow transverse grooves across the carriageway every ~5m.
-	var spacing := 5.0
-	var joint_w := carriage_width - 0.3
-	var joint_d := 0.06
-	var joint_h := 0.02
-	var z: float = -road.span_z * 0.5 + spacing
-	var i := 0
-	while z < road.span_z * 0.5 - 1.0:
-		road._add_box_centered(
-			"ExpansionJoint_%d" % i,
-			Vector3(joint_w, joint_h, joint_d),
-			Vector3(carriage_center, road.road_surface_y - joint_h * 0.35, z),
-			dark_mat,
-			false
-		)
-		z += spacing
-		i += 1
 
 
 func build_drains(

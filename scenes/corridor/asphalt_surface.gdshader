@@ -29,6 +29,26 @@ uniform float roughness_value : hint_range(0.0, 1.0) = 0.94;
 
 varying vec3 v_world_pos;
 
+// Rotated, warped fbm: the include's lattice is axis-aligned and shows as a grid.
+vec2 rot2(vec2 p, float a) {
+	float c = cos(a);
+	float s = sin(a);
+	return vec2(c * p.x - s * p.y, s * p.x + c * p.y);
+}
+
+float fbm_r(vec2 p) {
+	p = rot2(p, 0.61);
+	p += (vec2(noise21(p * 0.5 + 7.3), noise21(p * 0.5 + 2.9)) - 0.5) * 0.8;
+	float sum = 0.0;
+	float amp = 0.5;
+	for (int i = 0; i < 5; i++) {
+		sum += amp * noise21(p);
+		amp *= 0.5;
+		p = rot2(p, 0.93) * 2.03 + vec2(17.3, 9.1);
+	}
+	return sum / 0.96875 * 0.9375;
+}
+
 void vertex() {
 	v_world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
@@ -188,58 +208,65 @@ void fragment() {
 	vec2 pos = v_world_pos.xz;
 
 	// Aggregate grit — strong pebble contrast.
-	float grit_n = fbm(pos * 4.5 + vec2(3.1, 1.7));
+	float grit_n = fbm_r(pos * 4.5 + vec2(3.1, 1.7));
 	float grit = smoothstep(0.3, 0.7, grit_n);
-	float grain = noise21(pos * 28.0);
+	float grain = noise21(rot2(pos, 0.47) * 28.0);
 
 	// Longitudinal tire lanes — clear polished bands.
 	float lane_l = exp(-pow((pos.x + 1.4) / 0.7, 2.0));
 	float lane_r = exp(-pow((pos.x - 1.4) / 0.7, 2.0));
 	float lane_c = exp(-pow(pos.x / 0.95, 2.0)) * 0.65;
-	float tire_mod = 0.45 + 0.55 * fbm(vec2(pos.x * 0.35, pos.y * 0.08) + 4.0);
+	float tire_mod = 0.45 + 0.55 * fbm_r(vec2(pos.x * 0.35, pos.y * 0.08) + 4.0);
 	float tire = clamp(lane_l + lane_r + lane_c, 0.0, 1.0) * tire_mod;
 
 	// Oil / grease puddles — lower threshold so they show up.
-	float blotch_a = fbm(pos * 0.55 + vec2(8.7, 3.2));
-	float blotch_b = fbm(pos * 1.1 + vec2(2.4, 14.0));
+	float blotch_a = fbm_r(pos * 0.55 + vec2(8.7, 3.2));
+	float blotch_b = fbm_r(pos * 1.1 + vec2(2.4, 14.0));
 	float oil = max(
 		smoothstep(0.55, 0.78, blotch_a),
 		smoothstep(0.62, 0.85, blotch_b) * 0.7
 	) * trash;
 
 	// Repair patches — irregular darker asphalt blobs (not rectangles).
-	vec2 patch_cell = floor(pos / vec2(3.2, 3.8));
-	float patch_roll = hash21(patch_cell + 7.0);
-	float patch_mask = step(0.62, patch_roll) * trash;
-	vec2 patch_local = fract(pos / vec2(3.2, 3.8)) - 0.5;
-	vec2 patch_off = (hash22(patch_cell + 3.0) - 0.5) * 0.28;
-	vec2 patch_p = patch_local - patch_off;
-	float patch_ang = hash21(patch_cell + 5.0) * 6.28318;
-	float pca = cos(patch_ang);
-	float psa = sin(patch_ang);
-	patch_p = vec2(pca * patch_p.x - psa * patch_p.y, psa * patch_p.x + pca * patch_p.y);
-	vec2 patch_stretch = vec2(0.7, 1.15) + hash22(patch_cell + 9.0) * vec2(0.45, 0.35);
-	float patch_r = length(patch_p / patch_stretch);
-	float patch_warp = fbm(pos * 2.2 + patch_cell) * 0.22;
-	float patch_shape = 1.0 - smoothstep(0.22 + patch_warp, 0.38 + patch_warp * 0.5, patch_r);
-	float patch = patch_mask * patch_shape
-		* (0.7 + 0.3 * fbm(pos * 1.4 + patch_cell));
+	// Each patch is evaluated from its 3x3 neighbour cells so it is never cut at a cell edge.
+	float patch = 0.0;
+	for (int py = -1; py <= 1; py++) {
+		for (int px = -1; px <= 1; px++) {
+			vec2 patch_cell = floor(pos / vec2(3.2, 3.8)) + vec2(float(px), float(py));
+			float patch_roll = hash21(patch_cell + 7.0);
+			float patch_mask = step(0.62, patch_roll) * trash;
+			vec2 patch_local = pos / vec2(3.2, 3.8) - patch_cell - 0.5;
+			vec2 patch_off = (hash22(patch_cell + 3.0) - 0.5) * 0.28;
+			vec2 patch_p = patch_local - patch_off;
+			float patch_ang = hash21(patch_cell + 5.0) * 6.28318;
+			float pca = cos(patch_ang);
+			float psa = sin(patch_ang);
+			patch_p = vec2(pca * patch_p.x - psa * patch_p.y, psa * patch_p.x + pca * patch_p.y);
+			vec2 patch_stretch = vec2(0.7, 1.15) + hash22(patch_cell + 9.0) * vec2(0.45, 0.35);
+			float patch_r = length(patch_p / patch_stretch);
+			float patch_warp = fbm_r(pos * 2.2 + patch_cell) * 0.22;
+			float patch_shape = 1.0 - smoothstep(0.22 + patch_warp, 0.38 + patch_warp * 0.5, patch_r);
+			float patch_fill = patch_mask * patch_shape
+				* (0.7 + 0.3 * fbm_r(pos * 1.4 + patch_cell));
+			patch = max(patch, patch_fill);
+		}
+	}
 
 	// Cracks — full-strength seams, but only on ~40% of the road.
-	float crack_coverage = smoothstep(0.56, 0.64, fbm(pos * 0.22 + 11.0));
-	float cf = crack_field(pos * 0.85 + 2.3);
+	float crack_coverage = smoothstep(0.56, 0.64, fbm_r(pos * 0.22 + 11.0));
+	float cf = crack_field(rot2(pos, 0.38) * 0.85 + 2.3);
 	float cracks = 1.0 - smoothstep(0.02, 0.08, cf);
 	cracks *= crack_coverage * trash;
 
 	// Secondary hairline cracks (same coverage mask).
-	float cf2 = crack_field(pos * 1.6 + 9.1);
+	float cf2 = crack_field(rot2(pos, 1.07) * 1.6 + 9.1);
 	float hair = (1.0 - smoothstep(0.01, 0.04, cf2))
-		* smoothstep(0.5, 0.8, fbm(pos * 0.5 + 5.0)) * crack_coverage * trash * 0.7;
+		* smoothstep(0.5, 0.8, fbm_r(pos * 0.5 + 5.0)) * crack_coverage * trash * 0.7;
 	cracks = max(cracks, hair);
 
 	// Edge dirt / gutter runoff.
 	float edge_dirt = smoothstep(4.5, 7.5, abs(pos.x));
-	edge_dirt *= 0.4 + 0.6 * fbm(vec2(pos.x * 0.6, pos.y * 0.2) + 6.0);
+	edge_dirt *= 0.4 + 0.6 * fbm_r(vec2(pos.x * 0.6, pos.y * 0.2) + 6.0);
 
 	// --- Litter (paper, cans, plastic, debris) --------------------------------
 	vec2 litter_cell = floor(pos / 1.35);
@@ -247,7 +274,7 @@ void fragment() {
 	vec2 litter_id = litter_cell + 31.0;
 	float litter_roll = hash21(litter_id);
 	float litter_on = step(1.0 - 0.22 * trash, litter_roll); // ~22% cells at trash=1
-	vec2 litter_off = (hash22(litter_id + 1.0) - 0.5) * 0.55;
+	vec2 litter_off = (hash22(litter_id + 1.0) - 0.5) * 0.3;
 	vec2 litter_p = litter_f - litter_off;
 	float litter_ang = hash21(litter_id + 2.0) * 6.28318;
 	float ca = cos(litter_ang);
@@ -266,7 +293,7 @@ void fragment() {
 			vec2 paper_sz = vec2(0.12, 0.08) + hash22(litter_id + 5.0) * 0.1;
 			vec2 pd = abs(litter_p) / paper_sz;
 			float rect = 1.0 - smoothstep(0.75, 1.05, max(pd.x, pd.y));
-			float crumple = 0.7 + 0.3 * noise21(litter_p * 40.0 + litter_id);
+			float crumple = 0.7 + 0.3 * noise21(rot2(litter_p, 0.47) * 40.0 + litter_id);
 			paper = rect * crumple;
 		} else if (litter_kind < 0.55) {
 			// Can / bottle silhouette.
@@ -274,7 +301,7 @@ void fragment() {
 			can = 1.0 - smoothstep(0.75, 1.05, el);
 		} else if (litter_kind < 0.75) {
 			// Plastic bag / wrapper smear.
-			float bag = fbm(litter_p * 8.0 + litter_id);
+			float bag = fbm_r(litter_p * 8.0 + litter_id);
 			plastic = (1.0 - smoothstep(0.12, 0.28, length(litter_p)))
 				* smoothstep(0.35, 0.7, bag);
 		} else {
@@ -286,7 +313,7 @@ void fragment() {
 		}
 	}
 
-	float bleach = washout * (0.25 + 0.75 * fbm(pos * 0.15 + vec2(1.5, 9.0)));
+	float bleach = washout * (0.25 + 0.75 * fbm_r(pos * 0.15 + vec2(1.5, 9.0)));
 
 	vec3 color = base_color;
 	color = mix(color, grit_color, grit * 0.7);
@@ -331,7 +358,7 @@ void fragment() {
 	ROUGHNESS = clamp(rough, 0.3, 1.0);
 
 	float n_x = (grit_n - 0.5) * 0.55 + cracks * 0.7 + oil * 0.15;
-	float n_y = (fbm(pos * 3.5 + 3.0) - 0.5) * 0.45 + cracks * 0.4;
+	float n_y = (fbm_r(pos * 3.5 + 3.0) - 0.5) * 0.45 + cracks * 0.4;
 	n_x += (paper + can + plastic) * 0.35;
 	NORMAL_MAP = normalize(vec3(n_x, n_y, 1.0)) * 0.5 + 0.5;
 	NORMAL_MAP_DEPTH = 0.75;

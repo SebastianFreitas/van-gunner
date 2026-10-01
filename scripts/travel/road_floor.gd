@@ -283,7 +283,6 @@ func _build() -> void:
 		)
 
 	var details := RoadFloorDetails.new(self)
-	details.build_expansion_joints(carriage_width, carriage_center, dark_mat)
 	details.build_drains(gutter_inner, grate_mat, metal_mat, dark_mat)
 	details.build_manholes(carriage_width, carriage_center, metal_mat, dark_mat)
 	details.build_sidewalk_dressing(half_x, sidewalk_top, metal_mat, curb_mat, dark_mat)
