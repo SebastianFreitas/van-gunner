@@ -1,12 +1,12 @@
 {
   "master": "C:/Users/Traff/Desktop/sebas/claude-workflow",
-  "commit": "e1fddac82d453167695964476490164b42f848fb",
+  "commit": "07072a52fdeb72413de3f8d37eed57f33512d029",
   "files": {
     ".claude/agents/implementer-wt.md": "645bcafa085f37d78b4c39b64fc07c5c986ce6845e83979854e4f9de2b3a4ff0",
     ".claude/agents/implementer.md": "08974ffc4db178a3f5b9a0c66eb9abadc1b20a05cd95685d88eb98117aa060ac",
-    ".claude/agents/plan-reviewer.md": "ed92305331f5fd29f4191c75e707794f9dfd839d926ffc0ff1e591050c0235db",
+    ".claude/agents/plan-reviewer.md": "494d30961430f74687d16e50fa749e49f86fd641b6e22dbc68e490cfb01d4358",
     ".claude/agents/plan-writer.md": "579d8f3e28835f3d5a04f882c1bae43c6fe57ec931d3e952481e33944568b79a",
-    ".claude/agents/reviewer.md": "cef92351c4a762e1e7e8fc68dd581e8eee02784e8af4937bb64a8edaca887a4b",
+    ".claude/agents/reviewer.md": "3f48483d2961f2e93ed2c5395af2d1ecb1afe7de8c9736a69d02845dd8dbce72",
     ".claude/hooks/agent-guard.py": "e3822907195845cd80bfec93df858e67fa40c31eb62f1c80481fd42021337609",
     ".claude/hooks/context-watch.py": "551220917f63cf0ce2b97eb79e2e67e326771427a3d065b039ddd951179cf849",
     ".claude/hooks/file-guard.py": "ba322e166a4601553e54c41360baf65c17e048d0cbc1df2566f98ec683a4fecf",

@@ -55,7 +55,7 @@ rules or with what stands next to the change.
 - Read-only. Grep a name before reading around it; a file guard refuses
   whole reads over 300 lines. Never open binary or media paths, or
   `__pycache__/`.
-- About 80k tokens of room; past 120k every tool call is refused.
+- About 80k tokens of room; past 100k every tool call is refused.
 
 ## Report format
 

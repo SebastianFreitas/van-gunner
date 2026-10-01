@@ -47,7 +47,7 @@ Check, in this order:
   a server or any long-running process.
 - A file guard refuses whole reads over 300 lines: read the diff first,
   then only the regions around its hunks with `offset`/`limit`.
-- About 80k tokens of room; past 120k every tool call is refused. Never
+- About 80k tokens of room; past 100k every tool call is refused. Never
   open the binary paths the project lists, or `__pycache__/`.
 
 ## Report format
