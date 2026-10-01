@@ -101,6 +101,7 @@ rotation_mode = 1
 loop = false
 
 [node name="VanRig" type="Node3D" parent="TravelPath/VanFollow" unique_id=498735198]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
 
 [node name="Interior" type="Node3D" parent="TravelPath/VanFollow/VanRig" unique_id=23039912]
 

@@ -23,7 +23,7 @@ func configure_initial_route() -> void:
 	curve.add_point(Vector3(0.0, 0.0, -tc.route_length))
 	tc.travel_path.curve = curve
 	tc.van_follow.progress = 0.0
-	tc.van_rig.transform = Transform3D.IDENTITY
+	tc.van_rig.transform = VanWheels.rig_rest_transform()
 
 	spawn_world_segment(
 		Transform3D(
@@ -239,7 +239,7 @@ func spawn_act_statue() -> void:
 	tc.corridor_root.add_child(tc._active_statue)
 	# Roadside placeholder just ahead and to the right of the van.
 	var offset: Vector3 = tc.van_rig.global_transform.basis * Vector3(4.5, 0.0, -8.0)
-	tc._active_statue.global_position = tc.van_rig.global_position + offset
+	tc._active_statue.global_position = tc.van_follow.global_position + offset
 	tc._active_statue.global_basis = tc.van_rig.global_basis
 	tc._world_pieces.append(tc._active_statue)
 

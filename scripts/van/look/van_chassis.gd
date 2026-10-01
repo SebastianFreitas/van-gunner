@@ -58,7 +58,7 @@ func build(hull_mat: Material, rubber: Material, rear_axles: Array[float], exhau
 				var z_mid := (z + rear_axles[j - 1]) * 0.5
 				flare_lo = z_mid + TANDEM_GAP
 				well_lo = z_mid
-			var rear_centre := Vector3(side * VanWheels.WHEEL_X, VanWheels.ROAD_Y + VanWheels.REAR_RADIUS, z)
+			var rear_centre := Vector3(side * VanWheels.WHEEL_X, VanWheels.ARCH_ROAD_Y + VanWheels.REAR_RADIUS, z)
 			_build_flare("Flare%s%d" % [label, idx], rear_centre, VanWheels.REAR_RADIUS, hull_mat,
 					flare_lo, flare_hi)
 			_build_well("Well%s%d" % [label, idx], rear_centre, VanWheels.REAR_RADIUS, dark,
@@ -185,8 +185,8 @@ func _build_well(well_name: String, centre: Vector3, radius: float, mat: Materia
 		var p1 := _clamp_z(Vector3(x, centre.y + r * sin(a1), centre.z + r * cos(a1)), z_lo, z_hi)
 		_add_tri_solid(st, hub, p0, p1, ref)
 
-	var left := _clamp_z(Vector3(x, VanWheels.ROAD_Y, centre.z - r), z_lo, z_hi)
-	var right := _clamp_z(Vector3(x, VanWheels.ROAD_Y, centre.z + r), z_lo, z_hi)
+	var left := _clamp_z(Vector3(x, VanWheels.ARCH_ROAD_Y, centre.z - r), z_lo, z_hi)
+	var right := _clamp_z(Vector3(x, VanWheels.ARCH_ROAD_Y, centre.z + r), z_lo, z_hi)
 	var top_left := _clamp_z(Vector3(x, centre.y, centre.z - r), z_lo, z_hi)
 	var top_right := _clamp_z(Vector3(x, centre.y, centre.z + r), z_lo, z_hi)
 	_add_tri_solid(st, top_left, left, right, ref)

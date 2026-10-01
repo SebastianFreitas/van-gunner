@@ -35,7 +35,8 @@ func build_turn_route() -> void:
 	if tc._turn_direction == &"straight":
 		build_straight_route()
 		return
-	var van_transform: Transform3D = tc.van_rig.global_transform
+	# The rig rests BODY_LIFT above the follow; travel_path.global_transform = van_transform would raise the road path by the lift on every turn.
+	var van_transform: Transform3D = tc.van_follow.global_transform
 	var junction_local: Vector3 = van_transform.affine_inverse() * tc._active_junction.global_position
 	var straight_length := maxf(0.0, -junction_local.z - tc.turn_radius)
 	var side := -1.0 if tc._turn_direction == &"left" else 1.0
@@ -62,7 +63,7 @@ func build_turn_route() -> void:
 	tc.travel_path.curve = curve
 	tc.travel_path.global_transform = van_transform
 	tc.van_follow.progress = 0.0
-	tc.van_rig.transform = Transform3D.IDENTITY
+	tc.van_rig.transform = VanWheels.rig_rest_transform()
 
 	tc._turn_state = tc.TurnState.TURNING
 	tc._approach_stop_progress = INF
@@ -74,7 +75,7 @@ func build_turn_route() -> void:
 func build_straight_route() -> void:
 	# Stay on the live -Z curve. `through` already ends at the outgoing mouth
 	# (~20m past the junction); a full extra tile here left a 10m void.
-	var van_transform: Transform3D = tc.van_rig.global_transform
+	var van_transform: Transform3D = tc.van_follow.global_transform
 	var junction_local: Vector3 = van_transform.affine_inverse() * tc._active_junction.global_position
 	var through := maxf(tc.segment_length, -junction_local.z + 20.0)
 	tc._turn_state = tc.TurnState.TURNING
@@ -155,7 +156,7 @@ func build_park_route() -> void:
 	# then stored dock→van and driven with progress counting down so the nose stays
 	# road-facing. Handles are the T-turn controls transferred (not flipped) so the
 	# arc stays a C — flipping them was what made the serpent S.
-	var van_transform: Transform3D = tc.van_rig.global_transform
+	var van_transform: Transform3D = tc.van_follow.global_transform
 	var van_inv: Transform3D = van_transform.affine_inverse()
 	var park_radius: float = tc.STOP_PARK_TURN_RADIUS
 	var handle: float = park_radius * tc.QUARTER_CIRCLE_HANDLE
@@ -201,7 +202,7 @@ func build_park_route() -> void:
 	tc.travel_path.curve = curve
 	tc.travel_path.global_transform = van_transform
 	tc.van_follow.progress = curve.get_baked_length()
-	tc.van_rig.transform = Transform3D.IDENTITY
+	tc.van_rig.transform = VanWheels.rig_rest_transform()
 
 	tc._park_reversing = true
 	tc._turn_state = tc.TurnState.PARKING
@@ -243,7 +244,7 @@ func build_leave_stop_route() -> void:
 
 	tc._world.begin_new_route()
 	tc.van_follow.progress = 0.0
-	tc.van_rig.transform = Transform3D.IDENTITY
+	tc.van_rig.transform = VanWheels.rig_rest_transform()
 
 	tc._turn_state = tc.TurnState.LEAVING_STOP
 	tc._turn_end_progress = corridor_join

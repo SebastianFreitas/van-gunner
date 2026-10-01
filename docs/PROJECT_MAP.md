@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-303 GDScript files, 46620 lines.
+304 GDScript files, 46688 lines.
 
 ### `scenes/corridor/`
 
@@ -508,7 +508,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `road_floor_details.gd` | — | 232 | Street furniture/detail builders for RoadFloor: expansion joints, drains, manholes and sidewalk dressing. |
 | `road_floor_materials.gd` | — | 35 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
 | `travel_controller.gd` | `TravelController` | 607 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
-| `travel_routes.gd` | — | 264 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
+| `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
 | `travel_stops.gd` | — | 203 | Owns the stop fork, side-stop placement, elevator pad ride and stop-state cleanup. |
 | `travel_world.gd` | — | 268 | Owns corridor tile spawning/pruning, side streets, neighborhood variants and act statues. |
 
@@ -643,6 +643,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `machine_parts.gd` | `MachineParts` | 375 | Static low-poly part builders (motor, flywheel, belt, fan, battery, can, gauge, switch, CRT, tower, keyboard, pipe, vent, cables) for the van's interior machin… |
 | `van_armour.gd` | `VanArmour` | 260 | The van's seeded outer armour: plates, rebar and spikes on the real hull skin, placed from slots clear of every opening and merged per material. |
 | `van_armour_pieces.gd` | — | 84 | Appends armour piece geometry (leaned plates, bars, spikes) into per-material SurfaceTools for VanArmour. |
+| `van_axles.gd` | — | 51 | Axle beams, differentials and driveshafts under the lifted van body, at the wheels' hub height; built under VanWheels by its rebuild_look. |
 | `van_cab.gd` | `VanCab` | 207 | The van's front: a long-hood truck front off another vehicle bolted to the box (upright cab with a split windshield, hood, fenders, grille, doors, mirrors and… |
 | `van_cab_body.gd` | — | 218 | One closed truck-front body: an upright cab with a split windshield in two sealed dark glass pockets, a long hood, front fenders with splash aprons and frame r… |
 | `van_cab_face.gd` | — | 149 | Dresses the truck cab: grille on the hood's nose, headlight pods on the fenders and the two cab doors with windows. |
@@ -675,7 +676,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_stencil_font.gd` | — | 151 | A 5x7 pixel stencil font that renders worn, hand-painted text and tally marks into Images for the van's decals. |
 | `van_welding_bench.gd` | `VanWeldingBench` | 186 | The crafting-bench vital rebuilt as a welding bench (heavy steel bench, gas bottles, welder box, vice, grinder with shrouds, pegboard with tools and hood, roof… |
 | `van_welding_bench_parts.gd` | — | 271 | Prop builders for the welding bench (gas bottles, welder box with torch and power port, anvil, clamps, rod can, offcuts, scorch marks, hood, grinder shrouds, a… |
-| `van_wheels.gd` | `VanWheels` | 168 | The van's seeded road wheels and mud flaps, spun by the van's measured speed; the chassis kit around them lives in van_chassis.gd. |
+| `van_wheels.gd` | `VanWheels` | 184 | The van's seeded road wheels, mud flaps and axles, spun by the van's measured speed, hanging BODY_LIFT below the arches; the chassis kit around them lives in v… |
 
 ### `tools/`
 

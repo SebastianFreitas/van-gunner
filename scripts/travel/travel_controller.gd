@@ -548,7 +548,7 @@ func _update_turn() -> void:
 
 func _begin_elevator_descent() -> void:
 	van_follow.progress = _stop_align_progress
-	van_rig.transform = Transform3D.IDENTITY
+	van_rig.transform = VanWheels.rig_rest_transform()
 	_stop_align_progress = INF
 	_segment_spawning_paused = true
 	_turn_state = TurnState.ELEVATING

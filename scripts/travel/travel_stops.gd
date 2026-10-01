@@ -163,7 +163,7 @@ func finish_elevator_descent() -> void:
 
 func finish_elevator_ascent() -> void:
 	tc.van_follow.v_offset = 0.0
-	tc.van_rig.transform = Transform3D.IDENTITY
+	tc.van_rig.transform = VanWheels.rig_rest_transform()
 	tc._turn_state = tc.TurnState.NONE
 	tc.process_physics_priority = -100
 	restore_player_floor_snap()

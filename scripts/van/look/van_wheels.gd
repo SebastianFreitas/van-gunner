@@ -1,12 +1,19 @@
 class_name VanWheels
 extends Node3D
-## The van's seeded road wheels and mud flaps, spun by the van's measured speed; the chassis kit around them lives in van_chassis.gd.
+## The van's seeded road wheels, mud flaps and axles, spun by the van's measured speed, hanging BODY_LIFT below the arches; the chassis kit around them lives in van_chassis.gd.
 
 const HULL_PATH := ^"../Hull"
 ## Builds the flares, steps, tank, toolbox, exhaust, spares and rear bumper.
 const _Chassis := preload("res://scripts/van/look/van_chassis.gd")
+## Builds the axle beams, differentials and driveshafts under the lifted body.
+const _Axles := preload("res://scripts/van/look/van_axles.gd")
 
-const ROAD_Y := -0.2
+## How far the body rides above its stock height: VanRig rests this high on its PathFollow3D (rig_rest_transform), and the wheels hang this much lower under the arches so the tyres still touch the road.
+const BODY_LIFT := 0.7
+## The stock road line in body space: the arches, flares, wells and flap tops are drawn around wheels sitting on it.
+const ARCH_ROAD_Y := -0.2
+## The road in VanRig space: tyres, flap bottoms and axles reach it.
+const ROAD_Y := ARCH_ROAD_Y - BODY_LIFT
 const WHEEL_X := 2.8
 const TYRE_WIDTH := 0.42
 
@@ -69,10 +76,11 @@ func rebuild_look(look: VanLook) -> void:
 			_build_wheel("Wheel%s%d" % [side_label, idx],
 					Vector3(side * WHEEL_X, ROAD_Y + REAR_RADIUS, z), REAR_RADIUS, hull_mat, rubber)
 			idx += 1
-		_build_mud_flap("MudFlap%s" % side_label,
-				Vector3(side * WHEEL_X, ROAD_Y + 0.3, last_rear_z + REAR_RADIUS + 0.14), rubber)
+		_build_mud_flap("MudFlap%s" % side_label, side * WHEEL_X,
+				last_rear_z + REAR_RADIUS + 0.14, rubber)
 
 	_Chassis.new(self).build(hull_mat, rubber, rear_axles, exhaust_side, spare_mask)
+	_Axles.new(self).build(rear_axles)
 
 
 ## The rear axle z list rebuild_look builds for this look: replays the first draw of the "wheels" stream.
@@ -91,6 +99,11 @@ static func rear_arch_spans(look: VanLook) -> Array[Vector2]:
 		else:
 			spans.append(span)
 	return spans
+
+
+## VanRig's transform on its PathFollow3D: the body lift. Travel code resets the rig to this, never to identity.
+static func rig_rest_transform() -> Transform3D:
+	return Transform3D(Basis.IDENTITY, Vector3(0.0, BODY_LIFT, 0.0))
 
 
 func _process(delta: float) -> void:
@@ -145,8 +158,11 @@ func _build_wheel(wheel_name: String, pos: Vector3, radius: float, hull_mat: Mat
 		_add_mesh("Bolt%d" % i, _box(Vector3(0.05, 0.05, 0.05)), hull_mat, bolt_pos, pivot)
 
 
-func _build_mud_flap(flap_name: String, pos: Vector3, rubber: Material) -> void:
-	_add_mesh(flap_name, _box(Vector3(0.44, 0.5, 0.03)), rubber, pos)
+func _build_mud_flap(flap_name: String, x: float, z: float, rubber: Material) -> void:
+	var top := ARCH_ROAD_Y + 0.55
+	var bottom := ROAD_Y + 0.12
+	_add_mesh(flap_name, _box(Vector3(0.44, top - bottom, 0.03)), rubber,
+			Vector3(x, (top + bottom) * 0.5, z))
 
 
 func _add_mesh(mesh_name: String, mesh: Mesh, mat: Material, pos: Vector3, parent: Node3D = self) -> MeshInstance3D:
