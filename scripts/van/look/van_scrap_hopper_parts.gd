@@ -1,19 +1,16 @@
 extends RefCounted
-## Static dressing for the scrap hopper (frame, hazard band, cage, bin, chain drive, lamp mast, stop button, power port); built by van_scrap_hopper.gd.
+## Static dressing for the slim scrap hopper stack (skid, tray, cabinet, chute, pull lever, crusher cage, funnel, lamp, power port); built by van_scrap_hopper.gd.
 
-const FX0 := 0.26  ## Frame post x, aisle side, in the hopper's local space (+x is toward the left wall).
-const FX1 := 1.2  ## Frame post x, wall side.
-const FZ := 0.3  ## Frame post |z|.
-const TOP := 0.6  ## Frame top in local y; the funnel flares above it.
 const FLOOR := -1.44  ## Van floor in local y.
-const CX := 0.73  ## Crusher axis x.
+const FRONT := 0.215  ## Cabinet front face z; the back face stays at -0.215, off the bulkhead.
 
 var hopper: Node3D
 var _ochre: StandardMaterial3D
 var _ochre_dark: StandardMaterial3D
 var _black: StandardMaterial3D
 var _steel: StandardMaterial3D
-var _glass: StandardMaterial3D
+var _rust: StandardMaterial3D
+var _tape: StandardMaterial3D
 
 
 func _init(owner: Node3D) -> void:
@@ -21,186 +18,151 @@ func _init(owner: Node3D) -> void:
 	_ochre = MachineParts.dark(Color(0.34, 0.25, 0.09), 0.85)
 	_ochre_dark = MachineParts.dark(Color(0.24, 0.17, 0.05), 0.88)
 	_black = MachineParts.dark(Color(0.045, 0.04, 0.035), 0.92)
-	_steel = MachineParts.dark(Color(0.2, 0.2, 0.19), 0.85)
-	_glass = MachineParts.dark(Color(0.03, 0.04, 0.045), 0.8)
+	_steel = MachineParts.dark(Color(0.2, 0.2, 0.19), 0.75)
+	_rust = MachineParts.dark(Color(0.3, 0.18, 0.1), 0.9)
+	_tape = MachineParts.dark(Color(0.35, 0.35, 0.33), 0.9)
 
 
-func build_frame() -> void:
-	var h := TOP - FLOOR + 0.03
-	for x: float in [FX0, FX1]:
-		for z: float in [-FZ, FZ]:
-			_box(hopper, "Post%d%d" % [int(x > 1.0), int(z > 0.0)], _ochre,
-					Vector3(x, (TOP + FLOOR) * 0.5 + 0.015, z), Vector3(0.06, h, 0.06))
-	var span := FX1 - FX0 + 0.06
-	for z: float in [-FZ, FZ]:
-		_box(hopper, "TopRail%d" % int(z > 0.0), _ochre, Vector3(CX, TOP + 0.03, z),
-				Vector3(span, 0.05, 0.05))
-	_box(hopper, "RearMidRail", _ochre, Vector3(CX, -0.9, -FZ),
-			Vector3(FX1 - FX0, 0.05, 0.036))
-	_box(hopper, "FrontMidRail", _ochre, Vector3(CX, -0.9, FZ),
-			Vector3(FX1 - FX0, 0.05, 0.036))
-	for x: float in [FX0, FX1]:
-		_box(hopper, "SideTopRail%d" % int(x > 1.0), _ochre, Vector3(x, TOP + 0.03, 0.0),
-				Vector3(0.05, 0.05, FZ * 2.0))
-	_link("BraceA", Vector3(FX0, -0.9, -FZ - 0.04), Vector3(FX1, 0.6, -FZ - 0.04))
-	_link("BraceB", Vector3(FX1, -0.9, -FZ - 0.04), Vector3(FX0, 0.6, -FZ - 0.04))
-	_box(hopper, "Throat", _ochre, Vector3(CX, 0.47, 0.0), Vector3(0.4, 0.26, 0.4))
-	_box(hopper, "Housing", _ochre_dark, Vector3(CX, -0.2, 0.0), Vector3(0.7, 0.5, 0.5))
-	_box(hopper, "WindowFrame", _steel, Vector3(CX, -0.2, 0.262), Vector3(0.3, 0.2, 0.024))
-	_box(hopper, "WindowGlass", _glass, Vector3(CX, -0.2, 0.278), Vector3(0.24, 0.14, 0.012))
-	_build_hazard_band()
-	_build_seam()
-
-
-## Alternating dark ochre and near-black blocks on the frame's front, back and wall faces.
-func _build_hazard_band() -> void:
-	var n := 12
-	var step := (FX1 - FX0) / float(n)
+## Two runners on the floor with four angle-iron legs, and the catch tray at the front bottom.
+func build_skid_and_tray() -> void:
+	for x: float in [-0.32, 0.32]:
+		_box(hopper, "Runner%d" % int(x > 0.0), _steel, Vector3(x, FLOOR + 0.04, 0.0),
+				Vector3(0.06, 0.08, 0.45))
+		for z: float in [-0.17, 0.17]:
+			_box(hopper, "Leg%d%d" % [int(x > 0.0), int(z > 0.0)], _steel,
+					Vector3(x, -1.28, z), Vector3(0.04, 0.16, 0.04))
+	_box(hopper, "TrayFloor", _steel, Vector3(-0.05, -1.17, 0.37), Vector3(0.46, 0.03, 0.28))
+	for x: float in [-0.28, 0.18]:
+		_box(hopper, "TrayLip%d" % int(x > 0.0), _steel, Vector3(x, -1.12, 0.37),
+				Vector3(0.03, 0.07, 0.28))
+	_box(hopper, "TrayFront", _steel, Vector3(-0.05, -1.12, 0.485), Vector3(0.46, 0.07, 0.03))
+	var n := 9
+	var step := 0.46 / float(n)
 	for i: int in n:
-		var x := FX0 + (float(i) + 0.5) * step
-		var mat := _ochre_dark if i % 2 == 0 else _black
-		for z: float in [-FZ - 0.04, FZ + 0.04]:
-			_box(hopper, "Haz%d_%d" % [i, int(z > 0.0)], mat, Vector3(x, 0.53, z),
-					Vector3(step, 0.1, 0.02))
-	for i: int in 8:
-		var z := -FZ + (float(i) + 0.5) * (FZ * 2.0 / 8.0)
-		var mat := _ochre_dark if i % 2 == 0 else _black
-		_box(hopper, "HazSide%d" % i, mat, Vector3(FX1 + 0.04, 0.53, z),
-				Vector3(0.02, 0.1, FZ * 2.0 / 8.0))
+		_box(hopper, "TrayHaz%d" % i, _ochre if i % 2 == 0 else _black,
+				Vector3(-0.28 + (float(i) + 0.5) * step, -1.12, 0.506),
+				Vector3(step, 0.05, 0.012))
 
 
-## Rivet heads along the funnel's top rim (funnel half-width 0.44 at y 1.04).
-func _build_seam() -> void:
-	for i: int in 8:
-		var t := (float(i) + 0.5) / 8.0
-		for side: float in [-1.0, 1.0]:
-			_box(hopper, "RivetF%d_%d" % [i, int(side > 0.0)], _steel,
-					Vector3(CX + (t - 0.5) * 0.8, 1.03, side * 0.45), Vector3(0.025, 0.025, 0.02))
+## Dark steel body with its ochre door frame, seams, rivets, patch, tape, vent, gauge and grille.
+func build_cabinet() -> void:
+	_box(hopper, "Cabinet", _steel, Vector3(0.0, -0.55, 0.0), Vector3(0.78, 1.3, 0.43))
+	_box(hopper, "FrameTop", _ochre, Vector3(0.0, 0.075, 0.27), Vector3(0.46, 0.05, 0.04))
+	_box(hopper, "FrameBottom", _ochre, Vector3(0.0, -0.675, 0.27), Vector3(0.46, 0.05, 0.04))
+	for x: float in [-0.205, 0.205]:
+		_box(hopper, "FrameSide%d" % int(x > 0.0), _ochre, Vector3(x, -0.3, 0.27),
+				Vector3(0.05, 0.7, 0.04))
+		for y: float in [0.075, -0.675]:
+			_cyl(hopper, "Rivet%d%d" % [int(x > 0.0), int(y > 0.0)], 0.01, 0.01, _black,
+					Vector3(x, y, 0.295), Vector3(PI / 2.0, 0.0, 0.0))
+	for x: float in [-0.37, 0.37]:
+		_box(hopper, "SeamV%d" % int(x > 0.0), _black, Vector3(x, -0.55, FRONT + 0.0025),
+				Vector3(0.012, 1.28, 0.02))
+	for y: float in [0.07, -1.17]:
+		_box(hopper, "SeamH%d" % int(y > 0.0), _black, Vector3(0.0, y, FRONT + 0.0025),
+				Vector3(0.74, 0.012, 0.02))
+	_box(hopper, "Tape", _tape, Vector3(-0.37, -0.8, FRONT + 0.0175), Vector3(0.04, 0.05, 0.025))
+	_box(hopper, "Patch", _rust, Vector3(0.396, -0.7, 0.05), Vector3(0.012, 0.3, 0.2))
+	MachineParts.vent(hopper, Vector3(0.44, -0.2, -0.05), _steel, 0.1)
+	MachineParts.gauge(hopper, Vector3(-0.27, -0.02, 0.235), _steel, _black)
+	for x: float in [-0.08, 0.0, 0.08]:
+		_box(hopper, "Grille%d" % int(x * 100.0), _black, Vector3(x, -0.31, 0.3),
+				Vector3(0.012, 0.68, 0.012))
 
 
-## Guard bars over the front of the crusher drum (the throat feeds it from above).
+## Short sloped mouth over the tray with a rubber flap on its lip.
+func build_chute() -> void:
+	var mouth := _box(hopper, "ChuteMouth", _steel, Vector3(-0.05, -0.98, 0.315),
+			Vector3(0.3, 0.05, 0.17))
+	mouth.rotation = Vector3(0.35, 0.0, 0.0)
+	_box(hopper, "ChuteFlap", _black, Vector3(-0.05, -1.05, 0.395), Vector3(0.28, 0.1, 0.012))
+
+
+## Hazard-taped ratchet plate, pivot hub and the pull lever on the front face at the right.
+func build_lever() -> void:
+	_box(hopper, "RatchetPlate", _ochre_dark, Vector3(0.3, -0.55, 0.235), Vector3(0.07, 0.26, 0.03))
+	for y: float in [-0.52, -0.46]:
+		_box(hopper, "RatchetTape%d" % int(y < -0.49), _black, Vector3(0.3, y, 0.256),
+				Vector3(0.07, 0.03, 0.012))
+	_cyl(hopper, "LeverHub", 0.04, 0.08, _steel, Vector3(0.3, -0.62, 0.27),
+			Vector3(0.0, 0.0, PI / 2.0))
+	var pivot := Node3D.new()
+	pivot.name = "LeverPivot"
+	pivot.position = Vector3(0.3, -0.62, 0.27)
+	hopper.add_child(pivot)
+	var arm := Node3D.new()
+	arm.name = "LeverArm"
+	arm.rotation = Vector3(0.35, 0.0, 0.0)
+	pivot.add_child(arm)
+	_cyl(arm, "Rod", 0.022, 0.34, _steel, Vector3(0.0, 0.17, 0.0), Vector3.ZERO)
+	var ball := SphereMesh.new()
+	ball.radius = 0.05
+	ball.height = 0.1
+	ball.radial_segments = 12
+	ball.rings = 6
+	_mesh(arm, "Grip", ball, _black, Vector3(0.0, 0.36, 0.0), Vector3.ZERO)
+	_cyl(arm, "GripBand", 0.05, 0.015, _ochre, Vector3(0.0, 0.38, 0.0), Vector3.ZERO)
+
+
+## Open cage over the cabinet: four corner angle posts and two ring frames (the drum sits inside).
 func build_cage() -> void:
-	var cage := Node3D.new()
-	cage.name = "Cage"
-	cage.position = Vector3(CX, 0.2, 0.0)
-	hopper.add_child(cage)
-	for i: int in 6:
-		var a := deg_to_rad(-45.0 + 14.0 * float(i))
-		_box(cage, "Bar%d" % i, _steel, Vector3(0.0, 0.2 * sin(a), 0.2 * cos(a)),
-				Vector3(0.64, 0.02, 0.02))
-	for x_sign: float in [-1.0, 1.0]:
-		_box(cage, "Upright%d" % int(x_sign > 0.0), _steel, Vector3(0.33 * x_sign, -0.03, 0.19),
-				Vector3(0.02, 0.24, 0.02))
+	for x: float in [-0.36, 0.36]:
+		for z: float in [-0.19, 0.19]:
+			_box(hopper, "CagePost%d%d" % [int(x > 0.0), int(z > 0.0)], _steel,
+					Vector3(x, 0.36, z), Vector3(0.04, 0.52, 0.04))
+	for y: float in [0.14, 0.58]:
+		for z: float in [-0.19, 0.19]:
+			_box(hopper, "RingX%d%d" % [int(y > 0.3), int(z > 0.0)], _steel, Vector3(0.0, y, z),
+					Vector3(0.68, 0.03, 0.026))
+		for x: float in [-0.36, 0.36]:
+			_box(hopper, "RingZ%d%d" % [int(y > 0.3), int(x > 0.0)], _steel, Vector3(x, y, 0.0),
+					Vector3(0.026, 0.03, 0.34))
+	_box(hopper, "MotorMount", _ochre_dark, Vector3(0.33, 0.16, 0.0), Vector3(0.26, 0.12, 0.14))
 
 
-## Open catch bin at the floor under the chute, half full of seeded scrap.
-func build_bin() -> void:
-	var bin := Node3D.new()
-	bin.name = "CatchBin"
-	bin.position = Vector3(0.4, FLOOR, 0.55)
-	hopper.add_child(bin)
-	_box(bin, "Base", _steel, Vector3(0.0, 0.015, 0.0), Vector3(0.76, 0.03, 0.4))
-	for z: float in [-0.185, 0.185]:
-		_box(bin, "Wall%d" % int(z > 0.0), _ochre_dark, Vector3(0.0, 0.165, z),
-				Vector3(0.76, 0.27, 0.03))
-	for x: float in [-0.365, 0.365]:
-		_box(bin, "End%d" % int(x > 0.0), _ochre_dark, Vector3(x, 0.165, 0.0),
-				Vector3(0.03, 0.27, 0.34))
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 90210
-	# Tilted so overlapping pieces don't share one flat bottom plane (it z-fought).
-	var tilt := RandomNumberGenerator.new()
-	tilt.seed = 4242
-	for i: int in 9:
-		var size := Vector3(rng.randf_range(0.05, 0.14), rng.randf_range(0.03, 0.09),
-				rng.randf_range(0.05, 0.12))
-		var pos := Vector3(rng.randf_range(-0.28, 0.28), 0.03 + size.y * 0.5,
-				rng.randf_range(-0.12, 0.12))
-		if i == 8:
-			pos.y += 0.015 # clear of Scrap2's face plane (audit flicker gap)
-		var heap := _box(bin, "Scrap%d" % i, _black if i % 3 == 0 else _steel, pos, size)
-		heap.rotation = Vector3(tilt.randf_range(-0.3, 0.3), rng.randf_range(0.0, PI),
-				tilt.randf_range(-0.3, 0.3))
+## Ochre square funnel (a four-sided cone squashed in z to fit the 0.45 depth), rim and shards.
+func build_funnel() -> void:
+	var root := Node3D.new()
+	root.name = "FunnelRoot"
+	root.position = Vector3(0.0, 0.91, 0.0)
+	root.scale = Vector3(1.0, 1.0, 0.62)
+	hopper.add_child(root)
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.5
+	cone.bottom_radius = 0.24
+	cone.height = 0.58
+	cone.radial_segments = 4
+	cone.rings = 1
+	_mesh(root, "Funnel", cone, _ochre, Vector3.ZERO, Vector3(0.0, PI / 4.0, 0.0))
+	for z: float in [-0.219, 0.219]:
+		_box(hopper, "RimZ%d" % int(z > 0.0), _steel, Vector3(0.0, 1.205, z),
+				Vector3(0.74, 0.03, 0.025))
+	for x: float in [-0.354, 0.354]:
+		_box(hopper, "RimX%d" % int(x > 0.0), _steel, Vector3(x, 1.205, 0.0),
+				Vector3(0.025, 0.03, 0.42))
+	var shards := [
+		[Vector3(-0.12, 1.25, 0.03), Vector3(0.3, 0.4, 0.5), Vector3(0.04, 0.18, 0.02)],
+		[Vector3(0.06, 1.26, -0.04), Vector3(-0.2, 0.9, -0.4), Vector3(0.05, 0.2, 0.02)],
+		[Vector3(0.18, 1.24, 0.05), Vector3(0.4, -0.5, 0.3), Vector3(0.03, 0.15, 0.02)],
+	]
+	for i: int in shards.size():
+		var s: Array = shards[i]
+		_box(hopper, "Shard%d" % i, _black, s[0], s[2]).rotation = s[1]
 
 
-## Pedestal, chain drive with its guard, and the motor junction box with the power port.
-func build_drive_extras() -> void:
-	_box(hopper, "MotorPedestal", _ochre_dark, Vector3(1.38, -1.04, 0.0), Vector3(0.4, 0.8, 0.26))
-	var pulley_a := CylinderMesh.new()
-	pulley_a.top_radius = 0.06
-	pulley_a.bottom_radius = 0.06
-	pulley_a.height = 0.04
-	pulley_a.radial_segments = 10
-	var pulley_b := CylinderMesh.new()
-	pulley_b.top_radius = 0.09
-	pulley_b.bottom_radius = 0.09
-	pulley_b.height = 0.04
-	pulley_b.radial_segments = 10
-	_mesh(hopper, "SprocketA", pulley_a, _steel, Vector3(1.16, -0.48, 0.0),
-			Vector3(0.0, 0.0, PI / 2.0))
-	_mesh(hopper, "SprocketB", pulley_b, _steel, Vector3(1.16, 0.2, 0.0),
-			Vector3(0.0, 0.0, PI / 2.0))
-	for z: float in [-0.075, 0.075]:
-		_box(hopper, "Chain%d" % int(z > 0.0), _black, Vector3(1.16, -0.14, z),
-				Vector3(0.02, 0.68, 0.02))
-	for i: int in range(1, 6):
-		_box(hopper, "Link%d" % i, _black, Vector3(1.16, -0.45 + 0.1 * float(i), 0.0),
-				Vector3(0.03, 0.025, 0.16))
-	_box(hopper, "ChainGuard", _ochre, Vector3(1.22, -0.14, 0.0), Vector3(0.02, 0.78, 0.24))
-	_box(hopper, "JunctionBox", _steel, Vector3(1.38, -0.32, 0.0), Vector3(0.12, 0.12, 0.12))
-	var terminal := CylinderMesh.new()
-	terminal.top_radius = 0.012
-	terminal.bottom_radius = 0.012
-	terminal.height = 0.04
-	terminal.radial_segments = 6
-	for x_off: float in [-0.03, 0.03]:
-		_mesh(hopper, "Terminal%d" % int(x_off > 0.0), terminal, _black,
-				Vector3(1.38 + x_off, -0.24, 0.0), Vector3.ZERO)
-	# Cable rises at rig x -2.0, outside the frame's wall-side post (rig -1.82) and the funnel.
-	var port := Marker3D.new()
-	port.name = "PowerPort"
-	port.position = Vector3(1.38, -0.21, 0.0)
-	port.add_to_group(&"machine_power_ports")
-	port.set_meta(&"machine", &"scrap_hopper")
-	port.set_meta(&"role", &"load")
-	hopper.add_child(port)
-
-
-## Mushroom stop button on a stalk, and the warning lamp on its mast; returns the lamp's light.
-func build_lamp_and_stop() -> OmniLight3D:
-	var red := MachineParts.dark(Color(0.4, 0.06, 0.05), 0.85)
-	_box(hopper, "StopArm", _steel, Vector3(0.42, 0.0, 0.285), Vector3(0.03, 0.03, 0.08))
-	_box(hopper, "StopBox", _ochre, Vector3(0.42, 0.0, 0.36), Vector3(0.12, 0.16, 0.08))
-	var stalk := CylinderMesh.new()
-	stalk.top_radius = 0.02
-	stalk.bottom_radius = 0.02
-	stalk.height = 0.08
-	stalk.radial_segments = 8
-	_mesh(hopper, "StopStalk", stalk, _steel, Vector3(0.42, 0.12, 0.36), Vector3.ZERO)
-	var head := CylinderMesh.new()
-	head.top_radius = 0.05
-	head.bottom_radius = 0.05
-	head.height = 0.04
-	head.radial_segments = 10
-	_mesh(hopper, "StopHead", head, red, Vector3(0.42, 0.18, 0.36), Vector3.ZERO)
-
-	var mast_pos := Vector3(1.26, 0.0, -0.3)
-	var mast := CylinderMesh.new()
-	mast.top_radius = 0.015
-	mast.bottom_radius = 0.015
-	mast.height = 0.55
-	mast.radial_segments = 6
-	_mesh(hopper, "LampMast", mast, _steel, mast_pos + Vector3(0.0, 0.905, 0.0), Vector3.ZERO)
-	_box(hopper, "LampBase", _steel, mast_pos + Vector3(0.0, 0.64, 0.0), Vector3(0.1, 0.03, 0.1))
+## Pipe arm up to a caged amber trouble lamp; returns its light.
+func build_lamp() -> OmniLight3D:
+	var tip := Vector3(0.3, 1.32, 0.08)
+	MachineParts.pipe(hopper, Vector3(0.32, 0.95, -0.18), tip, _steel, 0.02)
 	var amber := MachineParts.emissive(Color(1.0, 0.6, 0.2), 1.6)
-	_box(hopper, "WarnLamp", amber, mast_pos + Vector3(0.0, 1.2, 0.0), Vector3(0.09, 0.1, 0.09))
-	_box(hopper, "LampCapTop", _steel, mast_pos + Vector3(0.0, 1.27, 0.0), Vector3(0.14, 0.02, 0.14))
-	_box(hopper, "LampCapBottom", _steel, mast_pos + Vector3(0.0, 1.13, 0.0),
-			Vector3(0.14, 0.02, 0.14))
-	for sx: float in [-0.06, 0.06]:
-		for sz: float in [-0.06, 0.06]:
+	_box(hopper, "WarnLamp", amber, tip, Vector3(0.06, 0.07, 0.06))
+	_box(hopper, "LampCapTop", _steel, tip + Vector3(0.0, 0.055, 0.0), Vector3(0.11, 0.015, 0.11))
+	_box(hopper, "LampCapBottom", _steel, tip - Vector3(0.0, 0.055, 0.0),
+			Vector3(0.11, 0.015, 0.11))
+	for sx: float in [-0.045, 0.045]:
+		for sz: float in [-0.045, 0.045]:
 			_box(hopper, "LampBar%d%d" % [int(sx > 0.0), int(sz > 0.0)], _steel,
-					mast_pos + Vector3(sx, 1.2, sz), Vector3(0.01, 0.14, 0.01))
+					tip + Vector3(sx, 0.0, sz), Vector3(0.01, 0.095, 0.01))
 	var light := OmniLight3D.new()
 	light.name = "WarnLight"
 	light.light_color = Color(1.0, 0.6, 0.2)
@@ -208,16 +170,31 @@ func build_lamp_and_stop() -> OmniLight3D:
 	light.omni_range = 2.0
 	light.shadow_enabled = false
 	light.light_cull_mask = VanLighting.LAYER_VAN_INTERIOR
-	light.position = mast_pos + Vector3(0.0, 1.2, 0.0)
+	light.position = Vector3(0.3, 1.24, 0.14)
 	hopper.add_child(light)
 	return light
 
 
-## Steel bar between two hopper-local points.
-func _link(part_name: String, a: Vector3, b: Vector3) -> void:
-	var inst := _box(hopper, part_name, _ochre, (a + b) * 0.5,
-			Vector3(0.044, 0.03, a.distance_to(b)))
-	inst.basis = Basis.looking_at((b - a).normalized(), Vector3.UP)
+## Junction box on the funnel's back with the power port inside it.
+func build_port() -> void:
+	_box(hopper, "JunctionBox", _steel, Vector3(0.28, 1.0, -0.195), Vector3(0.1, 0.1, 0.03))
+	var port := Marker3D.new()
+	port.name = "PowerPort"
+	port.position = Vector3(0.28, 1.0, -0.2)
+	port.add_to_group(&"machine_power_ports")
+	port.set_meta(&"machine", &"scrap_hopper")
+	port.set_meta(&"role", &"load")
+	hopper.add_child(port)
+
+
+func _cyl(parent: Node3D, part_name: String, radius: float, height: float, mat: Material,
+		pos: Vector3, rot: Vector3) -> MeshInstance3D:
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = radius
+	cyl.bottom_radius = radius
+	cyl.height = height
+	cyl.radial_segments = 10
+	return _mesh(parent, part_name, cyl, mat, pos, rot)
 
 
 func _mesh(parent: Node3D, part_name: String, mesh: Mesh, mat: Material, pos: Vector3,

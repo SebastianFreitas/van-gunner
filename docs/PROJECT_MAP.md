@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-325 GDScript files, 50667 lines.
+325 GDScript files, 50614 lines.
 
 ### `scenes/corridor/`
 
@@ -701,7 +701,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_cab_face.gd` | — | 149 | Dresses the truck cab: grille on the hood's nose, headlight pods on the fenders and the two cab doors with windows. |
 | `van_cab_parts.gd` | — | 22 | The cab's side mirrors, on seeded arms off the body's sides. |
 | `van_cable_router.gd` | — | 289 | Routes power cables around machine keep-out boxes inside the bowed shell and builds the small clamp, junction box, tape, plug and coil parts that VanCableRuns… |
-| `van_cable_runs.gd` | `VanCableRuns` | 397 | Seeded power tree: a thick generator-to-relay feed along the right trunk, relay drops to the PC rig, welding bench and hopper, ceiling lamp taps, then wall jun… |
+| `van_cable_runs.gd` | `VanCableRuns` | 398 | Seeded power tree: a thick generator-to-relay feed along the right trunk, relay drops to the PC rig, welding bench and hopper, ceiling lamp taps, then wall jun… |
 | `van_chassis.gd` | — | 349 | Builds the van's chassis kit around the wheels: arch flares and wells cut around the lifted wheels' hubs, side steps with chained drop steps, saddle tank, tool… |
 | `van_front_kit.gd` | — | 182 | Builds the van's seeded front kit (bumper, ram, windshield cage, lamp cages) onto a VanCab. |
 | `van_generator.gd` | `VanGenerator` | 120 | The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp… |
@@ -723,8 +723,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_relay_rack_parts.gd` | — | 271 | Part builders for VanRelayRack: angle-iron frame, six car batteries, relay cabinet, fuse board, trouble lamp and the two power ports. |
 | `van_roof.gd` | `VanRoof` | 279 | The van's roof rack, antennas, dish and the always-on roof spotlight; add-ons over the D24-D26 height caps are dropped, not built. |
 | `van_roof_junk.gd` | — | 158 | Fills VanRoof's rack with seeded junk: tyre stacks, jerry cans, crates and strapped tarp bundles. |
-| `van_scrap_hopper.gd` | `VanScrapHopper` | 235 | The loot hopper dressed as a scrap hopper (ochre frame, flared funnel, toothed crusher drum behind a guard cage, chute and catch bin, chain-driven motor, warni… |
-| `van_scrap_hopper_parts.gd` | — | 241 | Static dressing for the scrap hopper (frame, hazard band, cage, bin, chain drive, lamp mast, stop button, power port); built by van_scrap_hopper.gd. |
+| `van_scrap_hopper.gd` | `VanScrapHopper` | 204 | The loot hopper dressed as a slim scrap hopper stack (cabinet, crusher cage with a toothed drum, ochre funnel, catch tray, pull lever, warning lamp) that churn… |
+| `van_scrap_hopper_parts.gd` | — | 218 | Static dressing for the slim scrap hopper stack (skid, tray, cabinet, chute, pull lever, crusher cage, funnel, lamp, power port); built by van_scrap_hopper.gd. |
 | `van_stats_crt.gd` | `VanStatsCrt` | 117 | A second PC-rig CRT stacked on the desk tower that prints live run stats (act and street, hull, gold and parts, gun) in green phosphor text, refreshed on the s… |
 | `van_stencil_font.gd` | — | 151 | A 5x7 pixel stencil font that renders worn, hand-painted text and tally marks into Images for the van's decals. |
 | `van_welding_bench.gd` | `VanWeldingBench` | 186 | The crafting-bench vital rebuilt as a welding bench (heavy steel bench, gas bottles, welder box, vice, grinder with shrouds, pegboard with tools and hood, roof… |

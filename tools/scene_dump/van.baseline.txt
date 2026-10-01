@@ -6370,7 +6370,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine StaticBody3D script=
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.62164927, 1.4382443, 0.96901906)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.32, 1.438, 1.35)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -6401,7 +6401,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Body MeshInstance3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.55, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -6425,7 +6425,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Body MeshInstance3D
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#35{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.72, 1.18, 0.52), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#35{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.8, 1.3, 0.45), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -6438,13 +6438,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Collision CollisionS
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.07, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#36{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.72, 1.18, 0.52)}
+  shape=BoxShape3D#36{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.8, 2.74, 0.45)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Button MeshInstance3D
@@ -6456,7 +6456,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Button MeshInstance3
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.05, 0.265)
+  transform=Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.3, -0.6, 0.24)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -6493,7 +6493,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/WindowPane MeshInsta
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.28, 0.26)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0.235)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -6517,7 +6517,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/WindowPane MeshInsta
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#40{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.4, 0.55, 0.04), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#40{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.36, 0.8, 0.03), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -6530,7 +6530,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/HopperWindow Node3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0.28)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08, -0.66, 0.255)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -6545,7 +6545,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/EjectPoint Marker3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.48, 0.55)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, -1.05, 0.42)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -6578,7 +6578,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/VanVital/AttackMarke
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, -0.4, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, 0.75)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false

@@ -226,9 +226,10 @@ func _build_hopper(ports: Dictionary, keepouts: Array[AABB]) -> void:
 	var lx := -_trunk_x() + 0.05
 	var fy := TRUNK_Y - FEED_DROP
 	var hz := clampf(h.z, GAP_Z_MIN + 0.1, GAP_Z_MAX - 0.1)
+	# The port sits on the machine's back above the aisle, so a wall drop would cross the aisle.
 	var pts := _router.route(_router.hop_bays(PackedVector3Array([
-		o, Vector3(lx, fy, o.z), Vector3(lx, fy, hz), _wall_pt(-1.0, 1.9, hz, 0.12),
-		_wall_pt(-1.0, h.y + 0.15, hz, 0.12), h,
+		o, Vector3(lx, fy, o.z), Vector3(lx, fy, hz), Vector3(h.x, fy, hz),
+		Vector3(h.x, h.y + 0.12, h.z), h,
 	]), 0.12), keepouts)
 	_lay(pts, 3, 0.022, 3)
 	_junction(-1.0, o.z)
