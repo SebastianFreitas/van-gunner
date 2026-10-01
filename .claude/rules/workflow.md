@@ -178,6 +178,12 @@ because the main context is paid again on every turn.
 - Explore and Plan never load this file or `CLAUDE.md`: name the file,
   function or concept, tell them to grep `.claude/MAP.md` first, and ask
   for `file:line` anchors and a summary, not code bodies.
+- Models: Opus thinks (main, plan runs, `plan-writer`, Plan), Sonnet
+  does (`Explore`, `implementer`, `reviewer`, `plan-reviewer`). No
+  Haiku: every spec is written from Explore's anchors, so a missed
+  caller costs more than it saved (owner, 2026-10-01). Each project
+  keeps its own `.claude/agents/explore.md` with `model: sonnet`;
+  without one the built-in Explore runs on the main model (Opus).
 - Every code change goes to `implementer` (Sonnet), one spec per call,
   one file per call unless the change genuinely spans files. It sees
   only the spec, never these rules. Read `.claude/playbook.md` before

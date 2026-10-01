@@ -1,7 +1,8 @@
 ---
 name: Explore
 description: Fast read-only search of the van-gunner codebase. Use for finding files, symbols and callers, and for summarizing how code works, instead of reading files in the main session.
-model: haiku
+model: sonnet
+effort: medium
 tools: Read, Grep, Glob, Bash
 omitClaudeMd: true
 maxTurns: 40
