@@ -131,6 +131,8 @@ Surfaces, in the road's recipe:
   Street paving: tiles 0.5 m, setts 0.25 m, granite curb blocks 1 m,
   joints 3 cm, chamfers 1.2 cm; tiles dark (albedo 0.33), setts 0.25, and
   the paving's glare fades out over 18-45 m so a far grid never glows.
+  Sidewalk dirt (where the walk is gone) is packed earth with shader
+  pebbles (0.22 m and 0.07 m cells, stone albedo 0.24) faded by `fwidth`.
 - **Lighting model**: `diffuse_burley`, `specular_schlick_ggx`, roughness
   0.78..0.95 on base surfaces (wet oil and polished tyre lanes may drop to
   about 0.3 locally), metallic 0..0.3 (oil, cans, bolts). A shader may

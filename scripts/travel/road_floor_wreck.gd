@@ -1,5 +1,5 @@
 extends RefCounted
-## Builds RoadFloor's wrecked paving: tiles and setts graded by the destruction map over a soil pit, each side as merged meshes.
+## Builds RoadFloor's wrecked paving: tiles and setts graded by the destruction map and set into a raised dirt floor, each side as merged meshes.
 
 const RoadFloorMaterials = preload("res://scripts/travel/road_floor_materials.gd")
 const _PavingMesh := preload("res://scripts/travel/road_floor_paving_mesh.gd")
@@ -7,7 +7,7 @@ const _WreckCurb := preload("res://scripts/travel/road_floor_wreck_curb.gd")
 const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
 const _WreckGround = preload("res://scripts/travel/road_floor_wreck_ground.gd")
 
-const PIT_DEPTH := 0.25 ## soil bed top sits this far under the walk top
+const PIT_DEPTH := 0.12 ## collision bed top sits this far under the walk top, under the dirt
 const JOINT := 0.03
 const CHAMFER := 0.012
 const TILE_PITCH := 0.5
@@ -308,7 +308,7 @@ func _emit(rng: RandomNumberGenerator, out: _PavingMesh, state: int, at: Vector2
 			var drop := rng.randf_range(0.015, 0.05)
 			var tilt := rng.randf_range(0.0, 3.0)
 			if zone == _WreckMap.Zone.FRAGMENT:
-				drop = rng.randf_range(0.02, 0.08)
+				drop = lerpf(0.01, 0.05, _WreckMap.band_t(e)) + rng.randf_range(0.0, 0.02)
 				tilt = rng.randf_range(0.0, 4.0)
 			elif zone == _WreckMap.Zone.ROUGH:
 				drop = rng.randf_range(0.005, 0.03)
@@ -320,25 +320,25 @@ func _emit(rng: RandomNumberGenerator, out: _PavingMesh, state: int, at: Vector2
 					_PavingMesh.SIDE_ALL, false)
 		Piece.FRAGMENT:
 			var fp := _WreckGround.fragment_footprint(rng, w - joint, length - joint)
-			var drop := rng.randf_range(0.02, 0.08)
-			var height := PIT_DEPTH + 0.02 - drop
+			var drop := lerpf(0.0, 0.05, _WreckMap.band_t(e)) + rng.randf_range(0.0, 0.025)
+			var height := maxf(PIT_DEPTH + 0.02 - drop, 0.03)
 			var t := rng.randf() * TAU
 			var basis := Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 10.0)))
 			var pos := Vector3(centre.x, _top - drop - height * 0.5, centre.z)
 			out.add_prism(fp, height, Transform3D(basis, pos), wreck, tone, false)
-			if rng.randf() < 0.4:
+			if rng.randf() < 0.08:
 				_add_chunk(rng, at)
 		Piece.MISSING_PIECE:
-			if zone == _WreckMap.Zone.FRAGMENT and rng.randf() < 0.5:
+			if zone == _WreckMap.Zone.FRAGMENT and rng.randf() < 0.10:
 				_add_chunk(rng, at)
 
 
-## A broken lump of paving lying in the pit.
+## A rare broken lump of paving, half buried in the dirt floor.
 func _add_chunk(rng: RandomNumberGenerator, at: Vector2) -> void:
-	var size := Vector3(rng.randf_range(0.10, 0.30), rng.randf_range(0.05, 0.14),
-			rng.randf_range(0.10, 0.30))
-	var pos := Vector3(_sign * (at.x + rng.randf_range(-0.08, 0.08)), _bed_y + size.y * 0.3,
-			at.y + rng.randf_range(-0.08, 0.08))
+	var size := Vector3(rng.randf_range(0.08, 0.18), rng.randf_range(0.05, 0.10),
+			rng.randf_range(0.08, 0.18))
+	var pos := Vector3(_sign * (at.x + rng.randf_range(-0.08, 0.08)),
+			_top - _WreckGround.DIRT_DROP - size.y * 0.25, at.y + rng.randf_range(-0.08, 0.08))
 	var t := rng.randf() * TAU
 	var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)) \
 			* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 25.0)))

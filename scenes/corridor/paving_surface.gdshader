@@ -19,8 +19,37 @@ uniform float roughness_value = 0.9;
 // How far wreck pulls the albedo toward dirt_color.
 uniform float wreck_dirt = 0.6;
 
+// Draws embedded pebbles and stones on top faces (soil only; 0 leaves every other kind as is).
+uniform float gravel : hint_range(0.0, 1.0) = 0.0;
+
 varying vec3 v_world;
 varying vec3 v_wnormal;
+
+// One layer of round pebbles on a jittered grid (one hashed point and radius per cell,
+// present in `density` of the cells). Fades to a flat 8% lift toward the stone colour
+// (its average) before the cells go sub-pixel.
+vec3 gravel_layer(vec2 wp, float cell, float r_min, float r_max, vec3 col, vec3 stone,
+		float density) {
+	vec3 lit = col;
+	vec2 base = floor(wp / cell);
+	for (int j = -1; j <= 1; j++) {
+		for (int i = -1; i <= 1; i++) {
+			vec2 id = base + vec2(float(i), float(j));
+			vec2 pt = (id + 0.2 + 0.6 * hash22(id + 11.3)) * cell;
+			float d = length(wp - pt);
+			float r = mix(r_min, r_max, hash21(id + 23.7));
+			float aa = max(fwidth(d), 0.003);
+			float present = step(hash21(id + 41.9), density);
+			float mask = (1.0 - smoothstep(r - aa, r + aa, d)) * present;
+			float rim = (1.0 - smoothstep(r, r + 0.02, d)) * present;
+			lit *= 1.0 - 0.35 * (rim - mask);
+			vec3 pebble = stone * mix(0.7, 1.15, hash21(id + 67.1));
+			lit = mix(lit, pebble, mask);
+		}
+	}
+	float fade = 1.0 - smoothstep(cell * 0.15, cell * 0.4, length(fwidth(wp)));
+	return mix(mix(col, stone, 0.08), lit, fade);
+}
 
 void vertex() {
 	v_world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -84,6 +113,14 @@ void fragment() {
 		if (d.x < half_size.x && d.y < half_size.y) {
 			col = vec3(0.62, 0.60, 0.55);
 		}
+	}
+
+	// Pebbles and gravel set into the soil, tops only.
+	if (gravel > 0.0) {
+		vec3 stone = vec3(0.24, 0.23, 0.21);
+		vec3 packed_col = gravel_layer(v_world.xz, 0.22, 0.04, 0.08, col, stone, 0.55);
+		packed_col = gravel_layer(v_world.xz, 0.07, 0.012, 0.025, packed_col, stone, 0.70);
+		col = mix(col, packed_col, gravel * smoothstep(0.5, 0.8, up));
 	}
 
 	ALBEDO = col;

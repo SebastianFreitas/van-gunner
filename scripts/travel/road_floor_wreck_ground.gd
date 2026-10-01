@@ -1,13 +1,13 @@
 extends RefCounted
-## Builds a sidewalk side's ground: the soil heightfield under the paving, sunk into craters where the destruction map is worst, with rubble, shards and leaning slabs in obliterated zones.
+## Builds a sidewalk side's ground: a near-flush soil heightfield under the paving with shallow dips where the destruction map is worst, and sparse half-buried shards, stones and rubble.
 
 const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
 const _PavingMesh := preload("res://scripts/travel/road_floor_paving_mesh.gd")
 
-const CRATER_DEPTH := 0.25 ## on top of the 0.25 pit: the crater floor sits 0.5 m under the walk top
+const DIRT_DROP := 0.05 ## dirt surface under the walk top
+const DIP_DEPTH := 0.07 ## deepest hollow in the worst spots
 const STEP := 0.25
 const CELL := 0.5
-const GRADIENT_STEP := 0.25
 const MIN_KEPT := 0.35 ## a clip that leaves less of the fragment than this is undone
 
 
@@ -33,16 +33,17 @@ func build(wreck, rng: RandomNumberGenerator, soil, rubble, tiles) -> void:
 
 
 ## Ground height at a point on the walk, in the side's local space; `e` is the damage there.
+## The dirt sits DIRT_DROP under the walk top, so surviving tiles stand slightly proud and any
+## piece sunk deeper vanishes into it.
 func height_at(wreck, x_abs: float, z: float, e: float) -> float:
-	var y: float = wreck._bed_y
+	var y: float = wreck._top - DIRT_DROP
 	var inner: float = wreck._inner
 	var xfade := smoothstep(inner + 0.05, inner + 0.35, x_abs) \
 			* (1.0 - smoothstep(inner + 0.8, inner + 1.1, x_abs))
-	y -= _WreckMap.crater(e) * xfade * CRATER_DEPTH
-	if e > 0.0:
-		var w: Vector2 = wreck.world_xz(x_abs, z)
-		var lump := fposmod(sin(w.x * 12.9898 + w.y * 78.233) * 43758.5453, 1.0) - 0.5
-		y += lump * 0.04 * clampf(e * 8.0, 0.0, 1.0) * xfade
+	y -= _WreckMap.crater(e) * xfade * DIP_DEPTH
+	var w: Vector2 = wreck.world_xz(x_abs, z)
+	var lump := fposmod(sin(w.x * 12.9898 + w.y * 78.233) * 43758.5453, 1.0) - 0.5
+	y += lump * 0.024 * xfade
 	return y
 
 
@@ -95,7 +96,8 @@ func _h(wreck, x_abs: float, z: float) -> float:
 	return height_at(wreck, x_abs, z, e)
 
 
-## Rubble, shards and leaning slabs on 0.5 m cells wherever the damage is above 0.
+## Sparse pieces on 0.5 m cells wherever the damage is above 0: broken tile at the gone edge,
+## a few stones anywhere, rarely a rubble chunk. The core of a gone zone stays almost bare.
 func _scatter(wreck, rng: RandomNumberGenerator, rubble, tiles) -> void:
 	var inner: float = wreck._inner
 	var width: float = wreck._width
@@ -118,58 +120,44 @@ func _scatter(wreck, rng: RandomNumberGenerator, rubble, tiles) -> void:
 			var e: float = wreck.damage_at(cx, cz)
 			if e <= 0.0:
 				continue
-			var crater := _WreckMap.crater(e)
-			var count := r_n
-			if crater > 0.4:
-				count += rng.randi_range(2, 4)
-			for i: int in count:
-				_chunk(wreck, rng, rubble, cx, cz, i)
-			if r_shard < 0.5:
+			var edge := 1.0 - smoothstep(0.0, 0.06, e) # 1 at the gone edge, 0 in the core
+			if r_shard < 0.30 * edge:
 				_shard(wreck, rng, tiles, cx, cz, e)
-			var xfade := smoothstep(inner + 0.05, inner + 0.35, cx) \
-					* (1.0 - smoothstep(inner + 0.8, inner + 1.1, cx))
-			var rim := crater * xfade
-			if rim > 0.1 and rim < 0.6 and r_slab < 0.3:
-				_slab(wreck, rng, tiles, cx, cz, e)
+			if r_slab < 0.05 + 0.10 * edge:
+				_stone(wreck, rng, rubble, cx, cz, e)
+			elif r_n == 0 and r_slab > 1.0 - 0.10 * edge:
+				_chunk(wreck, rng, rubble, cx, cz, 0)
 
 
-## One rubble box, the same recipe as the paving wreck's chunks; heap chunks stack up with `i`.
+## One rubble box, the same recipe as the paving wreck's chunks, about half buried.
 func _chunk(wreck, rng: RandomNumberGenerator, rubble, cx: float, cz: float, i: int) -> void:
-	var size := Vector3(rng.randf_range(0.10, 0.30), rng.randf_range(0.05, 0.14),
-			rng.randf_range(0.10, 0.30))
+	var size := Vector3(rng.randf_range(0.08, 0.18), rng.randf_range(0.05, 0.10),
+			rng.randf_range(0.08, 0.18))
 	var x_abs := cx + rng.randf_range(-0.15, 0.15)
 	var z := cz + rng.randf_range(-0.15, 0.15)
-	var pos := Vector3(wreck._sign * x_abs, _h(wreck, x_abs, z) + size.y * 0.3 + i * 0.05, z)
+	var pos := Vector3(wreck._sign * x_abs, _h(wreck, x_abs, z) - size.y * 0.25 + i * 0.05, z)
 	var t := rng.randf() * TAU
 	var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)) \
-			* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 25.0)))
+			* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 20.0)))
 	rubble.add_block(size, Transform3D(basis, pos), 1.0, rng.randf(), 0.015,
 			_PavingMesh.SIDE_ALL, true)
 
 
-## A small broken tile fragment lying on the ground.
+## A small broken tile fragment lying almost flush on the dirt, its top 1 cm proud.
 func _shard(wreck, rng: RandomNumberGenerator, tiles, cx: float, cz: float, e: float) -> void:
 	var fp := fragment_footprint(rng, rng.randf_range(0.12, 0.3), rng.randf_range(0.12, 0.3))
-	var pos := Vector3(wreck._sign * cx, height_at(wreck, cx, cz, e) + 0.02, cz)
+	var pos := Vector3(wreck._sign * cx, height_at(wreck, cx, cz, e) - 0.01, cz)
 	var t := rng.randf() * TAU
 	var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)) \
-			* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 20.0)))
+			* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 8.0)))
 	tiles.add_prism(fp, 0.04, Transform3D(basis, pos), 1.0, rng.randf(), true)
 
 
-## A broken slab on the crater rim, its top tipped toward the downhill side.
-func _slab(wreck, rng: RandomNumberGenerator, tiles, cx: float, cz: float, e: float) -> void:
-	var gx := (_h(wreck, cx + GRADIENT_STEP, cz) - _h(wreck, cx - GRADIENT_STEP, cz)) \
-			/ (2.0 * GRADIENT_STEP)
-	var gz := (_h(wreck, cx, cz + GRADIENT_STEP) - _h(wreck, cx, cz - GRADIENT_STEP)) \
-			/ (2.0 * GRADIENT_STEP)
-	var down := Vector3(-wreck._sign * gx, 0.0, -gz)
-	if down.length() < 1e-4:
-		return
-	down = down.normalized()
-	var fp := fragment_footprint(rng, 0.47, 0.47)
-	var axis := Vector3.UP.cross(down).normalized()
-	var basis := Basis(axis, deg_to_rad(rng.randf_range(25.0, 45.0))) \
-			* Basis(Vector3.UP, rng.randf_range(0.0, TAU))
-	var pos := Vector3(wreck._sign * cx, height_at(wreck, cx, cz, e) - 0.03, cz)
-	tiles.add_prism(fp, 0.08, Transform3D(basis, pos), 1.0, rng.randf(), true)
+## A low flat rock half-sunk in the dirt, showing about 1.5 cm.
+func _stone(wreck, rng: RandomNumberGenerator, rubble, cx: float, cz: float, e: float) -> void:
+	var fp := fragment_footprint(rng, rng.randf_range(0.10, 0.22), rng.randf_range(0.08, 0.18))
+	var pos := Vector3(wreck._sign * cx, height_at(wreck, cx, cz, e) - 0.015, cz)
+	var t := rng.randf() * TAU
+	var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)) \
+			* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 12.0)))
+	rubble.add_prism(fp, 0.06, Transform3D(basis, pos), 1.0, rng.randf(), true)

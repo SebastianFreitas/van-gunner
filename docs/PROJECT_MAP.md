@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-324 GDScript files, 50436 lines.
+324 GDScript files, 50425 lines.
 
 ### `scenes/corridor/`
 
@@ -536,11 +536,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `road_floor.gd` | `RoadFloor` | 398 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
 | `road_floor_details.gd` | — | 213 | Street furniture/detail builders for RoadFloor: drains, manholes and sidewalk dressing. |
-| `road_floor_materials.gd` | — | 107 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
+| `road_floor_materials.gd` | — | 108 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
 | `road_floor_paving_mesh.gd` | — | 212 | Packs RoadFloor's paving pieces (chamfered blocks) into one ArrayMesh per material. |
-| `road_floor_wreck.gd` | — | 347 | Builds RoadFloor's wrecked paving: tiles and setts graded by the destruction map over a soil pit, each side as merged meshes. |
-| `road_floor_wreck_curb.gd` | — | 108 | Builds the wrecked paving's granite curb: 1 m blocks, knocked, missing or toppled in gone stretches. |
-| `road_floor_wreck_ground.gd` | — | 176 | Builds a sidewalk side's ground: the soil heightfield under the paving, sunk into craters where the destruction map is worst, with rubble, shards and leaning s… |
+| `road_floor_wreck.gd` | — | 347 | Builds RoadFloor's wrecked paving: tiles and setts graded by the destruction map and set into a raised dirt floor, each side as merged meshes. |
+| `road_floor_wreck_curb.gd` | — | 107 | Builds the wrecked paving's granite curb: 1 m blocks, knocked, missing or toppled in gone stretches. |
+| `road_floor_wreck_ground.gd` | — | 161 | Builds a sidewalk side's ground: a near-flush soil heightfield under the paving with shallow dips where the destruction map is worst, and sparse half-buried sh… |
 | `road_floor_wreck_map.gd` | — | 130 | The street's destruction map: one smooth world-space field saying how wrecked the sidewalk is at a point, continuous across corridor tiles and calibrated so DE… |
 | `travel_controller.gd` | `TravelController` | 607 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
 | `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
@@ -568,7 +568,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `facade_registry.gd` | — | 104 | Loads the facade data folders once: districts (sorted by index) and set-pieces (sorted by id). |
 | `facade_ruin.gd` | — | 223 | Rolls each street building's ruin condition and the column/hole data that later geometry cuts the facade with, and clips the plan that the prop families see so… |
 | `facade_ruin_body.gd` | — | 154 | Builds a ruined street building's body from its plan's ruin columns and holes: stepped tops, wall caps or roof plates, hole reveals over a dark back wall, then… |
-| `facade_ruin_debris.gd` | — | 220 | Debris for ruined street buildings: hanging slabs, rebar and sill chunks on the body, and the rubble heaps on the sidewalk below a collapse. |
+| `facade_ruin_debris.gd` | — | 224 | Debris for ruined street buildings: hanging slabs, rebar and sill chunks on the body, and the rubble heaps on the sidewalk below a collapse. |
 | `facade_set_piece.gd` | `FacadeSetPiece` | 46 | One rare street set-piece: eligibility data plus the hooks a subclass overrides. |
 | `facade_set_pieces.gd` | — | 84 | Rolls which rare set-piece (if any) a tile gets and on which side, and drives the piece's hooks from corridor_facades. |
 | `facade_signs.gd` | — | 285 | Street signage for one building: a backlit box sign over a storefront, a neon strip, a perpendicular blade sign, a cloth banner, or a torn poster on a boarded… |

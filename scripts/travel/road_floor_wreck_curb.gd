@@ -46,7 +46,7 @@ func build(wreck, side_idx: int, side_sign: float, rng: RandomNumberGenerator, c
 		var scale := 0.35 + 0.3 * t
 		match _WreckMap.zone(e):
 			_WreckMap.Zone.GONE:
-				if r_knock < 0.7:
+				if r_knock < 0.12:
 					_add_chunks(wreck, side_sign, rng, rubble, z0, z1)
 				continue
 			_WreckMap.Zone.FRAGMENT:
@@ -88,20 +88,19 @@ func build(wreck, side_idx: int, side_sign: float, rng: RandomNumberGenerator, c
 				_PavingMesh.SIDE_ALL, true)
 
 
-## One or two lumps of granite in the gutter where a block is gone.
+## One small lump of granite in the gutter where a block is gone.
 func _add_chunks(wreck, side_sign: float, rng: RandomNumberGenerator, rubble: Object, z0: float,
 		z1: float) -> void:
 	var curb_depth: float = wreck._curb_depth
 	var inner: float = wreck._inner
 	var gutter_top_y: float = wreck._gutter_top_y
-	var count := 2 if rng.randf() < 0.5 else 1
-	for i in count:
-		var size := Vector3(rng.randf_range(0.10, 0.28), rng.randf_range(0.06, 0.14),
-				rng.randf_range(0.10, 0.28))
-		var pos := Vector3(side_sign * (inner - curb_depth - rng.randf_range(0.05, 0.30)),
-				gutter_top_y + size.y * 0.3, rng.randf_range(z0, z1))
-		var t := rng.randf() * TAU
-		var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)) \
-				* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 20.0)))
-		rubble.add_block(size, Transform3D(basis, pos), 1.0, rng.randf(), 0.015,
-				_PavingMesh.SIDE_ALL, true)
+	rng.randf()  # keeps the stream aligned
+	var size := Vector3(rng.randf_range(0.08, 0.18), rng.randf_range(0.05, 0.10),
+			rng.randf_range(0.08, 0.18))
+	var pos := Vector3(side_sign * (inner - curb_depth - rng.randf_range(0.05, 0.30)),
+			gutter_top_y + size.y * 0.3, rng.randf_range(z0, z1))
+	var t := rng.randf() * TAU
+	var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)) \
+			* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 20.0)))
+	rubble.add_block(size, Transform3D(basis, pos), 1.0, rng.randf(), 0.015,
+			_PavingMesh.SIDE_ALL, true)

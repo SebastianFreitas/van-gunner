@@ -14,8 +14,10 @@ const ROOFED_DROP := 2.0
 const HOLE_DEPTH := 1.8
 # The crater floor: walk top -0.06 minus 0.5 m, so rubble sits in the craters, not over them.
 const RUBBLE_Y0 := -0.56
-# Rubble is buried this deep so it stands in a 0.5 m sidewalk crater with its top unchanged.
+# Rubble starts this deep (RUBBLE_Y0), so it stands in a 0.5 m sidewalk crater; tops land
+# half a drawn height above DIRT_Y.
 const SINK_DEPTH := 0.5
+const DIRT_Y := -0.11  ## sidewalk dirt surface (walk top -0.06 minus the 5 cm dirt drop)
 
 const _SLAB_P := 0.65
 const _SLAB_T := 0.22
@@ -100,15 +102,17 @@ static func build_rubble(
 		if lo > reach:
 			continue
 		var pos := Vector3(side_sign * rng.randf_range(lo, reach), 0.0, clampf(z, z_lo, z_hi))
-		var stack := rng.randf() < 0.3
-		# Boxes start in the crater and are 0.5 m taller, so their tops stay where they were.
-		var base_size := size + Vector3(0.0, SINK_DEPTH, 0.0)
+		var stack := rng.randf() < 0.1
+		# Boxes start in the crater and end half their drawn height above the dirt: half-buried.
+		var base_top := DIRT_Y + size.y * 0.5
+		var base_size := Vector3(size.x, base_top - RUBBLE_Y0, size.z)
 		pos.y = RUBBLE_Y0 + base_size.y * 0.5
 		if _FacadeMeshKit.add_box_xf(st, Transform3D(basis, pos), base_size, keep_out):
 			emitted += 1
 		if stack:
-			var top_size := size * 0.6 + Vector3(0.0, SINK_DEPTH, 0.0)
-			pos.y = RUBBLE_Y0 + top_size.y * 0.5 + 0.3
+			# The stacked box nests 0.3 of its own height into the base's top.
+			var top_size := size * 0.6
+			pos.y = base_top - top_size.y * 0.3 + top_size.y * 0.5
 			if _FacadeMeshKit.add_box_xf(st, Transform3D(basis, pos), top_size, keep_out):
 				emitted += 1
 	if emitted > 0:
@@ -125,7 +129,7 @@ static func _rubble_spots(
 	if tier == _FacadeRuin.WORN:
 		for h: Vector3 in holes:
 			var c: Vector3 = cols[int(h.x)]
-			for k in rng.randi_range(2, 4):
+			for k in rng.randi_range(1, 2):
 				zs.append(rng.randf_range(c.x, c.y))
 	elif tier == _FacadeRuin.BROKEN:
 		var idx: Array[int] = []
@@ -138,14 +142,14 @@ static func _rubble_spots(
 				deepest = i
 		if idx.is_empty():
 			idx.append(deepest)
-		for k in rng.randi_range(7, 12):
+		for k in rng.randi_range(2, 4):
 			var c: Vector3 = cols[idx[rng.randi_range(0, idx.size() - 1)]]
 			zs.append(rng.randf_range(c.x, c.y))
 	else:
 		var total := 0.0
 		for c: Vector3 in cols:
 			total += full - c.z + 0.5
-		for k in rng.randi_range(10, 16):
+		for k in rng.randi_range(3, 6):
 			var roll := rng.randf() * total
 			var pick: Vector3 = cols[cols.size() - 1]
 			for c: Vector3 in cols:
