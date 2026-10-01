@@ -20,7 +20,10 @@ import time
 from typing import Iterator
 
 LOCK_WAIT_SECONDS = 900
-SEED_SKIP = ("export_credentials.cfg", "tools.lock", "claude-verify.json")
+SEED_SKIP = (
+    "export_credentials.cfg", "tools.lock", "claude-verify.json",
+    "shots", "van_audit", "try-last.log",
+)
 NO_GODOT = (
     "No Godot found: set GODOT to the Godot 4.7 executable "
     "(Godot_v4.7-stable_win64_console.exe on Windows) or put `godot` on PATH "
@@ -75,23 +78,33 @@ def main_checkout(root: pathlib.Path) -> pathlib.Path | None:
     return pathlib.Path(proc.stdout.strip()).parent.resolve()
 
 
-def seed_import_cache(root: pathlib.Path) -> bool:
-    """Copy the main checkout's .godot/ into a linked worktree that has none, so its
-    first import scan only redoes what differs (Godot compares source hashes, not
-    times); never copies export credentials, the lock or the verify stamp.
+def has_import_cache(root: pathlib.Path) -> bool:
+    """True when <root>/.godot/imported/ holds anything. A tool may already have made
+    .godot/ for its lock or its shot folder, so .godot/ existing proves nothing.
     """
-    dst = root / ".godot"
-    if dst.exists():
+    imported = root / ".godot" / "imported"
+    return imported.is_dir() and any(imported.iterdir())
+
+
+def seed_import_cache(root: pathlib.Path) -> bool:
+    """Copy the main checkout's .godot/ into a linked worktree that has no import cache
+    yet, so its first import scan only redoes what differs (Godot compares source
+    hashes, not times); never copies export credentials, the lock, the verify stamp or
+    tool output (shot sets, audit reports, the try log).
+    """
+    if has_import_cache(root):
         return False
     main = main_checkout(root)
     if main is None or main == root.resolve():
         return False
-    src = main / ".godot"
-    if not src.is_dir():
+    if not has_import_cache(main):
         return False
     print(f"   seeding .godot/ from {main}")
     try:
-        shutil.copytree(src, dst, ignore=shutil.ignore_patterns(*SEED_SKIP))
+        shutil.copytree(
+            main / ".godot", root / ".godot",
+            ignore=shutil.ignore_patterns(*SEED_SKIP), dirs_exist_ok=True,
+        )
     except OSError as err:
         print(f"   could not seed .godot/: {err}")
         return False

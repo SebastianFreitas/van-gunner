@@ -37,9 +37,10 @@ import subprocess
 import sys
 import time
 
+import check
 import hidden_desktop
 import van_audit
-from godot_env import godot_exe, project_lock, seed_import_cache, stamp_clean
+from godot_env import godot_exe, has_import_cache, project_lock, seed_import_cache, stamp_clean
 
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -136,6 +137,16 @@ def main() -> int:
         print("== smoke: godot --headless --path . res://tools/smoke/smoke_test.tscn -- --smoke-sandbox")
     with project_lock(ROOT):
         started = time.time()
+        if not has_import_cache(ROOT):
+            # The game never imports: without the cache every texture and class lookup
+            # fails and the run hangs until the timeout, so a longer timeout would not
+            # help (a fresh worktree whose main checkout has no cache, or the main
+            # checkout before any editor run).
+            print("   no import cache in .godot/: running the import scan first")
+            import_hits, _ = check.run_pass(exe, ["--import"], "import scan")
+            if import_hits:
+                print(f"SMOKE FAILED: import scan printed {len(import_hits)} failure line(s)")
+                return 1
         if shots is not None and sys.platform == "win32":
             try:
                 returncode, output = hidden_desktop.run_hidden(args, ROOT, TIMEOUT_SECONDS)
