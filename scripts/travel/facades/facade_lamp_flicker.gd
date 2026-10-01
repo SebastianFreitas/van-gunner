@@ -1,10 +1,12 @@
 extends Node
 ## Drives one broken wall lamp's flicker: long on stretches, bursts of fast stutters and the odd
 ## blackout, on the light and its head's emission together.
+## Under the test sandbox it holds steady on, so two smoke screenshot sets of one tree match.
 
 enum Phase { ON, STUTTER, OFF }
 
 const LEVEL_OFF := 0.06
+const _SaveSandbox := preload("res://scripts/core/save_sandbox.gd")
 
 var light: Light3D
 var head: StandardMaterial3D
@@ -25,6 +27,12 @@ func _ready() -> void:
 		base_energy = light.light_energy
 	if head != null:
 		base_emission = head.emission_energy_multiplier
+	if _SaveSandbox.enabled:
+		# The smoke's shots compare against fixed tolerances (tools/shots.py): a lamp
+		# caught mid-stutter moved every exterior view by 3 to 8 points, so under the
+		# test sandbox the lamp holds steady on, like the van look holds its seed.
+		set_process(false)
+		return
 	_timer = _rng.randf_range(0.5, 3.5)
 
 

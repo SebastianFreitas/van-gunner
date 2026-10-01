@@ -38,7 +38,9 @@ SHOTS_ROOT = ROOT / ".godot" / "shots"
 NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 # Tolerance per view is 2x the mean pixel diff measured between two `capture`
-# runs of one unchanged tree on 2026-09-28 (workflow-port phase 7, D11). The
+# runs of one unchanged tree on 2026-09-28 (workflow-port phase 7, D11;
+# 05-combat-back, v04 and v16 re-measured 2026-10-01 once the IDLE van pin
+# in smoke_shots.gd made the exterior views deterministic). The
 # floor keeps a fully deterministic view from flagging float jitter; views
 # measured at 0 rely on it. Unknown views (new views, `--van-seeds` views
 # `v..-van-seed...`) fall back to DEFAULT_TOLERANCE. Re-measure with
@@ -50,7 +52,7 @@ TOLERANCE: dict[str, float] = {
 	"02-idle-back": 0.160,
 	"03-idle-outside": 0.0,
 	"04-combat-front": 0.634,
-	"05-combat-back": 0.026,
+	"05-combat-back": 0.172,
 	"06-combat-outside": 19.458,
 	"07-elevator-stop-front": 0.106,
 	"08-elevator-stop-back": 0.218,
@@ -61,7 +63,7 @@ TOLERANCE: dict[str, float] = {
 	"v01-idle-van-side-front": 0.0,
 	"v02-idle-van-side-rear": 0.0,
 	"v03-idle-van-low-front": 0.0,
-	"v04-idle-front-wall": 0.046,
+	"v04-idle-front-wall": 0.104,
 	"v05-idle-driver-wall": 0.004,
 	"v06-idle-passenger-wall": 0.052,
 	"v07-idle-ceiling-front": 0.002,
@@ -73,7 +75,7 @@ TOLERANCE: dict[str, float] = {
 	"v13-idle-van-lit-front": 0.0,
 	"v14-idle-van-lit-rear": 0.0,
 	"v15-idle-van-lit-window": 0.0,
-	"v16-idle-van-lit-roof": 5.480,
+	"v16-idle-van-lit-roof": 0.0,
 }
 
 

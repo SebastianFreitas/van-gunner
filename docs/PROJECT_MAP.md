@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-325 GDScript files, 50526 lines.
+325 GDScript files, 50583 lines.
 
 ### `scenes/corridor/`
 
@@ -559,7 +559,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `facade_fixtures.gd` | — | 170 | Wall lamp fixtures and their SpotLight3D pools for one facade side: district colour, dead lamps, the world-wide light cap, and the layer-1 cull mask that keeps… |
 | `facade_grime_materials.gd` | — | 31 | Cached grime ShaderMaterials for large facade props, one per flat prop material, so big slabs (awnings, lintels, docks, set-piece bodies) share the road's grim… |
 | `facade_keep_out.gd` | — | 163 | Keep-out volumes for one facade side: the gate every facade placer passes an AABB through, so nothing ever stands in the raider lane, hangs over the road below… |
-| `facade_lamp_flicker.gd` | — | 71 | Drives one broken wall lamp's flicker: long on stretches, bursts of fast stutters and the odd blackout, on the light and its head's emission together. |
+| `facade_lamp_flicker.gd` | — | 79 | Drives one broken wall lamp's flicker: long on stretches, bursts of fast stutters and the odd blackout, on the light and its head's emission together. |
 | `facade_materials.gd` | — | 328 | Static material factories for the facade system: a ShaderMaterial per building from a parameter dictionary, cached StandardMaterial3D props by key, and named s… |
 | `facade_mesh_kit.gd` | — | 149 | Box-and-quad helpers shared by every facade prop builder: gated boxes into a SurfaceTool, committing an ArrayMesh node, and single BoxMesh nodes for props that… |
 | `facade_overheads.gd` | — | 149 | Cross-street industrial dressing (pipe bridges, catwalks, ribs) built under Facades/Overhead when both sides are plain; it never reaches below 9 m over the roa… |
@@ -754,10 +754,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `smoke_driver.gd` | — | 375 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
+| `smoke_driver.gd` | — | 378 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 181 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
-| `smoke_shots.gd` | — | 334 | Screenshots for tools/smoke.py --shots. |
+| `smoke_shots.gd` | — | 380 | Screenshots for tools/smoke.py --shots. |
 | `smoke_shots_closeups.gd` | — | 303 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 

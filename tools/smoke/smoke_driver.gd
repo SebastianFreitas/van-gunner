@@ -8,7 +8,7 @@ extends Node
 ## With --smoke-shots=<dir> (tools/smoke.py --shots) it also saves screenshots at fixed checkpoints.
 
 const _WATCHDOG_SECONDS := 270.0
-const _Fingerprint := preload("res://tools/smoke/smoke_fingerprint.gd")
+const _Fingerprint :=preload("res://tools/smoke/smoke_fingerprint.gd")
 const _Route := preload("res://tools/smoke/smoke_route.gd")
 const _Shots := preload("res://tools/smoke/smoke_shots.gd")
 
@@ -68,6 +68,8 @@ func _run() -> void:
 		return
 
 	await _seconds(2.0)
+	# The van drives at IDLE and the timers are wall-clock, so the shots pin it in place.
+	var pinned := _shots.pin_van() if _shots != null else -1.0
 	await _shot("idle")
 	if _shots != null:
 		# Exterior views of the van itself, IDLE only.
@@ -75,6 +77,7 @@ func _run() -> void:
 		await _shots.van_views_lit("idle")
 		await _shots.van_views_closeups()
 		await _shots.van_views_gaps()
+		_shots.unpin_van(pinned)
 
 	var van := get_tree().get_first_node_in_group(&"van_run")
 	var gun_stats: GunStatsController = get_tree().get_first_node_in_group(&"gun_stats")

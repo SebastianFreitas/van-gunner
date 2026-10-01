@@ -49,6 +49,11 @@ const _VAN_PASSENGER_WALL := Vector3(-1.2, 1.65, -1.0)
 const _VAN_PASSENGER_WALL_TARGET := Vector3(2.4, 1.5, -2.3)
 const _VAN_CEILING_FRONT := Vector3(0.0, 1.4, 1.0)
 const _VAN_CEILING_FRONT_TARGET := Vector3(0.0, 3.0, -4.7)
+## Where the van stands on the street for the IDLE shots: the van drives at IDLE and the
+## driver waits on wall-clock timers, so without a fixed spot every exterior view lands a few
+## ticks further down the street each run. 12 m is behind anywhere the van can be after the
+## 2 s wait and well inside `world_cull_distance`.
+const _IDLE_SHOT_PROGRESS := 12.0
 
 
 func shot(shot_name: String) -> void:
@@ -73,6 +78,47 @@ func shot(shot_name: String) -> void:
 		cam.queue_free()
 	for layer in hidden:
 		layer.visible = true
+
+
+## Stops the van and its wheels (at a zero spin) and moves it to _IDLE_SHOT_PROGRESS; returns the progress to restore, or
+## -1.0 when nothing was pinned (no travel controller).
+func pin_van() -> float:
+	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+	if travel == null or travel.van_follow == null:
+		return -1.0
+	travel.set_physics_process(false)
+	var previous := travel.van_follow.progress
+	travel.van_follow.progress = _IDLE_SHOT_PROGRESS
+	for wheels in _van_wheels(travel):
+		wheels.set_process(false)
+		for pivot in wheels.wheel_pivots:
+			pivot.rotation.x = 0.0
+	print("SMOKE: idle shots pin the van at %.1f m (was %.2f m)" % [_IDLE_SHOT_PROGRESS, previous])
+	return previous
+
+
+## Puts the van back where pin_van found it and lets it drive on.
+func unpin_van(previous: float) -> void:
+	if previous < 0.0:
+		return
+	var travel := get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+	if travel == null:
+		return
+	travel.van_follow.progress = previous
+	travel.set_physics_process(true)
+	for wheels in _van_wheels(travel):
+		wheels.set_process(true)
+
+
+## Every VanWheels under the travelling van rig (the rig is built at runtime, so look it up).
+func _van_wheels(travel: TravelController) -> Array[VanWheels]:
+	var found: Array[VanWheels] = []
+	if travel.van_rig == null:
+		return found
+	for node in travel.van_rig.find_children("*", "Node3D", true, false):
+		if node is VanWheels:
+			found.append(node as VanWheels)
+	return found
 
 
 func _hide_ui() -> Array[CanvasLayer]:
