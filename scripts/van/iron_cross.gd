@@ -1,41 +1,60 @@
 class_name IronCross
 extends Node3D
 
-## Welded iron + on a window pane. Local XY is the glass face; +Z is outward.
-## Bars span the full opening so the ends meet the frame.
-## Optional side-wall curve: bars, center plate, and top/bottom pads follow VanSideWall.
+## Welded iron + outside a window pane. Local XY is the glass face; +Z is outward.
+## Square tubes stand off the exterior pane on posts that drop onto feet bolted to the frame ring.
+## Optional side-wall curve: tubes, plate, posts and feet follow VanSideWall.
 
 const BrokenIronCrossScene := preload("res://scenes/van/broken_iron_cross.tscn")
+const IronCrossGeo := preload("res://scripts/van/iron_cross_geo.gd")
 
-@export var span_width := 2.2
-@export var span_height := 1.23
-@export var bar_width := 0.055
-@export var bar_depth := 0.018
-@export var plate_size := 0.18
-@export var plate_depth := 0.018
-@export var rivet_size := 0.02
-@export var end_pad_size := 0.11
+## Foot centre to foot centre along local X.
+@export var span_width := 2.32
+## Foot centre to foot centre along local Y.
+@export var span_height := 1.324
+@export var tube_size := 0.045
+@export var plate_size := 0.20
+## Local z of the surface the feet stand on: the side frame ring's front.
+@export var mount_z := 0.03
 @export var curve_segments := 14
 @export var rebuild_on_ready := true
 
-## D7: the crossing bars, plate and pads step TRIM_LIFT apart in depth, over the audit's 1 cm FLICKER rule.
-const TRIM_LIFT := 0.012
-
-## D12: each end pad's outer edge stops 2 cm inside the bar span, so it stays inside the frame opening (which is >= the span) and never shares a plane with a bar's end face.
-const PAD_END_CLEAR := 0.02
-
-## D12: each bar ends 2 cm inside its end pad (4 cm inside the span), so its end face is buried in the pad and sits over 2 cm from both the pad's face and the frame opening.
-const BAR_END_CLEAR := 0.04
-
-## Back face of the inboard (vertical) bar: 1.2 cm outboard of the cabin glass at z -0.01.
-const BACK_Z := 0.002
-## Rivet head: a low cone, so no flat face over 1 cm² sits parallel to the exterior pane.
-const RIVET_TOP_RADIUS := 0.004
-const RIVET_HEIGHT := 0.006
+## Back face of the vertical tube: 2 cm outside the exterior pane (0.055).
+const TUBE_BACK_Z := 0.075
+## The horizontal tube sits this far in front of the vertical one so no two faces are coplanar.
+const TUBE_H_LIFT := 0.012
+## Tube edge chamfer.
+const TUBE_CHAMFER := 0.006
+## How far a tube runs past its foot centre, so its end hides behind the post.
+const TUBE_OVERRUN := 0.01
+## Centre plate thickness.
+const PLATE_DEPTH := 0.022
+## Post width across the tube.
+const POST_ACROSS := 0.07
+## Post width along the tube.
+const POST_ALONG := 0.035
+## How far the top post sits below its foot centre, clear of the opening return.
+const POST_TOP_DROP := 0.0065
+## Foot plate width across the tube.
+const FOOT_ACROSS := 0.11
+## Foot plate width along the tube.
+const FOOT_ALONG := 0.04
+## How far a foot sinks into the mounting surface.
+const FOOT_SINK := 0.015
+## How far a foot stands proud of the mounting surface.
+const FOOT_PROUD := 0.012
+## Foot corner chamfer.
+const FOOT_CHAMFER := 0.008
 
 static var _iron_mat: StandardMaterial3D = null
 static var _rivet_mat: StandardMaterial3D = null
 
+## How far the bars bow into the cabin at each damage stage, metres.
+const STAGE_DENT: Array[float] = [0.0, 0.025, 0.05]
+## Plate bolts popped off at each damage stage.
+const STAGE_BOLTS_LOST: Array[int] = [0, 1, 2]
+
+var _damage_stage := 0
 var _built := false
 var _broken := false
 ## When true every built mesh sits on layers 1 and 2 (D15) and joins VanLighting.GROUP_EXTERIOR_LAYER so VanLighting doesn't force it back to layer 2.
@@ -94,13 +113,12 @@ func break_bars() -> void:
 
 	var broken := BrokenIronCrossScene.instantiate() as BrokenIronCross
 	broken.name = "BrokenIronCross"
-	broken.span_width = span_width
-	broken.span_height = span_height
-	broken.bar_width = bar_width
-	broken.bar_depth = bar_depth
-	broken.rivet_size = rivet_size
-	broken.end_pad_size = end_pad_size
-	broken.curve_segments = curve_segments
+	broken.set(&"span_width", span_width)
+	broken.set(&"span_height", span_height)
+	broken.set(&"tube_size", tube_size)
+	broken.set(&"plate_size", plate_size)
+	broken.set(&"mount_z", mount_z)
+	broken.set(&"curve_segments", curve_segments)
 	broken.break_seed = 0
 	broken.rebuild_on_ready = false
 	broken.transform = transform
@@ -123,6 +141,15 @@ func repair_bars() -> void:
 	visible = true
 
 
+## Bend the intact bars to a damage stage (0 sound, 2 nearly gone). Called by BreachPoint.
+func set_damage_stage(stage: int) -> void:
+	stage = clampi(stage, 0, 2)
+	if stage == _damage_stage:
+		return
+	_damage_stage = stage
+	rebuild()
+
+
 func rebuild() -> void:
 	for child in get_children():
 		child.queue_free()
@@ -130,254 +157,87 @@ func rebuild() -> void:
 	_build()
 
 
+func _make_geo() -> RefCounted:
+	var geo := IronCrossGeo.new(
+		_curve_walls, _curve_mid_y, span_width * 0.5, span_height * 0.5
+	)
+	geo.on_mesh = _apply_street_lit
+	geo.segments = curve_segments
+	geo.dent = STAGE_DENT[_damage_stage]
+	return geo
+
+
 func _build() -> void:
 	if _built:
 		return
 	_built = true
 
-	# Parts sit in z 0.002..0.044 (rivet tips 0.049): behind the exterior pane (0.055), before the glass.
-	var zv := BACK_Z + bar_depth * 0.5
+	var geo := _make_geo()
 	var iron := iron_material()
-	_add_horizontal_bar(zv + TRIM_LIFT, iron)  # D7: TRIM_LIFT apart so the bars share no plane.
-	_add_vertical_bar(zv, iron)
+	var rivet := rivet_material()
+	var hw := span_width * 0.5
+	var hh := span_height * 0.5
+	var s := tube_size
+	var zv := TUBE_BACK_Z + s * 0.5
+	# In front of the vertical tube so no two tube faces are coplanar where they cross.
+	var zh := zv + TUBE_H_LIFT
+	geo.add_tube(self, "VerticalBar", true, hh + TUBE_OVERRUN, s, TUBE_CHAMFER, zv, iron)
+	geo.add_tube(self, "HorizontalBar", false, hw + TUBE_OVERRUN, s, TUBE_CHAMFER, zh, iron)
 
-	# Center weld plate: back 2 * TRIM_LIFT out, 1.2 cm clear of the horizontal bar's faces.
-	var plate_front := BACK_Z + 2.0 * TRIM_LIFT + plate_depth
-	_add_center_plate(plate_front - plate_depth * 0.5, iron)
+	# Centre plate: always square to the window, at every damage stage.
+	var plate_back := zh + s * 0.5 - 0.008
+	var plate_front := plate_back + PLATE_DEPTH
+	var plate_poly := IronCrossGeo.chamfered_rect(plate_size * 0.5, plate_size * 0.5, 0.012)
+	geo.add_prism(self, "CenterPlate", plate_poly, Vector2.ZERO, plate_back, PLATE_DEPTH, iron)
 
-	# Four rivets on the plate corners.
-	var rs := plate_size * 0.28
-	for corner in [Vector2(rs, rs), Vector2(-rs, rs), Vector2(rs, -rs), Vector2(-rs, -rs)]:
-		_add_rivet("Rivet", corner, plate_front + _curve_z(corner.y), rivet_material())
+	# One window always loses the same bolts: the RNG is seeded from its path.
+	var rng := RandomNumberGenerator.new()
+	if is_inside_tree():
+		rng.seed = hash(String(name) + str(get_parent().get_path()))
+	else:
+		rng.seed = hash(String(name))
+	var order: Array[int] = [0, 1, 2, 3]
+	for i in range(order.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var tmp := order[i]
+		order[i] = order[j]
+		order[j] = tmp
+	var lost: Array[int] = order.slice(0, STAGE_BOLTS_LOST[_damage_stage])
+	var bs := plate_size * 0.5 - 0.03
+	var corners: Array[Vector2] = [Vector2(bs, bs), Vector2(-bs, bs), Vector2(bs, -bs), Vector2(-bs, -bs)]
+	for idx in corners.size():
+		if lost.has(idx):
+			continue
+		geo.add_bolt(self, "PlateBolt%d" % idx, corners[idx], plate_front, rivet)
 
-	# Mounting pads where bars meet the frame, reaching from the bar's back to the plate's front.
-	var half_w := span_width * 0.5 - PAD_END_CLEAR - end_pad_size * 0.5
-	var half_h := span_height * 0.5 - PAD_END_CLEAR - end_pad_size * 0.5
-	var pad_h := Vector3(end_pad_size, end_pad_size * 0.85, plate_front - BACK_Z)
-	var pad_v := Vector3(end_pad_size * 0.85, end_pad_size, plate_front - BACK_Z - TRIM_LIFT)
-	var z_h := plate_front - pad_h.z * 0.5
-	var z_v := plate_front - pad_v.z * 0.5
-	_add_box("EndPadR", pad_h, Vector3(half_w, 0.0, z_h), iron)
-	_add_box("EndPadL", pad_h, Vector3(-half_w, 0.0, z_h), iron)
-	_add_box("EndPadT", pad_v, Vector3(0.0, half_h, z_v + _curve_z(half_h)), iron)
-	_add_box("EndPadB", pad_v, Vector3(0.0, -half_h, z_v + _curve_z(-half_h)), iron)
-
-	# One rivet at the centre of each end pad, on the pad's front face.
-	for tip in [Vector2(half_w, 0.0), Vector2(-half_w, 0.0), Vector2(0.0, half_h), Vector2(0.0, -half_h)]:
-		_add_rivet("TipRivet", tip, plate_front + _curve_z(tip.y), rivet_material())
-
-
-func _add_vertical_bar(z: float, iron: Material) -> void:
-	if _curve_walls == null:
-		_add_box(
-			"VerticalBar",
-			Vector3(bar_width, span_height - 2.0 * BAR_END_CLEAR, bar_depth),
-			Vector3(0.0, 0.0, z),
-			iron
+	# Each tube end is welded to a post that drops onto a foot bolted to the frame ring.
+	var ends: Array = [
+		["T", Vector2(0.0, hh), true], ["B", Vector2(0.0, -hh), true],
+		["R", Vector2(hw, 0.0), false], ["L", Vector2(-hw, 0.0), false],
+	]
+	var z_back := mount_z + FOOT_PROUD - 0.004
+	for end in ends:
+		var sfx: String = end[0]
+		var at: Vector2 = end[1]
+		var vertical: bool = end[2]
+		var foot_poly := IronCrossGeo.chamfered_rect(
+			FOOT_ACROSS * 0.5 if vertical else FOOT_ALONG * 0.5,
+			FOOT_ALONG * 0.5 if vertical else FOOT_ACROSS * 0.5,
+			FOOT_CHAMFER
 		)
-		return
-
-	var half_h := span_height * 0.5 - BAR_END_CLEAR
-	var half_w := bar_width * 0.5
-	var half_d := bar_depth * 0.5
-	var segs := maxi(curve_segments, 2)
-	var rings: Array = []
-	for i in range(segs + 1):
-		var y := lerpf(-half_h, half_h, float(i) / float(segs))
-		var cz := z + _curve_z(y)
-		rings.append([  # x mirrored vs the horizontal bar: lofting along +y flips handedness.
-			Vector3(half_w, y, cz - half_d),
-			Vector3(-half_w, y, cz - half_d),
-			Vector3(-half_w, y, cz + half_d),
-			Vector3(half_w, y, cz + half_d),
-		])
-	_commit_lofted_bar("VerticalBar", rings, iron)
-
-
-func _add_horizontal_bar(z: float, iron: Material) -> void:
-	if _curve_walls == null:
-		_add_box(
-			"HorizontalBar",
-			Vector3(span_width - 2.0 * BAR_END_CLEAR, bar_width, bar_depth),
-			Vector3(0.0, 0.0, z),
-			iron
+		geo.add_prism(
+			self, "Foot" + sfx, foot_poly, at, mount_z - FOOT_SINK, FOOT_SINK + FOOT_PROUD, iron
 		)
-		return
-
-	# Cross-section spans local Y; each corner follows the wall bow at its height.
-	var half_w := span_width * 0.5 - BAR_END_CLEAR
-	var half_y := bar_width * 0.5
-	var half_d := bar_depth * 0.5
-	var segs := maxi(curve_segments, 2)
-	var rings: Array = []
-	for i in range(segs + 1):
-		var x := lerpf(-half_w, half_w, float(i) / float(segs))
-		rings.append([
-			Vector3(x, -half_y, z + _curve_z(-half_y) - half_d),
-			Vector3(x, half_y, z + _curve_z(half_y) - half_d),
-			Vector3(x, half_y, z + _curve_z(half_y) + half_d),
-			Vector3(x, -half_y, z + _curve_z(-half_y) + half_d),
-		])
-	_commit_lofted_bar("HorizontalBar", rings, iron)
-
-
-func _add_center_plate(plate_z: float, iron: Material) -> void:
-	if _curve_walls == null:
-		_add_box(
-			"CenterPlate",
-			Vector3(plate_size, plate_size, plate_depth),
-			Vector3(0.0, 0.0, plate_z),
-			iron
-		)
-		return
-
-	var half := plate_size * 0.5
-	var half_d := plate_depth * 0.5
-	var segs := maxi(curve_segments >> 1, 2)
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	st.set_smooth_group(-1)
-
-	var front: Array = []
-	var back: Array = []
-	for iy in range(segs + 1):
-		var py := lerpf(-half, half, float(iy) / float(segs))
-		var cz := plate_z + _curve_z(py)
-		var row_f: Array = []
-		var row_b: Array = []
-		for ix in range(segs + 1):
-			var px := lerpf(-half, half, float(ix) / float(segs))
-			row_f.append(Vector3(px, py, cz + half_d))
-			row_b.append(Vector3(px, py, cz - half_d))
-		front.append(row_f)
-		back.append(row_b)
-
-	for iy in range(segs):
-		for ix in range(segs):
-			var f00: Vector3 = front[iy][ix]
-			var f10: Vector3 = front[iy][ix + 1]
-			var f11: Vector3 = front[iy + 1][ix + 1]
-			var f01: Vector3 = front[iy + 1][ix]
-			_add_quad(st, f00, f01, f11, f10)  # Clockwise from outside (Godot's front face).
-			var b00: Vector3 = back[iy][ix]
-			var b10: Vector3 = back[iy][ix + 1]
-			var b11: Vector3 = back[iy + 1][ix + 1]
-			var b01: Vector3 = back[iy + 1][ix]
-			_add_quad(st, b00, b10, b11, b01)
-
-	for ix in range(segs):
-		_add_quad(st, front[0][ix], front[0][ix + 1], back[0][ix + 1], back[0][ix])
-		_add_quad(
-			st,
-			front[segs][ix],
-			back[segs][ix],
-			back[segs][ix + 1],
-			front[segs][ix + 1]
-		)
-	for iy in range(segs):
-		_add_quad(st, front[iy][0], back[iy][0], back[iy + 1][0], front[iy + 1][0])
-		_add_quad(
-			st,
-			front[iy][segs],
-			front[iy + 1][segs],
-			back[iy + 1][segs],
-			back[iy][segs]
-		)
-
-	st.generate_normals()
-	st.generate_tangents()
-	var mi := MeshInstance3D.new()
-	mi.name = "CenterPlate"
-	mi.mesh = st.commit()
-	mi.material_override = iron
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	_apply_street_lit(mi)
-	add_child(mi)
-
-
-func _commit_lofted_bar(node_name: String, rings: Array, iron: Material) -> void:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	st.set_smooth_group(-1)
-	var segs := rings.size() - 1
-
-	for i in range(segs):
-		var a: Array = rings[i]
-		var b: Array = rings[i + 1]
-		# Cabin face (-Z), exterior (+Z), then the two side faces.
-		_add_quad(st, a[0], b[0], b[1], a[1])
-		_add_quad(st, a[3], a[2], b[2], b[3])
-		_add_quad(st, a[0], a[3], b[3], b[0])
-		_add_quad(st, a[1], b[1], b[2], a[2])
-
-	var start: Array = rings[0]
-	var end: Array = rings[segs]
-	_add_quad(st, start[0], start[1], start[2], start[3])
-	_add_quad(st, end[0], end[3], end[2], end[1])
-
-	st.generate_normals()
-	st.generate_tangents()
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = st.commit()
-	mi.material_override = iron
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	_apply_street_lit(mi)
-	add_child(mi)
-
-
-## Local +Z offset so a point at local_y sits on the side-wall profile.
-func _curve_z(local_y: float) -> float:
-	if _curve_walls == null:
-		return 0.0
-	return _curve_walls.wall_x_at(_curve_mid_y + local_y) - _curve_walls.wall_x_at(_curve_mid_y)
-
-
-func _add_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
-	st.set_uv(Vector2(0.0, 0.0))
-	st.add_vertex(a)
-	st.set_uv(Vector2(1.0, 0.0))
-	st.add_vertex(b)
-	st.set_uv(Vector2(1.0, 1.0))
-	st.add_vertex(c)
-	st.set_uv(Vector2(0.0, 0.0))
-	st.add_vertex(a)
-	st.set_uv(Vector2(1.0, 1.0))
-	st.add_vertex(c)
-	st.set_uv(Vector2(0.0, 1.0))
-	st.add_vertex(d)
-
-
-func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material) -> void:
-	var mesh := BoxMesh.new()
-	mesh.size = size
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = mesh
-	mi.position = pos
-	mi.material_override = material
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	_apply_street_lit(mi)
-	add_child(mi)
-
-
-## Adds one cone rivet head whose base sits on a face at local z `base_z` (1 mm sunk).
-func _add_rivet(node_name: String, pos_xy: Vector2, base_z: float, material: Material) -> void:
-	var mesh := CylinderMesh.new()
-	mesh.bottom_radius = rivet_size * 0.5
-	mesh.top_radius = RIVET_TOP_RADIUS
-	mesh.height = RIVET_HEIGHT
-	mesh.radial_segments = 8
-	mesh.rings = 0
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = mesh
-	mi.rotation = Vector3(deg_to_rad(90.0), 0.0, 0.0)
-	mi.position = Vector3(pos_xy.x, pos_xy.y, base_z + RIVET_HEIGHT * 0.5 - 0.001)
-	mi.material_override = material
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	_apply_street_lit(mi)
-	add_child(mi)
+		var depth := (zv if vertical else zh) - z_back
+		var size := Vector3(POST_ACROSS, POST_ALONG, depth) if vertical \
+			else Vector3(POST_ALONG, POST_ACROSS, depth)
+		# The wall bows in toward the top, so the top post sits 6.5 mm lower to clear the reveal.
+		var post_at := at + Vector2(0.0, -POST_TOP_DROP) if sfx == "T" else at
+		geo.add_box(self, "Post" + sfx, size, post_at, z_back, iron)
+		var across := Vector2.RIGHT if vertical else Vector2.UP
+		for k in 2:
+			var p := at + across * (0.038 if k == 1 else -0.038)
+			geo.add_bolt(self, "FootBolt" + sfx + str(k), p, mount_z + FOOT_PROUD, rivet)
 
 
 ## Shared matte dark steel for every bar, plate and pad (intact and broken crosses).

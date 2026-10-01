@@ -2,16 +2,18 @@ class_name BrokenIronCross
 extends Node3D
 
 ## Blown-out iron + after a window breach. Same local frame as IronCross:
-## XY = glass face, +Z = outward. Center plate and mid-bars are gone;
-## only frame pads + jagged stubs remain.
-## Optional side-wall curve: top/bottom pads + stubs follow VanSideWall.
+## XY = glass face, +Z = outward. Centre plate and mid-tubes are gone;
+## only the feet, posts and bolts stay, with bent tube stubs jutting inward from the posts.
+## Optional side-wall curve: feet + posts follow VanSideWall (via IronCrossGeo).
 
-@export var span_width := 2.2
-@export var span_height := 1.23
-@export var bar_width := 0.055
-@export var bar_depth := 0.018
-@export var rivet_size := 0.02
-@export var end_pad_size := 0.11
+const IronCrossGeo := preload("res://scripts/van/iron_cross_geo.gd")
+
+@export var span_width := 2.32
+@export var span_height := 1.324
+@export var tube_size := 0.045
+@export var plate_size := 0.20
+## Back of the feet off the frame ring (the rear doors use the window lip).
+@export var mount_z := 0.03
 @export var curve_segments := 14
 @export var rebuild_on_ready := true
 
@@ -22,14 +24,19 @@ extends Node3D
 @export_range(0.12, 0.55, 0.01) var stub_length_min := 0.18
 @export_range(0.12, 0.55, 0.01) var stub_length_max := 0.42
 
-## Max outward bend (degrees). Long stubs get less; never near 90°.
+## Max bend toward the cabin (degrees). Long stubs get less; never near 90°.
 @export_range(5.0, 50.0, 1.0) var bend_out_max_deg := 32.0
-@export_range(0.0, 25.0, 1.0) var bend_side_max_deg := 14.0
 
 var _built := false
 var _rng := RandomNumberGenerator.new()
 var _curve_walls: VanSideWall = null
 var _curve_mid_y := 0.0
+var _geo: RefCounted = null
+## Longest stub so far, for the hanging plate (null while it curls outward).
+var _longest_len := 0.0
+var _longest_tip: Node3D = null
+## That tip's transform in this node's frame, to keep the plate in front of the foot plane.
+var _longest_xf := Transform3D.IDENTITY
 
 
 func _ready() -> void:
@@ -37,7 +44,7 @@ func _ready() -> void:
 		rebuild()
 
 
-## Bend remaining pads/stubs to match a bowed side wall.
+## Bend remaining feet/posts/stubs to match a bowed side wall.
 func follow_side_wall_curve(walls: VanSideWall, mid_y: float) -> void:
 	_curve_walls = walls
 	_curve_mid_y = mid_y
@@ -62,206 +69,191 @@ func _build() -> void:
 		_rng.randomize()
 
 	var iron := IronCross.iron_material()
-	# Same depth layout as the intact cross: vertical bar at zv, horizontal bar TRIM_LIFT out.
-	var zv := IronCross.BACK_Z + bar_depth * 0.5
-	var zh := zv + IronCross.TRIM_LIFT
-	# The intact plate's front face (its default plate_depth is 0.018): pads and rivets end there.
-	var plate_front := IronCross.BACK_Z + 2.0 * IronCross.TRIM_LIFT + 0.018
-	var half_w := span_width * 0.5 - IronCross.PAD_END_CLEAR - end_pad_size * 0.5
-	var half_h := span_height * 0.5 - IronCross.PAD_END_CLEAR - end_pad_size * 0.5
+	var rivet := IronCross.rivet_material()
+	var hw := span_width * 0.5
+	var hh := span_height * 0.5
+	var s := tube_size
+	var zv := IronCross.TUBE_BACK_Z + s * 0.5
+	var zh := zv + IronCross.TUBE_H_LIFT
+	_geo = IronCrossGeo.new(_curve_walls, _curve_mid_y, hw, hh)
+	_geo.segments = curve_segments
+	_geo.dent = 0.0
+	_longest_len = 0.0
+	_longest_tip = null
 
-	# Frame mounts stay — bars snap off inward of these.
-	var pad_h := Vector3(end_pad_size, end_pad_size * 0.85, plate_front - IronCross.BACK_Z)
-	var pad_v := Vector3(end_pad_size * 0.85, end_pad_size, pad_h.z - IronCross.TRIM_LIFT)
-	var z_h := plate_front - pad_h.z * 0.5
-	var z_v := plate_front - pad_v.z * 0.5
-	_add_box("EndPadR", pad_h, Vector3(half_w, 0.0, z_h), iron)
-	_add_box("EndPadL", pad_h, Vector3(-half_w, 0.0, z_h), iron)
-	_add_box("EndPadT", pad_v, Vector3(0.0, half_h, z_v + _curve_z(half_h)), iron)
-	_add_box("EndPadB", pad_v, Vector3(0.0, -half_h, z_v + _curve_z(-half_h)), iron)
-
-	for tip in [Vector2(half_w, 0.0), Vector2(-half_w, 0.0), Vector2(0.0, half_h), Vector2(0.0, -half_h)]:
-		_add_rivet(tip, plate_front + _curve_z(tip.y))
-
-	# Four stubs: inward from each pad, center gap left open.
-	# inward = direction from frame toward window center.
-	_add_stub("StubRight", Vector3(half_w, 0.0, zh), Vector3(-1.0, 0.0, 0.0), half_w, iron)
-	_add_stub("StubLeft", Vector3(-half_w, 0.0, zh), Vector3(1.0, 0.0, 0.0), half_w, iron)
-	_add_stub(
-		"StubTop",
-		Vector3(0.0, half_h, zv + _curve_z(half_h)),
-		_curved_inward(half_h, -1.0),
-		half_h,
-		iron
-	)
-	_add_stub(
-		"StubBottom",
-		Vector3(0.0, -half_h, zv + _curve_z(-half_h)),
-		_curved_inward(-half_h, 1.0),
-		half_h,
-		iron
-	)
-
-
-## Unit tangent along the wall curve from local_y toward the center (sign_dir).
-func _curved_inward(local_y: float, sign_dir: float) -> Vector3:
-	if _curve_walls == null:
-		return Vector3(0.0, sign_dir, 0.0)
-	var eps := 0.04 * sign_dir
-	var y1 := local_y + eps
-	var d := Vector3(0.0, y1 - local_y, _curve_z(y1) - _curve_z(local_y))
-	if d.length_squared() < 0.000001:
-		return Vector3(0.0, sign_dir, 0.0)
-	return d.normalized()
+	# Feet and posts stay; each end is [suffix, position, vertical tube, centre z, half span].
+	var ends := [
+		["T", Vector2(0.0, hh), true, zv, hh],
+		["B", Vector2(0.0, -hh), true, zv, hh],
+		["R", Vector2(hw, 0.0), false, zh, hw],
+		["L", Vector2(-hw, 0.0), false, zh, hw],
+	]
+	var post_back := mount_z + IronCross.FOOT_PROUD - 0.004
+	for end in ends:
+		var sfx: String = end[0]
+		var at: Vector2 = end[1]
+		var vertical: bool = end[2]
+		var zc: float = end[3]
+		var inward := -Vector2(signf(at.x), signf(at.y))
+		var fa := IronCross.FOOT_ACROSS * 0.5
+		var fl := IronCross.FOOT_ALONG * 0.5
+		var foot_poly := IronCrossGeo.chamfered_rect(
+			fa if vertical else fl, fl if vertical else fa, IronCross.FOOT_CHAMFER
+		)
+		_geo.add_prism(
+			self, "Foot" + sfx, foot_poly, at, mount_z - IronCross.FOOT_SINK,
+			IronCross.FOOT_SINK + IronCross.FOOT_PROUD, iron
+		)
+		# Caps the stub's root too, since no tube runs through the post here.
+		var post_depth := zc + s * 0.5 - post_back
+		var post_size := Vector3(IronCross.POST_ACROSS, IronCross.POST_ALONG, post_depth)
+		if not vertical:
+			post_size = Vector3(IronCross.POST_ALONG, IronCross.POST_ACROSS, post_depth)
+		var post_at := at + Vector2(0.0, -IronCross.POST_TOP_DROP) if sfx == "T" else at
+		_geo.add_box(self, "Post" + sfx, post_size, post_at, post_back, iron)
+		for k in 2:
+			var side := -1.0 if k == 0 else 1.0
+			var bolt_at := at + (Vector2(side * 0.038, 0.0) if vertical else Vector2(0.0, side * 0.038))
+			_geo.add_bolt(
+				self, "FootBolt" + sfx + str(k), bolt_at, mount_z + IronCross.FOOT_PROUD, rivet
+			)
+		_add_weld_beads(at, vertical, iron)
+		_add_stub(sfx, at, inward, vertical, end[4], zc, iron)
+	if _longest_tip != null:
+		_add_hanging_plate(_longest_tip)
 
 
+## `at` is the post centre, `inward` the unit tube direction toward the window centre.
 func _add_stub(
-	node_name: String,
-	anchor: Vector3,
-	inward: Vector3,
+	sfx: String,
+	at: Vector2,
+	inward: Vector2,
+	vertical: bool,
 	half_span: float,
+	z_centre: float,
 	iron: Material
 ) -> void:
+	var s := tube_size
 	var length_t := _rng.randf_range(stub_length_min, stub_length_max)
 	# Keep a clear blown-out hole; never reach the center plate zone.
 	var max_reach := half_span * 0.72
-	var stub_len := clampf(half_span * length_t, bar_width * 1.2, max_reach)
+	var stub_len := clampf(half_span * length_t, s * 1.2, max_reach)
 
 	# Longer stubs stay straighter so they don't sweep into pathing space.
 	var length_factor := inverse_lerp(stub_length_min, stub_length_max, length_t)
-	var out_cap := lerpf(bend_out_max_deg, bend_out_max_deg * 0.35, length_factor)
-	var side_cap := lerpf(bend_side_max_deg, bend_side_max_deg * 0.25, length_factor)
-	# Hard ceiling well below 90° — no floor-horizontal spears.
-	out_cap = minf(out_cap, 40.0)
-	side_cap = minf(side_cap, 18.0)
+	var out_cap := minf(lerpf(bend_out_max_deg, bend_out_max_deg * 0.35, length_factor), 40.0)
+	var bend := deg_to_rad(_rng.randf_range(out_cap * 0.25, out_cap))
+	# Most stubs bend toward the cabin (-Z); occasional mild curl the other way.
+	var curls := _rng.randf() < 0.18
+	if curls:
+		bend *= -0.45
 
-	var bend_out := deg_to_rad(_rng.randf_range(out_cap * 0.25, out_cap))
-	var bend_side := deg_to_rad(_rng.randf_range(-side_cap, side_cap))
-	# Bias most stubs outward (+Z); occasional mild inward curl.
-	if _rng.randf() < 0.18:
-		bend_out *= -0.45
-
+	# Pivot on the post centre, bent about the axis across the tube (-Z for inward tilt).
+	var wall_basis: Basis = _geo.basis_at(at.x, at.y)
 	var pivot := Node3D.new()
-	pivot.name = node_name
-	pivot.position = anchor
-	# Local Y = along bar toward center, local Z = glass outward (+Z), X = across.
-	var across := Vector3(-inward.y, inward.x, 0.0)
-	if across.length_squared() < 0.001:
-		across = Vector3.RIGHT
-	across = across.normalized()
-	# For curved vertical stubs, across stays world-X (local iron X).
-	if absf(inward.x) < 0.01 and absf(inward.z) > 0.001:
-		across = Vector3.RIGHT
-	var x_axis := across
-	var y_axis := inward.normalized()
-	var z_axis := x_axis.cross(y_axis).normalized()
-	if z_axis.dot(Vector3(0.0, 0.0, 1.0)) < 0.0:
-		x_axis = -x_axis
-		z_axis = x_axis.cross(y_axis).normalized()
-	pivot.basis = Basis(x_axis, y_axis, z_axis)
-	# Right = outward bend into +Z; Forward/Z = in-plane sideways curl.
-	pivot.rotate_object_local(Vector3.RIGHT, bend_out)
-	pivot.rotate_object_local(Vector3(0.0, 0.0, 1.0), bend_side)
+	pivot.name = "Stub" + sfx
+	pivot.position = Vector3(at.x, at.y, _geo.surface_z(at.x, at.y)) + wall_basis.z * z_centre
+	var across := Vector3.RIGHT if vertical else Vector3.UP
+	var bend_sign := -inward.y if vertical else inward.x
+	var axis := Vector3(inward.x, inward.y, 0.0)
+	pivot.basis = wall_basis
+	pivot.rotate_object_local(across, bend * bend_sign)
+	pivot.rotate_object_local(axis, _rng.randf_range(-0.25, 0.25))
 	add_child(pivot)
 
-	# Root segment from frame toward break.
-	var root_frac := _rng.randf_range(0.55, 0.78)
-	var root_len := stub_len * root_frac
-	var tip_len := stub_len - root_len
-	_add_box_to(
-		pivot,
-		"Root",
-		Vector3(bar_width, root_len, bar_depth),
-		Vector3(0.0, root_len * 0.5, 0.0),
-		iron
-	)
+	var offset_node := Node3D.new()
+	offset_node.name = "StubOffset"
+	offset_node.position = axis * stub_len * 0.5
+	pivot.add_child(offset_node)
+	# Flat geo: the stub is straight, the pivot carries the wall's orientation.
+	var flat := IronCrossGeo.new(null, 0.0, 1.0, 1.0)
+	flat.segments = 2
+	flat.on_mesh = _geo.on_mesh
+	flat.add_tube(offset_node, "Tube", vertical, stub_len * 0.5, s, IronCross.TUBE_CHAMFER, 0.0, iron)
 
-	# Jagged tip: shorter, kinked, slightly thinned — snapped look.
+	# Tip frame: local Y along the tube, at the tube's torn end.
 	var tip := Node3D.new()
 	tip.name = "Tip"
-	tip.position = Vector3(0.0, root_len, 0.0)
-	var kink_side := deg_to_rad(_rng.randf_range(-22.0, 22.0))
-	var kink_out := deg_to_rad(_rng.randf_range(-18.0, 28.0))
-	# If root was long, keep tip kink modest.
-	kink_side *= lerpf(1.0, 0.4, length_factor)
-	kink_out *= lerpf(1.0, 0.45, length_factor)
-	tip.rotate_object_local(Vector3.RIGHT, kink_out)
-	tip.rotate_object_local(Vector3(0.0, 0.0, 1.0), kink_side)
+	tip.position = axis * stub_len
+	tip.basis = Basis(Vector3.BACK, Vector2(0.0, 1.0).angle_to(inward))
 	pivot.add_child(tip)
 
-	var tip_w := bar_width * _rng.randf_range(0.7, 1.05)
-	var tip_d := bar_depth * _rng.randf_range(0.75, 1.1)
-	_add_box_to(
-		tip,
-		"Shard",
-		Vector3(tip_w, maxf(tip_len, bar_width * 0.8), tip_d),
-		Vector3(0.0, maxf(tip_len, bar_width * 0.8) * 0.5, 0.0),
-		iron
-	)
+	# Torn end: two thin slivers splayed past the tube's end, so it reads ripped, not cut.
+	for side in [-1.0, 1.0]:
+		var sliver_len := _rng.randf_range(0.02, 0.05)
+		var sliver := Node3D.new()
+		sliver.name = "Sliver"
+		# Starts 3 mm past the tube end so the faces never overlap it.
+		sliver.position = Vector3(side * s * 0.25, 0.003, 0.0)
+		sliver.rotate_object_local(Vector3(0.0, 0.0, 1.0), deg_to_rad(_rng.randf_range(-25.0, 25.0)))
+		tip.add_child(sliver)
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(s * _rng.randf_range(0.35, 0.55), sliver_len, s * 0.8)
+		var mi := MeshInstance3D.new()
+		mi.name = "Bit"
+		mi.mesh = mesh
+		mi.position = Vector3(0.0, sliver_len * 0.5, 0.0)
+		mi.material_override = iron
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		if _geo.on_mesh.is_valid():
+			_geo.on_mesh.call(mi)
+		sliver.add_child(mi)
 
-	# Occasional tiny break flake near the snap for extra jaggedness.
-	if _rng.randf() < 0.55:
-		var flake_len := bar_width * _rng.randf_range(0.6, 1.3)
-		var flake := Node3D.new()
-		flake.name = "Flake"
-		flake.position = Vector3(
-			_rng.randf_range(-bar_width * 0.15, bar_width * 0.15),
-			tip_len * _rng.randf_range(0.2, 0.7),
-			bar_depth * _rng.randf_range(0.1, 0.35)
+	if stub_len > _longest_len:
+		_longest_len = stub_len
+		_longest_tip = null if curls else tip  # a curling longest stub means no plate
+		_longest_xf = pivot.transform * tip.transform
+
+
+## 2 or 3 small cubes where the post meets the foot front, half sunk, on the post's sides.
+func _add_weld_beads(at: Vector2, vertical: bool, iron: Material) -> void:
+	var across := Vector2.RIGHT if vertical else Vector2.UP
+	var along := Vector2.UP if vertical else Vector2.RIGHT
+	var base := mount_z + IronCross.FOOT_PROUD
+	var count := _rng.randi_range(2, 3)
+	for i in count:
+		var size := _rng.randf_range(0.014, 0.022)
+		var side := 1.0 if i % 2 == 0 else -1.0
+		var spot := at + across * side * IronCross.POST_ACROSS * 0.5
+		spot += along * _rng.randf_range(-0.3, 0.3) * IronCross.POST_ALONG
+		var bead: MeshInstance3D = _geo.add_box(
+			self, "WeldBead", Vector3(size, size, size), spot, base - size * 0.5, iron
 		)
-		flake.rotate_object_local(Vector3.RIGHT, deg_to_rad(_rng.randf_range(-40.0, 40.0)))
-		flake.rotate_object_local(Vector3.UP, deg_to_rad(_rng.randf_range(-35.0, 35.0)))
-		tip.add_child(flake)
-		_add_box_to(
-			flake,
-			"Bit",
-			Vector3(bar_width * 0.45, flake_len, bar_depth * 0.5),
-			Vector3(0.0, flake_len * 0.5, 0.0),
-			iron
-		)
+		bead.basis = _geo.basis_at(spot.x, spot.y) * Basis(Vector3.BACK, _rng.randf_range(0.0, TAU))
 
 
-func _curve_z(local_y: float) -> float:
-	if _curve_walls == null:
-		return 0.0
-	return _curve_walls.wall_x_at(_curve_mid_y + local_y) - _curve_walls.wall_x_at(_curve_mid_y)
-
-
-func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material) -> void:
-	_add_box_to(self, node_name, size, pos, material)
-
-
-func _add_box_to(
-	parent: Node,
-	node_name: String,
-	size: Vector3,
-	pos: Vector3,
-	material: Material
-) -> void:
-	var mesh := BoxMesh.new()
-	mesh.size = size
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = mesh
-	mi.position = pos
-	mi.material_override = material
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	parent.add_child(mi)
-
-
-## Cone rivet head on a face at local z `base_z`, same shape as IronCross._add_rivet.
-func _add_rivet(pos_xy: Vector2, base_z: float) -> void:
-	var mesh := CylinderMesh.new()
-	mesh.bottom_radius = rivet_size * 0.5
-	mesh.top_radius = IronCross.RIVET_TOP_RADIUS
-	mesh.height = IronCross.RIVET_HEIGHT
-	mesh.radial_segments = 8
-	mesh.rings = 0
-	var mi := MeshInstance3D.new()
-	mi.name = "TipRivet"
-	mi.mesh = mesh
-	mi.rotation = Vector3(deg_to_rad(90.0), 0.0, 0.0)
-	mi.position = Vector3(pos_xy.x, pos_xy.y, base_z + IronCross.RIVET_HEIGHT * 0.5 - 0.001)
-	mi.material_override = IronCross.rivet_material()
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	add_child(mi)
+## The centre plate, torn loose: it dangles off the longest stub's tip, sagging into the cabin.
+func _add_hanging_plate(stub_tip: Node3D) -> void:
+	var centre_y := plate_size * 0.45
+	var twist := deg_to_rad(_rng.randf_range(-20.0, 20.0))
+	var tilt := deg_to_rad(_rng.randf_range(35.0, 70.0))
+	# Never let the plate's lowest corner pass behind the foot plane.
+	while tilt > 0.0:
+		var xf := _longest_xf * Transform3D(Basis(Vector3.RIGHT, -tilt) * Basis(Vector3.BACK, twist))
+		var lowest := INF
+		for cx in [-1.0, 1.0]:
+			for cy in [centre_y - plate_size * 0.5, centre_y + plate_size * 0.5]:
+				var p: Vector3 = xf * Vector3(cx * plate_size * 0.5, cy, 0.0)
+				lowest = minf(lowest, p.z - _geo.surface_z(p.x, p.y))
+		if lowest >= mount_z:
+			break
+		tilt -= 0.05
+	tilt = maxf(tilt, 0.0)
+	var hinge := Node3D.new()
+	hinge.name = "HangingPlate"
+	hinge.rotate_object_local(Vector3.RIGHT, -tilt)
+	hinge.rotate_object_local(Vector3(0.0, 0.0, 1.0), twist)
+	stub_tip.add_child(hinge)
+	var plate_node := Node3D.new()
+	plate_node.name = "PlateOffset"
+	plate_node.position = Vector3(0.0, centre_y, 0.0)
+	hinge.add_child(plate_node)
+	var flat := IronCrossGeo.new(null, 0.0, 1.0, 1.0)
+	flat.on_mesh = _geo.on_mesh
+	var half := plate_size * 0.5
+	var poly := IronCrossGeo.chamfered_rect(half, half, 0.012)
+	flat.add_prism(plate_node, "Plate", poly, Vector2.ZERO, 0.0, IronCross.PLATE_DEPTH, IronCross.iron_material())
+	# The other two bolt holes are empty: those bolts sheared.
+	for side in [-1.0, 1.0]:
+		var bolt_at := Vector2(side * (half - 0.03), half - 0.03)
+		flat.add_bolt(plate_node, "PlateBolt", bolt_at, IronCross.PLATE_DEPTH, IronCross.rivet_material())

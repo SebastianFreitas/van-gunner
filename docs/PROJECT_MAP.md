@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-325 GDScript files, 50614 lines.
+326 GDScript files, 50789 lines.
 
 ### `scenes/corridor/`
 
@@ -395,7 +395,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
-| `debug_commands.gd` | — | 246 | Parses and runs debug console commands. |
+| `debug_commands.gd` | — | 248 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
 | `debug_facade_commands.gd` | — | 336 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
 | `debug_gap_light.gd` | — | 175 | Debug gap light: paints everything that is not van magenta, so a see-through seam shows pink. |
@@ -403,7 +403,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `debug_meta_commands.gd` | — | 55 | Debug console commands: meta. |
 | `debug_run_flow_commands.gd` | — | 54 | Debug console commands: run flow. |
 | `debug_street_art_commands.gd` | — | 26 | Debug console commands for the street-art pool: print its stats or save its atlas as a contact sheet PNG. |
-| `debug_van_commands.gd` | — | 178 | Debug console commands: van. |
+| `debug_van_commands.gd` | — | 205 | Debug console commands: van. |
 
 ### `scripts/dialogue/`
 
@@ -418,7 +418,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `biker_boss.gd` | `BikerBoss` | 310 | Wanjna: hit-and-run biker. |
 | `breach_controller.gd` | `BreachController` | 277 | Assigns raid slots around the van and interior vital damage targets. |
-| `breach_point.gd` | `BreachPoint` | 365 | Outside attack slot that must be breached (or opened) before mobs can enter. |
+| `breach_point.gd` | `BreachPoint` | 391 | Outside attack slot that must be breached (or opened) before mobs can enter. |
 | `cabin_nav.gd` | `CabinNav` | 333 | Van-local waypoint graph + occupancy. |
 | `cabin_nav_paths.gd` | — | 163 | A* pathfinding and slot geometry over CabinNav's waypoint graph. |
 | `encounter_director.gd` | `EncounterDirector` | 319 | Drives the travel/combat/rest cycle and owns the external spawn API for a run. |
@@ -644,8 +644,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `breakable_glass.gd` | — | 121 | Breakable window pane (rear doors or side openings). |
-| `broken_iron_cross.gd` | `BrokenIronCross` | 268 | Blown-out iron + after a window breach. |
-| `iron_cross.gd` | `IronCross` | 401 | Welded iron + on a window pane. |
+| `broken_iron_cross.gd` | `BrokenIronCross` | 260 | Blown-out iron + after a window breach. |
+| `iron_cross.gd` | `IronCross` | 261 | Welded iron + outside a window pane. |
+| `iron_cross_geo.gd` | — | 268 | Mesh builder for IronCross: bars, plate, pads and rivets that follow the bowed side wall. |
 | `rear_door_frame.gd` | — | 143 | Fixed steel frame on the cabin side of the rear doors, covering the leaves' clearance slits. |
 | `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
 | `rear_door_leaf_build.gd` | — | 140 | Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55). |
@@ -1000,4 +1001,4 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `ghost`, `torch`, `floodlight`, `gaplight`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`, `walk_wreck`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `ghost`, `torch`, `floodlight`, `gaplight`, `bars`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`, `walk_wreck`

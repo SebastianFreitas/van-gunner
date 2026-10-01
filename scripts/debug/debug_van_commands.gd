@@ -146,6 +146,33 @@ func cmd_gaplight(args: Array) -> String:
 	return _gap_light.run(rig as Node3D, args)
 
 
+func cmd_bars(args: Array) -> String:
+	var usage := "bars <0|1|2|break|fix>  window bars: damage stage, break them, or restore them (looks only, HP untouched)"
+	var van := host.get_tree().get_first_node_in_group(&"van_run")
+	if van == null:
+		return "bars: no van"
+	var arg: String = str(args[0]).to_lower() if not args.is_empty() else ""
+	if not arg in ["0", "1", "2", "break", "fix"]:
+		return usage
+	var count := 0
+	for node in host.get_tree().root.find_children("*IronCross", "", true, false):
+		if not node is IronCross or String(node.name).begins_with("BrokenIronCross"):
+			continue
+		count += 1
+		match arg:
+			"break":
+				if (node as IronCross).visible:
+					node.call(&"break_bars")
+			"fix":
+				node.call(&"repair_bars")
+				if node.has_method(&"set_damage_stage"):
+					node.call(&"set_damage_stage", 0)
+			_:
+				if node.has_method(&"set_damage_stage"):
+					node.call(&"set_damage_stage", int(arg))
+	return "bars: %s on %d windows" % [arg, count]
+
+
 ## Resolves "on" / "off" / bare toggle against the current state.
 func _toggle_target(args: Array, current: bool) -> bool:
 	var action: String = str(args[0]).to_lower() if not args.is_empty() else ""

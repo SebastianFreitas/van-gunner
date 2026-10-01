@@ -29,6 +29,8 @@ var health := 0.0
 var is_breached := false
 var _occupants: Array[Node] = []
 var _glass_cleared := false
+## Last damage stage sent to the window bars (0 sound .. 2 nearly gone).
+var _bars_stage := 0
 
 
 func _ready() -> void:
@@ -115,6 +117,7 @@ func take_damage(amount) -> void:
 	_shatter_window_glass_if_needed()
 	health = maxf(0.0, health - dmg)
 	health_changed.emit(health, max_health)
+	_update_bars_stage()
 	CombatFeedback.show_damage(get_outside_position() + Vector3(0, 0.6, 0), dmg, false)
 	if is_zero_approx(health):
 		_mark_breached()
@@ -136,7 +139,30 @@ func repair(amount: float) -> float:
 		if was_breached:
 			_restore_after_repair()
 	health_changed.emit(health, max_health)
+	_update_bars_stage()
 	return gained
+
+
+## Bend the window bars as HP drops: stage 0 above 2/3, 1 above 1/3, else 2.
+func _update_bars_stage() -> void:
+	if kind != Kind.WINDOW and kind != Kind.SIDE_DOOR_WINDOW:
+		return
+	if is_breached:
+		return
+	var frac := health / max_health if max_health > 0.0 else 1.0
+	var stage := 0
+	if frac <= 1.0 / 3.0:
+		stage = 2
+	elif frac <= 2.0 / 3.0:
+		stage = 1
+	if stage == _bars_stage:
+		return
+	_bars_stage = stage
+	if bars_path.is_empty():
+		return
+	var bars := get_node_or_null(bars_path)
+	if bars and bars.has_method(&"set_damage_stage"):
+		bars.call(&"set_damage_stage", stage)
 
 
 func is_at_full_health() -> bool:
