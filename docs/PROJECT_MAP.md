@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-301 GDScript files, 46355 lines.
+301 GDScript files, 46356 lines.
 
 ### `scenes/corridor/`
 
@@ -642,7 +642,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_armour.gd` | `VanArmour` | 260 | The van's seeded outer armour: plates, rebar and spikes on the real hull skin, placed from slots clear of every opening and merged per material. |
 | `van_armour_pieces.gd` | — | 84 | Appends armour piece geometry (leaned plates, bars, spikes) into per-material SurfaceTools for VanArmour. |
 | `van_cab.gd` | `VanCab` | 189 | The van's cab-over cab on the body profile: one closed body with a raked windshield, grille, headlights, doors, mirrors and two real headlights, rebuilt from t… |
-| `van_cab_body.gd` | — | 311 | One closed cab body lofted from VanBodyProfile's section: a vertical lower face, a raked windshield face with its glass in a sealed pocket, bevelled front corn… |
+| `van_cab_body.gd` | — | 312 | One closed cab body lofted from VanBodyProfile's section: a vertical lower face, a raked windshield face with its glass in a sealed pocket, bevelled front corn… |
 | `van_cab_face.gd` | — | 144 | Dresses the cab body's face and sides: grille, headlight housings and the two cab doors with windows. |
 | `van_cab_parts.gd` | — | 22 | The cab's side mirrors, on seeded arms off the body's sides. |
 | `van_cable_router.gd` | — | 289 | Routes power cables around machine keep-out boxes inside the bowed shell and builds the small clamp, junction box, tape, plug and coil parts that VanCableRuns… |

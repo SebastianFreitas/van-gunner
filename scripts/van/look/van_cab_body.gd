@@ -280,13 +280,14 @@ func _vertex(st: SurfaceTool, p: Vector3, uv_mode: int, group: int) -> void:
 	st.add_vertex(p)
 
 
-## One triangle wound to face away from the inside reference (toward it when inward).
+## One triangle wound clockwise as seen from outside (Godot's front face), facing away from the
+## inside reference (toward it when inward).
 func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, inside: Vector3, uv_mode: int,
 		group: int, inward: bool = false) -> void:
 	var facing := (b - a).cross(c - a).normalized().dot(((a + b + c) / 3.0 - inside).normalized())
 	if inward:
 		facing = -facing
-	if facing < 0.0:
+	if facing >= 0.0:
 		_vertex(st, a, uv_mode, group)
 		_vertex(st, c, uv_mode, group)
 		_vertex(st, b, uv_mode, group)
@@ -304,7 +305,7 @@ func _quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, insi
 	if inward:
 		facing = -facing
 	var order: Array[Vector3] = [a, b, c, a, c, d]
-	if facing < 0.0:
-		order = [a, d, c, a, c, b]
+	if facing >= 0.0:
+		order =[a, d, c, a, c, b]
 	for p in order:
 		_vertex(st, p, uv_mode, group)
