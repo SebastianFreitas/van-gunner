@@ -1,12 +1,15 @@
 extends RefCounted
 ## Axle beams, differentials hanging below the belly and the 4x4 driveshaft between them, under the lifted van body; built under VanWheels by its rebuild_look.
 
-## Differential housing (x, y, z) and how far its centre hangs below the hub, so most of it shows under the belly.
+## Differential housing (x, y, z) and how far its centre hangs below the hub, so most of it shows under the belly
+## and its top stays 4 cm under the axle beam's top (the audit's 1 cm flicker rule).
 const DIFF_SIZE := Vector3(0.44, 0.36, 0.38)
-const DIFF_DROP := 0.14
-## Driveshaft height: 10 cm under the hull's underside; its joints stop 5 mm under the cab's bottom (-0.29) and 1.5 cm above the diffs' bottom.
+const DIFF_DROP := 0.17
+## Driveshaft height: 10 cm under the hull's underside; its joints stop 5 mm under the cab's bottom (-0.29) and 4.5 cm above the diffs' bottom.
 const SHAFT_Y := VanWheels.HULL_BOTTOM_Y - 0.10
-const SHAFT_T := 0.09
+## Shaft thickness: 2 cm inside each joint's faces, and its ends tuck 3 cm into the joints (flicker rule).
+const SHAFT_T := 0.07
+const SHAFT_TUCK := 0.03
 ## U-joint block at each shaft end.
 const JOINT_SIZE := 0.11
 
@@ -47,7 +50,8 @@ func _diff(diff_name: String, z: float, hub_y: float, cover_dir: float) -> void:
 
 
 func _shaft(shaft_name: String, z_from: float, z_to: float, y: float) -> void:
-	_box(shaft_name, Vector3(SHAFT_T, SHAFT_T, z_to - z_from), Vector3(0.0, y, (z_from + z_to) * 0.5))
+	_box(shaft_name, Vector3(SHAFT_T, SHAFT_T, z_to - z_from - 2.0 * SHAFT_TUCK),
+			Vector3(0.0, y, (z_from + z_to) * 0.5))
 	_box(shaft_name + "Joint0", Vector3.ONE * JOINT_SIZE,
 			Vector3(0.0, y, z_from + JOINT_SIZE * 0.5))
 	_box(shaft_name + "Joint1", Vector3.ONE * JOINT_SIZE,

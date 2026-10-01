@@ -274,12 +274,20 @@ func _build_front(walls: VanSideWall) -> void:
 
 	# The fill: stands in front of the interior front wall's slab (so it never shows) and closes
 	# its sides and top back to the returns, since the bolted-on cab is smaller than the box.
-	var zf := VanFrontWall.BACK_Z - FRONT_FILL_GAP_M
+	# In front of the floor deck's front face too (z = -span_z / 2), so the deck never shows.
 	var g := FRONT_FILL_GAP_M
+	var zf := minf(VanFrontWall.BACK_Z, z) - g
 	var h: float = walls.wall_height
 	var rows := 12
+	# The fill's foot is at least as wide as the floor deck, whose front corners would otherwise
+	# poke 3 mm past the band below the sills' start (the audit's LEAK_OUT at the front corners).
+	var x0: float = _profile.outer_x_at(0.0)
+	var floor_node := walls.get_parent().get_node_or_null(^"Floor") as VanFloor
+	if floor_node != null:
+		x0 = maxf(x0, floor_node.span_x * 0.5)
 	var pts := PackedVector2Array()
-	pts.append(Vector2(_profile.outer_x_at(0.0) + g, VanCab.BASE_Y))
+	pts.append(Vector2(x0 + g, VanCab.BASE_Y))
+	pts.append(Vector2(x0 + g, 0.0))
 	for i in range(1, rows + 1):
 		var y := h * float(i) / float(rows)
 		pts.append(Vector2(_profile.outer_x_at(y) + g, y))
@@ -293,7 +301,8 @@ func _build_front(walls: VanSideWall) -> void:
 	for i in range(rows, 0, -1):
 		var y := h * float(i) / float(rows)
 		pts.append(Vector2(-(_profile.outer_x_at(y) + g), y))
-	pts.append(Vector2(-(_profile.outer_x_at(0.0) + g), VanCab.BASE_Y))
+	pts.append(Vector2(-(x0 + g), 0.0))
+	pts.append(Vector2(-(x0 + g), VanCab.BASE_Y))
 	var c := Vector2.ZERO
 	for p: Vector2 in pts:
 		c += p
@@ -314,8 +323,11 @@ func _build_front(walls: VanSideWall) -> void:
 		var out := Vector3(nrm.x, nrm.y, 0.0).normalized()
 		var pf := Vector3(p.x, p.y, zf)
 		var qf := Vector3(q.x, q.y, zf)
-		var qb := Vector3(q.x, q.y, z)
-		var pb := Vector3(p.x, p.y, z)
+		# The foot (below the deck top) runs back to the sills' start, closing the deck's side
+		# faces at the front corners, which nothing else covers between the returns and the sills.
+		var zb := _HullPatches.SILL_Z0 if p.y <= 0.0 and q.y <= 0.0 else z
+		var qb := Vector3(q.x, q.y, zb)
+		var pb := Vector3(p.x, p.y, zb)
 		_rear_tri(st, pf, qf, qb, out)
 		_rear_tri(st, pf, qb, pb, out)
 
