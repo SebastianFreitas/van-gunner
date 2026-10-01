@@ -233,16 +233,26 @@ target; its grid is not (it is upscaled about 3.2x off any exact grid).
   characters and pickups. Sprites are unshaded on purpose: in a dark world
   they are what the eye finds first.
 
-**Beasts, not humans** (owner, 2026-10-01): the raiders are cat-like beasts
-in washed yellow with a big lolling tongue, a red stripe centred on the face
-that runs up the back in white and onto a full white tail. The door raider
-is the fat big-headed one (80 x 72 canvas, 1.92 x 1.73 m, feet on the van
-floor); the window raider is the low crawler (80 x 48, 1.15 m tall, so it
-fits a side window). Both are drawn by `tools/gen_enemy_sprites.py` (19
-flat colours each, outlined, lit from the upper left) and shown at
+**Creepy, not cute** (owner, 2026-10-01, second pass): the raiders are Darkest
+Dungeon dark, never bright or rounded. The door raider is a humanoid gone
+feral, the loper: a 64 x 80 frame (1.54 x 1.92 m, claws on the van floor) on a
+256 x 80 four-frame run sheet (animation is frame-swapping on one sheet, never a
+node tween: a hand lands low and out, slides in, lifts to hang before the belly,
+reaches; the body bobs 2 px and the jaw trails it),
+hunched so the skull hangs forward below two shoulder balls and a knobbed
+spine hump, arms longer than the legs with the claws on the floor, a tilted
+gaunt skull with a dark brow over black eye pits (one pale pixel each, looking
+up), a round hanging jaw with uneven teeth over a dark red throat, a torn
+shoulder and blood down the belly. Corpse grey-green skin (sRGB 72,78,68 base,
+42,46,40 shadow, 104,110,96 highlight), bone and teeth under 0.35 linear,
+nothing above the albedo budget, so it reads as a shape the dark swallows.
+Asymmetry (the tilted head, one arm lower, uneven teeth) is what keeps a
+sprite from reading as cute. The window raider is still the first-pass
+yellow cat crawler (80 x 48, 1.15 m tall, so it fits a side window) and waits
+for its own redraw to this rule. Both are drawn by `tools/gen_enemy_sprites.py`
+(16 and 19 flat colours, outlined, lit from the upper left) and shown at
 `pixel_size 0.024`, `texture_filter 0`, `alpha_cut 1`; re-run the script
-after changing a colour or a shape, never paint over the PNGs. The two
-base sprites are the first on this rule and the model for the rest.
+after changing a colour or a shape, never paint over the PNGs.
 
 Off-style today, to redraw to this rule (not to copy from): the mechanic
 and Wanjna PNGs (painted, 10,000+ colours, soft red outline), the other

@@ -27,6 +27,7 @@ const _PLAYER_BIAS := 0.4
 ## Per-frame chase math and target-picking helpers. RefCounted, bound to this node.
 const _RaiderMotion := preload("res://scripts/enemies/window_raider_motion.gd")
 const _RaiderTargeting := preload("res://scripts/enemies/window_raider_targeting.gd")
+const _RaiderAnim := preload("res://scripts/enemies/window_raider_anim.gd")
 ## Fits the crawler's sprite, hitboxes and health bar to its lower canvas.
 const _RaiderLook := preload("res://scripts/enemies/window_raider_look.gd")
 
@@ -60,6 +61,7 @@ var _move_arrived := true
 var _chase_player := false
 
 var _motion: _RaiderMotion
+var _anim: _RaiderAnim
 var _targeting: _RaiderTargeting
 
 @onready var sprite: Sprite3D = $Sprite3D
@@ -73,6 +75,7 @@ func _init() -> void:
 	# begin_assault may be called by EncounterDirector right after instancing/add_child,
 	# before _ready runs — build the helpers as early as possible.
 	_motion = _RaiderMotion.new(self)
+	_anim = _RaiderAnim.new(self)
 	_targeting = _RaiderTargeting.new(self)
 
 
@@ -92,15 +95,19 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not _active or is_defeated:
 		return
+	var moving := false
 	if _chase_player:
 		_motion.physics_chase_player(delta)
+		moving = not _move_arrived
 	elif (
 		(_move_has_local or (_move_marker and is_instance_valid(_move_marker)))
 		and not _move_arrived
 	):
 		_motion.physics_chase_target(delta)
+		moving = not _move_arrived
 	elif _attach_marker and is_instance_valid(_attach_marker):
 		_snap_to_marker(_attach_marker)
+	_anim.step(delta, moving)
 
 
 func _configure_status_from_traits() -> void:
@@ -141,6 +148,8 @@ func mark_as_boss() -> void:
 	_base_modulate = Color.WHITE
 	if sprite:
 		sprite.texture = _BOSS_SPRITE
+		# The boss PNG is a single frame while the scene's sheet is four.
+		sprite.hframes = 1
 		sprite.modulate = _base_modulate
 		sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 

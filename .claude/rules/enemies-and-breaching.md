@@ -30,13 +30,16 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
 
 ## Beast sprites and hitboxes
 
-- `scenes/enemies/window_raider.tscn` holds the fat door beast: `Sprite3D` at
-  `pixel_size 0.024` on the 80 x 72 `door_raider.png`, centred 0.756 m
-  below the node so its feet sit at -1.62, the van floor under the 1.62 m
-  breach markers; the body hitbox is a cylinder (r 0.85, h 1.3 at y -0.95)
-  and the head a sphere (r 0.5 at y -0.8), both orientation-free because the
-  sprite is a billboard and the node is not. `EnemyHealthBar.height` sets the
-  bar's height per scene.
+- `scenes/enemies/window_raider.tscn` holds the door raider, a hunched humanoid
+  feral (the loper): `Sprite3D` at `pixel_size 0.024` on `door_raider.png`, a 256 x 80 sheet of
+  four 64 x 80 run frames (`hframes 4`, each 1.54 x 1.92 m; frame 0 is the still,
+  `window_raider_anim.gd` steps `frame` at 8 fps while the raider moves and rests
+  it on 0; the crawler and the boss set `hframes 1`), centred 0.66 m below the node so its claws
+  sit at -1.62, the van floor under the 1.62 m breach markers; the body hitbox
+  is a cylinder (r 0.7, h 1.75 at y -0.75: floor to the top of the hump) and the
+  head a sphere (r 0.36 at y -0.5: the skull and the hanging jaw), both
+  orientation-free because the sprite is a billboard and the node is not.
+  `EnemyHealthBar.height` sets the bar's height per scene.
 - The window crawler (`agile_raider.png`, 80 x 48) is fitted at `_ready` by
   `window_raider_look.gd`: sprite centred on the node (at a window the node
   is in the opening) with a 16 px `Sprite3D.offset` so the head drawn on the

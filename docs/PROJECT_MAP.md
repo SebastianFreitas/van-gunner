@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-324 GDScript files, 50425 lines.
+325 GDScript files, 50471 lines.
 
 ### `scenes/corridor/`
 
@@ -427,8 +427,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `enemy_spawn_pool.gd` | `EnemySpawnPool` | 48 | A weighted collection of enemies to roll spawns from. |
 | `enemy_spawn_pool_entry.gd` | `EnemySpawnPoolEntry` | 8 | A single weighted slot inside an EnemySpawnPool. |
 | `loot_drop_component.gd` | `LootDropComponent` | 62 | Drop-in component that gives any enemy a chance to drop loot on death. |
-| `window_raider.gd` | `WindowRaider` | 526 | A raider enemy: approaches, breaches a window or door, then attacks the bench or player. |
-| `window_raider_look.gd` | — | 35 | Fits the window crawler's sprite, hitboxes and health bar to its lower canvas. |
+| `window_raider.gd` | `WindowRaider` | 535 | A raider enemy: approaches, breaches a window or door, then attacks the bench or player. |
+| `window_raider_anim.gd` | — | 32 | Steps the door raider's four-frame run sheet: Sprite3D.frame advances at RUN_FPS while the raider moves and rests on frame 0 (the still) when it stands. |
+| `window_raider_look.gd` | — | 37 | Fits the window crawler's sprite, hitboxes and health bar to its lower canvas. |
 | `window_raider_motion.gd` | — | 69 | Per-frame chase math for WindowRaider. |
 | `window_raider_targeting.gd` | — | 112 | Target picking, cabin/breach queries and status math for WindowRaider. |
 
@@ -540,7 +541,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `road_floor_paving_mesh.gd` | — | 212 | Packs RoadFloor's paving pieces (chamfered blocks) into one ArrayMesh per material. |
 | `road_floor_wreck.gd` | — | 347 | Builds RoadFloor's wrecked paving: tiles and setts graded by the destruction map and set into a raised dirt floor, each side as merged meshes. |
 | `road_floor_wreck_curb.gd` | — | 107 | Builds the wrecked paving's granite curb: 1 m blocks, knocked, missing or toppled in gone stretches. |
-| `road_floor_wreck_ground.gd` | — | 161 | Builds a sidewalk side's ground: a near-flush soil heightfield under the paving with shallow dips where the destruction map is worst, and sparse half-buried sh… |
+| `road_floor_wreck_ground.gd` | — | 164 | Builds a sidewalk side's ground: a near-flush soil heightfield under the paving with shallow dips where the destruction map is worst, and sparse half-buried sh… |
 | `road_floor_wreck_map.gd` | — | 130 | The street's destruction map: one smooth world-space field saying how wrecked the sidewalk is at a point, continuous across corridor tiles and calibrated so DE… |
 | `travel_controller.gd` | `TravelController` | 607 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
 | `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
