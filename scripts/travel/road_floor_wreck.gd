@@ -1,27 +1,49 @@
 extends RefCounted
-## Builds RoadFloor's wrecked sidewalk: real slab boxes on a soil bed and a curb in pieces,
-## each side as one merged mesh. Wreckage follows the ruin tier of the building beside it.
+## Builds RoadFloor's wrecked paving: tiles, setts and gone stretches over a soil pit, each side as merged meshes.
 
-const SLAB_T := 0.09 ## slab box height; its bottom sinks into the soil bed
-const BED_DROP := 0.05 ## soil bed top sits this far under the walk top (pit depth)
-const SLAB_LEN := 1.2 ## must equal the sidewalk shader's slab_spacing_m
-const GAP := 0.02
-const MISSING: Array[float] = [0.0, 0.03, 0.10, 0.22]
-const PIT_CHUNKS: Array[float] = [0.0, 0.3, 0.5, 0.7]
-const SPLIT: Array[float] = [0.04, 0.12, 0.22, 0.30]
-const HEAVE: Array[float] = [0.03, 0.10, 0.20, 0.30]
-const MAX_TILT_DEG: Array[float] = [2.0, 4.0, 7.0, 10.0]
-const SINK: Array[float] = [0.03, 0.08, 0.12, 0.15]
-const CURB_CHIP: Array[float] = [0.05, 0.15, 0.30, 0.40]
-const CURB_MISSING: Array[float] = [0.0, 0.03, 0.10, 0.20]
-const CURB_KNOCKED: Array[float] = [0.02, 0.08, 0.15, 0.22]
+const RoadFloorMaterials = preload("res://scripts/travel/road_floor_materials.gd")
+const _PavingMesh := preload("res://scripts/travel/road_floor_paving_mesh.gd")
+const _WreckCurb := preload("res://scripts/travel/road_floor_wreck_curb.gd")
+
+const PIT_DEPTH := 0.25 ## soil bed top sits this far under the walk top
+const JOINT := 0.03
+const CHAMFER := 0.025
+const TILE_PITCH := 0.5
+const SETT_PITCH := 0.25
+const MIN_PIECE := 0.12
+const GONE_MISSING := 0.9 ## chance a piece is missing in the middle of a gone stretch
+const EDGE_REACH := 0.6 ## damage leaks this far out of a gone stretch
+const RAMP := 0.75 ## a gone stretch thickens over this distance from its ends
+const MISSING: Array[float] = [0.0, 0.03, 0.08, 0.14]
+const MISSING_SETT: Array[float] = [0.0, 0.04, 0.10, 0.18]
+const TILT: Array[float] = [0.02, 0.08, 0.16, 0.25]
+const TILT_DEG: Array[float] = [3.0, 6.0, 10.0, 14.0]
+const SINK: Array[float] = [0.03, 0.08, 0.12, 0.16]
+
+enum Piece { FLAT, MISSING_PIECE, TILTED, SUNK, TUMBLED }
 
 var road: RoadFloor
-## Running vertex count of the SurfaceTool being filled (reset per tool).
-var _verts := 0
-## Slab UV inputs: road-side x of the walk and z of its start.
-var _inner_x := 0.0
+var _tiles := _PavingMesh.new()
+var _setts := _PavingMesh.new()
+var _rubble := _PavingMesh.new()
+var _curb := _PavingMesh.new()
+var _sign := 1.0
 var _z_start := 0.0
+var _z_end := 0.0
+var _top := 0.0
+var _bed_y := 0.0
+var _inner := 0.0
+var _width := 0.0
+var _gutter_top_y := 0.0
+var _curb_depth := 0.0
+var _tile_cols := 1
+var _tile_w := TILE_PITCH
+var _sett_rows := 0
+var _sett_w := SETT_PITCH
+## Dressing z values (drains, hydrants...) on this side: their pieces stay flat.
+var _kept: Array[float] = []
+## Gone stretches, as tile-local z ranges.
+var _gone: Array[Vector2] = []
 
 
 func _init(owner_road: RoadFloor) -> void:
@@ -29,43 +51,38 @@ func _init(owner_road: RoadFloor) -> void:
 
 
 func build(side_idx: int, walk_len: float, walk_cz: float, walk_inner_x: float,
-		sidewalk_top: float, curb_x: float, curb_bottom_y: float, curb_top_y: float,
-		curb_depth: float, slab_mat: Material, curb_mat: Material) -> void:
-	var side := -1.0 if side_idx == 0 else 1.0
-	if walk_len < 0.3:
+		sidewalk_top: float, gutter_top_y: float, curb_depth: float) -> void:
+	_width = road.sidewalk_width
+	if walk_len <= 0.0 or _width <= 0.0:
 		return
-	var rng := RandomNumberGenerator.new()
-	rng.seed = road._seed_value(97 + side_idx * 1000)
-	_inner_x = walk_inner_x
+	_sign = -1.0 if side_idx == 0 else 1.0
 	_z_start = walk_cz - walk_len * 0.5
+	_z_end = walk_cz + walk_len * 0.5
+	_top = sidewalk_top
+	_bed_y = sidewalk_top - PIT_DEPTH
+	_inner = absf(walk_inner_x)
+	_gutter_top_y = gutter_top_y
+	_curb_depth = curb_depth
+	_kept.clear()
+	if road.dressing_z.size() == 2:
+		for dz: float in road.dressing_z[side_idx]:
+			_kept.append(dz)
+	_layout()
+	_pick_gone(side_idx)
+	_build_tiles(side_idx)
+	_build_setts(side_idx)
+	var rng_curb := RandomNumberGenerator.new()
+	rng_curb.seed = road._seed_value(297 + side_idx * 1000)
+	_WreckCurb.new().build(self, side_idx, _sign, rng_curb, _curb, _rubble)
 	var tag := "Left" if side_idx == 0 else "Right"
-
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_verts = 0
-	_build_slabs(st, rng, side_idx, side, walk_len, walk_cz, sidewalk_top)
-	if _verts > 0:
-		st.generate_tangents()
-		var mi := MeshInstance3D.new()
-		mi.name = "WalkSlabs" + tag
-		mi.mesh = st.commit()
-		mi.material_override = slab_mat
-		road.add_child(mi)
-
-	# Curb boxes stay centred on their node: curb_surface.gdshader reads abs(VERTEX.x/y).
-	var cst := SurfaceTool.new()
-	cst.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_verts = 0
-	_build_curb(cst, rng, side_idx, side, walk_len, curb_top_y - curb_bottom_y, curb_depth,
-			(curb_bottom_y + curb_top_y) * 0.5)
-	if _verts > 0:
-		cst.generate_tangents()
-		var cmi := MeshInstance3D.new()
-		cmi.name = "WalkCurb" + tag
-		cmi.mesh = cst.commit()
-		cmi.material_override = curb_mat
-		cmi.position = Vector3(side * curb_x, (curb_bottom_y + curb_top_y) * 0.5, 0.0)
-		road.add_child(cmi)
+	_rubble.commit(road, "WalkRubble" + tag,
+			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_RUBBLE))
+	_curb.commit(road, "WalkCurb" + tag,
+			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_CURB))
+	_tiles.commit(road, "WalkTiles" + tag,
+			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_TILE))
+	_setts.commit(road, "WalkSetts" + tag,
+			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_SETT))
 
 
 func tier_at(side_idx: int, z: float) -> int:
@@ -76,154 +93,255 @@ func tier_at(side_idx: int, z: float) -> int:
 	return clampi(road.default_wreck_tier, 0, 3)
 
 
-func _build_slabs(st: SurfaceTool, rng: RandomNumberGenerator, side_idx: int, side: float,
-		walk_len: float, _walk_cz: float, sidewalk_top: float) -> void:
-	var z_end := _z_start + walk_len
-	var rows := ceili(walk_len / SLAB_LEN - 0.001)
-	var width := road.sidewalk_width
-	var cx := side * (_inner_x + width * 0.5)
-	for r in rows:
-		var z0 := _z_start + r * SLAB_LEN
-		var z1 := minf(z0 + SLAB_LEN, z_end)
-		var tier := tier_at(side_idx, (z0 + z1) * 0.5)
-		var wreck := tier / 3.0
-		var r_miss := rng.randf()
-		var r_chunk := rng.randf()
-		var r_split := rng.randf()
-		var r_pos := rng.randf()
-		var r_tone := rng.randf()
-		var kept := false
-		if road.dressing_z.size() == 2:
-			for dz: float in road.dressing_z[side_idx]:
-				if dz >= z0 - 0.3 and dz <= z1 + 0.3:
-					kept = true
-		if r_miss < MISSING[tier] and not kept:
-			if r_chunk < PIT_CHUNKS[tier]:
-				for i in (2 if r_tone > 0.5 else 1):
-					var c := Vector3(
-							side * (_inner_x + rng.randf_range(0.1, width - 0.1)),
-							sidewalk_top - BED_DROP,
-							rng.randf_range(z0 + 0.1, maxf(z0 + 0.1, z1 - 0.1)))
-					_add_chunk(st, rng, c, wreck, true)
+## Splits the walk width into tile columns by the curb and sett strips toward the buildings.
+func _layout() -> void:
+	_tile_cols = 2 if _width >= 1.5 else 1
+	_tile_w = TILE_PITCH
+	var strip := _width - _tile_cols * TILE_PITCH
+	_sett_rows = maxi(1, roundi(strip / SETT_PITCH))
+	_sett_w = strip / _sett_rows
+	if strip < 0.15:
+		_sett_rows = 0
+		_tile_w = _width / _tile_cols
+
+
+## Picks the gone stretches: about half the walk, favouring the worst-ruined buildings.
+func _pick_gone(side_idx: int) -> void:
+	_gone.clear()
+	if road.wreck_spans.size() != 2:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = road._seed_value(497 + side_idx * 1000)
+	var target := rng.randf_range(0.40, 0.60) * (_z_end - _z_start)
+	var cands: Array[Vector3] = []
+	for v: Vector3 in road.wreck_spans[side_idx]:
+		var z0 := maxf(v.x, _z_start)
+		var z1 := minf(v.y, _z_end)
+		var tier := clampi(int(v.z), 0, 3)
+		var score := tier + rng.randf() * 1.5
+		if z1 - z0 < 1.0 or tier == 0:
 			continue
-		# Pieces as (z centre, length).
-		var pieces: Array[Vector2] = []
-		if r_split < SPLIT[tier]:
-			var zc := z0 + (z1 - z0) * lerpf(0.35, 0.65, r_pos)
-			pieces.append(Vector2((z0 + zc - 0.015) * 0.5, zc - 0.015 - z0 - GAP * 0.5))
-			pieces.append(Vector2((zc + 0.015 + z1) * 0.5, z1 - zc - 0.015 - GAP * 0.5))
-		else:
-			pieces.append(Vector2((z0 + z1) * 0.5, z1 - z0 - GAP))
-		for p in pieces:
-			var r_heave := rng.randf()
-			var r_axis := rng.randf()
-			var r_ang := rng.randf()
-			var r_sink := rng.randf()
-			var r_jit := rng.randf()
-			if p.y < 0.1:
-				continue
-			var yaw := (r_jit - 0.5) * deg_to_rad(1.0) * (0.3 + wreck)
-			var y := sidewalk_top - SLAB_T * 0.5
-			var tilt := Basis.IDENTITY
-			if not kept and r_heave < HEAVE[tier]:
-				var ang := deg_to_rad(MAX_TILT_DEG[tier]) * lerpf(0.4, 1.0, r_ang)
-				if r_axis < 0.6:
-					tilt = Basis(Vector3.RIGHT, ang)
-					y += 0.5 * p.y * sin(ang)
-				else:
-					ang *= 0.5
-					tilt = Basis(Vector3.BACK, ang)
-					y += 0.5 * (width - GAP) * sin(ang)
-			elif not kept and r_sink < SINK[tier]:
-				y -= lerpf(0.012, 0.035, r_ang)
-			else:
-				y += (r_jit - 0.5) * 0.006
-			var centre := Vector3(cx, y, p.x)
-			var xf := Transform3D(Basis(Vector3.UP, yaw) * tilt, centre)
-			_append_box(st, Vector3(width - GAP, SLAB_T, p.y), xf, Color(wreck, r_tone, 0.0), true)
+		cands.append(Vector3(z0, z1, score))
+	cands.sort_custom(func(a: Vector3, b: Vector3) -> bool: return a.z > b.z)
+	var total := 0.0
+	for c in cands:
+		if total >= target:
+			break
+		_gone.append(Vector2(c.x, c.y))
+		total += c.y - c.x
 
 
-func _build_curb(st: SurfaceTool, rng: RandomNumberGenerator, side_idx: int, side: float,
-		walk_len: float, curb_h: float, curb_depth: float, curb_mid_y: float) -> void:
-	var z_end := _z_start + walk_len
-	var cuts: Array[float] = [_z_start]
-	var k := ceili(_z_start / 1.2 - 0.5)
-	while (k + 0.5) * 1.2 < z_end:
-		if (k + 0.5) * 1.2 > _z_start:
-			cuts.append((k + 0.5) * 1.2)
+## 0 outside the gone stretches; inside, how deep into one (0.3 at its ends, 1 beyond RAMP).
+func _gone_at(z: float) -> float:
+	for r in _gone:
+		if z >= r.x and z <= r.y:
+			var d := INF
+			if r.x > _z_start + 0.01:
+				d = minf(d, z - r.x)
+			if r.y < _z_end - 0.01:
+				d = minf(d, r.y - z)
+			return clampf(d / RAMP, 0.3, 1.0)
+	return 0.0
+
+
+## Outside the gone stretches, how close to one (1 at its end, 0 at EDGE_REACH).
+func _edge_near(z: float) -> float:
+	var d := INF
+	for r in _gone:
+		if z >= r.x and z <= r.y:
+			return 0.0
+		if r.x > _z_start + 0.01:
+			d = minf(d, absf(z - r.x))
+		if r.y < _z_end - 0.01:
+			d = minf(d, absf(z - r.y))
+	return maxf(0.0, 1.0 - d / EDGE_REACH)
+
+
+func _is_kept(z0: float, z1: float) -> bool:
+	for dz in _kept:
+		if z1 >= dz - 0.4 and z0 <= dz + 0.4:
+			return true
+	return false
+
+
+## Draw order is fixed (miss, move, kind) so the other outcomes never shift the stream.
+func _piece_state(rng: RandomNumberGenerator, tier: int, gone: float, edge: float,
+		kept: bool, miss_table: Array[float]) -> int:
+	var r_miss := rng.randf()
+	var r_move := rng.randf()
+	var r_kind := rng.randf()
+	if kept:
+		return Piece.FLAT
+	var p_miss := miss_table[tier] + 0.35 * edge
+	if gone > 0.0:
+		p_miss = lerpf(miss_table[tier], GONE_MISSING, gone)
+	if r_miss < p_miss:
+		return Piece.MISSING_PIECE
+	if gone > 0.0:
+		return Piece.TUMBLED if r_kind < 0.75 else Piece.TILTED
+	var p_tilt := TILT[tier] + 0.3 * edge
+	if r_move < p_tilt:
+		return Piece.TILTED
+	if r_move < p_tilt + SINK[tier]:
+		return Piece.SUNK
+	return Piece.FLAT
+
+
+func _build_tiles(side_idx: int) -> void:
+	_build_columns(side_idx, 97, true)
+
+
+func _build_setts(side_idx: int) -> void:
+	_build_columns(side_idx, 197, false)
+
+
+## Tiles and setts share one pass: columns across the walk, cells along z on a grid anchored
+## at z = 0 (setts shift every other strip by half a sett for the running bond).
+func _build_columns(side_idx: int, salt: int, is_tile: bool) -> void:
+	var cols := _tile_cols if is_tile else _sett_rows
+	if cols <= 0:
+		return
+	var pitch := TILE_PITCH if is_tile else SETT_PITCH
+	var w := _tile_w if is_tile else _sett_w
+	var x0 := _inner if is_tile else _inner + _tile_cols * _tile_w
+	var miss_table := MISSING if is_tile else MISSING_SETT
+	var rng := RandomNumberGenerator.new()
+	rng.seed = road._seed_value(salt + side_idx * 1000)
+	var cells: Array = []
+	var states: Array = []
+	var tones: Array = []
+	for c in cols:
+		var shift := 0.0 if is_tile else (c % 2) * SETT_PITCH * 0.5
+		var col_cells := _cells(pitch, shift)
+		var col_states: Array[int] = []
+		var col_tones: Array[float] = []
+		for cell in col_cells:
+			var zm := (cell.x + cell.y) * 0.5
+			var gone := _gone_at(zm)
+			col_states.append(_piece_state(rng, tier_at(side_idx, zm), gone,
+					_edge_near(zm), _is_kept(cell.x, cell.y), miss_table))
+			col_tones.append(rng.randf())
+		cells.append(col_cells)
+		states.append(col_states)
+		tones.append(col_tones)
+	var out := _tiles if is_tile else _setts
+	for c in cols:
+		var cx := x0 + (c + 0.5) * w
+		var col_cells: Array[Vector2] = cells[c]
+		var col_states: Array[int] = states[c]
+		for r in col_cells.size():
+			var cell := col_cells[r]
+			var zm := (cell.x + cell.y) * 0.5
+			var tier := tier_at(side_idx, zm)
+			var gone := _gone_at(zm)
+			var wreck := 1.0 if gone > 0.0 else tier / 3.0
+			var tone: float = tones[c][r]
+			var state := col_states[r]
+			var sides := 0
+			if state == Piece.FLAT:
+				sides = _flat_sides(states, c, r, cols, is_tile)
+			_emit(rng, out, state, Vector2(cx, zm), Vector2(w, cell.y - cell.x), tier,
+					gone, wreck, tone, sides, is_tile)
+
+
+## Cells of one grid line along z: [k * pitch + shift, (k + 1) * pitch + shift] clipped to the walk.
+func _cells(pitch: float, shift: float) -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	var k := floori((_z_start - shift) / pitch)
+	while k * pitch + shift < _z_end:
+		var z0 := maxf(k * pitch + shift, _z_start)
+		var z1 := minf((k + 1) * pitch + shift, _z_end)
+		if z1 - z0 >= MIN_PIECE:
+			out.append(Vector2(z0, z1))
 		k += 1
-	cuts.append(z_end)
-	var gutter_y := road.road_surface_y - road.gutter_depth
-	for i in cuts.size() - 1:
-		var a0 := cuts[i]
-		var a1 := cuts[i + 1]
-		var zmid := (a0 + a1) * 0.5
-		var length := a1 - a0 - 0.024
-		var r_miss := rng.randf()
-		var r_chip := rng.randf()
-		var r_knock := rng.randf()
-		var a := rng.randf()
-		var b := rng.randf()
-		if length < 0.1:
-			continue
-		var tier := tier_at(side_idx, zmid)
-		var wreck := tier / 3.0
-		var gutter_local_y := gutter_y - curb_mid_y
-		var chunks := 0
-		var h := curb_h
-		var xshift := 0.0
-		var drop := 0.0
-		var yaw := 0.0
-		if r_miss < CURB_MISSING[tier]:
-			chunks = 2 if a > 0.5 else 1
-		else:
-			if r_knock < CURB_KNOCKED[tier]:
-				yaw = (1.0 if a > 0.5 else -1.0) * deg_to_rad(lerpf(3.0, 9.0, a))
-				xshift = -side * lerpf(0.02, 0.06, b)
-				drop = lerpf(0.01, 0.03, a)
-				chunks = 1
-			if r_chip < CURB_CHIP[tier]:
-				h -= lerpf(0.02, 0.05, b)
-			var cy := -curb_h * 0.5 + h * 0.5 - drop
-			var xf := Transform3D(Basis(Vector3.UP, yaw), Vector3(xshift, cy, zmid))
-			_append_box(st, Vector3(curb_depth, h, length), xf,
-					Color(wreck, rng.randf(), 0.0), false)
-		for c in chunks:
-			var cp := Vector3(-side * rng.randf_range(0.12, 0.35), gutter_local_y,
-					rng.randf_range(a0 + 0.1, maxf(a0 + 0.1, a1 - 0.1)))
-			_add_chunk(st, rng, cp, wreck, false)
+	return out
 
 
-func _add_chunk(st: SurfaceTool, rng: RandomNumberGenerator, centre: Vector3, wreck: float,
-		slab_uv: bool) -> void:
-	var size := Vector3(rng.randf_range(0.12, 0.3), rng.randf_range(0.05, 0.1),
-			rng.randf_range(0.12, 0.3))
-	var rot := Vector3(rng.randf_range(-0.5, 0.5), rng.randf_range(0.0, TAU),
-			rng.randf_range(-0.5, 0.5))
-	var pos := Vector3(centre.x, centre.y + size.y * 0.3, centre.z)
-	var color := Color(maxf(wreck, 0.66), rng.randf(), 0.0)
-	_append_box(st, size, Transform3D(Basis.from_euler(rot), pos), color, slab_uv)
+## A flat piece shows a side only where its neighbour is not flat or there is none.
+func _flat_sides(states: Array, c: int, r: int, cols: int, is_tile: bool) -> int:
+	var col_states: Array[int] = states[c]
+	var sides := 0
+	if r == 0 or col_states[r - 1] != Piece.FLAT:
+		sides |= _PavingMesh.SIDE_NEG_Z
+	if r == col_states.size() - 1 or col_states[r + 1] != Piece.FLAT:
+		sides |= _PavingMesh.SIDE_POS_Z
+	var toward_curb := _PavingMesh.SIDE_NEG_X if _sign > 0.0 else _PavingMesh.SIDE_POS_X
+	var toward_wall := _PavingMesh.SIDE_POS_X if _sign > 0.0 else _PavingMesh.SIDE_NEG_X
+	var inner_open := not is_tile or c == 0
+	var outer_open := not is_tile or c == cols - 1
+	if is_tile:
+		if c > 0:
+			var inner_col: Array[int] = states[c - 1]
+			inner_open = r >= inner_col.size() or inner_col[r] != Piece.FLAT
+		if c < cols - 1:
+			var outer_col: Array[int] = states[c + 1]
+			outer_open = r >= outer_col.size() or outer_col[r] != Piece.FLAT
+	if inner_open:
+		sides |= toward_curb
+	if outer_open:
+		sides |= toward_wall
+	return sides
 
 
-func _append_box(st: SurfaceTool, size: Vector3, xform: Transform3D, color: Color,
-		slab_uv: bool) -> void:
-	var box := BoxMesh.new()
-	box.size = size
-	var arrays := box.get_mesh_arrays()
-	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
-	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
-	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
-	for i in verts.size():
-		var uv := uvs[i]
-		if slab_uv:
-			# Unrotated road-local position keeps the shader's seams glued to the slab.
-			var p := xform.origin + verts[i]
-			uv = Vector2((absf(p.x) - _inner_x) / road.sidewalk_width, p.z - _z_start)
-		st.set_color(color)
-		st.set_normal((xform.basis * normals[i]).normalized())
-		st.set_uv(uv)
-		st.add_vertex(xform * verts[i])
-	for idx in indices:
-		st.add_index(idx + _verts)
-	_verts += verts.size()
+func _emit(rng: RandomNumberGenerator, out: _PavingMesh, state: int, at: Vector2, cell: Vector2,
+		tier: int, gone: float, wreck: float, tone: float, sides: int, is_tile: bool) -> void:
+	var w := cell.x
+	var length := cell.y
+	var size := Vector3(w - JOINT, PIT_DEPTH + 0.02, length - JOINT)
+	var centre := Vector3(_sign * at.x, _top - size.y * 0.5, at.y)
+	match state:
+		Piece.FLAT:
+			out.add_block(size, Transform3D(Basis(), centre), wreck, tone, CHAMFER, sides, false)
+		Piece.TILTED:
+			var deg := rng.randf_range(0.4, 1.0) * TILT_DEG[tier]
+			if gone > 0.0:
+				deg = rng.randf_range(8.0, 20.0)
+			var a := deg_to_rad(deg)
+			var on_x := rng.randf() < 0.5
+			var s := 1.0 if rng.randf() < 0.5 else -1.0
+			var hinge := Vector3(centre.x, _top, centre.z + s * size.z * 0.5)
+			var axis := Vector3.RIGHT
+			var angle := s * a
+			if not on_x:
+				hinge = Vector3(centre.x + s * size.x * 0.5, _top, centre.z)
+				axis = Vector3.BACK
+				angle = -s * a
+			var xf := Transform3D(Basis(), hinge) \
+					* Transform3D(Basis(axis, angle), Vector3.ZERO) \
+					* Transform3D(Basis(), -hinge) * Transform3D(Basis(), centre)
+			out.add_block(size, xf, wreck, tone, CHAMFER, _PavingMesh.SIDE_ALL, false)
+		Piece.SUNK:
+			centre.y -= rng.randf_range(0.015, 0.05)
+			var t := rng.randf() * TAU
+			var basis := Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 3.0)))
+			out.add_block(size, Transform3D(basis, centre), wreck, tone, CHAMFER,
+					_PavingMesh.SIDE_ALL, false)
+		Piece.TUMBLED:
+			var thin := Vector3((w - JOINT) * rng.randf_range(0.6, 1.0),
+					0.08 if is_tile else 0.10, (length - JOINT) * rng.randf_range(0.6, 1.0))
+			var pos := Vector3(centre.x, _bed_y + thin.y * 0.5 + rng.randf_range(0.0, 0.06),
+					centre.z)
+			var t := rng.randf() * TAU
+			var basis := Basis(Vector3.UP, rng.randf_range(-0.3, 0.3)) \
+					* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(8.0, 28.0)))
+			out.add_block(thin, Transform3D(basis, pos), wreck, tone, CHAMFER,
+					_PavingMesh.SIDE_ALL, true)
+		Piece.MISSING_PIECE:
+			var chance := 0.6 if is_tile else 0.25
+			if gone <= 0.0:
+				chance = 0.5 if is_tile else 0.2
+			if rng.randf() < chance:
+				_add_chunk(rng, at)
+
+
+## A broken lump of paving lying in the pit.
+func _add_chunk(rng: RandomNumberGenerator, at: Vector2) -> void:
+	var size := Vector3(rng.randf_range(0.10, 0.30), rng.randf_range(0.05, 0.14),
+			rng.randf_range(0.10, 0.30))
+	var pos := Vector3(_sign * (at.x + rng.randf_range(-0.08, 0.08)), _bed_y + size.y * 0.3,
+			at.y + rng.randf_range(-0.08, 0.08))
+	var t := rng.randf() * TAU
+	var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)) \
+			* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 25.0)))
+	_rubble.add_block(size, Transform3D(basis, pos), 1.0, rng.randf(), 0.015,
+			_PavingMesh.SIDE_ALL, true)

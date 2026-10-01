@@ -88,9 +88,12 @@ func _set_tree_walkable(root: Node, walkable: bool) -> void:
 
 ## Seed the floor's details and hand it the buildings' ruin spans, then rebuild.
 func set_sidewalk_wreck(tile_seed: int, left: Array[Vector3], right: Array[Vector3]) -> void:
-	detail_seed = tile_seed if tile_seed != 0 else 1
-	wreck_spans = [left.duplicate(), right.duplicate()]
-	rebuild()
+	var new_seed := tile_seed if tile_seed != 0 else 1
+	var new_spans: Array = [left.duplicate(), right.duplicate()]
+	if not (_built and new_seed == detail_seed and new_spans == wreck_spans):
+		detail_seed = new_seed
+		wreck_spans = new_spans
+		rebuild()
 
 
 ## Open a side to continuous road (drops sidewalk/curb/gutter on that edge).
@@ -239,7 +242,7 @@ func _build() -> void:
 	var wreck := sidewalk_material == null
 	var walk_thickness := sidewalk_top - slab_bottom
 	if wreck:
-		walk_thickness -= RoadFloorWreck.BED_DROP
+		walk_thickness -= RoadFloorWreck.PIT_DEPTH
 	var walk_center_x := half_x - sidewalk_width * 0.5
 	var walk_span := _sidewalk_span_z()
 	var walk_len: float = walk_span.x
@@ -310,13 +313,12 @@ func _build() -> void:
 	details.build_sidewalk_dressing(half_x, sidewalk_top, metal_mat, curb_mat, dark_mat)
 
 	if wreck:
-		var wreck_slab_mat := RoadFloorMaterials.sidewalk_wreck_mat(sidewalk_width)
 		for side_idx in 2:
 			if (side_idx == 0 and not sidewalk_left) or (side_idx == 1 and not sidewalk_right):
 				continue
 			RoadFloorWreck.new(self).build(
-				side_idx, walk_len, walk_cz, road_half, sidewalk_top, curb_x,
-				road_surface_y, road_surface_y + curb_h, curb_w, wreck_slab_mat, curb_strip_mat
+				side_idx, walk_len, walk_cz, road_half, sidewalk_top,
+				road_surface_y - gutter_depth, curb_face_depth
 			)
 
 

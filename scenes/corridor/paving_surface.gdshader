@@ -1,0 +1,87 @@
+// Skins the street's real paving pieces (square tiles, small setts, granite curb blocks,
+// rubble chunks). The mesh has no UVs: COLOR.r = wreck, COLOR.g = per-piece tone,
+// COLOR.b = up (1 on tops and chamfers, 0 at the foot of the sides). Patterns are planar
+// in world metres, and every fine pattern fades with fwidth before it goes sub-pixel.
+shader_type spatial;
+render_mode diffuse_burley, specular_schlick_ggx;
+
+#include "res://scenes/shaders/grime.gdshaderinc"
+
+uniform vec3 base_color : source_color = vec3(0.42, 0.41, 0.38);
+uniform vec3 dirt_color : source_color = vec3(0.16, 0.13, 0.10);
+uniform vec3 stain_color : source_color = vec3(0.10, 0.09, 0.075);
+uniform float tone_spread = 0.35;
+uniform float grain_per_m = 9.0;
+uniform float crack_width_m = 0.035;
+uniform float crack_amount = 1.0;
+uniform float litter = 0.5;
+uniform float roughness_value = 0.9;
+
+varying vec3 v_world;
+varying vec3 v_wnormal;
+
+void vertex() {
+	v_world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	v_wnormal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+}
+
+void fragment() {
+	vec3 n = normalize(v_wnormal);
+	vec2 p;
+	if (abs(n.y) > 0.6) {
+		p = v_world.xz;
+	} else if (abs(n.x) > abs(n.z)) {
+		p = v_world.zy;
+	} else {
+		p = v_world.xy;
+	}
+	float top = smoothstep(0.6, 0.85, n.y);
+
+	float tone = COLOR.g;
+	float wreck = COLOR.r;
+	float up = COLOR.b;
+
+	vec3 col = base_color * (1.0 - tone_spread * 0.5 + tone_spread * tone);
+
+	// Grain, faded before it gets sub-pixel.
+	float fw = max(length(fwidth(p)), 1e-5);
+	float g = noise21(p * grain_per_m + tone * 7.0);
+	float gfade = 1.0 - smoothstep(0.03, 0.08, fw * grain_per_m * 0.1);
+	col *= mix(1.0, 0.88 + 0.24 * g, gfade);
+
+	// Stains.
+	float s = fbm(p * 0.7 + vec2(tone * 13.0));
+	col = mix(col, stain_color, smoothstep(0.55, 0.8, s) * 0.5);
+
+	// Wear on tops.
+	float w = fbm(p * 1.3 + 4.0);
+	col *= 1.0 + 0.08 * top * smoothstep(0.6, 0.75, w);
+
+	// Cracks on tops, only on wrecked pieces; crack_field returns an edge distance in
+	// cell units, and the cells are 1/1.8 m.
+	float edge_m = crack_field(p * 1.8 + vec2(tone * 31.0)) / 1.8;
+	float line = 1.0 - smoothstep(crack_width_m * 0.5, crack_width_m, edge_m);
+	float cfade = 1.0 - smoothstep(0.02, 0.05, fw);
+	float crack = line * crack_amount * top * smoothstep(0.15, 0.6, wreck + tone * 0.3) * cfade;
+	col = mix(col, dirt_color * 0.6, clamp(crack, 0.0, 1.0));
+
+	// Wreck darkening and dirt toward the foot of the sides.
+	col *= mix(1.0, 0.8, wreck);
+	col = mix(dirt_color, col, smoothstep(0.0, 0.7, up));
+
+	// Litter on tops.
+	vec2 cell = floor(v_world.xz / 0.6);
+	if (hash21(cell) < 0.04 * litter && top > 0.5) {
+		vec2 centre = cell * 0.6 + 0.3 + (hash22(cell) - 0.5) * 0.3;
+		vec2 half_size = vec2(0.04 + 0.04 * hash21(cell + 3.1), 0.03 + 0.03 * hash21(cell + 5.7));
+		vec2 d = abs(v_world.xz - centre);
+		if (d.x < half_size.x && d.y < half_size.y) {
+			col = vec3(0.62, 0.60, 0.55);
+		}
+	}
+
+	ALBEDO = col;
+	ROUGHNESS = roughness_value;
+	METALLIC = 0.0;
+	SPECULAR = 0.4;
+}

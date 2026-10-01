@@ -128,6 +128,8 @@ Surfaces, in the road's recipe:
   corrugation 0.30 m, roll-up slats 0.40 m, planks 0.35 m, mullions 12 cm,
   seams and joints 3..4 cm; no hard repeating pitch under 0.20 m, no line
   under 3 cm; wall grain about 10/m, prop and plank grain about 8/m.
+  Street paving: tiles 0.5 m, setts 0.25 m, granite curb blocks 1 m,
+  joints 3 cm, chamfers 2.5 cm.
 - **Lighting model**: `diffuse_burley`, `specular_schlick_ggx`, roughness
   0.78..0.95 on base surfaces (wet oil and polished tyre lanes may drop to
   about 0.3 locally), metallic 0..0.3 (oil, cans, bolts). A shader may

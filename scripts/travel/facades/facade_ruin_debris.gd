@@ -12,7 +12,9 @@ const _FacadeRuin := preload("res://scripts/travel/facades/facade_ruin.gd")
 # facade_ruin_body aliases these (it preloads this file, so they live here, not there).
 const ROOFED_DROP := 2.0
 const HOLE_DEPTH := 1.8
-const RUBBLE_Y0 := -0.06
+# The paving pit floor: walk top -0.06 minus the 0.25 m pit, so rubble sits in the pits, not over them.
+const RUBBLE_Y0 := -0.31
+const PIT_DEPTH := 0.25
 
 const _SLAB_P := 0.65
 const _SLAB_T := 0.22
@@ -98,11 +100,13 @@ static func build_rubble(
 			continue
 		var pos := Vector3(side_sign * rng.randf_range(lo, reach), 0.0, clampf(z, z_lo, z_hi))
 		var stack := rng.randf() < 0.3
-		pos.y = RUBBLE_Y0 + size.y * 0.5
-		if _FacadeMeshKit.add_box_xf(st, Transform3D(basis, pos), size, keep_out):
+		# Boxes start in the pit and are 0.25 m taller, so their tops stay where they were.
+		var base_size := size + Vector3(0.0, PIT_DEPTH, 0.0)
+		pos.y = RUBBLE_Y0 + base_size.y * 0.5
+		if _FacadeMeshKit.add_box_xf(st, Transform3D(basis, pos), base_size, keep_out):
 			emitted += 1
 		if stack:
-			var top_size := size * 0.6
+			var top_size := size * 0.6 + Vector3(0.0, PIT_DEPTH, 0.0)
 			pos.y = RUBBLE_Y0 + top_size.y * 0.5 + 0.3
 			if _FacadeMeshKit.add_box_xf(st, Transform3D(basis, pos), top_size, keep_out):
 				emitted += 1

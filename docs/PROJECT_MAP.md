@@ -185,6 +185,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `signal sprung`
 
+**`scripts/travel/road_floor_wreck.gd`**
+
+- `enum Piece { FLAT, MISSING_PIECE, TILTED, SUNK, TUMBLED }`
+
 **`scripts/travel/travel_controller.gd`**
 
 - `enum TurnState { NONE, APPROACHING, TURNING, PARKING, LEAVING_STOP, ELEVATING, }`
@@ -296,7 +300,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-319 GDScript files, 49552 lines.
+321 GDScript files, 49918 lines.
 
 ### `scenes/corridor/`
 
@@ -525,10 +529,12 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `road_floor.gd` | `RoadFloor` | 399 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
+| `road_floor.gd` | `RoadFloor` | 401 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
 | `road_floor_details.gd` | — | 213 | Street furniture/detail builders for RoadFloor: drains, manholes and sidewalk dressing. |
-| `road_floor_materials.gd` | — | 67 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
-| `road_floor_wreck.gd` | — | 230 | Builds RoadFloor's wrecked sidewalk: real slab boxes on a soil bed and a curb in pieces, each side as one merged mesh. |
+| `road_floor_materials.gd` | — | 101 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
+| `road_floor_paving_mesh.gd` | — | 111 | Packs RoadFloor's paving pieces (chamfered blocks) into one ArrayMesh per material. |
+| `road_floor_wreck.gd` | — | 348 | Builds RoadFloor's wrecked paving: tiles, setts and gone stretches over a soil pit, each side as merged meshes. |
+| `road_floor_wreck_curb.gd` | — | 97 | Builds the wrecked paving's granite curb: 1 m blocks, knocked, missing or toppled in gone stretches. |
 | `travel_controller.gd` | `TravelController` | 607 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
 | `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
 | `travel_stops.gd` | — | 203 | Owns the stop fork, side-stop placement, elevator pad ride and stop-state cleanup. |
@@ -555,7 +561,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `facade_registry.gd` | — | 104 | Loads the facade data folders once: districts (sorted by index) and set-pieces (sorted by id). |
 | `facade_ruin.gd` | — | 223 | Rolls each street building's ruin condition and the column/hole data that later geometry cuts the facade with, and clips the plan that the prop families see so… |
 | `facade_ruin_body.gd` | — | 154 | Builds a ruined street building's body from its plan's ruin columns and holes: stepped tops, wall caps or roof plates, hole reveals over a dark back wall, then… |
-| `facade_ruin_debris.gd` | — | 215 | Debris for ruined street buildings: hanging slabs, rebar and sill chunks on the body, and the rubble heaps on the sidewalk below a collapse. |
+| `facade_ruin_debris.gd` | — | 219 | Debris for ruined street buildings: hanging slabs, rebar and sill chunks on the body, and the rubble heaps on the sidewalk below a collapse. |
 | `facade_set_piece.gd` | `FacadeSetPiece` | 46 | One rare street set-piece: eligibility data plus the hooks a subclass overrides. |
 | `facade_set_pieces.gd` | — | 84 | Rolls which rare set-piece (if any) a tile gets and on which side, and drives the piece's hooks from corridor_facades. |
 | `facade_signs.gd` | — | 285 | Street signage for one building: a backlit box sign over a storefront, a neon strip, a perpendicular blade sign, a cloth banner, or a torn poster on a boarded… |
@@ -815,7 +821,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Shaders
 
-`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/curb_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_prop_grime.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/crt_screen.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_exterior.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`, `scenes/van/van_window_exterior.gdshader`
+`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/curb_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_prop_grime.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/paving_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/crt_screen.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_exterior.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`, `scenes/van/van_window_exterior.gdshader`
 
 ## Balance sheet (`resources/balance/game_balance.tres`)
 
