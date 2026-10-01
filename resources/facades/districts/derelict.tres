@@ -37,3 +37,5 @@ sign_chance = 0.3
 awning_chance = 0.2
 furniture_chance = 0.4
 overhead_chance = 0.15
+graffiti_amount = 1.0
+poster_amount = 0.5

@@ -182,6 +182,17 @@ and nothing intersects the bowed wall, a machine or the aisle. The game never
 leaves the van, so the exterior is seen only from the debug `ghost` flight
 and is not detailed further.
 
+### Street art (graffiti and posters)
+
+Generated pixel-art images on wall quads are the one bitmap exception on
+the 3D street: they are things stuck to a wall, not a surface. Built in
+code per run (`scripts/travel/facades/street_art/`), packed into one
+per-run atlas, graffiti at 0.024 m/px and posters at 0.016 m/px, filter
+`TEXTURE_FILTER_NEAREST_WITH_MIPMAPS`, alpha scissor 0.5, lit (never
+unshaded), roughness 0.9. Faded: paint at most 0.40 and paper at most
+0.45 linear luminance, so they sit in the wall's light like everything
+else.
+
 Off-style today (3D): nothing known. The 3D art pass (2026-09-25) brought
 the facades, props, set-pieces, stops, junctions, statue and overheads onto
 this file; a new break found later goes here.

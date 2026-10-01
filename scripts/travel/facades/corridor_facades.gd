@@ -17,6 +17,7 @@ const _FacadeSigns := preload("res://scripts/travel/facades/facade_signs.gd")
 const _FacadeFixtures := preload("res://scripts/travel/facades/facade_fixtures.gd")
 const _FacadeSetPieces := preload("res://scripts/travel/facades/facade_set_pieces.gd")
 const _FacadeOverheads := preload("res://scripts/travel/facades/facade_overheads.gd")
+const _FacadeStreetArt := preload("res://scripts/travel/facades/facade_street_art.gd")
 
 const SIDE_NAMES: Array[String] = ["Left", "Right"]
 const SIDE_SIGNS: Array[float] = [-1.0, 1.0]
@@ -156,6 +157,9 @@ func rebuild_side(side_idx: int) -> void:
 		)
 		_FacadeRuinBody.build_rubble(root, plans_out[i], SIDE_SIGNS[side_idx], i, keep_out)
 		_FacadeWreck.wreck(root, first_child, plans_out[i], SIDE_SIGNS[side_idx], keep_out)
+		_FacadeStreetArt.build(
+			root, plans_out[i], prop_plan, SIDE_SIGNS[side_idx], i, keep_out, district_res
+		)
 	var force_dead := rare_id() == &"power_outage"
 	_FacadeFixtures.build_fixtures(
 		root, plans_out, SIDE_SIGNS[side_idx], keep_out, rng, district_res, force_dead

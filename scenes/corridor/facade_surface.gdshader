@@ -40,6 +40,12 @@ uniform float ground_units = 2.0;      // storefront / door bays across the faca
 uniform float emission_energy = 2.2;   // fire (flicker) windows only; they may bloom
 uniform float window_emission = 0.5;   // peak channel of a lit night window; stays under the glow threshold
 uniform float roughness_value : hint_range(0.0, 1.0) = 0.85;
+uniform float buff : hint_range(0.0, 1.0) = 0.5;           // rolled-over paint rectangles (graffiti buffed out)
+uniform float peel : hint_range(0.0, 1.0) = 0.5;           // top coat peeling off an older colour
+uniform float ghost : hint_range(0.0, 1.0) = 0.5;          // pale outline of a torn-down sign
+uniform float rust_bleed : hint_range(0.0, 1.0) = 0.5;     // rust streaks under old anchors
+uniform vec3 under_color : source_color = vec3(0.24, 0.27, 0.22);   // old paint under the top coat
+uniform vec3 rust_color : source_color = vec3(0.20, 0.09, 0.04);
 
 float hash11(float x) {
 	return fract(sin(x * 127.1) * 43758.5453);
@@ -415,6 +421,24 @@ void shade_ground(vec2 p, float sk, out vec3 albedo, out vec3 emission, out floa
 	}
 }
 
+// Signed distance (metres) to a rectangle: negative inside.
+float rect_sd(vec2 p, vec2 centre, vec2 half_size) {
+	vec2 q = abs(p - centre) - half_size;
+	return length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0);
+}
+
+// Rust run down from an anchor (a): 1 at the bolt, fading to 0 over len, narrowing from
+// top_w to 1 cm and wobbling +-1 cm. Fades to a faint tint as the line goes sub-pixel.
+float rust_streak(vec2 p, vec2 a, float len, float top_w, float fwm) {
+	float t = (a.y - p.y) / len;
+	if (t < 0.0 || t > 1.0) {
+		return 0.0;
+	}
+	float wobble = (noise21(vec2(p.y * 3.0, a.x * 7.1)) - 0.5) * 0.02;
+	float half_w = mix(top_w, 0.01, t) * 0.5;
+	return soft_line(abs(p.x - a.x - wobble), half_w, 0.9, fwm) * (1.0 - t);
+}
+
 // The road's grime recipe over everything but a window pane, in its order: grain, a broad
 // wash, rain streaks down from the roof line and sills, soot, the foot dirt band, stains,
 // cracks, then overgrowth and damage patches. Fine layers fade with fw like the patterns.
@@ -446,7 +470,8 @@ void apply_overlays(vec2 p, inout vec3 albedo, inout vec3 emission, inout float 
 			}
 		}
 	}
-	albedo *= 1.0 - grime * 0.55 * streak * run;
+	float rain_k = grime * 0.55 * streak * run;
+	albedo *= 1.0 - rain_k;
 
 	float roof_soot = (1.0 - smoothstep(0.0, 2.5, max(facade_height - p.y, 0.0)))
 		* (0.5 + 0.5 * fbm(p * 0.8 + seed + 3.0));
@@ -476,6 +501,132 @@ void apply_overlays(vec2 p, inout vec3 albedo, inout vec3 emission, inout float 
 	}
 
 	rough = min(rough + stain * 0.05 + foot * 0.06, 0.95);
+
+	// Decay marks, after the grime so they sit on top of it. All of them are only the ghosts
+	// of graffiti and posters; the windows never reach here (the caller skips panes).
+	bool walled = style != 3 && style != 6;
+
+	// 1. Buffed paint-overs: mismatched rectangles in the ground band, rarely the first floor.
+	if (walled) {
+		vec2 cell_size = vec2(3.0, 1.6);
+		vec2 cid = floor(p / cell_size);
+		float cell_mid = (cid.y + 0.5) * cell_size.y;
+		float row_cap = ground_height + floor_height;
+		float cell_chance = 0.45 * buff * (0.5 + grime) * (cell_mid < ground_height ? 1.0 : 0.25);
+		if (cid.y * cell_size.y < row_cap && hash21(cid + vec2(seed, 17.0)) < cell_chance) {
+			float rect_w = mix(0.8, 2.8, hash21(cid + vec2(seed, 18.0)));
+			float rect_h = mix(0.5, 1.5, hash21(cid + vec2(seed, 19.0)));
+			float rect_x0 = cid.x * cell_size.x + (cell_size.x - rect_w) * hash21(cid + vec2(seed, 20.0));
+			float rect_y0 = max(cid.y * cell_size.y + (cell_size.y - rect_h) * hash21(cid + vec2(seed, 21.0)), 0.4);
+			float rect_y1 = min(rect_y0 + rect_h, (cid.y + 1.0) * cell_size.y);
+			if (rect_y1 - rect_y0 > 0.05) {
+				vec2 rect_c = vec2(rect_x0 + rect_w * 0.5, (rect_y0 + rect_y1) * 0.5);
+				vec2 rect_hs = vec2(rect_w * 0.5, (rect_y1 - rect_y0) * 0.5);
+				float aa = max(0.01, fwm);
+				float buff_m = 1.0 - smoothstep(-aa, aa, rect_sd(p, rect_c, rect_hs));
+				float shift = 0.10 + 0.08 * hash21(cid + vec2(seed, 22.0));
+				float sgn = hash21(cid + vec2(seed, 23.0)) > 0.5 ? 1.0 : -1.0;
+				vec3 target = hash21(cid + vec2(seed, 24.0)) > 0.5 ? vec3(0.30, 0.29, 0.26) : base_color * 0.7;
+				float hue = (hash21(cid + vec2(seed, 25.0)) - 0.5) * 0.04;
+				vec3 paint = max(mix(base_color, target, 0.4) * (1.0 + sgn * shift) + vec3(hue, 0.0, -hue), vec3(0.0));
+				float roller = (noise21(vec2(p.x * 0.5, floor(p.y / 0.22))) - 0.5) * 0.08;
+				paint *= 1.0 + roller * (1.0 - pattern_fade(0.22, fw.y));
+				// Newer paint: the dirt underneath shows through only 70%.
+				vec3 dirty = albedo * clamp(paint / max(base_color, vec3(0.02)), vec3(0.6), vec3(1.6));
+				albedo = mix(albedo, mix(dirty, paint, 0.3), buff_m);
+				rough = mix(rough, 0.85, buff_m);
+			}
+		}
+	}
+
+	// 2. Peeling paint: clusters of top coat lifting off an older colour.
+	if (style == 1 || style == 2 || style == 5) {
+		vec2 pp = p * 0.8 + seed;
+		float pf = fbm(pp);
+		float cluster = smoothstep(0.44, 0.46, fbm(p * 0.25));
+		float amt = clamp((0.4 + damage) * peel, 0.0, 1.0) * cluster;
+		float peel_m = smoothstep(0.62, 0.66, pf) * amt;
+		if (amt > 0.0) {
+			// Distance to the 0.62 contour in metres, from the field's slope.
+			float pe = 0.02;
+			float slope = max(length(vec2(fbm(pp + vec2(pe * 0.8, 0.0)) - pf, fbm(pp + vec2(0.0, pe * 0.8)) - pf)) / pe, 0.05);
+			float contour = (pf - 0.62) / slope;
+			vec3 under = mix(under_color, vec3(0.22, 0.21, 0.2), fbm(p * 2.5 + seed + 61.0));
+			albedo = mix(albedo, under, peel_m);
+			float rim = contour >= 0.0 ? soft_line(contour, 0.015, 1.0, fwm) : 0.0;
+			float shadow = contour < 0.0 ? soft_line(-contour, 0.01, 1.0, fwm) : 0.0;
+			albedo *= 1.0 + 0.15 * rim * amt - 0.2 * shadow * amt;
+			rough = mix(rough, 0.9, peel_m);
+		}
+	}
+
+	// 3. Ghost sign: one pale, bolted rectangle per building where a sign used to hang.
+	if (walled && hash21(vec2(seed, 7.0)) < 0.55 * ghost) {
+		float gw = mix(1.4, 3.2, hash21(vec2(seed, 8.0)));
+		float gh = mix(0.5, 1.1, hash21(vec2(seed, 9.0)));
+		float gu_lo = 0.4 + gw * 0.5;
+		float gu = mix(gu_lo, max(gu_lo, facade_width - 0.4 - gw * 0.5), hash21(vec2(seed, 10.0)));
+		float gy = ground_height - 0.9 + (hash21(vec2(seed, 11.0)) - 0.5) * 0.6;
+		vec2 g_hs = vec2(gw * 0.5, gh * 0.5);
+		float gsd = rect_sd(p, vec2(gu, gy), g_hs);
+		float aa = max(0.01, fwm);
+		float g_in = 1.0 - smoothstep(-aa, aa, gsd);
+		// The sign shielded the wall: 12% lighter, and 60% of the rain streaks never landed.
+		albedo *= mix(1.0, 1.12 * (1.0 - 0.4 * rain_k) / max(1.0 - rain_k, 0.2), g_in);
+		float outline = gsd >= 0.0 ? soft_line(gsd, 0.04, 1.0, fwm) : 0.0;
+		albedo = mix(albedo, albedo * 0.7, outline * 0.6);
+		int bolts = 2 + int(floor(hash21(vec2(seed, 12.0)) * 3.0));
+		float hole_fade = 1.0 - line_fade(0.03, fwm);
+		for (int i = 0; i < 4; i++) {
+			if (i >= bolts) {
+				break;
+			}
+			vec2 corner = vec2(i % 2 == 0 ? -1.0 : 1.0, i < 2 ? 1.0 : -1.0);
+			vec2 bolt = vec2(gu, gy) + corner * (g_hs - vec2(0.12, 0.1));
+			vec2 bd = abs(p - bolt);
+			if (bd.x < 0.015 && bd.y < 0.015) {
+				albedo = mix(albedo, vec3(0.02), 0.85 * hole_fade);
+			}
+			float g_len = mix(0.3, 0.8, hash21(vec2(seed, 30.0 + float(i))));
+			float g_rust = rust_streak(p, bolt - vec2(0.0, 0.02), g_len, 0.04, fwm);
+			albedo = mix(albedo, rust_color, 0.6 * g_rust);
+			rough = mix(rough, 0.88, g_rust);
+		}
+	}
+
+	// 4. Rust bleed: dark bolts with an orange streak running down from each.
+	if (style != 3) {
+		vec2 rcell = vec2(1.8, 2.4);
+		vec2 rid = floor(p / rcell);
+		float rust_chance = 0.10 * rust_bleed * (0.5 + grime) * (style == 4 ? 2.0 : 1.0);
+		for (int k = 0; k < 2; k++) {
+			// Streaks reach up to 2.0 m, so the cell above can run into this one.
+			vec2 cid2 = rid + vec2(0.0, float(k));
+			vec2 rh = vec2(hash21(cid2 + vec2(seed, 40.0)), hash21(cid2 + vec2(seed, 41.0)));
+			if (hash21(cid2 + vec2(seed, 42.0)) >= rust_chance) {
+				continue;
+			}
+			vec2 anchor = (cid2 + vec2(0.15 + 0.7 * rh.x, 0.3 + 0.7 * rh.y)) * rcell;
+			float r_len = mix(0.5, 2.0, hash21(cid2 + vec2(seed, 43.0)));
+			float r_top = mix(0.03, 0.06, hash21(cid2 + vec2(seed, 44.0)));
+			vec2 rd = abs(p - anchor);
+			if (rd.x < 0.02 && rd.y < 0.02) {
+				albedo = mix(albedo, vec3(0.02), 0.85 * (1.0 - line_fade(0.04, fwm)));
+			}
+			float r_str = rust_streak(p, anchor - vec2(0.0, 0.02), r_len, r_top, fwm);
+			albedo = mix(albedo, rust_color, 0.6 * r_str);
+			rough = mix(rough, 0.88, r_str);
+		}
+	}
+
+	// 5. Damp tide line: darker, greener base with a pale salt rim at its top edge.
+	float tide_top = 0.3 + 0.9 * fbm(vec2(p.x * 0.4, seed));
+	float damp = 1.0 - smoothstep(tide_top - max(0.01, fw.y), tide_top + max(0.01, fw.y), p.y);
+	albedo = mix(albedo, mix(albedo * 0.82, vec3(0.05, 0.07, 0.05), 0.15), damp);
+	rough = mix(rough, 0.8, damp);
+	float salt = p.y < tide_top ? soft_line(tide_top - p.y, 0.02, 1.0, fwm) : 0.0;
+	albedo *= 1.0 + 0.12 * salt;
+
 	float lum = dot(albedo, vec3(0.2126, 0.7152, 0.0722));
 	if (lum > 0.4) {
 		albedo *= 0.4 / lum;

@@ -16,6 +16,13 @@ uniform vec3 dirt_color : source_color = vec3(0.05, 0.045, 0.035);
 uniform vec3 paper_color : source_color = vec3(0.42, 0.38, 0.3);
 uniform vec3 can_color : source_color = vec3(0.25, 0.12, 0.06);
 uniform vec3 plastic_color : source_color = vec3(0.12, 0.22, 0.18);
+uniform vec3 skid_color : source_color = vec3(0.016, 0.016, 0.018);
+uniform vec3 spill_color : source_color = vec3(0.010, 0.010, 0.011);
+uniform vec3 scorch_color : source_color = vec3(0.012, 0.010, 0.009);
+uniform vec3 ash_color : source_color = vec3(0.10, 0.095, 0.09);
+uniform float skids : hint_range(0.0, 2.0) = 1.0;
+uniform float spills : hint_range(0.0, 2.0) = 1.0;
+uniform float scorches : hint_range(0.0, 2.0) = 1.0;
 uniform float washout : hint_range(0.0, 1.0) = 0.35;
 uniform float trash : hint_range(0.0, 1.0) = 0.95;
 uniform float roughness_value : hint_range(0.0, 1.0) = 0.94;
@@ -24,6 +31,157 @@ varying vec3 v_world_pos;
 
 void vertex() {
 	v_world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
+// Rare tyre skids — two swerving rubber bands, patchy and streaked.
+void skid_layer(vec2 p, inout vec3 col, inout float rough) {
+	if (skids <= 0.0) {
+		return;
+	}
+	float px = length(fwidth(p));
+	float stri_fade = 1.0 - smoothstep(0.25, 0.6, px * 22.0);
+	vec2 base = floor(p / 14.0);
+	float mask = 0.0;
+	for (int j = -1; j <= 1; j++) {
+		for (int i = -1; i <= 1; i++) {
+			vec2 cell = base + vec2(float(i), float(j));
+			if (hash21(cell + 17.3) >= 0.18 * skids) {
+				continue;
+			}
+			float ang = hash21(cell + 3.1) * TAU;
+			vec2 ctr = (cell + mix(vec2(0.2), vec2(0.8), hash22(cell + 5.7))) * 14.0;
+			vec2 dir = vec2(cos(ang), sin(ang));
+			vec2 d = p - ctr;
+			float t = dot(d, dir);
+			float s = dot(d, vec2(-dir.y, dir.x));
+			float len = 4.0 + 8.0 * hash21(cell + 9.9);
+			float k = (hash21(cell + 11.3) - 0.5) * 0.06;
+			float s_off = k * t * t;
+			float band = max(
+				1.0 - smoothstep(0.08, 0.11, abs(s - s_off - 0.85)),
+				1.0 - smoothstep(0.08, 0.11, abs(s - s_off + 0.85))
+			);
+			float ends = smoothstep(0.0, 1.2, t) * (1.0 - smoothstep(len - 2.5, len, t));
+			band *= ends * step(0.0, t) * step(t, len);
+			float stri = mix(0.5, noise21(vec2(t * 0.6, s * 22.0)), stri_fade);
+			band *= mix(0.55, 1.0, stri);
+			band *= smoothstep(0.25, 0.6, fbm(p * 0.9 + cell));
+			mask = max(mask, band);
+		}
+	}
+	col = mix(col, skid_color, mask * 0.85);
+	rough = mix(rough, 0.6, mask * 0.6);
+}
+
+// Rare burnouts — two or three overlapping partial tyre rings.
+void burnout_layer(vec2 p, inout vec3 col, inout float rough) {
+	if (skids <= 0.0) {
+		return;
+	}
+	float px = length(fwidth(p));
+	float stri_fade = 1.0 - smoothstep(0.25, 0.6, px * 22.0);
+	vec2 base = floor(p / 26.0);
+	float mask = 0.0;
+	for (int j = -1; j <= 1; j++) {
+		for (int i = -1; i <= 1; i++) {
+			vec2 cell = base + vec2(float(i), float(j));
+			if (hash21(cell + 21.7) >= 0.05 * skids) {
+				continue;
+			}
+			vec2 ctr = (cell + mix(vec2(0.2), vec2(0.8), hash22(cell + 25.3))) * 26.0;
+			int rings = 2 + int(step(0.5, hash21(cell + 2.2)));
+			for (int r = 0; r < 3; r++) {
+				if (r >= rings) {
+					break;
+				}
+				float fr = float(r) * 7.7;
+				vec2 rc = ctr + (hash22(cell + 40.0 + fr) - 0.5) * 1.2;
+				float rad = 1.4 + hash21(cell + 50.0 + fr);
+				float start = hash21(cell + 60.0 + fr) * TAU;
+				float arc = radians(220.0 + 120.0 * hash21(cell + 70.0 + fr));
+				vec2 d = p - rc;
+				float dist = length(d);
+				float rel = mod(atan(d.y, d.x) - start, TAU);
+				float ring = 1.0 - smoothstep(0.08, 0.12, abs(dist - rad));
+				ring *= 1.0 - smoothstep(arc - 0.12, arc, rel);
+				float stri = mix(0.5, noise21(vec2(rel * rad * 0.6, (dist - rad) * 22.0)), stri_fade);
+				ring *= mix(0.55, 1.0, stri);
+				ring *= smoothstep(0.25, 0.6, fbm(p * 0.9 + cell));
+				mask = max(mask, ring);
+			}
+		}
+	}
+	col = mix(col, skid_color, mask * 0.85);
+	rough = mix(rough, 0.6, mask * 0.6);
+}
+
+// Rare big oil spills — a wet blob with a drip trail of shrinking drops.
+void spill_layer(vec2 p, inout vec3 col, inout float rough, inout float metal) {
+	if (spills <= 0.0) {
+		return;
+	}
+	vec2 base = floor(p / 18.0);
+	float mask = 0.0;
+	float rim = 0.0;
+	for (int j = -1; j <= 1; j++) {
+		for (int i = -1; i <= 1; i++) {
+			vec2 cell = base + vec2(float(i), float(j));
+			if (hash21(cell + 13.1) >= 0.12 * spills) {
+				continue;
+			}
+			vec2 ctr = (cell + mix(vec2(0.2), vec2(0.8), hash22(cell + 15.9))) * 18.0;
+			float rad = 0.8 + 1.4 * hash21(cell + 19.3);
+			vec2 d = p - ctr;
+			float dist = length(d) + (fbm(p * 1.3 + cell) - 0.5) * 0.8 * rad;
+			float blob = 1.0 - smoothstep(rad - 0.15, rad, dist);
+			rim = max(rim, smoothstep(rad - 0.02, rad, dist) * (1.0 - smoothstep(rad + 0.03, rad + 0.05, dist)));
+			float tang = hash21(cell + 23.7) * TAU;
+			vec2 tdir = vec2(cos(tang), sin(tang));
+			float tlen = 2.0 + 3.0 * hash21(cell + 27.1);
+			float u = dot(d, tdir);
+			float v = dot(d, vec2(-tdir.y, tdir.x));
+			float du = (fract(u / 0.35) - 0.5) * 0.35;
+			float drop_r = mix(0.14, 0.06, clamp(u / tlen, 0.0, 1.0));
+			float drop = 1.0 - smoothstep(drop_r - 0.02, drop_r, length(vec2(du, v)));
+			drop *= step(0.0, u) * step(u, tlen) * step(abs(v), drop_r);
+			mask = max(mask, max(blob, drop));
+		}
+	}
+	col = mix(col, spill_color, mask * 0.92);
+	col *= 1.0 - 0.25 * rim;
+	rough = mix(rough, 0.3, mask);
+	metal = mix(metal, 0.25, mask);
+}
+
+// Rare scorched patches — burnt tar, ash speckle and a melted rim.
+void scorch_layer(vec2 p, inout vec3 col, inout float rough) {
+	if (scorches <= 0.0) {
+		return;
+	}
+	float px = length(fwidth(p));
+	float ash_fade = smoothstep(0.35, 0.8, px * 9.0);
+	vec2 base = floor(p / 22.0);
+	float mask = 0.0;
+	float melt = 0.0;
+	for (int j = -1; j <= 1; j++) {
+		for (int i = -1; i <= 1; i++) {
+			vec2 cell = base + vec2(float(i), float(j));
+			if (hash21(cell + 29.3) >= 0.06 * scorches) {
+				continue;
+			}
+			vec2 ctr = (cell + mix(vec2(0.2), vec2(0.8), hash22(cell + 33.1))) * 22.0;
+			float rad = 1.0 + 1.5 * hash21(cell + 37.9);
+			float dist = length(p - ctr) + (fbm(p * 1.3 + cell) - 0.5) * 0.8 * rad;
+			mask = max(mask, 1.0 - smoothstep(rad - 0.6, rad, dist));
+			melt = max(melt, smoothstep(0.85 * rad, 0.9 * rad, dist)
+				* (1.0 - smoothstep(0.9 * rad, 0.95 * rad, dist)));
+		}
+	}
+	float ash = mix(step(0.86, hash21(floor(p * 9.0))), 0.14, ash_fade);
+	col = mix(col, scorch_color, mask);
+	col = mix(col, ash_color, ash * mask * 0.5);
+	rough = mix(rough, 0.95, mask * (1.0 - melt));
+	rough = mix(rough, 0.55, melt);
 }
 
 void fragment() {
@@ -135,6 +293,22 @@ void fragment() {
 	color = mix(color, wear_color, tire * 0.85);
 	color = mix(color, patch_color, patch * 1.0);
 	color = mix(color, oil_color, oil * 0.95);
+
+	// Rare marks: skids, burnouts, big oil spills, scorches.
+	float rough = roughness_value
+		- tire * 0.14
+		+ grit * 0.05
+		+ oil * 0.12
+		+ edge_dirt * 0.06
+		- cracks * 0.08
+		- paper * 0.1
+		- can * 0.2;
+	float metal = 0.02 + oil * 0.18 + can * 0.35;
+	skid_layer(pos, color, rough);
+	burnout_layer(pos, color, rough);
+	spill_layer(pos, color, rough, metal);
+	scorch_layer(pos, color, rough);
+
 	color = mix(color, dirt_color, edge_dirt * 0.75);
 	color = mix(color, crack_color, cracks * 0.95);
 
@@ -153,19 +327,8 @@ void fragment() {
 	color = mix(color, vec3(luma), washout * 0.12);
 
 	ALBEDO = color;
-	METALLIC = 0.02 + oil * 0.18 + can * 0.35;
-	ROUGHNESS = clamp(
-		roughness_value
-			- tire * 0.14
-			+ grit * 0.05
-			+ oil * 0.12
-			+ edge_dirt * 0.06
-			- cracks * 0.08
-			- paper * 0.1
-			- can * 0.2,
-		0.3,
-		1.0
-	);
+	METALLIC = metal;
+	ROUGHNESS = clamp(rough, 0.3, 1.0);
 
 	float n_x = (grit_n - 0.5) * 0.55 + cracks * 0.7 + oil * 0.15;
 	float n_y = (fbm(pos * 3.5 + 3.0) - 0.5) * 0.45 + cracks * 0.4;

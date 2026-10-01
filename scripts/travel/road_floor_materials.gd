@@ -26,6 +26,23 @@ static func sidewalk_mat(surface_size_m: Vector2) -> ShaderMaterial:
 	return mat
 
 
+## Worn concrete kerb with joints, chips, scuffs and faded paint (box long side along z).
+static func curb_mat() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://scenes/corridor/curb_surface.gdshader") as Shader
+	mat.set_shader_parameter("mode", 0)
+	return mat
+
+
+## Gutter sludge, wet patches and leaf litter: the kerb shader in mode 1.
+static func gutter_mat() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://scenes/corridor/curb_surface.gdshader") as Shader
+	mat.set_shader_parameter("mode", 1)
+	mat.set_shader_parameter("base_color", Color(0.04, 0.042, 0.038, 1.0))
+	return mat
+
+
 static func std(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = color

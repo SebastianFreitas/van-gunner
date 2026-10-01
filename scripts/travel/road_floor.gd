@@ -202,6 +202,9 @@ func _build() -> void:
 	var curb_mat := curb_material if curb_material else RoadFloorMaterials.std(
 		Color(0.3, 0.29, 0.265, 1.0), 0.9, 0.02
 	)
+	# The kerb strips get the grime shader; bollards keep the flat curb_mat.
+	var curb_strip_mat: Material = curb_material if curb_material else RoadFloorMaterials.curb_mat()
+	var gutter_mat := RoadFloorMaterials.gutter_mat()
 	var metal_mat := metal_material if metal_material else RoadFloorMaterials.std(
 		Color(0.1, 0.105, 0.1, 1.0), 0.62, 0.72
 	)
@@ -247,7 +250,7 @@ func _build() -> void:
 			"GutterLeft",
 			Vector3(gutter_width, gutter_thickness, walk_len),
 			Vector3(-gutter_center_x, slab_bottom + gutter_thickness * 0.5, walk_cz),
-			dark_mat,
+			gutter_mat,
 			true
 		)
 	if sidewalk_right:
@@ -255,7 +258,7 @@ func _build() -> void:
 			"GutterRight",
 			Vector3(gutter_width, gutter_thickness, walk_len),
 			Vector3(gutter_center_x, slab_bottom + gutter_thickness * 0.5, walk_cz),
-			dark_mat,
+			gutter_mat,
 			true
 		)
 
@@ -267,7 +270,7 @@ func _build() -> void:
 			"CurbLeft",
 			Vector3(curb_w, curb_h, walk_len),
 			Vector3(-curb_x, road_surface_y + curb_h * 0.5, walk_cz),
-			curb_mat,
+			curb_strip_mat,
 			false
 		)
 	if sidewalk_right:
@@ -275,7 +278,7 @@ func _build() -> void:
 			"CurbRight",
 			Vector3(curb_w, curb_h, walk_len),
 			Vector3(curb_x, road_surface_y + curb_h * 0.5, walk_cz),
-			curb_mat,
+			curb_strip_mat,
 			false
 		)
 

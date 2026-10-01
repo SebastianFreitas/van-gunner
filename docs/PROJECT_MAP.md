@@ -197,6 +197,18 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `enum Kind { NONE, SIGN, AWNING, FURNITURE }`
 
+**`scripts/travel/facades/street_art/street_art_graffiti.gd`**
+
+- `enum Kind { TAG, THROW_UP, SYMBOL, SLOGAN }`
+
+**`scripts/travel/facades/street_art/street_art_pool.gd`**
+
+- `enum Family { GRAFFITI, POSTER }`
+
+**`scripts/travel/facades/street_art/street_art_posters.gd`**
+
+- `enum Kind { WANTED, FESTIVAL, NOTICE }`
+
 **`scripts/ui/act_reveal_panel.gd`**
 
 - `signal reveal_finished`
@@ -284,7 +296,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-312 GDScript files, 47958 lines.
+318 GDScript files, 49264 lines.
 
 ### `scenes/corridor/`
 
@@ -377,11 +389,12 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
 | `debug_commands.gd` | — | 244 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
-| `debug_facade_commands.gd` | — | 301 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
+| `debug_facade_commands.gd` | — | 305 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
 | `debug_gap_light.gd` | — | 175 | Debug gap light: paints everything that is not van magenta, so a see-through seam shows pink. |
 | `debug_item_commands.gd` | — | 70 | Debug console commands: items. |
 | `debug_meta_commands.gd` | — | 55 | Debug console commands: meta. |
 | `debug_run_flow_commands.gd` | — | 54 | Debug console commands: run flow. |
+| `debug_street_art_commands.gd` | — | 26 | Debug console commands for the street-art pool: print its stats or save its atlas as a contact sheet PNG. |
 | `debug_van_commands.gd` | — | 178 | Debug console commands: van. |
 
 ### `scripts/dialogue/`
@@ -512,9 +525,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `road_floor.gd` | `RoadFloor` | 365 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
+| `road_floor.gd` | `RoadFloor` | 368 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
 | `road_floor_details.gd` | — | 232 | Street furniture/detail builders for RoadFloor: expansion joints, drains, manholes and sidewalk dressing. |
-| `road_floor_materials.gd` | — | 35 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
+| `road_floor_materials.gd` | — | 52 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
 | `travel_controller.gd` | `TravelController` | 607 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
 | `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
 | `travel_stops.gd` | — | 203 | Owns the stop fork, side-stop placement, elevator pad ride and stop-state cleanup. |
@@ -524,10 +537,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `corridor_facades.gd` | — | 259 | Owns a corridor tile's two facade sides: their openings, plans and built nodes. |
+| `corridor_facades.gd` | — | 263 | Owns a corridor tile's two facade sides: their openings, plans and built nodes. |
 | `facade_audit.gd` | — | 122 | Shared keep-out audits for a corridor tile's built facades: the bay-mouth clearance check (nothing built in front of a stop-bay opening) and the raider-lane cl… |
 | `facade_body.gd` | — | 268 | Builds one building's body: SurfaceTool quads with UV in metres (u along the facade, v up), end returns, a roof plate, the stop-bay header / flank cut, and the… |
-| `facade_district.gd` | `FacadeDistrict` | 57 | One neighborhood look: skin presets, height range, ground-floor kinds, window state ratios and prop chances. |
+| `facade_district.gd` | `FacadeDistrict` | 62 | One neighborhood look: skin presets, height range, ground-floor kinds, window state ratios and prop chances. |
 | `facade_fixtures.gd` | — | 170 | Wall lamp fixtures and their SpotLight3D pools for one facade side: district colour, dead lamps, the world-wide light cap, and the layer-1 cull mask that keeps… |
 | `facade_grime_materials.gd` | — | 31 | Cached grime ShaderMaterials for large facade props, one per flat prop material, so big slabs (awnings, lintels, docks, set-piece bodies) share the road's grim… |
 | `facade_keep_out.gd` | — | 163 | Keep-out volumes for one facade side: the gate every facade placer passes an AABB through, so nothing ever stands in the raider lane, hangs over the road below… |
@@ -546,6 +559,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `facade_set_pieces.gd` | — | 84 | Rolls which rare set-piece (if any) a tile gets and on which side, and drives the piece's hooks from corridor_facades. |
 | `facade_signs.gd` | — | 285 | Street signage for one building: a backlit box sign over a storefront, a neon strip, a perpendicular blade sign, a cloth banner, or a torn poster on a boarded… |
 | `facade_spans.gd` | — | 55 | Facade spans for walls that are not corridor tile sides (junction stems, branches, the T far wall, side-street flanks): a host node maps the tile body builder'… |
+| `facade_street_art.gd` | — | 218 | Street art family: scatters the run's pooled graffiti and posters over one building's wall as one merged, keep-out-gated quad mesh. |
 | `facade_wreck.gd` | — | 115 | Wreck pass: bends signs, sags awnings and tips street furniture on worn and ruined buildings. |
 
 ### `scripts/travel/facades/set_pieces/`
@@ -575,6 +589,15 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `searchlight.gd` | — | 92 | A rooftop searchlight sweeping a tilted cone over the street: a pedestal and housing on the roof, with a beam mesh spun by scripts/travel/facades/set_pieces/se… |
 | `searchlight_pivot.gd` | — | 15 | Spins a searchlight beam around its own tilted Y axis, sweeping a cone over the street. |
 | `water_tower.gd` | — | 99 | A rooftop water tower: four legs, a wood tank, a conical lid and a ladder on the road side. |
+
+### `scripts/travel/facades/street_art/`
+
+| File | class_name | LOC | Summary |
+|---|---|---|---|
+| `street_art_graffiti.gd` | — | 250 | Generates one random spray-paint graffiti piece (tag, throw-up, symbol or slogan) as a pixel-art Image. |
+| `street_art_paint.gd` | — | 345 | Static pixel-art drawing helpers for street art: budgeted palettes, primitives, text, outlines, drips, wear, tears and stains on RGBA8 Images. |
+| `street_art_pool.gd` | — | 142 | Per-run pool of generated graffiti and posters packed into one atlas texture and one shared material, rebuilt when the run seed changes. |
+| `street_art_posters.gd` | — | 292 | Generates one aged paper poster (WANTED van, festival or gig, gang notice) as a pixel-art Image. |
 
 ### `scripts/ui/`
 
@@ -791,7 +814,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Shaders
 
-`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_prop_grime.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/crt_screen.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_exterior.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`, `scenes/van/van_window_exterior.gdshader`
+`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/curb_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_prop_grime.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/van/crt_screen.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_exterior.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`, `scenes/van/van_window_exterior.gdshader`
 
 ## Balance sheet (`resources/balance/game_balance.tres`)
 

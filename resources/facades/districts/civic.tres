@@ -36,3 +36,5 @@ sign_words = PackedStringArray("CLINIC", "LIBRARY", "COURT", "POST", "CHURCH", "
 sign_chance = 0.5
 awning_chance = 0.1
 furniture_chance = 0.5
+graffiti_amount = 0.35
+poster_amount = 0.45

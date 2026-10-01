@@ -54,3 +54,8 @@ extends Resource
 
 ## Chance a plain (both-sides-NONE, no rare) tile gets cross-street overhead dressing.
 @export var overhead_chance := 0.0
+
+## Spray-paint graffiti on this district's walls: 0 none, 1 heavy.
+@export_range(0.0, 1.0) var graffiti_amount := 0.6
+## Pasted paper posters on this district's walls: 0 none, 1 heavy.
+@export_range(0.0, 1.0) var poster_amount := 0.5
