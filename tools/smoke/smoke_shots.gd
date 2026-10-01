@@ -269,6 +269,21 @@ func van_views_closeups() -> void:
 		layer.visible = true
 
 
+## First-person arm close-ups through the `arms` debug command, saved with the "a" prefix.
+func arm_views() -> void:
+	var hidden := _hide_ui()
+	for view in ["front", "side", "left", "top", "down"]:
+		DebugCommands.run("arms cam " + view)
+		await _save("arms-" + view, "a")
+	DebugCommands.run("arms reload 0.5")
+	DebugCommands.run("arms cam front")
+	await _save("arms-reload", "a")
+	DebugCommands.run("arms reload off")
+	DebugCommands.run("arms cam off")
+	for layer in hidden:
+		layer.visible = true
+
+
 ## The gap-light views (g01-...): every seam of the rear and side doors and the ceiling join
 ## from the cabin (gaplight on) and the street (gaplight out), under the floodlight. A magenta
 ## pixel is a see-through gap (tools/gap_check.py counts them). Leaves both side doors closed
@@ -342,10 +357,10 @@ func _save_van_view(
 	prefix: String = "v"
 ) -> void:
 	var player := get_tree().get_first_node_in_group(&"player") as Node3D
-	var hidden_meshes: Array[MeshInstance3D] = []
+	var hidden_meshes: Array[VisualInstance3D] = []
 	if player != null:
-		for node in player.find_children("*", "MeshInstance3D", true, false):
-			var mesh := node as MeshInstance3D
+		for node in player.find_children("*", "VisualInstance3D", true, false):
+			var mesh := node as VisualInstance3D
 			if mesh.visible:
 				mesh.visible = false
 				hidden_meshes.append(mesh)

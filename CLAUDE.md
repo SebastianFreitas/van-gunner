@@ -60,6 +60,7 @@ A task step, like a plan phase, is one context: verify it, commit it, tick it, a
 | Van shell, doors, windows, vitals, van root and HUD wiring | `scripts/van/` |
 | Van look (seeded war-rig dressing, machine looks, cables) | `scripts/van/look/` (`van_look.gd` owns the seed; `machine_parts.gd`, `machine_motion.gd`, `machine_damage.gd`; cables `van_cable_runs.gd` + `van_cable_router.gd`) |
 | Gun, projectiles, damage, status effects | `scripts/combat/` |
+| First-person arms and held gun (seeded viewmodel) | `scripts/player/arms/`, `scripts/combat/gun_viewmodel.gd` |
 | Classes | `scripts/classes/`, `resources/classes/` |
 | Player, boons, tools | `scripts/player/`, `scripts/items/`, `resources/items/` |
 | HUD panels, bench, schematic, menus | `scripts/ui/` |

@@ -107,6 +107,9 @@ Geometry:
 
 - Low-poly: primitives and `SurfaceTool` quads with hard edges. No imported
   realistic models, no subdivided or sculpted surfaces.
+  One owner exception (2026-10-01): the first-person arms are the CC0
+  low-poly rigged model `assets/models/arms/arms.glb`, posed by `ArmRig`
+  and skinned only with the grime shader as `material_override` (no bitmap).
 - No bitmap textures on 3D surfaces (no photos, no painted PNGs, no
   `NoiseTexture2D`). All surface detail comes from the shader.
 
@@ -131,6 +134,9 @@ Surfaces, in the road's recipe:
   Street paving: tiles 0.5 m, setts 0.25 m, granite curb blocks 1 m,
   joints 3 cm, chamfers 1.2 cm; tiles dark (albedo 0.33), setts 0.25, and
   the paving's glare fades out over 18-45 m so a far grid never glows.
+  Viewmodel surfaces under 0.4 m from the camera on the 0.18-scaled arms
+  rig are the one exception: grain about 60/m virtual, mottle about 6/m,
+  ribs 2..3 cm, with the same albedo, roughness and metallic budget.
   Sidewalk dirt (where the walk is gone) is packed earth with broad tone
   drift and damp darker spots (`packed`), gravel only in noise patches
   about a fifth of the ground (coarse 0.22 m cells at 15%, fine 0.07 m at

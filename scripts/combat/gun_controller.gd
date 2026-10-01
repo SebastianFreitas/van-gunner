@@ -18,8 +18,6 @@ const CAMERA_KICK := 0.012
 @onready var muzzle_flash: OmniLight3D = $MuzzleFlash
 @onready var viewmodel: GunViewmodel = $GunViewmodel
 
-@onready var _weapon_rest_position: Vector3 = position
-
 var _stats_controller: GunStatsController
 var _current_ammo := 0
 var _next_shot_time := 0
@@ -285,7 +283,7 @@ func apply_class(def: ClassDefinition) -> void:
 	var family := def.family if def else ClassDefinition.Family.BASIC
 	if viewmodel:
 		viewmodel.snap_rest()
-		muzzle_offset = Vector3(0.0, 0.0, viewmodel.apply_family(family))
+		muzzle_offset = viewmodel.apply_family(family)
 	if muzzle_flash:
 		muzzle_flash.position = muzzle_offset
 	_refill_magazine()
@@ -305,12 +303,9 @@ func _play_feedback() -> void:
 		viewmodel.play_shot()
 	if _feedback_tween and _feedback_tween.is_valid():
 		_feedback_tween.kill()
-	position = _weapon_rest_position
-	position.z += 0.08
 	camera.rotation.x = -CAMERA_KICK
 	_feedback_tween = create_tween()
 	_feedback_tween.set_parallel()
-	_feedback_tween.tween_property(self, "position", _weapon_rest_position, 0.09)
 	_feedback_tween.tween_property(muzzle_flash, "light_energy", 0.0, 0.06)
 	_feedback_tween.tween_property(camera, "rotation:x", 0.0, 0.11)
 	_feedback_tween.chain().tween_callback(_reset_flash)

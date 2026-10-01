@@ -1,221 +1,257 @@
 class_name GunViewmodel
 extends Node3D
+## First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; recoil and reload cant.
 
-## Viewmodel motion: quarter-roll per shot, tip-up accelerating spin on reload
-## with a coast / settle finish so the mag change doesn't hard-cut.
+const RIG_SCALE := 0.18
+const LAMP_COLOR := Color(1.0, 0.93, 0.82)
+const LAMP_ENERGY := 0.35
+const LAMP_RANGE := 0.9
+const RECOIL_BACK := 0.12  ## virtual metres
+const RECOIL_PITCH := 4.0 * PI / 180.0
+const RECOIL_TIME := 0.12
+const RELOAD_ROLL := -35.0 * PI / 180.0
+const RELOAD_DIP := 0.1  ## virtual metres
+const SWAY_MAX := 2.0 * PI / 180.0  ## radians, cap per axis
+const SWAY_GAIN := 0.02  ## seconds: a 100 deg/s turn reaches the cap
+const SWAY_RATE := 10.0  ## lerp rate per second
+const BOB_UP := 0.02  ## virtual metres
+const BOB_SIDE := 0.015  ## virtual metres
+const BOB_FREQ := 8.0  ## rad/s at walking speed
+const BOB_WALK_SPEED := 4.0  ## m/s that counts as a full bob
+const SLAP_DROP := 0.12  ## virtual metres the left hand drops below the magazine
+const MAG_SLAP_IN_GUN := Vector3(0.0, -0.24, -0.22)  ## under the magazine, Body-local
+## Rig-space shift that drops the relaxed left arm below the frame at rest.
+const LEFT_HIDE := Vector3(-0.5, -2.4, 0.6)
+## Fraction of the way from the shown left wrist to the magazine point the reload slap travels;
+## the gun is hidden, so the arm only swings in toward the right hand.
+const LEFT_REACH_K := 0.35
+## Camera look-down (global basis.z.y) where the left arm starts and finishes rising into view.
+const LOOK_DOWN_FROM := 0.35
+const LOOK_DOWN_TO := 0.75
 
-const SHOT_SPIN := TAU * 0.25
-const SHOT_SPIN_DURATION := 0.32
-const RELOAD_TIP_RAD := deg_to_rad(42.0)
-const RELOAD_TIP_UP := 0.28
-const RELOAD_TIP_DOWN := 0.42
-const RELOAD_SPIN_START := 2.0
-const RELOAD_SPIN_END := 18.0
-## Tip-down split: coast spin + pitch drop, brief overshoot, spring settle.
-const RELOAD_COAST_FRAC := 0.50
-const RELOAD_LOCK_FRAC := 0.15
-const RELOAD_SETTLE_FRAC := 0.35
-const RELOAD_OVERSHOOT_RAD := deg_to_rad(-6.5)
-
+## Debug overrides from the arms console command; negative means off.
+var debug_look_down := -1.0
+var debug_reload_t := -1.0
+var _look_down := 0.0  ## 0..1, set each frame in _process
 @onready var _rig: Node3D = $Rig
-
-var _rest_rotation := Vector3.ZERO
-var _family: int = -1
-var _muzzle_z := -0.38
-var _pitch := 0.0
-var _roll := 0.0
-var _shot_tween: Tween
+var _lamp: OmniLight3D
+var _look: VanLook
+var _roots := {}
+var _lamp_local := Vector3.ZERO
+var _recoil := 0.0
+var _reload_t := 0.0
+var _reloading := false
+var _recoil_tween: Tween
 var _reload_tween: Tween
-var _spinning := false
-var _spin_speed := 0.0
-var _spin_accel := 0.0
-var _coasting := false
-var _coast_target_roll := 0.0
-var _coast_start_roll := 0.0
-var _coast_start_speed := 0.0
-var _coast_elapsed := 0.0
-var _coast_duration := 0.0
+var _camera: Node3D
+var _body: Node3D
+var _prev_basis := Basis.IDENTITY
+var _prev_body_pos := Vector3.ZERO
+var _has_prev := false
+var _sway := Vector2.ZERO  ## x pitch, y yaw (radians)
+var _bob_phase := 0.0
+var _bob_amount := 0.0  ## 0..1 eased walking factor
 
 
 func _ready() -> void:
-	_rest_rotation = _rig.rotation
-	if _family < 0:
-		apply_family(ClassDefinition.Family.BASIC)
+	add_to_group(&"gun_viewmodel")
+	_rig.scale = Vector3.ONE * RIG_SCALE
+	# Built and configured before add_child: light_cull_mask must never change on a live light.
+	_lamp = OmniLight3D.new()
+	_lamp.name = "ArmLamp"
+	_lamp.light_color = LAMP_COLOR
+	_lamp.light_energy = LAMP_ENERGY
+	_lamp.omni_range = LAMP_RANGE
+	_lamp.light_cull_mask = VanLighting.LAYER_VAN_INTERIOR
+	_lamp.shadow_enabled = false
+	add_child(_lamp)
+	# The Player node sits before VanLook in van.tscn, so wait a frame for the group.
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	_camera = get_parent().get_parent() as Node3D
+	_body = get_tree().get_first_node_in_group(&"player") as Node3D
+	_look = get_tree().get_first_node_in_group(VanLook.GROUP) as VanLook
+	if _look != null:
+		_look.look_rebuilt.connect(rebuild_arms)
+		rebuild_arms(_look.van_seed)
+	else:
+		rebuild_arms(VanLook.DEFAULT_VAN_SEED)
+
+
+## Frees the old arms and rifle and builds a fresh set from the van seed.
+func rebuild_arms(seed_value: int) -> void:
+	for child in _rig.get_children():
+		_rig.remove_child(child)
+		child.queue_free()
+	var van_name := ""
+	if _look != null:
+		var markings := _look.get_node_or_null(^"Markings") as VanMarkings
+		if markings != null:
+			van_name = markings.van_name
+	_roots = ArmsBuilder.build(_rig, seed_value, van_name)
+	_lamp_local = _roots.get("lamp_local", Vector3.ZERO) as Vector3
 	_apply()
 
 
-func apply_family(family: ClassDefinition.Family) -> float:
-	if family == _family and _rig.get_child_count() > 0:
-		return _muzzle_z
-	_family = family
-	_muzzle_z = ArmCannonMesh.build(_rig, family)
-	return _muzzle_z
-
-
-func _process(delta: float) -> void:
-	if _coasting:
-		_update_coast(delta)
-		return
-	if not _spinning:
-		return
-	_spin_speed += _spin_accel * delta
-	_roll -= _spin_speed * delta
-	_apply()
+## Muzzle in Weapon space, real metres. One rifle serves every family.
+func apply_family(_family: ClassDefinition.Family) -> Vector3:
+	var xf := _rig.transform if _rig != null else Transform3D(
+		Basis.IDENTITY.scaled(Vector3.ONE * RIG_SCALE), Vector3.ZERO
+	)
+	return xf * HeldGun.muzzle_local()
 
 
 func play_shot() -> void:
-	if _spinning or _coasting or (_reload_tween and _reload_tween.is_valid()):
+	if _reloading:
 		return
-	if _shot_tween and _shot_tween.is_valid():
-		_shot_tween.kill()
-	var start := _roll
-	var target := start - SHOT_SPIN
-	_shot_tween = create_tween()
-	_shot_tween.tween_method(_set_roll, start, target, SHOT_SPIN_DURATION).set_trans(
-		Tween.TRANS_CUBIC
-	).set_ease(Tween.EASE_OUT)
+	if _recoil_tween != null and _recoil_tween.is_valid():
+		_recoil_tween.kill()
+	_set_recoil(1.0)
+	_recoil_tween = create_tween()
+	_recoil_tween.tween_method(_set_recoil, 1.0, 0.0, RECOIL_TIME) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 
 func play_reload(duration: float) -> void:
-	if duration <= 0.0:
-		return
-	_kill_shot()
-	_stop_spin()
-	_stop_coast()
-	if _reload_tween and _reload_tween.is_valid():
+	var d := maxf(duration, 0.05)
+	if _reload_tween != null and _reload_tween.is_valid():
 		_reload_tween.kill()
-
-	var tip_up := minf(RELOAD_TIP_UP, duration * 0.22)
-	var tip_down := minf(RELOAD_TIP_DOWN, duration * 0.38)
-	var spin_time := maxf(duration - tip_up - tip_down, 0.05)
-	var coast_time := tip_down * RELOAD_COAST_FRAC
-	var lock_time := tip_down * RELOAD_LOCK_FRAC
-	var settle_time := tip_down * RELOAD_SETTLE_FRAC
-
-	_spin_speed = RELOAD_SPIN_START
-	_spin_accel = (RELOAD_SPIN_END - RELOAD_SPIN_START) / spin_time
-
+	if _recoil_tween != null and _recoil_tween.is_valid():
+		_recoil_tween.kill()
+	_recoil = 0.0
+	_reloading = true
 	_reload_tween = create_tween()
-	## Tip muzzle up into the spin.
-	_reload_tween.tween_method(_set_pitch, _pitch, RELOAD_TIP_RAD, tip_up).set_trans(
-		Tween.TRANS_BACK
-	).set_ease(Tween.EASE_OUT)
-	_reload_tween.tween_callback(_start_spin)
-	_reload_tween.tween_interval(spin_time)
-	## Coast: decelerate spin into a quarter-turn while pitching most of the way down.
-	_reload_tween.tween_callback(_begin_coast.bind(coast_time))
-	_reload_tween.parallel().tween_method(
-		_set_pitch, RELOAD_TIP_RAD, RELOAD_OVERSHOOT_RAD * 0.35, coast_time
-	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	_reload_tween.tween_callback(_finish_coast)
-	## Soft lock: overshoot past rest, then spring settle.
-	if lock_time > 0.001:
-		_reload_tween.tween_method(
-			_set_pitch, RELOAD_OVERSHOOT_RAD * 0.35, RELOAD_OVERSHOOT_RAD, lock_time
-		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_reload_tween.tween_method(_set_pitch, RELOAD_OVERSHOOT_RAD, 0.0, settle_time).set_trans(
-		Tween.TRANS_ELASTIC
-	).set_ease(Tween.EASE_OUT)
-	_reload_tween.tween_callback(_finalize_reload)
+	_reload_tween.tween_method(_set_reload_t, 0.0, 1.0, d)
+	_reload_tween.tween_callback(snap_rest)
 
 
 func snap_rest() -> void:
-	_kill_shot()
-	_stop_spin()
-	_stop_coast()
-	if _reload_tween and _reload_tween.is_valid():
+	if _recoil_tween != null and _recoil_tween.is_valid():
+		_recoil_tween.kill()
+	if _reload_tween != null and _reload_tween.is_valid():
 		_reload_tween.kill()
-	_pitch = 0.0
-	_roll = _quantize_roll(_roll)
+	_recoil = 0.0
+	_reload_t = 0.0
+	_sway = Vector2.ZERO
+	_bob_amount = 0.0
+	_bob_phase = 0.0
+	_has_prev = false
+	_reloading = false
 	_apply()
 
 
-func _set_roll(value: float) -> void:
-	_roll = value
+func _set_recoil(v: float) -> void:
+	_recoil = v
 	_apply()
 
 
-func _set_pitch(value: float) -> void:
-	_pitch = value
+func _set_reload_t(v: float) -> void:
+	_reload_t = v
 	_apply()
 
 
-func _apply() -> void:
-	_rig.rotation = _rest_rotation + Vector3(_pitch, 0.0, _roll)
-
-
-func _start_spin() -> void:
-	_spinning = true
-
-
-func _stop_spin() -> void:
-	_spinning = false
-	_spin_speed = 0.0
-	_spin_accel = 0.0
-
-
-func _begin_coast(duration: float) -> void:
-	## Capture peak speed before clearing the accel spin state.
-	var peak_speed := maxf(_spin_speed, RELOAD_SPIN_END * 0.85)
-	_stop_spin()
-	_coasting = true
-	_coast_elapsed = 0.0
-	_coast_duration = maxf(duration, 0.05)
-	_coast_start_roll = _roll
-	_coast_start_speed = peak_speed
-	## Aim for the next quarter-turn ahead (spin is negative roll).
-	## Estimate how far we'd travel under ease-out so the target feels intentional.
-	var expected_travel := _coast_start_speed * _coast_duration * 0.45
-	var provisional := _roll - expected_travel
-	_coast_target_roll = _quantize_roll_down(provisional)
-
-
-func _update_coast(delta: float) -> void:
-	_coast_elapsed += delta
-	var t := clampf(_coast_elapsed / _coast_duration, 0.0, 1.0)
-	## Smoothstep ease-out: fast residual spin that dies into the lock.
-	var eased := 1.0 - (1.0 - t) * (1.0 - t) * (1.0 - t)
-	_roll = lerpf(_coast_start_roll, _coast_target_roll, eased)
-	## Keep a decaying visual spin speed for anything that reads it later.
-	_spin_speed = _coast_start_speed * (1.0 - eased)
-	_apply()
-	if t >= 1.0:
-		_finish_coast()
-
-
-func _finish_coast() -> void:
-	if not _coasting:
+func _process(delta: float) -> void:
+	if delta <= 0.0:
 		return
-	_coasting = false
-	_roll = _coast_target_roll
-	_spin_speed = 0.0
+	if debug_look_down >= 0.0:
+		_look_down = debug_look_down
+	elif _camera != null:
+		_look_down = smoothstep(LOOK_DOWN_FROM, LOOK_DOWN_TO,
+				_camera.global_transform.basis.z.y)
+	else:
+		_look_down = 0.0
+	if _camera != null:
+		var cur := _camera.global_basis.orthonormalized()
+		if _has_prev:
+			var e := (_prev_basis.inverse() * cur).get_euler()
+			var target := Vector2(
+				clampf(-e.x / delta * SWAY_GAIN, -SWAY_MAX, SWAY_MAX),
+				clampf(-e.y / delta * SWAY_GAIN, -SWAY_MAX, SWAY_MAX)
+			)
+			_sway = _sway.lerp(target, 1.0 - exp(-SWAY_RATE * delta))
+		_prev_basis = cur
+	if _body != null:
+		if _has_prev:
+			# Parent-local, so the van's own travel never counts as walking.
+			var d := _body.position - _prev_body_pos
+			var speed := Vector2(d.x, d.z).length() / delta
+			var want := clampf(speed / BOB_WALK_SPEED, 0.0, 1.0)
+			_bob_amount = lerpf(_bob_amount, want, 1.0 - exp(-8.0 * delta))
+			_bob_phase = fmod(_bob_phase + BOB_FREQ * delta * _bob_amount, TAU)
+		_prev_body_pos = _body.position
+	_has_prev = true
 	_apply()
 
 
-func _stop_coast() -> void:
-	_coasting = false
-	_coast_elapsed = 0.0
-	_coast_duration = 0.0
-	_coast_start_speed = 0.0
+## Debug camera target in the Weapon node's space (metres): the left wrist or the rifle.
+func arms_focus(which: StringName) -> Vector3:
+	if _roots.is_empty():
+		return Vector3.ZERO
+	if which == &"left":
+		var left := _roots.get("left_root") as Node3D
+		var wrist := _roots.get("left_wrist", Vector3.ZERO) as Vector3
+		if left == null:
+			return Vector3.ZERO
+		return transform * (_rig.transform * (left.transform * wrist))
+	return transform * (_rig.transform * HeldGun.gun_xform().origin)
 
 
-func _finalize_reload() -> void:
-	_stop_spin()
-	_stop_coast()
-	_pitch = 0.0
-	_roll = _quantize_roll(_roll)
-	_apply()
+## Look sway and walk bob applied on top of recoil to the rifle and both arms.
+func _motion() -> Transform3D:
+	return Transform3D(
+		Basis(Vector3.UP, _sway.y) * Basis(Vector3.RIGHT, _sway.x),
+		Vector3(
+			BOB_SIDE * _bob_amount * sin(_bob_phase),
+			BOB_UP * _bob_amount * sin(2.0 * _bob_phase),
+			0.0
+		)
+	)
 
 
-func _quantize_roll(value: float) -> float:
-	return roundf(value / SHOT_SPIN) * SHOT_SPIN
+## Reload timeline t 0..1 as x cant, y left-hand reach to the magazine, z slap (two humps).
+func _reload_curves(t: float) -> Vector3:
+	var c := 0.0
+	if t < 0.75:
+		c = smoothstep(0.0, 0.25, t)
+	else:
+		c = 1.0 - smoothstep(0.75, 1.0, t)
+	var z := 0.0
+	if t >= 0.25 and t < 0.75:
+		var u := (t - 0.25) / 0.5
+		z = sin(PI * fmod(u * 2.0, 1.0))
+	return Vector3(c, c, z)
 
 
-## Nearest quarter-turn at or below value (spin decreases roll).
-func _quantize_roll_down(value: float) -> float:
-	return floorf(value / SHOT_SPIN) * SHOT_SPIN
-
-
-func _kill_shot() -> void:
-	if _shot_tween and _shot_tween.is_valid():
-		_shot_tween.kill()
+## Poses the rifle and both arms: sway, bob and recoil on all three, the reload cant (about the
+## grip) on the rifle and the right arm only; the left hand reaches under the magazine and slaps.
+func _apply() -> void:
+	var recoil := Transform3D(
+		Basis(Vector3.RIGHT, RECOIL_PITCH * _recoil), Vector3(0.0, 0.0, RECOIL_BACK * _recoil)
+	)
+	var grip := Transform3D(Basis.IDENTITY, HeldGun.GRIP)
+	var k := _reload_curves(_reload_t if debug_reload_t < 0.0 else debug_reload_t)
+	var roll := Transform3D(
+		Basis(Vector3.BACK, RELOAD_ROLL * k.x), Vector3(0.0, -RELOAD_DIP * k.x, 0.0)
+	)
+	var cant := grip * roll * grip.affine_inverse()
+	var m := _motion()
+	var gun_x := m * recoil * cant
+	var rest_pt := _roots.get("left_wrist", Vector3.ZERO) as Vector3
+	var shown := maxf(k.y, _look_down)
+	var hide_off := LEFT_HIDE * (1.0 - shown)
+	var gx := cant * HeldGun.gun_xform()
+	var mag_pt := gx * MAG_SLAP_IN_GUN
+	var down := (gx.basis * Vector3.DOWN).normalized()
+	var off := hide_off + (mag_pt - rest_pt) * (k.y * LEFT_REACH_K) + down * SLAP_DROP * k.z
+	var gun := _roots.get("gun_root") as Node3D
+	var right := _roots.get("right_root") as Node3D
+	var left := _roots.get("left_root") as Node3D
+	if gun != null:
+		gun.transform = gun_x
+	if right != null:
+		right.transform = gun_x
+	if left != null:
+		left.transform = m * recoil * Transform3D(Basis.IDENTITY, off)
+	if _lamp != null and _rig != null:
+		_lamp.position = _rig.transform * (gun_x * _lamp_local)

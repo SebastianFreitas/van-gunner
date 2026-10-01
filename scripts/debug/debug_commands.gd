@@ -9,6 +9,7 @@ const _ActCommands := preload("res://scripts/debug/debug_act_commands.gd")
 const _VanCommands := preload("res://scripts/debug/debug_van_commands.gd")
 const _MetaCommands := preload("res://scripts/debug/debug_meta_commands.gd")
 const _FacadeCommands := preload("res://scripts/debug/debug_facade_commands.gd")
+const _ArmsCommands := preload("res://scripts/debug/debug_arms_commands.gd")
 
 var _commands: Dictionary = {}
 
@@ -19,6 +20,7 @@ var _van: RefCounted
 var _meta: RefCounted
 var _catalog: RefCounted
 var _facade: RefCounted
+var _arms: RefCounted
 
 
 func _ready() -> void:
@@ -65,6 +67,8 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 				matches = _filter_prefix(_DebugCatalog.class_id_strings(), "")
 			"facade":
 				matches = _filter_prefix(_facade.sub_commands(), "")
+			"arms":
+				matches = _filter_prefix(["cam", "reload"], "")
 			_:
 				matches = []
 	elif parts[0] == "give" or parts[0] == "spawn":
@@ -94,6 +98,8 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 		matches = _filter_prefix(_DebugCatalog.sound_id_strings(), partial)
 	elif parts[0] == "facade":
 		matches = _filter_prefix(_facade.sub_commands(), partial)
+	elif parts[0] == "arms":
+		matches = _filter_prefix(["cam", "reload"], partial)
 	else:
 		matches = []
 
@@ -127,6 +133,7 @@ func _register_commands() -> void:
 	_meta = _MetaCommands.new(self)
 	_catalog = _DebugCatalog.new(self)
 	_facade = _FacadeCommands.new(self)
+	_arms = _ArmsCommands.new(self)
 	_commands = {
 		"help": _cmd_help,
 		"chill": _run_flow.cmd_chill,
@@ -157,6 +164,7 @@ func _register_commands() -> void:
 		"tree_reset": _meta.cmd_tree_reset,
 		"facade": _facade.cmd_facade,
 		"walk_wreck": _facade.cmd_walk_wreck,
+		"arms": _arms.cmd_arms,
 	}
 
 
@@ -202,6 +210,8 @@ func _cmd_help(_args: Array) -> String:
 		+ "  parts [n]       add Rare Parts (meta schematic currency)\n"
 		+ "  tree_reset      wipe the schematic back to origin (keeps parts)\n"
 		+ "  facade [sub]    street facade debug (try facade help)\n"
+		+ "  arms cam <view>  frame the first-person arms (front|side|left|top|down|off)\n"
+		+ "  arms reload <t>  freeze the reload pose at 0..1 (off to release)\n"
 		+ "  walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street\n"
 		+ "  Tab            autocomplete command or item id"
 	) % ", ".join(names)

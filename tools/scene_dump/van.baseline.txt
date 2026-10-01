@@ -8152,7 +8152,7 @@ NODE TravelPath/VanFollow/VanRig/Player/Head/Camera3D Camera3D
   fov=78.0
   size=1.0
   frustum_offset=Vector2(0, 0)
-  near=0.05
+  near=0.02
   far=4000.0
 NODE TravelPath/VanFollow/VanRig/Player/Head/Camera3D/InteractionRay RayCast3D
   unique_name_in_owner=false
@@ -8188,7 +8188,7 @@ NODE TravelPath/VanFollow/VanRig/Player/Head/Camera3D/Weapon Node3D script=res:/
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.34, -0.31, -0.7)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
