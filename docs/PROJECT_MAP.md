@@ -276,7 +276,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-304 GDScript files, 46688 lines.
+305 GDScript files, 46857 lines.
 
 ### `scenes/corridor/`
 
@@ -643,14 +643,14 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `machine_parts.gd` | `MachineParts` | 375 | Static low-poly part builders (motor, flywheel, belt, fan, battery, can, gauge, switch, CRT, tower, keyboard, pipe, vent, cables) for the van's interior machin… |
 | `van_armour.gd` | `VanArmour` | 260 | The van's seeded outer armour: plates, rebar and spikes on the real hull skin, placed from slots clear of every opening and merged per material. |
 | `van_armour_pieces.gd` | — | 84 | Appends armour piece geometry (leaned plates, bars, spikes) into per-material SurfaceTools for VanArmour. |
-| `van_axles.gd` | — | 51 | Axle beams, differentials and driveshafts under the lifted van body, at the wheels' hub height; built under VanWheels by its rebuild_look. |
+| `van_axles.gd` | — | 73 | Axle beams, differentials hanging below the belly and the 4x4 driveshaft between them, under the lifted van body; built under VanWheels by its rebuild_look. |
 | `van_cab.gd` | `VanCab` | 207 | The van's front: a long-hood truck front off another vehicle bolted to the box (upright cab with a split windshield, hood, fenders, grille, doors, mirrors and… |
 | `van_cab_body.gd` | — | 218 | One closed truck-front body: an upright cab with a split windshield in two sealed dark glass pockets, a long hood, front fenders with splash aprons and frame r… |
 | `van_cab_face.gd` | — | 149 | Dresses the truck cab: grille on the hood's nose, headlight pods on the fenders and the two cab doors with windows. |
 | `van_cab_parts.gd` | — | 22 | The cab's side mirrors, on seeded arms off the body's sides. |
 | `van_cable_router.gd` | — | 289 | Routes power cables around machine keep-out boxes inside the bowed shell and builds the small clamp, junction box, tape, plug and coil parts that VanCableRuns… |
 | `van_cable_runs.gd` | `VanCableRuns` | 397 | Seeded power tree: a thick generator-to-relay feed along the right trunk, relay drops to the PC rig, welding bench and hopper, ceiling lamp taps, then wall jun… |
-| `van_chassis.gd` | — | 321 | Builds the van's chassis kit around the wheels: arch flares and wells, side steps, saddle tank, toolbox, short exhaust, chained spares, rear rails and bumper. |
+| `van_chassis.gd` | — | 349 | Builds the van's chassis kit around the wheels: arch flares and wells cut around the lifted wheels' hubs, side steps with chained drop steps, saddle tank, tool… |
 | `van_front_kit.gd` | — | 182 | Builds the van's seeded front kit (bumper, ram, windshield cage, lamp cages) onto a VanCab. |
 | `van_generator.gd` | `VanGenerator` | 120 | The fuse-box vital rebuilt as a scrap diesel generator set (welded skid, motor, flywheel and belt, radiator, tank, fan, control box with gauge and trouble lamp… |
 | `van_generator_parts.gd` | — | 189 | Builds the generator set's welded skid, oil pan, radiator, tank, manifold, control gantry, junction box, trouble lamp and rust patches; the core script keeps t… |
@@ -676,7 +676,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_stencil_font.gd` | — | 151 | A 5x7 pixel stencil font that renders worn, hand-painted text and tally marks into Images for the van's decals. |
 | `van_welding_bench.gd` | `VanWeldingBench` | 186 | The crafting-bench vital rebuilt as a welding bench (heavy steel bench, gas bottles, welder box, vice, grinder with shrouds, pegboard with tools and hood, roof… |
 | `van_welding_bench_parts.gd` | — | 271 | Prop builders for the welding bench (gas bottles, welder box with torch and power port, anvil, clamps, rod can, offcuts, scorch marks, hood, grinder shrouds, a… |
-| `van_wheels.gd` | `VanWheels` | 184 | The van's seeded road wheels, mud flaps and axles, spun by the van's measured speed, hanging BODY_LIFT below the arches; the chassis kit around them lives in v… |
+| `van_wheel_mesh.gd` | — | 120 | Builds one road wheel's merged meshes in its spin pivot's space (axle along x): the lugged tyre, the deep-dish rim and the steel beadlock ring, hub and lug nut… |
+| `van_wheels.gd` | `VanWheels` | 183 | The van's seeded road wheels (1.6 m lugged tyres on beadlocked rims, meshes from van_wheel_mesh.gd), mud flaps and axles, spun by the van's measured speed; the… |
 
 ### `tools/`
 

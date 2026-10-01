@@ -28,7 +28,7 @@ const HOOD_HALF_W := 1.25
 const HOOD_BOT_Y := 0.25
 const HOOD_TOP_Y := 1.75
 const HOOD_CHAMFER := 0.12
-## Front fenders over the front wheels (wheel centre x ±2.84, z -7.25, top y 0.8); the back end
+## Front fenders over the front wheels (wheel centre x ±2.88, y -0.1, z -7.25, top y 0.7); the back end
 ## sinks 5 cm into the cab.
 const FENDER_IN_X := 1.2
 const FENDER_OUT_X := 3.15

@@ -1,5 +1,5 @@
 extends RefCounted
-## Builds the van's chassis kit around the wheels: arch flares and wells, side steps, saddle tank,
+## Builds the van's chassis kit around the wheels: arch flares and wells cut around the lifted wheels' hubs, side steps with chained drop steps, saddle tank,
 ## toolbox, short exhaust, chained spares, rear rails and bumper.
 
 ## Outer face of the sill/skin.
@@ -9,7 +9,7 @@ const FLARE_OUT := 0.06
 const LIP_H := 0.07
 ## Flare band and lip thickness (D12).
 const FLARE_T := 0.02
-const ARC_SEGMENTS := 10
+const ARC_SEGMENTS := 14
 ## Outer face of VanHullPatches' sill (wall_x_at(0) 2.42 + SIDE_SKIN_OUTER_M 0.22 + 0.06); the
 ## exhaust keeps 2 cm off it.
 const SILL_OUT_X := 2.70
@@ -25,6 +25,10 @@ const TOOLBOX_LEN := 0.92
 const SPARE_LEN := 0.84
 ## Half gap between the tandem arches' flares where they meet (D12: faces 2 cm apart).
 const TANDEM_GAP := 0.01
+## The drop step's rung height: halfway between the road (VanWheels.ROAD_Y -0.9) and the side step.
+const DROP_STEP_Y := -0.48
+## Links per drop-step chain.
+const CHAIN_LINKS := 5
 
 var _wheels: VanWheels
 
@@ -58,7 +62,7 @@ func build(hull_mat: Material, rubber: Material, rear_axles: Array[float], exhau
 				var z_mid := (z + rear_axles[j - 1]) * 0.5
 				flare_lo = z_mid + TANDEM_GAP
 				well_lo = z_mid
-			var rear_centre := Vector3(side * VanWheels.WHEEL_X, VanWheels.ARCH_ROAD_Y + VanWheels.REAR_RADIUS, z)
+			var rear_centre := Vector3(side * VanWheels.WHEEL_X, VanWheels.ROAD_Y + VanWheels.REAR_RADIUS, z)
 			_build_flare("Flare%s%d" % [label, idx], rear_centre, VanWheels.REAR_RADIUS, hull_mat,
 					flare_lo, flare_hi)
 			_build_well("Well%s%d" % [label, idx], rear_centre, VanWheels.REAR_RADIUS, dark,
@@ -103,12 +107,17 @@ func _build_flare(flare_name: String, centre: Vector3, radius: float, mat: Mater
 
 	# Angle a puts a profile point at z = centre.z + rho * cos(a), so a = 0 is the +z end.
 	var rho_out := r + FLARE_T
-	var a_min := 0.0
+	# The arch is a circle around the hub, cut where it meets the hull's underside; the hub sits
+	# above that line, so a_base is negative and the arch wraps past horizontal.
+	var a_base := asin(clampf((VanWheels.HULL_BOTTOM_Y - centre.y) / rho_out, -1.0, 1.0))
+	var a_min := a_base
 	if z_hi - centre.z < rho_out:
-		a_min = acos(clampf((z_hi - centre.z) / rho_out, -1.0, 1.0))
-	var a_max := PI
+		a_min = maxf(a_base, acos(clampf((z_hi - centre.z) / rho_out, -1.0, 1.0)))
+	var a_max := PI - a_base
 	if centre.z - z_lo < rho_out:
-		a_max = PI - acos(clampf((centre.z - z_lo) / rho_out, -1.0, 1.0))
+		a_max = minf(PI - a_base, PI - acos(clampf((centre.z - z_lo) / rho_out, -1.0, 1.0)))
+	if a_min >= a_max:
+		return
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -173,24 +182,28 @@ func _build_well(well_name: String, centre: Vector3, radius: float, mat: Materia
 	var side := signf(centre.x)
 	var r := radius + FLARE_GAP
 	var x := side * (SKIN_X + 0.005)
-	var hub := _clamp_z(Vector3(x, centre.y, centre.z), z_lo, z_hi)
+	# The plate is the arch's circle clipped under the hull's underside; a hub below that line is
+	# moved up onto it so the fan still covers the segment.
+	var hub := _clamp_z(Vector3(x, maxf(centre.y, VanWheels.HULL_BOTTOM_Y), centre.z), z_lo, z_hi)
 	var ref := Vector3(0.0, centre.y, centre.z)
+	var a_base := asin(clampf((VanWheels.HULL_BOTTOM_Y - centre.y) / r, -1.0, 1.0))
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i: int in range(ARC_SEGMENTS):
-		var a0: float = PI * i / ARC_SEGMENTS
-		var a1: float = PI * (i + 1) / ARC_SEGMENTS
+		var a0 := lerpf(a_base, PI - a_base, float(i) / ARC_SEGMENTS)
+		var a1 := lerpf(a_base, PI - a_base, float(i + 1) / ARC_SEGMENTS)
 		var p0 := _clamp_z(Vector3(x, centre.y + r * sin(a0), centre.z + r * cos(a0)), z_lo, z_hi)
 		var p1 := _clamp_z(Vector3(x, centre.y + r * sin(a1), centre.z + r * cos(a1)), z_lo, z_hi)
 		_add_tri_solid(st, hub, p0, p1, ref)
 
-	var left := _clamp_z(Vector3(x, VanWheels.ARCH_ROAD_Y, centre.z - r), z_lo, z_hi)
-	var right := _clamp_z(Vector3(x, VanWheels.ARCH_ROAD_Y, centre.z + r), z_lo, z_hi)
-	var top_left := _clamp_z(Vector3(x, centre.y, centre.z - r), z_lo, z_hi)
-	var top_right := _clamp_z(Vector3(x, centre.y, centre.z + r), z_lo, z_hi)
-	_add_tri_solid(st, top_left, left, right, ref)
-	_add_tri_solid(st, top_left, right, top_right, ref)
+	# The sliver between the hub and the clip line.
+	if a_base < 0.0:
+		var c0 := _clamp_z(Vector3(x, centre.y + r * sin(PI - a_base),
+				centre.z + r * cos(PI - a_base)), z_lo, z_hi)
+		var c1 := _clamp_z(Vector3(x, centre.y + r * sin(a_base),
+				centre.z + r * cos(a_base)), z_lo, z_hi)
+		_add_tri_solid(st, hub, c0, c1, ref)
 	st.generate_normals()
 	var mi := _wheels._add_mesh(well_name, st.commit(), mat, Vector3.ZERO)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -204,6 +217,21 @@ func _build_steps(side: float, label: String, mat: Material) -> void:
 		var offset: float = 0.95 if i == 0 else -0.95
 		_wheels._add_mesh("SideStepHanger%s%d" % [label, i], _wheels._box(Vector3(0.16, 0.11, 0.06)), mat,
 				Vector3(side * (SKIN_X + 0.10), -0.055, -3.485 + offset))
+
+	# The drop step hangs on two chains from the side step; each chain's ends sink 1 cm into the
+	# step above and the rung below, and alternate links turn 90 degrees so it reads as chain.
+	_wheels._add_mesh("SideStepDrop%s" % label, _wheels._box(Vector3(0.22, 0.05, 1.0)), mat,
+			Vector3(side * (SKIN_X + 0.19), DROP_STEP_Y, -3.485))
+	var chain_mat := VanCab._dark_material(Color(0.09, 0.085, 0.08), 0.75)
+	var y_top := -0.075
+	var y_bot := DROP_STEP_Y + 0.025 - 0.01
+	var pitch := (y_top - y_bot - 0.085) / (CHAIN_LINKS - 1)
+	for i: int in range(2):
+		var chain_z: float = -3.485 + (0.4 if i == 0 else -0.4)
+		for k: int in range(CHAIN_LINKS):
+			var size := Vector3(0.015, 0.085, 0.045) if k % 2 == 0 else Vector3(0.045, 0.085, 0.015)
+			var pos := Vector3(side * (SKIN_X + 0.19), y_top - 0.0425 - k * pitch, chain_z)
+			_wheels._add_mesh("SideStepChain%s%d_%d" % [label, i, k], _wheels._box(size), chain_mat, pos)
 
 	# Under the cab door, inner face 3 cm off the truck cab's side.
 	_wheels._add_mesh("CabStep%s" % label, _wheels._box(Vector3(0.28, 0.05, 1.2)), mat,

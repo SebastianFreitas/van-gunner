@@ -1,5 +1,14 @@
 extends RefCounted
-## Axle beams, differentials and driveshafts under the lifted van body, at the wheels' hub height; built under VanWheels by its rebuild_look.
+## Axle beams, differentials hanging below the belly and the 4x4 driveshaft between them, under the lifted van body; built under VanWheels by its rebuild_look.
+
+## Differential housing (x, y, z) and how far its centre hangs below the hub, so most of it shows under the belly.
+const DIFF_SIZE := Vector3(0.44, 0.36, 0.38)
+const DIFF_DROP := 0.14
+## Driveshaft height: 10 cm under the hull's underside; its joints stop 5 mm under the cab's bottom (-0.29) and 1.5 cm above the diffs' bottom.
+const SHAFT_Y := VanWheels.HULL_BOTTOM_Y - 0.10
+const SHAFT_T := 0.09
+## U-joint block at each shaft end.
+const JOINT_SIZE := 0.11
 
 var _wheels: VanWheels
 var _steel: StandardMaterial3D
@@ -14,22 +23,35 @@ func _init(wheels: VanWheels) -> void:
 
 
 func build(rear_axles: Array[float]) -> void:
-	_beam("AxleFront", VanWheels.FRONT_AXLE_Z, VanWheels.ROAD_Y + VanWheels.FRONT_RADIUS,
+	var front_hub_y := VanWheels.ROAD_Y + VanWheels.FRONT_RADIUS
+	_beam("AxleFront", VanWheels.FRONT_AXLE_Z, front_hub_y,
 			VanWheels.WHEEL_X + VanWheels.FRONT_WHEEL_OUT)
+	_diff("DiffFront", VanWheels.FRONT_AXLE_Z, front_hub_y, -1.0)
 	var rear_hub_y := VanWheels.ROAD_Y + VanWheels.REAR_RADIUS
 	for i: int in range(rear_axles.size()):
 		var z: float = rear_axles[i]
 		_beam("AxleRear%d" % i, z, rear_hub_y, VanWheels.WHEEL_X)
-		_box("DiffRear%d" % i, Vector3(0.36, 0.26, 0.30), Vector3(0.0, rear_hub_y - 0.02, z))
+		var cover := 1.0 if i == rear_axles.size() - 1 else 0.0
+		_diff("DiffRear%d" % i, z, rear_hub_y, cover)
 
-	var shaft_y := rear_hub_y - 0.02
-	_shaft("Driveshaft", VanWheels.FRONT_AXLE_Z + 0.6, rear_axles[0] - 0.15, shaft_y)
+	_shaft("Driveshaft", VanWheels.FRONT_AXLE_Z + 0.18, rear_axles[0] - 0.18, SHAFT_Y)
 	if rear_axles.size() > 1:
-		_shaft("DriveshaftTandem", rear_axles[0] + 0.15, rear_axles[1] - 0.15, shaft_y)
+		_shaft("DriveshaftTandem", rear_axles[0] + 0.18, rear_axles[1] - 0.18, SHAFT_Y)
+
+
+func _diff(diff_name: String, z: float, hub_y: float, cover_dir: float) -> void:
+	_box(diff_name, DIFF_SIZE, Vector3(0.0, hub_y - DIFF_DROP, z))
+	if cover_dir != 0.0:
+		_box(diff_name + "Cover", Vector3(0.30, 0.26, 0.06),
+				Vector3(0.0, hub_y - DIFF_DROP, z + cover_dir * (DIFF_SIZE.z * 0.5 + 0.02)))
 
 
 func _shaft(shaft_name: String, z_from: float, z_to: float, y: float) -> void:
-	_box(shaft_name, Vector3(0.08, 0.08, z_to - z_from), Vector3(0.0, y, (z_from + z_to) * 0.5))
+	_box(shaft_name, Vector3(SHAFT_T, SHAFT_T, z_to - z_from), Vector3(0.0, y, (z_from + z_to) * 0.5))
+	_box(shaft_name + "Joint0", Vector3.ONE * JOINT_SIZE,
+			Vector3(0.0, y, z_from + JOINT_SIZE * 0.5))
+	_box(shaft_name + "Joint1", Vector3.ONE * JOINT_SIZE,
+			Vector3(0.0, y, z_to - JOINT_SIZE * 0.5))
 
 
 func _beam(beam_name: String, z: float, hub_y: float, wheel_x: float) -> void:
