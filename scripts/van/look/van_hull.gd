@@ -20,6 +20,10 @@ const SKIN_OFFSET_M := 0.06
 ## `side_windows.gd` `HINGE_OUT_M` is sized against it.
 const SIDE_SKIN_OUTER_M := 0.22
 
+## The fill stands this far in front of the interior front wall's cab-side face and this far
+## outside its outline, so the slab never shows and no face lies within the audit's 2 cm.
+const FRONT_FILL_GAP_M := 0.025
+
 const SIDE_WALLS_PATH := ^"../../Interior/Shell/SideWalls"
 
 ## The shared exterior material; later parts (armour, cab) reuse it.
@@ -219,10 +223,13 @@ func _build_rear(walls: VanSideWall) -> void:
 	_add_mesh("RearSkin", st.commit())
 
 
-## The front face closes the step between the skin (0.22 m off the liner) and the cab skin
-## (0.12 m off) over the roof, at the side skin's front returns' z. Its inner edge lies on the cab
-## outline's top, its outer edge on the roof curve, and a quad per corner reaches down to the
-## returns' top edge (y = wall height), where the cab outline steps up from the wall top.
+## The front face closes the whole front of the box at the side skin's front returns' z: the strip
+## over the roof step between the skin (0.22 m off the liner) and the cab skin (0.12 m off), whose
+## inner edge lies on the cab outline's top and outer edge on the roof curve, a quad per corner
+## down to the returns' top edge (y = wall height), and a fill that sits 2.5 cm in front of the
+## interior front wall's cab-side face (z -4.75) and 2.5 cm outside its outline, with a band along
+## its sides and top back to the returns at `z`, because the bolted-on truck cab (x +-1.95, roof
+## 3.05) no longer covers the slab.
 func _build_front(walls: VanSideWall) -> void:
 	var z := -walls.span_z * 0.5
 	var w: float = walls.wall_x_at(walls.wall_height) + SIDE_SKIN_OUTER_M
@@ -253,6 +260,53 @@ func _build_front(walls: VanSideWall) -> void:
 		var skin_top := Vector3(side * w, _roof_y(side * w, w, walls), z)
 		_rear_tri(st, cab_wall, skin_wall, cab_top, Vector3.FORWARD)
 		_rear_tri(st, skin_wall, skin_top, cab_top, Vector3.FORWARD)
+
+	# The fill: stands in front of the interior front wall's slab (so it never shows) and closes
+	# its sides and top back to the returns, since the bolted-on cab is smaller than the box.
+	var zf := VanFrontWall.BACK_Z - FRONT_FILL_GAP_M
+	var g := FRONT_FILL_GAP_M
+	var h: float = walls.wall_height
+	var rows := 12
+	var pts := PackedVector2Array()
+	pts.append(Vector2(_profile.outer_x_at(0.0) + g, VanCab.BASE_Y))
+	for i in range(1, rows + 1):
+		var y := h * float(i) / float(rows)
+		pts.append(Vector2(_profile.outer_x_at(y) + g, y))
+	if _profile.outer_roof_y_at(xc) > h + 0.001:
+		pts.append(Vector2(xc + g, _profile.outer_roof_y_at(xc) + g))
+	for i in range(top_steps - 1, 0, -1):
+		var x := lerpf(-xc, xc, float(i) / float(top_steps))
+		pts.append(Vector2(x, _profile.outer_roof_y_at(x) + g))
+	if _profile.outer_roof_y_at(-xc) > h + 0.001:
+		pts.append(Vector2(-(xc + g), _profile.outer_roof_y_at(-xc) + g))
+	for i in range(rows, 0, -1):
+		var y := h * float(i) / float(rows)
+		pts.append(Vector2(-(_profile.outer_x_at(y) + g), y))
+	pts.append(Vector2(-(_profile.outer_x_at(0.0) + g), VanCab.BASE_Y))
+	var c := Vector2.ZERO
+	for p: Vector2 in pts:
+		c += p
+	c /= float(pts.size())
+	for k in range(pts.size()):
+		var p := pts[k]
+		var q := pts[(k + 1) % pts.size()]
+		_rear_tri(st, Vector3(c.x, c.y, zf), Vector3(p.x, p.y, zf), Vector3(q.x, q.y, zf),
+				Vector3.FORWARD)
+	# The band: from the fill back to the returns along the sides and top (not the open bottom).
+	for k in range(pts.size() - 1):
+		var p := pts[k]
+		var q := pts[k + 1]
+		var e := q - p
+		var nrm := Vector2(e.y, -e.x)
+		if nrm.dot((p + q) * 0.5 - c) < 0.0:
+			nrm = -nrm
+		var out := Vector3(nrm.x, nrm.y, 0.0).normalized()
+		var pf := Vector3(p.x, p.y, zf)
+		var qf := Vector3(q.x, q.y, zf)
+		var qb := Vector3(q.x, q.y, z)
+		var pb := Vector3(p.x, p.y, z)
+		_rear_tri(st, pf, qf, qb, out)
+		_rear_tri(st, pf, qb, pb, out)
 
 	st.generate_normals()
 	# No tangents: the exterior shader projects in model space and these meshes carry no UVs.

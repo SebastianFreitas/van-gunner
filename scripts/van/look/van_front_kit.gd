@@ -32,9 +32,13 @@ func _bumper(mat: Material) -> void:
 				Vector3(s * 1.6, VanCab.BUMPER_Y - VanCab.BUMPER_H * 0.5 - 0.1, nose_z - 0.12))
 
 
-func _mount_z(y: float) -> float:
+## Where a ram bar at height y and across-position x meets the front: the bumper face low down,
+## the hood's nose inside the hood's width, the fender fronts outside it.
+func _mount_z(y: float, x: float = 0.0) -> float:
 	if y <= VanCab.BUMPER_TOP_Y + 0.01:
 		return VanCab.BUMPER_FRONT_Z
+	if absf(x) > VanCab.HOOD_HALF_W and y >= VanCab.APRON_BOT_Y and y <= VanCab.FENDER_TOP_Y:
+		return VanCab.FENDER_FRONT_Z - 0.08
 	# Rail faces (0.07 thick) then clear the cab face, grille back and slat planes by 1.5 cm+ (D12).
 	return VanCab.NOSE_Z - 0.08
 
@@ -46,7 +50,7 @@ func _ram(kind: StringName, mat: Material, rng: RandomNumberGenerator) -> void:
 		&"plow":
 			for y: float in [0.0, 0.7]:
 				for s: float in [-1.0, 1.0]:
-					_bar("RamBar%d" % i, Vector3(s * 2.4 * jitter, y, _mount_z(y)),
+					_bar("RamBar%d" % i, Vector3(s * 2.4 * jitter, y, _mount_z(y, s * 2.4 * jitter)),
 							Vector3(0.0, y, -9.2), 0.12, mat)
 					i += 1
 			var tip_bot := Vector3(0.0, 0.0, -9.2)
@@ -54,8 +58,10 @@ func _ram(kind: StringName, mat: Material, rng: RandomNumberGenerator) -> void:
 			_bar("RamBar%d" % i, tip_bot, tip_top, 0.08, mat)
 			i += 1
 			for s: float in [-1.0, 1.0]:
-				var bot_from := Vector3(s * 2.4 * jitter, 0.0, _mount_z(0.0))
-				var top_from := Vector3(s * 2.4 * jitter, 0.7, _mount_z(0.7))
+				var bot_from := Vector3(s * 2.4 * jitter, 0.0,
+							_mount_z(0.0, s * 2.4 * jitter))
+				var top_from := Vector3(s * 2.4 * jitter, 0.7,
+							_mount_z(0.7, s * 2.4 * jitter))
 				_bar("RamBar%d" % i, bot_from.lerp(tip_bot, 0.5), top_from.lerp(tip_top, 0.5),
 						0.08, mat)
 				i += 1
@@ -67,7 +73,7 @@ func _ram(kind: StringName, mat: Material, rng: RandomNumberGenerator) -> void:
 			for x: float in [-1.2, 1.2]:
 				for y: float in [0.25, 0.75]:
 					_bar("RamBar%d" % i, Vector3(x * jitter, y, -9.0),
-							Vector3(x * jitter, y, _mount_z(y)), 0.14, mat)
+							Vector3(x * jitter, y, _mount_z(y, x * jitter)), 0.14, mat)
 					i += 1
 		&"cow_catcher":
 			var top_rail_from := Vector3(-2.2 * jitter, 0.6, _mount_z(0.6))
@@ -98,7 +104,7 @@ func _ram(kind: StringName, mat: Material, rng: RandomNumberGenerator) -> void:
 
 func _cage(kind: StringName, mat: Material) -> void:
 	var half_w := VanCab.WS_HALF_W + 0.05
-	## The glass leans back, so the cage lies on the raked plane 10 cm in front of it.
+	## The cage stands 10 cm in front of the upright split windshield.
 	var top_z := VanCab.front_z_at(VanCab.WS_TOP_Y) - 0.10
 	var bot_z := VanCab.front_z_at(VanCab.WS_BOT_Y) - 0.10
 	var top_l := Vector3(-half_w, VanCab.WS_TOP_Y, top_z)
@@ -130,7 +136,7 @@ func _cage(kind: StringName, mat: Material) -> void:
 		&"slit_plate":
 			var ws_h := VanCab.WS_TOP_Y - VanCab.WS_BOT_Y
 			var lower_size := Vector3(2.0 * VanCab.WS_HALF_W + 0.2, 0.6 * ws_h, 0.04)
-			var plate_rot := Vector3(deg_to_rad(VanCab.RAKE_DEG), 0.0, 0.0)
+			var plate_rot := Vector3.ZERO
 			var lower_y := VanCab.WS_BOT_Y + 0.3 * ws_h
 			var lower_pos := Vector3(0.0, lower_y, VanCab.front_z_at(lower_y) - 0.10)
 			_cab._add_mesh("CagePlate%d" % i, _cab._box(lower_size), mat, lower_pos, plate_rot)
@@ -149,15 +155,15 @@ func _cage(kind: StringName, mat: Material) -> void:
 
 
 func _lamp_cages(mat: Material) -> void:
-	var face_z := VanCab.NOSE_Z
+	var bar_z := VanCab.HEADLIGHT_Z - 0.10
 	for s: float in [-1.0, 1.0]:
 		var lamp_x := VanCab.HEADLIGHT_X * s
 		var i := 0
 		for dx: float in [-0.1, 0.0, 0.1]:
 			var suffix := "L" if s < 0.0 else "R"
 			_bar("LampCage%s%d" % [suffix, i],
-					Vector3(lamp_x + dx, VanCab.HEADLIGHT_Y - 0.22, face_z - 0.27),
-					Vector3(lamp_x + dx, VanCab.HEADLIGHT_Y + 0.22, face_z - 0.27), 0.025, mat)
+					Vector3(lamp_x + dx, VanCab.FENDER_TOP_Y - 0.01, bar_z),
+					Vector3(lamp_x + dx, VanCab.HEADLIGHT_Y + 0.20, bar_z), 0.025, mat)
 			i += 1
 
 

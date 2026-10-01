@@ -103,4 +103,5 @@ Notes:
 ## Carry forward
 
 - vangapfix D77 (in `.claude/plans/vangapfix.md`) lists the 29 views still pink after its phase 6.
+- Phase 2 (side door slits): the `cabrebuild` branch added a temporary LEAK_OUT rule for `Interior/Shell/SideWalls/DoorStop_R` (box `RIGHT_DOOR_REAR_SLIT`, d D77) in `tools/van_audit/van_audit_exempt.gd`, because the truck cab moved the leak sampler's rays onto the right leaf's rear slit. Delete that rule and its constant once the slit is closed; the strict audit must stay clean without it.
 - A fresh worktree's `.godot/` must be seeded (`py -3 tools/check.py`) before any tool creates it, or the smoke import times out.

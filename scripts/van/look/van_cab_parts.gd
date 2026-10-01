@@ -10,10 +10,10 @@ func _init(owner_cab: VanCab) -> void:
 
 
 func build_mirrors(mat: Material, rng: RandomNumberGenerator) -> void:
-	var mirror_z := VanCab.front_z_at(2.4) + VanCab.CHAMFER + 0.25
+	var mirror_z := VanCab.CAB_FRONT_Z + 0.25
 	for s: float in [-1.0, 1.0]:
 		var suffix := "L" if s < 0.0 else "R"
-		var outer_x := cab.profile.outer_x_at(2.4)
+		var outer_x := VanCab.CAB_HALF_W
 		cab._add_mesh("MirrorArm%s" % suffix, cab._box(Vector3(0.45, 0.04, 0.04)), mat,
 				Vector3(s * (outer_x + 0.2), 2.4, mirror_z))
 		var tilt := deg_to_rad(s * rng.randf_range(-8.0, 8.0))

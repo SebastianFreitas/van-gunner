@@ -22,6 +22,9 @@ const OPENING: Dictionary = {
 ## Globs are String.match() patterns against the node path as printed in the report.
 ## The rear sill: deck end and step ramp under the rear doors, rig-local (D57).
 const REAR_SILL := AABB(Vector3(-2.5, -0.4, 4.5), Vector3(5.0, 0.5, 0.9))
+## The right side door leaf's rear slit, rig-local: the door opening's rear 30 cm at the stop
+## (vangapfix D77, closed by vangapfix2 phase 2).
+const RIGHT_DOOR_REAR_SLIT := AABB(Vector3(2.2, 0.0, -2.5), Vector3(0.5, 3.1, 0.4))
 const RULES: Array[Dictionary] = [
 	{
 		"section": "FLICKER", "a": "Interior/Bulkhead/KickPlate_*",
@@ -78,8 +81,8 @@ const RULES: Array[Dictionary] = [
 	},
 	{
 		"section": "EDGE", "a": "VanLook/Hull/FrontSkin", "b": "", "d": "cabrebuild",
-		"reason": "the front step plate's inner edge stands 2.5 cm behind the cab body's "
-			+ "closed back cap (a bolted-on donor cab, seam on purpose); no ray sees through",
+		"reason": "the front fill's bottom edge, left open at the cab's base under the deck "
+			+ "(a bolted-on donor cab, seam on purpose); no ray sees through",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/DoorJamb_*", "b": "", "d": "D54",
@@ -105,6 +108,13 @@ const RULES: Array[Dictionary] = [
 		"section": "LEAK_OUT", "a": "Interior/FrontWall/Slab", "b": "", "d": "D54",
 		"reason": "the front wall slab's side edge, seen through the side door's front "
 			+ "clearance gap",
+	},
+	{
+		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/DoorStop_R", "b": "", "d": "D77",
+		"box": RIGHT_DOOR_REAR_SLIT,
+		"reason": "the stop seen through the right leaf's rear slit; the cab rebuild moved the "
+			+ "leak sampler's rays onto it; temporary, vangapfix2 phase 2 closes the slit "
+			+ "and deletes this row",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/Floor/RearEntryRamp", "b": "", "d": "D57",
