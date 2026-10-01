@@ -57,7 +57,7 @@ open. Where it and this file disagree, it wins.
 ## Context budget
 
 You have about 60k tokens of room. Quality drops as your context grows,
-and past 90k every tool call is refused, so spend it on the change, not on
+and past 75k every tool call is refused, so spend it on the change, not on
 reading.
 
 - Read only the region you are changing. Grep for the function names the

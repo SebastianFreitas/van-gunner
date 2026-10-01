@@ -184,6 +184,8 @@ because the main context is paid again on every turn.
   caller costs more than it saved (owner, 2026-10-01). Each project
   keeps its own `.claude/agents/explore.md` with `model: sonnet`;
   without one the built-in Explore runs on the main model (Opus).
+  Opus 5.5 runs at high effort everywhere: `modelSettings` in
+  `.claude/settings.json`, autoplan's `--effort high` (owner, 2026-10-01).
 - Every code change goes to `implementer` (Sonnet), one spec per call,
   one file per call unless the change genuinely spans files. It sees
   only the spec, never these rules. Read `.claude/playbook.md` before
@@ -200,9 +202,9 @@ owner's rule 2026-09-29): no session runs on past its line; it stops
 and the owner clears or opens a new chat. Never compact, never clear
 yourself. `.claude/hooks/context-watch.py` prints `CONTEXT WATCH` near
 each line: main and headless plan sessions 160k (the runner kills at
-185k), Explore and Plan 100k, plan-writer 120k, implementer 60k,
-reviewer and plan-reviewer 80k. A subagent
-at 1.5 times its line is denied further tools, which means the prompt
+185k), Explore, Plan, general-purpose and claude-code-guide 100k,
+plan-writer 120k, implementer 60k, reviewer and plan-reviewer 80k. A
+subagent at 1.25 times its line is denied further tools, which means the prompt
 was too wide: next time name the file, function and range, or split.
 
 - Main session past its line: finish only the current atomic step,

@@ -45,7 +45,7 @@ open. Where it and this file disagree, it wins.
 
 ## Context budget
 
-About 60k tokens of room; past 90k every tool call is refused. Read only
+About 60k tokens of room; past 75k every tool call is refused. Read only
 the region you change (grep the spec's function names, then `Read` with
 `offset`/`limit`); never read a file over 300 lines top to bottom; never
 open the paths the project file lists, or `__pycache__/`; pipe command

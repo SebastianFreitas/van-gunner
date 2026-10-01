@@ -5,13 +5,13 @@ Main session (UserPromptSubmit, PostToolUse): warns from SOFT x LIMIT and
 says to finish and hand off past LIMIT (CLAUDE.md "Context budget";
 format in .claude/skills/handoff).
 
-Subagents (Explore, Plan, implementer, implementer-wt, reviewer, plan-reviewer,
-plan-writer):
+Subagents (Explore, Plan, general-purpose, claude-code-guide, implementer,
+implementer-wt, reviewer, plan-reviewer, plan-writer):
 - PostToolUse: warns at SOFT x its line, says to stop reading past it.
   Advisory only; a model can ignore it.
 - PreToolUse: past HARD x its line, every further tool call is DENIED with
   an instruction to write the report now. This is the enforcement: a
-  subagent cannot drift to 240k tokens any more.
+  subagent cannot drift past 1.25x its line.
 - SubagentStop: logs the peak to a per-session ledger; the main session's
   next hook run reports it.
 
@@ -29,13 +29,14 @@ import sys
 
 LIMIT = int(os.environ.get("AUTOPLAN_LINE") or 160_000)  # main session: handoff line (auto-compact is off)
 SOFT = 0.8          # warn from this fraction of a line
-HARD = 1.5          # subagents: deny all tools from this multiple of the line
+HARD = 1.25         # subagents: deny all tools from this multiple of the line
 
 # Context line per subagent type. Explore and Plan carry a ~33k baseline
 # (system prompt and tools) before reading anything, so their line is
 # higher. Types not listed are measured on SubagentStop, never warned or
 # denied.
 SUB_LIMITS = {"Explore": 100_000, "Plan": 100_000,
+              "general-purpose": 100_000, "claude-code-guide": 100_000,
               "implementer": 60_000, "implementer-wt": 60_000, "reviewer": 80_000,
               "plan-reviewer": 80_000, "plan-writer": 120_000}
 

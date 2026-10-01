@@ -2,6 +2,11 @@
   "env": {
     "DISABLE_AUTO_COMPACT": "1"
   },
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
+  },
   "worktree": {
     "baseRef": "head"
   },

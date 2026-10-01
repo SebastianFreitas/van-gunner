@@ -61,7 +61,7 @@ is fixed from a source (a D `(from <source>)`) or becomes a question.
 - Past your context line (`CONTEXT WATCH`) finish the sentence you are
   writing, set the plan's `Interview` line and Open items to exactly
   where you stopped, commit, and report. Your tools are refused past
-  1.5 times the line.
+  1.25 times the line.
 
 ## Your report (under 400 words, nothing else)
 

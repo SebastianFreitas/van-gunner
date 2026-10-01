@@ -830,7 +830,7 @@ def main() -> int:
     parser.add_argument("--max-sessions", type=int, default=30)
     parser.add_argument("--budget", type=float, default=None)
     parser.add_argument("--model", default="claude-opus-5-5")
-    parser.add_argument("--effort", default="medium")
+    parser.add_argument("--effort", default="high")
     parser.add_argument("--permission-mode", default="auto")
     parser.add_argument("--line", type=int, default=160000)
     parser.add_argument("--kill", type=int, default=185000)
