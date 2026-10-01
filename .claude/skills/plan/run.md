@@ -10,7 +10,8 @@ state files only change on the branch that runs them.
 
 Execution is `tools/autoplan.py`: every phase in its own fresh headless
 session. The run is supervised from a **fresh app session** (the ready
-gate ends with `/clear`, then `go`) that stays small because it never
+gate ends with `/clear`, then the go prompt) that stays small because it
+never
 does a phase's work (owner, 2026-10-01: *"I say go and you just
 basically say go phase 1, go phase 2, go phase 3, until it's done; if
 there's an error or problem stop it all and tell me what's up ... the
@@ -58,8 +59,9 @@ start one; when one is live, report where it is (below) and stop.
   sections or source; never run a phase or fix anything yourself.
   Each phase costs this session a few thousand tokens, so a whole plan
   fits under its line. Past the line anyway: finish the report and end
-  with "Please run `/clear`, then prompt me with `go` to carry on."
-  (the state file holds where the run is).
+  with the go prompt (`workflow.md` "The go prompt"; what: "carry on
+  running plan <name>"; file: the state file, which holds where the run
+  is).
 - **Asked "where is it?"** Read only the state file's `Status` and Next
   phase, `git log --oneline -5` on `claude/plan-<name>`, and the newest
   `.claude/autoplan/<name>/<run>/s<k>.jsonl`'s last few assistant texts
@@ -104,16 +106,21 @@ turn, never "keep going with Next".
       Carry forward, and commit those too (same path rules). The state
       file is committed: in cloud mode the next session is a fresh clone
       and reads it from the branch.
-5. **Hard stop.** End the turn with the normal report, and its last
-   line is this exact message (with the plan's name), nothing after it:
+5. **Hard stop.** End the turn with the normal report, then the go
+   prompt (`workflow.md` "The go prompt"; checkout and branch from git,
+   now) as the last thing, nothing after it:
 
-   > Phase complete. Please run `/clear` to flush the context window,
-   > then prompt me with: 'Read .claude/plans/<name>.state.md and execute the next phase.'
+       Phase complete. Please run `/clear`, then paste this:
 
-   With `Status: questions` the last line is instead: *"No phase can
-   run until the questions are answered. Please run `/clear`, then
-   prompt me with `go` to answer them."* Do not start the next phase. Do
-   not ask whether to continue.
+       ```
+       Read .claude/plans/<name>.state.md and execute the next phase. Checkout <path> on branch <branch>, <mode> mode.
+       ```
+
+   With `Status: questions` the block is instead `go: answer plan
+   <name>'s questions. Checkout <path> on branch <branch>, <mode> mode.
+   Read .claude/plans/<name>.state.md first.`, introduced with "No phase
+   can run until the questions are answered." Do not start the next
+   phase. Do not ask whether to continue.
 6. **The next prompt** ("Read .claude/plans/<name>.state.md and execute
    the next phase") starts at step 1 in a fresh context. A bare "go"
    starts or reports the supervised run instead (above).
@@ -236,8 +243,8 @@ and deletes each in the commit that lands its work.
 ### Answer (`go` in the app while `Status: questions` or `blocked`)
 
 The owner answers a run's questions in the app, where the question UI
-works. A bare `go` (or `/plan`) on the plan's checkout that finds either
-status:
+works. A `go` prompt (bare or the full one, or `/plan`) on the plan's
+checkout that finds either status:
 
 1. Asks every question under Questions and Blocker with
    `AskUserQuestion`, as written there, up to 4 per call, by the

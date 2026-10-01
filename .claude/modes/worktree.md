@@ -60,7 +60,8 @@ removes the worktree.
 The rule is `workflow.md`'s "Context budget" (stop, handoff, owner
 clears). Commit on the branch first; `.claude/handoff.md` stays in this
 worktree (gitignored). After `/clear` it is the same worktree and branch:
-never open a new one for the same work. If the owner opens a new chat
-instead, that gets a fresh worktree from `main` with no handoff: it runs
-`git merge <branch>` first, so name the branch and put the Next list in
-the report's "Look at" too.
+never open a new one for the same work; the go prompt names both and the
+fresh window checks them (`workflow.md` "The go prompt"). If the owner
+opens a new chat instead, that gets a fresh worktree from `main` with no
+handoff: it runs `git merge <branch named in the go prompt>` first, so
+put the Next list in the report's "Look at" too.

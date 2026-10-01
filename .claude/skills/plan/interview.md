@@ -364,14 +364,18 @@ interview: record it as a D, show the pieces and phases it touches
 again, and run the gate again.
 
 End the turn with the plan in a few plain lines (what it builds, the
-phases), then this as the last line, nothing after it:
+phases), then the go prompt (`workflow.md` "The go prompt": checkout and
+branch from git, now) as the last thing, nothing after it:
 
-> Plan ready. Please run `/clear`, then prompt me with `go` to run it,
-> one phase at a time.
+    Plan ready. Please run `/clear`, then paste this:
 
-If `tools/autoplan.py` does not exist in this checkout, the last line
-is instead: *"Plan ready. Please run `/clear`, then prompt me with:
-'Read .claude/plans/<name>.state.md and execute the next phase.'"*
+    ```
+    go: run plan <name> one phase at a time. Checkout <path> on branch <branch>, <mode> mode. Read .claude/plans/<name>.md first.
+    ```
+
+If `tools/autoplan.py` does not exist in this checkout, the first clause
+is instead "Read .claude/plans/<name>.state.md and execute the next
+phase" (no `go:`; the phase then runs in the app, `run.md`).
 
 Context: auto-compact is off (owner's rule, 2026-09-29). The manager
 stays small because writers do the work, but in planning it may run
@@ -383,10 +387,14 @@ question. Record the answers you already have as D's,
 make sure `Interview` names the open part and `Open items` lists every
 choice still to ask, and commit the plan by path. No
 `.claude/handoff.md`: the plan file *is* the handoff. Then hard-stop.
-The last line of the turn is this exact message, with nothing after it:
+The turn ends with the go prompt (`workflow.md` "The go prompt"),
+nothing after it:
 
-> Interview paused (context full). Please run `/clear`, then prompt me
-> with `go` to continue the interview from the same part.
+    Interview paused (context full). Please run `/clear`, then paste this:
 
-`go` then resumes through "`/plan` or `go` while Stage is `planning`"
-in a fresh context.
+    ```
+    go: continue the interview for plan <name> from Part <letter>. Checkout <path> on branch <branch>, <mode> mode. Read .claude/plans/<name>.md first.
+    ```
+
+That prompt then resumes through "`/plan` or `go` while Stage is
+`planning`" in a fresh context.

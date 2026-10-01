@@ -830,7 +830,7 @@ def main() -> int:
     parser.add_argument("--max-sessions", type=int, default=30)
     parser.add_argument("--budget", type=float, default=None)
     parser.add_argument("--model", default="claude-opus-5-5")
-    parser.add_argument("--effort", default="high")
+    parser.add_argument("--effort", default="medium")
     parser.add_argument("--permission-mode", default="auto")
     parser.add_argument("--line", type=int, default=160000)
     parser.add_argument("--kill", type=int, default=185000)
@@ -896,9 +896,12 @@ def main() -> int:
     global _PLAN_NAME
     _PLAN_NAME = name
 
+    answer_branch = git("rev-parse", "--abbrev-ref", "HEAD").strip() or "(detached)"
     answer_msg = (
-        f"Answer in the app: open a Claude Code session on {ROOT.as_posix()}, type go, "
-        f"then rerun: py -3 {main_root().as_posix()}/tools/autoplan.py {name}"
+        f"Answer in the app: paste this into a Claude Code session on {ROOT.as_posix()}:\n"
+        f"  go: answer plan {name}'s questions. Checkout {ROOT.as_posix()} on branch "
+        f"{answer_branch}. Read .claude/plans/{name}.state.md first.\n"
+        f"Then rerun: py -3 {main_root().as_posix()}/tools/autoplan.py {name}"
     )
     if not args.dry_run:
         pre_state = read_state(name)

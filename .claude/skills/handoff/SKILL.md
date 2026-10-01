@@ -29,8 +29,8 @@ first line is `Run: prepared`, and Next lists the spec files in
 a `Review:` line with the number of distinct target files across the
 specs (over three: due; the commit guard counts the real diff anyway),
 and the screenshots the report needs. It ends
-the turn with the "Ready" line, not a "Context full" report, and stays
-until the run's commit.
+the turn with the go prompt (`workflow.md` "The go prompt"), not a
+"Context full" report, and stays until the run's commit.
 
 Then end the turn as your mode file's "Context full" rule says. The
 SessionStart hook prints the file into the next context (also after
@@ -42,8 +42,10 @@ context has absorbed it.
 ## Then stop
 
 Auto-compact is off (owner's rule, 2026-09-29): a handoff always ends
-the turn. The owner runs `/clear` (or opens a new chat) and says `go`;
-the SessionStart hook prints the handoff into the fresh context. It is
-the same folder, branch and PR, so never open a new worktree, branch or
-PR for the same work. Never compact and never call
+the turn. The turn's last thing is the go prompt (`workflow.md` "The go
+prompt": what to do, checkout, branch, file), never "say `go`". The
+owner runs `/clear` (or opens a new chat) and pastes it; the
+SessionStart hook prints the handoff into the fresh context. It is the
+same folder, branch and PR, so never open a new worktree, branch or PR
+for the same work. Never compact and never call
 `mcp__ccd_session_mgmt__clear_session` on yourself.

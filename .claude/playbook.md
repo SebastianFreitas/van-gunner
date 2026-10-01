@@ -65,7 +65,7 @@ Every spec has:
   belongs to the owner: print it, never run it. Commit: worktree mode
   runs it itself once verified; cloud and shared print it.
 - **Autoplan:** `py -3 tools/autoplan.py [<name>] [--dry-run]
-  [--max-sessions N] [--budget USD] [--effort high] [--line 160000]
+  [--max-sessions N] [--budget USD] [--effort medium] [--line 160000]
   [--kill 185000] [--force]`. Started by the app session in the
   background (`run_in_background`) with `--max-sessions 1`, one phase
   per launch, and relaunched by it after each phase (plan skill

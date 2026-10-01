@@ -320,11 +320,12 @@ def main():
             lines.append("")
             if body.startswith("Run: prepared"):
                 lines.append("PREPARED RUN (.claude/handoff.md): on the "
-                             "owner's 'go', run it as .claude/rules/"
-                             "workflow.md 'Run' says: manage only, send "
-                             "each spec file to an implementer, never "
-                             "redo 'Done'; the file stays until the "
-                             "run's commit:")
+                             "owner's go prompt (check its checkout and "
+                             "branch against the MODE line above), run it "
+                             "as .claude/rules/workflow.md 'Run' says: "
+                             "manage only, send each spec file to an "
+                             "implementer, never redo 'Done'; the file "
+                             "stays until the run's commit:")
             else:
                 lines.append("HANDOFF from the previous context "
                              "(.claude/handoff.md). Restate the plan in two "

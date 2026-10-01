@@ -49,7 +49,8 @@ landing steps and the checks.
 
 The rule is `workflow.md`'s "Context budget" (stop, handoff, owner
 clears). Commit and push first, and put the handoff in the PR body under
-`## Handoff` as well as in `.claude/handoff.md`.
+`## Handoff` as well as in `.claude/handoff.md`. The go prompt names
+the branch and `PR #<n>`.
 
 If the owner starts a new cloud session for the same work and says
 "continue PR #<n>", that session runs `gh pr view <n>` and stays on the

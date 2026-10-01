@@ -2,7 +2,7 @@
 name: reviewer
 description: Read-only check of a finished diff against the spec it was built from, in a fresh context. Use after an implementer change over about 150 lines or more than three files, before committing. The caller pastes the spec(s) and names the diff range or paths.
 model: sonnet
-effort: high
+effort: medium
 tools: Read, Grep, Glob, Bash
 omitClaudeMd: true
 maxTurns: 40

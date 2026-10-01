@@ -57,6 +57,46 @@ worktree, and anything else is shared: read that mode file and say in
 the report that the hook did not run. After `EnterWorktree`, read
 `.claude/modes/worktree.md` before the next edit.
 
+## The go prompt
+
+A turn that hands its work to a fresh window (a prepared run, a
+context-full handoff, a plan's ready gate, a paused interview, a plan
+waiting for answers) never ends with "say `go`": a bare `go` in a fresh
+window has had to guess which worktree and branch it was in, and guessed
+wrong (owner, 2026-10-01). It ends with the exact prompt the owner
+pastes, in a plain fenced block (not `bash`: no Run button), as the last
+thing in the turn, after the report:
+
+    Ready. Please run `/clear`, then paste this:
+
+    ```
+    go: <what to do>. Checkout <path> on branch <branch>, <mode> mode. Read <file> first.
+    ```
+
+- `<what to do>`: one clause in plain words ("build the prepared
+  specs", "continue the handoff", "run plan <name> one phase at a
+  time", "continue the interview for plan <name> from Part B", "answer
+  plan <name>'s questions"). A stage file may give another first clause
+  without `go:`; the rest of the line stays.
+- `<path>` and `<branch>`: from `git rev-parse --show-toplevel` and
+  `git branch --show-current` run in this window now, forward slashes,
+  never from memory (cloud mode: add `PR #<n>`).
+- `<file>`: `.claude/handoff.md` for a run or a handoff,
+  `.claude/plans/<name>.md` for an interview, the plan's state file for
+  a run or its questions.
+
+**Receiving one.** A prompt that starts with `go` is handled as the
+rules say for `go`, bare or not. `.claude/hooks/go-check.py` compares
+the prompt's checkout and branch with this session's and prints `GO
+CHECK:` either way; no line (the hook did not run): run the two git
+commands yourself. A mismatch means the owner is in another session or
+folder: stop, say which checkout the prompt names and where this
+session is, and do nothing else. Never switch checkout or branch to
+match the prompt, unless your mode file says how a new session picks
+the work up (cloud: "continue PR #<n>"; worktree: a new chat merges
+the named branch for a plain handoff). A prepared run's specs are
+gitignored and exist only in the named worktree, so a run never moves.
+
 ## Plans
 
 Big work runs as a plan: `.claude/plans/<name>.md`, started with
@@ -70,7 +110,8 @@ are active and none is bound here. Planning is an interview the app
 session manages while `plan-writer` subagents do the work (owner,
 2026-10-01); execution is one phase per fresh session (owner's rule,
 2026-09-26), under `py -3 tools/autoplan.py <name>`. The ready gate
-ends with `/clear`, then `go`: that fresh app session runs the phases
+ends with `/clear`, then the go prompt ("The go prompt" above): that
+fresh app session runs the phases
 one at a time in the background, reports each, answers questions and
 restarts, and stops everything on any other problem. The owner never
 pastes a command or says `go` between phases. The runner sets `AUTOPLAN=1`: then read
@@ -88,8 +129,8 @@ Sort each new prompt from its words and at most one `Explore` call:
 - **Quick fix:** one or two files, one clear change. Prepare and run in
   this window, no clear: steps 1 to 7 below, straight through.
 - **Anything else:** **prepare** (steps 1 to 2), end the turn, the owner
-  runs `/clear` and says `go`, and the fresh window **runs** (steps 3 to
-  7). Unsure which: prepare.
+  runs `/clear` and pastes the go prompt, and the fresh window **runs**
+  (steps 3 to 7). Unsure which: prepare.
 - **Too big for one run:** more than about 20 specs is a plan. Say so
   and suggest `/plan new <name>: <prompt>`.
 
@@ -133,15 +174,15 @@ and reading five to eight files themselves (review, 2026-10-01). So:
    distinct target files across the specs (over three, or over about
    150 lines expected: due; the commit guard counts the real diff
    either way, step 5) and the screenshots the report needs. End the
-   turn with what will be built in two or three plain lines, then this
-   as the last line:
-
-   > Ready. Please run `/clear`, then prompt me with `go` to build it.
+   turn with what will be built in two or three plain lines, then the
+   go prompt ("The go prompt" above; what: "build the prepared specs";
+   file: `.claude/handoff.md`), nothing after it.
 
 ### Run
 
-A `go` whose printed handoff starts with `Run: prepared`. This window
-only manages: it never reads source, a spec or a diff, and never
+A go prompt whose printed handoff starts with `Run: prepared` (its
+checkout and branch checked first, "The go prompt"). This window only
+manages: it never reads source, a spec or a diff, and never
 explores; each spec costs it about 3k tokens (the call, the report, a
 tailed check), so 20 specs fit well under its 160k line (two clean runs
 went from 44k to 51k and 68k for three specs each, 2026-10-01).
@@ -210,8 +251,9 @@ because the main context is paid again on every turn.
   caller costs more than it saved (owner, 2026-10-01). Each project
   keeps its own `.claude/agents/explore.md` with `model: sonnet`;
   without one the built-in Explore runs on the main model (Opus).
-  Opus 5.5 runs at high effort everywhere: `modelSettings` in
-  `.claude/settings.json`, autoplan's `--effort high` (owner, 2026-10-01).
+  Effort is medium everywhere until the owner has tested whether high
+  earns its cost: `modelSettings` in `.claude/settings.json`, autoplan's
+  `--effort medium`, the agent files' `effort:` (owner, 2026-10-01).
 - Every code change goes to `implementer` (Sonnet), one spec per call,
   one file per call unless the change genuinely spans files. It sees
   only the spec, never these rules. Read `.claude/playbook.md` before
@@ -243,10 +285,11 @@ subagent's hand-back lands in a new turn that the Stop guard fights.
 - Main session past its line: finish only the current atomic step,
   verify, commit, write `.claude/handoff.md` (`handoff` skill) and end
   the turn with the normal report plus your mode file's "Context full"
-  extras. Look at's first bullet: "Context full: run `/clear` (or open
-  a new chat) and say `go`." Plans stop their own way (plan skill). In a
-  run, the handoff keeps `Run: prepared` and lists in Next the spec
-  files still to send, so `go` carries on managing.
+  extras, then the go prompt ("The go prompt"; what: "continue the
+  handoff") as the last thing. Plans stop their own way (plan skill). In
+  a run, the handoff keeps `Run: prepared` and lists in Next the spec
+  files still to send, and the go prompt's what is "build the prepared
+  specs", so the fresh window carries on managing.
 - A handoff printed at session start: restate the plan in two lines,
   continue from Next, never redo Done, delete the file once absorbed.
   One that starts `Run: prepared` is a run ("Run" above): it stays
