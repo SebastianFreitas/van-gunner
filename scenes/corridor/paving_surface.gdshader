@@ -21,6 +21,8 @@ uniform float wreck_dirt = 0.6;
 
 // Draws embedded pebbles and stones on top faces (soil only; 0 leaves every other kind as is).
 uniform float gravel : hint_range(0.0, 1.0) = 0.0;
+// Worn, packed-earth tone variation (soil only).
+uniform float packed : hint_range(0.0, 1.0) = 0.0;
 
 varying vec3 v_world;
 varying vec3 v_wnormal;
@@ -43,7 +45,7 @@ vec3 gravel_layer(vec2 wp, float cell, float r_min, float r_max, vec3 col, vec3 
 			float mask = (1.0 - smoothstep(r - aa, r + aa, d)) * present;
 			float rim = (1.0 - smoothstep(r, r + 0.02, d)) * present;
 			lit *= 1.0 - 0.35 * (rim - mask);
-			vec3 pebble = stone * mix(0.7, 1.15, hash21(id + 67.1));
+			vec3 pebble = stone * mix(0.6, 0.95, hash21(id + 67.1));
 			lit = mix(lit, pebble, mask);
 		}
 	}
@@ -115,16 +117,33 @@ void fragment() {
 		}
 	}
 
-	// Pebbles and gravel set into the soil, tops only.
+	// Worn packed earth: broad tone drift and darker damp spots, so bare soil is not one flat tone.
+	float rough = roughness_value;
+	if (packed > 0.0) {
+		float big = noise21(v_world.xz * 0.35);
+		float mid = noise21(v_world.xz * 1.6 + 5.0);
+		float damp = smoothstep(0.55, 0.75, noise21(v_world.xz * 0.8 + 31.0));
+		col *= mix(1.0, 0.82 + 0.3 * big + 0.12 * (mid - 0.5), packed);
+		col = mix(col, col * 0.7, damp * 0.5 * packed);
+		rough = mix(rough, rough - 0.08 * damp, packed);
+	}
+
+	// Pebbles and gravel set into the soil, tops only. Real gravel sits in a few soft patches;
+	// the rest is bare dirt with a faint grit.
 	if (gravel > 0.0) {
+		vec2 wp = v_world.xz;
+		float patch_n = noise21(wp * 0.45) * 0.65 + noise21(wp * 1.3 + 17.0) * 0.35;
+		float patch_m = smoothstep(0.62, 0.78, patch_n);
 		vec3 stone = vec3(0.24, 0.23, 0.21);
-		vec3 packed_col = gravel_layer(v_world.xz, 0.22, 0.04, 0.08, col, stone, 0.55);
-		packed_col = gravel_layer(v_world.xz, 0.07, 0.012, 0.025, packed_col, stone, 0.70);
+		vec3 coarse = gravel_layer(wp, 0.22, 0.03, 0.055, col, stone, 0.15);
+		vec3 packed_col = mix(col, coarse, patch_m * 0.6);
+		vec3 fine = gravel_layer(wp, 0.07, 0.012, 0.025, packed_col, stone, 0.45);
+		packed_col = mix(packed_col, fine, max(patch_m, 0.08));
 		col = mix(col, packed_col, gravel * smoothstep(0.5, 0.8, up));
 	}
 
 	ALBEDO = col;
-	ROUGHNESS = roughness_value;
+	ROUGHNESS = rough;
 	METALLIC = 0.0;
 
 	// Far away the chamfers and tops must not glow as a grid: lean their normals up and

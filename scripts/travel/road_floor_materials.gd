@@ -93,6 +93,7 @@ static func paving_mat(kind: int) -> ShaderMaterial:
 			mat.set_shader_parameter(&"crack_amount", 0.0)
 			mat.set_shader_parameter(&"litter", 0.25)
 			mat.set_shader_parameter(&"gravel", 1.0)
+			mat.set_shader_parameter(&"packed", 1.0)
 			mat.set_shader_parameter(&"roughness_value", 0.97)
 			mat.set_shader_parameter(&"wreck_dirt", 0.3)
 	_paving_cache[kind] = mat

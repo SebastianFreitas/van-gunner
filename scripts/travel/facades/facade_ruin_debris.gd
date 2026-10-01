@@ -17,7 +17,7 @@ const RUBBLE_Y0 := -0.56
 # Rubble starts this deep (RUBBLE_Y0), so it stands in a 0.5 m sidewalk crater; tops land
 # half a drawn height above DIRT_Y.
 const SINK_DEPTH := 0.5
-const DIRT_Y := -0.11  ## sidewalk dirt surface (walk top -0.06 minus the 5 cm dirt drop)
+const DIRT_Y := -0.08  ## worn dirt height (walk top -0.06 minus DIRT_DROP 0.02)
 
 const _SLAB_P := 0.65
 const _SLAB_T := 0.22

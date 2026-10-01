@@ -1,30 +1,46 @@
 extends RefCounted
-## Builds a sidewalk side's ground: a near-flush soil heightfield under the paving with shallow dips where the destruction map is worst, and sparse half-buried shards, stones and rubble.
+## Builds a sidewalk side's ground: a worn soil heightfield under the paving (a foot path just under tile height ramping down to road level at the curb line, with broad shallow hollows), and sparse half-buried shards, stones and rubble.
 
 const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
 const _PavingMesh := preload("res://scripts/travel/road_floor_paving_mesh.gd")
 
-const DIRT_DROP := 0.05 ## dirt surface under the walk top
-const DIP_DEPTH := 0.07 ## deepest hollow in the worst spots
+## How far the worn foot path sits under the walk top, so broken paving pressed into it reads flush.
+const DIRT_DROP := 0.02
+## Broad, shallow worn hollows.
+const DIP_DEPTH := 0.03
+## Ramp bottom under the walk top at the old curb line (road level minus 1 cm).
+const RAMP_FOOT := 0.15
+## Share of the walk width, from the curb, that the ramp takes.
+const RAMP_SHARE := 0.6
+## Ramp width clamp in metres.
+const RAMP_MIN := 0.8
+const RAMP_MAX := 2.5
+## The skirt column's depth under the walk top (gutter level).
+const SKIRT_DROP := 0.18
 const STEP := 0.25
 const CELL := 0.5
 const MIN_KEPT := 0.35 ## a clip that leaves less of the fragment than this is undone
 
 
 ## Fills `soil` with the side's heightfield, and `rubble` and `tiles` with what lies on it.
+## A skirt column 2 cm outside the curb line, down at gutter level, closes the gap under the
+## ramp's edge.
 func build(wreck, rng: RandomNumberGenerator, soil, rubble, tiles) -> void:
 	var inner: float = wreck._inner
 	var width: float = wreck._width
 	var z_start: float = wreck._z_start
 	var z_end: float = wreck._z_end
-	var nx := maxi(2, ceili(width / STEP) + 1)
+	var nx := maxi(2, ceili(width / STEP) + 1) + 1
 	var nz := maxi(2, ceili((z_end - z_start) / STEP) + 1)
 	var points := PackedVector3Array()
 	var wrecks := PackedFloat32Array()
 	for iz: int in nz:
 		var z := lerpf(z_start, z_end, float(iz) / float(nz - 1))
-		for ix: int in nx:
-			var x_abs := inner + width * float(ix) / float(nx - 1)
+		var e_skirt: float = wreck.damage_at(inner, z)
+		points.append(Vector3(wreck._sign * (inner - 0.02), wreck._top - SKIRT_DROP, z))
+		wrecks.append(_WreckMap.wreck_tint(e_skirt))
+		for ix: int in nx - 1:
+			var x_abs := inner + width * float(ix) / float(nx - 2)
 			var e: float = wreck.damage_at(x_abs, z)
 			points.append(Vector3(wreck._sign * x_abs, height_at(wreck, x_abs, z, e), z))
 			wrecks.append(_WreckMap.wreck_tint(e))
@@ -33,17 +49,20 @@ func build(wreck, rng: RandomNumberGenerator, soil, rubble, tiles) -> void:
 
 
 ## Ground height at a point on the walk, in the side's local space; `e` is the damage there.
-## The dirt sits DIRT_DROP under the walk top, so surviving tiles stand slightly proud and any
-## piece sunk deeper vanishes into it.
+## Worn dirt height: a foot path `DIRT_DROP` under the walk top, ramping down to road level at the
+## curb line as `e` goes into GONE, with broad shallow hollows.
 func height_at(wreck, x_abs: float, z: float, e: float) -> float:
-	var y: float = wreck._top - DIRT_DROP
 	var inner: float = wreck._inner
-	var xfade := smoothstep(inner + 0.05, inner + 0.35, x_abs) \
-			* (1.0 - smoothstep(inner + 0.8, inner + 1.1, x_abs))
-	y -= _WreckMap.crater(e) * xfade * DIP_DEPTH
+	var path_y: float = wreck._top - DIRT_DROP
+	var ramp_w := clampf(wreck._width * RAMP_SHARE, RAMP_MIN, RAMP_MAX)
+	var u := clampf((x_abs - inner) / ramp_w, 0.0, 1.0) # 0 at the curb line, 1 where the path starts
+	var ramp_y: float = lerpf(wreck._top - RAMP_FOOT, path_y, smoothstep(0.0, 1.0, u))
+	var g := smoothstep(0.0, 0.10, e) # the ramp grows in from the gone edge
+	var y := lerpf(path_y, ramp_y, g)
 	var w: Vector2 = wreck.world_xz(x_abs, z)
-	var lump := fposmod(sin(w.x * 12.9898 + w.y * 78.233) * 43758.5453, 1.0) - 0.5
-	y += lump * 0.024 * xfade
+	var swell := (sin(w.x * 1.7 + w.y * 0.9) + sin(w.y * 2.3 - w.x * 0.6)) * 0.5
+	y -= _WreckMap.crater(e) * DIP_DEPTH * (0.5 + 0.5 * swell) * smoothstep(0.0, 0.3, u)
+	y += swell * 0.008 * g
 	return y
 
 
@@ -121,9 +140,9 @@ func _scatter(wreck, rng: RandomNumberGenerator, rubble, tiles) -> void:
 			if e <= 0.0:
 				continue
 			var edge := 1.0 - smoothstep(0.0, 0.06, e) # 1 at the gone edge, 0 in the core
-			if r_shard < 0.30 * edge:
+			if r_shard < 0.10 * edge:
 				_shard(wreck, rng, tiles, cx, cz, e)
-			if r_slab < 0.05 + 0.10 * edge:
+			if r_slab < 0.01 + 0.03 * edge:
 				_stone(wreck, rng, rubble, cx, cz, e)
 			elif r_n == 0 and r_slab > 1.0 - 0.10 * edge:
 				_chunk(wreck, rng, rubble, cx, cz, 0)
@@ -159,5 +178,5 @@ func _stone(wreck, rng: RandomNumberGenerator, rubble, cx: float, cz: float, e: 
 	var pos := Vector3(wreck._sign * cx, height_at(wreck, cx, cz, e) - 0.015, cz)
 	var t := rng.randf() * TAU
 	var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)) \
-			* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 12.0)))
+			* Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 8.0)))
 	rubble.add_prism(fp, 0.06, Transform3D(basis, pos), 1.0, rng.randf(), true)

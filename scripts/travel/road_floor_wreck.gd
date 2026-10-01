@@ -308,7 +308,7 @@ func _emit(rng: RandomNumberGenerator, out: _PavingMesh, state: int, at: Vector2
 			var drop := rng.randf_range(0.015, 0.05)
 			var tilt := rng.randf_range(0.0, 3.0)
 			if zone == _WreckMap.Zone.FRAGMENT:
-				drop = lerpf(0.01, 0.05, _WreckMap.band_t(e)) + rng.randf_range(0.0, 0.02)
+				drop = lerpf(0.005, 0.025, _WreckMap.band_t(e)) + rng.randf_range(0.0, 0.01)
 				tilt = rng.randf_range(0.0, 4.0)
 			elif zone == _WreckMap.Zone.ROUGH:
 				drop = rng.randf_range(0.005, 0.03)
@@ -320,7 +320,7 @@ func _emit(rng: RandomNumberGenerator, out: _PavingMesh, state: int, at: Vector2
 					_PavingMesh.SIDE_ALL, false)
 		Piece.FRAGMENT:
 			var fp := _WreckGround.fragment_footprint(rng, w - joint, length - joint)
-			var drop := lerpf(0.0, 0.05, _WreckMap.band_t(e)) + rng.randf_range(0.0, 0.025)
+			var drop := lerpf(0.0, 0.02, _WreckMap.band_t(e)) + rng.randf_range(0.0, 0.012)
 			var height := maxf(PIT_DEPTH + 0.02 - drop, 0.03)
 			var t := rng.randf() * TAU
 			var basis := Basis(Vector3(cos(t), 0.0, sin(t)), deg_to_rad(rng.randf_range(0.0, 10.0)))

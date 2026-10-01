@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-325 GDScript files, 50471 lines.
+325 GDScript files, 50491 lines.
 
 ### `scenes/corridor/`
 
@@ -537,11 +537,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `road_floor.gd` | `RoadFloor` | 398 | Reusable corridor road slab: carriageway + raised sidewalks + curb/gutter details. |
 | `road_floor_details.gd` | — | 213 | Street furniture/detail builders for RoadFloor: drains, manholes and sidewalk dressing. |
-| `road_floor_materials.gd` | — | 108 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
+| `road_floor_materials.gd` | — | 109 | Static material factories for RoadFloor: procedural street shaders plus a generic StandardMaterial3D helper, shared by the core and the detail builders. |
 | `road_floor_paving_mesh.gd` | — | 212 | Packs RoadFloor's paving pieces (chamfered blocks) into one ArrayMesh per material. |
 | `road_floor_wreck.gd` | — | 347 | Builds RoadFloor's wrecked paving: tiles and setts graded by the destruction map and set into a raised dirt floor, each side as merged meshes. |
 | `road_floor_wreck_curb.gd` | — | 107 | Builds the wrecked paving's granite curb: 1 m blocks, knocked, missing or toppled in gone stretches. |
-| `road_floor_wreck_ground.gd` | — | 164 | Builds a sidewalk side's ground: a near-flush soil heightfield under the paving with shallow dips where the destruction map is worst, and sparse half-buried sh… |
+| `road_floor_wreck_ground.gd` | — | 183 | Builds a sidewalk side's ground: a worn soil heightfield under the paving (a foot path just under tile height ramping down to road level at the curb line, with… |
 | `road_floor_wreck_map.gd` | — | 130 | The street's destruction map: one smooth world-space field saying how wrecked the sidewalk is at a point, continuous across corridor tiles and calibrated so DE… |
 | `travel_controller.gd` | `TravelController` | 607 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
 | `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
