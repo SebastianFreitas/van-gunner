@@ -89,13 +89,13 @@ void window_grid(vec2 p, out float row, out float fy, out float col, out float f
 		&& ground_height + (row + 1.0) * floor_height <= facade_height - 0.6;
 }
 
-// Brick coursing: 0.065 m courses, 0.22 m bricks, odd courses offset 0.11 m.
+// Brick coursing: 0.20 m courses, 0.60 m bricks, odd courses offset 0.30 m.
 void brick_grid(vec2 p, out vec2 id, out float bx, out float by) {
-	float row = floor(p.y / 0.065);
-	float offset = mod(row, 2.0) < 1.0 ? 0.0 : 0.11;
-	bx = mod(p.x + offset, 0.22);
-	by = mod(p.y, 0.065);
-	id = vec2(floor((p.x + offset) / 0.22), row);
+	float row = floor(p.y / 0.20);
+	float offset = mod(row, 2.0) < 1.0 ? 0.0 : 0.30;
+	bx = mod(p.x + offset, 0.60);
+	by = mod(p.y, 0.20);
+	id = vec2(floor((p.x + offset) / 0.60), row);
 }
 
 // Stone coursing: 1.0 x 0.5 m blocks, odd rows offset 0.5 m.
@@ -124,7 +124,7 @@ void window_cell(vec2 p, out vec2 id, out vec2 local, out float pane, out float 
 		float col = floor(p.x / 1.5);
 		float fx = p.x - col * 1.5;
 		id = vec2(col, row);
-		float mull = 0.06;
+		float mull = 0.12;
 		bool mullion = fx < mull || fx > 1.5 - mull || fy > floor_height - mull;
 		if (fy < 0.9 || mullion) {
 			frame = 1.0;
@@ -158,13 +158,13 @@ void window_cell(vec2 p, out vec2 id, out vec2 local, out float pane, out float 
 	}
 }
 
-// Shared boarded-plank look: 0.2 m stripes with wood grain and darker gaps.
+// Shared boarded-plank look: 0.35 m stripes with wood grain and darker gaps.
 vec3 plank_color(vec2 p, vec2 fw) {
-	float grain = mix(noise21(p * 18.0), 0.5, pattern_fade(1.0 / 18.0, max(fw.x, fw.y)));
+	float grain = mix(noise21(p * 8.0), 0.5, pattern_fade(1.0 / 8.0, max(fw.x, fw.y)));
 	vec3 wood = accent_color * vec3(1.35, 1.1, 0.8) * (0.85 + 0.3 * grain);
-	float plank_shade = mix(hash21(vec2(floor(p.y / 0.2), floor(p.x / 2.4))), 0.5, pattern_fade(0.2, fw.y));
+	float plank_shade = mix(hash21(vec2(floor(p.y / 0.35), floor(p.x / 2.4))), 0.5, pattern_fade(0.35, fw.y));
 	wood *= 0.8 + 0.4 * plank_shade;
-	wood *= mix(1.0, 0.45, soft_line(mod(p.y, 0.2), 0.02, 0.2, fw.y));
+	wood *= mix(1.0, 0.45, soft_line(mod(p.y, 0.35), 0.04, 0.35, fw.y));
 	return wood;
 }
 
@@ -182,8 +182,8 @@ float facade_relief(vec2 p, vec2 fw) {
 		if (style == 3) {
 			float fx = mod(p.x, 1.5);
 			float fy = mod(p.y - ground_height, floor_height);
-			bool mullion = (fx < 0.06 || fx > 1.44) && fy >= 0.9 && fy <= floor_height - 0.06;
-			h += mullion ? mix(0.03, -0.15, line_fade(0.12, fw.x)) : 0.03;
+			bool mullion = (fx < 0.12 || fx > 1.38) && fy >= 0.9 && fy <= floor_height - 0.12;
+			h += mullion ? mix(0.03, -0.15, line_fade(0.24, fw.x)) : 0.03;
 		} else {
 			h += 0.03;
 		}
@@ -192,23 +192,23 @@ float facade_relief(vec2 p, vec2 fw) {
 		float bx;
 		float by;
 		brick_grid(p, id, bx, by);
-		float my = soft_line(by, 0.012, 0.065, fw.y);
-		float mx = soft_line(bx, 0.012, 0.22, fw.x);
+		float my = soft_line(by, 0.03, 0.20, fw.y);
+		float mx = soft_line(bx, 0.03, 0.60, fw.x);
 		float mortar = 1.0 - (1.0 - mx) * (1.0 - my);
 		h += 0.01 - 0.02 * mortar;
 	} else if (style == 1) {
 		vec2 pm = mod(p, vec2(2.4, 1.2));
-		float seam = 1.0 - (1.0 - soft_line(pm.x, 0.02, 2.4, fw.x)) * (1.0 - soft_line(pm.y, 0.02, 1.2, fw.y));
+		float seam = 1.0 - (1.0 - soft_line(pm.x, 0.04, 2.4, fw.x)) * (1.0 - soft_line(pm.y, 0.04, 1.2, fw.y));
 		h -= 0.02 * seam;
 	} else if (style == 4) {
-		h += 0.02 * sin(p.x / 0.1 * TAU) * (1.0 - pattern_fade(0.1, fw.x));
+		h += 0.02 * sin(p.x / 0.3 * TAU) * (1.0 - pattern_fade(0.3, fw.x));
 	} else if (style == 5) {
 		vec2 id;
 		float bx;
 		float by;
 		stone_grid(p, id, bx, by);
 		float d = min(min(bx, 1.0 - bx), min(by, 0.5 - by));
-		h -= 0.03 * (1.0 - smoothstep(0.0, 0.04, d)) * (1.0 - line_fade(0.04, max(fw.x, fw.y)));
+		h -= 0.03 * (1.0 - smoothstep(0.0, 0.06, d)) * (1.0 - line_fade(0.06, max(fw.x, fw.y)));
 	}
 	if (string_course(p)) {
 		h += 0.06;
@@ -219,7 +219,7 @@ float facade_relief(vec2 p, vec2 fw) {
 		if (ground_kind == 1 && (ux < 0.5 || ux > unit_w - 0.5)) {
 			h += 0.05;
 		} else if (ground_kind == 3 && ux >= 0.5 && ux <= unit_w - 0.5 && p.y <= 3.8) {
-			h += 0.02 * sin(p.y / 0.15 * TAU) * (1.0 - pattern_fade(0.15, fw.y));
+			h += 0.02 * sin(p.y / 0.40 * TAU) * (1.0 - pattern_fade(0.40, fw.y));
 		} else if (ground_kind == 5) {
 			if (ux < 0.6 || ux > unit_w - 0.6) {
 				h += 0.08;
@@ -246,10 +246,10 @@ void shade_skin(vec2 p, float sk, out vec3 albedo, out vec3 emission, out float 
 		float bx;
 		float by;
 		brick_grid(p, brick_id, bx, by);
-		float my = soft_line(by, 0.012, 0.065, fw.y);
-		float mx = soft_line(bx, 0.012, 0.22, fw.x);
+		float my = soft_line(by, 0.03, 0.20, fw.y);
+		float mx = soft_line(bx, 0.03, 0.60, fw.x);
 		float mortar = 1.0 - (1.0 - mx) * (1.0 - my);
-		float bf = max(pattern_fade(0.22, fw.x), pattern_fade(0.065, fw.y));
+		float bf = max(pattern_fade(0.60, fw.x), pattern_fade(0.20, fw.y));
 		vec3 brick = base_color * (0.85 + 0.3 * mix(hash21(brick_id), 0.5, bf));
 		float variant = hash21(brick_id + 5.0);
 		float vmul = variant < 0.08 ? 0.65 : (variant > 0.94 ? 1.25 : 1.0);
@@ -258,9 +258,9 @@ void shade_skin(vec2 p, float sk, out vec3 albedo, out vec3 emission, out float 
 	} else if (style == 1) {
 		vec2 pm = mod(p, vec2(2.4, 1.2));
 		albedo = base_color * mix(1.0, 0.75, smoothstep(0.5, 0.8, fbm(p * 0.9 + seed)));
-		float seam = 1.0 - (1.0 - soft_line(pm.x, 0.02, 2.4, fw.x)) * (1.0 - soft_line(pm.y, 0.02, 1.2, fw.y));
-		float bolt = (length(mod(p, 0.6) - 0.3) < 0.02 && hash21(floor(p / 0.6)) < 0.4) ? 1.0 : 0.0;
-		bolt *= 1.0 - line_fade(0.04, max(fw.x, fw.y));
+		float seam = 1.0 - (1.0 - soft_line(pm.x, 0.04, 2.4, fw.x)) * (1.0 - soft_line(pm.y, 0.04, 1.2, fw.y));
+		float bolt = (length(mod(p, 1.2) - 0.6) < 0.04 && hash21(floor(p / 1.2)) < 0.4) ? 1.0 : 0.0;
+		bolt *= 1.0 - line_fade(0.08, max(fw.x, fw.y));
 		albedo = mix(albedo, mortar_color * 0.5, bolt);
 		albedo = mix(albedo, mortar_color, seam);
 	} else if (style == 2) {
@@ -272,8 +272,8 @@ void shade_skin(vec2 p, float sk, out vec3 albedo, out vec3 emission, out float 
 			albedo = base_color * 0.55;
 		}
 	} else if (style == 4) {
-		albedo = base_color * (0.85 + 0.15 * sin(p.x / 0.1 * TAU) * (1.0 - pattern_fade(0.1, fw.x)));
-		albedo = mix(albedo, mortar_color, soft_line(mod(p.y, 1.0), 0.015, 1.0, fw.y));
+		albedo = base_color * (0.85 + 0.15 * sin(p.x / 0.3 * TAU) * (1.0 - pattern_fade(0.3, fw.x)));
+		albedo = mix(albedo, mortar_color, soft_line(mod(p.y, 1.0), 0.04, 1.0, fw.y));
 		float rust = 0.6 * smoothstep(0.6, 0.95, fbm(vec2(p.x * 3.0, p.y * 0.4) + seed));
 		albedo = mix(albedo, vec3(0.30, 0.11, 0.05), rust);
 	} else if (style == 5) {
@@ -282,7 +282,7 @@ void shade_skin(vec2 p, float sk, out vec3 albedo, out vec3 emission, out float 
 		float by;
 		stone_grid(p, block_id, bx, by);
 		vec3 block = base_color * (0.9 + 0.2 * hash21(block_id));
-		float joint = 1.0 - (1.0 - soft_line(bx, 0.02, 1.0, fw.x)) * (1.0 - soft_line(by, 0.02, 0.5, fw.y));
+		float joint = 1.0 - (1.0 - soft_line(bx, 0.04, 1.0, fw.x)) * (1.0 - soft_line(by, 0.04, 0.5, fw.y));
 		albedo = mix(block, mortar_color, joint);
 	} else if (style == 6) {
 		bool is_col = mod(p.x, 4.0) < 0.5;
@@ -382,8 +382,8 @@ void shade_ground(vec2 p, float sk, out vec3 albedo, out vec3 emission, out floa
 		if (p.y < 0.5) {
 			albedo = accent_color * 0.6;
 		} else {
-			float gap = hash21(vec2(floor(p.y / 0.2), u)) < 0.12 ? 1.0 : 0.0;
-			gap = mix(gap, 0.12, pattern_fade(0.2, fw.y));
+			float gap = hash21(vec2(floor(p.y / 0.35), u)) < 0.12 ? 1.0 : 0.0;
+			gap = mix(gap, 0.12, pattern_fade(0.35, fw.y));
 			albedo = mix(plank_color(p, fw), vec3(0.01), gap);
 		}
 		rough = 0.95;
@@ -391,7 +391,7 @@ void shade_ground(vec2 p, float sk, out vec3 albedo, out vec3 emission, out floa
 		if (ux < 0.8 || ux > unit_w - 0.8 || p.y < 0.3 || p.y > 3.5) {
 			albedo = mortar_color;
 		} else {
-			vec3 col = accent_color * (0.9 + 0.1 * sin(p.y / 0.15 * TAU) * (1.0 - pattern_fade(0.15, fw.y)));
+			vec3 col = accent_color * (0.9 + 0.1 * sin(p.y / 0.40 * TAU) * (1.0 - pattern_fade(0.40, fw.y)));
 			float rust = 0.6 * smoothstep(0.6, 0.95, fbm(vec2(p.x * 3.0, p.y * 0.4) + seed));
 			albedo = mix(col, vec3(0.30, 0.11, 0.05), rust);
 		}
@@ -447,7 +447,7 @@ void apply_overlays(vec2 p, inout vec3 albedo, inout vec3 emission, inout float 
 		albedo = accent_color;
 	}
 	float fwm = max(fw.x, fw.y);
-	float grain = mix(noise21(p * 24.0 + seed), 0.5, pattern_fade(1.0 / 24.0, fwm));
+	float grain = mix(noise21(p * 10.0 + seed), 0.5, pattern_fade(1.0 / 10.0, fwm));
 	albedo *= 0.9 + 0.2 * grain;
 	albedo *= 1.0 - grime * 0.3 * fbm(p * 0.35 + seed + 11.0);
 
@@ -493,7 +493,7 @@ void apply_overlays(vec2 p, inout vec3 albedo, inout vec3 emission, inout float 
 	albedo = mix(albedo, mortar_color * 0.4, cracks * 0.8);
 
 	if (fbm(p * 0.6 + seed + 23.0) > 1.0 - overgrowth * 0.5 && p.y < facade_height * 0.7) {
-		albedo = vec3(0.08, 0.12, 0.05) * (0.7 + 0.6 * noise21(p * 12.0));
+		albedo = vec3(0.08, 0.12, 0.05) * (0.7 + 0.6 * noise21(p * 6.0));
 		rough = 0.95;
 	}
 	if (fbm(p * 1.3 + seed + 41.0) > 1.0 - damage * 0.45) {
@@ -654,8 +654,8 @@ void facade_shade(vec2 p, out vec3 albedo, out vec3 emission, out float rough, o
 		if (style == 3) {
 			float fx = mod(p.x, 1.5);
 			float fy = mod(p.y - ground_height, floor_height);
-			if ((fx < 0.06 || fx > 1.44) && fy >= 0.9 && fy <= floor_height - 0.06) {
-				albedo = mix(accent_color, glass_color, line_fade(0.12, fw.x));
+			if ((fx < 0.12 || fx > 1.38) && fy >= 0.9 && fy <= floor_height - 0.12) {
+				albedo = mix(accent_color, glass_color, line_fade(0.24, fw.x));
 			}
 		}
 	} else if (w_pane > 0.5) {

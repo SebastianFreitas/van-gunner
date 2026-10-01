@@ -42,8 +42,8 @@ void fragment() {
 	vec3 col = base_color * (0.9 + 0.2 * (fbm(p * 0.7 + 3.1) - 0.5) * 2.0);
 
 	// Grain, faded with distance so it never shimmers.
-	float gfade = 1.0 - smoothstep(0.02, 0.05, fw);
-	col *= mix(1.0, 0.85 + 0.3 * noise21(p * 18.0), gfade);
+	float gfade = 1.0 - smoothstep(0.045, 0.11, fw);
+	col *= mix(1.0, 0.85 + 0.3 * noise21(p * 8.0), gfade);
 
 	// Broad grime wash.
 	float wash = smoothstep(0.35, 0.8, fbm(p * 0.45 + 7.3)) * grime;

@@ -123,6 +123,11 @@ Surfaces, in the road's recipe:
   the style; they are not a problem to remove.
 - **Big shapes read first**: seams, panels, courses, windows and slabs are
   the structure; grime breaks them up and never hides them.
+- **Chunky, not fine** (owner, 2026-10-01): hard repeating lines on
+  buildings are low-poly scale: bricks 0.60 x 0.20 m with 3 cm mortar,
+  corrugation 0.30 m, roll-up slats 0.40 m, planks 0.35 m, mullions 12 cm,
+  seams and joints 3..4 cm; no hard repeating pitch under 0.20 m, no line
+  under 3 cm; wall grain about 10/m, prop and plank grain about 8/m.
 - **Lighting model**: `diffuse_burley`, `specular_schlick_ggx`, roughness
   0.78..0.95 on base surfaces (wet oil and polished tyre lanes may drop to
   about 0.3 locally), metallic 0..0.3 (oil, cans, bolts). A shader may
