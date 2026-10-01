@@ -1,10 +1,10 @@
 extends RefCounted
-## Steps the door raider's four-frame run sheet: Sprite3D.frame advances at RUN_FPS while
+## Steps the door raider's eight-frame run sheet: Sprite3D.frame advances at RUN_FPS while
 ## the raider moves and rests on frame 0 (the still) when it stands. Does nothing for a
 ## single-frame sprite (the window crawler, the biker boss), whose hframes is 1.
 
-const RUN_FPS := 8.0
-const RUN_FRAMES := 4
+const RUN_FPS := 12.0
+const RUN_FRAMES := 8
 
 var raider: WindowRaider
 var _clock := 0.0

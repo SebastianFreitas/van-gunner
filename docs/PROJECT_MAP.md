@@ -304,7 +304,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-325 GDScript files, 50491 lines.
+325 GDScript files, 50494 lines.
 
 ### `scenes/corridor/`
 
@@ -428,7 +428,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `enemy_spawn_pool_entry.gd` | `EnemySpawnPoolEntry` | 8 | A single weighted slot inside an EnemySpawnPool. |
 | `loot_drop_component.gd` | `LootDropComponent` | 62 | Drop-in component that gives any enemy a chance to drop loot on death. |
 | `window_raider.gd` | `WindowRaider` | 535 | A raider enemy: approaches, breaches a window or door, then attacks the bench or player. |
-| `window_raider_anim.gd` | — | 32 | Steps the door raider's four-frame run sheet: Sprite3D.frame advances at RUN_FPS while the raider moves and rests on frame 0 (the still) when it stands. |
+| `window_raider_anim.gd` | — | 32 | Steps the door raider's eight-frame run sheet: Sprite3D.frame advances at RUN_FPS while the raider moves and rests on frame 0 (the still) when it stands. |
 | `window_raider_look.gd` | — | 37 | Fits the window crawler's sprite, hitboxes and health bar to its lower canvas. |
 | `window_raider_motion.gd` | — | 69 | Per-frame chase math for WindowRaider. |
 | `window_raider_targeting.gd` | — | 112 | Target picking, cabin/breach queries and status math for WindowRaider. |
@@ -525,7 +525,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `stop_vestibule.gd` | `StopVestibule` | 348 | Shared mouth for every roadside stop. |
 | `warehouse_chest.gd` | `WarehouseChest` | 60 | Table-top crate. |
 | `warehouse_director.gd` | `WarehouseDirector` | 176 | Picks one hide layout per visit. |
-| `warehouse_dummy.gd` | `WarehouseDummy` | 114 | Standing shootable raider for warehouse hides. |
+| `warehouse_dummy.gd` | `WarehouseDummy` | 117 | Standing shootable raider for warehouse hides. |
 | `warehouse_hide.gd` | `WarehouseHide` | 149 | One ambush pocket. |
 | `warehouse_interior.gd` | — | 256 | Flared warehouse bay: shell, wrapped dressing, table + chest, one hide layout. |
 | `warehouse_laser.gd` | `WarehouseLaser` | 72 | Waist-high trip across the aisle. |

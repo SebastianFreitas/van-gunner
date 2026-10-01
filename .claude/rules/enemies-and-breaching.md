@@ -31,10 +31,10 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
 ## Beast sprites and hitboxes
 
 - `scenes/enemies/window_raider.tscn` holds the door raider, a hunched humanoid
-  feral (the loper): `Sprite3D` at `pixel_size 0.024` on `door_raider.png`, a 256 x 80 sheet of
-  four 64 x 80 run frames (`hframes 4`, each 1.54 x 1.92 m; frame 0 is the still,
-  `window_raider_anim.gd` steps `frame` at 8 fps while the raider moves and rests
-  it on 0; the crawler and the boss set `hframes 1`), centred 0.66 m below the node so its claws
+  feral (the loper): `Sprite3D` at `pixel_size 0.024` on `door_raider.png`, a 512 x 80 sheet of
+  eight 64 x 80 run frames (`hframes 8`, each 1.54 x 1.92 m; frame 0 is the still,
+  `window_raider_anim.gd` steps `frame` at 12 fps while the raider moves and rests
+  it on 0, frame 4 is the airborne kick; the crawler and the boss set `hframes 1`), centred 0.66 m below the node so its claws
   sit at -1.62, the van floor under the 1.62 m breach markers; the body hitbox
   is a cylinder (r 0.7, h 1.75 at y -0.75: floor to the top of the hump) and the
   head a sphere (r 0.36 at y -0.5: the skull and the hanging jaw), both

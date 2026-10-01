@@ -6,7 +6,7 @@ hangs forward below the shoulders, arms longer than the legs with the claws
 on the van floor, knobbed spine, hanging jaw, corpse-grey skin and black
 eye pits, nothing bright. The window raider (the low yellow crawler that
 fits through a side window) is still the first pass and waits for its own
-redraw. door_raider.png is a 4-frame 256 x 80 run sheet (a lope on all fours,
+redraw. door_raider.png is a 8-frame 512 x 80 run sheet (a bounding charge,
 seen from the front); frame 0 is the still.
 
 Art rules (.claude/rules/art-style.md, pixel art): native size, one image
@@ -34,7 +34,7 @@ OUT = ROOT / "scenes" / "enemies"
 
 # Canvas sizes: the fat beast is 1.92 x 1.73 m, the crawler 1.92 x 1.15 m.
 LOPER_SIZE = (64, 80)
-LOPER_FRAMES = 4
+LOPER_FRAMES = 8
 LOPER_SHEET = (LOPER_SIZE[0] * LOPER_FRAMES, LOPER_SIZE[1])
 CRAWLER_SIZE = (80, 48)
 
@@ -271,29 +271,84 @@ def draw_strand(c: Canvas, x0: int, y0: int, x1: int, y1: int) -> None:
 	c.fill(c.mask(capsule(x0, y0, x1, y1, 0.6)), OUTLINE)
 
 
-# One pose per run frame, frame 0 being the approved still. by: the body bob (everything
-# but the legs' lower halves moves by it); lag: extra y for the hanging jaw, the chin blood
-# and the strand ends, which trail the bob; left/right: (elbow, wrist, claw tips) per arm;
-# legs: (left, right) lift in px. The lope: a hand lands low and out, slides in and up as
-# the body passes over it, lifts to hang in front of the belly, then reaches out to land.
+def draw_rump(c: Canvas, cy: int, rx: float, ry: float, tail) -> None:
+	"""Two haunch lobes and the tail-bone knobs, seen over the dropped hump."""
+	for cx in (27, 37):
+		lobe = c.mask(ellipse(cx, cy, rx, ry))
+		c.part(lobe, SKIN, SKIN_SH, SKIN_HI, light(cx, cy, rx, ry), 0.25, -1.0)
+	for r in tail:
+		knob = c.mask(ellipse(32, r, 1.6, 1.4))
+		c.outline(knob)
+		c.fill(knob, BONE)
+		c.fill({p for p in knob if p[0] <= 31 and p[1] <= r}, BONE_HI)
+
+
+def draw_sole(c: Canvas, cx: int, cy: int) -> None:
+	"""A hind foot seen sole-on, claws up: darker than the skin so it reads as an underside."""
+	sole = c.mask(ellipse(cx, cy, 4.5, 5))
+	c.part(sole, SKIN_SH, SKIN_DEEP, SKIN, light(cx, cy, 4.5, 5), 0.3, -1.2)
+	c.fill(c.mask(ellipse(cx, cy + 2, 2.0, 1.5)), SKIN_DEEP)
+	for tx, ty in ((cx - 2, cy - 2), (cx, cy - 3), (cx + 2, cy - 2)):
+		c.set(tx, ty, SKIN_DEEP)
+	draw_claws(c, cx, cy - 3, [(cx - 3, cy - 9), (cx, cy - 10), (cx + 3, cy - 9)])
+
+
+# One pose per run frame, frame 0 being the approved still. The bound: both front paws
+# lift and tuck together, the hind legs carry the body, something always touches row 79.
+# by: the body's rise (negative is up; it carries the torso, shoulders, arms, head and
+# drips); hump_dy / head_dy: extra y for the spine hump and the skull on top of by (the
+# hump may rise at most 5 px net, its top knob sits on row 5); shoulder_dx: how far the
+# shoulder balls, the arms' roots and the tear spread apart; lag: extra y for the hanging
+# jaw, the chin blood and the strand ends, which trail the head; left/right: (elbow, wrist,
+# claw tips) per arm; legs: ((knee, foot) left, (knee, foot) right) as absolute points.
+# rump: (cy, rx, ry, tail), two lobes at x 27 and x 37 on row cy, tail the rows of the
+# tail-bone knobs at x 32 (absolute rows, never shifted by by); soles: each leg's foot is
+# the ankle and a hind sole with its claws up is drawn 5 px above it, not the floor claws.
+# Frame 0 still. Frame 1 crouch: hips down, knees wide, head low. Frame 2 push: hind legs
+# straight under the body, hump at its highest, row 0, head up. Frame 3 lift-off: paws tuck
+# under the chest, left toes still on the floor, the rump starting to show over the dropped
+# hump. Frame 4 kick: airborne, claws 6 px off the floor, the head dropped 13 px to the
+# chest, the hump dropped so the two-lobed rump and tail-bone stand above it and both hind
+# feet show sole-on at the top corners, claws up. Frame 5 reach: paws spread wide, first
+# contact, rump sinking behind the hump, legs swinging forward. Frame 6 land: paws flat,
+# feet coming down behind the elbows. Frame 7 gather: toes land, the still's shape with the
+# body 1 px low.
 LOPER_POSES = [
-	dict(by=0, lag=0,
+	dict(by=0, hump_dy=0, head_dy=0, shoulder_dx=0, lag=0,
 		left=((4, 43), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
 		right=((60, 48), (57, 73), [(52, 78), (56, 79), (60, 79), (63, 77)]),
-		legs=(0, 0)),
-	dict(by=-1, lag=1,
-		left=((6, 46), (11, 70), [(6, 77), (9, 78), (13, 78), (16, 76)]),
-		right=((57, 42), (52, 61), [(47, 67), (50, 69), (54, 69), (57, 67)]),
-		legs=(0, 3)),
-	dict(by=-2, lag=1,
-		left=((7, 40), (12, 59), [(7, 65), (10, 67), (14, 67), (17, 65)]),
-		right=((61, 44), (58, 70), [(52, 77), (56, 78), (60, 78), (63, 76)]),
-		legs=(0, 0)),
-	dict(by=-1, lag=0,
-		left=((3, 42), (6, 68), [(0, 75), (4, 76), (8, 76), (12, 75)]),
-		right=((60, 45), (58, 72), [(53, 79), (57, 79), (61, 79), (63, 77)]),
-		legs=(3, 0)),
+		legs=(((16, 66), (19, 75)), ((48, 67), (45, 75)))),
+	dict(by=2, hump_dy=-1, head_dy=2, shoulder_dx=1, lag=1,  # 1 crouch
+		left=((2, 48), (9, 72), [(3, 79), (7, 79), (11, 79), (15, 78)]),
+		right=((62, 52), (56, 74), [(51, 78), (55, 79), (59, 79), (63, 78)]),
+		legs=(((12, 68), (19, 75)), ((52, 69), (45, 75)))),
+	dict(by=-3, hump_dy=-2, head_dy=-1, shoulder_dx=0, lag=2,  # 2 push
+		left=((5, 40), (8, 70), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((59, 44), (57, 72), [(52, 78), (56, 79), (60, 79), (63, 77)]),
+		legs=(((22, 64), (20, 75)), ((42, 65), (44, 75)))),
+	dict(by=-6, hump_dy=5, head_dy=3, shoulder_dx=-1, lag=3,  # 3 lift-off
+		left=((3, 34), (14, 52), [(10, 56), (13, 58), (16, 58), (18, 56)]),
+		right=((61, 36), (50, 54), [(46, 58), (49, 60), (52, 60), (54, 58)]),
+		legs=(((17, 62), (19, 75)), ((47, 58), (46, 67))), rump=(6, 7, 5, ())),
+	dict(by=-7, hump_dy=11, head_dy=13, shoulder_dx=0, lag=3,  # 4 kick, airborne
+		left=((5, 42), (9, 63), [(3, 71), (7, 72), (11, 72), (15, 70)]),
+		right=((61, 45), (56, 65), [(50, 72), (54, 73), (58, 73), (62, 71)]),
+		legs=(((10, 30), (5, 15)), ((54, 31), (59, 16))), rump=(10, 8, 7, (2, 4, 6)),
+		soles=True),
+	dict(by=-5, hump_dy=7, head_dy=9, shoulder_dx=3, lag=2,  # 5 reach
+		left=((1, 40), (6, 68), [(1, 77), (4, 78), (8, 79), (12, 78)]),
+		right=((63, 43), (58, 70), [(53, 78), (57, 79), (61, 79), (63, 78)]),
+		legs=(((10, 46), (13, 56)), ((54, 47), (51, 57))), rump=(10, 8, 6, (5, 7))),
+	dict(by=-1, hump_dy=1, head_dy=4, shoulder_dx=2, lag=1,  # 6 land
+		left=((3, 46), (8, 72), [(2, 79), (6, 79), (10, 79), (14, 79)]),
+		right=((61, 50), (57, 74), [(52, 79), (56, 79), (60, 79), (63, 79)]),
+		legs=(((14, 58), (17, 68)), ((50, 59), (47, 69)))),
+	dict(by=1, hump_dy=-1, head_dy=2, shoulder_dx=1, lag=1,  # 7 gather
+		left=((3, 47), (8, 72), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((61, 51), (57, 74), [(52, 78), (56, 79), (60, 79), (63, 78)]),
+		legs=(((14, 66), (19, 75)), ((50, 67), (45, 75)))),
 ]
+assert len(LOPER_POSES) == LOPER_FRAMES
 
 
 def draw_loper(frame: int = 0) -> Canvas:
@@ -301,63 +356,69 @@ def draw_loper(frame: int = 0) -> Canvas:
 	hump of the back rises above and behind the hanging head, the arms reach
 	the floor, the legs crouch behind. Feet on the bottom row. The parts are drawn
 	at the still's coordinates on layers and blitted with the pose's bob, so every
-	frame is the approved drawing moved, never redrawn."""
+	frame is the approved drawing moved, never redrawn. The bound is
+	eight frames: still, crouch, push, lift-off, kick, reach, land, gather; frame 4
+	is airborne."""
 	p = LOPER_POSES[frame]
 	by = p["by"]
-	jy = by + p["lag"]
+	hy_ = by + p["hump_dy"]
+	hd = by + p["head_dy"]
+	sdx = p["shoulder_dx"]
+	jy = hd + p["lag"]
 	c = Canvas(LOPER_SIZE)
 	# Legs first, crouched behind everything: knees out, shins down, toes on the floor.
-	# A lifted leg raises knee and foot and draws the foot in a pixel toward the middle.
-	for (hip, knee, foot), lift in ((((27, 56), (16, 66), (19, 75)), p["legs"][0]),
-			(((37, 57), (48, 67), (45, 75)), p["legs"][1])):
-		hip = (hip[0], hip[1] + by)
-		knee = (knee[0], knee[1] - lift)
-		if lift > 0:
-			foot = (foot[0] + (1 if foot[0] < 32 else -1), foot[1])
-		foot = (foot[0], foot[1] - lift)
+	# The pose holds each knee and foot as absolute points; only the hips ride the body.
+	for hip, (knee, foot) in (((27, 56 + by), p["legs"][0]), ((37, 57 + by), p["legs"][1])):
 		leg = c.mask(polyline([hip, knee, foot], 3.2))
 		c.part(leg, SKIN, SKIN_SH, SKIN_HI, light(knee[0], knee[1], 12, 12), 0.2, -0.9)
-		toe_y = 79 - lift
-		draw_claws(c, foot[0], foot[1], [(foot[0] - 4, toe_y), (foot[0], toe_y),
-			(foot[0] + 4, toe_y)])
+		if p.get("soles"):
+			draw_sole(c, foot[0], foot[1] - 5)
+		else:
+			draw_claws(c, foot[0], foot[1], [(foot[0] - 4, foot[1] + 4),
+				(foot[0], foot[1] + 4), (foot[0] + 4, foot[1] + 4)])
+	if "rump" in p:
+		draw_rump(c, *p["rump"])
 	# The back: the shoulders as two balls either side of a spine hump that rises
 	# above the head, the vertebrae knobbing its top, the hollow the head hangs
 	# from in shadow.
-	body = Canvas(LOPER_SIZE)
-	for sx, sy in ((17, 24), (47, 25)):
-		ball = body.mask(ellipse(sx, sy, 9, 8))
-		body.part(ball, SKIN, SKIN_SH, SKIN_HI, light(sx, sy, 9, 8), 0.25, -1.0)
+	for sx, sy in ((17 - sdx, 24 + by), (47 + sdx, 25 + by)):
+		ball = c.mask(ellipse(sx, sy, 9, 8))
+		c.part(ball, SKIN, SKIN_SH, SKIN_HI, light(sx, sy, 9, 8), 0.25, -1.0)
+	hump_c = Canvas(LOPER_SIZE)
 	hx, hy, hrx, hry = 32, 17, 13, 10
-	hump = body.mask(ellipse(hx, hy, hrx, hry))
-	body.part(hump, SKIN, SKIN_SH, SKIN_HI, light(hx, hy, hrx, hry), 0.25, -1.0)
-	body.fill({p for p in hump if 15 <= p[1] <= 18 and abs(p[0] - 32) <= 7}, SKIN_SH)
+	hump = hump_c.mask(ellipse(hx, hy, hrx, hry))
+	hump_c.part(hump, SKIN, SKIN_SH, SKIN_HI, light(hx, hy, hrx, hry), 0.25, -1.0)
+	hump_c.fill({p for p in hump if 15 <= p[1] <= 18 and abs(p[0] - 32) <= 7}, SKIN_SH)
 	for kx, kr in ((22, 1.4), (26, 1.8), (31, 2.0), (36, 1.8), (41, 1.5)):
 		u = (kx - hx) / hrx
 		ky = hy - hry * math.sqrt(1.0 - u * u) + 0.5
-		knob = body.mask(ellipse(kx, ky, kr, kr * 0.85))
-		body.outline(knob)
-		body.fill(knob, BONE)
-		body.fill({p for p in knob if p[0] <= kx - 1 and p[1] <= ky}, BONE_HI)
-	# Skin torn open on the right shoulder.
-	tear = body.mask(polygon([(44, 20), (50, 18), (53, 23), (48, 27), (43, 24)]))
-	body.fill(tear, BLOOD_DARK)
-	body.fill({p for p in tear if p[0] < 47 and p[1] < 22}, BLOOD)
+		knob = hump_c.mask(ellipse(kx, ky, kr, kr * 0.85))
+		hump_c.outline(knob)
+		hump_c.fill(knob, BONE)
+		hump_c.fill({p for p in knob if p[0] <= kx - 1 and p[1] <= ky}, BONE_HI)
+	c.blit(hump_c, 0, hy_)
 	# The torso hangs under the hump: a long ribcage over a sunken belly.
+	torso_c = Canvas(LOPER_SIZE)
 	tx, ty, trx, try_ = 32, 44, 11, 16
-	torso = body.mask(ellipse(tx, ty, trx, try_))
-	body.part(torso, SKIN, SKIN_SH, SKIN_HI, light(tx, ty, trx, try_), 0.15, -1.05)
-	body.fill({p for p in torso if p[1] >= 52}, SKIN_SH)
-	body.fill({p for p in torso if p[1] >= 57}, SKIN_DEEP)
+	torso = torso_c.mask(ellipse(tx, ty, trx, try_))
+	torso_c.part(torso, SKIN, SKIN_SH, SKIN_HI, light(tx, ty, trx, try_), 0.15, -1.05)
+	torso_c.fill({p for p in torso if p[1] >= 52}, SKIN_SH)
+	torso_c.fill({p for p in torso if p[1] >= 57}, SKIN_DEEP)
 	for y in range(45, 58):
-		body.set(32, y, SKIN_DEEP)
+		torso_c.set(32, y, SKIN_DEEP)
 	for ry in (49, 53, 57):
 		for dx in range(1, 10):
-			body.set(32 - dx, ry + dx // 4, SKIN_DEEP)
-			body.set(32 + dx, ry + dx // 4, SKIN_DEEP)
-	c.blit(body, 0, by)
+			torso_c.set(32 - dx, ry + dx // 4, SKIN_DEEP)
+			torso_c.set(32 + dx, ry + dx // 4, SKIN_DEEP)
+	c.blit(torso_c, 0, by)
+	# Skin torn open on the right shoulder, riding with the shoulder ball.
+	tear = c.mask(polygon([(x + sdx, y + by) for x, y in
+		((44, 20), (50, 18), (53, 23), (48, 27), (43, 24))]))
+	c.fill(tear, BLOOD_DARK)
+	c.fill({p for p in tear if p[0] < 47 + sdx and p[1] < 22 + by}, BLOOD)
 	# Arms: out from the shoulders to elbows wider than the body, then down to the floor.
-	for shoulder, (elbow, wrist, tips) in (((14, 27 + by), p["left"]),
-			((50, 29 + by), p["right"])):
+	for shoulder, (elbow, wrist, tips) in (((14 - sdx, 27 + by), p["left"]),
+			((50 + sdx, 29 + by), p["right"])):
 		upper = c.mask(capsule(*shoulder, *elbow, 3.4, 2.8))
 		c.part(upper, SKIN, SKIN_SH, SKIN_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
 		fore = c.mask(capsule(*elbow, *wrist, 2.8, 2.2))
@@ -387,11 +448,11 @@ def draw_loper(frame: int = 0) -> Canvas:
 	for x, depth in ((25, 2), (27, 3), (30, 2), (32, 4), (35, 2), (38, 3)):
 		for y in range(35, 35 + depth):
 			head.set(x, y, TEETH)
-	c.blit(head, 0, by)
+	c.blit(head, 0, hd)
 	# Lank hair from the head, the ends trailing the bob.
 	for x0, y0, x1, y1 in ((25, 19, 20, 31), (23, 23, 17, 32), (28, 18, 27, 21),
 			(40, 20, 44, 29)):
-		draw_strand(c, x0, y0 + by, x1, y1 + jy)
+		draw_strand(c, x0, y0 + hd, x1, y1 + jy)
 	# The jaw hangs open and off to one side, swinging a beat behind the head.
 	jaw = Canvas(LOPER_SIZE)
 	jaw_m = jaw.mask(both(ellipse(30, 48, 7.5, 5.5), lambda x, y: y >= 44))
