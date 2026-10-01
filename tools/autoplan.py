@@ -48,7 +48,7 @@ ALLOWED_TOOLS = [
     "Bash(mkdir *)", "PowerShell(git add *)", "PowerShell(git commit *)",
     "PowerShell(git status *)", "PowerShell(git diff *)",
     "PowerShell(git log *)", "PowerShell(py -3 tools/*)",
-    # Worktree sessions land their own phase and resolve merges.
+    # Worktree sessions resolve merges; landing waits for the owner (git-guard refuses it).
     "Bash(git merge *)", "Bash(git mv *)", "Bash(git rm *)",
     "Bash(git branch --show-current)", "Bash(git grep *)",
     "PowerShell(git merge *)", "PowerShell(git mv *)", "PowerShell(git rm *)",
@@ -1105,7 +1105,7 @@ def main() -> int:
     if m == "worktree":
         branch = git("rev-parse", "--abbrev-ref", "HEAD")
         print(
-            "Each phase lands itself on local main. Anything left unlanded: "
+            "Nothing landed on main; it waits for your OK. To land the branch: "
             f"py -3 {main_root().as_posix()}/tools/try.py {branch} --commit"
         )
     if stop_reason.startswith(("blocked", "questions")):

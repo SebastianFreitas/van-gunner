@@ -211,7 +211,8 @@ went from 44k to 51k and 68k for three specs each, 2026-10-01).
    an earlier window does not count; a fresh one is cheap).
 6. **Commit** by path, as your mode says, with a message that describes
    the work (a squash takes the branch tip's message). In worktree mode
-   run the mode's `try.py --commit` yourself once verified. Delete
+   commit on the branch only: `try.py --commit` waits for the owner's
+   OK (the mode file's Commit). Delete
    `.claude/specs/` and `.claude/handoff.md`.
 7. **Report**: end the turn with exactly this:
    1. **Name:** the feature in plain words, then the branch (and PR in cloud).
@@ -319,8 +320,8 @@ subagent's hand-back lands in a new turn that the Stop guard fights.
   delete branches by hand, never `gh pr merge`. `tools/cleanup.py`
   deletes local session branches and their worktrees once they have
   landed on `main` and sat idle 24 h; it runs at session start and after
-  `try.py --commit`. Only `try.py --commit` (run by you in worktree
-  mode) reaches local `main` from a branch, and it pushes `main` once
+  `try.py --commit`. Only `try.py --commit` (run by the owner, or by
+  you when the owner's latest message says merge or land) reaches local `main` from a branch, and it pushes `main` once
   it landed: the app cuts new worktrees from `origin/main`, so an
   unpushed `main` starts every new session without it (2026-10-01).
   Nothing else reaches origin except the owner's GitHub Desktop.

@@ -270,8 +270,9 @@ per phase, on the owner's subscription only: it
 never uses an API key and stops the chain when the usage limit is hit.
 Started from the main checkout, it makes (or reuses) the worktree
 `.claude/worktrees/plan-<name>` on branch `claude/plan-<name>` and runs
-there; each phase lands itself with `try.py --commit` as the worktree
-mode file says. A session it starts has `AUTOPLAN=1` and a prompt that
+there; each phase commits on that branch and nothing lands on `main`
+(the runner's sessions are refused `try.py --commit`). The owner lands
+the finished run, after the Stage done report. A session it starts has `AUTOPLAN=1` and a prompt that
 begins `[autoplan | ...]` and carries the phase brief: read
 `.claude/skills/plan/unattended.md` (short) and not the rest of this
 file.
@@ -284,4 +285,5 @@ every `missed:` line in the report under **Look at**, commit. The plan
 file stays as the record. This last phase ends with the hard-stop
 message too; the owner's next prompt is a fresh task. The supervising
 session, on the run's `plan-done`, reports the whole plan: what each
-phase built, and Look at.
+phase built, Look at, and the worktree mode's Commit command for
+`claude/plan-<name>`, which waits for the owner's OK like any branch.
