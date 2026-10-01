@@ -47,7 +47,8 @@ The SessionStart hook prints `MODE: <mode>` and the matching
 mode file overrides this one on branches, pushing, shipping and the
 report's commands.
 
-- `worktree` (default): `.claude/worktrees/<name>`, own branch, never pushed.
+- `worktree` (default): `.claude/worktrees/<name>`, own branch, never pushed
+  (landing it pushes `main`).
 - `cloud`: a fresh clone on a `claude/<name>` branch, pushed, with a PR.
 - `shared`: the main checkout, with other sessions editing too; quick fixes.
 
@@ -319,8 +320,10 @@ subagent's hand-back lands in a new turn that the Stop guard fights.
   deletes local session branches and their worktrees once they have
   landed on `main` and sat idle 24 h; it runs at session start and after
   `try.py --commit`. Only `try.py --commit` (run by you in worktree
-  mode) reaches local `main` from a branch; only the owner's GitHub
-  Desktop reaches origin.
+  mode) reaches local `main` from a branch, and it pushes `main` once
+  it landed: the app cuts new worktrees from `origin/main`, so an
+  unpushed `main` starts every new session without it (2026-10-01).
+  Nothing else reaches origin except the owner's GitHub Desktop.
 - `.claude/hooks/git-guard.py` blocks blanket git (`add -A`/`.`,
   `commit -a`, `stash`, `checkout --`, `restore`, `reset --hard`,
   `clean`, `rebase`, force push). Do not work around it; the owner runs

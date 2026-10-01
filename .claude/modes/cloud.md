@@ -38,10 +38,10 @@ The project's notes below give the literal paths.
   (the same command as Try's prompt): fetches the branch from origin,
   builds one squash commit on local `main` without touching the main
   checkout's files, runs the landing steps and checks on the combined
-  tree in the `-try` checkout, fast-forwards `main`, and pushes nothing. On a conflict it pushes
-  nothing and says so.
+  tree in the `-try` checkout, fast-forwards `main`, and pushes `main`. On a conflict it lands and
+  pushes nothing and says so.
 
-After the owner pushes `main`, they close the PR by hand (GitHub shows it
+Once `main` is pushed, the owner closes the PR by hand (GitHub shows it
 closed, not merged). Never use GitHub's merge button: it skips the
 landing steps and the checks.
 

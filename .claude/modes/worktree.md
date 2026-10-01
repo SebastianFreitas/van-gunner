@@ -1,9 +1,11 @@
 ## Worktree mode
 
 This session has its own checkout under `.claude/worktrees/<name>` on its
-own `claude/<name>` branch, cut from the main checkout's `HEAD`
-(`worktree.baseRef: "head"`, so it starts from commits the owner landed
-but hasn't pushed). It shares only `.git` with the main checkout, so no
+own `claude/<name>` branch. The settings ask for it to be cut from the
+main checkout's `HEAD` (`worktree.baseRef: "head"`), but the desktop app
+cuts it from `origin/main` (seen 2026-10-01), which is why Commit pushes
+`main` and session start prints WORKTREE BEHIND MAIN when this branch
+lacks commits from local `main`. It shares only `.git` with the main checkout, so no
 other session touches these files and there are no foreign edits.
 
 - **Commit on this branch, by path. Never push, never open a PR, never
@@ -39,8 +41,8 @@ checkout>` with the path in the `MODE:` line.
   builds one squash commit on top of local `main` without touching the
   main checkout's files, runs the project's landing steps and checks on
   the combined tree in the `-try` checkout, then fast-forwards `main`,
-  merges `main` back into this branch and pushes nothing; the owner
-  reviews in GitHub Desktop and pushes there. On a conflict, a failed
+  merges `main` back into this branch and pushes `main` (only `main`,
+  only after it landed). On a conflict, a failed
   check, or the owner's uncommitted edits in a file the branch changes,
   it lands nothing and says why; then run `git merge main` here,
   resolve, verify, commit, and run it again.

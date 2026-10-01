@@ -19,6 +19,10 @@ Called by tools/try.py (`--commit`, or typing `commit` at its prompt).
    changes one of those files.
 5. Merge main back into the session's worktree branch when it is local
    and clean, so its next round starts from this commit.
+6. Push main to origin. The app cuts new worktrees from origin/main, so an
+   unpushed main means every new session starts without this commit
+   (owner, 2026-10-01). A failed push leaves the commit on local main and
+   says so; the owner pushes it from GitHub Desktop.
 
 The project plugs in through the optional tools/try_project.py, loaded from
 the main checkout. This module uses:
@@ -38,7 +42,7 @@ the main checkout. This module uses:
   after_land(root)
                 run in the main checkout after the commit landed.
 
-Never pushes, never deletes a branch, never runs project code in the main
+Pushes only main, only after it landed; never deletes a branch, never runs project code in the main
 checkout except after_land (the owner's editor may be open there).
 """
 
@@ -347,6 +351,21 @@ def sync_worktree(branch: str) -> None:
         )
 
 
+def push_main() -> None:
+    r = git_run("push", "origin", "main")
+    if r.returncode == 0:
+        print(
+            "Pushed main to origin, so new sessions start from this commit. To take it "
+            "back: GitHub Desktop, History, right-click it, Revert changes in commit."
+        )
+    else:
+        print(r.stderr.strip(), file=sys.stderr)
+        print(
+            "The commit is on local main but the push failed. Push origin in GitHub "
+            "Desktop: until then new sessions start from origin/main without it."
+        )
+
+
 def land(branch: str, ref: str, args) -> int:
     main_sha = preflight()
 
@@ -389,10 +408,7 @@ def land(branch: str, ref: str, args) -> int:
 
     sync_worktree(branch)
     print(f"Committed {git('rev-parse', '--short', 'HEAD')} on main: {subject}")
-    print(
-        "Nothing was pushed. Review it in GitHub Desktop (History), then Push origin. "
-        "To take it back before pushing: History, right-click it, Undo commit."
-    )
+    push_main()
 
     after_land = hook("after_land")
     if after_land:

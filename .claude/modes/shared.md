@@ -23,7 +23,8 @@ for any task longer than a quick fix; this mode is for small changes.
 - **Never push, never pull, never merge anything into `main`.** Commit
   straight to `main` by path; the commit stays local until the owner
   pushes it with GitHub Desktop (the owner can Undo commit there before
-  pushing). If `git status -sb` shows `main` behind `origin`, say so in
+  pushing). Until then new app sessions start from `origin/main` without
+  it, so the report says to push it. If `git status -sb` shows `main` behind `origin`, say so in
   Look at; the owner pulls in GitHub Desktop.
 - `implementer-wt` is not used in this mode (its merges would land in a
   tree with foreign edits); run parallel same-file work in a worktree
@@ -35,7 +36,8 @@ for any task longer than a quick fix; this mode is for small changes.
 
 - **Try:** the project's notes below give the command.
 - **Commit:** no command: say "Already committed as <sha> on `main`;
-  review it in GitHub Desktop and push there."
+  review it in GitHub Desktop and push there (new sessions start from
+  `origin/main`, so they miss it until it is pushed)."
 
 ### Merging by hand
 

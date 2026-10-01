@@ -77,4 +77,6 @@ Every spec has:
 - **Cleanup:** `py -3 tools/cleanup.py` deletes landed, idle session
   branches and their worktrees (it also runs at session start).
 - **Sync:** `py -3 <master>/sync.py status|push|pull <project root>`
-  (`.claude/rules/workflow.md` "Shared files").
+  (`.claude/rules/workflow.md` "Shared files"). After committing a sync
+  in a project, its `main` must be pushed: new app sessions start from
+  `origin/main` and never see an unpushed sync.

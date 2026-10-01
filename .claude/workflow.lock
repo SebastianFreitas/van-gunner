@@ -1,6 +1,6 @@
 {
   "master": "C:/Users/Traff/Desktop/sebas/claude-workflow",
-  "commit": "0e36b361eeb66f9861bf27633dd78d3d5bdfeda5",
+  "commit": "d0f266c944bb0b510d4e57c88b5d1b2665c876a4",
   "files": {
     ".claude/agents/implementer-wt.md": "645bcafa085f37d78b4c39b64fc07c5c986ce6845e83979854e4f9de2b3a4ff0",
     ".claude/agents/implementer.md": "08974ffc4db178a3f5b9a0c66eb9abadc1b20a05cd95685d88eb98117aa060ac",
@@ -10,19 +10,19 @@
     ".claude/hooks/agent-guard.py": "e3822907195845cd80bfec93df858e67fa40c31eb62f1c80481fd42021337609",
     ".claude/hooks/context-watch.py": "551220917f63cf0ce2b97eb79e2e67e326771427a3d065b039ddd951179cf849",
     ".claude/hooks/file-guard.py": "ba322e166a4601553e54c41360baf65c17e048d0cbc1df2566f98ec683a4fecf",
-    ".claude/hooks/git-guard.py": "82e62d7aebda2b569b6350a7f73c26ff77a036d73b751186ac5c93d95ec283b1",
+    ".claude/hooks/git-guard.py": "de8310cfae06313cf6115e164f1551ef9c8d8782164a0d09531bfd735d834c6a",
     ".claude/hooks/go-check.py": "b84d896e559ac8f0cf7ccc6fd78c4a7fbfb2f3cbbccc4bd2c5b5159606db19c8",
     ".claude/hooks/hooks.py": "89ef972cc274cdae8fb9de2b42bfa0181a371e13e081dc1793d7901ffbb3297c",
     ".claude/hooks/review-guard.py": "5501bcbd5e29148ec6113d9bcf5a6866b6f0d0cc8558f97390a3a3747f7491e7",
     ".claude/hooks/run.sh": "c24f9c69af6cb369f81153d75aeb942fbb45a1ee8b0c066e74179ac17a594adf",
-    ".claude/hooks/session-start.py": "31239c8e24aba0638ad279ddf1441988bf0b044c4cd89ef255eff12b99732943",
+    ".claude/hooks/session-start.py": "077a3878fe5a4457b1f005af57bd9cf627698c41fbc7dbac1e6323ddd78cd727",
     ".claude/hooks/stop-guard.py": "30de4b5abbadfdaddf1c3badc6290b9eae904219c88c88ec51625a7e09de743c",
-    ".claude/modes/cloud.md": "57e7b833612333426e2dbb71c2e50b26315a0c90f5678021ba6e81960899f53c",
-    ".claude/modes/shared.md": "0e604860b60a6f4e1952daa613b9ae6dedaa8cb88d7d868e668f47326411c1fc",
-    ".claude/modes/worktree.md": "a7fa37ab172e699611edde6eff80d7658375db7a4709344959072ee2115bc9d4",
+    ".claude/modes/cloud.md": "87338e700b15271c757bc6de93c6ef2f309863dd1fb119cb7040a2dc7a8b2496",
+    ".claude/modes/shared.md": "6a3bfb3df57a6e114407dc17b123f2e9e7a28ddb8dcdc7090d122d00d4cec8c2",
+    ".claude/modes/worktree.md": "a4a8281e9897880119c065862fb40ac00c1cd0729b7bd44f43a198621801e1f6",
     ".claude/plans/TEMPLATE.md": "a1c7976fd4af189d5d09f6428be7e0577e95d4bf727dd5535ae63fc93767dabb",
-    ".claude/playbook.md": "14eb22b868cffab2f61bdbd95ac87511bcd7cec3420cce3842b91fabd67bf864",
-    ".claude/rules/workflow.md": "2877027a85f991608b944002c5d40112a613192806d67be4761fd58ad56de8cc",
+    ".claude/playbook.md": "be0f91281ef2f31da474b846a0336af5926297ed1b2a4719fe95ef074fce9ae2",
+    ".claude/rules/workflow.md": "e70cabcdf305728ceb74f16bf7ff9701196a87b8fcb89b77acb75ec1332d00e5",
     ".claude/settings.json": "e7df1801890a58104879ce07085ea4680232796033099c167daf69ab6d925979",
     ".claude/skills/handoff/SKILL.md": "76fd71721bef3ea9de5cfbbc5496211e407f96f74d50631537bc2299223b136c",
     ".claude/skills/plan/SKILL.md": "5ec47625cec261f1ce334140d9442d3c80ac67f32887f5349b70443d0eb59c62",
@@ -31,7 +31,7 @@
     ".claude/skills/plan/unattended.md": "eab898b321dfb21d3ab6407ed1f462644215f1072fa93f87ee8a4e561d923bc9",
     "tools/autoplan.py": "843e461a5420de5c5733f69b9b24ff7f8c62142dedad83be222438b49db9ef71",
     "tools/cleanup.py": "71108a1cc531c1beaada08f99c5269024843b6f035c0d575a0ef2ed603401c25",
-    "tools/try.py": "e84c0d52381014265d9bc4c4c0d3fb14956ea93f13b9edca2b9722819bacfd78",
-    "tools/try_commit.py": "6c985a710664cf7e7176e1010e13c1e43c319ba07d1cd77226108cef83a34f5c"
+    "tools/try.py": "8b99b9a9b721c72df9de747ece1e232d11b3462cf59971e6a2fcd36d3cc99645",
+    "tools/try_commit.py": "2b34311eb484e45b67996b482cca5aeb708632e869dd68eed8f958bfadc6462e"
   }
 }

@@ -106,7 +106,7 @@ def prompt_loop(proc: subprocess.Popen | None, allow_commit: bool, on_commit) ->
     """Enter stops proc; "commit" (if allowed) stops it and returns on_commit()."""
     print(
         "Enter = stop."
-        + ("  Type commit + Enter = squash it into main as one commit (nothing is pushed)."
+        + ("  Type commit + Enter = squash it into main as one commit and push main."
            if allow_commit else "")
     )
     while True:
@@ -140,7 +140,7 @@ def main() -> int:
     parser.add_argument("branch", nargs="?")
     parser.add_argument(
         "--commit", action="store_true",
-        help="land the branch on local main as one commit; nothing is pushed",
+        help="land the branch on main as one commit and push main",
     )
     parser.add_argument("--no-open", action="store_true", help="do not open the url in a browser")
     add_arguments = hook("add_arguments")

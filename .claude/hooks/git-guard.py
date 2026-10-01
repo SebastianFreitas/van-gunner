@@ -5,8 +5,8 @@ normal permission prompt still applies) and gets a note listing the
 unstaged files that are staying out of it.
 
 Also enforces the owner-only path to `main`/origin: the owner lands
-branches with `py -3 tools/try.py <branch> --commit` and pushes with
-GitHub Desktop. Sessions never push (except a cloud session pushing its
+branches with `py -3 tools/try.py <branch> --commit`, which pushes main
+once it landed. Sessions never push (except a cloud session pushing its
 own non-main branch), never merge into `main`, never delete a branch or
 remove a worktree (tools/cleanup.py does both once a branch has landed),
 and never run `gh pr merge`.
@@ -130,9 +130,9 @@ def git(*args, cwd=None):
 def deny(why):
     sys.stderr.write(
         f"Blocked by .claude/hooks/git-guard.py: {why}. The owner lands "
-        "branches with tools/try.py --commit and pushes with GitHub "
-        "Desktop. If the user explicitly asked for this command, ask them "
-        "to run it themselves.\n")
+        "branches with tools/try.py --commit, which pushes main itself. "
+        "If the user explicitly asked for this command, ask them to run "
+        "it themselves.\n")
     sys.exit(2)
 
 

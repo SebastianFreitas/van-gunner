@@ -11,7 +11,12 @@
 4. In shared mode on a fresh start or /clear: the uncommitted paths are
    also written to `<session dir>/foreign-paths.json`, which git-guard
    reads to refuse staging them.
-5. Every time: the active plans (Stage planning/ready/running in
+5. On a fresh start or /clear, outside cloud: WORKTREE BEHIND MAIN when
+   local main has commits this worktree's branch lacks (the app cuts
+   worktrees from origin/main, owner 2026-10-01), and MAIN NOT PUSHED when
+   local main is ahead of origin/main (new worktrees would miss those
+   commits). Compares local refs only, no fetch.
+6. Every time: the active plans (Stage planning/ready/running in
    .claude/plans/*.md). The one bound to this checkout (.claude/plans/HERE,
    or the only active plan) prints as `PLAN: <name> · <stage>`, with its
    state file's Status while running; the others are listed.
@@ -218,6 +223,27 @@ def workflow_sync_lines(root):
         return []
 
 
+def behind_lines(mode):
+    if mode == "cloud":
+        return []
+    lines = []
+    if mode == "worktree":
+        n = git("rev-list", "--count", "HEAD..main")
+        if n.isdigit() and int(n) > 0:
+            lines.append(f"WORKTREE BEHIND MAIN: local main has {n} commit(s) "
+                         "this branch lacks (the worktree was cut from "
+                         "origin/main or before they landed). Before any "
+                         "other work, run `git merge main` here and say so in "
+                         "one line; on a conflict, stop and ask the owner.")
+    n = git("rev-list", "--count", "origin/main..main")
+    if n.isdigit() and int(n) > 0:
+        lines.append(f"MAIN NOT PUSHED: local main is {n} commit(s) ahead of "
+                     "origin/main, and new app sessions start from "
+                     "origin/main without them. Tell the owner in one line "
+                     "to Push origin in GitHub Desktop.")
+    return lines
+
+
 def dirty_paths(dirty):
     paths = []
     for line in dirty.splitlines():
@@ -307,6 +333,7 @@ def main():
                 pass
 
     if source in ("startup", "clear"):
+        lines.extend(behind_lines(mode))
         lines.extend(workflow_sync_lines(root))
 
     if source in ("startup", "clear", "compact"):
