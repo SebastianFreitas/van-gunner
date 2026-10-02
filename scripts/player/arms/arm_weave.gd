@@ -14,7 +14,7 @@ const BASE := Vector3(35.0, 55.0, 45.0)  ## degrees curl of joints .01/.02/.03: 
 const SWING := Vector3(14.0, 22.0, 18.0)  ## degrees of weave around BASE per joint
 const THUMB_BASE := Vector3(4.0, 10.0, 18.0)  ## degrees flex of thumb .01/.02/.03: tip bent
 const THUMB_SWING := Vector3(3.0, 6.0, 9.0)
-const THUMB_SPREAD := 28.0  ## degrees the thumb .01 bone is held splayed from the index
+const THUMB_SPREAD := 42.0  ## degrees the thumb .01 bone is held splayed from the index
 ## Axis and sign settled in round 9 by a six-shot top-view sheet (goblin-weave-research.md).
 const THUMB_SPREAD_SIGN := -1.0  ## settled by the round 9 axis sheet (top view, 3 axes x 2 signs)
 const THUMB_SPREAD_AXIS := Vector3.RIGHT  ## the thumb .01 axis that splays it from the index

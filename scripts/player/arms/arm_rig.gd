@@ -182,6 +182,14 @@ static func stretch_tips(model: Node3D, suffix: String, k: float) -> void:
 			sk.set_bone_pose_scale(i, Vector3(1.0, k, 1.0))
 
 
+## Lengthens the thumb: pose-scales its .02 bone along Y, which its .03 inherits.
+static func stretch_thumb(model: Node3D, suffix: String, k: float) -> void:
+	var sk := skeleton(model)
+	var i := sk.find_bone("DEF-thumb.02" + suffix)
+	if i != -1:
+		sk.set_bone_pose_scale(i, Vector3(1.0, k, 1.0))
+
+
 ## One swept claw per finger on its `.03` bone, sized from `ArmFingers.build`'s dictionary: the
 ## nail bed starts half-way along the tip's back and the horn reaches `claw_k` tips past it.
 static func add_claws(model: Node3D, suffix: String, fingers: Dictionary, claw_k: float,

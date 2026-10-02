@@ -215,6 +215,7 @@ func _cmd_help(_args: Array) -> String:
 		+ "  arms fit         print the right thumb's clearance to the gun parts\n"
 		+ "  arms dress <style>  worn gear style (gear|rags|none), rebuilds the arms\n"
 		+ "  arms gear        count skin vertices poking through the sleeves over weave, kick, reload\n"
+		+ "  arms thumbs      print each thumb's angle to the index finger and its size next to it\n"
 		+ "  walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street\n"
 		+ "  Tab            autocomplete command or item id"
 	) % ", ".join(names)

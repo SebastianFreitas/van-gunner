@@ -41,6 +41,8 @@ const LEFT_CURL := {
 	&"thumb": Vector3(10, 15, 10),
 }
 const ELBOW_JITTER := 0.03
+## Pose scale on each thumb's .02 bone (its .03 inherits it), so the thumb outreaches the fingers.
+const THUMB_STRETCH := 1.2
 
 ## Hand dressing: `&"gear"` (a wrecked T-shirt sleeve on each arm plus the skin layers),
 ## `&"rags"` (the old rag and glove dress) or `&"none"` (bare arms). Set by the `arms dress`
@@ -104,7 +106,9 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 		sk_r.set_bone_pose_rotation(thumb_i, sk_r.get_bone_pose_rotation(thumb_i)
 				* Quaternion.from_euler(RIGHT_THUMB_AIM * (PI / 180.0)))
 	ArmRig.stretch_tips(model_r, ".R", tip_k)
+	ArmRig.stretch_thumb(model_r, ".R", THUMB_STRETCH)
 	var fingers_r := ArmFingers.build(model_r, ".R", gaunt, rng_r, skin_r)
+	model_r.set_meta(&"fingers", fingers_r)
 	ArmRig.add_claws(model_r, ".R", fingers_r, claw_k, claw_curve, claw)
 	_skin_model(model_r, skin_r)
 
@@ -146,7 +150,9 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 				LEFT_WEAVE_PALM.normalized())
 	ArmRig.curl(model_l, ".L", LEFT_CURL)
 	ArmRig.stretch_tips(model_l, ".L", tip_k)
+	ArmRig.stretch_thumb(model_l, ".L", THUMB_STRETCH)
 	var fingers_l := ArmFingers.build(model_l, ".L", gaunt, rng_l, skin_l)
+	model_l.set_meta(&"fingers", fingers_l)
 	ArmRig.add_claws(model_l, ".L", fingers_l, claw_k, claw_curve, claw)
 	_skin_model(model_l, skin_l)
 	match dress_style:

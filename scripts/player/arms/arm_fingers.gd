@@ -9,6 +9,8 @@ const PAD_H := 0.86
 ## Dorsal half-width of the nail bed, on the distal rings from this fraction of the tip on.
 const NAIL_H := 0.85
 const NAIL_FROM := 0.55
+## Thumb shaft radius as a multiple of the index finger's shaft radius.
+const THUMB_R := 1.35
 
 
 ## Builds `Skin_fingers` under the arm skeleton and returns, per finger in `ArmRig.FINGERS`,
@@ -26,12 +28,15 @@ static func build(model: Node3D, suffix: String, gaunt: float, rng: RandomNumber
 	var weights := PackedFloat32Array()
 	var indices := PackedInt32Array()
 	var out := {}
+	var ref_r := 0.0
 	for f in ArmRig.FINGERS:
 		# Drawn even when the finger is skipped, so one missing bone keeps the others' crooks.
 		var cr := rng.randf_range(-0.30, 0.30) * (0.5 if f == &"thumb" else 1.0)
-		var fg := _finger(mi, sk, own, f, suffix, gaunt, cr)
+		var fg := _finger(mi, sk, own, f, suffix, gaunt, cr, ref_r)
 		if fg.is_empty():
 			continue
+		if f == &"f_index":
+			ref_r = fg[&"r1"]
 		var fv: PackedVector3Array = fg[&"verts"]
 		var centres: PackedVector3Array = fg[&"centres"]
 		var rings: int = fg[&"rings"]
@@ -55,7 +60,7 @@ static func build(model: Node3D, suffix: String, gaunt: float, rng: RandomNumber
 
 ## One finger's rings, weights and info, or {} when one of its bones is missing.
 static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: StringName,
-		suffix: String, gaunt: float, cr: float) -> Dictionary:
+		suffix: String, gaunt: float, cr: float, ref_r: float) -> Dictionary:
 	var thumb := f == &"thumb"
 	# The thumb's tube covers .02 and .03: its .01 is the palm's thumb meat.
 	var first := 2 if thumb else 1
@@ -73,13 +78,25 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 	var root_pts: PackedVector3Array = own.get(binds[first], PackedVector3Array())
 	var tip_pts: PackedVector3Array = own.get(binds[3], PackedVector3Array())
 	lens[3] = _tip_len(tip_pts, lens[2])
-	var rk := _radii(_root_radius(root_pts, lens[first]), gaunt, thumb)
+	# Pads face down; the thumb's faces the index finger, turning its flat pad and claw inward.
+	var pad := Vector3.DOWN
+	if thumb:
+		var idx := "DEF-f_index.01" + suffix
+		if sk.find_bone(idx) >= 0 and ArmWrap.bind_index(mi, sk, idx) >= 0:
+			var toward := ArmSkinMesh.ring_frame(mi, sk, idx, 0.0).origin \
+					- ArmSkinMesh.ring_frame(mi, sk, names[2], 0.0).origin
+			if toward.length() >= 1e-4:
+				pad = toward
+	var r0 := _root_radius(root_pts, lens[first])
+	# The thumb is sized from the index's shaft, not its own thin glb root.
+	var use_ref := thumb and ref_r > 0.0
+	var rk := _radii(ref_r if use_ref else r0, gaunt, thumb, use_ref)
 	var shaft: PackedFloat32Array = rk[0]
 	var knob: PackedFloat32Array = rk[1]
 	var fg := {
 		&"verts": PackedVector3Array(), &"centres": PackedVector3Array(), &"wts": [],
 		&"rings": 0, &"names": names, &"binds": binds, &"lens": lens,
-		&"cr": cr, &"r2": shaft[2], &"r3": shaft[3],
+		&"cr": cr, &"r1": shaft[1], &"r2": shaft[2], &"r3": shaft[3], &"pad": pad,
 	}
 	var tip_prof := _tip_profile(knob[3], shaft[3])
 	for j in range(first, 4):
@@ -87,19 +104,24 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 		_segment(mi, sk, fg, j, prof)
 	# The pole closes the tip on the finger's own (crooked) axis, weighted to .03 only.
 	var base := ArmSkinMesh.ring_frame(mi, sk, names[3], 0.0)
-	var ax := _axes(base)
+	var ax := _axes(base, pad)
 	var fv: PackedVector3Array = fg[&"verts"]
 	fv.append(base.origin + base.basis.y.normalized() * 1.06 * lens[3]
 			+ ax[1] * _crook(3, 1.0, fg))
 	var wts: Array = fg[&"wts"]
 	wts.append({binds[3]: 1.0})
 	var inv := base.basis.inverse()
+	var tube_len := 0.0
+	for j in range(first, 4):
+		tube_len += lens[j]
 	fg[&"info"] = {
 		&"tip_len": lens[3],
 		&"bed_r": _radius_at(tip_prof, 0.5),
 		&"dorsal": (inv * ax[0]).normalized(),
 		&"lateral": (inv * ax[1]).normalized(),
 		&"crook": cr * shaft[2] + 0.3 * cr * shaft[3],
+		&"shaft": shaft[first],
+		&"length": tube_len,
 	}
 	return fg
 
@@ -116,7 +138,8 @@ static func _segment(mi: MeshInstance3D, sk: Skeleton3D, fg: Dictionary, j: int,
 	var wts: Array = fg[&"wts"]
 	var base := ArmSkinMesh.ring_frame(mi, sk, names[j], 0.0)
 	var y := base.basis.y.normalized()
-	var ax := _axes(base)
+	var pad: Vector3 = fg[&"pad"]
+	var ax := _axes(base, pad)
 	var parent := _parent_bind(mi, sk, names[j])
 	var nxt := binds[j + 1] if j < 3 else -1
 	for p in prof:
@@ -169,20 +192,21 @@ static func _radius_at(prof: Array[Vector3], t: float) -> float:
 
 
 ## [shaft radii, knob radii] indexed by bone number 1..3 (0 unused, thumb has no 1).
-static func _radii(r0: float, gaunt: float, thumb: bool) -> Array:
+static func _radii(r0: float, gaunt: float, thumb: bool, ref: bool = false) -> Array:
 	var r := PackedFloat32Array([0.0, 0.0, 0.0, 0.0])
 	var k := PackedFloat32Array([0.0, 0.0, 0.0, 0.0])
 	if thumb:
-		r[2] = 1.1 * gaunt * r0
-		r[3] = 0.85 * r[2]
-		k[2] = 1.30 * r[2]
+		# With `ref`, r0 is already the index's gaunt shaft radius.
+		r[2] = THUMB_R * r0 if ref else 1.1 * gaunt * r0
+		r[3] = 0.90 * r[2]
+		k[2] = 1.22 * r[2]
 	else:
 		r[1] = gaunt * r0
 		r[2] = 0.90 * r[1]
 		r[3] = 0.78 * r[1]
 		k[1] = 1.32 * r[1]
 		k[2] = 1.28 * r[2]
-	k[3] = 1.20 * r[3]
+	k[3] = (1.15 if thumb else 1.20) * r[3]
 	return [r, k]
 
 
@@ -199,11 +223,11 @@ static func _crook(j: int, t: float, fg: Dictionary) -> float:
 	return 0.0
 
 
-## [dorsal, lateral] in mesh space for a bone frame: the pad faces down, as the rest hand
-## hangs palm down (the way ArmRig.add_claws finds it).
-static func _axes(frame: Transform3D) -> PackedVector3Array:
+## [dorsal, lateral] in mesh space for a bone frame: the pad faces `pad_hint` (DOWN for the
+## fingers, as the rest hand hangs palm down; the index finger for the thumb).
+static func _axes(frame: Transform3D, pad_hint: Vector3 = Vector3.DOWN) -> PackedVector3Array:
 	var y := frame.basis.y.normalized()
-	var pad := (Vector3.DOWN - y * Vector3.DOWN.dot(y)).normalized()
+	var pad := (pad_hint - y * pad_hint.dot(y)).normalized()
 	return PackedVector3Array([-pad, y.cross(pad).normalized()])
 
 
