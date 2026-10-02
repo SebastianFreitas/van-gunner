@@ -276,3 +276,44 @@ HUD clear, lit from a source you can point at with no blown pixels on skin. Stop
 3. Measure: stills at two pinned times plus a pinned series diffed step to step.
 4. Step back against the bar: worse / why / solve, one round per commit.
 5. Stop when every bar line is met by a number or a described still, not by taste.
+
+## Round 9 (owner, 2026-10-02: thumbs curled down, hands at an odd angle, left hand twitching)
+
+- Worse: thumbs always tucked, both hands held at an unnatural angle, the left hand
+  sliding when the player looks up and down. Why: `ArmWeave._add_hand` took the wrist from
+  `get_bone_rest`, so the orientation `ArmRig.reach` chose was overwritten every frame
+  (the angle); the thumb was only flexed on the fingers' X axis with no abduction (the
+  tuck); `gun_viewmodel.gd` still blended the left root by `maxf(k.y, _look_down)`, the
+  old hide-until-look-down behaviour fused with the weave (the twitch).
+- Solve: the look-down blend, `debug_look_down`, `cam down` and the `arms-down` shot are
+  gone (`arms-reload`/`arms-weave` are now `a05`/`a06`). The weave circles the posed
+  wrist (`get_bone_pose_rotation`), with both wrist bases at zero. The thumb .01 bone is
+  held abducted on its local Z (`THUMB_SPREAD 28`, `THUMB_ARC 7` slow opposition swing).
+  `ArmsBuilder` poses both arms with a two-pass weave reach (`*_WEAVE_WRIST`,
+  `*_WEAVE_PALM`, `WEAVE_WRIST_LIFT`), and the viewmodel's `LEFT_REST`/`RIGHT_REST` and
+  tilts are zero: the builder owns the framing.
+- Thumb sign: `THUMB_SPREAD_SIGN` settled at -1.0 by two `arms cam top` probes at weave
+  0 and 1.8 (raw diff 0.24 each). At +1 both thumbs lay along the fingers (the left
+  tucked under the curled fist); at -1 the left thumb stands out from the fist and the
+  right points outward from the index.
+- Series (8 x 0.45 s, bottom 40%, threshold 12): 5.5..12.2% per step, mean 8.0%, no dead
+  steps, wrap 19%. The tool's 6% jump flag fires on every step at this coarse pitch, as
+  the Round 4 note says (13% is the bar for steps this long); the max is under it.
+- `a01` (front): both hands in frame, backs to the camera, fingers forward-down with the
+  near hand half-curled; the thumbs read only from the top view. HUD box clear.
+
+### Round 9b (owner: "the left thumb still looks odd")
+
+- Worse: with the spread on the thumb bone's local Z at -1 the left thumb bent backward
+  under the fist (seen from the top), and at +1 it lay along the index: Z is not the
+  abduction axis. Why: the thumb .01 bone is rolled against the fingers, so its Z swings
+  the thumb in the palm's plane only when the hand is flat; the weave's curl made that
+  read as a hyperextension.
+- Solve: `THUMB_SPREAD_AXIS` picks the axis. A six-shot sheet (`arms cam top`, weave 0,
+  left-hand crop, axes RIGHT/UP/BACK at +1/-1; crop diffs vs BACK -1: 1.2, 1.9, 1.1, 0.9,
+  0, 1.4%) showed RIGHT at -1 as the only variant where the thumb stands clearly away from
+  the index; the right-hand crop of the same shot agrees (BACK -1 gave a stub, RIGHT +1
+  hid it). The `arms cam left` view hides the left thumb behind the hand: judge thumbs
+  from the top camera only.
+- Series after the change (8 x 0.45 s): 5.6..12.1% per step, mean 8.2%, no dead steps,
+  wrap 19%; unchanged within noise.

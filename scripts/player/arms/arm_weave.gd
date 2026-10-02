@@ -4,6 +4,7 @@ extends RefCounted
 ## Every value is a sum of smooth sines (no noise, no per-frame random), so the hands
 ## never twitch. Only bone rotations are written: scale and position stay untouched so
 ## the builder's tip stretch and the claw BoneAttachment3Ds keep working.
+## The wrists circle the posed hand (the orientation ArmRig.reach chose), not the glb rest.
 
 const PERIOD := 3.6  ## seconds per main finger roll
 const ROLL_LAG := 0.9  ## radians of phase lag index -> middle -> ring -> pinky
@@ -11,13 +12,18 @@ const HARMONIC := 0.37  ## second, slower wave as a multiple of PERIOD's frequen
 const HARMONIC_K := 0.3  ## its share of the amplitude, so the loop never reads as a loop
 const BASE := Vector3(35.0, 55.0, 45.0)  ## degrees curl of joints .01/.02/.03: always hooked
 const SWING := Vector3(14.0, 22.0, 18.0)  ## degrees of weave around BASE per joint
-const THUMB_BASE := Vector3(20.0, 30.0, 25.0)
-const THUMB_SWING := Vector3(6.0, 10.0, 8.0)
+const THUMB_BASE := Vector3(4.0, 10.0, 18.0)  ## degrees flex of thumb .01/.02/.03: tip bent
+const THUMB_SWING := Vector3(3.0, 6.0, 9.0)
+const THUMB_SPREAD := 28.0  ## degrees the thumb .01 bone is held splayed from the index
+## Axis and sign settled in round 9 by a six-shot top-view sheet (goblin-weave-research.md).
+const THUMB_SPREAD_SIGN := -1.0  ## settled by the round 9 axis sheet (top view, 3 axes x 2 signs)
+const THUMB_SPREAD_AXIS := Vector3.RIGHT  ## the thumb .01 axis that splays it from the index
+const THUMB_ARC := 7.0  ## degrees of slow opposition swing on the spread, toward the index
 const SPREAD := 6.0  ## degrees of side sway on each .01 bone, alternating sign
 const WRIST_CIRCLE := 8.0  ## degrees, wrist pitch and yaw 90 deg apart
 const WRIST_ROLL := 6.0  ## degrees, slow roll at half speed
-const RIGHT_WRIST_BASE := Vector3(20.0, 0.0, 0.0)  ## degrees XYZ, palm-down hold, tuned in spec 2
-const LEFT_WRIST_BASE := Vector3(20.0, 0.0, 0.0)
+const RIGHT_WRIST_BASE := Vector3(0.0, 0.0, 0.0)  ## degrees XYZ on top of the posed hand
+const LEFT_WRIST_BASE := Vector3(0.0, 0.0, 0.0)
 const ARM_DRIFT := Vector3(0.04, 0.035, 0.03)  ## rig-space metres of slow figure-eight per arm root
 const ARM_TILT := Vector3(2.5, 2.0, 3.0)  ## degrees of root tilt riding the same figure-eight
 const DRIFT_RATE := 0.4  ## drift speed as a multiple of the finger roll
@@ -27,11 +33,11 @@ const FLOURISH_IN := 1.2  ## seconds opening
 const FLOURISH_HOLD := 0.4
 const FLOURISH_OUT := 1.6  ## seconds re-hooking
 const OPEN_CURL := Vector3(8.0, 12.0, 10.0)  ## degrees per joint when stretched open
-const OPEN_THUMB := Vector3(5.0, 8.0, 6.0)
+const OPEN_THUMB := Vector3(0.0, 4.0, 6.0)
 const OPEN_SPREAD_K := 2.0  ## spread multiplier while open
 const OPEN_WRIST_PITCH := 12.0  ## degrees the wrist lifts (negative X) while open
 
-## One entry per hand: {sk, suffix, phase, wrist, wrist_rest, wrist_base, joints}, where each
+## One entry per hand: {sk, suffix, phase, wrist, wrist_pose, wrist_base, joints}, where each
 ## joint is {bone, rest, finger, j} and finger 0..3 = index..pinky, 4 = thumb.
 var _hands: Array[Dictionary] = []
 ## Drift phase and last drift transform per arm root: 0 right, 1 left.
@@ -67,13 +73,13 @@ func _add_hand(model: Node3D, suffix: String, wrist_base: Vector3, phase: float)
 					&"finger": f, &"j": j})
 	var wrist_name := "DEF-hand" + suffix
 	var wrist := sk.find_bone(wrist_name)
-	var wrist_rest := Quaternion.IDENTITY
+	var wrist_pose := Quaternion.IDENTITY
 	if wrist == -1:
 		push_warning("ArmWeave: bone not found: %s" % wrist_name)
 	else:
-		wrist_rest = sk.get_bone_rest(wrist).basis.get_rotation_quaternion()
+		wrist_pose = sk.get_bone_pose_rotation(wrist)
 	_hands.append({&"sk": sk, &"suffix": suffix, &"phase": phase, &"wrist": wrist,
-			&"wrist_rest": wrist_rest, &"wrist_base": wrist_base, &"joints": joints})
+			&"wrist_pose": wrist_pose, &"wrist_base": wrist_base, &"joints": joints})
 
 
 ## Poses every finger and wrist for time `t` (seconds). Allocation-free per frame.
@@ -102,6 +108,10 @@ func update(t: float) -> void:
 						OPEN_THUMB[j] + THUMB_SWING[j] * wave * 0.3, f)
 			var rot: Quaternion = joint[&"rest"] * Quaternion(Vector3.RIGHT,
 					deg_to_rad(deg) * ArmRig.CURL_SIGN)
+			if j == 0 and finger == 4:
+				# Hold the thumb abducted from the palm and swing it slowly toward the index.
+				rot = rot * Quaternion(THUMB_SPREAD_AXIS, deg_to_rad((THUMB_SPREAD
+						+ THUMB_ARC * sin(a * 0.5 + 0.9)) * THUMB_SPREAD_SIGN * lerpf(1.0, 1.25, f)))
 			if j == 0 and finger < 4:
 				var side := 1.0 if finger % 2 == 0 else -1.0
 				rot = rot * Quaternion(Vector3.BACK,
@@ -115,8 +125,8 @@ func update(t: float) -> void:
 		var e := wrist_base + Vector3(WRIST_CIRCLE * sin(b), WRIST_ROLL * sin(b * 0.5),
 				WRIST_CIRCLE * cos(b))
 		e.x -= OPEN_WRIST_PITCH * f
-		var wrist_rest: Quaternion = hand[&"wrist_rest"]
-		sk.set_bone_pose_rotation(wrist, wrist_rest * Quaternion.from_euler(e * (PI / 180.0)))
+		var wrist_pose: Quaternion = hand[&"wrist_pose"]
+		sk.set_bone_pose_rotation(wrist, wrist_pose * Quaternion.from_euler(e * (PI / 180.0)))
 	for side in 2:
 		var p := w * DRIFT_RATE + _phase[side]
 		var pos := Vector3(ARM_DRIFT.x * sin(p), ARM_DRIFT.y * sin(2.0 * p + 0.4),

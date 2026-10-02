@@ -19,6 +19,12 @@ const LEFT_HANG_POLE := Vector3(-1.0, -0.6, 0.2)
 const LEFT_HANG_HAND_DIR := Vector3(0.1, -0.5, -1.0)
 ## How far the straightened left hand droops below its forearm line (a relaxed hang).
 const LEFT_WRIST_DROP := 0.15
+## Weave pose (gun hidden): wrists raised in front, forearms angled in, palms down and inward.
+const RIGHT_WEAVE_WRIST := Vector3(0.62, -0.50, -1.00)
+const LEFT_WEAVE_WRIST := Vector3(-0.62, -0.52, -1.00)
+const RIGHT_WEAVE_PALM := Vector3(-0.6, -0.8, 0.1)  ## palm normal: down, toward the body centre
+const LEFT_WEAVE_PALM := Vector3(0.6, -0.8, 0.1)
+const WEAVE_WRIST_LIFT := 0.18  ## UP added to the forearm line: about 10 deg of wrist extension
 ## Palm toward the body.
 const LEFT_HANG_PALM := Vector3(1, 0, 0)
 ## Finger joint curls in degrees for joints .01/.02/.03.
@@ -71,10 +77,21 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	var muscle_r := rng_r.randi()
 	var model_r := ArmRig.spawn(&"R", s, bulk, muscle_r)
 	right.add_child(model_r)
-	var r := ArmRig.reach(model_r, ".R", RIGHT_SHOULDER + _jitter(rng_r),
-			gx * RIGHT_WRIST_IN_GUN, RIGHT_POLE,
-			(gx.basis * RIGHT_HAND_DIR_IN_GUN).normalized(),
-			(gx.basis * RIGHT_PALM_IN_GUN).normalized())
+	var shoulder_r := RIGHT_SHOULDER + _jitter(rng_r)
+	var r: Dictionary
+	if SHOW_GUN:
+		r = ArmRig.reach(model_r, ".R", shoulder_r,
+				gx * RIGHT_WRIST_IN_GUN, RIGHT_POLE,
+				(gx.basis * RIGHT_HAND_DIR_IN_GUN).normalized(),
+				(gx.basis * RIGHT_PALM_IN_GUN).normalized())
+	else:
+		r = ArmRig.reach(model_r, ".R", shoulder_r, RIGHT_WEAVE_WRIST, RIGHT_POLE,
+				(RIGHT_WEAVE_WRIST - shoulder_r).normalized(),
+				RIGHT_WEAVE_PALM.normalized())
+		var fore_r := (Vector3(r.wrist) - Vector3(r.elbow)).normalized()
+		r = ArmRig.reach(model_r, ".R", shoulder_r, RIGHT_WEAVE_WRIST, RIGHT_POLE,
+				(fore_r + Vector3.UP * WEAVE_WRIST_LIFT).normalized(),
+				RIGHT_WEAVE_PALM.normalized())
 	ArmRig.curl(model_r, ".R", RIGHT_CURL)
 	ArmRig.stretch_tips(model_r, ".R", tip_k)
 	ArmRig.add_claws(model_r, ".R", claw_len, claw)
@@ -97,14 +114,24 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	var model_l := ArmRig.spawn(&"L", s, bulk, muscle_l)
 	left.add_child(model_l)
 	var shoulder_l := LEFT_SHOULDER + _jitter(rng_l)
-	var l := ArmRig.reach(model_l, ".L", shoulder_l,
-			LEFT_SHOWN_WRIST, LEFT_HANG_POLE,
-			LEFT_HANG_HAND_DIR.normalized(), LEFT_HANG_PALM)
-	# Pose again with the hand along the forearm: a sharply bent hand pokes its slim wrist out
-	# under the fat forearm's open end.
-	var fore_dir := (Vector3(l.wrist) - Vector3(l.elbow)).normalized()
-	l = ArmRig.reach(model_l, ".L", shoulder_l, LEFT_SHOWN_WRIST, LEFT_HANG_POLE,
-			(fore_dir + Vector3.DOWN * LEFT_WRIST_DROP).normalized(), LEFT_HANG_PALM)
+	var l: Dictionary
+	if SHOW_GUN:
+		l = ArmRig.reach(model_l, ".L", shoulder_l,
+				LEFT_SHOWN_WRIST, LEFT_HANG_POLE,
+				LEFT_HANG_HAND_DIR.normalized(), LEFT_HANG_PALM)
+		# Pose again with the hand along the forearm: a sharply bent hand pokes its slim wrist
+		# out under the fat forearm's open end.
+		var fore_dir := (Vector3(l.wrist) - Vector3(l.elbow)).normalized()
+		l = ArmRig.reach(model_l, ".L", shoulder_l, LEFT_SHOWN_WRIST, LEFT_HANG_POLE,
+				(fore_dir + Vector3.DOWN * LEFT_WRIST_DROP).normalized(), LEFT_HANG_PALM)
+	else:
+		l = ArmRig.reach(model_l, ".L", shoulder_l, LEFT_WEAVE_WRIST, LEFT_HANG_POLE,
+				(LEFT_WEAVE_WRIST - shoulder_l).normalized(),
+				LEFT_WEAVE_PALM.normalized())
+		var fore_l := (Vector3(l.wrist) - Vector3(l.elbow)).normalized()
+		l = ArmRig.reach(model_l, ".L", shoulder_l, LEFT_WEAVE_WRIST, LEFT_HANG_POLE,
+				(fore_l + Vector3.UP * WEAVE_WRIST_LIFT).normalized(),
+				LEFT_WEAVE_PALM.normalized())
 	ArmRig.curl(model_l, ".L", LEFT_CURL)
 	ArmRig.stretch_tips(model_l, ".L", tip_k)
 	ArmRig.add_claws(model_l, ".L", claw_len, claw)

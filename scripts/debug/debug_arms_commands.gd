@@ -9,7 +9,7 @@ const VIEWS := {
 	&"left": Vector3(0.05, 0.08, -0.3),
 	&"top": Vector3(0.0, 0.3, 0.02),
 }
-const USAGE := "arms cam <front|side|left|top|down|off> | arms reload <0..1|off> | arms weave <seconds|off>"
+const USAGE := "arms cam <front|side|left|top|off> | arms reload <0..1|off> | arms weave <seconds|off>"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -54,17 +54,11 @@ func _cam(vm: Node, view: StringName) -> String:
 		parent.remove_child(old)
 		old.free()
 	_show_body()
-	vm.debug_look_down = -1.0
 	var player_cam := parent.get_parent() as Camera3D
 	if view == &"off":
 		if player_cam != null:
 			player_cam.make_current()
 		return "arms cam off"
-	if view == &"down":
-		vm.debug_look_down = 1.0
-		if player_cam != null:
-			player_cam.make_current()
-		return "arms cam down (left arm raised as if looking down)"
 	if not VIEWS.has(view):
 		return USAGE
 	var cam := Camera3D.new()

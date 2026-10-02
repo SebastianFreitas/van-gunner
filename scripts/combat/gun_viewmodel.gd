@@ -23,27 +23,23 @@ const BOB_FREQ := 8.0  ## rad/s at walking speed
 const BOB_WALK_SPEED := 4.0  ## m/s that counts as a full bob
 const SLAP_DROP := 0.12  ## virtual metres the left hand drops below the magazine
 const MAG_SLAP_IN_GUN := Vector3(0.0, -0.24, -0.22)  ## under the magazine, Body-local
-## Rig-space shift that puts the left hand in the lower-left of the view at rest.
-const LEFT_REST := Vector3(-0.10, -0.04, 0.0)
-const RIGHT_REST := Vector3(0.06, 0.05, 0.04)  ## rig-space shift lifting the right hand into view
-## Degrees XYZ: hand pitched up and rolled so the curls face the player.
-const RIGHT_REST_TILT := Vector3(15.0, -10.0, -15.0)
-const LEFT_REST_TILT := Vector3(15.0, 10.0, 15.0)  ## mirror for the left; fades out with `shown`
+## Rig-space tuning shift for the left hand at rest; the pose constants in `ArmsBuilder` own
+## the framing now, so this stays zero.
+const LEFT_REST := Vector3.ZERO
+const RIGHT_REST := Vector3.ZERO  ## rig-space tuning shift for the right hand, kept at zero
+## Degrees XYZ tuning tilt of the right arm root, kept at zero (`ArmsBuilder` poses the hand).
+const RIGHT_REST_TILT := Vector3.ZERO
+const LEFT_REST_TILT := Vector3.ZERO  ## mirror for the left; fades out with `shown`
 ## Smoke holds the finger weave still at this time, like the facade lamp flicker.
 const WEAVE_SANDBOX_T := 1.1
 ## Fraction of the way from the shown left wrist to the magazine point the reload slap travels;
 ## the gun is hidden, so the arm only swings in toward the right hand.
 const LEFT_REACH_K := 0.35
-## Camera look-down (global basis.z.y) where the left arm starts and finishes rising into view.
-const LOOK_DOWN_FROM := 0.35
-const LOOK_DOWN_TO := 0.75
 
 ## Debug overrides from the arms console command; negative means off.
-var debug_look_down := -1.0
 var debug_reload_t := -1.0
 ## >= 0 pins the finger weave time, from arms weave.
 var debug_weave_t := -1.0
-var _look_down := 0.0  ## 0..1, set each frame in _process
 @onready var _rig: Node3D = $Rig
 var _lamp: OmniLight3D
 var _look: VanLook
@@ -181,13 +177,6 @@ func _set_reload_t(v: float) -> void:
 func _process(delta: float) -> void:
 	if delta <= 0.0:
 		return
-	if debug_look_down >= 0.0:
-		_look_down = debug_look_down
-	elif _camera != null:
-		_look_down = smoothstep(LOOK_DOWN_FROM, LOOK_DOWN_TO,
-				_camera.global_transform.basis.z.y)
-	else:
-		_look_down = 0.0
 	if _camera != null:
 		var cur := _camera.global_basis.orthonormalized()
 		if _has_prev:
@@ -270,7 +259,7 @@ func _apply() -> void:
 	var m := _motion()
 	var gun_x := m * recoil * cant
 	var rest_pt := _roots.get("left_wrist", Vector3.ZERO) as Vector3
-	var shown := maxf(k.y, _look_down)
+	var shown := k.y
 	var hide_off := LEFT_REST * (1.0 - shown)
 	var gx := cant * HeldGun.gun_xform()
 	var mag_pt := gx * MAG_SLAP_IN_GUN

@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-348 GDScript files, 54809 lines.
+348 GDScript files, 54829 lines.
 
 ### `scenes/corridor/`
 
@@ -403,7 +403,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `gun_controller.gd` | `GunController` | 317 | Hit/miss for the HUD once the first pellet resolves. |
 | `gun_stats.gd` | `GunStats` | 46 | Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance. |
 | `gun_stats_controller.gd` | `GunStatsController` | 153 | Rebuilds a gun's effective stats from its base stats, class and modifiers. |
-| `gun_viewmodel.gd` | `GunViewmodel` | 295 | First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; recoil and reload cant. |
+| `gun_viewmodel.gd` | `GunViewmodel` | 284 | First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; recoil and reload cant. |
 | `projectile.gd` | `Projectile` | 341 | A bullet: flies, ricochets off scenery and resolves damage on hit. |
 | `projectile_pool.gd` | — | 82 | Reuses Projectile nodes to avoid instantiate/free churn during heavy fire. |
 | `stat_modifier.gd` | `StatModifier` | 14 | A single additive or multiplicative modifier applied to a named gun stat. |
@@ -431,7 +431,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
-| `debug_arms_commands.gd` | — | 115 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
+| `debug_arms_commands.gd` | — | 109 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
 | `debug_commands.gd` | — | 258 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
@@ -554,8 +554,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `arm_refine.gd` | `ArmRefine` | 128 | Midpoint-subdivides the imported arm mesh once at load, so the gain ramp and the muscle lumps have rings to shape instead of one step between the mid-forearm a… |
 | `arm_rig.gd` | `ArmRig` | 184 | Skinned first-person arm model: spawn, two-bone reach to a wrist target, finger curl and claws. |
 | `arm_tattoo.gd` | `ArmTattoo` | 66 |  |
-| `arm_weave.gd` | — | 154 | Drives the goblin's always-on witch-finger weave on both arm skeletons each frame. |
-| `arms_builder.gd` | `ArmsBuilder` | 197 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
+| `arm_weave.gd` | — | 164 | Drives the goblin's always-on witch-finger weave on both arm skeletons each frame. |
+| `arms_builder.gd` | `ArmsBuilder` | 224 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
 | `held_gun.gd` | `HeldGun` | 115 | The scavenged pipe rifle the arms hold: receiver, pipe barrel, taped grip, lamp fixture and sling, built from one seed. |
 
 ### `scripts/stops/`

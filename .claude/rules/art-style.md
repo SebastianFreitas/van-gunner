@@ -112,9 +112,9 @@ Geometry:
   and skinned only with the grime shader as `material_override` (no bitmap).
   The hands never rest: `ArmWeave` (`scripts/player/arms/arm_weave.gd`)
   rolls both hands' fingers index to pinky in hooked witch curls on a 3.6 s
-  period with a slow second harmonic, wrists circling, the left hand raised
-  into the lower-left of the view; it runs through idle, walking, shooting
-  and reloading, and holds still at t 1.1 under `SaveSandbox` so shots
+  period with a slow second harmonic, wrists circling, both hands
+  raised in front, palms down and inward, thumbs held out; it runs
+  through idle, walking, shooting and reloading, and holds still at t 1.1 under `SaveSandbox` so shots
   compare (`arms weave <s>|off` pins it).
 - No bitmap textures on 3D surfaces (no photos, no painted PNGs, no
   `NoiseTexture2D`). All surface detail comes from the shader.
