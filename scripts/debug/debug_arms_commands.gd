@@ -123,7 +123,9 @@ func _thumbs(vm: Node) -> String:
 			shaft = float(thumb[&"shaft"]) / float(index[&"shaft"])
 		if thumb.has(&"length") and index.has(&"length") and float(index[&"length"]) != 0.0:
 			len_x = float(thumb[&"length"]) / float(index[&"length"])
-		if shaft < 1.2 or (h == "L" and (angle < 60.0 or angle > 110.0)):
+		var bad_l := h == "L" and (angle < 60.0 or angle > 110.0)
+		var bad_r := h == "R" and (angle < 26.0 or angle > 56.0)
+		if shaft < 1.2 or bad_l or bad_r:
 			ok = false
 		lines.append("thumbs %s: angle %.0f shaft x%.2f len x%.2f" % [h, angle, shaft, len_x])
 	lines.append("THUMBS OK" if ok else "THUMBS CHECK")
