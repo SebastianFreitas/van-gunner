@@ -35,14 +35,25 @@ uniform float vein_height : hint_range(0.0, 0.004) = 0.0008;
 // ridge's lit flank and shaded flank read even where the arm lamp does not reach.
 const vec3 VEIN_KEY = normalize(vec3(-0.3, 0.8, 0.52));
 
+// Skin only: the engine skins vertices before vertex() runs, so VERTEX is already posed and a
+// pattern drawn from it swims as the arm moves. The skin mesh bakes its rest pose into CUSTOM1
+// (xyz position, w hand weight) and CUSTOM2 (xyz normal), and the patterns read those instead.
+uniform bool use_rest_pos = false;
+
 varying vec3 obj_pos;
 varying vec3 obj_normal;
 // CUSTOM0: x along the arm, y and z across it, w vein mask.
 varying vec4 vein_data;
+// Rest-pose position (xyz) and hand weight (w); the posed VERTEX when use_rest_pos is off.
+varying vec4 rest_data;
+
+// Skin layers (tattoo, scars, wounds, grazes, dirt); read vein_data, so it follows the varyings.
+#include "res://scenes/player/arm_skin_layers.gdshaderinc"
 
 void vertex() {
-	obj_pos = VERTEX;
-	obj_normal = NORMAL;
+	rest_data = use_rest_pos ? CUSTOM1 : vec4(VERTEX, 0.0);
+	obj_pos = rest_data.xyz;
+	obj_normal = use_rest_pos ? CUSTOM2.xyz : NORMAL;
 	vein_data = CUSTOM0;
 }
 
@@ -135,4 +146,11 @@ void fragment() {
 	ROUGHNESS = clamp(roughness_value - 0.04 * (grain - 0.5) - 0.25 * vn, 0.60, 0.95);
 	METALLIC = metallic_value;
 	SPECULAR = 0.5 + 0.2 * vn;
+	if (use_rest_pos) {
+		vec3 skin_albedo = ALBEDO;
+		float skin_rough = ROUGHNESS;
+		skin_layers(rest_data.xyz, rest_data.w, vein_data.x, skin_albedo, skin_rough);
+		ALBEDO = skin_albedo;
+		ROUGHNESS = skin_rough;
+	}
 }

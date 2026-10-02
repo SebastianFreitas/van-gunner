@@ -68,7 +68,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 			"facade":
 				matches = _filter_prefix(_facade.sub_commands(), "")
 			"arms":
-				matches = _filter_prefix(["cam", "reload"], "")
+				matches = _filter_prefix(["cam", "reload", "dress", "gear"], "")
 			_:
 				matches = []
 	elif parts[0] == "give" or parts[0] == "spawn":
@@ -99,7 +99,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 	elif parts[0] == "facade":
 		matches = _filter_prefix(_facade.sub_commands(), partial)
 	elif parts[0] == "arms":
-		matches = _filter_prefix(["cam", "reload"], partial)
+		matches = _filter_prefix(["cam", "reload", "dress", "gear"], partial)
 	else:
 		matches = []
 
@@ -210,9 +210,11 @@ func _cmd_help(_args: Array) -> String:
 		+ "  parts [n]       add Rare Parts (meta schematic currency)\n"
 		+ "  tree_reset      wipe the schematic back to origin (keeps parts)\n"
 		+ "  facade [sub]    street facade debug (try facade help)\n"
-		+ "  arms cam <view>  frame the first-person arms (front|side|left|top|off)\n"
+		+ "  arms cam <view>  frame the first-person arms (front|side|left|top|elbow|off)\n"
 		+ "  arms reload <t>  freeze the reload pose at 0..1 (off to release)\n"
 		+ "  arms fit         print the right thumb's clearance to the gun parts\n"
+		+ "  arms dress <style>  worn gear style (gear|rags|none), rebuilds the arms\n"
+		+ "  arms gear        count skin vertices poking through the sleeves over weave, kick, reload\n"
 		+ "  walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street\n"
 		+ "  Tab            autocomplete command or item id"
 	) % ", ".join(names)

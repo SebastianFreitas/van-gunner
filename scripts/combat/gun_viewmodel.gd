@@ -43,6 +43,8 @@ var debug_shot_t := -1.0
 var _lamp: OmniLight3D
 var _look: VanLook
 var _roots := {}
+## Seed of the last `rebuild_arms`, so the `arms dress` console command can rebuild the same look.
+var _arms_seed := 0
 var _lamp_local := Vector3.ZERO
 var _reload_t := 0.0
 var _reloading := false
@@ -91,6 +93,7 @@ func _ready() -> void:
 
 ## Frees the old arms and rifle and builds a fresh set from the van seed.
 func rebuild_arms(seed_value: int) -> void:
+	_arms_seed = seed_value
 	_weave = null
 	_kick = null
 	for child in _rig.get_children():

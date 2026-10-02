@@ -120,6 +120,19 @@ Geometry:
   wave), the thumb hooked over the beavertail onto the frame's left flank
   (`RIGHT_THUMB_AIM`); `arms fit` prints the thumb's clearance from the gun
   parts and must say `FIT OK`.
+  Arm dressing (`ArmsBuilder.dress_style`, console `arms dress gear|rags|none`):
+  `gear` (default) is one wrecked T-shirt sleeve on each arm (`ArmSleeve`, a
+  skinned tube on the upper arm only, hem torn and open just above the elbow at
+  `DEF-upper_arm.001` t 0.72, hem rings weighted to the upper arm only) plus the
+  skin layers: the van-name tattoo in faded block letters on the LEFT lower
+  forearm (where the player camera sees it), scars, wounds, dirt. Owner
+  (2026-10-02): no rings, straps, bands or other bolt-ons on the arms; "the
+  sleeve is enough". `rags` is the old rag and glove dress. Skin layers paint
+  in LINEAR colours (the skin albedo is a `source_color` uniform) from the
+  rest-pose chart in CUSTOM1/CUSTOM2; cloth tints are `source_color`. Gear is
+  built after the arms join the camera (facing angles need it). `arms gear`
+  checks each sleeve's own-bone (upper-arm) skin through every pose and must say
+  `GEAR OK`.
 - No bitmap textures on 3D surfaces (no photos, no painted PNGs, no
   `NoiseTexture2D`). All surface detail comes from the shader.
 

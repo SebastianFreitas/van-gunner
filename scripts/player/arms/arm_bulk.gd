@@ -179,8 +179,53 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 				new_verts[i] = acc / sum
 		ArmMuscle.apply(arrays, new_verts, heads, bone_names, muscle_seed, bulk,
 				side == ".L")
+		_rest_channels(arrays, mi)
 		var flags := src.surface_get_format(s) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS
 		flags |= Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT
+		flags |= Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM1_SHIFT
+		flags |= Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM2_SHIFT
 		out.add_surface_from_arrays(src.surface_get_primitive_type(s), arrays, [], {}, flags)
 		out.surface_set_material(s, src.surface_get_material(s))
 	mi.mesh = out
+
+
+## Bakes the rest pose into CUSTOM1 (xyz position, w hand weight) and CUSTOM2 (xyz normal). The
+## engine skins vertices before the shader's vertex() runs, so VERTEX is already posed there and
+## the skin shader needs this unposed chart to keep its patterns glued to the skin.
+static func _rest_channels(arrays: Array, mi: MeshInstance3D) -> void:
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+	var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+	var count := verts.size()
+	var per := int(float(bones.size()) / maxf(count, 1.0))
+	# ARRAY_BONES index the Skin's binds, so the hand flag is looked up per bind, not per bone.
+	var sk_res := mi.skin
+	var skel := mi.get_node_or_null(mi.skeleton) as Skeleton3D
+	var is_hand := PackedByteArray()
+	for b in sk_res.get_bind_count():
+		var bone_name := String(sk_res.get_bind_name(b))
+		if bone_name.is_empty() and skel != null:
+			bone_name = skel.get_bone_name(sk_res.get_bind_bone(b))
+		var hand := bone_name.contains("hand") or bone_name.contains("palm") \
+				or bone_name.contains("f_") or bone_name.contains("thumb")
+		is_hand.append(1 if hand else 0)
+	var rest := PackedFloat32Array()
+	rest.resize(count * 4)
+	var rest_n := PackedFloat32Array()
+	rest_n.resize(count * 4)
+	for i in count:
+		var hand_w := 0.0
+		for k in per:
+			var w := weights[i * per + k]
+			if w > 0.0 and is_hand[bones[i * per + k]] == 1:
+				hand_w += w
+		rest[i * 4] = verts[i].x
+		rest[i * 4 + 1] = verts[i].y
+		rest[i * 4 + 2] = verts[i].z
+		rest[i * 4 + 3] = clampf(hand_w, 0.0, 1.0)
+		rest_n[i * 4] = normals[i].x
+		rest_n[i * 4 + 1] = normals[i].y
+		rest_n[i * 4 + 2] = normals[i].z
+	arrays[Mesh.ARRAY_CUSTOM1] = rest
+	arrays[Mesh.ARRAY_CUSTOM2] = rest_n

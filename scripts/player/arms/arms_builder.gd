@@ -45,6 +45,11 @@ const ELBOW_JITTER := 0.03
 const FOREARM_R_ELBOW := 0.075
 const FOREARM_R_WRIST := 0.06
 
+## Hand dressing: `&"gear"` (a wrecked T-shirt sleeve on each arm plus the skin layers),
+## `&"rags"` (the old rag and glove dress) or `&"none"` (bare arms). Set by the `arms dress`
+## console command, then rebuilt.
+static var dress_style := &"gear"
+
 
 static func rng_for(seed_value: int, part_id: StringName) -> RandomNumberGenerator:
 	var rng := RandomNumberGenerator.new()
@@ -52,9 +57,14 @@ static func rng_for(seed_value: int, part_id: StringName) -> RandomNumberGenerat
 	return rng
 
 
-static func build(rig: Node3D, seed_value: int, _van_name: String) -> Dictionary:
+static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	var rng := rng_for(seed_value, &"arms")
 	var skin := ArmMaterials.skin(rng)
+	# One copy per arm so the skin layers' uniforms (tattoo, scars) differ between the arms.
+	var skin_r := skin.duplicate() as ShaderMaterial
+	var skin_l := skin.duplicate() as ShaderMaterial
+	# One shirt for both arms: the two sleeves are the same cloth.
+	var cloth := ArmMaterials.gear_cloth(rng_for(seed_value, &"arm_cloth"))
 	var s := rng.randf_range(1.12, 1.28)
 	var tip_k := rng.randf_range(1.0, 1.35)
 	var claw_len := rng.randf_range(0.04, 0.08)
@@ -69,6 +79,8 @@ static func build(rig: Node3D, seed_value: int, _van_name: String) -> Dictionary
 	var muscle_r := rng_r.randi()
 	var model_r := ArmRig.spawn(&"R", s, bulk, muscle_r)
 	right.add_child(model_r)
+	# Parented at once: gear and skin layers aim at the camera, found through the ancestors.
+	rig.add_child(right)
 	var gun_root := HeldGun.build(rng_for(seed_value, &"arm_gun"), ArmRig.palm_len(model_r))
 	gun_root.visible = SHOW_GUN
 	var shoulder_r := RIGHT_SHOULDER + _jitter(rng_r)
@@ -94,7 +106,7 @@ static func build(rig: Node3D, seed_value: int, _van_name: String) -> Dictionary
 				* Quaternion.from_euler(RIGHT_THUMB_AIM * (PI / 180.0)))
 	ArmRig.stretch_tips(model_r, ".R", tip_k)
 	ArmRig.add_claws(model_r, ".R", claw_len, claw)
-	_skin_model(model_r, skin)
+	_skin_model(model_r, skin_r)
 
 	# s is 1.0: the lamp attaches inside the model that `s` already scales.
 	var lamp_t := 0.5 + 0.5 * ArmLampKit.MOUNT_T
@@ -102,7 +114,14 @@ static func build(rig: Node3D, seed_value: int, _van_name: String) -> Dictionary
 			lerpf(ArmBulk.FOREARM_ELBOW_GAIN, ArmBulk.FOREARM_WRIST_GAIN, lamp_t), 1.0, bulk)
 	var bulb := ArmLampKit.build(model_r, r_mount, rng_for(seed_value, &"arm_lamp"))
 	# After the lamp so the dress stream never shifts the lamp's.
-	ArmDress.right(model_r, rng_for(seed_value, &"arm_dress_r"))
+	match dress_style:
+		&"rags":
+			ArmDress.right(model_r, rng_for(seed_value, &"arm_dress_r"))
+		&"gear":
+			ArmSleeve.build(model_r, ".R", rng_for(seed_value, &"arm_gear_r"), cloth)
+	if dress_style != &"none":
+		ArmSkinLayers.apply(skin_r, model_r, ".R", rng_for(seed_value, &"arm_skin_r"),
+				van_name, false)
 
 	# Left arm: hangs relaxed at the side.
 	var left := Node3D.new()
@@ -111,6 +130,7 @@ static func build(rig: Node3D, seed_value: int, _van_name: String) -> Dictionary
 	var muscle_l := rng_l.randi()
 	var model_l := ArmRig.spawn(&"L", s, bulk, muscle_l)
 	left.add_child(model_l)
+	rig.add_child(left)
 	var shoulder_l := LEFT_SHOULDER + _jitter(rng_l)
 	var l: Dictionary
 	if SHOW_GUN:
@@ -133,11 +153,16 @@ static func build(rig: Node3D, seed_value: int, _van_name: String) -> Dictionary
 	ArmRig.curl(model_l, ".L", LEFT_CURL)
 	ArmRig.stretch_tips(model_l, ".L", tip_k)
 	ArmRig.add_claws(model_l, ".L", claw_len, claw)
-	_skin_model(model_l, skin)
-	ArmDress.left(model_l, rng_for(seed_value, &"arm_dress_l"))
+	_skin_model(model_l, skin_l)
+	match dress_style:
+		&"rags":
+			ArmDress.left(model_l, rng_for(seed_value, &"arm_dress_l"))
+		&"gear":
+			ArmSleeve.build(model_l, ".L", rng_for(seed_value, &"arm_gear_l"), cloth)
+	if dress_style != &"none":
+		ArmSkinLayers.apply(skin_l, model_l, ".L", rng_for(seed_value, &"arm_skin_l"),
+				van_name, true)
 
-	rig.add_child(left)
-	rig.add_child(right)
 	rig.add_child(gun_root)
 	return {
 		"left_root": left,

@@ -1,15 +1,22 @@
 extends RefCounted
 ## Debug console `arms`: frames the first-person arms from fixed angles and freezes poses.
 
+const _GearFit := preload("res://scripts/debug/debug_arms_gear_fit.gd")
+
 const CAM_NAME := &"ArmsDebugCam"
-## Camera offsets from the focus point in Weapon space (metres); `left` aims at the left hand.
+## Camera offsets from the focus point in Weapon space (metres); `left` aims at the left hand,
+## `elbow` at the left elbow, from below and to its left.
 const VIEWS := {
 	&"front": Vector3(0.0, 0.03, -0.32),
 	&"side": Vector3(-0.3, 0.05, -0.05),
 	&"left": Vector3(0.05, 0.08, -0.3),
 	&"top": Vector3(0.0, 0.3, 0.02),
+	&"elbow": Vector3(-0.1, -0.12, -0.28),
 }
-const USAGE := "arms cam <front|side|left|top|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit"
+## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
+## measured with the arms at rest (-0.099, -0.051, 0.002).
+const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms gear | arms dress <gear|rags|none>"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -53,8 +60,19 @@ func cmd_arms(args: Array) -> String:
 			return USAGE
 		vm.debug_shot_t = maxf(float(arg), 0.0)
 		return "arms shot " + str(vm.debug_shot_t)
+	if args[0] == "dress" and args.size() >= 2:
+		var arg := str(args[1])
+		if arg != "gear" and arg != "rags" and arg != "none":
+			return USAGE
+		if not vm.has_method(&"rebuild_arms"):
+			return "arms: no viewmodel"
+		ArmsBuilder.dress_style = StringName(arg)
+		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
+		return "arms dress: " + arg
 	if args[0] == "fit":
 		return _fit(vm)
+	if args[0] == "gear":
+		return _GearFit.new(host).run(vm)
 	return USAGE
 
 
@@ -188,7 +206,10 @@ func _cam(vm: Node, view: StringName) -> String:
 		cam.cull_mask = player_cam.cull_mask
 	parent.add_child(cam)
 	_hide_body(vm)
-	var focus: Vector3 = vm.arms_focus(&"left" if view == &"left" else &"right")
+	var left_view := view == &"left" or view == &"elbow"
+	var focus: Vector3 = vm.arms_focus(&"left" if left_view else &"right")
+	if view == &"elbow":
+		focus += ELBOW_FROM_WRIST
 	var from: Vector3 = focus + (VIEWS[view] as Vector3)
 	var up := Vector3.FORWARD if view == &"top" else Vector3.UP
 	cam.transform = Transform3D(Basis.looking_at(focus - from, up), from)
