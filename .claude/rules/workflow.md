@@ -248,7 +248,12 @@ because the main context is paid again on every turn.
   function or concept, tell them to grep `.claude/MAP.md` first, and ask
   for `file:line` anchors and a summary, not code bodies.
 - Models: Opus thinks (main, plan runs, `plan-writer`, Plan), Sonnet
-  does (`Explore`, `implementer`, `reviewer`, `plan-reviewer`). No
+  does (`Explore`, `implementer`, `reviewer`, `plan-reviewer`). When
+  the owner picks Fable (`claude-fable-5-1`) for a session, Fable takes
+  Opus's place and nothing else changes: it manages, writes specs and
+  delegates every code change exactly as Opus does (owner, 2026-10-02).
+  `plan-writer` and Plan inherit the session's model; a plan run uses
+  Fable with `autoplan.py --model claude-fable-5-1`. No
   Haiku: every spec is written from Explore's anchors, so a missed
   caller costs more than it saved (owner, 2026-10-01). Each project
   keeps its own `.claude/agents/explore.md` with `model: sonnet`;

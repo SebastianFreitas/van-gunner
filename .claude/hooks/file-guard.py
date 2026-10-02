@@ -16,9 +16,7 @@ repo is allowed.
   reads it. The project lists them in its config (`generated`).
 - In the main session (no agent_id), source files are the implementer
   subagent's job, built from a spec (workflow.md Main session role); the main
-  session itself may still make a single-line Edit. A session whose model
-  the project exempts implements directly, so this rule skips it; the model
-  is read from the transcript's tail.
+  session itself may still make a single-line Edit.
 
 The project tunes this through an optional .claude/project/file-guard.json
 (read once per call; missing or bad JSON means no config):
@@ -29,8 +27,6 @@ The project tunes this through an optional .claude/project/file-guard.json
 - generated: list of {"glob": "...", "why": "..."}; fnmatch on the
   root-relative path, first hit wins; a write to a hit is always refused
   with "<path> is <why>." (a missing or empty why gets a default reason).
-- main_session_exempt_models: lowercase substrings; a session model that
-  contains one skips the main-session source rule.
 - quiet_dirty: globs (same matching as generated) for paths a tool rewrites
   all the time; session-start and git-guard count them in one line instead
   of listing them, but still record them as foreign. Not used here.
@@ -41,7 +37,6 @@ Never fails the hook: any error allows the call (exit 0).
 """
 import json
 import os
-import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -61,9 +56,6 @@ DEFAULT_WHY = "generated or tool-owned (see .claude/project/file-guard.json)"
 
 MAX_LINES = 300
 MAX_READ_BYTES = 50 * 1024 * 1024
-TRANSCRIPT_TAIL_BYTES = 400_000
-
-MODEL_RE = re.compile(r'"model"\s*:\s*"([^"]+)"')
 
 
 def ext(path: str) -> str:
@@ -121,24 +113,6 @@ def generated_reason(rel: str, cfg: dict) -> str | None:
         if isinstance(entry, dict) and matches_any(rel, [str(entry.get("glob", ""))]):
             return str(entry.get("why") or "") or DEFAULT_WHY
     return None
-
-
-def session_model(transcript_path: str | None) -> str:
-    # Last "model" field logged in the transcript's tail, or "" on any
-    # problem (no path, unreadable file, no match).
-    if not transcript_path:
-        return ""
-    try:
-        with open(transcript_path, "rb") as f:
-            f.seek(0, os.SEEK_END)
-            size = f.tell()
-            f.seek(max(0, size - TRANSCRIPT_TAIL_BYTES))
-            data = f.read()
-    except OSError:
-        return ""
-    text = data.decode("utf-8", errors="ignore")
-    matches = MODEL_RE.findall(text)
-    return matches[-1] if matches else ""
 
 
 def edit_pairs(tool_name: str, tool_input: dict) -> list[tuple[str, str]]:
@@ -208,11 +182,6 @@ def main() -> None:
         return
     if not main_session_violation(tool_name, tool_input):
         return
-    exempt = [m.lower() for m in cfg.get("main_session_exempt_models") or []]
-    if exempt:
-        model = session_model(d.get("transcript_path")).lower()
-        if any(m in model for m in exempt):
-            return
     listed = " ".join(sorted(suffixes) + source_files)
     deny(f"Main session: source files ({listed}) are changed by the "
          "implementer subagent from a spec (.claude/rules/workflow.md Main "

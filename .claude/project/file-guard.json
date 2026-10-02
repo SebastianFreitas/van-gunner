@@ -5,9 +5,6 @@
   "source_files": [
     "project.godot"
   ],
-  "main_session_exempt_models": [
-    "fable"
-  ],
   "generated": [
     {
       "glob": "resources/items/boons/*.tres",

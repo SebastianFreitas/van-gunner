@@ -68,6 +68,15 @@ BILLING_ENV = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"
 LIMIT_RE = re.compile(r"usage limit|rate limit|limit reached|out of (extra )?usage|limit will reset|resets at", re.I)
 
 _PLAN_NAME = "?"  # set by main() before the loop; safety_commit's message needs it
+_MODEL = "claude-opus-5-5"  # set by main() from --model; safety_commit's trailer names it
+
+
+def model_display_name(model_id: str) -> str:
+    """'claude-fable-5-1' -> 'Claude Fable 5.1'; ids not starting with 'claude-' come back as they are."""
+    if not model_id.startswith("claude-"):
+        return model_id
+    family, *version = model_id[len("claude-"):].split("-")
+    return " ".join(["Claude", family.capitalize()] + ([".".join(version)] if version else []))
 
 
 def child_env(name: str, k: int, line: int) -> dict[str, str]:
@@ -791,7 +800,7 @@ def safety_commit(pre_dirty: set[str], label: str, reason: str) -> str | None:
             "git", "commit",
             "-m", f"autoplan {_PLAN_NAME} {label}: uncommitted work at session end ({reason})",
             "-m", "Committed by tools/autoplan.py; unverified.",
-            "-m", "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+            "-m", f"Co-Authored-By: {model_display_name(_MODEL)} <noreply@anthropic.com>",
             "--pathspec-from-file=-", "--pathspec-file-nul",
         ],
         input=stdin_paths, cwd=ROOT, text=True, encoding="utf-8", capture_output=True,
@@ -893,8 +902,9 @@ def main() -> int:
     if not args.dry_run:
         acquire_lock(name, args.force)
 
-    global _PLAN_NAME
+    global _PLAN_NAME, _MODEL
     _PLAN_NAME = name
+    _MODEL = args.model
 
     answer_branch = git("rev-parse", "--abbrev-ref", "HEAD").strip() or "(detached)"
     answer_msg = (

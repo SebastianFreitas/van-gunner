@@ -26,7 +26,7 @@ A task step, like a plan phase, is one context: verify it, commit it, tick it, a
 ## Main session role, van-gunner specifics
 
 - Source files here are `.gd`, `.tscn`, `.tres`, `.gdshader`, `.py`, `.cfg` and `project.godot`; `.claude/settings.json` (generated: edit `.claude/project/settings.json` and push from the master) and `.gitignore` are not.
-- If this session runs on Fable, implement directly instead of delegating (the file guard reads the model from the transcript and lets it through). Every other rule still applies.
+- On Fable the session takes Opus's role and works exactly as on Opus: it manages, writes specs and hands every code change to `implementer` (workflow.md Main session role, Models).
 - Explore prompts name the file, function or concept and say to grep `docs/PROJECT_MAP.md` first.
 
 ## Always-on invariants
