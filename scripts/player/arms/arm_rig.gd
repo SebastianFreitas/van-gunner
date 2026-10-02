@@ -182,24 +182,28 @@ static func stretch_tips(model: Node3D, suffix: String, k: float) -> void:
 			sk.set_bone_pose_scale(i, Vector3(1.0, k, 1.0))
 
 
-static func add_claws(model: Node3D, suffix: String, length: float, mat: Material) -> void:
+## One swept claw per finger on its `.03` bone, sized from `ArmFingers.build`'s dictionary: the
+## nail bed starts half-way along the tip's back and the horn reaches `claw_k` tips past it.
+static func add_claws(model: Node3D, suffix: String, fingers: Dictionary, claw_k: float,
+		curve_deg: float, mat: Material) -> void:
 	var sk := skeleton(model)
 	for f in FINGERS:
 		var i3 := sk.find_bone("DEF-%s.03%s" % [f, suffix])
-		var i2 := sk.find_bone("DEF-%s.02%s" % [f, suffix])
-		if i3 == -1 or i2 == -1:
+		if i3 == -1 or not fingers.has(f):
+			continue
+		var d: Dictionary = fingers[f]
+		var tip_len: float = d[&"tip_len"]
+		var bed_r: float = d[&"bed_r"]
+		var horn_len := claw_k * tip_len
+		if horn_len <= 0.0 or bed_r <= 0.0:
 			continue
 		var att := BoneAttachment3D.new()
 		att.name = "Claw_" + String(f)
 		att.bone_name = sk.get_bone_name(i3)
 		sk.add_child(att)
-		var len03 := _global_rest(sk, i3).origin.distance_to(
-				_global_rest(sk, i2).origin)
-		var n := _global_rest(sk, i3).basis.inverse() * Vector3.DOWN
-		n.y = 0.0
-		var tilt := Basis.IDENTITY
-		if n.length() > 0.001:
-			n = n.normalized()
-			tilt = Basis(Vector3.UP.cross(n).normalized(), deg_to_rad(15.0))
-		ArmParts.mesh(att, "Cone", ArmParts.cyl(0.0, length, 0.012, 6), mat,
-				Vector3(0.0, 0.8 * len03, 0.0), tilt)
+		var dorsal: Vector3 = d[&"dorsal"]
+		var lateral: Vector3 = d[&"lateral"]
+		var crook: float = d[&"crook"]
+		var at := Vector3(0.0, 0.5 * tip_len, 0.0) + dorsal * 0.92 * bed_r + lateral * crook
+		ArmParts.mesh(att, "Claw", ArmClaw.mesh(0.5 * tip_len, horn_len, 1.5 * bed_r,
+				0.35 * bed_r, curve_deg), mat, at, Basis(lateral, Vector3.UP, dorsal))

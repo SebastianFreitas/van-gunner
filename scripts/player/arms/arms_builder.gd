@@ -64,8 +64,10 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	var cloth := ArmMaterials.gear_cloth(rng_for(seed_value, &"arm_cloth"))
 	var s := rng.randf_range(1.12, 1.28)
 	var tip_k := rng.randf_range(1.0, 1.35)
-	var claw_len := rng.randf_range(0.04, 0.08)
+	var claw_k := rng.randf_range(0.45, 0.65)
 	var bulk := rng.randf_range(0.85, 1.15)
+	var gaunt := rng.randf_range(0.68, 0.80)
+	var claw_curve := rng.randf_range(40.0, 60.0)
 	var claw := ArmMaterials.claw()
 	var gx := HeldGun.gun_xform()
 
@@ -102,7 +104,8 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 		sk_r.set_bone_pose_rotation(thumb_i, sk_r.get_bone_pose_rotation(thumb_i)
 				* Quaternion.from_euler(RIGHT_THUMB_AIM * (PI / 180.0)))
 	ArmRig.stretch_tips(model_r, ".R", tip_k)
-	ArmRig.add_claws(model_r, ".R", claw_len, claw)
+	var fingers_r := ArmFingers.build(model_r, ".R", gaunt, rng_r, skin_r)
+	ArmRig.add_claws(model_r, ".R", fingers_r, claw_k, claw_curve, claw)
 	_skin_model(model_r, skin_r)
 
 	match dress_style:
@@ -143,7 +146,8 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 				LEFT_WEAVE_PALM.normalized())
 	ArmRig.curl(model_l, ".L", LEFT_CURL)
 	ArmRig.stretch_tips(model_l, ".L", tip_k)
-	ArmRig.add_claws(model_l, ".L", claw_len, claw)
+	var fingers_l := ArmFingers.build(model_l, ".L", gaunt, rng_l, skin_l)
+	ArmRig.add_claws(model_l, ".L", fingers_l, claw_k, claw_curve, claw)
 	_skin_model(model_l, skin_l)
 	match dress_style:
 		&"rags":
@@ -163,7 +167,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	}
 
 
-## Skins the arm mesh: the skeleton's direct meshes, not the claw cones under its attachments.
+## Skins the arm mesh: the skeleton's direct meshes, not the claw nails under its attachments.
 static func _skin_model(model: Node3D, skin: Material) -> void:
 	for c in ArmRig.skeleton(model).get_children():
 		if c is MeshInstance3D:

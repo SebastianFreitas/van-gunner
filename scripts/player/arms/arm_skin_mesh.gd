@@ -126,7 +126,7 @@ static func tube_indices(verts: PackedVector3Array, centres: PackedVector3Array,
 static func build(mi: MeshInstance3D, sk: Skeleton3D, node_name: StringName,
 		verts: PackedVector3Array, normals: PackedVector3Array, custom0: PackedFloat32Array,
 		bones: PackedInt32Array, weights: PackedFloat32Array, indices: PackedInt32Array,
-		mat: Material) -> MeshInstance3D:
+		mat: Material, rest_chart: bool = false) -> MeshInstance3D:
 	if mi == null or mi.skin == null or sk == null:
 		push_warning("ArmSkinMesh: arm mesh without a skin, cannot build %s" % node_name)
 		return null
@@ -158,9 +158,28 @@ static func build(mi: MeshInstance3D, sk: Skeleton3D, node_name: StringName,
 	arrays[Mesh.ARRAY_BONES] = bones
 	arrays[Mesh.ARRAY_WEIGHTS] = weights
 	arrays[Mesh.ARRAY_INDEX] = indices
+	var flags := Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT
+	if rest_chart and not verts.is_empty():
+		# The skin shader reads the unposed position and normal from CUSTOM1/CUSTOM2 (the same
+		# chart ArmBulk._rest_channels bakes); w 1.0 is the hand weight it uses for grime.
+		var c1 := PackedFloat32Array()
+		c1.resize(verts.size() * 4)
+		var c2 := PackedFloat32Array()
+		c2.resize(verts.size() * 4)
+		for i in verts.size():
+			c1[i * 4] = verts[i].x
+			c1[i * 4 + 1] = verts[i].y
+			c1[i * 4 + 2] = verts[i].z
+			c1[i * 4 + 3] = 1.0
+			c2[i * 4] = nrm[i].x
+			c2[i * 4 + 1] = nrm[i].y
+			c2[i * 4 + 2] = nrm[i].z
+		arrays[Mesh.ARRAY_CUSTOM1] = c1
+		arrays[Mesh.ARRAY_CUSTOM2] = c2
+		flags |= Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM1_SHIFT
+		flags |= Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM2_SHIFT
 	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {},
-			Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT)
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, flags)
 	var node := MeshInstance3D.new()
 	node.name = node_name
 	node.mesh = mesh

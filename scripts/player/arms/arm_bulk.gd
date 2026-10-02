@@ -11,10 +11,16 @@ const FOREARM_WRIST_GAIN := 2.1
 ## bones, so their ring sits well under the bone's own gain.
 const WRIST_END_GAIN := 1.5
 ## Extra on the palm gain over the knuckle half of each palm bone: the knuckle row is the widest
-## point of a hand.
-const KNUCKLE_GAIN := 1.15
+## point of a hand. Neutral now: the procedural finger tubes' knobs replace the palm-end swell.
+const KNUCKLE_GAIN := 1.0
 ## Fraction of the palm bone where the knuckle boost starts.
 const KNUCKLE_RAMP_START := 0.5
+## Glb finger segments shrink to a thin core hidden inside the procedural finger tubes
+## (ArmFingers); never bulked, so it stays hidden.
+const FINGER_CORE := 0.55
+## Along a finger's ".01" bone (and the thumb's ".02"), the gain ramps from 1.0 to FINGER_CORE
+## between these fractions of the bone length, so the tube's knuckle knob covers the step.
+const FINGER_RAMP := Vector2(0.10, 0.35)
 ## Finger whose ".01" head ends palm bone ".01".. ".04" (Rigify order, index to pinky).
 const PALM_FINGERS: Array[String] = ["f_index", "f_middle", "f_ring", "f_pinky"]
 ## Where along the forearm twist bone (0 head, 1 wrist) the gain starts easing to the hand's, so
@@ -26,15 +32,15 @@ const WRIST_RAMP_START := 0.5
 const GAIN: Array = [
 	["DEF-forearm", FOREARM_ELBOW_GAIN],
 	["DEF-upper_arm", 2.5],
-	["DEF-hand", 1.9],
+	["DEF-hand", 1.55],
 	# ".01" is the metacarpal (thenar mass), tapered to the tip.
-	["DEF-thumb.01", 1.9],
-	["DEF-thumb.02", 1.4],
-	["DEF-thumb.03", 1.15],
-	["DEF-palm.01", 1.8],
-	["DEF-palm.04", 1.8],
-	["DEF-palm", 1.7],
-	["DEF-f_", 1.35],
+	["DEF-thumb.01", 1.5],
+	["DEF-thumb.02", FINGER_CORE],
+	["DEF-thumb.03", FINGER_CORE],
+	["DEF-palm.01", 1.5],
+	["DEF-palm.04", 1.5],
+	["DEF-palm", 1.45],
+	["DEF-f_", 1.0],
 ]
 
 
@@ -50,14 +56,18 @@ static func _raw_gain(bone_name: String) -> float:
 	# Fingers taper root to tip; ".02." and ".03." keep the ".001" and side suffix out of it.
 	if bone_name.begins_with("DEF-f_"):
 		if bone_name.contains(".02."):
-			g = 1.2
+			g = FINGER_CORE
 		elif bone_name.contains(".03."):
-			g = 1.1
+			g = FINGER_CORE
 	return g
 
 
 static func _gain_for(bone_name: String, bulk: float) -> float:
-	return _bulked(_raw_gain(bone_name), bulk)
+	var g := _raw_gain(bone_name)
+	# A finger core must stay thin under any bulk, or it would poke out of its tube.
+	if g == FINGER_CORE:
+		return g
+	return _bulked(g, bulk)
 
 
 static func _bulked(g: float, bulk: float) -> float:
@@ -98,6 +108,10 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 	var palm_len := PackedFloat32Array()
 	palm_len.resize(count)
 	palm_len.fill(0.0)
+	# Finger ".01" (and thumb ".02") length to the next segment's head, for the FINGER_RAMP.
+	var seg_len := PackedFloat32Array()
+	seg_len.resize(count)
+	seg_len.fill(0.0)
 	var knuckle_gain := PackedFloat32Array()
 	knuckle_gain.resize(count)
 	knuckle_gain.fill(1.0)
@@ -140,6 +154,18 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 				palm_len[b] = (inv_poses[fb].origin - inv_poses[b].origin).length()
 				knuckle_gain[b] = _bulked(_raw_gain(bone_names[b]) * KNUCKLE_GAIN, bulk)
 				break
+	for b in count:
+		var child_name := ""
+		if bone_names[b].begins_with("DEF-f_") and bone_names[b].contains(".01."):
+			child_name = bone_names[b].replace(".01.", ".02.")
+		elif bone_names[b].begins_with("DEF-thumb.02"):
+			child_name = bone_names[b].replace("DEF-thumb.02", "DEF-thumb.03")
+		if child_name.is_empty():
+			continue
+		for cb in count:
+			if bone_names[cb] == child_name:
+				seg_len[b] = (inv_poses[cb].origin - inv_poses[b].origin).length()
+				break
 	var wrist_end := _bulked(WRIST_END_GAIN, bulk)
 	var wrist_half := _bulked(FOREARM_WRIST_GAIN, bulk)
 	var out := ArrayMesh.new()
@@ -173,6 +199,10 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 					var kn := clampf((p.y / palm_len[b] - KNUCKLE_RAMP_START)
 							/ (1.0 - KNUCKLE_RAMP_START), 0.0, 1.0)
 					g = lerpf(g, knuckle_gain[b], kn)
+				# The glb finger starts at its own radius and thins to the core past the knuckle.
+				if seg_len[b] > 0.0:
+					var t := p.y / seg_len[b]
+					g = lerpf(1.0, FINGER_CORE, smoothstep(FINGER_RAMP.x, FINGER_RAMP.y, t))
 				acc += w * (inv_poses[b] * Vector3(p.x * g, p.y, p.z * g))
 				sum += w
 			if sum > 0.0:

@@ -81,7 +81,7 @@ static func gear_cloth(rng: RandomNumberGenerator) -> ShaderMaterial:
 
 
 static func claw() -> StandardMaterial3D:
-	return MachineParts.dark(Color(0.08, 0.07, 0.06))
+	return MachineParts.dark(Color(0.13, 0.11, 0.075), 0.8)
 
 
 static func tape(rng: RandomNumberGenerator) -> StandardMaterial3D:
