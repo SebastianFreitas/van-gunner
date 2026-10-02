@@ -42,6 +42,19 @@ def section(title):
     return f"\n## {title}\n\n"
 
 
+# --- glossary ----------------------------------------------------------------
+
+
+def owners_words():
+    """The bullets of docs/glossary.md, one per line; "" when the file is missing."""
+    try:
+        src = read("docs/glossary.md")
+    except OSError:
+        return ""
+    lines = [ln.rstrip() for ln in src.splitlines() if ln.startswith("- ")]
+    return "\n".join(lines) + "\n" if lines else ""
+
+
 # --- project.godot -----------------------------------------------------------
 
 
@@ -252,6 +265,11 @@ def build():
         "summary, always-on invariants) and `.claude/rules/` (per-area design "
         "notes and pitfalls, loaded by path).\n"
     )
+
+    glossary = owners_words()
+    if glossary:
+        doc.append(section("Owner's words"))
+        doc.append(glossary)
 
     doc.append(section("Project settings"))
     doc.append(
