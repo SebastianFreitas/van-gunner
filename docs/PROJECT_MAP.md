@@ -60,13 +60,17 @@
 
 ## Input actions
 
-`move_forward`, `move_back`, `move_left`, `move_right`, `interact`, `jump`, `shoot`, `reload`, `pause`, `use_usable`, `use_slot_1`, `use_slot_2`, `use_slot_3`, `use_slot_4`, `debug_console`, `driver_boost`, `driver_slow`
+`move_forward`, `move_back`, `move_left`, `move_right`, `interact`, `jump`, `shoot`, `reload`, `pause`, `use_usable`, `use_slot_1`, `use_slot_2`, `use_slot_3`, `use_slot_4`, `debug_console`,
+`driver_boost`, `driver_slow`
 
 ## Node groups
 
-Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`, `gun_stats`, `gun_viewmodel`, `head_hitbox`, `machine_power_ports`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_exterior_layer`, `van_run`, `van_vitals`
+Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`,
+`gun_stats`, `gun_viewmodel`, `head_hitbox`, `machine_power_ports`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_exterior_layer`, `van_run`, `van_vitals`
 
-Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `facade_lights`, `gun_controller`, `gun_port_leaf`, `gun_ports`, `gun_stats`, `gun_viewmodel`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`, `van_vitals`
+Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `facade_lights`,
+`gun_controller`, `gun_port_leaf`, `gun_ports`, `gun_stats`, `gun_viewmodel`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`,
+`van_vitals`
 
 ## Signals and enums
 
@@ -888,7 +892,26 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Shaders
 
-`scenes/corridor/asphalt_surface.gdshader`, `scenes/corridor/curb_surface.gdshader`, `scenes/corridor/facade_marquee.gdshader`, `scenes/corridor/facade_prop_grime.gdshader`, `scenes/corridor/facade_sign.gdshader`, `scenes/corridor/facade_surface.gdshader`, `scenes/corridor/industrial_surface.gdshader`, `scenes/corridor/paving_surface.gdshader`, `scenes/corridor/sidewalk_surface.gdshader`, `scenes/player/arm_surface.gdshader`, `scenes/van/crt_screen.gdshader`, `scenes/van/van_ceiling.gdshader`, `scenes/van/van_exterior.gdshader`, `scenes/van/van_floor.gdshader`, `scenes/van/van_floor_mat.gdshader`, `scenes/van/van_floor_paper.gdshader`, `scenes/van/van_rear_door.gdshader`, `scenes/van/van_viga.gdshader`, `scenes/van/van_wall.gdshader`, `scenes/van/van_window_exterior.gdshader`
+- `scenes/corridor/asphalt_surface.gdshader`
+- `scenes/corridor/curb_surface.gdshader`
+- `scenes/corridor/facade_marquee.gdshader`
+- `scenes/corridor/facade_prop_grime.gdshader`
+- `scenes/corridor/facade_sign.gdshader`
+- `scenes/corridor/facade_surface.gdshader`
+- `scenes/corridor/industrial_surface.gdshader`
+- `scenes/corridor/paving_surface.gdshader`
+- `scenes/corridor/sidewalk_surface.gdshader`
+- `scenes/player/arm_surface.gdshader`
+- `scenes/van/crt_screen.gdshader`
+- `scenes/van/van_ceiling.gdshader`
+- `scenes/van/van_exterior.gdshader`
+- `scenes/van/van_floor.gdshader`
+- `scenes/van/van_floor_mat.gdshader`
+- `scenes/van/van_floor_paper.gdshader`
+- `scenes/van/van_rear_door.gdshader`
+- `scenes/van/van_viga.gdshader`
+- `scenes/van/van_wall.gdshader`
+- `scenes/van/van_window_exterior.gdshader`
 
 ## Balance sheet (`resources/balance/game_balance.tres`)
 
@@ -1059,4 +1082,5 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Debug console commands
 
-`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `ghost`, `torch`, `floodlight`, `gaplight`, `bars`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`, `walk_wreck`, `arms`
+`help`, `chill`, `unchill`, `speed`, `unspeed`, `summon`, `give`, `spawn`, `coins`, `heal`, `phase`, `list`, `card`, `stop`, `boss`, `reardoor`, `sidedoor`, `ghost`, `torch`, `floodlight`, `gaplight`,
+`bars`, `van`, `class`, `sound`, `parts`, `tree_reset`, `facade`, `walk_wreck`, `arms`

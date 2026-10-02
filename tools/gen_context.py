@@ -42,6 +42,21 @@ def section(title):
     return f"\n## {title}\n\n"
 
 
+def code_list(items, prefix="", width=200):
+    """`a`, `b`, ... wrapped into lines of at most `width` characters: the
+    Grep tool hides lines over about 300 ("[Omitted long matching line]")."""
+    lines, cur = [], prefix
+    for i, item in enumerate(items):
+        tok = f"`{item}`" + ("," if i < len(items) - 1 else "")
+        if cur.strip() and len(cur) + 1 + len(tok) > width:
+            lines.append(cur.rstrip())
+            cur = tok
+        else:
+            cur = f"{cur} {tok}" if cur.strip() else tok
+    lines.append(cur.rstrip())
+    return "\n".join(lines) + "\n"
+
+
 # --- glossary ----------------------------------------------------------------
 
 
@@ -283,12 +298,12 @@ def build():
     doc.append(md_table(["Name", "Script"], [(n, f"`{p}`") for n, p in ps["autoloads"]]))
 
     doc.append(section("Input actions"))
-    doc.append("`" + "`, `".join(ps["actions"]) + "`\n")
+    doc.append(code_list(ps["actions"]))
 
     doc.append(section("Node groups"))
     added, looked = groups()
-    doc.append("Registered: `" + "`, `".join(added) + "`\n\n")
-    doc.append("Looked up: `" + "`, `".join(looked) + "`\n")
+    doc.append(code_list(added, "Registered:") + "\n")
+    doc.append(code_list(looked, "Looked up:"))
 
     doc.append(section("Signals and enums"))
     for rel, sigs, enums in signals_and_enums():
@@ -321,7 +336,7 @@ def build():
     )
 
     doc.append(section("Shaders"))
-    doc.append("`" + "`, `".join(shaders()) + "`\n")
+    doc.append("".join(f"- `{sh}`\n" for sh in shaders()))
 
     doc.append(section("Balance sheet (`resources/balance/game_balance.tres`)"))
     over, inherited = balance_values()
@@ -400,7 +415,7 @@ def build():
     pools = sorted(
         f[:-5] for f in os.listdir(os.path.join(ROOT, "resources/items/pools"))
     )
-    doc.append("`" + "`, `".join(pools) + "`\n")
+    doc.append(code_list(pools))
 
     doc.append(section("Sound cues (`resources/audio/sound_bank.tres`)"))
     doc.append(md_table(["id", "bus", "positional", "min_interval", "max_voices"], sound_cues()))
@@ -414,7 +429,7 @@ def build():
     )
 
     doc.append(section("Debug console commands"))
-    doc.append("`" + "`, `".join(debug_commands()) + "`\n")
+    doc.append(code_list(debug_commands()))
 
     return "".join(doc)
 
