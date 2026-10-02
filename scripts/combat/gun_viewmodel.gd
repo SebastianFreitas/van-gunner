@@ -2,10 +2,13 @@ class_name GunViewmodel
 extends Node3D
 ## First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; recoil and reload cant.
 
+const ArmWeave := preload("res://scripts/player/arms/arm_weave.gd")
+
 const RIG_SCALE := 0.18
 const LAMP_COLOR := Color(1.0, 0.93, 0.82)
-const LAMP_ENERGY := 0.35
-const LAMP_RANGE := 0.9
+const LAMP_ENERGY := 0.45
+const LAMP_RANGE := 1.3
+const LAMP_ATTENUATION := 0.8  ## flatter than 1 spreads the glow, used only if the bulb still blows out
 const RECOIL_BACK := 0.12  ## virtual metres
 const RECOIL_PITCH := 4.0 * PI / 180.0
 const RECOIL_TIME := 0.12
@@ -20,8 +23,14 @@ const BOB_FREQ := 8.0  ## rad/s at walking speed
 const BOB_WALK_SPEED := 4.0  ## m/s that counts as a full bob
 const SLAP_DROP := 0.12  ## virtual metres the left hand drops below the magazine
 const MAG_SLAP_IN_GUN := Vector3(0.0, -0.24, -0.22)  ## under the magazine, Body-local
-## Rig-space shift that drops the relaxed left arm below the frame at rest.
-const LEFT_HIDE := Vector3(-0.5, -2.4, 0.6)
+## Rig-space shift that puts the left hand in the lower-left of the view at rest.
+const LEFT_REST := Vector3(-0.10, -0.04, 0.0)
+const RIGHT_REST := Vector3(0.06, 0.05, 0.04)  ## rig-space shift lifting the right hand into view
+## Degrees XYZ: hand pitched up and rolled so the curls face the player.
+const RIGHT_REST_TILT := Vector3(15.0, -10.0, -15.0)
+const LEFT_REST_TILT := Vector3(15.0, 10.0, 15.0)  ## mirror for the left; fades out with `shown`
+## Smoke holds the finger weave still at this time, like the facade lamp flicker.
+const WEAVE_SANDBOX_T := 1.1
 ## Fraction of the way from the shown left wrist to the magazine point the reload slap travels;
 ## the gun is hidden, so the arm only swings in toward the right hand.
 const LEFT_REACH_K := 0.35
@@ -32,6 +41,8 @@ const LOOK_DOWN_TO := 0.75
 ## Debug overrides from the arms console command; negative means off.
 var debug_look_down := -1.0
 var debug_reload_t := -1.0
+## >= 0 pins the finger weave time, from arms weave.
+var debug_weave_t := -1.0
 var _look_down := 0.0  ## 0..1, set each frame in _process
 @onready var _rig: Node3D = $Rig
 var _lamp: OmniLight3D
@@ -50,6 +61,8 @@ var _prev_body_pos := Vector3.ZERO
 var _has_prev := false
 var _sway := Vector2.ZERO  ## x pitch, y yaw (radians)
 var _bob_phase := 0.0
+var _weave: RefCounted = null
+var _weave_t := 0.0
 var _bob_amount := 0.0  ## 0..1 eased walking factor
 
 
@@ -62,6 +75,7 @@ func _ready() -> void:
 	_lamp.light_color = LAMP_COLOR
 	_lamp.light_energy = LAMP_ENERGY
 	_lamp.omni_range = LAMP_RANGE
+	_lamp.omni_attenuation = LAMP_ATTENUATION
 	_lamp.light_cull_mask = VanLighting.LAYER_VAN_INTERIOR
 	_lamp.shadow_enabled = false
 	add_child(_lamp)
@@ -81,6 +95,7 @@ func _ready() -> void:
 
 ## Frees the old arms and rifle and builds a fresh set from the van seed.
 func rebuild_arms(seed_value: int) -> void:
+	_weave = null
 	for child in _rig.get_children():
 		_rig.remove_child(child)
 		child.queue_free()
@@ -91,7 +106,19 @@ func rebuild_arms(seed_value: int) -> void:
 			van_name = markings.van_name
 	_roots = ArmsBuilder.build(_rig, seed_value, van_name)
 	_lamp_local = _roots.get("lamp_local", Vector3.ZERO) as Vector3
+	_weave = ArmWeave.new(_arm_model("right_root"), _arm_model("left_root"), seed_value)
 	_apply()
+
+
+## The glb model under an arm root (the child that has a skeleton), or null.
+func _arm_model(root_key: String) -> Node3D:
+	var root := _roots.get(root_key) as Node3D
+	if root == null:
+		return null
+	for c in root.get_children():
+		if c is Node3D and ArmRig.skeleton(c as Node3D) != null:
+			return c as Node3D
+	return null
 
 
 ## Muzzle in Weapon space, real metres. One rifle serves every family.
@@ -181,6 +208,11 @@ func _process(delta: float) -> void:
 			_bob_phase = fmod(_bob_phase + BOB_FREQ * delta * _bob_amount, TAU)
 		_prev_body_pos = _body.position
 	_has_prev = true
+	_weave_t = fmod(_weave_t + delta, 3600.0)
+	var weave_at := debug_weave_t if debug_weave_t >= 0.0 else (
+			WEAVE_SANDBOX_T if SaveSandbox.enabled else _weave_t)
+	if _weave:
+		_weave.update(weave_at)
 	_apply()
 
 
@@ -239,19 +271,24 @@ func _apply() -> void:
 	var gun_x := m * recoil * cant
 	var rest_pt := _roots.get("left_wrist", Vector3.ZERO) as Vector3
 	var shown := maxf(k.y, _look_down)
-	var hide_off := LEFT_HIDE * (1.0 - shown)
+	var hide_off := LEFT_REST * (1.0 - shown)
 	var gx := cant * HeldGun.gun_xform()
 	var mag_pt := gx * MAG_SLAP_IN_GUN
 	var down := (gx.basis * Vector3.DOWN).normalized()
 	var off := hide_off + (mag_pt - rest_pt) * (k.y * LEFT_REACH_K) + down * SLAP_DROP * k.z
+	var rest_r := Transform3D(Basis.from_euler(RIGHT_REST_TILT * (PI / 180.0)), RIGHT_REST)
+	var drift_r: Transform3D = _weave.arm_offset(0) if _weave else Transform3D.IDENTITY
+	var drift_l: Transform3D = _weave.arm_offset(1) if _weave else Transform3D.IDENTITY
+	var right_x := gun_x * rest_r * drift_r
+	var tilt_l := Basis.from_euler(LEFT_REST_TILT * (1.0 - shown) * (PI / 180.0))
 	var gun := _roots.get("gun_root") as Node3D
 	var right := _roots.get("right_root") as Node3D
 	var left := _roots.get("left_root") as Node3D
 	if gun != null:
 		gun.transform = gun_x
 	if right != null:
-		right.transform = gun_x
+		right.transform = right_x
 	if left != null:
-		left.transform = m * recoil * Transform3D(Basis.IDENTITY, off)
+		left.transform = m * recoil * Transform3D(tilt_l, off) * drift_l
 	if _lamp != null and _rig != null:
-		_lamp.position = _rig.transform * (gun_x * _lamp_local)
+		_lamp.position = _rig.transform * (right_x * _lamp_local)

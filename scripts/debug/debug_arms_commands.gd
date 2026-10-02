@@ -9,7 +9,7 @@ const VIEWS := {
 	&"left": Vector3(0.05, 0.08, -0.3),
 	&"top": Vector3(0.0, 0.3, 0.02),
 }
-const USAGE := "arms cam <front|side|left|top|down|off> | arms reload <0..1|off>"
+const USAGE := "arms cam <front|side|left|top|down|off> | arms reload <0..1|off> | arms weave <seconds|off>"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -35,6 +35,15 @@ func cmd_arms(args: Array) -> String:
 			return "arms reload off"
 		vm.debug_reload_t = clampf(float(arg), 0.0, 1.0)
 		return "arms reload " + str(vm.debug_reload_t)
+	if args[0] == "weave" and args.size() >= 2:
+		var arg := str(args[1])
+		if arg == "off":
+			vm.debug_weave_t = -1.0
+			return "arms weave off"
+		if not arg.is_valid_float():
+			return USAGE
+		vm.debug_weave_t = maxf(float(arg), 0.0)
+		return "arms weave " + str(vm.debug_weave_t)
 	return USAGE
 
 

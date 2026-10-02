@@ -83,6 +83,12 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 		_dress_right(right, rng_r, r.elbow, r.wrist, van_name,
 				r_elbow, r_wrist)
 
+	# s is 1.0: the lamp attaches inside the model that `s` already scales.
+	var lamp_t := 0.5 + 0.5 * ArmLampKit.MOUNT_T
+	var r_mount := _fore_r(lerpf(FOREARM_R_ELBOW, FOREARM_R_WRIST, lamp_t),
+			lerpf(ArmBulk.FOREARM_ELBOW_GAIN, ArmBulk.FOREARM_WRIST_GAIN, lamp_t), 1.0, bulk)
+	var bulb := ArmLampKit.build(model_r, r_mount, rng_for(seed_value, &"arm_lamp"))
+
 	# Left arm: hangs relaxed at the side.
 	var left := Node3D.new()
 	left.name = "ArmLeft"
@@ -114,7 +120,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 		"right_root": right,
 		"gun_root": gun_root,
 		"left_wrist": l["wrist"],
-		"lamp_local": gun_root.get_meta(&"lamp_local", Vector3.ZERO),
+		"lamp_local": bulb,
 	}
 
 

@@ -80,6 +80,14 @@ static func lamp_body() -> StandardMaterial3D:
 	return MachineParts.dark(Color(0.22, 0.22, 0.20))
 
 
+const BULB_GLOW := 1.2## emission multiplier; lamp heads may cross the 1.1 glow threshold
+
+
+## Trouble-lamp bulb: the same emissive recipe as the van's machine lamps, warm like the arm light.
+static func bulb() -> StandardMaterial3D:
+	return MachineParts.emissive(Color(1.0, 0.8, 0.55), BULB_GLOW)
+
+
 static func leather() -> StandardMaterial3D:
 	return MachineParts.dark(Color(0.10, 0.07, 0.05))
 

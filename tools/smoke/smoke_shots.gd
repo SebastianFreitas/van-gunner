@@ -280,6 +280,10 @@ func arm_views() -> void:
 	DebugCommands.run("arms cam front")
 	await _save("arms-reload", "a")
 	DebugCommands.run("arms reload off")
+	DebugCommands.run("arms weave 2.9")
+	DebugCommands.run("arms cam front")
+	await _save("arms-weave", "a")
+	DebugCommands.run("arms weave off")
 	DebugCommands.run("arms cam off")
 	for layer in hidden:
 		layer.visible = true
