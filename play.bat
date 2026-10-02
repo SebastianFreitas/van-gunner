@@ -15,11 +15,11 @@ if not defined GODOT_EXE (
 	exit /b 1
 )
 
-rem A checkout the editor never opened has no import cache, and the game can't load without one.
-if not exist ".godot\" (
-	echo First run: importing assets, this takes a few minutes...
-	"%GODOT_EXE%" --headless --path . --import
-)
+rem Import every launch: a checkout the editor never opened has no import cache, and a pull that
+rem adds class_name scripts leaves the class cache stale (their names then fail to parse).
+rem A warm import takes seconds.
+if not exist ".godot\" echo First run: importing assets, this takes a few minutes...
+"%GODOT_EXE%" --headless --path . --import >nul 2>&1
 
 "%GODOT_EXE%" --path . %*
 rem Keep the window open after a crash so the error stays readable.
