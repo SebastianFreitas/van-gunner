@@ -89,32 +89,50 @@ static func bulb() -> StandardMaterial3D:
 	return MachineParts.emissive(Color(1.0, 0.8, 0.55), BULB_GLOW)
 
 
-static func leather() -> StandardMaterial3D:
-	return MachineParts.dark(Color(0.10, 0.07, 0.05))
+## Worn brown work glove, fingerless.
+static func glove(rng: RandomNumberGenerator) -> ShaderMaterial:
+	var base := Color(0.11 + rng.randf_range(-0.01, 0.01), 0.08 + rng.randf_range(-0.01, 0.01),
+			0.06 + rng.randf_range(-0.01, 0.01))
+	var shade := Color(base.r * 0.5, base.g * 0.5, base.b * 0.5)
+	return surface(base, shade, Color(0.08, 0.08, 0.06), 60.0, 6.0, 0.0, 0.6, 0.86, 0.0,
+			rng.randf_range(0.0, 100.0))
 
 
-## Built directly: dark() would clamp the roughness up to 0.78.
-static func wound() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.16, 0.04, 0.03)
-	mat.roughness = 0.6
-	mat.metallic = 0.0
-	return mat
+## Dirty boxer's wrap.
+static func wrap_cloth(rng: RandomNumberGenerator) -> ShaderMaterial:
+	var bases: Array[Color] = [Color(0.30, 0.28, 0.24), Color(0.26, 0.25, 0.20)]
+	var base: Color = bases[rng.randi_range(0, 1)]
+	var shade := Color(base.r * 0.55, base.g * 0.55, base.b * 0.55)
+	return surface(base, shade, Color(0.08, 0.08, 0.06), 60.0, 6.0, 0.02, 0.65, 0.93, 0.0,
+			rng.randf_range(0.0, 100.0))
 
 
-## Built directly like wound(): scar tissue is skin, so no metallic and softer than dark() allows.
-static func scar() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.12, 0.15, 0.13)
-	mat.roughness = 0.85
-	mat.metallic = 0.0
-	return mat
+## Cut-off sleeve: denim, flannel, olive or soot.
+static func sleeve(rng: RandomNumberGenerator) -> ShaderMaterial:
+	var bases: Array[Color] = [
+		Color(0.10, 0.12, 0.16), # denim
+		Color(0.18, 0.07, 0.06), # flannel
+		Color(0.14, 0.13, 0.09), # olive
+		Color(0.10, 0.10, 0.09), # soot
+	]
+	var base: Color = bases[rng.randi_range(0, 3)]
+	var shade := Color(base.r * 0.55, base.g * 0.55, base.b * 0.55)
+	return surface(base, shade, Color(0.08, 0.08, 0.06), 60.0, 6.0, 0.025, 0.6, 0.92, 0.0,
+			rng.randf_range(0.0, 100.0))
 
 
-static func shrapnel() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.30, 0.31, 0.32)
-	mat.roughness = 0.8
+## Rag knotted round the forearm.
+static func rag(rng: RandomNumberGenerator) -> ShaderMaterial:
+	var bases: Array[Color] = [Color(0.14, 0.12, 0.10), Color(0.17, 0.09, 0.08)]
+	var base: Color = bases[rng.randi_range(0, 1)]
+	var shade := Color(base.r * 0.55, base.g * 0.55, base.b * 0.55)
+	return surface(base, shade, Color(0.08, 0.08, 0.06), 60.0, 6.0, 0.02, 0.75, 0.93, 0.0,
+			rng.randf_range(0.0, 100.0))
+
+
+## Cheap brass for rings and the chain: flat like the lamp body, a little metal.
+static func brass() -> StandardMaterial3D:
+	var mat := MachineParts.dark(Color(0.30, 0.22, 0.10), 0.78)
 	mat.metallic = 0.3
 	return mat
 

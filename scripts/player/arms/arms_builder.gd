@@ -41,15 +41,9 @@ const LEFT_CURL := {
 	&"thumb": Vector3(10, 15, 10),
 }
 const ELBOW_JITTER := 0.03
-## Sleeve, straps, wounds, shards, scars and tattoo stay off while the bare arms are tuned.
-const DRESS := false
-## Sleeve slots along the left forearm (0 elbow, 1 hem); wounds and straps share them.
-const DRESS_SLOTS: Array[float] = [0.30, 0.44, 0.58, 0.72, 0.86]
 ## Bare forearm radii in model units before bulk; times the seeded scale and ArmBulk's gain where used.
 const FOREARM_R_ELBOW := 0.075
 const FOREARM_R_WRIST := 0.06
-## The ragged sleeve hangs this much wider than the inflated forearm under it.
-const SLEEVE_SLACK := 1.35
 
 
 static func rng_for(seed_value: int, part_id: StringName) -> RandomNumberGenerator:
@@ -58,15 +52,13 @@ static func rng_for(seed_value: int, part_id: StringName) -> RandomNumberGenerat
 	return rng
 
 
-static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
+static func build(rig: Node3D, seed_value: int, _van_name: String) -> Dictionary:
 	var rng := rng_for(seed_value, &"arms")
 	var skin := ArmMaterials.skin(rng)
 	var s := rng.randf_range(1.12, 1.28)
 	var tip_k := rng.randf_range(1.0, 1.35)
 	var claw_len := rng.randf_range(0.04, 0.08)
 	var bulk := rng.randf_range(0.85, 1.15)
-	var r_elbow := _fore_r(FOREARM_R_ELBOW, ArmBulk.FOREARM_ELBOW_GAIN, s, bulk)
-	var r_wrist := _fore_r(FOREARM_R_WRIST, ArmBulk.FOREARM_WRIST_GAIN, s, bulk)
 	var claw := ArmMaterials.claw()
 	var gx := HeldGun.gun_xform()
 
@@ -103,15 +95,14 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	ArmRig.stretch_tips(model_r, ".R", tip_k)
 	ArmRig.add_claws(model_r, ".R", claw_len, claw)
 	_skin_model(model_r, skin)
-	if DRESS:
-		_dress_right(right, rng_r, r.elbow, r.wrist, van_name,
-				r_elbow, r_wrist)
 
 	# s is 1.0: the lamp attaches inside the model that `s` already scales.
 	var lamp_t := 0.5 + 0.5 * ArmLampKit.MOUNT_T
 	var r_mount := _fore_r(lerpf(FOREARM_R_ELBOW, FOREARM_R_WRIST, lamp_t),
 			lerpf(ArmBulk.FOREARM_ELBOW_GAIN, ArmBulk.FOREARM_WRIST_GAIN, lamp_t), 1.0, bulk)
 	var bulb := ArmLampKit.build(model_r, r_mount, rng_for(seed_value, &"arm_lamp"))
+	# After the lamp so the dress stream never shifts the lamp's.
+	ArmDress.right(model_r, rng_for(seed_value, &"arm_dress_r"))
 
 	# Left arm: hangs relaxed at the side.
 	var left := Node3D.new()
@@ -143,8 +134,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	ArmRig.stretch_tips(model_l, ".L", tip_k)
 	ArmRig.add_claws(model_l, ".L", claw_len, claw)
 	_skin_model(model_l, skin)
-	if DRESS:
-		_dress_left(left, rng_l, l.elbow, l.wrist, r_elbow, r_wrist)
+	ArmDress.left(model_l, rng_for(seed_value, &"arm_dress_l"))
 
 	rig.add_child(left)
 	rig.add_child(right)
@@ -174,57 +164,3 @@ static func _jitter(rng: RandomNumberGenerator) -> Vector3:
 		rng.randf_range(-ELBOW_JITTER, ELBOW_JITTER),
 		rng.randf_range(-ELBOW_JITTER, ELBOW_JITTER),
 		rng.randf_range(-ELBOW_JITTER, ELBOW_JITTER))
-
-
-## Scars on one flank of the right forearm, then the van tattoo on top.
-static func _dress_right(right: Node3D, rng: RandomNumberGenerator, elbow: Vector3,
-		wrist: Vector3, van_name: String, r_elbow: float, r_wrist: float) -> void:
-	var dn := (wrist - elbow).normalized()
-	var facing := -((elbow + wrist) * 0.5).normalized()
-	var scar_mat := ArmMaterials.scar()
-	var side := 1.0 if rng.randi_range(0, 1) == 0 else -1.0
-	var flank := facing.rotated(dn, side * rng.randf_range(0.8, 1.3))
-	for i in rng.randi_range(2, 4):
-		var t := rng.randf_range(0.45, 0.95)
-		ArmParts.scar(right, "Scar%d" % i, elbow.lerp(wrist, t), dn,
-				lerpf(r_elbow, r_wrist, t), flank, scar_mat, rng)
-	ArmTattoo.apply(right, rng, van_name, elbow, wrist, r_elbow,
-			r_wrist, facing)
-
-
-## Cloth sleeve on the left forearm with wounds, straps knotted over them, and shards.
-static func _dress_left(left: Node3D, rng: RandomNumberGenerator, elbow: Vector3,
-		wrist: Vector3, r_elbow: float, r_wrist: float) -> void:
-	var sleeve_elbow := r_elbow * SLEEVE_SLACK
-	var sleeve_hem := r_wrist * SLEEVE_SLACK
-	var cloth := ArmMaterials.cloth(rng)
-	var leather := ArmMaterials.leather()
-	var blood := ArmMaterials.wound()
-	var steel := ArmMaterials.shrapnel()
-	var dn := (wrist - elbow).normalized()
-	var a := elbow - dn * 0.10
-	var b := wrist - dn * 0.05
-	ArmParts.sleeve(left, "Sleeve", a, b, sleeve_elbow, sleeve_hem, cloth, rng,
-			rng.randi_range(6, 10))
-	var facing := -((a + b) * 0.5).normalized()
-	var slots: Array[float] = DRESS_SLOTS.duplicate()
-	# Fisher-Yates on the arm's own stream; Array.shuffle() would use the global RNG.
-	for i in range(slots.size() - 1, 0, -1):
-		var j := rng.randi_range(0, i)
-		var tmp: float = slots[i]
-		slots[i] = slots[j]
-		slots[j] = tmp
-	var n_wounds := rng.randi_range(2, 3)
-	var n_straps := rng.randi_range(2, 4)
-	for i in n_wounds:
-		var t := slots[i]
-		ArmParts.wound(left, "Wound%d" % i, a.lerp(b, t), dn,
-				lerpf(sleeve_elbow, sleeve_hem, t), facing, blood, rng)
-	for i in n_straps:
-		var t := slots[i]
-		ArmParts.strap(left, "Strap%d" % i, a.lerp(b, t), dn,
-				lerpf(sleeve_elbow, sleeve_hem, t), facing, leather, rng)
-	for i in rng.randi_range(3, 6):
-		var t := rng.randf_range(0.25, 0.90)
-		ArmParts.shard(left, "Shard%d" % i, a.lerp(b, t), dn,
-				lerpf(sleeve_elbow, sleeve_hem, t), facing, steel, blood, rng)

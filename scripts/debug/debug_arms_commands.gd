@@ -97,9 +97,7 @@ func _fit(vm: Node) -> String:
 			if mi == null:
 				continue
 			var q := mi.transform.affine_inverse() * (to_body * g)
-			var box := mi.get_aabb()
-			var d := (q - box.get_center()).abs() - box.size * 0.5
-			var sd := d.max(Vector3.ZERO).length() + minf(maxf(d.x, maxf(d.y, d.z)), 0.0)
+			var sd := _box_sd(mi, q)
 			if sd < best:
 				best = sd
 				part = part_name
@@ -110,10 +108,62 @@ func _fit(vm: Node) -> String:
 		lines.append("%s body/p (%.2f, %.2f, %.2f) nearest %s clearance/p %.2f"
 				% [key, b.x, b.y, b.z, part, clear])
 	lines.append("tip to index.01 / p %.2f" % (tip.distance_to(heads["f_index.01"]) / p))
+	# Dressing is judged by buried vertices, not boxes: a band hugging the gripping hand
+	# overlaps every gun box, and the palm-side bands sit inside the grip where the palm does,
+	# so only depths past the finger clearance count.
+	var dress_depth := 0.10 * p  # same scale as the finger clearance above
+	var dress_clips := 0
+	var dress_pieces := 0
+	for att in sk.find_children("Dress_*", "BoneAttachment3D", true, false):
+		for found in att.find_children("*", "MeshInstance3D", true, false):
+			var dm := found as MeshInstance3D
+			if dm == null or dm.mesh == null:
+				continue
+			dress_pieces += 1
+			var total := 0
+			var n := 0
+			var min_sd := 0.0
+			var worst := "-"
+			for s in dm.mesh.get_surface_count():
+				var arr := dm.mesh.surface_get_arrays(s)
+				var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+				for v in verts:
+					total += 1
+					var g := dm.global_transform * v
+					var is_buried := false
+					for part_name in ["GripCore", "GripPanelL", "GripPanelR", "Frame",
+							"Beavertail", "Barrel"]:
+						var gm := body.get_node_or_null(NodePath(part_name)) as MeshInstance3D
+						if gm == null:
+							continue
+						var sd := _box_sd(gm, gm.transform.affine_inverse() * (to_body * g))
+						if sd < min_sd:
+							min_sd = sd
+							worst = part_name
+						if sd < -dress_depth:
+							is_buried = true
+					if is_buried:
+						n += 1
+			if min_sd < -0.02 * p:
+				if n > 0:
+					dress_clips += 1
+				lines.append("dress %s/%s depth/p %.2f buried %d/%d in %s"
+						% [att.name, dm.name, -min_sd / p, n, total, worst])
 	lines.append("FIT OK" if clips == 0 else "FIT CLIP %d" % clips)
+	if dress_pieces == 0:
+		lines.append("DRESS OK (0 pieces)")
+	else:
+		lines.append("DRESS OK" if dress_clips == 0 else "DRESS CLIP %d" % dress_clips)
 	var text := "\n".join(lines)
 	print(text)
 	return text
+
+
+## Signed distance from `q` (in the gun part's parent space) to the part's box; negative inside.
+func _box_sd(mi: MeshInstance3D, q: Vector3) -> float:
+	var box := mi.get_aabb()
+	var d := (q - box.get_center()).abs() - box.size * 0.5
+	return d.max(Vector3.ZERO).length() + minf(maxf(d.x, maxf(d.y, d.z)), 0.0)
 
 
 func _cam(vm: Node, view: StringName) -> String:
