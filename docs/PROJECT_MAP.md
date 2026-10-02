@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-348 GDScript files, 55013 lines.
+349 GDScript files, 55240 lines.
 
 ### `scenes/corridor/`
 
@@ -403,7 +403,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `gun_controller.gd` | `GunController` | 317 | Hit/miss for the HUD once the first pellet resolves. |
 | `gun_stats.gd` | `GunStats` | 46 | Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance. |
 | `gun_stats_controller.gd` | `GunStatsController` | 153 | Rebuilds a gun's effective stats from its base stats, class and modifiers. |
-| `gun_viewmodel.gd` | `GunViewmodel` | 284 | First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; recoil and reload cant. |
+| `gun_viewmodel.gd` | `GunViewmodel` | 289 | First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; shot kick and reload cant. |
 | `projectile.gd` | `Projectile` | 341 | A bullet: flies, ricochets off scenery and resolves damage on hit. |
 | `projectile_pool.gd` | — | 82 | Reuses Projectile nodes to avoid instantiate/free churn during heavy fire. |
 | `stat_modifier.gd` | `StatModifier` | 14 | A single additive or multiplicative modifier applied to a named gun stat. |
@@ -431,7 +431,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
-| `debug_arms_commands.gd` | — | 169 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
+| `debug_arms_commands.gd` | — | 178 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
 | `debug_commands.gd` | — | 259 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
@@ -547,6 +547,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `arm_bulk.gd` | `ArmBulk` | 187 | Inflates a skinned arm mesh around each bone's axis so the limbs read thick. |
+| `arm_kick.gd` | — | 213 | Shot impact on the goblin arms: a time-sampled kick (root slide, forearm lift about the elbow, hand and gun flex about the wrist, trigger pull and grip squeeze… |
 | `arm_lamp_kit.gd` | `ArmLampKit` | 115 | Builds the goblin's scavenged trouble lamp on the right forearm and returns its bulb position. |
 | `arm_materials.gd` | `ArmMaterials` | 124 | Materials for the first-person goblin arms and pipe rifle: grime-shaded skin, cloth and steel, flat darks for the rest. |
 | `arm_muscle.gd` | `ArmMuscle` | 161 | Seeded muscle masses, rebuilt normals and vein coordinates for the inflated arm mesh. |

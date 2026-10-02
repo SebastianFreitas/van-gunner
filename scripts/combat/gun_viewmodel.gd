@@ -1,17 +1,15 @@
 class_name GunViewmodel
 extends Node3D
-## First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; recoil and reload cant.
+## First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; shot kick and reload cant.
 
 const ArmWeave := preload("res://scripts/player/arms/arm_weave.gd")
+const ArmKick := preload("res://scripts/player/arms/arm_kick.gd")
 
 const RIG_SCALE := 0.18
 const LAMP_COLOR := Color(1.0, 0.93, 0.82)
 const LAMP_ENERGY := 0.45
 const LAMP_RANGE := 1.3
 const LAMP_ATTENUATION := 0.8  ## flatter than 1 spreads the glow, used only if the bulb still blows out
-const RECOIL_BACK := 0.12  ## virtual metres
-const RECOIL_PITCH := 4.0 * PI / 180.0
-const RECOIL_TIME := 0.12
 const RELOAD_ROLL := -35.0 * PI / 180.0
 const RELOAD_DIP := 0.1  ## virtual metres
 const SWAY_MAX := 2.0 * PI / 180.0  ## radians, cap per axis
@@ -39,15 +37,15 @@ const LEFT_REACH_K := 0.35
 var debug_reload_t := -1.0
 ## >= 0 pins the finger weave time, from arms weave.
 var debug_weave_t := -1.0
+## >= 0 pins one shot's kick at this time, from arms shot.
+var debug_shot_t := -1.0
 @onready var _rig: Node3D = $Rig
 var _lamp: OmniLight3D
 var _look: VanLook
 var _roots := {}
 var _lamp_local := Vector3.ZERO
-var _recoil := 0.0
 var _reload_t := 0.0
 var _reloading := false
-var _recoil_tween: Tween
 var _reload_tween: Tween
 var _camera: Node3D
 var _body: Node3D
@@ -58,6 +56,9 @@ var _sway := Vector2.ZERO  ## x pitch, y yaw (radians)
 var _bob_phase := 0.0
 var _weave: RefCounted = null
 var _weave_t := 0.0
+var _kick: RefCounted = null
+var _kick_clock := 0.0
+var _shots := 0
 var _bob_amount := 0.0  ## 0..1 eased walking factor
 
 
@@ -91,6 +92,7 @@ func _ready() -> void:
 ## Frees the old arms and rifle and builds a fresh set from the van seed.
 func rebuild_arms(seed_value: int) -> void:
 	_weave = null
+	_kick = null
 	for child in _rig.get_children():
 		_rig.remove_child(child)
 		child.queue_free()
@@ -103,6 +105,7 @@ func rebuild_arms(seed_value: int) -> void:
 	_lamp_local = _roots.get("lamp_local", Vector3.ZERO) as Vector3
 	_weave = ArmWeave.new(_arm_model("right_root"), _arm_model("left_root"), seed_value,
 			ArmsBuilder.SHOW_GUN)
+	_kick = ArmKick.new(_arm_model("right_root"), _roots.get("gun_root") as Node3D)
 	_apply()
 
 
@@ -128,21 +131,17 @@ func apply_family(_family: ClassDefinition.Family) -> Vector3:
 func play_shot() -> void:
 	if _reloading:
 		return
-	if _recoil_tween != null and _recoil_tween.is_valid():
-		_recoil_tween.kill()
-	_set_recoil(1.0)
-	_recoil_tween = create_tween()
-	_recoil_tween.tween_method(_set_recoil, 1.0, 0.0, RECOIL_TIME) \
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if _kick:
+		_kick.fire(_kick_clock, _shots)
+	_shots += 1
 
 
 func play_reload(duration: float) -> void:
 	var d := maxf(duration, 0.05)
 	if _reload_tween != null and _reload_tween.is_valid():
 		_reload_tween.kill()
-	if _recoil_tween != null and _recoil_tween.is_valid():
-		_recoil_tween.kill()
-	_recoil = 0.0
+	if _kick:
+		_kick.clear()
 	_reloading = true
 	_reload_tween = create_tween()
 	_reload_tween.tween_method(_set_reload_t, 0.0, 1.0, d)
@@ -150,22 +149,16 @@ func play_reload(duration: float) -> void:
 
 
 func snap_rest() -> void:
-	if _recoil_tween != null and _recoil_tween.is_valid():
-		_recoil_tween.kill()
 	if _reload_tween != null and _reload_tween.is_valid():
 		_reload_tween.kill()
-	_recoil = 0.0
+	if _kick:
+		_kick.clear()
 	_reload_t = 0.0
 	_sway = Vector2.ZERO
 	_bob_amount = 0.0
 	_bob_phase = 0.0
 	_has_prev = false
 	_reloading = false
-	_apply()
-
-
-func _set_recoil(v: float) -> void:
-	_recoil = v
 	_apply()
 
 
@@ -202,6 +195,17 @@ func _process(delta: float) -> void:
 			WEAVE_SANDBOX_T if SaveSandbox.enabled else _weave_t)
 	if _weave:
 		_weave.update(weave_at)
+	var clock := fmod(_kick_clock + delta, 3600.0)
+	if clock < _kick_clock and _kick:
+		_kick.clear()
+	_kick_clock = clock
+	if _kick:
+		if debug_shot_t >= 0.0:
+			_kick.pin(debug_shot_t)
+		elif SaveSandbox.enabled:
+			_kick.pin(10.0)  # fully settled, keeps smoke stills comparable
+		else:
+			_kick.sample(_kick_clock)
 	_apply()
 
 
@@ -218,7 +222,7 @@ func arms_focus(which: StringName) -> Vector3:
 	return transform * (_rig.transform * HeldGun.gun_xform().origin)
 
 
-## Look sway and walk bob applied on top of recoil to the rifle and both arms.
+## Look sway and walk bob applied on top of the shot kick to the rifle and both arms.
 func _motion() -> Transform3D:
 	return Transform3D(
 		Basis(Vector3.UP, _sway.y) * Basis(Vector3.RIGHT, _sway.x),
@@ -244,12 +248,13 @@ func _reload_curves(t: float) -> Vector3:
 	return Vector3(c, c, z)
 
 
-## Poses the rifle and both arms: sway, bob and recoil on all three, the reload cant (about the
-## grip) on the rifle and the right arm only; the left hand reaches under the magazine and slaps.
+## Poses the rifle and both arms: sway and bob on all three, the shot kick on each arm and the
+## rifle, the reload cant (about the grip) on the rifle and the right arm only; the left hand
+## reaches under the magazine and slaps.
 func _apply() -> void:
-	var recoil := Transform3D(
-		Basis(Vector3.RIGHT, RECOIL_PITCH * _recoil), Vector3(0.0, 0.0, RECOIL_BACK * _recoil)
-	)
+	var kick_r: Transform3D = _kick.right_offset() if _kick else Transform3D.IDENTITY
+	var kick_l: Transform3D = _kick.left_offset() if _kick else Transform3D.IDENTITY
+	var kick_w: Transform3D = _kick.wrist_offset() if _kick else Transform3D.IDENTITY
 	var grip := Transform3D(Basis.IDENTITY, HeldGun.GRIP)
 	var k := _reload_curves(_reload_t if debug_reload_t < 0.0 else debug_reload_t)
 	var roll := Transform3D(
@@ -257,7 +262,7 @@ func _apply() -> void:
 	)
 	var cant := grip * roll * grip.affine_inverse()
 	var m := _motion()
-	var gun_x := m * recoil * cant
+	var gun_x := m * cant
 	var rest_pt := _roots.get("left_wrist", Vector3.ZERO) as Vector3
 	var shown := k.y
 	var hide_off := LEFT_REST * (1.0 - shown)
@@ -268,16 +273,16 @@ func _apply() -> void:
 	var rest_r := Transform3D(Basis.from_euler(RIGHT_REST_TILT * (PI / 180.0)), RIGHT_REST)
 	var drift_r: Transform3D = _weave.arm_offset(0) if _weave else Transform3D.IDENTITY
 	var drift_l: Transform3D = _weave.arm_offset(1) if _weave else Transform3D.IDENTITY
-	var right_x := gun_x * rest_r * drift_r
+	var right_x := gun_x * rest_r * drift_r * kick_r
 	var tilt_l := Basis.from_euler(LEFT_REST_TILT * (1.0 - shown) * (PI / 180.0))
 	var gun := _roots.get("gun_root") as Node3D
 	var right := _roots.get("right_root") as Node3D
 	var left := _roots.get("left_root") as Node3D
 	if gun != null:
-		gun.transform = right_x
+		gun.transform = right_x * kick_w
 	if right != null:
 		right.transform = right_x
 	if left != null:
-		left.transform = m * recoil * Transform3D(tilt_l, off) * drift_l
+		left.transform = m * kick_l * Transform3D(tilt_l, off) * drift_l
 	if _lamp != null and _rig != null:
 		_lamp.position = _rig.transform * (right_x * _lamp_local)
