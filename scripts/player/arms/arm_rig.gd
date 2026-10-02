@@ -35,6 +35,28 @@ static func skeleton(model: Node3D) -> Skeleton3D:
 	return model.find_child("Skeleton3D", true, false) as Skeleton3D
 
 
+## The right hand's palm length (wrist to middle knuckle) in rig units, so the gun's holder is
+## sized from the hand and fits every seed.
+static func palm_len(model: Node3D) -> float:
+	var sk := skeleton(model)
+	if sk == null:
+		return 0.22
+	var ih := sk.find_bone("DEF-hand.R")
+	var im := sk.find_bone("DEF-f_middle.01.R")
+	if ih == -1 or im == -1:
+		ih = sk.find_bone("DEF-hand.L")
+		im = sk.find_bone("DEF-f_middle.01.L")
+	if ih == -1 or im == -1:
+		return 0.22
+	var len_sk := _global_rest(sk, ih).origin.distance_to(_global_rest(sk, im).origin)
+	var k := 1.0
+	var node: Node = sk
+	while node != model.get_parent() and node is Node3D:
+		k *= (node as Node3D).transform.basis.get_scale().y
+		node = node.get_parent()
+	return len_sk * k
+
+
 static func _aim(rest_basis: Basis, dir: Vector3) -> Basis:
 	return Basis(Quaternion(rest_basis.y.normalized(), dir)) * rest_basis
 

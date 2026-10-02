@@ -1,5 +1,5 @@
 extends RefCounted
-## Drives the goblin's always-on witch-finger weave on both arm skeletons each frame.
+## Drives the goblin's idle hands each frame: the witch-finger weave, and a grip idle on the gun hand when the gun is shown.
 ##
 ## Every value is a sum of smooth sines (no noise, no per-frame random), so the hands
 ## never twitch. Only bone rotations are written: scale and position stay untouched so
@@ -36,7 +36,20 @@ const OPEN_CURL := Vector3(8.0, 12.0, 10.0)  ## degrees per joint when stretched
 const OPEN_THUMB := Vector3(0.0, 4.0, 6.0)
 const OPEN_SPREAD_K := 2.0  ## spread multiplier while open
 const OPEN_WRIST_PITCH := 12.0  ## degrees the wrist lifts (negative X) while open
+const GRIP_SQUEEZE := 3.0  ## degrees of extra curl on the gripping middle/ring/pinky, all joints
+const THUMB_GRIP := 1.5  ## degrees of thumb flex on the gripping hand
+const TRIGGER_PERIOD := 7.0  ## seconds between trigger-finger lifts
+const TRIGGER_AT := 3.0  ## seconds into the cycle the lift starts (keeps t 1.1 at rest)
+const TRIGGER_IN := 0.45  ## seconds lifting off the trigger
+const TRIGGER_HOLD := 0.7
+const TRIGGER_OUT := 0.55  ## seconds settling back
+const TRIGGER_LIFT := Vector3(-14.0, -8.0, -4.0)  ## degrees per index joint at full lift (straighten)
 
+## True when the gun is shown: the right hand grips it instead of weaving.
+var _grip_right := false
+## Right-hand grip joints {bone, base, finger, j} and their skeleton (grip mode only).
+var _grip: Array[Dictionary] = []
+var _grip_sk: Skeleton3D = null
 ## One entry per hand: {sk, suffix, phase, wrist, wrist_pose, wrist_base, joints}, where each
 ## joint is {bone, rest, finger, j} and finger 0..3 = index..pinky, 4 = thumb.
 var _hands: Array[Dictionary] = []
@@ -45,14 +58,37 @@ var _phase: Array[float] = [0.0, PI]
 var _arm_x: Array[Transform3D] = [Transform3D.IDENTITY, Transform3D.IDENTITY]
 
 
-func _init(arm_right: Node3D, arm_left: Node3D, seed_value: int) -> void:
+func _init(arm_right: Node3D, arm_left: Node3D, seed_value: int, grip_right := false) -> void:
+	_grip_right = grip_right
 	var rng := ArmsBuilder.rng_for(seed_value, &"arm_weave")
 	var right_phase := rng.randf() * TAU
 	_phase[0] = right_phase
 	_phase[1] = right_phase + PI
-	_add_hand(arm_right, ".R", RIGHT_WRIST_BASE, right_phase)
+	if _grip_right:
+		_add_grip(arm_right)
+	else:
+		_add_hand(arm_right, ".R", RIGHT_WRIST_BASE, right_phase)
 	# The hands weave out of step.
 	_add_hand(arm_left, ".L", LEFT_WRIST_BASE, right_phase + PI)
+
+
+## Records the right hand's finger joints with the grip curl the builder already posed.
+func _add_grip(model: Node3D) -> void:
+	if model == null:
+		return
+	var sk := ArmRig.skeleton(model)
+	if sk == null:
+		return
+	_grip_sk = sk
+	for f in ArmRig.FINGERS.size():
+		for j in 3:
+			var bone_name := "DEF-%s.0%d.R" % [ArmRig.FINGERS[f], j + 1]
+			var i := sk.find_bone(bone_name)
+			if i == -1:
+				push_warning("ArmWeave: bone not found: %s" % bone_name)
+				continue
+			_grip.append({&"bone": i, &"base": sk.get_bone_pose_rotation(i),
+					&"finger": f, &"j": j})
 
 
 func _add_hand(model: Node3D, suffix: String, wrist_base: Vector3, phase: float) -> void:
@@ -85,6 +121,8 @@ func _add_hand(model: Node3D, suffix: String, wrist_base: Vector3, phase: float)
 ## Poses every finger and wrist for time `t` (seconds). Allocation-free per frame.
 func update(t: float) -> void:
 	var w := TAU * t / PERIOD
+	if _grip_right:
+		_update_grip(t, w)
 	for hand in _hands:
 		var sk: Skeleton3D = hand[&"sk"]
 		if not is_instance_valid(sk):
@@ -135,6 +173,28 @@ func update(t: float) -> void:
 		_arm_x[side] = Transform3D(Basis.from_euler(tilt * (PI / 180.0)), pos)
 
 
+## Grip idle on the gun hand: a slow squeeze on middle/ring/pinky, a faint thumb flex and an
+## occasional trigger-finger lift, all on top of the grip curl the builder posed. The wrist is
+## never touched: the gun is not attached to the hand, so a wrist turn would slide it off.
+func _update_grip(t: float, w: float) -> void:
+	if not is_instance_valid(_grip_sk):
+		return
+	var lift := _trigger(t)
+	for joint in _grip:
+		var finger: int = joint[&"finger"]
+		var j: int = joint[&"j"]
+		var deg := 0.0
+		if finger == 0:
+			deg = TRIGGER_LIFT[j] * lift
+		elif finger < 4:
+			deg = GRIP_SQUEEZE * _wave(w * 0.6 + finger * 0.4)
+		else:
+			deg = THUMB_GRIP * _wave(w * 0.45 + 2.0)
+		var base: Quaternion = joint[&"base"]
+		_grip_sk.set_bone_pose_rotation(joint[&"bone"],
+				base * Quaternion(Vector3.RIGHT, deg_to_rad(deg) * ArmRig.CURL_SIGN))
+
+
 ## Slow whole-arm figure-eight drift of the last update (0 right, 1 left), in rig space.
 func arm_offset(side: int) -> Transform3D:
 	if side < 0 or side > 1:
@@ -143,19 +203,34 @@ func arm_offset(side: int) -> Transform3D:
 
 
 ## 0..1 flourish envelope for one hand (0 right, 1 left) at time `t`: smoothstep open, hold,
-## smoothstep re-hook, once per FLOURISH_PERIOD, alternating hands.
+## smoothstep re-hook, once per FLOURISH_PERIOD, alternating hands. With the gun shown the left
+## hand is the only weave hand, so it flourishes every cycle.
 func _flourish(t: float, side: int) -> float:
 	var cycle := floori(t / FLOURISH_PERIOD)
-	if cycle % 2 != side:
+	if _grip_right:
+		if side != 1:
+			return 0.0
+	elif cycle % 2 != side:
 		return 0.0
 	var u := t - cycle * FLOURISH_PERIOD - FLOURISH_AT
-	if u < 0.0 or u > FLOURISH_IN + FLOURISH_HOLD + FLOURISH_OUT:
+	return _envelope(u, FLOURISH_IN, FLOURISH_HOLD, FLOURISH_OUT)
+
+
+## 0..1 trigger-finger lift at time `t`: the same envelope shape as the flourish, every cycle.
+func _trigger(t: float) -> float:
+	var cycle := floori(t / TRIGGER_PERIOD)
+	return _envelope(t - cycle * TRIGGER_PERIOD - TRIGGER_AT, TRIGGER_IN, TRIGGER_HOLD, TRIGGER_OUT)
+
+
+## Smoothstep up over `t_in`, hold, smoothstep down over `t_out`, measured from `u` = 0.
+func _envelope(u: float, t_in: float, hold: float, t_out: float) -> float:
+	if u < 0.0 or u > t_in + hold + t_out:
 		return 0.0
-	if u < FLOURISH_IN:
-		return smoothstep(0.0, 1.0, u / FLOURISH_IN)
-	if u < FLOURISH_IN + FLOURISH_HOLD:
+	if u < t_in:
+		return smoothstep(0.0, 1.0, u / t_in)
+	if u < t_in + hold:
 		return 1.0
-	return 1.0 - smoothstep(0.0, 1.0, (u - FLOURISH_IN - FLOURISH_HOLD) / FLOURISH_OUT)
+	return 1.0 - smoothstep(0.0, 1.0, (u - t_in - hold) / t_out)
 
 
 ## Main sine plus a slower harmonic, normalised to -1..1.

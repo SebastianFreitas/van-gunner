@@ -22,7 +22,6 @@ const BOB_SIDE := 0.015  ## virtual metres
 const BOB_FREQ := 8.0  ## rad/s at walking speed
 const BOB_WALK_SPEED := 4.0  ## m/s that counts as a full bob
 const SLAP_DROP := 0.12  ## virtual metres the left hand drops below the magazine
-const MAG_SLAP_IN_GUN := Vector3(0.0, -0.24, -0.22)  ## under the magazine, Body-local
 ## Rig-space tuning shift for the left hand at rest; the pose constants in `ArmsBuilder` own
 ## the framing now, so this stays zero.
 const LEFT_REST := Vector3.ZERO
@@ -102,7 +101,8 @@ func rebuild_arms(seed_value: int) -> void:
 			van_name = markings.van_name
 	_roots = ArmsBuilder.build(_rig, seed_value, van_name)
 	_lamp_local = _roots.get("lamp_local", Vector3.ZERO) as Vector3
-	_weave = ArmWeave.new(_arm_model("right_root"), _arm_model("left_root"), seed_value)
+	_weave = ArmWeave.new(_arm_model("right_root"), _arm_model("left_root"), seed_value,
+			ArmsBuilder.SHOW_GUN)
 	_apply()
 
 
@@ -262,7 +262,7 @@ func _apply() -> void:
 	var shown := k.y
 	var hide_off := LEFT_REST * (1.0 - shown)
 	var gx := cant * HeldGun.gun_xform()
-	var mag_pt := gx * MAG_SLAP_IN_GUN
+	var mag_pt := gx * HeldGun.mag_slap_in_gun
 	var down := (gx.basis * Vector3.DOWN).normalized()
 	var off := hide_off + (mag_pt - rest_pt) * (k.y * LEFT_REACH_K) + down * SLAP_DROP * k.z
 	var rest_r := Transform3D(Basis.from_euler(RIGHT_REST_TILT * (PI / 180.0)), RIGHT_REST)
@@ -274,7 +274,7 @@ func _apply() -> void:
 	var right := _roots.get("right_root") as Node3D
 	var left := _roots.get("left_root") as Node3D
 	if gun != null:
-		gun.transform = gun_x
+		gun.transform = right_x
 	if right != null:
 		right.transform = right_x
 	if left != null:

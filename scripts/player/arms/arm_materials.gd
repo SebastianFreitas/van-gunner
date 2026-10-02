@@ -72,8 +72,9 @@ static func tape(rng: RandomNumberGenerator) -> StandardMaterial3D:
 	return MachineParts.dark(Color(0.08, 0.08, 0.08))
 
 
-static func grip_wood() -> StandardMaterial3D:
-	return MachineParts.dark(Color(0.18, 0.12, 0.07))
+## Grip panels and the bore: dark rubber.
+static func grip_rubber() -> StandardMaterial3D:
+	return MachineParts.dark(Color(0.07, 0.07, 0.065))
 
 
 static func lamp_body() -> StandardMaterial3D:

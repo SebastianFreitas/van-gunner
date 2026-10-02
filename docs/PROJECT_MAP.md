@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-348 GDScript files, 54829 lines.
+348 GDScript files, 54944 lines.
 
 ### `scenes/corridor/`
 
@@ -548,15 +548,15 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `arm_bulk.gd` | `ArmBulk` | 187 | Inflates a skinned arm mesh around each bone's axis so the limbs read thick. |
 | `arm_lamp_kit.gd` | `ArmLampKit` | 115 | Builds the goblin's scavenged trouble lamp on the right forearm and returns its bulb position. |
-| `arm_materials.gd` | `ArmMaterials` | 123 | Materials for the first-person goblin arms and pipe rifle: grime-shaded skin, cloth and steel, flat darks for the rest. |
+| `arm_materials.gd` | `ArmMaterials` | 124 | Materials for the first-person goblin arms and pipe rifle: grime-shaded skin, cloth and steel, flat darks for the rest. |
 | `arm_muscle.gd` | `ArmMuscle` | 161 | Seeded muscle masses, rebuilt normals and vein coordinates for the inflated arm mesh. |
 | `arm_parts.gd` | `ArmParts` | 181 | Low-poly primitives for the first-person arms: tapered limbs, cloth sleeves, straps, wounds, shards and scars. |
 | `arm_refine.gd` | `ArmRefine` | 128 | Midpoint-subdivides the imported arm mesh once at load, so the gain ramp and the muscle lumps have rings to shape instead of one step between the mid-forearm a… |
-| `arm_rig.gd` | `ArmRig` | 184 | Skinned first-person arm model: spawn, two-bone reach to a wrist target, finger curl and claws. |
+| `arm_rig.gd` | `ArmRig` | 206 | Skinned first-person arm model: spawn, two-bone reach to a wrist target, finger curl and claws. |
 | `arm_tattoo.gd` | `ArmTattoo` | 66 |  |
-| `arm_weave.gd` | — | 164 | Drives the goblin's always-on witch-finger weave on both arm skeletons each frame. |
-| `arms_builder.gd` | `ArmsBuilder` | 224 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
-| `held_gun.gd` | `HeldGun` | 115 | The scavenged pipe rifle the arms hold: receiver, pipe barrel, taped grip, lamp fixture and sling, built from one seed. |
+| `arm_weave.gd` | — | 239 | Drives the goblin's idle hands each frame: the witch-finger weave, and a grip idle on the gun hand when the gun is shown. |
+| `arms_builder.gd` | `ArmsBuilder` | 223 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
+| `held_gun.gd` | `HeldGun` | 133 | The Desert-Eagle-style pistol the arms hold: a shared holder (grip, guard, trigger, frame) plus a per-gun barrel block. |
 
 ### `scripts/stops/`
 

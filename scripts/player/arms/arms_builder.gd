@@ -10,9 +10,8 @@ const RIGHT_HAND_DIR_IN_GUN := Vector3(-0.05, 0.25, -1.0)
 const RIGHT_PALM_IN_GUN := Vector3(-1.0, 0.0, 0.0)
 ## Low and off-frame left of the camera (camera = 0.18 * rig point), so only the forearm and hand show.
 const LEFT_SHOULDER := Vector3(-1.2, -1.3, -0.45)
-## The held rifle is built (muzzle and lamp anchors still come from it) but hidden while the arms
-## are reworked.
-const SHOW_GUN := false
+## The held pistol is shown while the hand pose is reworked around its holder.
+const SHOW_GUN := true
 ## Where the relaxed left wrist sits when shown (looking down, reloading): the lower-left of the frame.
 const LEFT_SHOWN_WRIST := Vector3(-0.95, -0.62, -1.05)
 const LEFT_HANG_POLE := Vector3(-1.0, -0.6, 0.2)
@@ -66,8 +65,6 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	var r_elbow := _fore_r(FOREARM_R_ELBOW, ArmBulk.FOREARM_ELBOW_GAIN, s, bulk)
 	var r_wrist := _fore_r(FOREARM_R_WRIST, ArmBulk.FOREARM_WRIST_GAIN, s, bulk)
 	var claw := ArmMaterials.claw()
-	var gun_root := HeldGun.build(rng_for(seed_value, &"arm_gun"))
-	gun_root.visible = SHOW_GUN
 	var gx := HeldGun.gun_xform()
 
 	# Right arm: bare, holds the grip.
@@ -77,6 +74,8 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	var muscle_r := rng_r.randi()
 	var model_r := ArmRig.spawn(&"R", s, bulk, muscle_r)
 	right.add_child(model_r)
+	var gun_root := HeldGun.build(rng_for(seed_value, &"arm_gun"), ArmRig.palm_len(model_r))
+	gun_root.visible = SHOW_GUN
 	var shoulder_r := RIGHT_SHOULDER + _jitter(rng_r)
 	var r: Dictionary
 	if SHOW_GUN:

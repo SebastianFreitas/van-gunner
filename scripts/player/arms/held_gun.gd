@@ -1,14 +1,23 @@
 class_name HeldGun
 extends RefCounted
-## The scavenged pipe rifle the arms hold: receiver, pipe barrel, taped grip, lamp fixture and sling, built from one seed.
+## The Desert-Eagle-style pistol the arms hold: a shared holder (grip, guard, trigger, frame) plus a per-gun barrel block.
 
 ## Grip centre in rig space (camera at the origin, -Z forward, +X right).
 const GRIP := Vector3(0.40, -0.42, -0.95)
-## Rifle yawed inward so the muzzle points at the screen centre.
+## Gun yawed inward so the muzzle points at the screen centre.
 const CANT := 5.0 * PI / 180.0
-## Muzzle and fore-end in gun space; fixed so the aim never depends on the seed.
-const MUZZLE_IN_GUN := Vector3(0.0, 0.09, -1.13)
-const FORE_END_IN_GUN := Vector3(0.0, -0.02, -0.48)
+## Rake of the grip: its bottom sits further back than its top.
+const RAKE := 18.0 * PI / 180.0
+## Muzzle tip in gun space; written by `build` from the barrel, so the aim never depends on
+## the seed (the barrel block is a fixed size).
+static var muzzle_in_gun := Vector3(0.0, 0.14, -0.6)
+## Fore-end (where the left hand supports the barrel) in gun space; written by `build`.
+static var fore_end_in_gun := Vector3(0.0, 0.08, -0.45)
+## Bottom of the grip in gun space, where the left hand slaps the magazine; written by `build`.
+static var mag_slap_in_gun := Vector3(0.0, -0.3, 0.1)
+
+## Top of the grip axis in body space.
+const _TOP := Vector3(0.0, 0.03, -0.01)
 
 
 static func gun_xform() -> Transform3D:
@@ -16,16 +25,18 @@ static func gun_xform() -> Transform3D:
 
 
 static func muzzle_local() -> Vector3:
-	return gun_xform() * MUZZLE_IN_GUN
+	return gun_xform() * muzzle_in_gun
 
 
-static func fore_end() -> Vector3:
-	return gun_xform() * FORE_END_IN_GUN
+static func fore_end_local() -> Vector3:
+	return gun_xform() * fore_end_in_gun
 
 
-## Builds the rifle under a "Gun" root the caller animates; the lamp's rig-space spot is
-## stored in the root's `lamp_local` meta.
-static func build(rng: RandomNumberGenerator) -> Node3D:
+## Builds the pistol under a "Gun" root the caller animates; `palm_len` is the right hand's
+## palm length, which every dimension scales from. The lamp's rig-space spot is stored in
+## the root's `lamp_local` meta.
+static func build(rng: RandomNumberGenerator, palm_len: float = 0.22) -> Node3D:
+	var p := palm_len if palm_len > 0.0 else 0.22
 	var root := Node3D.new()
 	root.name = "Gun"
 	var body := Node3D.new()
@@ -33,82 +44,89 @@ static func build(rng: RandomNumberGenerator) -> Node3D:
 	body.transform = gun_xform()
 	root.add_child(body)
 
-	# Draw order is part of the design: it keeps the same seed giving the same rifle.
-	var steel := ArmMaterials.steel(rng.randf_range(0.0, 100.0))
-	var pipe := ArmMaterials.pipe(rng.randf_range(0.0, 100.0))
-	var tape := ArmMaterials.tape(rng)
-	var wood := ArmMaterials.grip_wood()
-	var lamp_mat := ArmMaterials.lamp_body()
-	var lens := ArmMaterials.lens()
-	var leather := ArmMaterials.leather()
+	_build_grip(body, p, rng)
+	_build_guard_and_trigger(body, p, rng)
+	_build_frame(body, p, rng)
+	_build_barrel(body, p, rng)
 
-	ArmParts.mesh(body, "Grip", ArmParts.box(Vector3(0.07, 0.20, 0.09)), wood,
-			Vector3(0.0, -0.09, 0.02), Basis(Vector3.RIGHT, deg_to_rad(18.0)))
-	ArmParts.mesh(body, "Receiver", ArmParts.box(Vector3(0.10, 0.14, 0.42)), steel,
-			Vector3(0.0, 0.06, -0.10))
-	ArmParts.mesh(body, "ChargingHandle", ArmParts.box(Vector3(0.06, 0.025, 0.03)), steel,
-			Vector3(-0.08, 0.09, -0.02))
-	ArmParts.mesh(body, "ChargingKnob", ArmParts.cyl(0.018, 0.03, 0.018), steel,
-			Vector3(-0.115, 0.09, -0.02), ArmParts.along(Vector3.RIGHT))
-
-	# Skeletal pipe stock: two rails and a butt plate, no slab.
-	ArmParts.limb(body, "StockTop", Vector3(0.0, 0.08, 0.11), Vector3(0.0, 0.06, 0.45),
-			0.016, 0.016, pipe)
-	ArmParts.limb(body, "StockLow", Vector3(0.0, -0.02, 0.08), Vector3(0.0, -0.04, 0.45),
-			0.016, 0.016, pipe)
-	ArmParts.mesh(body, "Butt", ArmParts.box(Vector3(0.06, 0.18, 0.03)), steel,
-			Vector3(0.0, 0.01, 0.46))
-
-	ArmParts.limb(body, "Barrel", Vector3(0.0, 0.09, -0.31), Vector3(0.0, 0.09, -1.05),
-			0.028, 0.028, pipe)
-	ArmParts.mesh(body, "Brake", ArmParts.cyl(0.045, 0.08, 0.045), steel,
-			Vector3(0.0, 0.09, -1.09), ArmParts.along(Vector3.FORWARD))
-	for i: int in range(3):
-		ArmParts.mesh(body, "BrakeSlot%d" % i, ArmParts.box(Vector3(0.095, 0.012, 0.014)),
-				lamp_mat, Vector3(0.0, 0.09, -1.07 - 0.02 * i))
-	ArmParts.mesh(body, "Handguard", ArmParts.box(Vector3(0.09, 0.08, 0.30)), wood,
-			Vector3(0.0, 0.03, -0.47))
-
-	if rng.randf() < 0.5:
-		ArmParts.mesh(body, "Drum", ArmParts.cyl(0.11, 0.07, 0.11), steel,
-				Vector3(0.0, -0.10, -0.22), ArmParts.along(Vector3.RIGHT))
-	else:
-		ArmParts.mesh(body, "Magazine", ArmParts.box(Vector3(0.06, 0.22, 0.10)), steel,
-				Vector3(0.0, -0.12, -0.22), Basis(Vector3.RIGHT, deg_to_rad(10.0)))
-
-	ArmParts.limb(body, "TriggerGuardA", Vector3(0.0, -0.01, -0.04), Vector3(0.0, -0.07, -0.06),
-			0.008, 0.008, steel)
-	ArmParts.limb(body, "TriggerGuardB", Vector3(0.0, -0.07, -0.06), Vector3(0.0, -0.07, 0.0),
-			0.008, 0.008, steel)
-	ArmParts.mesh(body, "Trigger", ArmParts.box(Vector3(0.012, 0.04, 0.012)), steel,
-			Vector3(0.0, -0.035, -0.03))
-
-	ArmParts.mesh(body, "RearSight", ArmParts.box(Vector3(0.05, 0.03, 0.02)), steel,
-			Vector3(0.0, 0.15, -0.25))
-	ArmParts.mesh(body, "FrontSight", ArmParts.box(Vector3(0.012, 0.05, 0.012)), steel,
-			Vector3(0.0, 0.14, -1.0))
-
-	# The lamp is taped to the left of the barrel, where the camera sees it.
-	ArmParts.mesh(body, "LampBody", ArmParts.cyl(0.035, 0.12, 0.035), lamp_mat,
-			Vector3(-0.07, 0.04, -0.62), ArmParts.along(Vector3.FORWARD))
-	ArmParts.mesh(body, "Lens", ArmParts.cyl(0.03, 0.01, 0.03), lens,
-			Vector3(-0.07, 0.04, -0.685), ArmParts.along(Vector3.FORWARD))
-	for i: int in range(2):
-		ArmParts.mesh(body, "LampTape%d" % i, ArmParts.cyl(0.04, 0.02, 0.04), tape,
-				Vector3(-0.07, 0.04, -0.60 - 0.04 * i), ArmParts.along(Vector3.FORWARD))
-	root.set_meta(&"lamp_local", gun_xform() * Vector3(-0.07, 0.04, -0.695))
-
-	var bands := rng.randi_range(2, 4)
-	for i: int in range(bands):
-		var h := rng.randf_range(0.02, 0.04)
-		ArmParts.mesh(body, "Tape%d" % i, ArmParts.cyl(0.034, h, 0.034), tape,
-				Vector3(0.0, 0.09, rng.randf_range(-0.95, -0.40)),
-				ArmParts.along(Vector3.FORWARD))
-
-	var sling := MachineParts.cable_bundle(body, PackedVector3Array([
-			Vector3(0.0, 0.01, 0.46), Vector3(0.03, -0.30, 0.15),
-			Vector3(0.02, -0.22, -0.30), Vector3(0.0, 0.0, -0.55)]), leather, 0.015, 1)
-	# The bundle's meshes are already on layer 2; only its shadows need turning off.
-	for node: Node in sling.find_children("*", "GeometryInstance3D", true, false):
-		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var y0 := _TOP.y + 0.36 * p
+	var down := Vector3(0.0, -cos(RAKE), sin(RAKE))
+	muzzle_in_gun = Vector3(0.0, y0 + 0.25 * p, 0.20 * p - 2.80 * p - 0.02)
+	fore_end_in_gun = Vector3(0.0, y0 - 0.06 * p, 0.20 * p - 2.30 * p)
+	mag_slap_in_gun = _TOP + (1.35 * p + 0.10 * p) * down
+	# Under the barrel's left flank.
+	root.set_meta(&"lamp_local",
+			gun_xform() * Vector3(-0.19 * p, y0 - 0.10 * p, 0.20 * p - 2.0 * p))
 	return root
+
+
+## The grip the right hand closes on: steel core, rubber panels with screws, a floor plate
+## and three finger grooves on the front strap.
+static func _build_grip(body: Node3D, p: float, rng: RandomNumberGenerator) -> void:
+	var steel := ArmMaterials.steel(rng.randf_range(0.0, 100.0))
+	var rubber := ArmMaterials.grip_rubber()
+	var length := 1.35 * p
+	var down := Vector3(0.0, -cos(RAKE), sin(RAKE))
+	var centre := _TOP + 0.5 * length * down
+	var gb := Basis(Vector3.RIGHT, -RAKE)
+
+	ArmParts.mesh(body, "GripCore", ArmParts.box(Vector3(0.34 * p, length, 0.62 * p)), steel,
+			centre, gb)
+	for side: float in [-1.0, 1.0]:
+		var tag := "L" if side < 0.0 else "R"
+		ArmParts.mesh(body, "GripPanel" + tag,
+				ArmParts.box(Vector3(0.07 * p, 0.78 * length, 0.50 * p)), rubber,
+				centre + gb * Vector3(side * 0.17 * p, -0.04 * length, 0.02 * p), gb)
+		for k: float in [-1.0, 1.0]:
+			ArmParts.mesh(body, "GripScrew%s%d" % [tag, int(k)],
+					ArmParts.cyl(0.03 * p, 0.02 * p, 0.03 * p), steel,
+					centre + gb * Vector3(side * 0.205 * p,
+							-0.04 * length + k * 0.28 * length, 0.02 * p),
+					gb * ArmParts.along(Vector3.RIGHT))
+	ArmParts.mesh(body, "FloorPlate", ArmParts.box(Vector3(0.40 * p, 0.07 * length, 0.72 * p)),
+			steel, _TOP + length * down, gb)
+	for i: int in range(3):
+		var f := 0.30 + 0.20 * i
+		ArmParts.mesh(body, "GripRidge%d" % i,
+				ArmParts.box(Vector3(0.34 * p, 0.045 * length, 0.05 * p)), steel,
+				centre + gb * Vector3(0.0, length * (0.5 - f), -0.31 * p), gb)
+
+
+## Squared trigger guard of four limbs, and the trigger inside it.
+static func _build_guard_and_trigger(body: Node3D, p: float, rng: RandomNumberGenerator) -> void:
+	var steel := ArmMaterials.steel(rng.randf_range(0.0, 100.0))
+	var a := Vector3(0.0, 0.03, -0.30 * p)
+	var b := Vector3(0.0, -0.42 * p, -0.30 * p)
+	var c := Vector3(0.0, -0.42 * p, -1.05 * p)
+	var d := Vector3(0.0, 0.03, -1.05 * p)
+	var r := 0.035 * p
+	ArmParts.limb(body, "GuardRear", a, b, r, r, steel)
+	ArmParts.limb(body, "GuardBottom", b, c, r, r, steel)
+	ArmParts.limb(body, "GuardFront", c, d, r, r, steel)
+	ArmParts.limb(body, "GuardJoin", d, d + Vector3(0.0, 0.08 * p, 0.0), r, r, steel)
+	ArmParts.mesh(body, "Trigger", ArmParts.box(Vector3(0.09 * p, 0.34 * p, 0.09 * p)), steel,
+			Vector3(0.0, 0.03 - 0.20 * p, -0.62 * p), Basis(Vector3.RIGHT, deg_to_rad(-12.0)))
+
+
+## The frame stub above the grip: frame box, beavertail over the web of the hand, hammer.
+static func _build_frame(body: Node3D, p: float, rng: RandomNumberGenerator) -> void:
+	var steel := ArmMaterials.steel(rng.randf_range(0.0, 100.0))
+	ArmParts.mesh(body, "Frame", ArmParts.box(Vector3(0.38 * p, 0.36 * p, 1.55 * p)), steel,
+			Vector3(0.0, 0.03 + 0.18 * p, 0.32 * p - 0.775 * p))
+	ArmParts.mesh(body, "Beavertail", ArmParts.box(Vector3(0.30 * p, 0.05 * p, 0.30 * p)),
+			steel, Vector3(0.0, 0.03, 0.40 * p), Basis(Vector3.RIGHT, deg_to_rad(25.0)))
+	ArmParts.mesh(body, "Hammer", ArmParts.box(Vector3(0.10 * p, 0.22 * p, 0.08 * p)), steel,
+			Vector3(0.0, 0.03 + 0.36 * p + 0.09 * p, 0.26 * p),
+			Basis(Vector3.RIGHT, deg_to_rad(20.0)))
+
+
+## The per-gun part: a placeholder barrel block that later guns swap for their own.
+static func _build_barrel(body: Node3D, p: float, rng: RandomNumberGenerator) -> void:
+	var steel := ArmMaterials.steel(rng.randf_range(0.0, 100.0))
+	var rubber := ArmMaterials.grip_rubber()
+	var y0 := 0.03 + 0.36 * p
+	ArmParts.mesh(body, "Barrel", ArmParts.box(Vector3(0.38 * p, 0.50 * p, 2.80 * p)), steel,
+			Vector3(0.0, y0 + 0.25 * p, 0.20 * p - 1.40 * p))
+	ArmParts.mesh(body, "Bore", ArmParts.cyl(0.10 * p, 0.04 * p, 0.10 * p), rubber,
+			Vector3(0.0, y0 + 0.25 * p, 0.20 * p - 2.80 * p - 0.01),
+			ArmParts.along(Vector3.FORWARD))
