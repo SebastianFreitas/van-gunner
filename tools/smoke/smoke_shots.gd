@@ -19,6 +19,7 @@ var _prefix_counts: Dictionary = {}
 const _SideDoors := preload("res://scripts/van/side_doors.gd")
 const _SideWindows := preload("res://scripts/van/side_windows.gd")
 const _CloseupViews := preload("res://tools/smoke/smoke_shots_closeups.gd")
+const _DebugFacadeRender := preload("res://scripts/debug/debug_facade_render_commands.gd")
 
 ## Rig-local point the van cameras look at: the van body's middle.
 const _VAN_TARGET := Vector3(0.0, 1.5, 0.0)
@@ -392,3 +393,4 @@ func _save(label: String, prefix: String = "") -> void:
 		push_error("SMOKE: could not save shot %s: %s" % [path, error_string(err)])
 		return
 	print("SMOKE: shot " + path)
+	print("SMOKE: " + _DebugFacadeRender.render_line(label))

@@ -13,8 +13,14 @@ const _FacadeRuinInterior := preload("res://scripts/travel/facades/facade_ruin_i
 
 const WALL_T := 0.35
 const ROOF_DEPTH := 1.2
+## Safety under the lowest front opening: nothing deeper than this is built behind the front.
+const CUT_MARGIN := 0.3
 const ROOFED_DROP := _FacadeRuinDebris.ROOFED_DROP
 const HOLE_DEPTH := _FacadeRuinDebris.HOLE_DEPTH
+## A collapsed top on a shallow body gets a dark pocket at least this tall above its cap, up to
+## this share of the drop to the full height (mirrors the shell's numbers).
+const POCKET_RISE_MIN := 0.6
+const POCKET_RISE_SHARE := 0.5
 const RUBBLE_Y0 := _FacadeRuinDebris.RUBBLE_Y0
 
 
@@ -45,6 +51,8 @@ static func build(
 	var st := _begin()
 	var st_dark := _begin()
 	var n_dark := 0
+	var pocket_rng := RandomNumberGenerator.new()
+	pocket_rng.seed = hash([float(plan[&"params"][&"seed"]), &"ruin_pocket"])
 	for i in cols.size():
 		var c: Vector3 = cols[i]
 		var u_a := _u(c.x, z0, z1, s)
@@ -76,6 +84,19 @@ static func build(
 		var x_in := x_face + s * depth
 		_quad(st, Vector3(x_face, c.z, c.x), Vector3(x_face, c.z, c.y), Vector3(x_in, c.z, c.y),
 			Vector3(x_in, c.z, c.x), Vector3.UP, 0.0, c.y - c.x, 0.0, depth)
+		if not deep and full - c.z >= ROOFED_DROP:
+			# One draw per collapsed column, even when the keep-out refuses it, to keep the stream.
+			var y_hi := clampf(
+				full - pocket_rng.randf_range(0.0, POCKET_RISE_SHARE) * (full - c.z),
+				c.z + POCKET_RISE_MIN, full
+			)
+			var box := AABB(
+				Vector3(minf(x_face, x_face + s * HOLE_DEPTH), c.z - 0.2, c.x),
+				Vector3(HOLE_DEPTH, y_hi - c.z + 0.2, c.y - c.x)
+			)
+			if keep_out == null or keep_out.allows(box):
+				_pocket(st_dark, x_face, s, c.x, c.y, c.z - 0.2, y_hi)
+				n_dark += 1
 		if i + 1 < cols.size():
 			_step_face(st, x_face, s, y0, full, roof_d, c, cols[i + 1] as Vector3)
 	var first: Vector3 = cols[0]
@@ -87,14 +108,31 @@ static func build(
 	)
 	if n_dark > 0:
 		var dark := _FacadeMaterials.prop_material(
-			&"ruin_interior", Color(0.016, 0.015, 0.014), 0.95, 0.0
+			&"ruin_interior", Color(0.085, 0.08, 0.072), 0.95, 0.0
 		)
 		_FacadeMeshKit.commit(host, st_dark, "Body%dInterior" % index, dark, false)
 	if deep:
-		_FacadeRuinShell.build(host, plan, side_sign, index, x_face, x_back, y0, false)
-		_FacadeRuinInterior.build(host, plan, side_sign, index, x_face, x_back, y0, keep_out)
+		# The front is opaque and every camera is low, so nothing under the lowest opening shows.
+		var y_cut := opening_cut(plan, full) - CUT_MARGIN
+		if y_cut != INF:
+			_FacadeRuinShell.build(host, plan, side_sign, index, x_face, x_back, y0, false, y_cut)
+			_FacadeRuinInterior.build(
+				host, plan, side_sign, index, x_face, x_back, y0, keep_out, y_cut
+			)
 	_FacadeRuinDebris.build_body_debris(host, plan, side_sign, index, keep_out)
 	return mi
+
+
+## The lowest front opening's bottom edge: a collapsed column's top (it has no roof plate) or a
+## hole's sill. INF when the front is closed.
+static func opening_cut(plan: Dictionary, full: float) -> float:
+	var cut := INF
+	for c: Vector3 in plan.get(&"ruin_cols", []):
+		if full - c.z >= ROOFED_DROP:
+			cut = minf(cut, c.z)
+	for h: Vector3 in plan.get(&"ruin_holes", []):
+		cut = minf(cut, h.y)
+	return cut
 
 
 ## Sidewalk rubble under a collapse (tile sides only); lives in the debris helper.
@@ -102,6 +140,21 @@ static func build_rubble(
 	host: Node3D, plan: Dictionary, side_sign: float, index: int, keep_out: RefCounted
 ) -> void:
 	_FacadeRuinDebris.build_rubble(host, plan, side_sign, index, keep_out)
+
+
+## A dark pocket above a collapsed column's cap: a back quad HOLE_DEPTH behind the face and two
+## jambs back to it. No sill or lid: they face where nothing looks, and the cap already exists.
+static func _pocket(
+	st: SurfaceTool, x_face: float, s: float, z0: float, z1: float, y_lo: float, y_hi: float
+) -> void:
+	var xd := x_face + s * HOLE_DEPTH
+	var xj := x_face + s * WALL_T
+	_quad(st, Vector3(xd, y_lo, z0), Vector3(xd, y_lo, z1), Vector3(xd, y_hi, z1),
+		Vector3(xd, y_hi, z0), Vector3(-s, 0.0, 0.0), 0.0, 1.0, 0.0, 1.0)
+	_quad(st, Vector3(xj, y_lo, z0), Vector3(xd, y_lo, z0), Vector3(xd, y_hi, z0),
+		Vector3(xj, y_hi, z0), Vector3.BACK, 0.0, 1.0, 0.0, 1.0)
+	_quad(st, Vector3(xj, y_lo, z1), Vector3(xd, y_lo, z1), Vector3(xd, y_hi, z1),
+		Vector3(xj, y_hi, z1), Vector3.FORWARD, 0.0, 1.0, 0.0, 1.0)
 
 
 ## The step where column `c` meets the next one: a face from the lower top to the higher, deep

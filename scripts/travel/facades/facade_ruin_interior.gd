@@ -22,7 +22,7 @@ const _MIN_SPAN := 1.2
 ## Works in abs x and mirrors by side_sign when emitting.
 static func build(
 	host: Node3D, plan: Dictionary, side_sign: float, index: int, x_face: float, x_back: float,
-	y0: float, keep_out: RefCounted
+	y0: float, keep_out: RefCounted, y_cut: float
 ) -> void:
 	var s := side_sign
 	var params: Dictionary = plan[&"params"]
@@ -42,7 +42,8 @@ static func build(
 	var st_joist := _begin()
 	var st_ground := _begin()
 	var counts: Array[int] = [0, 0, 0, 0]
-	if xo - xi > 0.1 and zi1 - zi0 > 0.1:
+	# Under the cut nothing shows: no ground box, and no floor line at or below it.
+	if GROUND_TOP >= y_cut and xo - xi > 0.1 and zi1 - zi0 > 0.1:
 		var size := Vector3(xo - xi, 0.4, zi1 - zi0)
 		var center := Vector3(s * (xi + xo) * 0.5, GROUND_TOP - 0.2, (zi0 + zi1) * 0.5)
 		if _box(st_ground, center, size, keep_out):
@@ -65,6 +66,8 @@ static func build(
 			var top_b := float(tops[i]) if i < tops.size() else c.z
 			for j in range(1, floors):
 				var y_f := y0 + gh + (j - 1) * floor_h
+				if y_f <= y_cut:
+					continue
 				_floor_line(
 					sts, counts, rng, slabs, s, Vector4(za, zb, xi, xo), x_face, y_f, c.z, top_b,
 					keep_out
@@ -87,7 +90,9 @@ static func build(
 	if counts[3] > 0:
 		_FacadeMeshKit.commit(host, st_ground, "Body%dGround" % index, ground_mat, false)
 	if xo - xi >= 1.2 and zi1 - zi0 >= 1.2:
-		_FacadeRuinClutter.build(host, plan, side_sign, index, xi, xo, zi0, zi1, y0, keep_out)
+		_FacadeRuinClutter.build(
+			host, plan, side_sign, index, xi, xo, zi0, zi1, y0, keep_out, y_cut
+		)
 
 
 ## One floor line across one column; span = (z_a, z_b, x_in, x_out), all abs in x.

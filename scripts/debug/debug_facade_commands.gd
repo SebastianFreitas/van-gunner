@@ -8,6 +8,7 @@ const _FacadeSetPieces := preload("res://scripts/travel/facades/facade_set_piece
 const _FacadeAudit := preload("res://scripts/travel/facades/facade_audit.gd")
 const _CorridorSegmentScene := preload("res://scenes/corridor/corridor_segment.tscn")
 const _DebugStreetArt := preload("res://scripts/debug/debug_street_art_commands.gd")
+const _DebugFacadeRender := preload("res://scripts/debug/debug_facade_render_commands.gd")
 const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
 
 const OPENING_NONE := 0  # mirrors corridor_segment.gd's Opening enum
@@ -25,7 +26,8 @@ func _init(owner: Node) -> void:
 
 ## Sub-command names, for DebugCommands.get_completion_context.
 func sub_commands() -> Array[String]:
-	return ["help", "list", "district", "rare", "reseed", "stats", "dump", "check", "stress", "art"]
+	return ["help", "list", "district", "rare", "reseed", "stats", "dump", "check",
+		"stress", "art", "faces", "perf"]
 
 
 func cmd_facade(args: Array) -> String:
@@ -52,6 +54,8 @@ func cmd_facade(args: Array) -> String:
 			return _cmd_stress(rest)
 		"art":
 			return _DebugStreetArt.run(rest)
+		"faces", "perf":
+			return _DebugFacadeRender.run(args)
 		_:
 			return "Unknown facade sub-command: %s  (try facade help)" % sub
 
@@ -66,7 +70,9 @@ func _usage() -> String:
 		+ "facade dump [left|right]         nearest tile's plans and prop node names\n"
 		+ "facade check                     mouth keep-out audit over every alive tile\n"
 		+ "facade stress [seeds]            build + audit every district x piece x opening\n"
-		+ "facade art [sheet <path>]       street-art pool stats, or save its atlas as a PNG"
+		+ "facade art [sheet <path>]       street-art pool stats, or save its atlas as a PNG\n"
+		+ "facade faces                     triangles per mesh family over every alive tile\n"
+		+ "facade perf                      draw calls and primitives of the current frame"
 	)
 
 

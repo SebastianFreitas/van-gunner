@@ -67,7 +67,7 @@ class _Out extends RefCounted:
 ## family's draws move. Works in abs x and mirrors by side_sign when emitting.
 static func build(
 	host: Node3D, plan: Dictionary, side_sign: float, index: int, xi: float, xo: float,
-	zi0: float, zi1: float, y0: float, keep_out: RefCounted
+	zi0: float, zi1: float, y0: float, keep_out: RefCounted, y_cut: float
 ) -> void:
 	var params: Dictionary = plan[&"params"]
 	var rng := RandomNumberGenerator.new()
@@ -76,7 +76,9 @@ static func build(
 	var out := _Out.new(side_sign, keep_out)
 	var lim := Vector4(xi, xo, zi0, zi1)
 	var mounds: Array[Vector3] = []
-	var cols: Array = plan.get(&"ruin_cols", [])
+	# Ground-floor families top out under the first floor line; skip them when it is under the cut.
+	var ground_seen := y0 + gh > y_cut
+	var cols: Array = plan.get(&"ruin_cols", []) if ground_seen else []
 	for v in cols:
 		var c: Vector3 = v
 		var za := maxf(c.x, zi0)
@@ -90,13 +92,14 @@ static func build(
 			_greens(out, rng, lim, highs)
 	var slabs: Array = plan.get(&"ruin_slabs", [])
 	_heaps(out, rng, slabs)
-	if xo - xi >= 1.5:
-		if zi1 - zi0 >= 4.0:
-			_partitions(out, rng, lim, gh)
-		if rng.randf() < 0.5:
-			_stair(out, rng, lim)
-	_pipes(out, rng, lim)
-	_planks(out, rng, lim, mounds)
+	if ground_seen:
+		if xo - xi >= 1.5:
+			if zi1 - zi0 >= 4.0:
+				_partitions(out, rng, lim, gh)
+			if rng.randf() < 0.5:
+				_stair(out, rng, lim)
+		_pipes(out, rng, lim)
+		_planks(out, rng, lim, mounds)
 
 	var names: Array[String] = ["Clutter", "ClutterBrick", "ClutterWood", "ClutterPipe", "ClutterLeaf"]
 	var mats: Array[Material] = [

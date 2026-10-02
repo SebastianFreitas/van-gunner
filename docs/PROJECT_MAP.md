@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-345 GDScript files, 54253 lines.
+346 GDScript files, 54471 lines.
 
 ### `scenes/corridor/`
 
@@ -435,7 +435,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
 | `debug_commands.gd` | — | 258 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
-| `debug_facade_commands.gd` | — | 336 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
+| `debug_facade_commands.gd` | — | 342 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
+| `debug_facade_render_commands.gd` | — | 87 | Debug console commands: facade render stats (`facade faces`, `facade perf`), reached from debug_facade_commands.gd. |
 | `debug_gap_light.gd` | — | 175 | Debug gap light: paints everything that is not van magenta, so a see-through seam shows pink. |
 | `debug_item_commands.gd` | — | 70 | Debug console commands: items. |
 | `debug_meta_commands.gd` | — | 55 | Debug console commands: meta. |
@@ -624,11 +625,11 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `facade_props_upper.gd` | — | 354 | Upper-facade props for one building: trim (parapet cap, cornice, string-course ledges, downspout), AC units, a fire escape, balconies, roof clutter and wall pi… |
 | `facade_registry.gd` | — | 104 | Loads the facade data folders once: districts (sorted by index) and set-pieces (sorted by id). |
 | `facade_ruin.gd` | — | 256 | Rolls each street building's ruin condition and the column/hole data that later geometry cuts the facade with, and clips the plan that the prop families see so… |
-| `facade_ruin_body.gd` | — | 183 | Builds a ruined street building's body from its plan's ruin columns and holes: stepped tops, wall caps or roof plates, hole reveals over a dark back wall, then… |
-| `facade_ruin_clutter.gd` | — | 310 | Rubble, partitions, a broken stair, pipes, planks and weeds inside a deep ruined body. |
+| `facade_ruin_body.gd` | — | 236 | Builds a ruined street building's body from its plan's ruin columns and holes: stepped tops, wall caps or roof plates, hole reveals over a dark back wall, then… |
+| `facade_ruin_clutter.gd` | — | 313 | Rubble, partitions, a broken stair, pipes, planks and weeds inside a deep ruined body. |
 | `facade_ruin_debris.gd` | — | 224 | Debris for ruined street buildings: hanging slabs, rebar and sill chunks on the body, and the rubble heaps on the sidewalk below a collapse. |
-| `facade_ruin_interior.gd` | — | 235 | Floor slabs, broken stubs, rebar and joists inside a deep ruined body. |
-| `facade_ruin_shell.gd` | — | 115 | Back wall and inner end walls of a deep ruined body, seen through its holes and collapsed tops. |
+| `facade_ruin_interior.gd` | — | 240 | Floor slabs, broken stubs, rebar and joists inside a deep ruined body. |
+| `facade_ruin_shell.gd` | — | 177 | Back wall and inner end walls of a deep ruined body, seen through its holes and collapsed tops. |
 | `facade_set_piece.gd` | `FacadeSetPiece` | 46 | One rare street set-piece: eligibility data plus the hooks a subclass overrides. |
 | `facade_set_pieces.gd` | — | 84 | Rolls which rare set-piece (if any) a tile gets and on which side, and drives the piece's hooks from corridor_facades. |
 | `facade_signs.gd` | — | 285 | Street signage for one building: a backlit box sign over a storefront, a neon strip, a perpendicular blade sign, a cloth banner, or a torn poster on a boarded… |
@@ -820,7 +821,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `smoke_driver.gd` | — | 379 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 181 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
-| `smoke_shots.gd` | — | 395 | Screenshots for tools/smoke.py --shots. |
+| `smoke_shots.gd` | — | 397 | Screenshots for tools/smoke.py --shots. |
 | `smoke_shots_closeups.gd` | — | 303 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 
