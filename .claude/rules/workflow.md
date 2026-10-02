@@ -299,9 +299,12 @@ subagent's hand-back lands in a new turn that the Stop guard fights.
 
 ## Token rules (every agent)
 
-- Never read a whole file over 300 lines (MAP.md lists those over 500):
-  grep the name, then read around the hit. Names do not drift; line
-  numbers do.
+- Never read a whole file over 300 lines (file-guard refuses it and
+  gives the count): grep the name, then read around the hit. Names do
+  not drift; line numbers do.
+- Search with the Grep and Glob tools, not `grep`/`find` in Bash: they
+  skip gitignored paths, and `.claude/worktrees/` holds a full copy of
+  the repo per worktree (Van Gunner had 24, 2026-10-02).
 - Never open the binary and media paths `CLAUDE.md` lists; list them
   for names only. Never open `__pycache__/`.
 - Keep command output short: `tail -n 30`, `Select-Object -Last 30`, or
@@ -311,7 +314,15 @@ subagent's hand-back lands in a new turn that the Stop guard fights.
   picture. Read a picture only for a look no tool measures, once, with
   one line on what it shows; never re-read one already described.
 - A new file, moved function or new export gets its MAP.md row fixed in
-  the same commit (branches: see your mode file).
+  the same commit (branches: see your mode file). The map holds purpose
+  and exports, not line counts, and no line in it passes 300
+  characters: the Grep tool prints "[Omitted long matching line]"
+  instead of a longer one. Put detail on bullets under the table, each
+  starting with the file name. `review-guard.py` refuses a commit once
+  when either slips.
+- The map's "Owner's words" section maps the owner's nicknames to code
+  names. When the owner uses a word the code does not, add a line
+  (Van Gunner: `docs/glossary.md`, copied into the generated map).
 
 ## Git and the owner's commands
 

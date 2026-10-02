@@ -38,7 +38,7 @@ open. Where it and this file disagree, it wins.
   stop and report.
 - Never run a landing step the project file names (a cache-bust, a
   version bump), never re-record a baseline unless the spec says so, and
-  never change the line count of an existing `.claude/MAP.md` row.
+  never rewrite an existing `.claude/MAP.md` row beyond what your change needs.
 - When done, stage by path (only files you changed) and commit on your
   branch: `git add <paths>` then `git commit -m "<one sentence: what changed and why>"`.
   Never push, never merge, never switch branches.

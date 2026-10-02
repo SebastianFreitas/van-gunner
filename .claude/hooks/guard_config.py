@@ -39,3 +39,29 @@ def matches_any(rel: str, globs: list[str]) -> bool:
 
 def quiet_line(n: int, globs: list[str]) -> str:
     return f"{n} files matching {', '.join(globs)} changed (not listed)"
+
+
+SOURCE_SUFFIXES = {
+    ".py", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".css", ".scss",
+    ".html", ".gd", ".tscn", ".tres", ".gdshader", ".gdshaderinc", ".cs",
+    ".cfg", ".sh",
+}
+
+
+def source_rule(cfg: dict) -> tuple[set[str], list[str]]:
+    """(suffixes, exact paths) that count as source: `source_suffixes`
+    replaces the default set, `source_files` adds paths."""
+    suffixes = SOURCE_SUFFIXES
+    if "source_suffixes" in cfg:
+        suffixes = {s.lower() for s in cfg["source_suffixes"] or []}
+    return suffixes, list(cfg.get("source_files") or [])
+
+
+def map_rule(root: str, cfg: dict) -> tuple[str, bool] | None:
+    """(map path, generated) from the `map` key, default .claude/MAP.md
+    hand-written; None when the map file does not exist."""
+    m = cfg.get("map") if isinstance(cfg.get("map"), dict) else {}
+    path = str(m.get("path") or ".claude/MAP.md")
+    if not os.path.isfile(os.path.join(root, path)):
+        return None
+    return path, bool(m.get("generated"))

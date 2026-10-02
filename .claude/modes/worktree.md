@@ -14,8 +14,8 @@ other session touches these files and there are no foreign edits.
   `try.py` reads it from here.
 - **Landing steps are not yours.** Never run a step the project's notes
   below reserve for landing (a cache-bust, a version bump) and never
-  change the line count of an existing `.claude/MAP.md` row. Add rows for
-  new files and update descriptions only. Those two are where merge
+  rewrite an existing `.claude/MAP.md` row beyond what your change needs.
+  Add rows for new files and update descriptions only. Those two are where merge
   conflicts between parallel branches came from; `--commit` runs the
   landing steps once on merge.
 - Commit everything before the report: `--commit` merges commits only,

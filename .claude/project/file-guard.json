@@ -74,5 +74,9 @@
     ".gdshaderinc",
     ".py",
     ".cfg"
-  ]
+  ],
+  "map": {
+    "path": "docs/PROJECT_MAP.md",
+    "generated": true
+  }
 }

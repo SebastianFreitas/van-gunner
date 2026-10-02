@@ -14,8 +14,8 @@ push reaches `main` until the owner lands it with Commit.
   "Look at"; the Commit command does not need it.
 - **Landing steps are not yours.** Never run a step the project's notes
   below reserve for landing (a cache-bust, a version bump) and never
-  change the line count of an existing `.claude/MAP.md` row. Add rows
-  for new files and update descriptions only. `try.py --commit` runs the
+  rewrite an existing `.claude/MAP.md` row beyond what your change
+  needs. Add rows for new files and update descriptions only. `try.py --commit` runs the
   landing steps once on merge.
 - **Commands:** there is no `py -3` here; run every tool with `python3`.
   Screenshots: send them with SendUserFile when the tool exists. A tool

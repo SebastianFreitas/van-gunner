@@ -45,7 +45,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from guard_config import load_config, matches_any  # noqa: E402
+from guard_config import load_config, matches_any, source_rule  # noqa: E402
 
 BINARY_SUFFIXES = {
     ".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tga", ".exr", ".hdr",
@@ -56,11 +56,6 @@ BINARY_SUFFIXES = {
     ".psd", ".7z", ".gz", ".tar",
 }
 CACHE_DIR_NAMES = {"__pycache__", "node_modules", ".git"}
-SOURCE_SUFFIXES = {
-    ".py", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".css", ".scss",
-    ".html", ".gd", ".tscn", ".tres", ".gdshader", ".gdshaderinc", ".cs",
-    ".cfg", ".sh",
-}
 WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 DEFAULT_WHY = "generated or tool-owned (see .claude/project/file-guard.json)"
 
@@ -208,10 +203,7 @@ def main() -> None:
 
     if d.get("agent_id"):
         return
-    suffixes = SOURCE_SUFFIXES
-    if "source_suffixes" in cfg:
-        suffixes = {s.lower() for s in cfg["source_suffixes"] or []}
-    source_files = list(cfg.get("source_files") or [])
+    suffixes, source_files = source_rule(cfg)
     if ext(path) not in suffixes and rel not in source_files:
         return
     if not main_session_violation(tool_name, tool_input):
