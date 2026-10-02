@@ -115,7 +115,11 @@ Geometry:
   period with a slow second harmonic, wrists circling, both hands
   raised in front, palms down and inward, thumbs held out; it runs
   through idle, walking, shooting and reloading, and holds still at t 1.1 under `SaveSandbox` so shots
-  compare (`arms weave <s>|off` pins it).
+  compare (`arms weave <s>|off` pins it). With the gun shown the right hand
+  grips it instead (`ArmWeave._update_grip`: squeeze, trigger lift, thumb
+  wave), the thumb hooked over the beavertail onto the frame's left flank
+  (`RIGHT_THUMB_AIM`); `arms fit` prints the thumb's clearance from the gun
+  parts and must say `FIT OK`.
 - No bitmap textures on 3D surfaces (no photos, no painted PNGs, no
   `NoiseTexture2D`). All surface detail comes from the shader.
 

@@ -9,7 +9,7 @@ const VIEWS := {
 	&"left": Vector3(0.05, 0.08, -0.3),
 	&"top": Vector3(0.0, 0.3, 0.02),
 }
-const USAGE := "arms cam <front|side|left|top|off> | arms reload <0..1|off> | arms weave <seconds|off>"
+const USAGE := "arms cam <front|side|left|top|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms fit"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -44,7 +44,67 @@ func cmd_arms(args: Array) -> String:
 			return USAGE
 		vm.debug_weave_t = maxf(float(arg), 0.0)
 		return "arms weave " + str(vm.debug_weave_t)
+	if args[0] == "fit":
+		return _fit(vm)
 	return USAGE
+
+
+## Read-only readout of where the right thumb sits against the gun's steel and rubber parts,
+## in palm lengths, so a thumb pose can be tuned without a screenshot per try.
+func _fit(vm: Node) -> String:
+	var roots := vm.get("_roots") as Dictionary
+	var right := roots.get("right_root") as Node3D
+	var gun := roots.get("gun_root") as Node3D
+	if right == null or gun == null or not gun.visible:
+		return "arms fit: no gun"
+	var body := gun.get_node_or_null(^"Body") as Node3D
+	var model: Node3D = null
+	for c in right.get_children():
+		if c is Node3D and ArmRig.skeleton(c as Node3D) != null:
+			model = c as Node3D
+	if body == null or model == null:
+		return "arms fit: no gun"
+	var sk := ArmRig.skeleton(model)
+	sk.force_update_all_bone_transforms()
+	var p := ArmRig.palm_len(model)
+	var heads := {}
+	for n in ["thumb.01", "thumb.02", "thumb.03", "f_index.01"]:
+		var i := sk.find_bone("DEF-%s.R" % n)
+		if i == -1:
+			return "arms fit: bone " + n + " missing"
+		heads[n] = sk.global_transform * sk.get_bone_global_pose(i).origin
+	var tip: Vector3 = heads["thumb.03"] + (heads["thumb.03"] - heads["thumb.02"])
+	var pts := {"thumb.01": heads["thumb.01"], "thumb.02": heads["thumb.02"],
+			"thumb.03": heads["thumb.03"], "tip": tip}
+	var to_body := body.global_transform.affine_inverse()
+	var lines: Array[String] = []
+	var clips := 0
+	for key: String in pts:
+		var g: Vector3 = pts[key]
+		var best := INF
+		var part := "-"
+		for part_name in ["GripCore", "GripPanelL", "GripPanelR", "Frame", "Beavertail", "Barrel"]:
+			var mi := body.get_node_or_null(NodePath(part_name)) as MeshInstance3D
+			if mi == null:
+				continue
+			var q := mi.transform.affine_inverse() * (to_body * g)
+			var box := mi.get_aabb()
+			var d := (q - box.get_center()).abs() - box.size * 0.5
+			var sd := d.max(Vector3.ZERO).length() + minf(maxf(d.x, maxf(d.y, d.z)), 0.0)
+			if sd < best:
+				best = sd
+				part = part_name
+		var clear := (best - 0.10 * p) / p
+		if clear < 0.0:
+			clips += 1
+		var b: Vector3 = (to_body * g) / p
+		lines.append("%s body/p (%.2f, %.2f, %.2f) nearest %s clearance/p %.2f"
+				% [key, b.x, b.y, b.z, part, clear])
+	lines.append("tip to index.01 / p %.2f" % (tip.distance_to(heads["f_index.01"]) / p))
+	lines.append("FIT OK" if clips == 0 else "FIT CLIP %d" % clips)
+	var text := "\n".join(lines)
+	print(text)
+	return text
 
 
 func _cam(vm: Node, view: StringName) -> String:

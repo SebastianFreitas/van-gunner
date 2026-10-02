@@ -30,8 +30,11 @@ const LEFT_HANG_PALM := Vector3(1, 0, 0)
 const RIGHT_CURL := {
 	&"f_index": Vector3(20, 25, 15), &"f_middle": Vector3(40, 45, 30),
 	&"f_ring": Vector3(40, 45, 30), &"f_pinky": Vector3(40, 45, 30),
-	&"thumb": Vector3(15, 20, 15),
+	&"thumb": Vector3(15, 10, 15),
 }
+## Extra euler degrees on the right thumb's first bone after the curl: lifts the thumb out of
+## the grip and lays it over the frame's left flank (the curl alone only bends it about one axis).
+const RIGHT_THUMB_AIM := Vector3(-20, 40, -40)
 const LEFT_CURL := {
 	&"f_index": Vector3(25, 30, 20), &"f_middle": Vector3(25, 30, 20),
 	&"f_ring": Vector3(25, 30, 20), &"f_pinky": Vector3(25, 30, 20),
@@ -92,6 +95,11 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 				(fore_r + Vector3.UP * WEAVE_WRIST_LIFT).normalized(),
 				RIGHT_WEAVE_PALM.normalized())
 	ArmRig.curl(model_r, ".R", RIGHT_CURL)
+	var sk_r := ArmRig.skeleton(model_r)
+	var thumb_i := sk_r.find_bone("DEF-thumb.01.R")
+	if SHOW_GUN and thumb_i != -1:
+		sk_r.set_bone_pose_rotation(thumb_i, sk_r.get_bone_pose_rotation(thumb_i)
+				* Quaternion.from_euler(RIGHT_THUMB_AIM * (PI / 180.0)))
 	ArmRig.stretch_tips(model_r, ".R", tip_k)
 	ArmRig.add_claws(model_r, ".R", claw_len, claw)
 	_skin_model(model_r, skin)

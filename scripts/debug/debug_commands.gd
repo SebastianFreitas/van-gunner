@@ -210,8 +210,9 @@ func _cmd_help(_args: Array) -> String:
 		+ "  parts [n]       add Rare Parts (meta schematic currency)\n"
 		+ "  tree_reset      wipe the schematic back to origin (keeps parts)\n"
 		+ "  facade [sub]    street facade debug (try facade help)\n"
-		+ "  arms cam <view>  frame the first-person arms (front|side|left|top|down|off)\n"
+		+ "  arms cam <view>  frame the first-person arms (front|side|left|top|off)\n"
 		+ "  arms reload <t>  freeze the reload pose at 0..1 (off to release)\n"
+		+ "  arms fit         print the right thumb's clearance to the gun parts\n"
 		+ "  walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street\n"
 		+ "  Tab            autocomplete command or item id"
 	) % ", ".join(names)
