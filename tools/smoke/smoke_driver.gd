@@ -78,6 +78,11 @@ func _run() -> void:
 		await _shots.van_views_closeups()
 		await _shots.van_views_gaps()
 		await _shots.arm_views()
+		await get_tree().process_frame
+		var frame_line: String = DebugCommands.run("arms frame")
+		_log(frame_line)
+		if frame_line.begins_with("FRAME ERR"):
+			_fail(frame_line)
 		_shots.unpin_van(pinned)
 
 	var van := get_tree().get_first_node_in_group(&"van_run")

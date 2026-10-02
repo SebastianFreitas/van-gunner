@@ -6,6 +6,7 @@ render_mode diffuse_burley, specular_schlick_ggx;
 // cylinders show no seam; seed_offset shifts the noise so two limbs on one recipe differ.
 
 #include "res://scenes/shaders/grime.gdshaderinc"
+#include "res://scenes/player/viewmodel_fov.gdshaderinc"
 
 uniform vec3 base_color : source_color = vec3(0.22, 0.26, 0.21);
 uniform vec3 shade_color : source_color = vec3(0.11, 0.14, 0.12);
@@ -55,6 +56,9 @@ void vertex() {
 	obj_pos = rest_data.xyz;
 	obj_normal = use_rest_pos ? CUSTOM2.xyz : NORMAL;
 	vein_data = CUSTOM0;
+	if (!IN_SHADOW_PASS) {
+		apply_viewmodel_fov(PROJECTION_MATRIX);
+	}
 }
 
 float tri_fbm(vec3 p, vec3 w, float scale) {

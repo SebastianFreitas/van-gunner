@@ -4,6 +4,7 @@ extends RefCounted
 const _Fit := preload("res://scripts/debug/debug_arms_fit.gd")
 const _GearFit := preload("res://scripts/debug/debug_arms_gear_fit.gd")
 const _HandsCheck := preload("res://scripts/debug/debug_arms_hands.gd")
+const _Frame := preload("res://scripts/debug/debug_arms_frame.gd")
 
 const CAM_NAME := &"ArmsDebugCam"
 ## Camera offsets from the focus point in Weapon space (metres); `left` aims at the left hand,
@@ -19,7 +20,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms hands | arms dress <gear|rags|none>"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms hands | arms dress <gear|rags|none> | arms fov [deg] | arms frame"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -72,6 +73,19 @@ func cmd_arms(args: Array) -> String:
 		ArmsBuilder.dress_style = StringName(arg)
 		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
 		return "arms dress: " + arg
+	if args[0] == "fov":
+		if args.size() < 2:
+			return "arms fov %.1f (default %.1f, 0 = world camera)" % [
+				vm.viewmodel_fov, vm.VIEWMODEL_FOV]
+		var arg := str(args[1])
+		if not arg.is_valid_float() or float(arg) < 0.0 or float(arg) > 120.0:
+			return USAGE
+		vm.set_viewmodel_fov(float(arg))
+		return "arms fov -> %.1f" % float(arg)
+	if args[0] == "frame":
+		if vm.get_parent().get_node_or_null(NodePath(CAM_NAME)) != null:
+			return "FRAME n/a (arms cam on; run arms cam off)"
+		return _Frame.new().run(vm)
 	if args[0] == "fit":
 		return _Fit.new().run(vm)
 	if args[0] == "gear":
@@ -143,9 +157,12 @@ func _cam(vm: Node, view: StringName) -> String:
 	if view == &"off":
 		if player_cam != null:
 			player_cam.make_current()
+		vm.set_viewmodel_fov(vm.viewmodel_fov)
 		return "arms cam off"
 	if not VIEWS.has(view):
 		return USAGE
+	# The debug cameras look at the arms from outside; the player-camera FOV override would zoom them.
+	ViewmodelFov.apply(vm.get_node("Rig"), 0.0)
 	var cam := Camera3D.new()
 	cam.name = CAM_NAME
 	cam.fov = 50.0

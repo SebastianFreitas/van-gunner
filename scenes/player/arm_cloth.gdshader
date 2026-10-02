@@ -7,6 +7,7 @@ render_mode cull_disabled, diffuse_burley, specular_schlick_ggx;
 // edge is 0 at a torn edge and rises to 1 inside the cloth.
 
 #include "res://scenes/shaders/grime.gdshaderinc"
+#include "res://scenes/player/viewmodel_fov.gdshaderinc"
 
 // The three tints are sRGB values: source_color makes Godot convert them to linear.
 uniform vec3 base_tint : source_color = vec3(0.20, 0.18, 0.13);
@@ -29,6 +30,9 @@ void vertex() {
 	// A mesh without the chart would discard everything at e = 0: render a flat worn tint instead.
 	if (dot(CUSTOM0, CUSTOM0) == 0.0) {
 		cloth.w = 1.0;
+	}
+	if (!IN_SHADOW_PASS) {
+		apply_viewmodel_fov(PROJECTION_MATRIX);
 	}
 }
 

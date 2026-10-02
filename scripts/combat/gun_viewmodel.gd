@@ -6,6 +6,8 @@ const ArmWeave := preload("res://scripts/player/arms/arm_weave.gd")
 const ArmKick := preload("res://scripts/player/arms/arm_kick.gd")
 
 const RIG_SCALE := 0.18
+## Vertical FOV the arms and gun draw with (the world camera is 78); 0 = the camera's own.
+const VIEWMODEL_FOV := 50.0
 const RELOAD_ROLL := -35.0 * PI / 180.0
 const RELOAD_DIP := 0.1  ## virtual metres
 const SWAY_MAX := 2.0 * PI / 180.0  ## radians, cap per axis
@@ -35,6 +37,8 @@ var debug_reload_t := -1.0
 var debug_weave_t := -1.0
 ## >= 0 pins one shot's kick at this time, from arms shot.
 var debug_shot_t := -1.0
+## Current viewmodel FOV in degrees, reapplied after every `rebuild_arms`.
+var viewmodel_fov := VIEWMODEL_FOV
 @onready var _rig: Node3D = $Rig
 var _look: VanLook
 var _roots := {}
@@ -92,7 +96,14 @@ func rebuild_arms(seed_value: int) -> void:
 	_weave = ArmWeave.new(_arm_model("right_root"), _arm_model("left_root"), seed_value,
 			ArmsBuilder.SHOW_GUN)
 	_kick = ArmKick.new(_arm_model("right_root"), _roots.get("gun_root") as Node3D)
+	ViewmodelFov.apply(_rig, viewmodel_fov)
 	_apply()
+
+
+## Sets the viewmodel FOV on the arms and gun now and for later rebuilds; 0 = the camera's own.
+func set_viewmodel_fov(fov_deg: float) -> void:
+	viewmodel_fov = maxf(fov_deg, 0.0)
+	ViewmodelFov.apply(_rig, viewmodel_fov)
 
 
 ## The glb model under an arm root (the child that has a skeleton), or null.

@@ -68,7 +68,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 			"facade":
 				matches = _filter_prefix(_facade.sub_commands(), "")
 			"arms":
-				matches = _filter_prefix(["cam", "reload", "dress", "gear"], "")
+				matches = _filter_prefix(["cam", "reload", "dress", "gear", "fov", "frame"], "")
 			_:
 				matches = []
 	elif parts[0] == "give" or parts[0] == "spawn":
@@ -99,7 +99,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 	elif parts[0] == "facade":
 		matches = _filter_prefix(_facade.sub_commands(), partial)
 	elif parts[0] == "arms":
-		matches = _filter_prefix(["cam", "reload", "dress", "gear"], partial)
+		matches = _filter_prefix(["cam", "reload", "dress", "gear", "fov", "frame"], partial)
 	else:
 		matches = []
 
@@ -215,6 +215,8 @@ func _cmd_help(_args: Array) -> String:
 		+ "  arms fit         print the right thumb's clearance to the gun parts\n"
 		+ "  arms dress <style>  worn gear style (gear|rags|none), rebuilds the arms\n"
 		+ "  arms gear        count skin vertices poking through the sleeves over weave, kick, reload\n"
+		+ "  arms fov [deg]  viewmodel FOV (50 default, 0 = world camera)\n"
+		+ "  arms frame  screen share of arms+gun at the player camera\n"
 		+ "  arms thumbs      print each thumb's angle to the index finger and its size next to it\n"
 		+ "  walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street\n"
 		+ "  Tab            autocomplete command or item id"
