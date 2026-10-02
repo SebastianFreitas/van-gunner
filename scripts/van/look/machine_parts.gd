@@ -122,10 +122,15 @@ static func belt(parent: Node3D, from: Vector3, to: Vector3, mat: Material,
 		var dir_n := dir.normalized()
 		var rise := Vector3(0.0, (radius_a + radius_b) * 0.5, 0.0)
 		var strip := _box(Vector3(0.02, 0.02, dir.length()))
+		# RIGHT is colinear with an X-run belt; UP * sign(x) yields the same basis Godot's
+		# fallback did (x axis BACK), without its warning.
+		var up := Vector3.RIGHT
+		if up.cross(dir_n).is_zero_approx():
+			up = Vector3.UP * signf(dir_n.x)
 		var top := _mesh(root, "BeltTop", strip, mat, dir * 0.5 + rise)
-		top.basis = Basis.looking_at(dir_n, Vector3.RIGHT)
+		top.basis = Basis.looking_at(dir_n, up)
 		var bottom := _mesh(root, "BeltBottom", strip, mat, dir * 0.5 - rise)
-		bottom.basis = Basis.looking_at(dir_n, Vector3.RIGHT)
+		bottom.basis = Basis.looking_at(dir_n, up)
 	parent.add_child(root)
 	return root
 
