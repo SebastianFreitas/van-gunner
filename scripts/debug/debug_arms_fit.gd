@@ -4,9 +4,17 @@ extends RefCounted
 ## the arms and print the fit again.
 
 
-## The readout, ending FIT OK or FIT CLIP <n> and a DRESS line.
-## Read-only readout of where the right thumb sits against the gun's steel and rubber parts,
-## in palm lengths, so a thumb pose can be tuned without a screenshot per try.
+## Gap the thumb's skin must keep from a gun box, in palm lengths: a gripping thumb touches the
+## steel, so only a near-touch is asked for.
+const CLEARANCE_P := 0.03
+
+## Depth past which a buried dressing vertex counts; looser than CLEARANCE_P because the
+## palm-side bands sit inside the grip where the palm does.
+const DRESS_DEPTH_P := 0.10
+
+
+## Read-only readout of the right thumb against the gun's steel and rubber parts, in palm lengths,
+## to tune a pose without a screenshot per try, ending FIT OK or FIT CLIP <n> and a DRESS line.
 func run(vm: Node) -> String:
 	var roots := vm.get("_roots") as Dictionary
 	var right := roots.get("right_root") as Node3D
@@ -29,13 +37,25 @@ func run(vm: Node) -> String:
 	var hand_i := sk.find_bone("DEF-hand.R")
 	var hand_k := sk.get_bone_pose_scale(hand_i).y if hand_i != -1 else 1.0
 	var r_thumb := float(thumb.get(&"shaft", 0.0)) * hand_k
+	var r_tip := float(thumb.get(&"r3", 0.0)) * hand_k
+	if r_tip <= 0.0:
+		r_tip = r_thumb
 	var heads := {}
 	for n in ["thumb.01", "thumb.02", "thumb.03", "f_index.01"]:
 		var i := sk.find_bone("DEF-%s.R" % n)
 		if i == -1:
 			return "arms fit: bone " + n + " missing"
 		heads[n] = sk.global_transform * sk.get_bone_global_pose(i).origin
-	var tip: Vector3 = heads["thumb.03"] + (heads["thumb.03"] - heads["thumb.02"])
+	# The tube's tip vertex sits at bone-local (0, tip_len, 0) on .03, whose pose scale carries
+	# the hand scale and the tip stretch, so basis.y is deliberately not normalised.
+	var i03 := sk.find_bone("DEF-thumb.03.R")
+	var gp03 := sk.get_bone_global_pose(i03)
+	var tip_len := float(thumb.get(&"tip_len", 0.0))
+	var tip: Vector3
+	if tip_len > 0.0:
+		tip = sk.global_transform * (gp03.origin + gp03.basis.y * tip_len)
+	else:
+		tip = heads["thumb.03"] + (heads["thumb.03"] - heads["thumb.02"])
 	var pts := {"thumb.01": heads["thumb.01"], "thumb.02": heads["thumb.02"],
 			"thumb.03": heads["thumb.03"], "tip": tip}
 	var to_body := body.global_transform.affine_inverse()
@@ -54,17 +74,19 @@ func run(vm: Node) -> String:
 			if sd < best:
 				best = sd
 				part = part_name
-		var clear := (best - 0.10 * p - r_thumb) / p
+		var r := r_tip if key == "tip" else r_thumb
+		var clear := (best - CLEARANCE_P * p - r) / p
 		if clear < 0.0:
 			clips += 1
 		var b: Vector3 = (to_body * g) / p
 		lines.append("%s body/p (%.2f, %.2f, %.2f) nearest %s clearance/p %.2f"
 				% [key, b.x, b.y, b.z, part, clear])
+	lines.append("tip len / p %.2f" % (tip_len * hand_k / p))
 	lines.append("tip to index.01 / p %.2f" % (tip.distance_to(heads["f_index.01"]) / p))
 	# Dressing is judged by buried vertices, not boxes: a band hugging the gripping hand
 	# overlaps every gun box, and the palm-side bands sit inside the grip where the palm does,
 	# so only depths past the finger clearance count.
-	var dress_depth := 0.10 * p  # same scale as the finger clearance above
+	var dress_depth := DRESS_DEPTH_P * p  # looser than the thumb's clearance, see DRESS_DEPTH_P
 	var dress_clips := 0
 	var dress_pieces := 0
 	for att in sk.find_children("Dress_*", "BoneAttachment3D", true, false):
