@@ -215,7 +215,7 @@ budget above.
 Machines read as machines (owner play notes, 2026-09-26): 20+ parts of varied
 size, one desaturated accent colour each (generator safety orange, relay rack
 oxide green, bench oxblood and steel, hopper ochre), and a lamp you can point
-at that lights it (an `OmniLight3D` under a caged trouble lamp or arm lamp,
+at that lights it (an `OmniLight3D` under a caged trouble lamp,
 energy 0.35 to 0.9, range 1.6 to 2.4, no shadow). Cables have logic: each one
 runs from a machine's `PowerPort` to another's along a trunk, with junction
 boxes at joins and clamps or tape along the way; nothing hangs from nowhere,

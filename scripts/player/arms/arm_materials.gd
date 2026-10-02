@@ -80,11 +80,6 @@ static func gear_cloth(rng: RandomNumberGenerator) -> ShaderMaterial:
 	return mat
 
 
-static func pipe(seed_offset: float) -> ShaderMaterial:
-	return surface(Color(0.14, 0.14, 0.15), Color(0.09, 0.09, 0.10), Color(0.08, 0.08, 0.06),
-			60.0, 6.0, 0.0, 0.7, 0.82, 0.3, seed_offset)
-
-
 static func claw() -> StandardMaterial3D:
 	return MachineParts.dark(Color(0.08, 0.07, 0.06))
 
@@ -98,18 +93,6 @@ static func tape(rng: RandomNumberGenerator) -> StandardMaterial3D:
 ## Grip panels and the bore: dark rubber.
 static func grip_rubber() -> StandardMaterial3D:
 	return MachineParts.dark(Color(0.07, 0.07, 0.065))
-
-
-static func lamp_body() -> StandardMaterial3D:
-	return MachineParts.dark(Color(0.22, 0.22, 0.20))
-
-
-const BULB_GLOW := 1.2## emission multiplier; lamp heads may cross the 1.1 glow threshold
-
-
-## Trouble-lamp bulb: the same emissive recipe as the van's machine lamps, warm like the arm light.
-static func bulb() -> StandardMaterial3D:
-	return MachineParts.emissive(Color(1.0, 0.8, 0.55), BULB_GLOW)
 
 
 ## Worn brown work glove, fingerless.

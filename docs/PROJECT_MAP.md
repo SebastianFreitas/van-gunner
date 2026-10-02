@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-355 GDScript files, 56837 lines.
+354 GDScript files, 56672 lines.
 
 ### `scenes/corridor/`
 
@@ -403,7 +403,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `gun_controller.gd` | `GunController` | 317 | Hit/miss for the HUD once the first pellet resolves. |
 | `gun_stats.gd` | `GunStats` | 46 | Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance. |
 | `gun_stats_controller.gd` | `GunStatsController` | 153 | Rebuilds a gun's effective stats from its base stats, class and modifiers. |
-| `gun_viewmodel.gd` | `GunViewmodel` | 292 | First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; shot kick and reload cant. |
+| `gun_viewmodel.gd` | `GunViewmodel` | 273 | First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; shot kick and reload cant. |
 | `projectile.gd` | `Projectile` | 341 | A bullet: flies, ricochets off scenery and resolves damage on hit. |
 | `projectile_pool.gd` | — | 82 | Reuses Projectile nodes to avoid instantiate/free churn during heavy fire. |
 | `stat_modifier.gd` | `StatModifier` | 14 | A single additive or multiplicative modifier applied to a named gun stat. |
@@ -550,8 +550,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `arm_bulk.gd` | `ArmBulk` | 232 | Inflates a skinned arm mesh around each bone's axis so the limbs read thick. |
 | `arm_dress.gd` | `ArmDress` | 233 | Dresses the goblin's arms from the van seed: fingerless glove, rings and tape on the gun hand, boxer's wrap, forearm bandage and chain on the free hand, cut-of… |
 | `arm_kick.gd` | — | 213 | Shot impact on the goblin arms: a time-sampled kick (root slide, forearm lift about the elbow, hand and gun flex about the wrist, trigger pull and grip squeeze… |
-| `arm_lamp_kit.gd` | `ArmLampKit` | 115 | Builds the goblin's scavenged trouble lamp on the right forearm and returns its bulb position. |
-| `arm_materials.gd` | `ArmMaterials` | 165 | Materials for the first-person goblin arms and pipe rifle: grime-shaded skin, cloth and steel, flat darks for the rest. |
+| `arm_materials.gd` | `ArmMaterials` | 148 | Materials for the first-person goblin arms and pipe rifle: grime-shaded skin, cloth and steel, flat darks for the rest. |
 | `arm_muscle.gd` | `ArmMuscle` | 161 | Seeded muscle masses, rebuilt normals and vein coordinates for the inflated arm mesh. |
 | `arm_parts.gd` | `ArmParts` | 46 | Low-poly primitives for the first-person arms: meshes, cylinders, boxes and tapered limbs. |
 | `arm_refine.gd` | `ArmRefine` | 128 | Midpoint-subdivides the imported arm mesh once at load, so the gain ramp and the muscle lumps have rings to shape instead of one step between the mid-forearm a… |
@@ -562,7 +561,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `arm_tattoo_font.gd` | `ArmTattooFont` | 184 | Block-capital stroke font: lays a short text out as line segments for the arm tattoo shader. |
 | `arm_weave.gd` | — | 239 | Drives the goblin's idle hands each frame: the witch-finger weave, and a grip idle on the gun hand when the gun is shown. |
 | `arm_wrap.gd` | `ArmWrap` | 249 | Shrinkwrap bands: low-poly tubes built from the skinned arm mesh's own cross-sections, so wraps, gloves, cuffs and rings hug the hand instead of floating as cy… |
-| `arms_builder.gd` | `ArmsBuilder` | 192 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
+| `arms_builder.gd` | `ArmsBuilder` | 178 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
 | `held_gun.gd` | `HeldGun` | 133 | The Desert-Eagle-style pistol the arms hold: a shared holder (grip, guard, trigger, frame) plus a per-gun barrel block. |
 
 ### `scripts/stops/`

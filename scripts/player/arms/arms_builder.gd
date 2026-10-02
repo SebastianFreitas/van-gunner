@@ -41,9 +41,6 @@ const LEFT_CURL := {
 	&"thumb": Vector3(10, 15, 10),
 }
 const ELBOW_JITTER := 0.03
-## Bare forearm radii in model units before bulk; times the seeded scale and ArmBulk's gain where used.
-const FOREARM_R_ELBOW := 0.075
-const FOREARM_R_WRIST := 0.06
 
 ## Hand dressing: `&"gear"` (a wrecked T-shirt sleeve on each arm plus the skin layers),
 ## `&"rags"` (the old rag and glove dress) or `&"none"` (bare arms). Set by the `arms dress`
@@ -108,12 +105,6 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	ArmRig.add_claws(model_r, ".R", claw_len, claw)
 	_skin_model(model_r, skin_r)
 
-	# s is 1.0: the lamp attaches inside the model that `s` already scales.
-	var lamp_t := 0.5 + 0.5 * ArmLampKit.MOUNT_T
-	var r_mount := _fore_r(lerpf(FOREARM_R_ELBOW, FOREARM_R_WRIST, lamp_t),
-			lerpf(ArmBulk.FOREARM_ELBOW_GAIN, ArmBulk.FOREARM_WRIST_GAIN, lamp_t), 1.0, bulk)
-	var bulb := ArmLampKit.build(model_r, r_mount, rng_for(seed_value, &"arm_lamp"))
-	# After the lamp so the dress stream never shifts the lamp's.
 	match dress_style:
 		&"rags":
 			ArmDress.right(model_r, rng_for(seed_value, &"arm_dress_r"))
@@ -169,7 +160,6 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 		"right_root": right,
 		"gun_root": gun_root,
 		"left_wrist": l["wrist"],
-		"lamp_local": bulb,
 	}
 
 
@@ -178,10 +168,6 @@ static func _skin_model(model: Node3D, skin: Material) -> void:
 	for c in ArmRig.skeleton(model).get_children():
 		if c is MeshInstance3D:
 			(c as MeshInstance3D).material_override = skin
-
-
-static func _fore_r(base: float, gain: float, s: float, bulk: float) -> float:
-	return base * s * (1.0 + (gain - 1.0) * bulk)
 
 
 static func _jitter(rng: RandomNumberGenerator) -> Vector3:

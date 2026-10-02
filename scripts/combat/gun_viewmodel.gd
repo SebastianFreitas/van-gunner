@@ -6,10 +6,6 @@ const ArmWeave := preload("res://scripts/player/arms/arm_weave.gd")
 const ArmKick := preload("res://scripts/player/arms/arm_kick.gd")
 
 const RIG_SCALE := 0.18
-const LAMP_COLOR := Color(1.0, 0.93, 0.82)
-const LAMP_ENERGY := 0.45
-const LAMP_RANGE := 1.3
-const LAMP_ATTENUATION := 0.8  ## flatter than 1 spreads the glow, used only if the bulb still blows out
 const RELOAD_ROLL := -35.0 * PI / 180.0
 const RELOAD_DIP := 0.1  ## virtual metres
 const SWAY_MAX := 2.0 * PI / 180.0  ## radians, cap per axis
@@ -40,12 +36,10 @@ var debug_weave_t := -1.0
 ## >= 0 pins one shot's kick at this time, from arms shot.
 var debug_shot_t := -1.0
 @onready var _rig: Node3D = $Rig
-var _lamp: OmniLight3D
 var _look: VanLook
 var _roots := {}
 ## Seed of the last `rebuild_arms`, so the `arms dress` console command can rebuild the same look.
 var _arms_seed := 0
-var _lamp_local := Vector3.ZERO
 var _reload_t := 0.0
 var _reloading := false
 var _reload_tween: Tween
@@ -67,16 +61,6 @@ var _bob_amount := 0.0  ## 0..1 eased walking factor
 func _ready() -> void:
 	add_to_group(&"gun_viewmodel")
 	_rig.scale = Vector3.ONE * RIG_SCALE
-	# Built and configured before add_child: light_cull_mask must never change on a live light.
-	_lamp = OmniLight3D.new()
-	_lamp.name = "ArmLamp"
-	_lamp.light_color = LAMP_COLOR
-	_lamp.light_energy = LAMP_ENERGY
-	_lamp.omni_range = LAMP_RANGE
-	_lamp.omni_attenuation = LAMP_ATTENUATION
-	_lamp.light_cull_mask = VanLighting.LAYER_VAN_INTERIOR
-	_lamp.shadow_enabled = false
-	add_child(_lamp)
 	# The Player node sits before VanLook in van.tscn, so wait a frame for the group.
 	await get_tree().process_frame
 	if not is_inside_tree():
@@ -105,7 +89,6 @@ func rebuild_arms(seed_value: int) -> void:
 		if markings != null:
 			van_name = markings.van_name
 	_roots = ArmsBuilder.build(_rig, seed_value, van_name)
-	_lamp_local = _roots.get("lamp_local", Vector3.ZERO) as Vector3
 	_weave = ArmWeave.new(_arm_model("right_root"), _arm_model("left_root"), seed_value,
 			ArmsBuilder.SHOW_GUN)
 	_kick = ArmKick.new(_arm_model("right_root"), _roots.get("gun_root") as Node3D)
@@ -287,5 +270,3 @@ func _apply() -> void:
 		right.transform = right_x
 	if left != null:
 		left.transform = m * kick_l * Transform3D(tilt_l, off) * drift_l
-	if _lamp != null and _rig != null:
-		_lamp.position = _rig.transform * (right_x * _lamp_local)
