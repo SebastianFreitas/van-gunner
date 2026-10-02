@@ -39,6 +39,7 @@ static func build(rng: RandomNumberGenerator, palm_len: float = 0.22) -> Node3D:
 	var p := palm_len if palm_len > 0.0 else 0.22
 	var root := Node3D.new()
 	root.name = "Gun"
+	root.set_meta(&"palm_len", p)
 	var body := Node3D.new()
 	body.name = "Body"
 	body.transform = gun_xform()
@@ -58,6 +59,12 @@ static func build(rng: RandomNumberGenerator, palm_len: float = 0.22) -> Node3D:
 	root.set_meta(&"lamp_local",
 			gun_xform() * Vector3(-0.19 * p, y0 - 0.10 * p, 0.20 * p - 2.0 * p))
 	return root
+
+
+## The palm length the gun was built with, scaled by the hand scale, so every gun point
+## (muzzle, fore-end, mag slap, lamp) is computed from the same number as the geometry.
+static func palm_len_of(gun_root: Node3D) -> float:
+	return float(gun_root.get_meta(&"palm_len", 0.22))
 
 
 ## The grip the right hand closes on: steel core, rubber panels with screws, a floor plate

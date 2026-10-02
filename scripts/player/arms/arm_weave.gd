@@ -15,11 +15,17 @@ const SWING := Vector3(14.0, 22.0, 18.0)  ## degrees of weave around BASE per jo
 const THUMB_BASE := Vector3(4.0, 10.0, 18.0)  ## degrees flex of thumb .01/.02/.03: tip bent
 const THUMB_SWING := Vector3(3.0, 6.0, 9.0)
 const THUMB_SPREAD := 42.0  ## degrees the thumb .01 bone is held splayed from the index
+const THUMB_FAN := 1.5 * SPLAY  ## the index fans this far toward the thumb; the thumb follows
 ## Axis and sign settled in round 9 by a six-shot top-view sheet (goblin-weave-research.md).
 const THUMB_SPREAD_SIGN := -1.0  ## settled by the round 9 axis sheet (top view, 3 axes x 2 signs)
 const THUMB_SPREAD_AXIS := Vector3.RIGHT  ## the thumb .01 axis that splays it from the index
 const THUMB_ARC := 7.0  ## degrees of slow opposition swing on the spread, toward the index
 const SPREAD := 6.0  ## degrees of side sway on each .01 bone, alternating sign
+## Static abduction in degrees between neighbouring fingers about Vector3.BACK on each .01,
+## so fingers twice as thick keep their gaps.
+const SPLAY := 14.0
+const SPLAY_SIGN := 1.0  ## flips the splay if the rig's Z points the other way
+const GRIP_SPLAY_K := 0.75  ## share of the splay the gripping hand uses
 const WRIST_CIRCLE := 8.0  ## degrees, wrist pitch and yaw 90 deg apart
 const WRIST_ROLL := 6.0  ## degrees, slow roll at half speed
 const RIGHT_WRIST_BASE := Vector3(0.0, 0.0, 0.0)  ## degrees XYZ on top of the posed hand
@@ -50,8 +56,8 @@ var _grip_right := false
 ## Right-hand grip joints {bone, base, finger, j} and their skeleton (grip mode only).
 var _grip: Array[Dictionary] = []
 var _grip_sk: Skeleton3D = null
-## One entry per hand: {sk, suffix, phase, wrist, wrist_pose, wrist_base, joints}, where each
-## joint is {bone, rest, finger, j} and finger 0..3 = index..pinky, 4 = thumb.
+## One entry per hand: {sk, suffix, phase, wrist, wrist_pose, wrist_base, joints, side_sign},
+## where each joint is {bone, rest, finger, j} and finger 0..3 = index..pinky, 4 = thumb.
 var _hands: Array[Dictionary] = []
 ## Drift phase and last drift transform per arm root: 0 right, 1 left.
 var _phase: Array[float] = [0.0, PI]
@@ -115,7 +121,9 @@ func _add_hand(model: Node3D, suffix: String, wrist_base: Vector3, phase: float)
 	else:
 		wrist_pose = sk.get_bone_pose_rotation(wrist)
 	_hands.append({&"sk": sk, &"suffix": suffix, &"phase": phase, &"wrist": wrist,
-			&"wrist_pose": wrist_pose, &"wrist_base": wrist_base, &"joints": joints})
+			&"wrist_pose": wrist_pose, &"wrist_base": wrist_base, &"joints": joints,
+			# The left rig's Z points the other way: the same splay would close its fingers.
+			&"side_sign": 1.0 if suffix == ".R" else -1.0})
 
 
 ## Poses every finger and wrist for time `t` (seconds). Allocation-free per frame.
@@ -129,6 +137,7 @@ func update(t: float) -> void:
 			continue
 		var phase: float = hand[&"phase"]
 		var hand_side := 0 if hand[&"suffix"] == ".R" else 1
+		var side_sign: float = hand[&"side_sign"]
 		var f := _flourish(t, hand_side)
 		for joint in hand[&"joints"]:
 			var finger: int = joint[&"finger"]
@@ -148,12 +157,13 @@ func update(t: float) -> void:
 					deg_to_rad(deg) * ArmRig.CURL_SIGN)
 			if j == 0 and finger == 4:
 				# Hold the thumb abducted from the palm and swing it slowly toward the index.
-				rot = rot * Quaternion(THUMB_SPREAD_AXIS, deg_to_rad((THUMB_SPREAD
+				rot = rot * Quaternion(THUMB_SPREAD_AXIS, deg_to_rad((THUMB_SPREAD + THUMB_FAN
 						+ THUMB_ARC * sin(a * 0.5 + 0.9)) * THUMB_SPREAD_SIGN * lerpf(1.0, 1.25, f)))
 			if j == 0 and finger < 4:
 				var side := 1.0 if finger % 2 == 0 else -1.0
-				rot = rot * Quaternion(Vector3.BACK,
-						deg_to_rad(SPREAD * sin(a + 0.7) * side * lerpf(1.0, OPEN_SPREAD_K, f)))
+				var fan := (float(finger) - 1.5) * SPLAY * SPLAY_SIGN * side_sign
+				rot = rot * Quaternion(Vector3.BACK, deg_to_rad(fan
+						+ SPREAD * sin(a + 0.7) * side * lerpf(1.0, OPEN_SPREAD_K, f)))
 			sk.set_bone_pose_rotation(joint[&"bone"], rot)
 		var wrist: int = hand[&"wrist"]
 		if wrist == -1:
@@ -191,8 +201,11 @@ func _update_grip(t: float, w: float) -> void:
 		else:
 			deg = THUMB_GRIP * _wave(w * 0.45 + 2.0)
 		var base: Quaternion = joint[&"base"]
-		_grip_sk.set_bone_pose_rotation(joint[&"bone"],
-				base * Quaternion(Vector3.RIGHT, deg_to_rad(deg) * ArmRig.CURL_SIGN))
+		var rot := base * Quaternion(Vector3.RIGHT, deg_to_rad(deg) * ArmRig.CURL_SIGN)
+		if j == 0 and finger < 4:
+			rot = rot * Quaternion(Vector3.BACK,
+					deg_to_rad((float(finger) - 1.5) * SPLAY * SPLAY_SIGN * GRIP_SPLAY_K))
+		_grip_sk.set_bone_pose_rotation(joint[&"bone"], rot)
 
 
 ## Slow whole-arm figure-eight drift of the last update (0 right, 1 left), in rig space.

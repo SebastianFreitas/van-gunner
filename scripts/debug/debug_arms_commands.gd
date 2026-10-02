@@ -2,21 +2,23 @@ extends RefCounted
 ## Debug console `arms`: frames the first-person arms from fixed angles and freezes poses.
 
 const _GearFit := preload("res://scripts/debug/debug_arms_gear_fit.gd")
+const _HandsCheck := preload("res://scripts/debug/debug_arms_hands.gd")
 
 const CAM_NAME := &"ArmsDebugCam"
 ## Camera offsets from the focus point in Weapon space (metres); `left` aims at the left hand,
-## `elbow` at the left elbow, from below and to its left.
+## `elbow` at the left elbow, from below and to its left. The hands are half again as big, so
+## the close-ups step back.
 const VIEWS := {
-	&"front": Vector3(0.0, 0.03, -0.32),
-	&"side": Vector3(-0.3, 0.05, -0.05),
-	&"left": Vector3(0.05, 0.08, -0.3),
-	&"top": Vector3(0.0, 0.3, 0.02),
-	&"elbow": Vector3(-0.1, -0.12, -0.28),
+	&"front": Vector3(0.0, 0.042, -0.448),
+	&"side": Vector3(-0.42, 0.07, -0.07),
+	&"left": Vector3(0.07, 0.112, -0.42),
+	&"top": Vector3(0.0, 0.42, 0.028),
+	&"elbow": Vector3(-0.14, -0.168, -0.392),
 }
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms gear | arms thumbs | arms dress <gear|rags|none>"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms gear | arms thumbs | arms hands | arms dress <gear|rags|none>"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -75,6 +77,8 @@ func cmd_arms(args: Array) -> String:
 		return _GearFit.new(host).run(vm)
 	if args[0] == "thumbs":
 		return _thumbs(vm)
+	if args[0] == "hands":
+		return _HandsCheck.new().run(vm)
 	return USAGE
 
 
@@ -140,7 +144,13 @@ func _fit(vm: Node) -> String:
 		return "arms fit: no gun"
 	var sk := ArmRig.skeleton(model)
 	sk.force_update_all_bone_transforms()
-	var p := ArmRig.palm_len(model)
+	var p := HeldGun.palm_len_of(gun)
+	# A thick thumb buried in the gun is a clip: the point clears by its shaft radius too.
+	var fingers: Dictionary = model.get_meta(&"fingers", {})
+	var thumb: Dictionary = fingers.get(&"thumb", {})
+	var hand_i := sk.find_bone("DEF-hand.R")
+	var hand_k := sk.get_bone_pose_scale(hand_i).y if hand_i != -1 else 1.0
+	var r_thumb := float(thumb.get(&"shaft", 0.0)) * hand_k
 	var heads := {}
 	for n in ["thumb.01", "thumb.02", "thumb.03", "f_index.01"]:
 		var i := sk.find_bone("DEF-%s.R" % n)
@@ -166,7 +176,7 @@ func _fit(vm: Node) -> String:
 			if sd < best:
 				best = sd
 				part = part_name
-		var clear := (best - 0.10 * p) / p
+		var clear := (best - 0.10 * p - r_thumb) / p
 		if clear < 0.0:
 			clips += 1
 		var b: Vector3 = (to_body * g) / p
