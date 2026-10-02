@@ -14,8 +14,9 @@ const THUMB_R := 1.35
 
 
 ## Builds `Skin_fingers` under the arm skeleton and returns, per finger in `ArmRig.FINGERS`,
-## {tip_len, bed_r, dorsal, lateral, crook} of its `.03` bone (bind units, bone-local axes).
-static func build(model: Node3D, suffix: String, gaunt: float, rng: RandomNumberGenerator,
+## {tip_len, bed_r, dorsal, lateral, crook, shaft, length, r2, r3} of its `.03` bone (bind
+## units, bone-local axes). `girth` is the shaft radius as a share of the glb finger root radius.
+static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumberGenerator,
 		mat: Material) -> Dictionary:
 	var sk := ArmRig.skeleton(model)
 	var mi := _glb_mesh(sk)
@@ -31,8 +32,8 @@ static func build(model: Node3D, suffix: String, gaunt: float, rng: RandomNumber
 	var ref_r := 0.0
 	for f in ArmRig.FINGERS:
 		# Drawn even when the finger is skipped, so one missing bone keeps the others' crooks.
-		var cr := rng.randf_range(-0.30, 0.30) * (0.5 if f == &"thumb" else 1.0)
-		var fg := _finger(mi, sk, own, f, suffix, gaunt, cr, ref_r)
+		var cr := rng.randf_range(-0.40, 0.40) * (0.5 if f == &"thumb" else 1.0)
+		var fg := _finger(mi, sk, own, f, suffix, girth, cr, ref_r)
 		if fg.is_empty():
 			continue
 		if f == &"f_index":
@@ -60,7 +61,7 @@ static func build(model: Node3D, suffix: String, gaunt: float, rng: RandomNumber
 
 ## One finger's rings, weights and info, or {} when one of its bones is missing.
 static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: StringName,
-		suffix: String, gaunt: float, cr: float, ref_r: float) -> Dictionary:
+		suffix: String, girth: float, cr: float, ref_r: float) -> Dictionary:
 	var thumb := f == &"thumb"
 	# The thumb's tube covers .02 and .03: its .01 is the palm's thumb meat.
 	var first := 2 if thumb else 1
@@ -90,7 +91,7 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 	var r0 := _root_radius(root_pts, lens[first])
 	# The thumb is sized from the index's shaft, not its own thin glb root.
 	var use_ref := thumb and ref_r > 0.0
-	var rk := _radii(ref_r if use_ref else r0, gaunt, thumb, use_ref)
+	var rk := _radii(ref_r if use_ref else r0, girth, thumb, use_ref)
 	var shaft: PackedFloat32Array = rk[0]
 	var knob: PackedFloat32Array = rk[1]
 	var fg := {
@@ -122,6 +123,8 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 		&"crook": cr * shaft[2] + 0.3 * cr * shaft[3],
 		&"shaft": shaft[first],
 		&"length": tube_len,
+		&"r2": shaft[2],
+		&"r3": shaft[3],
 	}
 	return fg
 
@@ -192,21 +195,21 @@ static func _radius_at(prof: Array[Vector3], t: float) -> float:
 
 
 ## [shaft radii, knob radii] indexed by bone number 1..3 (0 unused, thumb has no 1).
-static func _radii(r0: float, gaunt: float, thumb: bool, ref: bool = false) -> Array:
+static func _radii(r0: float, girth: float, thumb: bool, ref: bool = false) -> Array:
 	var r := PackedFloat32Array([0.0, 0.0, 0.0, 0.0])
 	var k := PackedFloat32Array([0.0, 0.0, 0.0, 0.0])
 	if thumb:
-		# With `ref`, r0 is already the index's gaunt shaft radius.
-		r[2] = THUMB_R * r0 if ref else 1.1 * gaunt * r0
+		# With `ref`, r0 is already the index's shaft radius.
+		r[2] = THUMB_R * r0 if ref else 1.1 * girth * r0
 		r[3] = 0.90 * r[2]
-		k[2] = 1.22 * r[2]
+		k[2] = 1.28 * r[2]
 	else:
-		r[1] = gaunt * r0
+		r[1] = girth * r0
 		r[2] = 0.90 * r[1]
 		r[3] = 0.78 * r[1]
-		k[1] = 1.32 * r[1]
-		k[2] = 1.28 * r[2]
-	k[3] = (1.15 if thumb else 1.20) * r[3]
+		k[1] = 1.40 * r[1]
+		k[2] = 1.35 * r[2]
+	k[3] = (1.22 if thumb else 1.25) * r[3]
 	return [r, k]
 
 

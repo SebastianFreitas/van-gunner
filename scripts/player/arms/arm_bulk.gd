@@ -6,13 +6,14 @@ extends RefCounted
 const FOREARM_ELBOW_GAIN := 2.8
 ## Wrist:palm width should be about 0.75-0.8, not 1.0.
 const FOREARM_WRIST_GAIN := 2.1
-## Gain the forearm ramp ends at. Aimed at the measured first hand ring (1.34 at hand gain 1.7,
-## scaled to hand gain 1.9), not at the hand bone's nominal gain: hand vertices blend several
-## bones, so their ring sits well under the bone's own gain.
-const WRIST_END_GAIN := 1.5
+## Gain the forearm ramp ends at. Aimed at the first hand ring, not at the hand bone's nominal
+## gain: hand vertices blend several bones, so their ring sits well under the bone's own gain.
+## Raised from 1.5 with the hand gains (1.55 -> 1.85) for the monster hands (2026-10-02).
+const WRIST_END_GAIN := 1.8
 ## Extra on the palm gain over the knuckle half of each palm bone: the knuckle row is the widest
-## point of a hand. Neutral now: the procedural finger tubes' knobs replace the palm-end swell.
-const KNUCKLE_GAIN := 1.0
+## point of a hand. Only slightly above neutral: the procedural finger tubes' knobs carry most of
+## the knuckle swell.
+const KNUCKLE_GAIN := 1.15
 ## Fraction of the palm bone where the knuckle boost starts.
 const KNUCKLE_RAMP_START := 0.5
 ## Glb finger segments shrink to a thin core hidden inside the procedural finger tubes
@@ -32,14 +33,14 @@ const WRIST_RAMP_START := 0.5
 const GAIN: Array = [
 	["DEF-forearm", FOREARM_ELBOW_GAIN],
 	["DEF-upper_arm", 2.5],
-	["DEF-hand", 1.55],
+	["DEF-hand", 1.85],
 	# ".01" is the metacarpal (thenar mass), tapered to the tip.
-	["DEF-thumb.01", 1.5],
+	["DEF-thumb.01", 1.9],
 	["DEF-thumb.02", FINGER_CORE],
 	["DEF-thumb.03", FINGER_CORE],
-	["DEF-palm.01", 1.5],
-	["DEF-palm.04", 1.5],
-	["DEF-palm", 1.45],
+	["DEF-palm.01", 1.85],
+	["DEF-palm.04", 1.85],
+	["DEF-palm", 1.75],
 	["DEF-f_", 1.0],
 ]
 

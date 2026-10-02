@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-356 GDScript files, 57166 lines.
+358 GDScript files, 57391 lines.
 
 ### `scenes/corridor/`
 
@@ -431,8 +431,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
-| `debug_arms_commands.gd` | — | 296 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
+| `debug_arms_commands.gd` | — | 197 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
+| `debug_arms_fit.gd` | — | 172 | Debug console `arms fit`: the right thumb's clearance from the gun parts in palm lengths, plus `arms thumbaim\|thumbcurl\|wrist x y z`, which set the builder's l… |
 | `debug_arms_gear_fit.gd` | — | 290 | Debug `arms gear`: poses both arms through the weave, the shot kick and the reload, skins the arm and its sleeve on the CPU and counts skin vertices that poke… |
+| `debug_arms_hands.gd` | — | 99 | The monster-hand bar (hand as long as the forearm, finger shaft over a quarter of its length, neighbours not merged) measured on the posed skeleton. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
 | `debug_commands.gd` | — | 262 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
@@ -547,24 +549,24 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `arm_bulk.gd` | `ArmBulk` | 262 | Inflates a skinned arm mesh around each bone's axis so the limbs read thick. |
+| `arm_bulk.gd` | `ArmBulk` | 263 | Inflates a skinned arm mesh around each bone's axis so the limbs read thick. |
 | `arm_claw.gd` | `ArmClaw` | 55 | Swept goblin claw mesh: a thin nail plate that thickens into a horn, reaches past the fingertip and hooks toward the pad. |
 | `arm_dress.gd` | `ArmDress` | 233 | Dresses the goblin's arms from the van seed: fingerless glove, rings and tape on the gun hand, boxer's wrap, forearm bandage and chain on the free hand, cut-of… |
-| `arm_fingers.gd` | `ArmFingers` | 320 | Procedural finger tubes: per hand one skinned mesh of five bony finger tubes (knuckle knobs, thin shafts, flat pads, tapering tips, a seeded sideways crook) in… |
+| `arm_fingers.gd` | `ArmFingers` | 323 | Procedural finger tubes: per hand one skinned mesh of five bony finger tubes (knuckle knobs, thin shafts, flat pads, tapering tips, a seeded sideways crook) in… |
 | `arm_kick.gd` | — | 213 | Shot impact on the goblin arms: a time-sampled kick (root slide, forearm lift about the elbow, hand and gun flex about the wrist, trigger pull and grip squeeze… |
 | `arm_materials.gd` | `ArmMaterials` | 148 | Materials for the first-person goblin arms and pipe rifle: grime-shaded skin, cloth and steel, flat darks for the rest. |
 | `arm_muscle.gd` | `ArmMuscle` | 161 | Seeded muscle masses, rebuilt normals and vein coordinates for the inflated arm mesh. |
 | `arm_parts.gd` | `ArmParts` | 46 | Low-poly primitives for the first-person arms: meshes, cylinders, boxes and tapered limbs. |
 | `arm_refine.gd` | `ArmRefine` | 128 | Midpoint-subdivides the imported arm mesh once at load, so the gain ramp and the muscle lumps have rings to shape instead of one step between the mid-forearm a… |
-| `arm_rig.gd` | `ArmRig` | 218 | Skinned first-person arm model: spawn, two-bone reach to a wrist target, finger curl and claws. |
+| `arm_rig.gd` | `ArmRig` | 228 | Skinned first-person arm model: spawn, two-bone reach to a wrist target, finger curl and claws. |
 | `arm_skin_layers.gd` | `ArmSkinLayers` | 289 | Seeds one arm's skin-layer shader uniforms: scars, wounds, knuckle grazes, dirt, the van-name tattoo. |
 | `arm_skin_mesh.gd` | `ArmSkinMesh` | 268 | Builds skinned cloth meshes on an arm skeleton: ring frames, averaged ring weights, tube indices. |
 | `arm_sleeve.gd` | `ArmSleeve` | 181 | Builds the oversized torn T-shirt sleeve as a skinned tube on the upper arm, above the elbow. |
 | `arm_tattoo_font.gd` | `ArmTattooFont` | 184 | Block-capital stroke font: lays a short text out as line segments for the arm tattoo shader. |
-| `arm_weave.gd` | — | 239 | Drives the goblin's idle hands each frame: the witch-finger weave, and a grip idle on the gun hand when the gun is shown. |
+| `arm_weave.gd` | — | 252 | Drives the goblin's idle hands each frame: the witch-finger weave, and a grip idle on the gun hand when the gun is shown. |
 | `arm_wrap.gd` | `ArmWrap` | 249 | Shrinkwrap bands: low-poly tubes built from the skinned arm mesh's own cross-sections, so wraps, gloves, cuffs and rings hug the hand instead of floating as cy… |
-| `arms_builder.gd` | `ArmsBuilder` | 188 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
-| `held_gun.gd` | `HeldGun` | 133 | The Desert-Eagle-style pistol the arms hold: a shared holder (grip, guard, trigger, frame) plus a per-gun barrel block. |
+| `arms_builder.gd` | `ArmsBuilder` | 207 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
+| `held_gun.gd` | `HeldGun` | 140 | The Desert-Eagle-style pistol the arms hold: a shared holder (grip, guard, trigger, frame) plus a per-gun barrel block. |
 
 ### `scripts/stops/`
 

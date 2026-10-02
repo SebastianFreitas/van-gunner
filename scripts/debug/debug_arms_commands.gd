@@ -1,22 +1,25 @@
 extends RefCounted
 ## Debug console `arms`: frames the first-person arms from fixed angles and freezes poses.
 
+const _Fit := preload("res://scripts/debug/debug_arms_fit.gd")
 const _GearFit := preload("res://scripts/debug/debug_arms_gear_fit.gd")
+const _HandsCheck := preload("res://scripts/debug/debug_arms_hands.gd")
 
 const CAM_NAME := &"ArmsDebugCam"
 ## Camera offsets from the focus point in Weapon space (metres); `left` aims at the left hand,
-## `elbow` at the left elbow, from below and to its left.
+## `elbow` at the left elbow, from below and to its left. The hands are half again as big, so
+## the close-ups step back.
 const VIEWS := {
-	&"front": Vector3(0.0, 0.03, -0.32),
-	&"side": Vector3(-0.3, 0.05, -0.05),
-	&"left": Vector3(0.05, 0.08, -0.3),
-	&"top": Vector3(0.0, 0.3, 0.02),
-	&"elbow": Vector3(-0.1, -0.12, -0.28),
+	&"front": Vector3(0.0, 0.042, -0.448),
+	&"side": Vector3(-0.42, 0.07, -0.07),
+	&"left": Vector3(0.07, 0.112, -0.42),
+	&"top": Vector3(0.0, 0.42, 0.028),
+	&"elbow": Vector3(-0.14, -0.168, -0.392),
 }
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms gear | arms thumbs | arms dress <gear|rags|none>"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms hands | arms dress <gear|rags|none>"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -70,11 +73,15 @@ func cmd_arms(args: Array) -> String:
 		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
 		return "arms dress: " + arg
 	if args[0] == "fit":
-		return _fit(vm)
+		return _Fit.new().run(vm)
 	if args[0] == "gear":
 		return _GearFit.new(host).run(vm)
 	if args[0] == "thumbs":
 		return _thumbs(vm)
+	if args[0] == "hands":
+		return _HandsCheck.new().run(vm)
+	if args[0] == "thumbaim" or args[0] == "thumbcurl" or args[0] == "wrist":
+		return _Fit.new().tune(vm, str(args[0]), args.slice(1))
 	return USAGE
 
 
@@ -116,119 +123,13 @@ func _thumbs(vm: Node) -> String:
 			shaft = float(thumb[&"shaft"]) / float(index[&"shaft"])
 		if thumb.has(&"length") and index.has(&"length") and float(index[&"length"]) != 0.0:
 			len_x = float(thumb[&"length"]) / float(index[&"length"])
-		if shaft < 1.2 or (h == "L" and (angle < 60.0 or angle > 110.0)):
+		var bad_l := h == "L" and (angle < 60.0 or angle > 110.0)
+		var bad_r := h == "R" and (angle < 26.0 or angle > 56.0)
+		if shaft < 1.2 or bad_l or bad_r:
 			ok = false
 		lines.append("thumbs %s: angle %.0f shaft x%.2f len x%.2f" % [h, angle, shaft, len_x])
 	lines.append("THUMBS OK" if ok else "THUMBS CHECK")
 	return "\n".join(lines)
-
-
-## Read-only readout of where the right thumb sits against the gun's steel and rubber parts,
-## in palm lengths, so a thumb pose can be tuned without a screenshot per try.
-func _fit(vm: Node) -> String:
-	var roots := vm.get("_roots") as Dictionary
-	var right := roots.get("right_root") as Node3D
-	var gun := roots.get("gun_root") as Node3D
-	if right == null or gun == null or not gun.visible:
-		return "arms fit: no gun"
-	var body := gun.get_node_or_null(^"Body") as Node3D
-	var model: Node3D = null
-	for c in right.get_children():
-		if c is Node3D and ArmRig.skeleton(c as Node3D) != null:
-			model = c as Node3D
-	if body == null or model == null:
-		return "arms fit: no gun"
-	var sk := ArmRig.skeleton(model)
-	sk.force_update_all_bone_transforms()
-	var p := ArmRig.palm_len(model)
-	var heads := {}
-	for n in ["thumb.01", "thumb.02", "thumb.03", "f_index.01"]:
-		var i := sk.find_bone("DEF-%s.R" % n)
-		if i == -1:
-			return "arms fit: bone " + n + " missing"
-		heads[n] = sk.global_transform * sk.get_bone_global_pose(i).origin
-	var tip: Vector3 = heads["thumb.03"] + (heads["thumb.03"] - heads["thumb.02"])
-	var pts := {"thumb.01": heads["thumb.01"], "thumb.02": heads["thumb.02"],
-			"thumb.03": heads["thumb.03"], "tip": tip}
-	var to_body := body.global_transform.affine_inverse()
-	var lines: Array[String] = []
-	var clips := 0
-	for key: String in pts:
-		var g: Vector3 = pts[key]
-		var best := INF
-		var part := "-"
-		for part_name in ["GripCore", "GripPanelL", "GripPanelR", "Frame", "Beavertail", "Barrel"]:
-			var mi := body.get_node_or_null(NodePath(part_name)) as MeshInstance3D
-			if mi == null:
-				continue
-			var q := mi.transform.affine_inverse() * (to_body * g)
-			var sd := _box_sd(mi, q)
-			if sd < best:
-				best = sd
-				part = part_name
-		var clear := (best - 0.10 * p) / p
-		if clear < 0.0:
-			clips += 1
-		var b: Vector3 = (to_body * g) / p
-		lines.append("%s body/p (%.2f, %.2f, %.2f) nearest %s clearance/p %.2f"
-				% [key, b.x, b.y, b.z, part, clear])
-	lines.append("tip to index.01 / p %.2f" % (tip.distance_to(heads["f_index.01"]) / p))
-	# Dressing is judged by buried vertices, not boxes: a band hugging the gripping hand
-	# overlaps every gun box, and the palm-side bands sit inside the grip where the palm does,
-	# so only depths past the finger clearance count.
-	var dress_depth := 0.10 * p  # same scale as the finger clearance above
-	var dress_clips := 0
-	var dress_pieces := 0
-	for att in sk.find_children("Dress_*", "BoneAttachment3D", true, false):
-		for found in att.find_children("*", "MeshInstance3D", true, false):
-			var dm := found as MeshInstance3D
-			if dm == null or dm.mesh == null:
-				continue
-			dress_pieces += 1
-			var total := 0
-			var n := 0
-			var min_sd := 0.0
-			var worst := "-"
-			for s in dm.mesh.get_surface_count():
-				var arr := dm.mesh.surface_get_arrays(s)
-				var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
-				for v in verts:
-					total += 1
-					var g := dm.global_transform * v
-					var is_buried := false
-					for part_name in ["GripCore", "GripPanelL", "GripPanelR", "Frame",
-							"Beavertail", "Barrel"]:
-						var gm := body.get_node_or_null(NodePath(part_name)) as MeshInstance3D
-						if gm == null:
-							continue
-						var sd := _box_sd(gm, gm.transform.affine_inverse() * (to_body * g))
-						if sd < min_sd:
-							min_sd = sd
-							worst = part_name
-						if sd < -dress_depth:
-							is_buried = true
-					if is_buried:
-						n += 1
-			if min_sd < -0.02 * p:
-				if n > 0:
-					dress_clips += 1
-				lines.append("dress %s/%s depth/p %.2f buried %d/%d in %s"
-						% [att.name, dm.name, -min_sd / p, n, total, worst])
-	lines.append("FIT OK" if clips == 0 else "FIT CLIP %d" % clips)
-	if dress_pieces == 0:
-		lines.append("DRESS OK (0 pieces)")
-	else:
-		lines.append("DRESS OK" if dress_clips == 0 else "DRESS CLIP %d" % dress_clips)
-	var text := "\n".join(lines)
-	print(text)
-	return text
-
-
-## Signed distance from `q` (in the gun part's parent space) to the part's box; negative inside.
-func _box_sd(mi: MeshInstance3D, q: Vector3) -> float:
-	var box := mi.get_aabb()
-	var d := (q - box.get_center()).abs() - box.size * 0.5
-	return d.max(Vector3.ZERO).length() + minf(maxf(d.x, maxf(d.y, d.z)), 0.0)
 
 
 func _cam(vm: Node, view: StringName) -> String:
