@@ -5,7 +5,8 @@ const _Fit := preload("res://scripts/debug/debug_arms_fit.gd")
 const _Thumbs := preload("res://scripts/debug/debug_arms_thumbs.gd")
 const _GearFit := preload("res://scripts/debug/debug_arms_gear_fit.gd")
 const _HandsCheck := preload("res://scripts/debug/debug_arms_hands.gd")
-const _Frame := preload("res://scripts/debug/debug_arms_frame.gd")
+const _Dump := preload("res://scripts/debug/debug_arms_dump.gd")
+const _Frame :=preload("res://scripts/debug/debug_arms_frame.gd")
 const _Gesture := preload("res://scripts/player/arms/arm_gesture.gd")
 const _Weave := preload("res://scripts/player/arms/arm_weave.gd")
 
@@ -23,7 +24,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dress <gear|rags|none> | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -122,6 +123,14 @@ func cmd_arms(args: Array) -> String:
 		return _lthumb(args)
 	if args[0] == "hands":
 		return _HandsCheck.new().run(vm)
+	if args[0] == "dump":
+		var parts: Array[String] = []
+		for a in args.slice(1):
+			parts.append(str(a))
+		var path := " ".join(parts)
+		if path.is_empty():
+			return USAGE
+		return _Dump.new().run(vm, path)
 	if args[0] == "thumbaim" or args[0] == "thumbcurl" or args[0] == "wrist":
 		return _Fit.new().tune(vm, str(args[0]), args.slice(1))
 	return USAGE
