@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-362 GDScript files, 58284 lines.
+362 GDScript files, 58283 lines.
 
 ### `scenes/corridor/`
 
@@ -565,7 +565,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `arm_skin_mesh.gd` | `ArmSkinMesh` | 268 | Builds skinned cloth meshes on an arm skeleton: ring frames, averaged ring weights, tube indices. |
 | `arm_sleeve.gd` | `ArmSleeve` | 181 | Builds the oversized torn T-shirt sleeve as a skinned tube on the upper arm, above the elbow. |
 | `arm_tattoo_font.gd` | `ArmTattooFont` | 184 | Block-capital stroke font: lays a short text out as line segments for the arm tattoo shader. |
-| `arm_walk.gd` | — | 138 | Walk layer for the first-person arms: a footstep-locked figure-8 with roll, a footfall dip, strafe lean, a start/stop lag spring and a free left-arm swing, ble… |
+| `arm_walk.gd` | — | 137 | Walk layer for the first-person arms: a footstep-locked figure-8 with roll, a footfall dip, strafe lean, a start/stop lag spring and a free left-arm swing, ble… |
 | `arm_weave.gd` | — | 258 | Drives the goblin's idle hands each frame: the witch-finger weave, and a grip idle on the gun hand when the gun is shown. |
 | `arm_wrap.gd` | `ArmWrap` | 249 | Shrinkwrap bands: low-poly tubes built from the skinned arm mesh's own cross-sections, so wraps, gloves, cuffs and rings hug the hand instead of floating as cy… |
 | `arms_builder.gd` | `ArmsBuilder` | 212 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
