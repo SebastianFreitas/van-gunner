@@ -213,6 +213,8 @@ static func add_claws(model: Node3D, suffix: String, fingers: Dictionary, claw_k
 		var tip_len: float = d[&"tip_len"]
 		var bed_r: float = d[&"bed_r"]
 		var horn_len := claw_k * tip_len
+		# Thumb tips are long and fat; cap the horn by the tip radius so it stays a nail.
+		horn_len = minf(horn_len, 1.6 * bed_r)
 		if horn_len <= 0.0 or bed_r <= 0.0:
 			continue
 		var tip_rings: Array = d[&"tip_rings"]
