@@ -13,12 +13,24 @@ func _init(owner: Node) -> void:
 
 func cmd_summon(args: Array) -> String:
 	var kind: String = str(args[0]).to_lower() if not args.is_empty() else "enemy"
+	if kind == "loper":
+		return cmd_summon_loper()
 	if kind != "enemy":
-		return "Usage: summon enemy"
+		return "Usage: summon enemy|loper"
 	var director: EncounterDirector = host._find_encounter_director()
 	if not director:
 		return "EncounterDirector not found — are you in the van scene?"
 	return director.spawn_debug_raider()
+
+
+## Spawns a window loper, the wall climber (console `summon loper`).
+func cmd_summon_loper() -> String:
+	var director: EncounterDirector = host._find_encounter_director()
+	if not director:
+		return "EncounterDirector not found — are you in the van scene?"
+	if director.spawn_agile_raider() == null:
+		return "Failed to spawn window loper."
+	return "Summoned a window loper."
 
 
 func cmd_give(args: Array) -> String:
