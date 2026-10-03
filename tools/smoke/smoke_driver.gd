@@ -72,6 +72,10 @@ func _run() -> void:
 
 	await _seconds(2.0)
 	# The van drives at IDLE and the timers are wall-clock, so the shots pin it in place.
+	# Print-only: the IK bars never enter the fingerprint and never fail smoke.
+	var ik_lines := DebugCommands.run("arms ik").split("\n")
+	for ik_line in ik_lines.slice(maxi(ik_lines.size() - 3, 0)):
+		_log("arms ik: " + ik_line)
 	var pinned := _shots.pin_van() if _shots != null else -1.0
 	await _shot("idle")
 	if _shots != null:

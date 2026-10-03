@@ -218,6 +218,7 @@ func _cmd_help(_args: Array) -> String:
 		+ "  arms fov [deg]  viewmodel FOV (50 default, 0 = world camera)\n"
 		+ "  arms frame  screen share of arms+gun at the player camera\n"
 		+ "  arms thumbs      print each thumb's angle to the index finger and its size next to it\n"
+		+ "  arms ik          sweep the arm IK (elbow, clamps, twist) and bar the thumb nail; prints IK OK/CHECK\n"
 		+ "  walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street\n"
 		+ "  Tab            autocomplete command or item id"
 	) % ", ".join(names)
