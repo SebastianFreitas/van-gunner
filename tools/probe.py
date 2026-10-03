@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """Headless probe for van-gunner: `py -3 tools/probe.py [res://path.tscn] [--cmd "<console line>"]...
-[--eval "<expr>"] [--frames N] [--shot out.png [--every <s> --max <n>]] [--timeout S]`.
+[--eval "<expr>"] [--frames N] [--shot out.png [--every <s> --max <n> | --views a,b]] [--timeout S]`.
 
 Loads one scene headless and evaluates an expression against its root, or, with no
 scene, boots the run (`SceneRouter.go_to_van()`, the van at IDLE) with the save
 sandbox on. `--cmd` lines run through the debug console (`DebugCommands.run`) in
 order before `--eval` and `--shot`. `--shot` renders in a real window on a hidden
-Win32 desktop (never visible, never takes focus); with `--every`/`--max` it writes
-`<stem>-01.png`... Fails on any output line with SCRIPT ERROR / Parse Error / ERROR:,
+Win32 desktop (never visible, never takes focus), or under `xvfb-run` on Linux;
+with `--every`/`--max` it writes
+`<stem>-01.png`...; with `--views` (--shot is then a directory) it writes one
+`<view>.png` per `arms cam` view. Fails on any output line with SCRIPT ERROR / Parse Error / ERROR:,
 a non-zero exit, a timeout, a missing `PROBE: done` line or a missing PNG.
 """
 import argparse
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 
@@ -37,9 +40,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--shot", help="PNG path to render to on a hidden desktop")
     parser.add_argument("--every", type=float, help="seconds between repeated shots")
     parser.add_argument("--max", type=int, help="number of repeated shots")
+    parser.add_argument("--views", help="with --shot DIR: one PNG per `arms cam` view")
     parser.add_argument("--timeout", type=int, default=180, help="timeout in seconds")
 
     opts = parser.parse_args()
+    opts.views = [v.strip() for v in opts.views.split(",") if v.strip()] if opts.views else []
+    if opts.views:
+        if not opts.shot:
+            parser.error("--views needs --shot")
+        if opts.every is not None or opts.max is not None:
+            parser.error("--views can't be combined with --every/--max")
 
     if opts.scene is not None:
         if not opts.scene.startswith("res://") or not (
@@ -62,7 +72,7 @@ def resolve_shot(opts: argparse.Namespace) -> pathlib.Path | None:
     if not opts.shot:
         return None
     shot = pathlib.Path(opts.shot).resolve()
-    shot.parent.mkdir(parents=True, exist_ok=True)
+    (shot if opts.views else shot.parent).mkdir(parents=True, exist_ok=True)
     targets = expected_pngs(shot, opts)
     for target in targets:
         if target.exists():
@@ -71,6 +81,8 @@ def resolve_shot(opts: argparse.Namespace) -> pathlib.Path | None:
 
 
 def expected_pngs(shot: pathlib.Path, opts: argparse.Namespace) -> list[pathlib.Path]:
+    if opts.views:
+        return [shot / f"{v}.png" for v in opts.views]
     if opts.max is not None:
         stem = shot.stem
         return [shot.with_name(f"{stem}-{n:02d}{shot.suffix}") for n in range(1, opts.max + 1)]
@@ -88,6 +100,8 @@ def build_args(opts: argparse.Namespace, shot: pathlib.Path | None) -> list[str]
     user.append("--probe-frames=" + str(opts.frames))
     if shot is not None:
         user.append("--probe-shot=" + shot.as_posix())
+        if opts.views:
+            user.append("--probe-views=" + ",".join(opts.views))
         if opts.every is not None:
             user.append("--probe-every=" + str(opts.every))
         if opts.max is not None:
@@ -100,13 +114,20 @@ def run_godot(
     exe: str, opts: argparse.Namespace, user: list[str], shot: pathlib.Path | None
 ) -> tuple[int, str] | int:
     if shot is not None:
-        if sys.platform != "win32":
-            print("PROBE FAILED: --shot needs the Windows hidden desktop")
-            return 1
         args = [
             exe, "--path", str(ROOT),
             "--resolution", "1440x720", "res://tools/probe/probe_runner.tscn", "--", *user,
         ]
+        if sys.platform != "win32":
+            # Linux (cloud sessions): a virtual X screen instead of the hidden desktop. Mesa has
+            # no Vulkan surface there and the container has no sound card; both log ERROR: lines.
+            if shutil.which("xvfb-run") is None:
+                print("PROBE FAILED: --shot needs the Windows hidden desktop or xvfb-run on Linux")
+                return 1
+            args = [
+                "xvfb-run", "-a", "-s", "-screen 0 1920x1080x24", *args[:3],
+                "--rendering-driver", "opengl3", "--audio-driver", "Dummy", *args[3:],
+            ]
     else:
         args = [
             exe, "--headless", "--path", str(ROOT),

@@ -27,17 +27,18 @@ const WEAVE_WRIST_LIFT := 0.18  ## UP added to the forearm line: about 10 deg of
 ## Palm toward the body.
 const LEFT_HANG_PALM := Vector3(1, 0, 0)
 ## The gripping thumb's curl in degrees for joints .01/.02/.03, split out so it can be tuned live.
-const RIGHT_THUMB_CURL := Vector3(15, 45, 60)
+const RIGHT_THUMB_CURL := Vector3(10, 0, 45)
 ## Finger joint curls in degrees for joints .01/.02/.03.
 const RIGHT_CURL := {
 	&"f_index": Vector3(20, 25, 15), &"f_middle": Vector3(40, 45, 30),
 	&"f_ring": Vector3(40, 45, 30), &"f_pinky": Vector3(40, 45, 30),
 	&"thumb": RIGHT_THUMB_CURL,
 }
-## Extra euler degrees on the right thumb's first bone after the curl: lifts the thumb out of
-## the grip and lays it over the frame's left flank (the curl alone only bends it about one axis).
-## Swept with `arms fit`: .01 near vertical, .02 leaning left, .03 hooked onto the flank.
-const RIGHT_THUMB_AIM := Vector3(-40, 70, -55)
+## Extra euler degrees on the right thumb's first bone after the curl: wraps the thumb around the
+## grip's far (left) side so it points forward under the slide, a C with the trigger finger (the
+## curl alone only bends it about one axis). Swept with `arms fit` and `arms thumbs`: .01 rolled
+## down around the back of the grip, .02 straight along the flank, .03 hooked slightly inward.
+const RIGHT_THUMB_AIM := Vector3(-36, -18, -82)
 ## Live copies of the gripping hand's tunables: the `arms thumbaim`, `arms thumbcurl` and
 ## `arms wrist` console commands set them and rebuild, so a thumb pose is tuned by numbers
 ## instead of a screenshot per try. The constants above are their defaults.

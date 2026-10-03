@@ -345,7 +345,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-365 GDScript files, 58553 lines.
+367 GDScript files, 58834 lines.
 
 ### `scenes/corridor/`
 
@@ -434,11 +434,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
-| `debug_arms_commands.gd` | — | 266 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
+| `debug_arms_commands.gd` | — | 252 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
+| `debug_arms_dump.gd` | — | 115 | Writes the posed arm skeletons (both hands) to a JSON file so two poses can be diffed. |
 | `debug_arms_fit.gd` | — | 172 | Debug console `arms fit`: the right thumb's clearance from the gun parts in palm lengths, plus `arms thumbaim\|thumbcurl\|wrist x y z`, which set the builder's l… |
 | `debug_arms_frame.gd` | — | 106 | Debug `arms frame`: how much of the player camera's picture the arms and gun cover, found by drawing them white and diffing against the normal frame. |
 | `debug_arms_gear_fit.gd` | — | 290 | Debug `arms gear`: poses both arms through the weave, the shot kick and the reload, skins the arm and its sleeve on the CPU and counts skin vertices that poke… |
 | `debug_arms_hands.gd` | — | 99 | The monster-hand bar (hand as long as the forearm, finger shaft over a quarter of its length, neighbours not merged) measured on the posed skeleton. |
+| `debug_arms_thumbs.gd` | — | 139 | Debug console `arms thumbs`: per hand, the thumb against the index (angle, C gap, hook, how far it points up and forward), with bars. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
 | `debug_commands.gd` | — | 264 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
@@ -569,9 +571,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `arm_sleeve.gd` | `ArmSleeve` | 181 | Builds the oversized torn T-shirt sleeve as a skinned tube on the upper arm, above the elbow. |
 | `arm_tattoo_font.gd` | `ArmTattooFont` | 184 | Block-capital stroke font: lays a short text out as line segments for the arm tattoo shader. |
 | `arm_walk.gd` | — | 137 | Walk layer for the first-person arms: a footstep-locked figure-8 with roll, a footfall dip, strafe lean, a start/stop lag spring and a free left-arm swing, ble… |
-| `arm_weave.gd` | — | 258 | Drives the goblin's idle hands each frame: the witch-finger weave, and a grip idle on the gun hand when the gun is shown. |
+| `arm_weave.gd` | — | 272 | Drives the goblin's idle hands each frame: the witch-finger weave, and a grip idle on the gun hand when the gun is shown. |
 | `arm_wrap.gd` | `ArmWrap` | 249 | Shrinkwrap bands: low-poly tubes built from the skinned arm mesh's own cross-sections, so wraps, gloves, cuffs and rings hug the hand instead of floating as cy… |
-| `arms_builder.gd` | `ArmsBuilder` | 212 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
+| `arms_builder.gd` | `ArmsBuilder` | 213 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
 | `held_gun.gd` | `HeldGun` | 140 | The Desert-Eagle-style pistol the arms hold: a shared holder (grip, guard, trigger, frame) plus a per-gun barrel block. |
 | `viewmodel_fov.gd` | `ViewmodelFov` | 67 | Sets the viewmodel FOV override on every arm shader and base material under a rig and turns shadow casting off. |
 
@@ -827,7 +829,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `probe_runner.gd` | — | 171 | Headless probe entry scene: runs debug commands/evals/screenshots from user args and quits. |
+| `probe_runner.gd` | — | 197 | Headless probe entry scene: runs debug commands/evals/screenshots from user args and quits. |
 
 ### `tools/scene_dump/`
 
