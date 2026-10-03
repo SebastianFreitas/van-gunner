@@ -2,7 +2,7 @@
 """Render the first-person goblin arms in chosen poses from fixed cameras, one Godot launch.
 
 Usage: `py -3 tools/hand_shots.py --out DIR [--pose NAME | --pose "<console line>"]...
-[--views front,side,left,top,elbow] [--dress gear|rags|none] [--timeout S]`.
+[--views front,side,left,top,elbow,player] [--dress gear|rags|none] [--timeout S]`.
 
 Runs `tools/probe.py` with the pose's `arms` console lines and `--views`, so DIR gets one
 `<view>.png` per camera. `--list` prints the named poses and exits.
@@ -16,8 +16,9 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-# The `arms cam` views in scripts/debug/debug_arms_commands.gd (`VIEWS`).
-VIEW_NAMES = ["front", "side", "left", "top", "elbow"]
+# The first five are the `arms cam` views in scripts/debug/debug_arms_commands.gd (`VIEWS`);
+# `player` is the player's own camera (handled in tools/probe/probe_runner.gd).
+VIEW_NAMES = ["front", "side", "left", "top", "elbow", "player"]
 
 POSES: dict[str, list[str]] = {
     "rest": [],  # the arms as they hang, no pose forced
@@ -28,7 +29,8 @@ POSES: dict[str, list[str]] = {
     "press": ["arms gesture press contact"],  # palm on the button at contact
     "push": ["arms gesture push contact"],  # both hands on the door at contact
     "pull": ["arms gesture pull contact"],  # hand gripping the handle at contact
-    "slide": ["arms gesture slide contact"],  # hand on the sliding door at contact
+    "slide_open": ["arms gesture slide_open contact"],  # hand on the sliding door opening it, at contact
+    "slide_close": ["arms gesture slide_close contact"],  # hand on the sliding door closing it, at contact
     "walk": ["arms walk 0.25"],  # the walk bob a quarter through its cycle
 }
 
@@ -68,6 +70,14 @@ def pose_lines(opts: argparse.Namespace) -> list[str]:
     return lines
 
 
+def run_shots(lines: list[str], out_dir: pathlib.Path, views: str, timeout: int) -> int:
+    cmd = [sys.executable, str(ROOT / "tools" / "probe.py")]
+    for line in lines:
+        cmd += ["--cmd", line]
+    cmd += ["--shot", str(out_dir), "--views", views, "--timeout", str(timeout)]
+    return subprocess.run(cmd, cwd=ROOT).returncode
+
+
 def main() -> int:
     opts = parse_args()
     if opts.list:
@@ -76,12 +86,7 @@ def main() -> int:
         return 0
 
     out_dir = pathlib.Path(opts.out).resolve()
-    cmd = [sys.executable, str(ROOT / "tools" / "probe.py")]
-    for line in pose_lines(opts):
-        cmd += ["--cmd", line]
-    cmd += ["--shot", str(out_dir), "--views", opts.views, "--timeout", str(opts.timeout)]
-
-    code = subprocess.run(cmd, cwd=ROOT).returncode
+    code = run_shots(pose_lines(opts), out_dir, opts.views, opts.timeout)
     if code != 0:
         return code
     pngs = [out_dir / f"{v}.png" for v in opts.views.split(",")]

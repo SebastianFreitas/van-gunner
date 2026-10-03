@@ -157,17 +157,19 @@ func _take_shots(args: Dictionary) -> void:
 
 
 ## One PNG per `arms cam` view into the directory `dir`, named `<view>.png`.
+## The view `player` shoots through the player's own camera (`arms cam off`).
 func _take_view_shots(dir: String, views: String) -> void:
 	DirAccess.make_dir_recursive_absolute(dir)
 	for raw in views.split(","):
 		var view: String = raw.strip_edges()
 		if view.is_empty():
 			continue
-		var out: String = DebugCommands.run("arms cam " + view)
+		var arg: String = "off" if view == "player" else view
+		var out: String = DebugCommands.run("arms cam " + arg)
 		print("PROBE VIEW %s" % view)
 		print("  " + out)
-		if out != "arms cam " + view:
-			_fail("arms cam %s: %s" % [view, out])
+		if out != "arms cam " + arg:
+			_fail("arms cam %s: %s" % [arg, out])
 			return
 		for i in range(3):
 			await get_tree().process_frame
