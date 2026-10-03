@@ -32,6 +32,10 @@ const _MANTLE := preload("res://scripts/player/player_mantle.gd")
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 var _current_interactable: Interactable
 var _interact_pending := false
+## Seconds E has been held with nothing in sight to use; negative when not counting.
+var _inspect_hold := -1.0
+## How long E is held, looking at nothing usable, before the gun inspect plays.
+const INSPECT_HOLD_TIME := 0.4
 var _movement_reference: Node3D
 var _local_horizontal_velocity := Vector3.ZERO
 var _jump_queued := false
@@ -84,6 +88,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_interact_with(_current_interactable)
 		else:
 			_close_open_dialogue()
+			if not event.is_echo():
+				_inspect_hold = 0.0
 	elif event.is_action_pressed("jump"):
 		_jump_queued = true
 		_mantle_buffer = MANTLE_BUFFER_TIME
@@ -211,6 +217,27 @@ func set_ghost(on: bool) -> void:
 		collision_mask = _ghost_saved_mask
 		ghost = false
 		velocity = Vector3.ZERO
+
+
+func _process(delta: float) -> void:
+	if _inspect_hold < 0.0:
+		return
+	if not Input.is_action_pressed(&"interact") or _current_interactable != null:
+		_inspect_hold = -1.0
+		return
+	_inspect_hold += delta
+	if _inspect_hold < INSPECT_HOLD_TIME:
+		return
+	_inspect_hold = -1.0
+	if (
+		Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
+		or _ui_wants_free_cursor()
+		or is_mantling()
+	):
+		return
+	var vm := get_tree().get_first_node_in_group(&"gun_viewmodel")
+	if vm and vm.has_method(&"play_inspect"):
+		vm.play_inspect()
 
 
 func _physics_process(delta: float) -> void:

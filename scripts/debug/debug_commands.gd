@@ -68,7 +68,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 			"facade":
 				matches = _filter_prefix(_facade.sub_commands(), "")
 			"arms":
-				matches = _filter_prefix(["cam", "reload", "dress", "gear", "fov", "frame"], "")
+				matches = _filter_prefix(["cam", "reload", "inspect", "dress", "gear", "fov", "frame"], "")
 			_:
 				matches = []
 	elif parts[0] == "give" or parts[0] == "spawn":
@@ -99,7 +99,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 	elif parts[0] == "facade":
 		matches = _filter_prefix(_facade.sub_commands(), partial)
 	elif parts[0] == "arms":
-		matches = _filter_prefix(["cam", "reload", "dress", "gear", "fov", "frame"], partial)
+		matches = _filter_prefix(["cam", "reload", "inspect", "dress", "gear", "fov", "frame"], partial)
 	else:
 		matches = []
 
