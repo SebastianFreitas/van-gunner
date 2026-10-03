@@ -2,10 +2,12 @@ extends RefCounted
 ## Debug console `arms`: frames the first-person arms from fixed angles and freezes poses.
 
 const _Fit := preload("res://scripts/debug/debug_arms_fit.gd")
+const _Thumbs := preload("res://scripts/debug/debug_arms_thumbs.gd")
 const _GearFit := preload("res://scripts/debug/debug_arms_gear_fit.gd")
 const _HandsCheck := preload("res://scripts/debug/debug_arms_hands.gd")
 const _Frame := preload("res://scripts/debug/debug_arms_frame.gd")
 const _Gesture := preload("res://scripts/player/arms/arm_gesture.gd")
+const _Weave := preload("res://scripts/player/arms/arm_weave.gd")
 
 const CAM_NAME := &"ArmsDebugCam"
 ## Camera offsets from the focus point in Weapon space (metres); `left` aims at the left hand,
@@ -21,7 +23,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms hands | arms dress <gear|rags|none> | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dress <gear|rags|none> | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -115,7 +117,9 @@ func cmd_arms(args: Array) -> String:
 	if args[0] == "gear":
 		return _GearFit.new(host).run(vm)
 	if args[0] == "thumbs":
-		return _thumbs(vm)
+		return _Thumbs.new().run(vm)
+	if args[0] == "lthumb":
+		return _lthumb(args)
 	if args[0] == "hands":
 		return _HandsCheck.new().run(vm)
 	if args[0] == "thumbaim" or args[0] == "thumbcurl" or args[0] == "wrist":
@@ -123,51 +127,24 @@ func cmd_arms(args: Array) -> String:
 	return USAGE
 
 
-## Read-only readout of each thumb's angle to its index finger and its shaft and length next to
-## the index's, so the thumbs can be judged without a screenshot.
-func _thumbs(vm: Node) -> String:
-	var roots := vm.get("_roots") as Dictionary
-	var lines: Array[String] = []
-	var ok := true
-	for hand: Array in [["R", "right_root"], ["L", "left_root"]]:
-		var h: String = hand[0]
-		var root := roots.get(hand[1]) as Node3D
-		var model: Node3D = null
-		if root != null:
-			for c in root.get_children():
-				if c is Node3D and ArmRig.skeleton(c as Node3D) != null:
-					model = c as Node3D
-		if model == null:
-			lines.append("thumbs %s: no model" % h)
-			ok = false
-			continue
-		var sk := ArmRig.skeleton(model)
-		sk.force_update_all_bone_transforms()
-		var fingers: Dictionary = model.get_meta(&"fingers", {})
-		var ti := sk.find_bone("DEF-thumb.02." + h)
-		var ii := sk.find_bone("DEF-f_index.01." + h)
-		if ti == -1 or ii == -1:
-			lines.append("thumbs %s: bone missing" % h)
-			ok = false
-			continue
-		var a := sk.get_bone_global_pose(ti).basis.y
-		var b := sk.get_bone_global_pose(ii).basis.y
-		var angle := rad_to_deg(a.angle_to(b))
-		var thumb: Dictionary = fingers.get(&"thumb", {})
-		var index: Dictionary = fingers.get(&"f_index", {})
-		var shaft := 0.0
-		var len_x := 0.0
-		if thumb.has(&"shaft") and index.has(&"shaft") and float(index[&"shaft"]) != 0.0:
-			shaft = float(thumb[&"shaft"]) / float(index[&"shaft"])
-		if thumb.has(&"length") and index.has(&"length") and float(index[&"length"]) != 0.0:
-			len_x = float(thumb[&"length"]) / float(index[&"length"])
-		var bad_l := h == "L" and (angle < 20.0 or angle > 110.0)
-		var bad_r := h == "R" and (angle < 26.0 or angle > 56.0)
-		if shaft < 1.2 or bad_l or bad_r:
-			ok = false
-		lines.append("thumbs %s: angle %.0f shaft x%.2f len x%.2f" % [h, angle, shaft, len_x])
-	lines.append("THUMBS OK" if ok else "THUMBS CHECK")
-	return "\n".join(lines)
+## `arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az>`: live-tunes the free left thumb's rest pose.
+func _lthumb(args: Array) -> String:
+	if args.size() != 8:
+		return USAGE
+	var n: Array[float] = []
+	for i in range(1, 8):
+		if not str(args[i]).is_valid_float():
+			return USAGE
+		n.append(float(str(args[i])))
+	var axis := Vector3(n[4], n[5], n[6])
+	if axis.is_zero_approx():
+		return "lthumb: axis must be non-zero"
+	_Weave.left_thumb_base = Vector3(n[0], n[1], n[2])
+	_Weave.left_thumb_spread = n[3]
+	_Weave.left_thumb_axis = axis.normalized()
+	var ax: Vector3 = _Weave.left_thumb_axis
+	return "lthumb base (%.0f, %.0f, %.0f) spread %.0f axis (%.2f, %.2f, %.2f)" % [
+			n[0], n[1], n[2], n[3], ax.x, ax.y, ax.z]
 
 
 ## `arms gesture <kind> <seconds|contact>`, `off` and `play <kind>`: pins or plays a left-hand gesture.

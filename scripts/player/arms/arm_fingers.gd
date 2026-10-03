@@ -32,7 +32,7 @@ static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumber
 	var ref_r := 0.0
 	for f in ArmRig.FINGERS:
 		# Drawn even when the finger is skipped, so one missing bone keeps the others' crooks.
-		var cr := rng.randf_range(-0.40, 0.40) * (0.5 if f == &"thumb" else 1.0)
+		var cr := rng.randf_range(-0.40, 0.40) * (0.0 if f == &"thumb" else 1.0)
 		var fg := _finger(mi, sk, own, f, suffix, girth, cr, ref_r)
 		if fg.is_empty():
 			continue

@@ -20,9 +20,15 @@ const THUMB_FAN := 1.5 * SPLAY  ## the index fans this far toward the thumb; the
 const THUMB_SPREAD_SIGN := -1.0  ## settled by the round 9 axis sheet (top view, 3 axes x 2 signs)
 const THUMB_SPREAD_AXIS := Vector3.RIGHT  ## the thumb .01 axis that splays it from the index
 ## The left thumb's spread axis un-curls it, so the right-hand numbers bend it ~60 deg backwards
-## (a permanent thumbs-up); the free hand rests with its own flex and almost no spread.
-const LEFT_THUMB_BASE := Vector3(12.0, 16.0, 20.0)  ## degrees flex of the left thumb at rest
-const LEFT_THUMB_SPREAD := 10.0  ## degrees, replaces THUMB_SPREAD + THUMB_FAN on the left only
+## (a permanent thumbs-up); the free hand has its own flex, spread and swing axis.
+## The axis swings the thumb out opposite the index, the base curls it back toward the index
+## tip into an open C.
+const LEFT_THUMB_BASE := Vector3(12.0, 11.0, 44.0)  ## degrees flex of the left thumb at rest
+const LEFT_THUMB_SPREAD := 79.0  ## degrees, replaces THUMB_SPREAD + THUMB_FAN on the left only
+## Left thumb .01 swing-away axis, bone-local (normalized where it is used).
+const LEFT_THUMB_SPREAD_AXIS := Vector3(0.50, 0.01, -0.86)
+## Share of THUMB_SWING the left thumb keeps, so its weave stays inside the open C.
+const LEFT_THUMB_SWING_K := 0.5
 const THUMB_ARC := 7.0 ## degrees of slow opposition swing on the spread, toward the index
 const SPREAD := 6.0  ## degrees of side sway on each .01 bone, alternating sign
 ## Static abduction in degrees between neighbouring fingers about Vector3.BACK on each .01,
@@ -54,6 +60,11 @@ const TRIGGER_IN := 0.45  ## seconds lifting off the trigger
 const TRIGGER_HOLD := 0.7
 const TRIGGER_OUT := 0.55  ## seconds settling back
 const TRIGGER_LIFT := Vector3(-14.0, -8.0, -4.0)  ## degrees per index joint at full lift (straighten)
+
+## Live-tuning copies of the left thumb consts (`arms lthumb`); the left thumb branch reads these.
+static var left_thumb_base := LEFT_THUMB_BASE
+static var left_thumb_spread := LEFT_THUMB_SPREAD
+static var left_thumb_axis := LEFT_THUMB_SPREAD_AXIS
 
 ## True when the gun is shown: the right hand grips it instead of weaving.
 var _grip_right := false
@@ -155,15 +166,18 @@ func update(t: float) -> void:
 			else:
 				a = w * 0.5 + phase + PI
 				var wave := _wave(a)
-				var thumb_base := LEFT_THUMB_BASE if hand_side == 1 else THUMB_BASE
-				deg = lerpf(thumb_base[j] + THUMB_SWING[j] * wave,
-						OPEN_THUMB[j] + THUMB_SWING[j] * wave * 0.3, f)
+				var thumb_base := left_thumb_base if hand_side == 1 else THUMB_BASE
+				var swing: float = THUMB_SWING[j] * (LEFT_THUMB_SWING_K if hand_side == 1 else 1.0)
+				deg = lerpf(thumb_base[j] + swing * wave,
+						OPEN_THUMB[j] + swing * wave * 0.3, f)
 			var rot: Quaternion = joint[&"rest"] * Quaternion(Vector3.RIGHT,
 					deg_to_rad(deg) * ArmRig.CURL_SIGN)
 			if j == 0 and finger == 4:
 				# Hold the thumb abducted from the palm and swing it slowly toward the index.
-				var spread := LEFT_THUMB_SPREAD if hand_side == 1 else THUMB_SPREAD + THUMB_FAN
-				rot = rot * Quaternion(THUMB_SPREAD_AXIS, deg_to_rad((spread
+				var spread := left_thumb_spread if hand_side == 1 else THUMB_SPREAD + THUMB_FAN
+				var spread_axis := left_thumb_axis.normalized() if hand_side == 1 \
+							else THUMB_SPREAD_AXIS
+				rot = rot * Quaternion(spread_axis, deg_to_rad((spread
 						+ THUMB_ARC * sin(a * 0.5 + 0.9)) * THUMB_SPREAD_SIGN * lerpf(1.0, 1.25, f)))
 			if j == 0 and finger < 4:
 				var side := 1.0 if finger % 2 == 0 else -1.0
