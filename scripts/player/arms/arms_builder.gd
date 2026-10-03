@@ -52,6 +52,22 @@ const LEFT_CURL := {
 const ELBOW_JITTER := 0.03
 ## Pose scale on each thumb's .02 bone (its .03 inherits it), so the thumb outreaches the fingers.
 const THUMB_STRETCH := 1.2
+## Arm, hand and claw proportions are fixed, not seeded: randomized thickness made the nails
+## and the gun fit inconsistent between runs. Pose scale on each arm model, and the stretch of
+## the fingertip bones.
+const ARM_SCALE := 1.20
+const TIP_K := 1.15
+## Fixed for the same reason. Fingers twice as thick as a human's and the hand half again as big
+## are the monster read the owner asked for (2026-10-02); the claw share rises so the wider
+## nails stay long.
+const CLAW_K := 0.72
+## Fixed for the same reason: the arm model's muscle bulk and the nails' curve in degrees.
+const BULK := 1.0
+const CLAW_CURVE := 22.0
+## Fixed for the same reason. Girth is about three times the witch's gaunt shafts (0.68-0.80):
+## the index shaft is over a quarter of its length. HAND_K scales the hand and the gun grip.
+const GIRTH := 2.10
+const HAND_K := 1.47
 
 ## Hand dressing: `&"gear"` (a wrecked T-shirt sleeve on each arm plus the skin layers),
 ## `&"rags"` (the old rag and glove dress) or `&"none"` (bare arms). Set by the `arms dress`
@@ -73,17 +89,6 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	var skin_l := skin.duplicate() as ShaderMaterial
 	# One shirt for both arms: the two sleeves are the same cloth.
 	var cloth := ArmMaterials.gear_cloth(rng_for(seed_value, &"arm_cloth"))
-	var s := rng.randf_range(1.12, 1.28)
-	var tip_k := rng.randf_range(1.0, 1.35)
-	# Fingers twice as thick as a human's and the hand half again as big are the monster read
-	# the owner asked for (2026-10-02); the claw share rises so the wider nails stay long.
-	var claw_k := rng.randf_range(0.60, 0.85)
-	var bulk := rng.randf_range(0.85, 1.15)
-	# Girth is about three times the witch's gaunt shafts (0.68-0.80): the index shaft is over a
-	# quarter of its length.
-	var girth := rng.randf_range(2.00, 2.20)
-	var claw_curve := rng.randf_range(15.0, 30.0)
-	var hand_k := rng.randf_range(1.40, 1.55)
 	var claw := ArmMaterials.claw()
 	var gx := HeldGun.gun_xform()
 
@@ -92,18 +97,18 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	right.name = "ArmRight"
 	var rng_r := rng_for(seed_value, &"arm_right")
 	var muscle_r := rng_r.randi()
-	var model_r := ArmRig.spawn(&"R", s, bulk, muscle_r)
+	var model_r := ArmRig.spawn(&"R", ARM_SCALE, BULK, muscle_r)
 	right.add_child(model_r)
 	# Parented at once: gear and skin layers aim at the camera, found through the ancestors.
 	rig.add_child(right)
 	var gun_root := HeldGun.build(rng_for(seed_value, &"arm_gun"),
-			ArmRig.palm_len(model_r) * hand_k)
+			ArmRig.palm_len(model_r) * HAND_K)
 	gun_root.visible = SHOW_GUN
 	var shoulder_r := RIGHT_SHOULDER + _jitter(rng_r)
 	var r: Dictionary
 	if SHOW_GUN:
 		r = ArmRig.reach(model_r, ".R", shoulder_r,
-				gx * (right_wrist_in_gun * hand_k), RIGHT_POLE,
+				gx * (right_wrist_in_gun * HAND_K), RIGHT_POLE,
 				(gx.basis * RIGHT_HAND_DIR_IN_GUN).normalized(),
 				(gx.basis * RIGHT_PALM_IN_GUN).normalized())
 	else:
@@ -122,12 +127,12 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	if SHOW_GUN and thumb_i != -1:
 		sk_r.set_bone_pose_rotation(thumb_i, sk_r.get_bone_pose_rotation(thumb_i)
 				* Quaternion.from_euler(right_thumb_aim * (PI / 180.0)))
-	ArmRig.stretch_tips(model_r, ".R", tip_k)
+	ArmRig.stretch_tips(model_r, ".R", TIP_K)
 	ArmRig.stretch_thumb(model_r, ".R", THUMB_STRETCH)
-	ArmRig.scale_hand(model_r, ".R", hand_k)
-	var fingers_r := ArmFingers.build(model_r, ".R", girth, rng_r, skin_r)
+	ArmRig.scale_hand(model_r, ".R", HAND_K)
+	var fingers_r := ArmFingers.build(model_r, ".R", GIRTH, rng_r, skin_r)
 	model_r.set_meta(&"fingers", fingers_r)
-	ArmRig.add_claws(model_r, ".R", fingers_r, claw_k, claw_curve, claw)
+	ArmRig.add_claws(model_r, ".R", fingers_r, CLAW_K, CLAW_CURVE, claw)
 	_skin_model(model_r, skin_r)
 
 	match dress_style:
@@ -144,7 +149,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	left.name = "ArmLeft"
 	var rng_l := rng_for(seed_value, &"arm_left")
 	var muscle_l := rng_l.randi()
-	var model_l := ArmRig.spawn(&"L", s, bulk, muscle_l)
+	var model_l := ArmRig.spawn(&"L", ARM_SCALE, BULK, muscle_l)
 	left.add_child(model_l)
 	rig.add_child(left)
 	var shoulder_l := LEFT_SHOULDER + _jitter(rng_l)
@@ -167,12 +172,12 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 				(fore_l + Vector3.UP * WEAVE_WRIST_LIFT).normalized(),
 				LEFT_WEAVE_PALM.normalized())
 	ArmRig.curl(model_l, ".L", LEFT_CURL)
-	ArmRig.stretch_tips(model_l, ".L", tip_k)
+	ArmRig.stretch_tips(model_l, ".L", TIP_K)
 	ArmRig.stretch_thumb(model_l, ".L", THUMB_STRETCH)
-	ArmRig.scale_hand(model_l, ".L", hand_k)
-	var fingers_l := ArmFingers.build(model_l, ".L", girth, rng_l, skin_l)
+	ArmRig.scale_hand(model_l, ".L", HAND_K)
+	var fingers_l := ArmFingers.build(model_l, ".L", GIRTH, rng_l, skin_l)
 	model_l.set_meta(&"fingers", fingers_l)
-	ArmRig.add_claws(model_l, ".L", fingers_l, claw_k, claw_curve, claw)
+	ArmRig.add_claws(model_l, ".L", fingers_l, CLAW_K, CLAW_CURVE, claw)
 	_skin_model(model_l, skin_l)
 	match dress_style:
 		&"rags":

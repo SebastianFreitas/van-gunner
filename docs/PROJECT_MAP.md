@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-361 GDScript files, 58065 lines.
+361 GDScript files, 58070 lines.
 
 ### `scenes/corridor/`
 
@@ -567,7 +567,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `arm_tattoo_font.gd` | `ArmTattooFont` | 184 | Block-capital stroke font: lays a short text out as line segments for the arm tattoo shader. |
 | `arm_weave.gd` | — | 258 | Drives the goblin's idle hands each frame: the witch-finger weave, and a grip idle on the gun hand when the gun is shown. |
 | `arm_wrap.gd` | `ArmWrap` | 249 | Shrinkwrap bands: low-poly tubes built from the skinned arm mesh's own cross-sections, so wraps, gloves, cuffs and rings hug the hand instead of floating as cy… |
-| `arms_builder.gd` | `ArmsBuilder` | 207 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
+| `arms_builder.gd` | `ArmsBuilder` | 212 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
 | `held_gun.gd` | `HeldGun` | 140 | The Desert-Eagle-style pistol the arms hold: a shared holder (grip, guard, trigger, frame) plus a per-gun barrel block. |
 | `viewmodel_fov.gd` | `ViewmodelFov` | 67 | Sets the viewmodel FOV override on every arm shader and base material under a rig and turns shadow casting off. |
 
