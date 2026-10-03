@@ -13,7 +13,7 @@ const LEFT_SHOULDER := Vector3(-1.35, -1.35, -0.3)
 ## The held pistol is shown while the hand pose is reworked around its holder.
 const SHOW_GUN := true
 ## Where the relaxed left wrist sits when shown (looking down, reloading): the lower-left of the frame.
-const LEFT_SHOWN_WRIST := Vector3(-1.1, -0.62, -1.25)
+const LEFT_SHOWN_WRIST := Vector3(-0.8, -0.6, -1.25)
 const LEFT_HANG_POLE := Vector3(-1.0, -0.6, 0.2)
 const LEFT_HANG_HAND_DIR := Vector3(0.1, -0.5, -1.0)
 ## How far the straightened left hand droops below its forearm line (a relaxed hang).
