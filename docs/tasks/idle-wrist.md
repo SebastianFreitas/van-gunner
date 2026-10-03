@@ -72,7 +72,7 @@ hand beyond the default).
 
 ## Steps
 
-- [ ] 1. **Bar, readout and baseline.** Write `.claude/plans/idle-wrist-research.md` (the bar
+- [x] 1. **Bar, readout and baseline.** Write `.claude/plans/idle-wrist-research.md` (the bar
   above, round log). Add a debug readout `arms wristang [t]` (in `debug_arms_commands.gd` or a
   small new `debug_arms_wrist.gd`) printing the left wrist's flex, twist and deviation in degrees
   relative to the posed wrist at time `t`, plus the forearm.001 twist. Use it and three
