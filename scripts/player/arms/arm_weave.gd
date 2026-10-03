@@ -1,10 +1,12 @@
 extends RefCounted
 ## Drives the goblin's idle hands each frame: the witch-finger weave, and a grip idle on the gun hand when the gun is shown.
 ##
-## Every value is a sum of smooth sines (no noise, no per-frame random), so the hands
-## never twitch. Only bone rotations are written: scale and position stay untouched so
+## The weave is smooth sines (no noise, no per-frame random); the left hand adds ArmCreep
+## tics and stretches on top. Only bone rotations are written: scale and position stay untouched so
 ## the builder's tip stretch and the claw BoneAttachment3Ds keep working.
 ## The wrists circle the posed hand (the orientation ArmRig.reach chose), not the glb rest.
+
+const ArmCreep := preload("res://scripts/player/arms/arm_creep.gd")
 
 const PERIOD := 3.6  ## seconds per main finger roll
 const ROLL_LAG := 0.9  ## radians of phase lag index -> middle -> ring -> pinky
@@ -73,6 +75,8 @@ const TRIGGER_LIFT := Vector3(-14.0, -8.0, -4.0)  ## degrees per index joint at 
 static var left_thumb_base := LEFT_THUMB_BASE
 static var left_thumb_spread := LEFT_THUMB_SPREAD
 static var left_thumb_axis := LEFT_THUMB_SPREAD_AXIS
+## Strength of the gun hand's creep twitches (1.0 = the free left hand's). Tune here.
+static var grip_creep_scale := 0.25
 
 ## True when the gun is shown: the right hand grips it instead of weaving.
 var _grip_right := false
@@ -85,6 +89,10 @@ var _hands: Array[Dictionary] = []
 ## Drift phase and last drift transform per arm root: 0 right, 1 left.
 var _phase: Array[float] = [0.0, PI]
 var _arm_x: Array[Transform3D] = [Transform3D.IDENTITY, Transform3D.IDENTITY]
+## Tics, stretches and drift for the free (left) hand.
+var _creep_l: ArmCreep
+## Finger twitches only for the gun hand (no stretches, no wrist drift).
+var _creep_r: ArmCreep
 
 
 func _init(arm_right: Node3D, arm_left: Node3D, seed_value: int, grip_right := false) -> void:
@@ -93,6 +101,8 @@ func _init(arm_right: Node3D, arm_left: Node3D, seed_value: int, grip_right := f
 	var right_phase := rng.randf() * TAU
 	_phase[0] = right_phase
 	_phase[1] = right_phase + PI
+	_creep_l = ArmCreep.new(rng, 1.0, false)
+	_creep_r = ArmCreep.new(rng, grip_creep_scale, true)
 	if _grip_right:
 		_add_grip(arm_right)
 	else:
@@ -154,6 +164,7 @@ func update(t: float) -> void:
 	var w := TAU * t / PERIOD
 	if _grip_right:
 		_update_grip(t, w)
+	_creep_l.sample(t)
 	for hand in _hands:
 		var sk: Skeleton3D = hand[&"sk"]
 		if not is_instance_valid(sk):
@@ -178,6 +189,8 @@ func update(t: float) -> void:
 				var swing: float = THUMB_SWING[j] * (LEFT_THUMB_SWING_K if hand_side == 1 else 1.0)
 				deg = lerpf(thumb_base[j] + swing * wave,
 						OPEN_THUMB[j] + swing * wave * 0.3, f)
+			if hand_side == 1:
+				deg += _creep_l.curl[finger * 3 + j]
 			var rot: Quaternion = joint[&"rest"] * Quaternion(Vector3.RIGHT,
 					deg_to_rad(deg) * ArmRig.CURL_SIGN)
 			if j == 0 and finger == 4:
@@ -185,13 +198,15 @@ func update(t: float) -> void:
 				var spread := left_thumb_spread if hand_side == 1 else THUMB_SPREAD + THUMB_FAN
 				var spread_axis := left_thumb_axis.normalized() if hand_side == 1 \
 							else THUMB_SPREAD_AXIS
-				rot = rot * Quaternion(spread_axis, deg_to_rad((spread
+				var creep_spread := _creep_l.splay[4] if hand_side == 1 else 0.0
+				rot = rot * Quaternion(spread_axis, deg_to_rad((spread + creep_spread
 						+ THUMB_ARC * sin(a * 0.5 + 0.9)) * THUMB_SPREAD_SIGN * lerpf(1.0, 1.25, f)))
 			if j == 0 and finger < 4:
 				var side := 1.0 if finger % 2 == 0 else -1.0
 				var fan := (float(finger) - 1.5) * SPLAY * SPLAY_SIGN * side_sign \
 						+ (LEFT_FAN_OFFSET[finger] if hand_side == 1 else 0.0)
-				rot = rot * Quaternion(Vector3.BACK, deg_to_rad(fan
+				var creep_fan := _creep_l.splay[finger] if hand_side == 1 else 0.0
+				rot = rot * Quaternion(Vector3.BACK, deg_to_rad(fan + creep_fan
 						+ SPREAD * sin(a + 0.7) * side * lerpf(1.0, OPEN_SPREAD_K, f)))
 			sk.set_bone_pose_rotation(joint[&"bone"], rot)
 		var wrist: int = hand[&"wrist"]
@@ -202,6 +217,8 @@ func update(t: float) -> void:
 		var e := wrist_base + Vector3(WRIST_CIRCLE * sin(b), WRIST_ROLL * sin(b * 0.5),
 				WRIST_CIRCLE * cos(b))
 		e.x -= OPEN_WRIST_PITCH * f
+		if hand_side == 1:
+			e += _creep_l.wrist
 		var wrist_pose: Quaternion = hand[&"wrist_pose"]
 		sk.set_bone_pose_rotation(wrist, wrist_pose * Quaternion.from_euler(e * (PI / 180.0)))
 	for side in 2:
@@ -219,6 +236,7 @@ func _update_grip(t: float, w: float) -> void:
 	if not is_instance_valid(_grip_sk):
 		return
 	var lift := _trigger(t)
+	_creep_r.sample(t)
 	for joint in _grip:
 		var finger: int = joint[&"finger"]
 		var j: int = joint[&"j"]
@@ -229,6 +247,7 @@ func _update_grip(t: float, w: float) -> void:
 			deg = GRIP_SQUEEZE * _wave(w * 0.6 + finger * 0.4)
 		else:
 			deg = THUMB_GRIP * _wave(w * 0.45 + 2.0)
+		deg += _creep_r.curl[finger * 3 + j]
 		var base: Quaternion = joint[&"base"]
 		var rot := base * Quaternion(Vector3.RIGHT, deg_to_rad(deg) * ArmRig.CURL_SIGN)
 		if j == 0 and finger < 4:
@@ -245,14 +264,11 @@ func arm_offset(side: int) -> Transform3D:
 
 
 ## 0..1 flourish envelope for one hand (0 right, 1 left) at time `t`: smoothstep open, hold,
-## smoothstep re-hook, once per FLOURISH_PERIOD, alternating hands. With the gun shown the left
-## hand is the only weave hand, so it flourishes every cycle.
+## smoothstep re-hook, once per FLOURISH_PERIOD on the right hand's turns. The left hand never
+## flourishes: ArmCreep's stretches replace it.
 func _flourish(t: float, side: int) -> float:
 	var cycle := floori(t / FLOURISH_PERIOD)
-	if _grip_right:
-		if side != 1:
-			return 0.0
-	elif cycle % 2 != side:
+	if side == 1 or _grip_right or cycle % 2 != side:
 		return 0.0
 	var u := t - cycle * FLOURISH_PERIOD - FLOURISH_AT
 	return _envelope(u, FLOURISH_IN, FLOURISH_HOLD, FLOURISH_OUT)
