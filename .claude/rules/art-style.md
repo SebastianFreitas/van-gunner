@@ -283,7 +283,7 @@ target; its grid is not (it is upscaled about 3.2x off any exact grid).
 **Creepy, not cute** (owner, 2026-10-01, second pass): the raiders are Darkest
 Dungeon dark, never bright or rounded. The door raider is a humanoid gone
 feral, the loper: a 64 x 80 frame (1.54 x 1.92 m, claws on the van floor) on a
-832 x 160 sheet (row 0 the thirteen-frame run; row 1 a five-frame front-on jump take-off (the run's rising half, pushed further), frames J0-J3 keep a claw row on the floor row and J4 is airborne; animation is frame-swapping on one sheet,
+832 x 240 sheet (row 0 the thirteen-frame run; row 1 a five-frame front-on jump take-off (the run's rising half, pushed further), frames J0-J3 keep a claw row on the floor row and J4 is airborne; row 2 a four-frame latch, clip `latch`: reach, impact, pull in, cling; animation is frame-swapping on one sheet,
 never a node tween: a bounding charge seen from the front at 18 fps, crouch,
 push, paws-rise, lift-off, tip-over, kick, fall, drop, reach, rump-down, land,
 gather; the kick, fall and drop frames are airborne, the kick 4 px off the floor
