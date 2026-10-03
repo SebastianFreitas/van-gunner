@@ -511,7 +511,8 @@ func _drop_off_wall() -> void:
 	assault_phase = AssaultPhase.JUMPING
 	var x := position.x * 1.3 if absf(position.x) > 1.5 else position.x
 	var z := position.z + (1.0 if position.z > 4.5 else 0.0)
-	await _wall_move(Vector3(x, _wall.ROAD_ORIGIN_Y, z), true)
+	var land := Vector3(x, _wall.ROAD_ORIGIN_Y, z)
+	await _wall_move(land, true)
 	if not _active or is_defeated:
 		return
 	assault_phase = AssaultPhase.APPROACH

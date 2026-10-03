@@ -5,8 +5,8 @@ dark. The door raider is a humanoid gone feral: a hunched loper whose head
 hangs forward out of a furred ruff, tapered arms longer than the legs with
 the claws on the van floor, hair that trails every bob, knobbed spine,
 hanging jaw, corpse-grey skin and black eye pits, nothing bright. The loper is both the door raider and the window
-raider. door_raider.png is a 13-frame 832 x 80 run sheet (a bounding charge,
-seen from the front); frame 0 is the still. Every frame has the
+raider. door_raider.png is a 13-frame 832 x 160 sheet: row 0 the 13-frame run (a bounding charge,
+seen from the front; frame 0 is the still), row 1 the 5-frame jump take-off. Every frame has the
 feral face (draw_feral_head), riding the pose's head bob and jaw lag.
 
 Art rules (.claude/rules/art-style.md, pixel art): native size, one image
@@ -36,7 +36,9 @@ OUT = ROOT / "scenes" / "enemies"
 # Canvas size: the loper (door and window raider) is 1.54 x 1.92 m.
 LOPER_SIZE = (64, 80)
 LOPER_FRAMES = 13
-LOPER_SHEET = (LOPER_SIZE[0] * LOPER_FRAMES, LOPER_SIZE[1])
+LOPER_ROWS = 2
+JUMP_FRAMES = 5
+LOPER_SHEET = (LOPER_SIZE[0] * LOPER_FRAMES, LOPER_SIZE[1] * LOPER_ROWS)
 
 OUTLINE = (30, 20, 18)
 
@@ -433,10 +435,49 @@ LOPER_POSES = [
 ]
 assert len(LOPER_POSES) == LOPER_FRAMES
 
+# Row 1 of the sheet: the jump, front-on like the run (the sprite is never flipped). Same
+# pose format as the run table; bx is left out (0), the body stays centred (draw_loper still
+# supports it). It is the run's rising half (frames 0 to 6) with the body higher and the
+# limbs thrown out further, and the same limits: the hump rises at most 5 px net.
+# Frame 0 crouch: run frame 1 deeper, hips low, knees wide, head low, elbows bowed out, claws
+# on row 79. Frame 1 push: run frame 2 stronger, body up, hind legs straight under it, arms
+# stretched long with claws still on row 79. Frame 2 paws-rise: run frame 3 more extreme, both
+# paws lifted high and wide, hind feet planted. Frame 3 lift-off: run frame 4 pushed on, paws
+# tucked high under the chest, rump showing, left toes the last thing on the floor. Frame 4
+# airborne: run frame 6 (kick) pushed on, held for the rest of the jump; body highest, both
+# hind feet sole-on at the top corners, rump and tail-bone above the hump, paws reaching
+# down and out, nothing on row 79.
+LOPER_JUMP_POSES = [
+	dict(by=6, hump_dy=-2, head_dy=4, shoulder_dx=2, lag=1,  # 0 crouch
+		left=((0, 52), (8, 73), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((63, 56), (56, 75), [(51, 78), (55, 79), (59, 79), (63, 78)]),
+		legs=(((9, 71), (19, 75)), ((55, 72), (45, 75)))),
+	dict(by=-4, hump_dy=-1, head_dy=2, shoulder_dx=0, lag=1,  # 1 push
+		left=((5, 38), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((59, 42), (57, 72), [(52, 78), (56, 79), (60, 79), (63, 77)]),
+		legs=(((21, 66), (20, 75)), ((43, 67), (44, 75)))),
+	dict(by=-7, hump_dy=2, head_dy=2, shoulder_dx=1, lag=2,  # 2 paws-rise
+		left=((3, 36), (6, 54), [(1, 60), (4, 62), (8, 62), (11, 60)]),
+		right=((61, 38), (58, 55), [(53, 61), (56, 63), (60, 63), (63, 61)]),
+		legs=(((20, 63), (20, 75)), ((44, 62), (45, 75)))),
+	dict(by=-9, hump_dy=4, head_dy=4, shoulder_dx=-1, lag=2,  # 3 lift-off
+		left=((3, 31), (15, 46), [(11, 50), (14, 52), (17, 52), (19, 50)]),
+		right=((61, 33), (49, 47), [(45, 51), (48, 53), (51, 53), (53, 51)]),
+		legs=(((17, 62), (19, 75)), ((47, 56), (46, 64))), rump=(6, 7, 5, ())),
+	dict(by=-10, hump_dy=5, head_dy=14, shoulder_dx=0, lag=4,  # 4 airborne
+		left=((4, 38), (7, 58), [(2, 65), (6, 67), (10, 67), (14, 65)]),
+		right=((60, 40), (57, 60), [(50, 65), (54, 67), (58, 67), (62, 65)]),
+		legs=(((7, 26), (3, 11)), ((57, 27), (61, 12))), rump=(8, 8, 7, (1, 3, 5)),
+		soles=True),
+]
+assert len(LOPER_JUMP_POSES) == JUMP_FRAMES
 
-def fur_sway(frame: int) -> tuple[int, int]:
+
+def fur_sway(frame: int, poses=LOPER_POSES) -> tuple[int, int]:
 	"""Overlap and follow-through: the hair lags the body by a frame."""
-	vy = LOPER_POSES[frame]["by"] - LOPER_POSES[frame - 1]["by"]
+	# the jump row starts from the run's still, not from its own last frame
+	prev = LOPER_POSES[0] if poses is not LOPER_POSES and frame == 0 else poses[frame - 1]
+	vy = poses[frame]["by"] - prev["by"]
 	return 0, max(-3, min(3, -vy))
 
 
@@ -467,7 +508,7 @@ def draw_fang(c: Canvas, x: int, y: int, w: int, length: int, lean: int = 0,
 			c.set(xx, row, WHITE_SH if w > 1 and xx > cx else TEETH)
 
 
-def draw_feral_head(c: Canvas, hd: int, jy: int, by: int) -> None:
+def draw_feral_head(c: Canvas, hd: int, jy: int, by: int, bx: int = 0) -> None:
 	"""The feral head for every run frame: a long, angular, tilted skull with sharp
 	cheekbones and hollow cheeks, a V brow over slanted black sockets with burning red
 	eyes, a bare nasal pit, and a maw split almost ear to ear, red gums peeled back over
@@ -523,10 +564,10 @@ def draw_feral_head(c: Canvas, hd: int, jy: int, by: int) -> None:
 			continue
 		if (x - 1, y) not in skull or (x, y - 1) not in skull:
 			head.set(x, y, FACE_HI)
-	c.blit(head, 0, hd)
+	c.blit(head, bx, hd)
 	# Matted hair framing the skull, kept off the face so it stays one pale shape.
 	for x0, y0, x1, y1 in ((21, 19, 16, 31), (19, 23, 15, 34), (43, 19, 47, 31)):
-		draw_strand(c, x0, y0 + hd, x1, y1 + jy)
+		draw_strand(c, x0 + bx, y0 + hd, x1 + bx, y1 + jy)
 	# The lower jaw hangs open and a pixel to the left, its fangs pointing up, gum along its lip.
 	jaw = Canvas(LOPER_SIZE)
 	jaw_m = jaw.mask(polygon([(22, 46), (41, 46), (39, 51), (33, 58), (29, 58), (24, 51)]))
@@ -541,14 +582,14 @@ def draw_feral_head(c: Canvas, hd: int, jy: int, by: int) -> None:
 		draw_fang(jaw, x, 46, w, length, lean, up=True)
 	for x, y in ((28, 53), (29, 54), (30, 55), (33, 53), (34, 54), (31, 56)):
 		jaw.set(x, y, BLOOD_DARK)
-	c.blit(jaw, -1, jy)
+	c.blit(jaw, -1 + bx, jy)
 	for x, y0, y1 in ((29, 58, 61), (32, 58, 63), (30, 58, 59)):
 		for y in range(y0 + by, y1 + by):
-			c.set(x, y, BLOOD_DARK)
-		c.set(x, y1 + by, BLOOD)
+			c.set(x + bx, y, BLOOD_DARK)
+		c.set(x + bx, y1 + by, BLOOD)
 
 
-def draw_loper(frame: int = 0) -> Canvas:
+def draw_loper(frame: int = 0, poses=LOPER_POSES) -> Canvas:
 	"""The door raider, seen from the front as it comes through the doors: the
 	furred mantle rises above and behind the head, which hangs from a hair ruff,
 	tapered arms with fur sleeves reach the floor, the tapered legs crouch behind,
@@ -557,18 +598,19 @@ def draw_loper(frame: int = 0) -> Canvas:
 	frame is the approved drawing moved, never redrawn. The bound is
 	13 frames: still, crouch, push, paws-rise, lift-off, tip-over, kick, fall, drop,
 	reach, rump-down, land, gather; frames 6, 7 and 8 are airborne (6 the kick)."""
-	p = LOPER_POSES[frame]
+	p = poses[frame]
 	by = p["by"]
+	bx = p.get("bx", 0)
 	hy_ = by + p["hump_dy"]
 	hd = by + p["head_dy"]
 	sdx = p["shoulder_dx"]
 	jy = hd + p["lag"]
-	sway = fur_sway(frame)
-	flare = 1 if frame in (10, 11) else 0  # the coat flares when the weight lands
+	sway = fur_sway(frame, poses)
+	flare = 1 if poses is LOPER_POSES and frame in (10, 11) else 0  # the coat flares when the weight lands
 	c = Canvas(LOPER_SIZE)
 	# Legs first, crouched behind everything: knees out, shins down, toes on the floor.
 	# The pose holds each knee and foot as absolute points; only the hips ride the body.
-	for hip, (knee, foot) in (((27, 56 + by), p["legs"][0]), ((37, 57 + by), p["legs"][1])):
+	for hip, (knee, foot) in (((27 + bx, 56 + by), p["legs"][0]), ((37 + bx, 57 + by), p["legs"][1])):
 		leg = c.mask(taper([hip, knee, foot], [4.5, 3.0, 2.2]))
 		c.part(leg, SKIN_SH, SKIN_DEEP, SKIN, light(knee[0], knee[1], 12, 12), 0.2, -0.9)
 		tuft = c.mask(ellipse(hip[0], hip[1] + 2, 4.5, 4.0))
@@ -582,17 +624,17 @@ def draw_loper(frame: int = 0) -> Canvas:
 				(foot[0], foot[1] + 4), (foot[0] + 4, foot[1] + 4)])
 	# The chest and belly in one shape from shoulder to hip, under the mantle: sparse
 	# fur on the ribs, the belly bare and sunk.
-	chest = c.mask(polygon([(22, 34 + by), (42, 34 + by), (40, 46 + by), (39, 58 + by),
-		(25, 58 + by), (24, 46 + by)]))
-	c.part(chest, FUR, FUR_SH, FUR_HI, light(32, 40 + by, 12, 14), 0.1, -1.0)
+	chest = c.mask(polygon([(22 + bx, 34 + by), (42 + bx, 34 + by), (40 + bx, 46 + by),
+		(39 + bx, 58 + by), (25 + bx, 58 + by), (24 + bx, 46 + by)]))
+	c.part(chest, FUR, FUR_SH, FUR_HI, light(32 + bx, 40 + by, 12, 14), 0.1, -1.0)
 	c.fill({q for q in chest if q[1] >= 47 + by}, SKIN_SH)
 	c.fill({q for q in chest if q[1] >= 56 + by}, SKIN_DEEP)
 	for y in range(48 + by, 58 + by):
-		c.set(32, y, SKIN_DEEP)
+		c.set(32 + bx, y, SKIN_DEEP)
 	for ry in (49, 53):
 		for dx in range(1, 7):
-			c.set(32 - dx, ry + by + dx // 4, SKIN_DEEP)
-			c.set(32 + dx, ry + by + dx // 4, SKIN_DEEP)
+			c.set(32 + bx - dx, ry + by + dx // 4, SKIN_DEEP)
+			c.set(32 + bx + dx, ry + by + dx // 4, SKIN_DEEP)
 	fur_fringe(c, chest, seed=12, sway=sway, length=2 + flare, density=0.35)
 	# The mantle: shoulders, neck and the spine hump as one furred mass, the crest
 	# above the head riding the hump, the shoulders the body, the right one lower.
@@ -600,31 +642,32 @@ def draw_loper(frame: int = 0) -> Canvas:
 		(27, 8 + hy_), (34, 8 + hy_), (44, 10 + hy_), (51, 15 + hy_), (58 + sdx, 23 + by),
 		(60 + sdx, 31 + by), (50 + sdx, 34 + by), (44, 37 + by), (20, 36 + by),
 		(14 - sdx, 34 + by)]
+	mantle_pts = [(x + bx, y) for x, y in mantle_pts]
 	mantle = c.mask(polygon(mantle_pts))
-	c.part(mantle, FUR, FUR_SH, FUR_HI, light(32, 24 + by, 28, 16), 0.3, -0.9)
+	c.part(mantle, FUR, FUR_SH, FUR_HI, light(32 + bx, 24 + by, 28, 16), 0.3, -0.9)
 	# Mange: patches torn out of the coat, grey skin showing.
 	for patch, tone in (
 			([(16, 16 + hy_), (20, 15 + hy_), (21, 19 + hy_), (17, 20 + hy_)], SKIN),
 			([(24, 14 + hy_), (28, 13 + hy_), (27, 17 + hy_)], SKIN_SH),
 			([(10 - sdx, 26 + by), (14 - sdx, 25 + by), (15 - sdx, 29 + by),
 				(11 - sdx, 30 + by)], SKIN_SH)):
-		c.fill(c.mask(polygon(patch)), tone)
+		c.fill(c.mask(polygon([(x + bx, y) for x, y in patch])), tone)
 	fur_fringe(c, mantle, seed=11, sway=sway, length=3 + flare, up_only=True)
 	# Vertebrae poking through the fur along the crest.
 	crest = ((20, 10), (27, 8), (34, 8), (44, 10))
 	for kx, kr in ((22, 1.4), (26, 1.8), (31, 2.0), (36, 1.8), (41, 1.5)):
 		i = 0 if kx < 27 else 1 if kx < 34 else 2
-		(ax, ay), (bx, bby) = crest[i], crest[i + 1]
-		ky = ay + (bby - ay) * (kx - ax) / (bx - ax) + 1.0 + hy_
-		knob = c.mask(ellipse(kx, ky, kr, kr * 0.85))
+		(ax, ay), (bx_, bby) = crest[i], crest[i + 1]
+		ky = ay + (bby - ay) * (kx - ax) / (bx_ - ax) + 1.0 + hy_
+		knob = c.mask(ellipse(kx + bx, ky, kr, kr * 0.85))
 		c.outline(knob)
 		c.fill(knob, BONE)
-		c.fill({q for q in knob if q[0] <= kx - 1 and q[1] <= ky}, BONE_HI)
+		c.fill({q for q in knob if q[0] <= kx + bx - 1 and q[1] <= ky}, BONE_HI)
 	# Skin torn open on the right shoulder, the fur ragged around it.
-	tear = c.mask(polygon([(x + sdx, y + by) for x, y in
+	tear = c.mask(polygon([(x + sdx + bx, y + by) for x, y in
 		((44, 20), (50, 18), (53, 23), (48, 27), (43, 24))]))
 	c.fill(tear, BLOOD_DARK)
-	c.fill({q for q in tear if q[0] < 47 + sdx and q[1] < 22 + by}, BLOOD)
+	c.fill({q for q in tear if q[0] < 47 + sdx + bx and q[1] < 22 + by}, BLOOD)
 	fur_fringe(c, tear, seed=13, sway=sway, length=1, density=0.5)
 	# The haunches show over the dropped crest, so they are drawn after the mantle.
 	if "rump" in p:
@@ -632,8 +675,8 @@ def draw_loper(frame: int = 0) -> Canvas:
 	# Arms: one tapered limb from inside the mantle out to elbows wider than the body,
 	# then down to the floor; bare skin forearm, a furred sleeve over the upper arm whose
 	# hair hangs off the back of the arm.
-	for shoulder, (elbow, wrist, tips), seed in (((14 - sdx, 27 + by), p["left"], 21),
-			((50 + sdx, 29 + by), p["right"], 22)):
+	for shoulder, (elbow, wrist, tips), seed in (((14 - sdx + bx, 27 + by), p["left"], 21),
+			((50 + sdx + bx, 29 + by), p["right"], 22)):
 		arm = c.mask(taper([shoulder, elbow, wrist], [5.0, 3.4, 2.2]))
 		c.part(arm, SKIN, SKIN_SH, SKIN_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
 		past = (elbow[0] + (wrist[0] - elbow[0]) * 0.2, elbow[1] + (wrist[1] - elbow[1]) * 0.2)
@@ -646,19 +689,23 @@ def draw_loper(frame: int = 0) -> Canvas:
 	# a gaunt skull, a brow over black pits that look up at you, cheeks fallen in.
 	# A ruff of hair behind and around the top of the skull, so the head hangs out of
 	# the coat instead of floating on it.
-	ruff = c.mask(polygon([(17, 34 + by), (18, 24 + hd), (22, 15 + hd), (32, 11 + hd),
-		(42, 15 + hd), (46, 24 + hd), (47, 34 + by)]))
+	ruff = c.mask(polygon([(17 + bx, 34 + by), (18 + bx, 24 + hd),
+		(22 + bx, 15 + hd), (32 + bx, 11 + hd), (42 + bx, 15 + hd), (46 + bx, 24 + hd),
+		(47 + bx, 34 + by)]))
 	c.fill(ruff, FUR_SH)
 	fur_fringe(c, ruff, seed=51, sway=sway, length=2 + flare, density=0.45, up_only=True)
-	draw_feral_head(c, hd, jy, by)
+	draw_feral_head(c, hd, jy, by, bx)
 	return c
 
 
 def draw_loper_sheet() -> Canvas:
-	"""The thirteen run frames side by side, each cell exactly LOPER_SIZE wide."""
+	"""Row 0 the thirteen run frames, row 1 the five jump take-off frames, each cell
+	exactly LOPER_SIZE."""
 	sheet = Canvas(LOPER_SHEET)
 	for i in range(LOPER_FRAMES):
 		sheet.blit(draw_loper(i), i * LOPER_SIZE[0])
+	for i in range(JUMP_FRAMES):
+		sheet.blit(draw_loper(i, LOPER_JUMP_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1])
 	return sheet
 
 
