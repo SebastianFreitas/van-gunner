@@ -88,7 +88,7 @@ hand beyond the default).
 - [x] 3. **Flex/extend beat in roll 1.** One smoothstep beat over `rt` 0 to `PERIOD`: down to 30
   then back through neutral to 20 up, peak timed on the finger roll's crest. Check the finger
   curl does not collide with the palm at the down peak (`arms touch`). Round; commit.
-- [ ] 4. **Deviation beat in roll 3.** Same shape, sideways, 20 toward the pinky, 12 toward the
+- [x] 4. **Deviation beat in roll 3.** Same shape, sideways, 20 toward the pinky, 12 toward the
   thumb, closing the routine so roll 3 hands back to roll 1 without a seam (check the wrap with
   `anim_series.py` across 10.8 s to 12 s). Round; commit.
 - [ ] 5. **Stack and gameplay pass.** Run the routine under walk, shoot, reload, the left-hand

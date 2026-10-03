@@ -219,7 +219,7 @@ func _cmd_help(_args: Array) -> String:
 		+ "  arms fov [deg]  viewmodel FOV (50 default, 0 = world camera)\n"
 		+ "  arms frame  screen share of arms+gun at the player camera\n"
 		+ "  arms thumbs      print each thumb's angle to the index finger and its size next to it\n"
-		+ "  arms wristang    left wrist flex/twist/deviation in degrees (t, axes, flex, scan)\n"
+		+ "  arms wristang    left wrist flex/twist/deviation in degrees (t, axes, flex, dev, scan)\n"
 		+ "  arms ik          sweep the arm IK (elbow, clamps, twist) and bar the thumb nail; prints IK OK/CHECK\n"
 		+ "  arms touch       fingertips inside fingers or gun parts, index tip to trigger; prints TOUCH OK/CHECK\n"
 		+ "  walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street\n"

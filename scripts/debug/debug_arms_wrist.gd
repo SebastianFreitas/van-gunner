@@ -1,7 +1,7 @@
 extends RefCounted
-## Debug console `arms wristang`: the left wrist's flex, twist and deviation in degrees against the posed wrist, the forearm.001 twist, an axis-sign experiment, a flex-axis purity check and a range and speed scan.
+## Debug console `arms wristang`: the left wrist's flex, twist and deviation in degrees against the posed wrist, the forearm.001 twist, an axis-sign experiment, flex and deviation axis purity checks and a range and speed scan.
 
-const USAGE := "arms wristang [t|axes|flex [deg]|scan [t0 t1]]"
+const USAGE := "arms wristang [t|axes|flex [deg]|dev [deg]|scan [t0 t1]]"
 const ROUTINE := "res://scripts/player/arms/arm_wrist_routine.gd"
 ## The bones the palm frame is built from.
 const BONES := {&"mid": "DEF-f_middle.01.L", &"tip": "DEF-f_middle.03.L",
@@ -23,7 +23,7 @@ var _pose := Quaternion.IDENTITY
 var _frame_err := ""
 
 
-## Prints the left wrist's angles for `arms wristang [t|axes|flex [deg]|scan [t0 t1]]`; `args[0]` is
+## Prints the left wrist's angles for `arms wristang [t|axes|flex [deg]|dev [deg]|scan [t0 t1]]`; `args[0]` is
 ## "wristang". Read-only apart from posing the bones, which the viewmodel overwrites next frame.
 func run(vm: Node, args: Array) -> String:
 	_weave = vm.get("_weave")
@@ -42,12 +42,14 @@ func run(vm: Node, args: Array) -> String:
 	var word := str(args[1])
 	if word == "axes":
 		return _axes()
-	if word == "flex":
-		if args.size() == 2:
-			return _flex(30.0)
+	if word == "flex" or word == "dev":
+		var dev := word == "dev"
+		var deg := 12.0 if dev else 30.0
 		if args.size() == 3 and str(args[2]).is_valid_float():
-			return _flex(str(args[2]).to_float())
-		return USAGE
+			deg = str(args[2]).to_float()
+		elif args.size() != 2:
+			return USAGE
+		return _axis_check("DEV_AXIS" if dev else "FLEX_AXIS", word, deg, dev)
 	if word == "scan":
 		if args.size() == 2:
 			return _scan(0.0, 10.8)
@@ -213,13 +215,15 @@ func _axes() -> String:
 	return "\n".join(lines)
 
 
-## Turns the wrist by the routine's flex axis times `deg` (downward flexion) and says how much of
-## the fingertip's move is palm-ward and how much sideways, so the axis can be checked as pure.
-func _flex(deg: float) -> String:
+## Turns the wrist by the routine's `const_name` axis times `deg` and says how much of the
+## fingertip's move is palm-ward and how much sideways, so the axis can be checked as pure: flex
+## (`label` "flex", deg = downward) must be all palm-ward, dev (`label` "dev", deg = toward the
+## thumb) all sideways, with the sign of `deg`.
+func _axis_check(const_name: String, label: String, deg: float, want_sideways: bool) -> String:
 	var consts: Dictionary = (load(ROUTINE) as Script).get_script_constant_map()
-	if not consts.has("FLEX_AXIS"):
-		return "flex: ArmWristRoutine.FLEX_AXIS missing"
-	var axis: Vector3 = consts["FLEX_AXIS"]
+	if not consts.has(const_name):
+		return "%s: ArmWristRoutine.%s missing" % [label, const_name]
+	var axis: Vector3 = consts[const_name]
 	var frame := _palm_frame()
 	if frame.is_empty():
 		return _frame_err
@@ -232,11 +236,14 @@ func _flex(deg: float) -> String:
 	var p := d.dot(frame[&"palm"]) / dl
 	var sideways := rad_to_deg(asin(clampf(s, -1.0, 1.0)))
 	var palmward := rad_to_deg(asin(clampf(p, -1.0, 1.0)))
-	var pure := absf(sideways) <= 5.0 and signf(palmward) == signf(deg)
+	var pure := absf(palmward) <= 5.0 and signf(sideways) == signf(deg) if want_sideways \
+			else absf(sideways) <= 5.0 and signf(palmward) == signf(deg)
 	_weave.call(&"update", 0.0)
-	return ("wristang flex %+.0f deg down: tip a=%+.2f s=%+.2f p=%+.2f"
-			+ " -> palm-ward %.1f deg, sideways %.1f deg %s") % [deg, a, s, p, palmward,
-			sideways, "FLEX PURE" if pure else "FLEX SKEWED"]
+	var way := "toward thumb" if want_sideways else "down"
+	var verdict := label.to_upper() + (" PURE" if pure else " SKEWED")
+	return ("wristang %s %+.0f deg %s: tip a=%+.2f s=%+.2f p=%+.2f"
+			+ " -> palm-ward %.1f deg, sideways %.1f deg %s") % [label, deg, way, a, s, p,
+			palmward, sideways, verdict]
 
 
 ## Range, peak angular speed and largest per-frame jump of the wrist over t0..t1. `t` only

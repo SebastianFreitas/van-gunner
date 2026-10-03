@@ -111,5 +111,30 @@ max jump 0.87 deg/frame (bar 1.5). Checks: `arms fit` FIT OK, `gear` GEAR OK, `t
 **Worse:** peak speed 52 deg/s is over the 40 bar. **Why:** 30 down + 20 up in one 3.6 s beat is 100
 deg of travel, which needs at least 41.7 deg/s with eased legs before the circle (16.6) is added.
 **Loosened with a note (owner's ranges kept):** the beat-roll speed bar is 55 deg/s total; step 5 may
-slow the circle during the beat if it reads fast. Still to look at: a pinned still at the down peak
-(not captured this round; context ran out), and step 5 judges the skin at the extremes.
+slow the circle during the beat if it reads fast. Step 5 judges the skin at the extremes.
+
+**Still at the down peak** (`arms weave 1.8`, scan: dev z -30.6 / flex x +20.1 at t 1.6-2.0, views
+`player` and `elbow`): the left hand sits low-left with the claws curled down toward the palm, no
+wrung or inverted skin at the wrist. A reviewer found no gaps in the step's diff.
+
+## Round 4 (step 4: deviation beat in roll 3)
+
+**Built:** `ArmWristRoutine._dev`: roll 3 only (`rt` 2P..3P), same keys and smoothstep legs as the
+flex beat: 0 -> 20 toward the pinky (u 0.30, on the finger crest) -> 12 toward the thumb (u 0.80) -> 0 at
+roll end, so roll 3 hands back to roll 1 at rest with no seam. Driven along `DEV_AXIS` (0.877, 0, 0.480)
+euler deg per deg (+ = thumb): mostly +x with +z cancelling the palm-ward mix found in round 1.
+`beat_scale` gates it like the flex, so the sandbox hold and the smoke shots stay `same`.
+
+**Numbers:** `arms wristang dev 12`: palm-ward -1.4 deg, tip move s +1.00 (DEV PURE); `dev -20`:
+palm-ward -1.4 deg, s -0.97 (DEV PURE). Scan 0..10.8: flex(x) -17.6..+20.1 (the pinky peak is the new
+-17.6 end), twist -2.2..+20.0, dev(z) -32.4..+19.1, peak speed 52.3 deg/s at t 1.17 (roll 1, bar 55),
+max jump 0.87 deg/frame. Wrap scan 9.0..12.6: peak speed 33.1, max jump 0.55 at t 11.05, no seam.
+Checks: `arms touch` TOUCH CHECK 18, FIT OK, GEAR OK, `arms thumbs` unchanged (BAR flags pre-existing:
+identical with `DEV_AXIS` zero), check and smoke clean.
+
+**Worse:** the readout cannot show the amount of sideways rotation, only the move direction and the
+euler mix, so the 20 / 12 degree sizes are known from the axis length, not measured at the tip. **Why:**
+`wristang dev` reports the tip-move direction angle. **Fix:** step 5 judges the extremes from stills.
+
+**Still at the pinky peak** (`arms weave 9.0`, view `elbow`): the left hand tilts sideways at the
+wrist with the claws curled, forearm and wrist skin intact, no wrung or inverted skin.
