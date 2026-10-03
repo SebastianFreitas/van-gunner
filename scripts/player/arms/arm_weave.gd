@@ -107,7 +107,7 @@ func _init(arm_right: Node3D, arm_left: Node3D, seed_value: int, grip_right := f
 	_phase[1] = right_phase + PI
 	_creep_l = ArmCreep.new(rng, 1.0, false)
 	_creep_r = ArmCreep.new(rng, grip_creep_scale, true)
-	_routine = ArmWristRoutine.new(rng, PERIOD)
+	_routine = ArmWristRoutine.new(rng, PERIOD, right_phase + PI - 1.5 * ROLL_LAG)
 	if _grip_right:
 		_add_grip(arm_right)
 	else:
@@ -167,13 +167,19 @@ func _add_hand(model: Node3D, suffix: String, wrist_base: Vector3, phase: float)
 			&"side_sign": 1.0 if suffix == ".R" else -1.0})
 
 
-## Poses every finger and wrist for time `t` (seconds). Allocation-free per frame.
-func update(t: float) -> void:
+## The beat_scale for `update`: the wrist routine's smoothed duck (see ArmWristRoutine.scale_step).
+func wrist_scale(delta: float, hold: bool, busy: bool, snap: bool) -> float:
+	return _routine.scale_step(delta, hold, busy, snap)
+
+
+## Poses every finger and wrist for time `t` (seconds). `beat_scale` 0 holds the routine's
+## beats at rest (the sandbox hold). Allocation-free per frame.
+func update(t: float, beat_scale := 1.0) -> void:
 	var w := TAU * t / PERIOD
 	if _grip_right:
 		_update_grip(t, w)
 	_creep_l.sample(t)
-	_routine.sample(t)
+	_routine.sample(t, beat_scale)
 	for hand in _hands:
 		var sk: Skeleton3D = hand[&"sk"]
 		if not is_instance_valid(sk):

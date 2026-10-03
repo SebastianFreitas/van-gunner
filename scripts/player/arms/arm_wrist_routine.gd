@@ -1,40 +1,68 @@
 extends RefCounted
-## Keyed wrist routine for the free left hand: a slow twist now, flex and deviation beats in later steps, on one 3-roll clock.
+## Keyed wrist routine for the free left hand: a slow twist, a flex beat in roll 1 and a deviation beat in roll 3, on one 3-roll clock.
 
 const ROLLS := 3  ## finger rolls per routine
 const TWIST_MAX := 30.0  ## degrees, the peak of the total twist
 const FOREARM_SHARE := 1.0 / 3.0  ## share of the twist given to the forearm.001 bone
 const EDGE_AMP := 0.55  ## twist amplitude outside roll 2, as a share of the middle's
-## The SaveSandbox weave hold (GunViewmodel.WEAVE_SANDBOX_T): the twist is exactly 0 there,
-## so smoke stills stay `same`.
+## The SaveSandbox weave hold (GunViewmodel.WEAVE_SANDBOX_T), as absolute seconds: the twist is
+## exactly 0 there, so smoke stills stay `same`.
 const REST_T := 1.1
 const PHASE_JITTER := 0.5  ## radians, the seeded shift of the carrier
 const FOREARM_BONE := "DEF-forearm.L.001"
+const FLEX_DOWN := 30.0  ## degrees, the big downward flex peak of roll 1
+const FLEX_UP := 20.0  ## degrees, the smaller upward extension peak after it
+const PEAK_DOWN_U := 0.30  ## share of the roll where the down peak sits (0 at u 0 and 1)
+const PEAK_UP_U := 0.80  ## share of the roll where the up peak sits
+## Wrist euler degrees (x, y, z) per degree of DOWNWARD flexion. On the left rig flexion is -z
+## and x is sideways, and this unit vector cancels the sideways swing (measured in
+## `.claude/plans/idle-wrist-research.md` round 1; tuned by `arms wristang flex`).
+const FLEX_AXIS := Vector3(0.463, 0.0, -0.886)
+const DEV_PINKY := 20.0  ## degrees, the big sideways peak toward the pinky in roll 3
+const DEV_THUMB := 12.0  ## degrees, the smaller sideways peak toward the thumb after it
+## Wrist euler degrees (x, y, z) per degree of deviation TOWARD THE THUMB (negative = pinky). On
+## the left rig +x is mostly thumb-ward with some palm-ward, which +z (extension) cancels
+## (measured in `.claude/plans/idle-wrist-research.md` round 1; tuned by `arms wristang dev`).
+const DEV_AXIS := Vector3(0.877, 0.0, 0.480)
+## Seconds for a full duck fade: only long enough to avoid a pop, the routine need not be gone
+## by a gesture's contact time (0.12-0.16 s).
+const DUCK_S := 0.35
 
 var period := 3.6
 var routine := 10.8
-## Routine time of the last `sample`, fposmod(t, routine); later steps read it.
+## Routine time of the last `sample`, fposmod(t - origin, routine); later steps read it.
 var rt := 0.0
-## Euler degrees to ADD to the wrist (x flex, y twist, z sideways); only y is used so far.
+## Euler degrees to ADD to the wrist (x and z flex and deviation, y twist).
 var wrist := Vector3.ZERO
 ## Degrees about the forearm.001 bone's local Y of the last sample.
 var forearm := 0.0
+var flex := 0.0  ## degrees of downward flex of the last sample (negative = up)
+var dev := 0.0  ## degrees toward the thumb of the last sample (negative = toward the pinky)
+var _scale := 1.0  ## smoothed 0..1 duck level before the smoothstep, see `scale_step`
 var _phase := 0.0
 var _norm := 1.0
+## Absolute seconds where the routine's rt = 0: the flex's big down peak lands on the finger
+## curl crest, PEAK_DOWN_U into the roll.
+var _origin := 0.0
+var _rest_rt := 0.0  ## routine time of the sandbox hold
+var _rest_raw := 0.0
 var _sk: Skeleton3D = null
 var _fa := -1
 var _fa_pose := Quaternion.IDENTITY
 
 
-func _init(rng: RandomNumberGenerator, period_s: float) -> void:
+func _init(rng: RandomNumberGenerator, period_s: float, crest_phase: float) -> void:
 	period = period_s
 	routine = ROLLS * period_s
 	_phase = rng.randf_range(-PHASE_JITTER, PHASE_JITTER)
+	var crest_t := fposmod((PI / 2.0 - crest_phase) / TAU, 1.0) * period_s
+	_origin = fposmod(crest_t - PEAK_DOWN_U * period_s, period_s)
+	_rest_rt = fposmod(REST_T - _origin, routine)
 	# Scale so the biggest swing away from the rest pose is exactly TWIST_MAX.
-	var rest := _raw(REST_T)
+	_rest_raw = _raw(_rest_rt)
 	var m := 0.0
 	for i in 721:
-		m = maxf(m, absf(_raw(routine * i / 720.0) - rest))
+		m = maxf(m, absf(_raw(routine * i / 720.0) - _rest_raw))
 	_norm = TWIST_MAX / m
 
 
@@ -49,15 +77,61 @@ func bind(sk: Skeleton3D) -> void:
 	_fa_pose = sk.get_bone_pose_rotation(_fa)
 
 
+## The beat_scale to pass to `sample` this frame: the routine fades out while the left hand
+## is `busy` with something else and back in after. `hold` (the sandbox hold) is 0 and fades in
+## from rest if it ends; `snap` (a debug pin) skips the fade so pinned poses are exact.
+func scale_step(delta: float, hold: bool, busy: bool, snap: bool) -> float:
+	if hold:
+		_scale = 0.0
+		return 0.0
+	var target := 0.0 if busy else 1.0
+	if snap:
+		_scale = target
+	else:
+		_scale = move_toward(_scale, target, delta / DUCK_S)
+	return smoothstep(0.0, 1.0, _scale)
+
+
 ## Samples the routine at time `t` and twists the forearm bone. Allocation-free per frame.
-func sample(t: float) -> void:
-	rt = fposmod(t, routine)
-	var tw := (_raw(rt) - _raw(REST_T)) * _norm
-	wrist = Vector3(0.0, tw * (1.0 - FOREARM_SHARE), 0.0)
+func sample(t: float, beat_scale := 1.0) -> void:
+	rt = fposmod(t - _origin, routine)
+	var tw := (_raw(rt) - _rest_raw) * _norm * beat_scale
+	flex = _flex(rt) * beat_scale
+	dev = _dev(rt) * beat_scale
+	wrist = (Vector3(0.0, tw * (1.0 - FOREARM_SHARE), 0.0) + FLEX_AXIS * flex
+			+ DEV_AXIS * dev)
 	forearm = tw * FOREARM_SHARE
 	if _fa != -1 and is_instance_valid(_sk):
 		# The hand is a child of forearm.001, so the hand's total turn is wrist.y + forearm.
 		_sk.set_bone_pose_rotation(_fa, _fa_pose * Quaternion(Vector3.UP, deg_to_rad(forearm)))
+
+
+## The flex beat in degrees of downward flex (negative = up): roll 1 only, 0 at its start and
+## end, a big down peak then a smaller up peak. Each leg eases in and out.
+func _flex(rt_s: float) -> float:
+	var u := rt_s / period
+	if u >= 1.0:
+		return 0.0
+	if u < PEAK_DOWN_U:
+		return FLEX_DOWN * smoothstep(0.0, 1.0, u / PEAK_DOWN_U)
+	if u < PEAK_UP_U:
+		return lerpf(FLEX_DOWN, -FLEX_UP,
+				smoothstep(0.0, 1.0, (u - PEAK_DOWN_U) / (PEAK_UP_U - PEAK_DOWN_U)))
+	return -FLEX_UP * (1.0 - smoothstep(0.0, 1.0, (u - PEAK_UP_U) / (1.0 - PEAK_UP_U)))
+
+
+## The deviation beat in degrees toward the thumb (negative = pinky): roll 3 only, 0 at its start
+## and end, a big pinky-ward peak then a smaller thumb-ward one. Each leg eases in and out.
+func _dev(rt_s: float) -> float:
+	var u := (rt_s - 2.0 * period) / period
+	if u < 0.0 or u >= 1.0:
+		return 0.0
+	if u < PEAK_DOWN_U:
+		return -DEV_PINKY * smoothstep(0.0, 1.0, u / PEAK_DOWN_U)
+	if u < PEAK_UP_U:
+		return lerpf(-DEV_PINKY, DEV_THUMB,
+				smoothstep(0.0, 1.0, (u - PEAK_DOWN_U) / (PEAK_UP_U - PEAK_DOWN_U)))
+	return DEV_THUMB * (1.0 - smoothstep(0.0, 1.0, (u - PEAK_UP_U) / (1.0 - PEAK_UP_U)))
 
 
 ## The un-normalised, unanchored twist on a -1..1 scale: one slow swing per routine, peaking

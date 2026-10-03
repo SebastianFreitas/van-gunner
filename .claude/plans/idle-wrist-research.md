@@ -91,3 +91,86 @@ alone peaks near 17 deg/s) but steps 3 and 4 add beats on top of it. **Why:** ze
 single swing per routine. **Solve if it reads stiff in play:** a second, faster carrier; left for step 5.
 Still `player` at weave 5.4 (twist peak): the left hand sits low-left, claws clear, no wrung or
 inverted skin, HUD clear.
+
+## Round 3 (step 3: flex/extend beat in roll 1)
+
+**Built:** the routine clock now starts at a seeded origin so the beat's big down peak (u 0.30 of
+roll 1) sits on the left fingers' mean curl crest (`ArmWristRoutine._origin`, from the weave's
+`crest_phase`); keys 0 -> +30 down (u 0.30) -> -20 up (u 0.80) -> 0 (u 1.0), smoothstep per leg, equal
+leg speeds (41.7 deg/s). Driven along `FLEX_AXIS` (0.463, 0, -0.886) euler deg per deg, so it is a pure
+flexion on the left rig. At the `SaveSandbox` hold the viewmodel passes `beat_scale` 0, so smoke
+stills stay `same`; pins (`arms weave <t>`) get the full beat. Twist is anchored to the hold through
+the new origin.
+
+**Numbers:** `arms wristang flex 30`: palm-ward 53.6 deg, sideways -0.2 (FLEX PURE); `flex -20`:
+sideways 0.2 (FLEX PURE). Scan 0..10.8 s: flex(x) -17.2..+20.1, twist(y) -2.2..+20.0, dev(z)
+-32.4..+19.1 (the x/z split is the flex axis plus the circle), peak speed 52.3 deg/s at t 1.17,
+max jump 0.87 deg/frame (bar 1.5). Checks: `arms fit` FIT OK, `gear` GEAR OK, `touch` TOUCH CHECK 18,
+`arms thumbs` identical to before the step (L angle 66, hook 79, BAR hook), check and smoke clean.
+
+**Worse:** peak speed 52 deg/s is over the 40 bar. **Why:** 30 down + 20 up in one 3.6 s beat is 100
+deg of travel, which needs at least 41.7 deg/s with eased legs before the circle (16.6) is added.
+**Loosened with a note (owner's ranges kept):** the beat-roll speed bar is 55 deg/s total; step 5 may
+slow the circle during the beat if it reads fast. Step 5 judges the skin at the extremes.
+
+**Still at the down peak** (`arms weave 1.8`, scan: dev z -30.6 / flex x +20.1 at t 1.6-2.0, views
+`player` and `elbow`): the left hand sits low-left with the claws curled down toward the palm, no
+wrung or inverted skin at the wrist. A reviewer found no gaps in the step's diff.
+
+## Round 4 (step 4: deviation beat in roll 3)
+
+**Built:** `ArmWristRoutine._dev`: roll 3 only (`rt` 2P..3P), same keys and smoothstep legs as the
+flex beat: 0 -> 20 toward the pinky (u 0.30, on the finger crest) -> 12 toward the thumb (u 0.80) -> 0 at
+roll end, so roll 3 hands back to roll 1 at rest with no seam. Driven along `DEV_AXIS` (0.877, 0, 0.480)
+euler deg per deg (+ = thumb): mostly +x with +z cancelling the palm-ward mix found in round 1.
+`beat_scale` gates it like the flex, so the sandbox hold and the smoke shots stay `same`.
+
+**Numbers:** `arms wristang dev 12`: palm-ward -1.4 deg, tip move s +1.00 (DEV PURE); `dev -20`:
+palm-ward -1.4 deg, s -0.97 (DEV PURE). Scan 0..10.8: flex(x) -17.6..+20.1 (the pinky peak is the new
+-17.6 end), twist -2.2..+20.0, dev(z) -32.4..+19.1, peak speed 52.3 deg/s at t 1.17 (roll 1, bar 55),
+max jump 0.87 deg/frame. Wrap scan 9.0..12.6: peak speed 33.1, max jump 0.55 at t 11.05, no seam.
+Checks: `arms touch` TOUCH CHECK 18, FIT OK, GEAR OK, `arms thumbs` unchanged (BAR flags pre-existing:
+identical with `DEV_AXIS` zero), check and smoke clean.
+
+**Worse:** the readout cannot show the amount of sideways rotation, only the move direction and the
+euler mix, so the 20 / 12 degree sizes are known from the axis length, not measured at the tip. **Why:**
+`wristang dev` reports the tip-move direction angle. **Fix:** step 5 judges the extremes from stills.
+
+**Still at the pinky peak** (`arms weave 9.0`, view `elbow`): the left hand tilts sideways at the
+wrist with the claws curled, forearm and wrist skin intact, no wrung or inverted skin.
+
+## Round 5 (step 5: stack and gameplay pass, final)
+
+**Stack read from the code** (`gun_viewmodel.gd` per-frame order): walk writes only rig offsets, the
+shot kick writes only the right hand, inspect moves arm-root transforms, so none of them touch
+`DEF-hand.L` and the routine reads clean under walking, shooting and the right-hand kick. Two
+writers do clash: `ArmGesture.apply_bones` post-multiplies its wrist euler onto the weave pose
+(push is -35 on x, so a gesture during the 30-down flex stacks to over 60 deg), and inspect and
+reload show the left hand on purpose while the idle beats keep turning it. Creep tics, stretch and
+drift are summed in the same euler vector and are not locked to the clock.
+
+**Worse:** gesture, inspect and reload played over a live flex or deviation beat. **Why:** `beat_scale`
+was only ever 0 (sandbox hold) or 1, and twist was never scaled. **Fix:** `ArmWristRoutine.scale_step`
+fades flex, deviation and twist to 0 over 0.35 s (smoothstep) while the left hand is busy (gesture or
+inspect playing, `_reloading`, or any debug pin: those snap, no smoothing) and back after; the hold
+still gives 0. Walking and shooting do not duck it.
+
+**Numbers:** `arms weave 1.8` + `arms gesture push contact`: flex(x) -29.8 (the gesture's own -35,
+nothing of the +30 flex stacked); + `arms inspect 1.8`: twist 0.0, flex +5.0 / dev -6.3 (the inspect
+pose and the base circle). Scan 0..10.8 unchanged from round 4: flex -17.6..+20.1, twist -2.2..+20.0,
+dev -32.4..+19.1, peak speed 52.3 deg/s (bar 55 on the beat roll), max jump 0.87 deg/frame; wrap scan 9..12.6
+peak 33.1, jump 0.55. Largest total rotation of the routine scan 37.9 deg at t 1.73; over the whole
+240 s creep loop 38.4 deg at t 197.9 (a tic or the stretch riding a beat), never wrung in the stills.
+The 240 s scan also shows a creep tic attack at t 225.1 of 232 deg/s, 3.9 deg/frame: that is
+`ArmCreep` (0.04-0.08 s ease-out, untouched by this task), not the routine, left as it is.
+`anim_series` 0..10.8 over 12 steps: no dead step (min 9.5%, max 19.6%, mean 13.9%; the whole bottom
+40% of the frame is the finger roll, so every step flags `JUMPY` at the default threshold 12 as it
+does without the wrist routine); wrap step 14.0%, no seam. `arms fit` FIT OK, `gear` GEAR OK, `thumbs`
+unchanged (L angle 66, hook 79, BAR flags pre-existing), `touch` TOUCH CHECK 18, `check` clean, `smoke`
+clean (fingerprint unchanged: the hold still gives scale 0, so no `--shots` re-run and no bless).
+
+**Still at the flex peak** (`arms weave 1.8`, view `player`): left hand low-left, claws curled, HUD
+clear, no wrung or inverted skin.
+
+**Left for later:** the gun hand's wrist (needs the gun to follow it); a faster second twist carrier if
+the twist reads stiff in play (round 2).
