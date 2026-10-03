@@ -60,8 +60,15 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
 - The window raider is the loper too (`agile_raider.tres`, `is_agile` true): same scene
   defaults, sheet, hitboxes and clips; `is_agile` only adds the `agile` group (window pool in
   `breach_controller.gd`) and exempts it from the road hold, so outside it floats at the
-  1.62 m window marker with its claws at the van floor. That float is a placeholder until the
-  wall-grip step (JUMPING, GRIPPING, CLIMBING). Inside the cabin it is clamped like the door
+  1.62 m window marker with its claws at the van floor only in BREACHING. Before that
+  (B3, 2026-10-03) it runs on the road in APPROACH (the road hold covers agile APPROACH),
+  JUMPING from a launch point (x ±4.3 beside the window, z 6.2 behind a rear window) to a grip
+  point on the skin (origin y 0.9), then CLIMBING to the Outside marker. Wall maths, the four
+  cling-and-wait spots (static owner map, released in `_die`/`retreat`/`_exit_tree`) and the
+  jump/climb lerp are in `window_raider_wall.gd`; the awaits are in `window_raider.gd`. A run-up
+  from behind goes via `approach_path`'s corner point (z 8.2), because the open rear-leaf
+  keep-out pins a straight run. A loper never climbs between faces: it drops off and re-jumps.
+  The smoke prints `loper wall climb:` and fails if CLIMBING is never reached. Inside the cabin it is clamped like the door
   loper; only the boss skips `clear_point`. The green crawler (`agile_raider.png`,
   `window_raider_look.gd`) was retired (owner, 2026-10-03).
 - `biker_boss.tscn` overrides the sprite back to `pixel_size 0.006`, zero

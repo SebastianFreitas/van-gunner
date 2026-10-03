@@ -6,7 +6,7 @@ signal attack_landed(amount: float)
 signal defeated
 signal assault_finished
 
-enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH, ATTACKING_PLAYER }
+enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH, ATTACKING_PLAYER, JUMPING, GRIPPING, CLIMBING }
 
 @export var attack_damage := 8.0
 @export var attack_interval := 1.25
@@ -24,6 +24,7 @@ const _BENCH_BIAS := 0.6
 const _PLAYER_BIAS := 0.4
 ## Per-frame chase math and target-picking helpers. RefCounted, bound to this node.
 const _RaiderMotion := preload("res://scripts/enemies/window_raider_motion.gd")
+const _WallScript := preload("res://scripts/enemies/window_raider_wall.gd")
 const _RaiderTargeting := preload("res://scripts/enemies/window_raider_targeting.gd")
 const _RaiderAnim := preload("res://scripts/enemies/window_raider_anim.gd")
 
@@ -57,6 +58,9 @@ var _move_arrived := true
 var _chase_player := false
 
 var _motion: _RaiderMotion
+var _wall: RefCounted
+## True from the latch until it goes in or drops off the wall.
+var _on_wall := false
 var _anim: _RaiderAnim
 var _targeting: _RaiderTargeting
 
@@ -71,6 +75,7 @@ func _init() -> void:
 	# begin_assault may be called by EncounterDirector right after instancing/add_child,
 	# before _ready runs — build the helpers as early as possible.
 	_motion = _RaiderMotion.new(self)
+	_wall = _WallScript.new(self)
 	_anim = _RaiderAnim.new(self)
 	_targeting = _RaiderTargeting.new(self)
 
@@ -87,6 +92,10 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if not _active or is_defeated:
+		return
+	if _is_wall_phase():
+		_wall.step(delta)
+		_anim.step(delta, false)
 		return
 	var moving := false
 	if _chase_player:
@@ -152,8 +161,10 @@ func retreat() -> void:
 	if is_defeated or is_boss:
 		return
 	_active = false
+	_on_wall = false
 	_clear_motion()
 	_release_breach()
+	_wall.release_cling()
 	_targeting.release_nav()
 	assault_phase = AssaultPhase.IDLE
 	assault_finished.emit()
@@ -192,6 +203,7 @@ func _die() -> void:
 	_active = false
 	_clear_motion()
 	_release_breach()
+	_wall.release_cling()
 	_targeting.release_nav()
 	health_bar.visible = false
 	hitbox.collision_layer = 0
@@ -223,11 +235,17 @@ func _run_assault() -> void:
 		assigned_breach = _targeting.request_breach()
 		if assigned_breach and assigned_breach.claim(self):
 			break
-		await _wait_outside_for_breach()
+		if is_agile and not is_boss:
+			await _cling_and_wait()
+		else:
+			await _wait_outside_for_breach()
 	if not _active or is_defeated or assigned_breach == null:
 		return
 
-	await _approach_breach(assigned_breach)
+	if is_agile and not is_boss:
+		await _jump_to_wall(assigned_breach)
+	else:
+		await _approach_breach(assigned_breach)
 	if not _active or is_defeated:
 		return
 	_attach_marker = assigned_breach.outside_marker
@@ -239,6 +257,7 @@ func _run_assault() -> void:
 			return
 
 	_attach_marker = null
+	_on_wall = false
 	assault_phase = AssaultPhase.ENTERING
 	var interior_speed := GameBalance.MOB_INTERIOR_SPEED
 	if assigned_breach and assigned_breach.entry_marker:
@@ -259,7 +278,10 @@ func _breach_until_open() -> void:
 				assigned_breach = next_point
 				assault_phase = AssaultPhase.APPROACH
 				_attach_marker = null
-				await _approach_breach(assigned_breach)
+				if is_agile and not is_boss:
+					await _jump_to_wall(assigned_breach)
+				else:
+					await _approach_breach(assigned_breach)
 				if not _active or is_defeated:
 					return
 				_attach_marker = assigned_breach.outside_marker
@@ -374,6 +396,122 @@ func _follow_path(points: Array[Vector3], speed: float, van_relative: bool) -> v
 			nav.release_passage(self)
 		else:
 			await _move_to_local(pt, speed, van_relative)
+
+
+func _is_wall_phase() -> bool:
+	return assault_phase in [AssaultPhase.JUMPING, AssaultPhase.GRIPPING, AssaultPhase.CLIMBING]
+
+
+func _local_of(marker: Node3D) -> Vector3:
+	return (get_parent() as Node3D).to_local(marker.global_position)
+
+
+func _wall_move(to: Vector3, jump: bool) -> void:
+	_clear_motion()
+	if jump:
+		_wall.start_jump(to)
+	else:
+		_wall.start_climb(to)
+	while not _wall.done and _active and not is_defeated:
+		await get_tree().physics_frame
+
+
+## Runs up from the road (or along the wall) to the window's outside marker.
+func _jump_to_wall(breach: BreachPoint) -> void:
+	if breach == null or breach.outside_marker == null:
+		return
+	var marker := _local_of(breach.outside_marker)
+	var grip: Vector3 = _wall.grip_point(marker)
+	if _on_wall:
+		var grip_rear: bool = grip.z > 4.5
+		var here_rear: bool = position.z > 4.5
+		var other_face: bool = grip_rear != here_rear
+		if not grip_rear and not here_rear:
+			other_face = signf(grip.x) != signf(position.x)
+		if other_face:
+			await _drop_off_wall()
+			if not _active or is_defeated:
+				return
+	if not _on_wall:
+		await _follow_path(_wall.approach_path(position, _wall.launch_point(grip)), 0.0, true)
+		if not _active or is_defeated:
+			return
+		assault_phase = AssaultPhase.JUMPING
+		await _wall_move(grip, true)
+		if not _active or is_defeated:
+			return
+		_on_wall = true
+	else:
+		assault_phase = AssaultPhase.CLIMBING
+		await _wall_move(grip, false)
+		if not _active or is_defeated:
+			return
+	assault_phase = AssaultPhase.CLIMBING
+	await _wall_move(marker, false)
+
+
+## Hangs on a free wall spot until a window opens up; drops back down if it is across the van.
+func _cling_and_wait() -> void:
+	var i: int = _wall.claim_cling(position)
+	if i < 0:
+		if _on_wall:
+			# The outside walk never runs while the phase is a wall phase, so just hang and poll.
+			assault_phase = AssaultPhase.GRIPPING
+			while _active and not is_defeated:
+				await get_tree().create_timer(0.1).timeout
+				if not _active or is_defeated:
+					return
+				var got := _targeting.request_breach()
+				if got:
+					assigned_breach = got
+					return
+			return
+		await _wait_outside_for_breach()
+		return
+	var spot: Vector3 = _wall.cling_point(i)
+	if not _on_wall:
+		await _follow_path(_wall.approach_path(position, _wall.launch_point(spot)), 0.0, true)
+		if not _active or is_defeated:
+			return
+		assault_phase = AssaultPhase.JUMPING
+		await _wall_move(spot, true)
+		if not _active or is_defeated:
+			return
+		_on_wall = true
+	else:
+		assault_phase = AssaultPhase.CLIMBING
+		await _wall_move(spot, false)
+		if not _active or is_defeated:
+			return
+	assault_phase = AssaultPhase.GRIPPING
+	while true:
+		await get_tree().create_timer(0.1).timeout
+		if not _active or is_defeated:
+			break
+		var b := _targeting.request_breach()
+		if b:
+			assigned_breach = b
+			break
+	_wall.release_cling()
+	if not _active or is_defeated or assigned_breach == null:
+		return
+	if assigned_breach.outside_marker == null:
+		return
+	var marker := _local_of(assigned_breach.outside_marker)
+	if _WallScript.is_rear(marker) or signf(marker.x) != signf(position.x):
+		await _drop_off_wall()
+
+
+## Jumps from the wall back down to the road, clear of the van, so the raider never climbs through it.
+func _drop_off_wall() -> void:
+	_on_wall = false
+	assault_phase = AssaultPhase.JUMPING
+	var x := position.x * 1.3 if absf(position.x) > 1.5 else position.x
+	var z := position.z + (1.0 if position.z > 4.5 else 0.0)
+	await _wall_move(Vector3(x, _wall.ROAD_ORIGIN_Y, z), true)
+	if not _active or is_defeated:
+		return
+	assault_phase = AssaultPhase.APPROACH
 
 
 func _wait_outside_for_breach() -> void:
@@ -529,4 +667,5 @@ func _breach_controller() -> BreachController:
 func _exit_tree() -> void:
 	_clear_motion()
 	_release_breach()
+	_wall.release_cling()
 	_targeting.release_nav()

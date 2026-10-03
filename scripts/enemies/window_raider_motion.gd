@@ -31,8 +31,12 @@ func _init(owner: Node3D) -> void:
 	raider = owner
 
 
+## The window loper runs on the road while approaching and leaves it in JUMPING, GRIPPING
+## and CLIMBING; the door loper walks the road throughout; the boss never does.
 func _walks_on_road() -> bool:
-	return not raider.is_agile and not raider.is_boss
+	return not raider.is_boss and (
+		not raider.is_agile or raider.assault_phase == WindowRaider.AssaultPhase.APPROACH
+	)
 
 
 ## Outside, the loper runs and claws at the doors from the street.
@@ -46,8 +50,8 @@ func keep_feet_on_road() -> void:
 
 
 ## Where the loper may stand for its phase: outside it stays off the van's body, door leaves
-## and wheels, inside it stays off the cabin walls. The window loper floats at its marker
-## outside, so only road walkers are pushed out; every non-boss raider is clamped inside.
+## and wheels, inside it stays off the cabin walls. The window loper only floats at its
+## marker in BREACHING, so only road walkers are pushed out; every non-boss raider is clamped inside.
 ## Other phases and the boss pass.
 func clear_point(p: Vector3) -> Vector3:
 	if raider.is_boss:

@@ -46,7 +46,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 			"give", "spawn":
 				matches = _filter_prefix(ItemRegistry.list_ids(), "")
 			"summon":
-				matches = _filter_prefix(["enemy"], "")
+				matches = _filter_prefix(["enemy", "loper"], "")
 			"reardoor":
 				matches = _filter_prefix(["open", "close", "toggle"], "")
 			"sidedoor":
@@ -83,7 +83,7 @@ func get_completion_context(text: String, caret_col: int) -> Dictionary:
 		else:
 			matches = _filter_prefix(_DebugCatalog.stop_force_tokens(), partial)
 	elif parts[0] == "summon":
-		matches = _filter_prefix(["enemy"], partial)
+		matches = _filter_prefix(["enemy", "loper"], partial)
 	elif parts[0] == "reardoor":
 		matches = _filter_prefix(["open", "close", "toggle"], partial)
 	elif parts[0] == "sidedoor":
@@ -180,6 +180,7 @@ func _cmd_help(_args: Array) -> String:
 		+ "  speed          debug turbo — fast travel, skips intro, compresses timers\n"
 		+ "  unspeed        turn off debug turbo\n"
 		+ "  summon enemy   spawn a raider that assaults an open breach slot\n"
+		+ "  summon loper   spawn a window loper that climbs the van wall\n"
 		+ "  give <item_id> add item to player (e.g. give frag_grenade)\n"
 		+ "  spawn <item_id> drop a pickup near the player\n"
 		+ "  coins <n>      add coins\n"
