@@ -312,10 +312,9 @@ on the face's edges that face the upper-left light (left temple and cheek, the
 jaw's left edge), about 20 pixels; never a pale fill, never on the chin or the
 right side, and no marks under the eyes (they read as blushing).
 Asymmetry (the tilted head, one arm lower, uneven teeth) is what keeps a
-sprite from reading as cute. The window raider is still the first-pass
-yellow cat crawler (80 x 48, 1.15 m tall, so it fits a side window) and waits
-for its own redraw to this rule. Both are drawn by `tools/gen_enemy_sprites.py`
-(19 flat colours each, outlined, lit from the upper left) and shown at
+sprite from reading as cute. The loper is also the window raider
+(the first-pass crawler was retired, 2026-10-03). It is drawn by `tools/gen_enemy_sprites.py`
+(19 flat colours, outlined, lit from the upper left) and shown at
 `pixel_size 0.024`, `texture_filter 0`, `alpha_cut 1`; re-run the script
 after changing a colour or a shape, never paint over the PNGs.
 
