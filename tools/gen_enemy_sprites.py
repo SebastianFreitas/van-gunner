@@ -5,10 +5,10 @@ dark. The door raider is a humanoid gone feral: a hunched loper whose head
 hangs forward out of a furred ruff, tapered arms longer than the legs with
 the claws on the van floor, hair that trails every bob, knobbed spine,
 hanging jaw, corpse-grey skin and black eye pits, nothing bright. The loper is both the door raider and the window
-raider. door_raider.png is a 13-frame 832 x 480 sheet: row 0 the 13-frame run (a bounding charge,
+raider. door_raider.png is a 13-frame 832 x 560 sheet: row 0 the 13-frame run (a bounding charge,
 seen from the front; frame 0 is the still), row 1 the 5-frame jump take-off, row 2 a 4-frame
 front-on latch onto the van wall (reach, impact, cling), row 3 an 8-frame front-on wall crawl
-(diagonal pairs, looping), row 4 a 6-frame front-on bar rake (hold on left, rake right), row 5 a 6-frame front-on on-foot claw swipe (left paw braced, right paw strikes). Every frame has the
+(diagonal pairs, looping), row 4 a 6-frame front-on bar rake (hold on left, rake right), row 5 a 6-frame front-on on-foot claw swipe (left paw braced, right paw strikes), row 6 a 5-frame front-on enter (pulls in through the window). Every frame has the
 feral face (draw_feral_head), riding the pose's head bob and jaw lag.
 
 Art rules (.claude/rules/art-style.md, pixel art): native size, one image
@@ -22,7 +22,7 @@ deterministic. Usage:
     py -3 tools/gen_enemy_sprites.py              # writes scenes/enemies/*.png
     py -3 tools/gen_enemy_sprites.py --preview D  # also 6x previews in D
     py -3 tools/gen_enemy_sprites.py --out D      # draft somewhere else first
-    py -3 tools/gen_enemy_sprites.py --strip P    # run 0, then the latch, climb, rake and swipe frames in one 6x PNG
+    py -3 tools/gen_enemy_sprites.py --strip P    # run 0, then the latch, climb, rake, swipe and enter frames in one 6x PNG
 """
 from __future__ import annotations
 
@@ -39,12 +39,13 @@ OUT = ROOT / "scenes" / "enemies"
 # Canvas size: the loper (door and window raider) is 1.54 x 1.92 m.
 LOPER_SIZE = (64, 80)
 LOPER_FRAMES = 13
-LOPER_ROWS = 6
+LOPER_ROWS = 7
 JUMP_FRAMES = 5
 LATCH_FRAMES = 4
 CLIMB_FRAMES = 8
 RAKE_FRAMES = 6
 SWIPE_FRAMES = 6
+ENTER_FRAMES = 5
 LOPER_SHEET = (LOPER_SIZE[0] * LOPER_FRAMES, LOPER_SIZE[1] * LOPER_ROWS)
 
 OUTLINE = (30, 20, 18)
@@ -626,6 +627,38 @@ LOPER_SWIPE_POSES = [
 ]
 assert len(LOPER_SWIPE_POSES) == SWIPE_FRAMES
 
+# Row 6 of the sheet: the loper pulls itself in through a van window toward the player, front-on
+# like the run (never a side view, never flipped). Frame 0 hang: both paws high and wide on the
+# sill, head low between the arms, legs dangling low outside. Frame 1 duck: head and shoulders
+# duck forward, head bigger and lower, elbows bent out, paws still high. Frame 2 chest through:
+# body higher, the right paw reaching down to the floor, the left still pulling on the sill.
+# Frame 3 hips over: body dropping, both arms down and forward, legs bent up under the body.
+# Frame 4 landing: crouched, soles down at the cell bottom, knees wide, paws planted; it reads
+# as the start of the prowl row (run frame 1 crouch numbers). The right arm draws in front on 2.
+LOPER_ENTER_POSES = [
+	dict(by=2, hump_dy=-1, head_dy=3, shoulder_dx=2, lag=1,  # 0 hang on the sill
+		left=((3, 28), (5, 14), [(2, 9), (4, 7), (7, 7), (10, 9)]),
+		right=((60, 28), (59, 14), [(62, 9), (60, 7), (57, 7), (54, 9)]),
+		legs=(((12, 70), (16, 78)), ((52, 71), (48, 78)))),
+	dict(by=1, hump_dy=-1, head_dy=7, shoulder_dx=3, lag=2,  # 1 duck forward
+		left=((1, 30), (5, 13), [(2, 8), (4, 6), (7, 6), (10, 8)]),
+		right=((62, 30), (59, 13), [(62, 8), (60, 6), (57, 6), (54, 8)]),
+		legs=(((12, 70), (16, 78)), ((52, 71), (48, 78)))),
+	dict(by=-3, hump_dy=0, head_dy=4, shoulder_dx=2, right_front=True, lag=2,  # 2 chest through
+		left=((4, 28), (6, 14), [(3, 9), (5, 7), (8, 7), (11, 9)]),
+		right=((58, 44), (56, 72), [(51, 76), (55, 78), (59, 78), (62, 76)]),
+		legs=(((14, 70), (18, 78)), ((50, 71), (46, 78)))),
+	dict(by=0, hump_dy=0, head_dy=3, shoulder_dx=1, lag=2,  # 3 hips over, dropping
+		left=((3, 46), (8, 70), [(2, 77), (6, 78), (10, 78), (14, 77)]),
+		right=((61, 48), (56, 71), [(51, 77), (55, 78), (59, 78), (62, 76)]),
+		legs=(((14, 62), (20, 70)), ((50, 63), (44, 71)))),
+	dict(by=3, hump_dy=-1, head_dy=3, shoulder_dx=1, lag=1,  # 4 crouched landing
+		left=((2, 49), (9, 72), [(3, 79), (7, 79), (11, 79), (15, 78)]),
+		right=((62, 53), (56, 74), [(51, 78), (55, 79), (59, 79), (63, 78)]),
+		legs=(((8, 66), (14, 79)), ((56, 67), (50, 79))), soles=True),
+]
+assert len(LOPER_ENTER_POSES) == ENTER_FRAMES
+
 
 def fur_sway(frame: int, poses=LOPER_POSES) -> tuple[int, int]:
 	"""Overlap and follow-through: the hair lags the body by a frame."""
@@ -881,7 +914,8 @@ def draw_loper(frame: int = 0, poses=LOPER_POSES) -> Canvas:
 def draw_loper_sheet() -> Canvas:
 	"""Row 0 the thirteen run frames, row 1 the five jump take-off frames, row 2 the four
 	latch frames, row 3 the eight climb frames, row 4 the six rake frames, row 5 the six
-	on-foot swipe frames, each cell exactly LOPER_SIZE."""
+	on-foot swipe frames, row 6 the five enter frames (pulls in through the window), each
+	cell exactly LOPER_SIZE."""
 	sheet = Canvas(LOPER_SHEET)
 	for i in range(LOPER_FRAMES):
 		sheet.blit(draw_loper(i), i * LOPER_SIZE[0])
@@ -895,6 +929,8 @@ def draw_loper_sheet() -> Canvas:
 		sheet.blit(draw_loper(i, LOPER_RAKE_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 4)
 	for i in range(SWIPE_FRAMES):
 		sheet.blit(draw_loper(i, LOPER_SWIPE_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 5)
+	for i in range(ENTER_FRAMES):
+		sheet.blit(draw_loper(i, LOPER_ENTER_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 6)
 	return sheet
 
 
@@ -912,7 +948,7 @@ def main() -> None:
 	ap = argparse.ArgumentParser()
 	ap.add_argument("--preview", help="folder for 6x nearest previews")
 	ap.add_argument("--out", help="write the PNGs here instead of scenes/enemies")
-	ap.add_argument("--strip", help="write one 6x PNG of run 0, then the latch, climb, rake and swipe frames")
+	ap.add_argument("--strip", help="write one 6x PNG of run 0, then the latch, climb, rake, swipe and enter frames")
 	args = ap.parse_args()
 	out = Path(args.out) if args.out else OUT
 	out.mkdir(parents=True, exist_ok=True)
@@ -928,10 +964,11 @@ def main() -> None:
 
 
 def write_strip(sheet: Image.Image, path: Path) -> None:
-	"""Run frame 0, then the latch, climb, rake and swipe frames in one row at 6x, 2 px gaps."""
+	"""Run frame 0, then the latch, climb, rake, swipe and enter frames in one row at 6x, 2 px gaps."""
 	w, h = LOPER_SIZE
 	cells = [(0, 0)] + [(i, 2) for i in range(LATCH_FRAMES)] + [(i, 3) for i in range(CLIMB_FRAMES)] \
-		+ [(i, 4) for i in range(RAKE_FRAMES)] + [(i, 5) for i in range(SWIPE_FRAMES)]
+		+ [(i, 4) for i in range(RAKE_FRAMES)] + [(i, 5) for i in range(SWIPE_FRAMES)] \
+		+ [(i, 6) for i in range(ENTER_FRAMES)]
 	scale = 6
 	gap = 2
 	strip = Image.new("RGBA", (len(cells) * (w * scale + gap) - gap, h * scale), (40, 40, 40, 255))

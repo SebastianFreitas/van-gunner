@@ -7,7 +7,7 @@ extends RefCounted
 ## Columns of the sheet: the thirteen run frames.
 const SHEET_COLUMNS := 13
 ## Rows of the sheet; grows as animation PRs add them.
-const SHEET_ROWS := 6
+const SHEET_ROWS := 7
 ## Seconds into the jump when the latch clip takes over: the jump lasts window_raider_wall.gd
 ## JUMP_TIME 0.8 s and, at 10 fps, the latch's impact frame (index 2) starts at 0.75 s, i.e. on
 ## contact. Keep the two in step.
@@ -36,6 +36,9 @@ const CLIPS: Dictionary = {
 	&"rake": {"row": 4, "frames": [0, 1, 2, 3, 4, 5], "fps": 12.0, "loop": false},
 	# One claw swipe at the bench or the player inside the van; frame 0 is the ready pose.
 	&"swipe": {"row": 5, "frames": [0, 1, 2, 3, 4, 5], "fps": 12.0, "loop": false},
+		# The window loper's climb in over the sill while ENTERING (1.3 m at 1.6 m/s = 0.81 s);
+		# holds the last frame until the phase ends.
+		&"enter": {"row": 6, "frames": [0, 1, 2, 3, 4], "fps": 6.0, "loop": false},
 }
 ## Swipe frame that shows the claws landing; start_swipe is timed so it coincides with the hit.
 const SWIPE_IMPACT_FRAME := 3
@@ -163,6 +166,12 @@ func step(delta: float, moving: bool) -> void:
 	)
 	if moving and not jumping and not on_wall:
 		picked = &"prowl" if in_cabin else &"run"
+	var entering := (
+		phase == WindowRaider.AssaultPhase.ENTERING
+		and raider.is_agile and not raider.is_boss and has_clip(&"enter")
+	)
+	if entering:
+		picked = &"enter"
 	var swiping := _swiping and in_cabin and has_clip(&"swipe")
 	if swiping:
 		picked = &"swipe"
@@ -181,7 +190,7 @@ func step(delta: float, moving: bool) -> void:
 		_step_rake(delta)
 	elif swiping:
 		_step_swipe(delta)
-	elif moving or jumping or on_wall:
+	elif moving or jumping or on_wall or entering:
 		_clock += delta
 		var data: Dictionary = CLIPS[_clip]
 		if data["loop"]:
