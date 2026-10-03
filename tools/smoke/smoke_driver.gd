@@ -10,8 +10,7 @@ extends Node
 const _WATCHDOG_SECONDS := 270.0
 const _Fingerprint :=preload("res://tools/smoke/smoke_fingerprint.gd")
 const _Halt := preload("res://tools/smoke/smoke_halt.gd")
-const _LoperClimb := preload("res://tools/smoke/smoke_loper_climb.gd")
-const _LoperKnock := preload("res://tools/smoke/smoke_loper_knock.gd")
+const _Lopers := preload("res://tools/smoke/smoke_lopers.gd")
 const _Route := preload("res://tools/smoke/smoke_route.gd")
 const _Shots := preload("res://tools/smoke/smoke_shots.gd")
 
@@ -237,8 +236,7 @@ func _run_pass(_van: Node) -> bool:
 
 	for _i in range(2):
 		_log(DebugCommands.run("summon enemy"))
-	await _LoperClimb.new().run(self)
-	await _LoperKnock.new().run(self)
+	await _Lopers.new().run(self)
 
 	var gun_controller := get_tree().get_first_node_in_group(&"gun_controller")
 	if gun_controller == null:

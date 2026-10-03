@@ -7,7 +7,7 @@ extends RefCounted
 ## Columns of the sheet: the thirteen run frames.
 const SHEET_COLUMNS := 13
 ## Rows of the sheet; grows as animation PRs add them.
-const SHEET_ROWS := 8
+const SHEET_ROWS := 9
 ## Seconds into the jump when the latch clip takes over: the jump lasts window_raider_wall.gd
 ## JUMP_TIME 0.8 s and, at 10 fps, the latch's impact frame (index 2) starts at 0.75 s, i.e. on
 ## contact. Keep the two in step.
@@ -16,7 +16,8 @@ const LATCH_START := 0.55
 ## at 6-8). Inside the cabin the loper prowls on these so it does not hop around the van.
 const GROUNDED_FRAMES: Array[int] = [0, 1, 2, 3, 4, 5, 9, 10, 11, 12]
 ## Clips by name: {"row": sheet row, "frames": columns in play order, "fps", "loop"}.
-## No death clip yet: W7/W8 add it, and _die then holds it before the fade.
+## wall_death is the wall kill (see step_wall_death); the generic `death` clip that _die holds
+## before the fade is not there yet (W8 adds it).
 const CLIPS: Dictionary = {
 	&"still": {"row": 0, "frames": [0], "fps": 1.0, "loop": true},
 	&"run": {"row": 0, "frames": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "fps": 18.0, "loop": true},
@@ -42,6 +43,9 @@ const CLIPS: Dictionary = {
 	# Shot out of a jump: frame 0 is the fall, frames 1..5 (slam, roll, get up) play from the
 	# landing and hold the last frame until the phase ends.
 	&"tumble": {"row": 7, "frames": [0, 1, 2, 3, 4, 5], "fps": 10.0, "loop": false},
+	# Shot dead on the wall: frames 0-1 kick off, frame 2 is held in the fall, frames 3-4 play
+	# from the landing and frame 4 stays on the road.
+	&"wall_death": {"row": 8, "frames": [0, 1, 2, 3, 4], "fps": 10.0, "loop": false},
 }
 ## Swipe frame that shows the claws landing; start_swipe is timed so it coincides with the hit.
 const SWIPE_IMPACT_FRAME := 3
@@ -209,6 +213,20 @@ func step(delta: float, moving: bool) -> void:
 		if data["loop"]:
 			var frames: Array = data["frames"]
 			_clock = fmod(_clock, frames.size() / float(data["fps"]))
+	show_clip_at(_clock, _clip)
+
+
+## Plays the wall death once per physics frame after _die: holds frame 2 until the fall lands,
+## then plays frames 3-4 and holds frame 4.
+func step_wall_death(delta: float) -> void:
+	if not drives_sprite():
+		return
+	play(&"wall_death")
+	var fps := float(CLIPS[&"wall_death"]["fps"])
+	if raider._wall.fall_landed:
+		_clock = maxf(_clock, 3.0 / fps) + delta
+	else:
+		_clock = minf(_clock + delta, 2.0 / fps)
 	show_clip_at(_clock, _clip)
 
 

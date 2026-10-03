@@ -63,6 +63,8 @@ var _wall: RefCounted
 var _on_wall := false
 ## Shot out of a latch jump: ends `_wall_move` early and runs the fall and tumble.
 var _knocked := false
+## Shot dead on the wall or at the window: the body falls and is left on the road (_die).
+var _dead_fall := false
 var _anim: _RaiderAnim
 var _targeting: _RaiderTargeting
 
@@ -93,7 +95,13 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if not _active or is_defeated:
+	if is_defeated:
+		if _dead_fall:
+			_anim.step_wall_death(delta)
+			if _wall.step_body(delta, _current_van_speed()):
+				queue_free()
+		return
+	if not _active:
 		return
 	if _is_wall_phase() or assault_phase == AssaultPhase.KNOCKED:
 		_wall.step(delta)
@@ -208,6 +216,11 @@ func take_damage(amount) -> void:
 
 
 func _die() -> void:
+	var on_wall := is_agile and not is_boss and (
+		_is_wall_phase()
+		or assault_phase == AssaultPhase.KNOCKED
+		or assault_phase == AssaultPhase.BREACHING
+	)
 	is_defeated = true
 	_active = false
 	_clear_motion()
@@ -225,6 +238,10 @@ func _die() -> void:
 	GameSession.notify_enemy_defeated(self)
 	defeated.emit()
 	assault_finished.emit()
+	if on_wall:
+		_dead_fall = true
+		_wall.start_death_fall()
+		return
 	var hold := _anim.clip_seconds(&"death")
 	var tween := create_tween()
 	if hold > 0.0:

@@ -43,6 +43,8 @@ const CLING_SPOTS: Array[Vector3] = [
 	Vector3(1, CLING_Y, 1.23),
 ]
 
+## The body is freed once it is this many metres behind the van along +Z.
+const BODY_KEEP_BEHIND := 40.0
 ## Spot index -> raider instance id.
 static var _cling_owners: Dictionary = {}
 
@@ -59,6 +61,8 @@ var _falling := false
 var _fall_vy := 0.0
 var _fall_drift := Vector3.ZERO
 var _slide_t := 0.0
+## True once the raider was shot dead on the wall: the body falls, then is left on the road.
+var body_mode := false
 
 
 func _init(owner: Node3D) -> void:
@@ -170,6 +174,22 @@ func start_fall() -> void:
 	fall_landed = false
 	_falling = true
 	done = false
+
+
+## Starts the fall of a raider shot dead on the wall (same drift, landing and short slide).
+func start_death_fall() -> void:
+	body_mode = true
+	start_fall()
+
+
+## Per-frame move of a dead body: the fall and slide, then it stays put on the road while the
+## van drives on. True once it is BODY_KEEP_BEHIND behind the van and can be freed.
+func step_body(delta: float, van_speed: float) -> bool:
+	if (_falling or fall_landed) and not done:
+		step(delta)
+	if fall_landed:
+		raider.position.z += van_speed * delta
+	return raider.position.z > BODY_KEEP_BEHIND
 
 
 func _step_fall(delta: float) -> void:

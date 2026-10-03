@@ -27,7 +27,7 @@ alpha_cut = 1
 texture_filter = 0
 render_priority = 2
 hframes = 13
-vframes = 8
+vframes = 9
 texture = ExtResource("2")
 
 [node name="EnemyHealthBar" type="Node3D" parent="." unique_id=2025378030]

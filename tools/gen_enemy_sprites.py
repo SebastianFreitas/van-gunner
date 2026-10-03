@@ -5,10 +5,10 @@ dark. The door raider is a humanoid gone feral: a hunched loper whose head
 hangs forward out of a furred ruff, tapered arms longer than the legs with
 the claws on the van floor, hair that trails every bob, knobbed spine,
 hanging jaw, corpse-grey skin and black eye pits, nothing bright. The loper is both the door raider and the window
-raider. door_raider.png is a 13-frame 832 x 640 sheet: row 0 the 13-frame run (a bounding charge,
+raider. door_raider.png is a 13-frame 832 x 720 sheet: row 0 the 13-frame run (a bounding charge,
 seen from the front; frame 0 is the still), row 1 the 5-frame jump take-off, row 2 a 4-frame
 front-on latch onto the van wall (reach, impact, cling), row 3 an 8-frame front-on wall crawl
-(diagonal pairs, looping), row 4 a 6-frame front-on bar rake (hold on left, rake right), row 5 a 6-frame front-on on-foot claw swipe (left paw braced, right paw strikes), row 6 a 5-frame front-on enter (pulls in through the window), row 7 a 6-frame front-on tumble (shot out of a jump, slams the road, rolls, gets up). Every frame has the
+(diagonal pairs, looping), row 4 a 6-frame front-on bar rake (hold on left, rake right), row 5 a 6-frame front-on on-foot claw swipe (left paw braced, right paw strikes), row 6 a 5-frame front-on enter (pulls in through the window), row 7 a 6-frame front-on tumble (shot out of a jump, slams the road, rolls, gets up), row 8 a 5-frame front-on wall death (shot off the van wall, falls, slams the road, lies still). Every frame has the
 feral face (draw_feral_head), riding the pose's head bob and jaw lag.
 
 Art rules (.claude/rules/art-style.md, pixel art): native size, one image
@@ -22,7 +22,7 @@ deterministic. Usage:
     py -3 tools/gen_enemy_sprites.py              # writes scenes/enemies/*.png
     py -3 tools/gen_enemy_sprites.py --preview D  # also 6x previews in D
     py -3 tools/gen_enemy_sprites.py --out D      # draft somewhere else first
-    py -3 tools/gen_enemy_sprites.py --strip P    # run 0, then the latch, climb, rake, swipe, enter and tumble frames in one 6x PNG
+    py -3 tools/gen_enemy_sprites.py --strip P    # run 0, then the latch, climb, rake, swipe, enter, tumble and wall-death frames in one 6x PNG
 """
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ OUT = ROOT / "scenes" / "enemies"
 # Canvas size: the loper (door and window raider) is 1.54 x 1.92 m.
 LOPER_SIZE = (64, 80)
 LOPER_FRAMES = 13
-LOPER_ROWS = 8
+LOPER_ROWS = 9
 JUMP_FRAMES = 5
 LATCH_FRAMES = 4
 CLIMB_FRAMES = 8
@@ -47,6 +47,7 @@ RAKE_FRAMES = 6
 SWIPE_FRAMES = 6
 ENTER_FRAMES = 5
 TUMBLE_FRAMES = 6
+WALL_DEATH_FRAMES = 5
 LOPER_SHEET = (LOPER_SIZE[0] * LOPER_FRAMES, LOPER_SIZE[1] * LOPER_ROWS)
 
 OUTLINE = (30, 20, 18)
@@ -696,6 +697,38 @@ LOPER_TUMBLE_POSES = [
 ]
 assert len(LOPER_TUMBLE_POSES) == TUMBLE_FRAMES
 
+# Row 8 of the sheet: a loper shot dead on the van wall loses its grip, falls, slams the road and
+# lies still, front-on like every row (never a side view, never flipped). Nothing in frames 0-2
+# touches the cell's outer border; frames 3-4 may touch row 79 (the road). Frame 0 hit: the
+# cling look, head snapped back, both paws flung off the wall, claws open. Frame 1 grip lost:
+# peeling back, arms high and limp above the head, claws dangling, legs coming loose. Frame 2
+# falling: airborne and limp, limbs trailing up and out, head lolled. Frame 3 slam: flat and
+# squashed on the road like tumble frame 1, limbs splayed. Frame 4 dead: sprawled and still,
+# lowest in the cell, limbs relaxed, head down on the road.
+LOPER_WALL_DEATH_POSES = [
+	dict(by=-3, hump_dy=1, head_dy=-2, shoulder_dx=-2, lag=2,  # 0 hit, paws flung off the wall
+		left=((8, 22), (7, 11), [(5, 6), (7, 4), (10, 4), (13, 6)]),
+		right=((55, 23), (56, 12), [(58, 7), (56, 5), (53, 5), (50, 7)]),
+		legs=(((10, 60), (7, 70)), ((54, 61), (57, 71))), soles=True),
+	dict(by=3, hump_dy=0, head_dy=0, shoulder_dx=-2, lag=1,  # 1 grip lost, peeling back
+		left=((10, 24), (8, 14), [(7, 18), (9, 19), (11, 19), (13, 18)]),
+		right=((53, 25), (55, 15), [(54, 19), (56, 20), (58, 20), (59, 18)]),
+		legs=(((12, 60), (9, 68)), ((52, 61), (55, 69)))),
+	dict(by=-1, hump_dy=1, head_dy=3, shoulder_dx=-2, lag=2,  # 2 falling, limp
+		left=((8, 26), (7, 17), [(6, 13), (8, 12), (10, 12), (12, 14)]),
+		right=((55, 28), (56, 19), [(57, 15), (55, 14), (53, 14), (51, 16)]),
+		legs=(((12, 58), (9, 64)), ((52, 59), (55, 65)))),
+	dict(by=14, hump_dy=3, head_dy=2, shoulder_dx=-4, lag=1,  # 3 slam, flat on the road
+		left=((9, 66), (8, 77), [(6, 79), (8, 79), (10, 79), (13, 78)]),
+		right=((55, 67), (55, 77), [(51, 78), (53, 79), (55, 79), (57, 79)]),
+		legs=(((15, 76), (9, 79)), ((49, 77), (55, 79))), soles=True),
+	dict(by=16, hump_dy=1, head_dy=6, shoulder_dx=-3, lag=0,  # 4 dead, sprawled and still
+		left=((9, 71), (8, 78), [(6, 79), (8, 79), (10, 79), (12, 79)]),
+		right=((54, 72), (54, 78), [(50, 79), (52, 79), (54, 79), (56, 79)]),
+		legs=(((14, 77), (8, 79)), ((50, 78), (56, 79))), soles=True),
+]
+assert len(LOPER_WALL_DEATH_POSES) == WALL_DEATH_FRAMES
+
 
 def fur_sway(frame: int, poses=LOPER_POSES) -> tuple[int, int]:
 	"""Overlap and follow-through: the hair lags the body by a frame."""
@@ -969,7 +1002,8 @@ def draw_loper_sheet() -> Canvas:
 	"""Row 0 the thirteen run frames, row 1 the five jump take-off frames, row 2 the four
 	latch frames, row 3 the eight climb frames, row 4 the six rake frames, row 5 the six
 	on-foot swipe frames, row 6 the five enter frames (pulls in through the window), row 7 the
-	six tumble frames (shot out of a jump, slams, rolls, gets up); 832 x 640, each
+	six tumble frames (shot out of a jump, slams, rolls, gets up), row 8 the five wall-death
+	frames (shot off the van wall, falls, slams the road, lies still); 832 x 720, each
 	cell exactly LOPER_SIZE."""
 	sheet = Canvas(LOPER_SHEET)
 	for i in range(LOPER_FRAMES):
@@ -988,6 +1022,8 @@ def draw_loper_sheet() -> Canvas:
 		sheet.blit(draw_loper(i, LOPER_ENTER_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 6)
 	for i in range(TUMBLE_FRAMES):
 		sheet.blit(draw_loper(i, LOPER_TUMBLE_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 7)
+	for i in range(WALL_DEATH_FRAMES):
+		sheet.blit(draw_loper(i, LOPER_WALL_DEATH_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 8)
 	return sheet
 
 
@@ -1021,11 +1057,12 @@ def main() -> None:
 
 
 def write_strip(sheet: Image.Image, path: Path) -> None:
-	"""Run frame 0, then the latch, climb, rake, swipe, enter and tumble frames in one row at 6x, 2 px gaps."""
+	"""Run frame 0, then the latch, climb, rake, swipe, enter, tumble and wall-death frames in one row at 6x, 2 px gaps."""
 	w, h = LOPER_SIZE
 	cells = [(0, 0)] + [(i, 2) for i in range(LATCH_FRAMES)] + [(i, 3) for i in range(CLIMB_FRAMES)] \
 		+ [(i, 4) for i in range(RAKE_FRAMES)] + [(i, 5) for i in range(SWIPE_FRAMES)] \
-		+ [(i, 6) for i in range(ENTER_FRAMES)] + [(i, 7) for i in range(TUMBLE_FRAMES)]
+		+ [(i, 6) for i in range(ENTER_FRAMES)] + [(i, 7) for i in range(TUMBLE_FRAMES)] \
+		+ [(i, 8) for i in range(WALL_DEATH_FRAMES)]
 	scale = 6
 	gap = 2
 	strip = Image.new("RGBA", (len(cells) * (w * scale + gap) - gap, h * scale), (40, 40, 40, 255))
