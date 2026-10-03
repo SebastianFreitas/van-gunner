@@ -506,17 +506,21 @@ def draw_feral_head(c: Canvas, hd: int, jy: int, by: int) -> None:
 	for x, y0, y1 in ((27, 38, 45), (35, 39, 46)):
 		for y in range(y0, y1):
 			head.set(x, y, DROOL)
-	# The rim: pale only on the face's edge below the hair, bright on the lit left side and
-	# the chin line, the mid tone on the shadowed right side's bony points.
+	# The rim follows the light from the upper left like every other part: pale only on
+	# the edges that face up or left (the left temple and cheek, the top of the left
+	# cheekbone), and on the top of each cheekbone ridge above its hollow (bright on the lit
+	# left one, the mid tone on the right). Edges facing down or right stay dark.
 	face = skull - cap - maw
+	lit = light(31, 30, 14, 12)
 	for x, y in face:
-		if y < 23 or all((x + dx, y + dy) in skull for dx, dy in ((1, 0), (-1, 0), (0, 1))):
+		if y < 23 or lit(x, y) > -0.25:
 			continue
-		if x <= 31:
+		if (x - 1, y) not in skull or (x, y - 1) not in skull:
 			head.set(x, y, FACE_HI)
-	for x, y in ((46, 29), (45, 28), (45, 30), (44, 31), (43, 37), (44, 38), (43, 39)):
-		if (x, y) in face:
-			head.set(x, y, FACE)
+	for xs, y, tone in ((range(22, 26), 29, FACE_HI), (range(39, 43), 30, FACE)):
+		for x in xs:
+			if (x, y) in face:
+				head.set(x, y, tone)
 	c.blit(head, 0, hd)
 	# Matted hair framing the skull, kept off the face so it stays one pale shape.
 	for x0, y0, x1, y1 in ((21, 19, 16, 31), (19, 23, 15, 34), (43, 19, 47, 31)):
@@ -525,11 +529,10 @@ def draw_feral_head(c: Canvas, hd: int, jy: int, by: int) -> None:
 	jaw = Canvas(LOPER_SIZE)
 	jaw_m = jaw.mask(polygon([(22, 46), (41, 46), (39, 51), (33, 58), (29, 58), (24, 51)]))
 	jaw.part(jaw_m, SKIN, SKIN_SH, SKIN_HI, light(31, 50, 10, 7), 0.3, -1.2)
-	# The chin's rim: the lit left edge and the point, pale like the skull's.
+	# The jaw's left edge catches the light; its chin points down, away from it.
 	for x, y in jaw_m:
-		edge = any((x + dx, y + dy) not in jaw_m for dx, dy in ((1, 0), (-1, 0), (0, 1)))
-		if edge and y > 46 and (x <= 31 or y >= 57):
-			jaw.set(x, y, FACE_HI if x <= 31 else FACE)
+		if (x - 1, y) not in jaw_m and y < 52:
+			jaw.set(x, y, FACE)
 	for x in range(23, 41):
 		jaw.set(x, 46, GUM)
 	for x, h in ((24, 4), (28, 2), (31, 5), (35, 3), (39, 4)):
