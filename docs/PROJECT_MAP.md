@@ -22,6 +22,7 @@
 - loot machine: LootMachine, scripts/interactions/loot_machine.gd (left-wall hopper for street-kill loot)
 - stims / tools / hotbar: ItemUsableConfig, scripts/items/item_usable_config.gd, scripts/player/usables_controller.gd, resources/items/adrenaline_stim.tres
 - chill (mode): GameSession.chill_mode, debug commands chill / unchill (freezes encounters)
+- stop / halt the van: C while EASY, TravelController.try_halt (speed 0, exit through the rear doors, Shift to go); turbo is Shift, EASY is the first C; climb back in: rear_climb.gd
 - shop lift / elevator stop: StopElevator, scripts/stops/stop_elevator.gd, scenes/corridor/stop_elevator.tscn
 - stop mouth / vestibule: scripts/stops/stop_vestibule.gd (shared entrance of every roadside stop)
 - garage / lounge: resources/side_stops/garage.tres, scripts/stops/garage_lounge.gd, scenes/corridor/garage_bay.tscn
@@ -66,11 +67,12 @@
 ## Node groups
 
 Registered: `act_deck_controller`, `agile`, `boon_reward_controller`, `boss`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `gun_controller`,
-`gun_stats`, `gun_viewmodel`, `head_hitbox`, `machine_power_ports`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_exterior_layer`, `van_run`, `van_vitals`
+`gun_stats`, `gun_viewmodel`, `head_hitbox`, `machine_power_ports`, `pickup`, `player`, `rear_climb`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_exterior_layer`, `van_run`,
+`van_vitals`
 
 Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_controller`, `breach_points`, `cabin_nav`, `dialogue_hud`, `encounter_director`, `enemy`, `facade_lights`,
-`gun_controller`, `gun_port_leaf`, `gun_ports`, `gun_stats`, `gun_viewmodel`, `head_hitbox`, `pickup`, `player`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`, `van_run`,
-`van_vitals`
+`gun_controller`, `gun_port_leaf`, `gun_ports`, `gun_stats`, `gun_viewmodel`, `head_hitbox`, `pickup`, `player`, `rear_climb`, `rear_doors`, `side_doors`, `side_windows`, `travel_controller`,
+`van_run`, `van_vitals`
 
 ## Signals and enums
 
@@ -233,6 +235,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 **`scripts/travel/travel_controller.gd`**
 
+- `signal halted_changed(halted: bool)`
 - `enum TurnState { NONE, APPROACHING, TURNING, PARKING, LEAVING_STOP, ELEVATING, }`
 
 **`scripts/travel/facades/facade_lamp_flicker.gd`**
@@ -342,7 +345,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-362 GDScript files, 58305 lines.
+365 GDScript files, 58553 lines.
 
 ### `scenes/corridor/`
 
@@ -379,7 +382,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `audio_director.gd` | — | 368 | Central sound playback. |
+| `audio_director.gd` | — | 381 | Central sound playback. |
 | `sound_bank.gd` | `SoundBank` | 42 | Flat list of SoundCues, indexed by id once at load. |
 | `sound_cue.gd` | `SoundCue` | 41 | One addressable sound. |
 
@@ -612,7 +615,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `road_floor_wreck_curb.gd` | — | 107 | Builds the wrecked paving's granite curb: 1 m blocks, knocked, missing or toppled in gone stretches. |
 | `road_floor_wreck_ground.gd` | — | 183 | Builds a sidewalk side's ground: a worn soil heightfield under the paving (a foot path just under tile height ramping down to road level at the curb line, with… |
 | `road_floor_wreck_map.gd` | — | 137 | The street's destruction map: one smooth world-space field saying how wrecked the sidewalk is at a point, continuous across corridor tiles and calibrated so DE… |
-| `travel_controller.gd` | `TravelController` | 607 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
+| `travel_controller.gd` | `TravelController` | 646 | Drives the van's travel state machine: approach, turn, park and leave each stop. |
 | `travel_routes.gd` | — | 265 | Owns the travel-path curve building for turns, stop parking and leaving a stop. |
 | `travel_stops.gd` | — | 203 | Owns the stop fork, side-stop placement, elevator pad ride and stop-state cleanup. |
 | `travel_world.gd` | — | 268 | Owns corridor tile spawning/pruning, side streets, neighborhood variants and act statues. |
@@ -705,7 +708,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `damage_number.gd` | `DamageNumber` | 38 | A floating label showing one damage hit, styled differently for headshots. |
 | `debug_console.gd` | `DebugConsole` | 259 | In-game debug terminal. |
 | `dialogue_hud.gd` | `DialogueHud` | 270 | Hover-to-highlight NPC talk, Slay-the-Spire style. |
-| `driver_shout_hud.gd` | `DriverShoutHud` | 109 | Always-on GO / EASY shouts. |
+| `driver_shout_hud.gd` | `DriverShoutHud` | 106 | Always-on GO / EASY shouts. |
 | `enemy_health_bar.gd` | `EnemyHealthBar` | 63 | A billboard health bar shown above an enemy while it is damaged. |
 | `item_hud.gd` | — | 88 | Hotbar for tools and a row of collected boon icons. |
 | `main_menu.gd` | — | 128 | The main menu screen: save slot selection, settings panel and starting a run. |
@@ -724,6 +727,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `iron_cross.gd` | `IronCross` | 246 | Scrap rebar + outside a window pane: two bent bars, often one in a pipe sleeve, welded and lashed. |
 | `iron_cross_build.gd` | — | 347 | Builds IronCross's scrap +: two bent rebar bars, a pipe sleeve, blobby welds, a seeded centre. |
 | `iron_cross_geo.gd` | — | 298 | Mesh builder for IronCross: rods, boxes, bolts and weld blobs that follow the bowed side wall. |
+| `rear_climb.gd` | `RearClimb` | 50 | Prompt just outside the rear doors that lifts the player back onto the deck while the van is halted. |
 | `rear_door_frame.gd` | — | 143 | Fixed steel frame on the cabin side of the rear doors, covering the leaves' clearance slits. |
 | `rear_door_interact.gd` | — | 30 | Layer-2-only hit target on a rear door leaf. |
 | `rear_door_leaf_build.gd` | — | 117 | Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55). |
@@ -747,16 +751,17 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_bulkhead_mesh.gd` | — | 245 | Builds the bulkhead's frame posts, headers, panels and diagonal mesh netting. |
 | `van_ceiling.gd` | `VanCeiling` | 384 | Barrel-vault interior ceiling with headliner and cargo dressing. |
 | `van_ceiling_cove.gd` | — | 133 | Steel cove strips along the ceiling-to-wall join (vangapfix D33). |
-| `van_driver_talk.gd` | — | 158 | The driver-talk panel: open/close, option refresh, and boost/slow shout handling. |
+| `van_driver_talk.gd` | — | 193 | The driver-talk panel: open/close, option refresh, and boost/slow shout handling. |
 | `van_floor.gd` | `VanFloor` | 343 | Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape). |
 | `van_front_wall.gd` | `VanFrontWall` | 207 | The cargo room's cab-end wall as one slab cut from VanBodyProfile's section, with a doorway notch that the CabDoor leaf fills, so its edges meet the bowed wall… |
 | `van_gun_port.gd` | `VanGunPort` | 198 | A slot gun port on a side door leaf: welded frame and a steel plate sliding in a track, seen from inside and outside. |
 | `van_gun_port_interact.gd` | — | 16 | Layer-2 hit target in front of a side door's gun port; E slides the port's plate open or shut. |
-| `van_hud.gd` | — | 183 | Combat HUD readouts: ammo, health, waves, prompts, item toasts, stop toasts. |
+| `van_halt.gd` | — | 35 | Halted-van exit: who counts as inside the van, and what the rear exit does while the van is fully stopped. |
+| `van_hud.gd` | — | 186 | Combat HUD readouts: ammo, health, waves, prompts, item toasts, stop toasts. |
 | `van_hull_mesh.gd` | `VanHullMesh` | 401 | XY end-cap slabs that follow VanSideWall's bow and VanCeiling's barrel vault. |
 | `van_lighting.gd` | `VanLighting` | 56 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) lights the corridor through openings without washing the cabin. |
 | `van_overlays.gd` | — | 238 | Modal overlays: bench, skill tree, class panel, debug console, pause menu, mouse passthrough. |
-| `van_player_containment.gd` | `VanPlayerContainment` | 77 | Invisible shell that keeps the player inside the van. |
+| `van_player_containment.gd` | `VanPlayerContainment` | 89 | Invisible shell that keeps the player inside the van. |
 | `van_route_choice.gd` | — | 287 | Builds and refreshes the ROUTE_CHOICE panel: card art, stop labels, highlight state. |
 | `van_side_wall.gd` | `VanSideWall` | 368 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
 | `van_side_wall_jambs.gd` | — | 175 | Door jambs for VanSideWall: the frame ring's lip inside each side door bay, without the outer return the wall's reveal owns. |
@@ -834,8 +839,9 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `smoke_driver.gd` | — | 384 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
+| `smoke_driver.gd` | — | 390 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
+| `smoke_halt.gd` | — | 58 | Smoke step: the C-C halt, exit, climb-in and Shift resume round trip. |
 | `smoke_route.gd` | — | 181 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
 | `smoke_shots.gd` | — | 401 | Screenshots for tools/smoke.py --shots. |
 | `smoke_shots_closeups.gd` | — | 314 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
@@ -882,7 +888,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/bench_screen.tscn` | 24 | Control |
 | `scenes/ui/damage_number.tscn` | 1 | Label |
 | `scenes/ui/debug_console.tscn` | 8 | Control |
-| `scenes/ui/driver_shout_hud.tscn` | 9 | Control |
+| `scenes/ui/driver_shout_hud.tscn` | 8 | Control |
 | `scenes/ui/item_hud.tscn` | 7 | Control |
 | `scenes/ui/main_menu.tscn` | 25 | Control |
 | `scenes/ui/pause_menu.tscn` | 22 | Control |

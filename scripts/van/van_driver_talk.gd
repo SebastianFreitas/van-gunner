@@ -2,11 +2,15 @@ extends RefCounted
 
 ## The driver-talk panel: open/close, option refresh, and boost/slow shout handling.
 
+const _VanHalt := preload("res://scripts/van/van_halt.gd")
+
 var van: Node3D  # untyped owner; van.gd has no class_name (cycle rule), so fields are read dynamically
+var halt: _VanHalt
 
 
 func _init(owner: Node3D) -> void:
 	van = owner
+	halt = _VanHalt.new(owner)
 
 
 func open() -> void:
@@ -64,29 +68,39 @@ func refresh_options() -> void:
 		van.slow_button.text = "EASY"
 		return
 
-	if travel.is_boosting():
+	var halted := travel.is_halted()
+	var slowing := travel.is_slowing()
+	if halted:
+		van.driver_talk_hint.text = "Engine's off - walk out the back, or shout to go."
+	elif slowing:
+		van.driver_talk_hint.text = "Holding back - shout when you want speed."
+	elif travel.is_boosting():
 		van.driver_talk_hint.text = "Hold on — flooring it."
+	elif not travel.can_boost():
+		van.driver_talk_hint.text = "Engine's hot — give it a moment."
+	else:
+		van.driver_talk_hint.text = "Yell at the driver — speed up or ease off."
+
+	if travel.is_boosting():
 		van.accelerate_button.disabled = true
 		van.accelerate_button.text = "FLOORING IT"
+	elif halted or slowing:
+		van.accelerate_button.disabled = false
+		van.accelerate_button.text = "LET'S GO"
 	elif not travel.can_boost():
 		var wait := ceili(travel.get_boost_cooldown_remaining())
-		van.driver_talk_hint.text = "Engine's hot — give it a moment."
 		van.accelerate_button.disabled = true
 		van.accelerate_button.text = "WAIT %ds" % wait
 	else:
-		van.driver_talk_hint.text = "Yell at the driver — speed up or ease off."
 		van.accelerate_button.disabled = false
 		van.accelerate_button.text = "ACCELERATE"
 
-	if travel.is_slowing():
-		van.slow_button.disabled = false
-		van.slow_button.text = "LET'S GO"
-		if not travel.is_boosting() and travel.can_boost():
-			van.driver_talk_hint.text = "Holding back — shout when you want speed."
-	elif not travel.can_slow():
-		var slow_wait := ceili(travel.get_slow_cooldown_remaining())
+	if halted:
 		van.slow_button.disabled = true
-		van.slow_button.text = "WAIT %ds" % slow_wait if slow_wait > 0 else "EASY"
+		van.slow_button.text = "STOPPED"
+	elif slowing:
+		van.slow_button.disabled = not travel.can_halt()
+		van.slow_button.text = "STOP"
 	else:
 		van.slow_button.disabled = false
 		van.slow_button.text = "EASY"
@@ -102,7 +116,18 @@ func request_boost() -> bool:
 		AudioDirector.play(&"shout_start")
 		van._show_message("LET'S GO")
 		return true
+	if not halt.is_player_inside():
+		van._show_message("GET BACK IN THE VAN")
+		return false
 	var travel := van.get_tree().get_first_node_in_group(&"travel_controller") as TravelController
+	if travel != null and (travel.is_slowing() or travel.is_halted()):
+		if not travel.try_resume_speed():
+			refresh_options()
+			return false
+		refresh_options()
+		AudioDirector.play(&"shout_resume")
+		van._show_message("LET'S GO")
+		return true
 	if travel == null or not travel.try_boost():
 		refresh_options()
 		return false
@@ -112,19 +137,25 @@ func request_boost() -> bool:
 	return true
 
 
-## C / HUD: ease off, or resume if already crawling.
+## C / HUD: ease off, then stop; a stopped van only answers to Shift.
 func request_slow_or_go() -> bool:
+	if not halt.is_player_inside():
+		van._show_message("GET BACK IN THE VAN")
+		return false
 	var travel := van.get_tree().get_first_node_in_group(&"travel_controller") as TravelController
 	if travel == null:
 		refresh_options()
 		return false
+	if travel.is_halted():
+		van._show_message("STOPPED - SHIFT TO GO")
+		return false
 	if travel.is_slowing():
-		if not travel.try_resume_speed():
-			refresh_options()
+		if not travel.try_halt():
+			van._show_message("CAN'T STOP HERE")
 			return false
 		refresh_options()
-		AudioDirector.play(&"shout_resume")
-		van._show_message("LET'S GO")
+		AudioDirector.play(&"shout_slow")
+		van._show_message("STOP THE VAN")
 		return true
 	if not travel.try_slow():
 		refresh_options()
@@ -135,7 +166,11 @@ func request_slow_or_go() -> bool:
 	return true
 
 
+## Outside the van Shift and C are not shouts: van.gd leaves them unhandled,
+## so a later dash and crouch can take them.
 func shout_keys_blocked() -> bool:
+	if not halt.is_player_inside() and GameSession.phase != GameSession.RunPhase.IDLE:
+		return true
 	if van.pause_menu and van.pause_menu.visible:
 		return true
 	if van._debug_console and van._debug_console.visible:
