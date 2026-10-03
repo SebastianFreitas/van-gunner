@@ -98,6 +98,7 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 		&"verts": PackedVector3Array(), &"centres": PackedVector3Array(), &"wts": [],
 		&"rings": 0, &"names": names, &"binds": binds, &"lens": lens,
 		&"cr": cr, &"r1": shaft[1], &"r2": shaft[2], &"r3": shaft[3], &"pad": pad,
+		&"tip_rings": [],
 	}
 	var tip_prof := _tip_profile(knob[3], shaft[3])
 	for j in range(first, 4):
@@ -115,7 +116,19 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 	var tube_len := 0.0
 	for j in range(first, 4):
 		tube_len += lens[j]
+	# Tip rings in the nail frame (x lateral, y along the bone, z dorsal) of the bone-local
+	# attachment, so ArmClaw can follow the tube without further offsets.
+	var lat_n := (inv * ax[1]).normalized()
+	var dor_n := (inv * ax[0]).normalized()
+	var tip_rings: Array = []
+	for r: Dictionary in fg[&"tip_rings"]:
+		var v: Vector3 = inv * (r[&"centre"] - base.origin)
+		tip_rings.append({&"t": r[&"t"], &"centre": Vector3(lat_n.dot(v), v.y, dor_n.dot(v)),
+				&"half_w": r[&"half_w"], &"half_h": r[&"half_h"]})
+	tip_rings.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a[&"t"]) < float(b[&"t"]))
 	fg[&"info"] = {
+		&"tip_rings": tip_rings,
 		&"tip_len": lens[3],
 		&"bed_r": _radius_at(tip_prof, 0.5),
 		&"dorsal": (inv * ax[0]).normalized(),
@@ -150,6 +163,9 @@ static func _segment(mi: MeshInstance3D, sk: Skeleton3D, fg: Dictionary, j: int,
 				+ ax[1] * _crook(j, p.x, fg)
 		var h := NAIL_H if j == 3 and p.x >= NAIL_FROM else 1.0
 		_ring(fv, c, ax[0], ax[1], p.y, h)
+		if j == 3:
+			var tips: Array = fg[&"tip_rings"]
+			tips.append({&"t": p.x, &"centre": c, &"half_w": 0.92 * p.y, &"half_h": p.y * h})
 		centres.append(c)
 		var w := _ring_weights(binds[j], parent, nxt, p.x)
 		for _s in SECTORS:

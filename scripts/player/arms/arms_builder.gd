@@ -82,7 +82,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	# Girth is about three times the witch's gaunt shafts (0.68-0.80): the index shaft is over a
 	# quarter of its length.
 	var girth := rng.randf_range(2.00, 2.20)
-	var claw_curve := rng.randf_range(40.0, 60.0)
+	var claw_curve := rng.randf_range(15.0, 30.0)
 	var hand_k := rng.randf_range(1.40, 1.55)
 	var claw := ArmMaterials.claw()
 	var gx := HeldGun.gun_xform()

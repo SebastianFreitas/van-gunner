@@ -110,6 +110,11 @@ Geometry:
   One owner exception (2026-10-01): the first-person arms are the CC0
   low-poly rigged model `assets/models/arms/arms.glb`, posed by `ArmRig`
   and skinned only with the grime shader as `material_override` (no bitmap).
+  Its claw-nails (`ArmClaw`) are smooth-shaded, 12-segment arcs that hug
+  the fingertip from the tube's own recorded rings (`tip_rings`), sunk 3 %
+  into the skin so they never float, then taper to a point curving 15-30
+  degrees toward the pad (owner, 2026-10-03: the old 6-sided horns floated
+  and looked too low-poly).
   The hands never rest: `ArmWeave` (`scripts/player/arms/arm_weave.gd`)
   rolls both hands' fingers index to pinky in hooked witch curls on a 3.6 s
   period with a slow second harmonic, wrists circling, both hands

@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-360 GDScript files, 57599 lines.
+360 GDScript files, 57691 lines.
 
 ### `scenes/corridor/`
 
@@ -551,15 +551,15 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `arm_bulk.gd` | `ArmBulk` | 263 | Inflates a skinned arm mesh around each bone's axis so the limbs read thick. |
-| `arm_claw.gd` | `ArmClaw` | 55 | Swept goblin claw mesh: a thin nail plate that thickens into a horn, reaches past the fingertip and hooks toward the pad. |
+| `arm_claw.gd` | `ArmClaw` | 129 | Claw-nail mesh: a rounded plate sunk into the top of the fingertip that grows past the tip into a tapered point curving slightly toward the pad. |
 | `arm_dress.gd` | `ArmDress` | 233 | Dresses the goblin's arms from the van seed: fingerless glove, rings and tape on the gun hand, boxer's wrap, forearm bandage and chain on the free hand, cut-of… |
-| `arm_fingers.gd` | `ArmFingers` | 323 | Procedural finger tubes: per hand one skinned mesh of five bony finger tubes (knuckle knobs, thin shafts, flat pads, tapering tips, a seeded sideways crook) in… |
+| `arm_fingers.gd` | `ArmFingers` | 339 | Procedural finger tubes: per hand one skinned mesh of five bony finger tubes (knuckle knobs, thin shafts, flat pads, tapering tips, a seeded sideways crook) in… |
 | `arm_kick.gd` | — | 213 | Shot impact on the goblin arms: a time-sampled kick (root slide, forearm lift about the elbow, hand and gun flex about the wrist, trigger pull and grip squeeze… |
 | `arm_materials.gd` | `ArmMaterials` | 148 | Materials for the first-person goblin arms and pipe rifle: grime-shaded skin, cloth and steel, flat darks for the rest. |
 | `arm_muscle.gd` | `ArmMuscle` | 161 | Seeded muscle masses, rebuilt normals and vein coordinates for the inflated arm mesh. |
 | `arm_parts.gd` | `ArmParts` | 46 | Low-poly primitives for the first-person arms: meshes, cylinders, boxes and tapered limbs. |
 | `arm_refine.gd` | `ArmRefine` | 128 | Midpoint-subdivides the imported arm mesh once at load, so the gain ramp and the muscle lumps have rings to shape instead of one step between the mid-forearm a… |
-| `arm_rig.gd` | `ArmRig` | 228 | Skinned first-person arm model: spawn, two-bone reach to a wrist target, finger curl and claws. |
+| `arm_rig.gd` | `ArmRig` | 230 | Skinned first-person arm model: spawn, two-bone reach to a wrist target, finger curl and claws. |
 | `arm_skin_layers.gd` | `ArmSkinLayers` | 289 | Seeds one arm's skin-layer shader uniforms: scars, wounds, knuckle grazes, dirt, the van-name tattoo. |
 | `arm_skin_mesh.gd` | `ArmSkinMesh` | 268 | Builds skinned cloth meshes on an arm skeleton: ring frames, averaged ring weights, tube indices. |
 | `arm_sleeve.gd` | `ArmSleeve` | 181 | Builds the oversized torn T-shirt sleeve as a skinned tube on the upper arm, above the elbow. |
