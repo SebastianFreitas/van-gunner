@@ -1,20 +1,26 @@
 class_name ArmClaw
 extends RefCounted
-## Claw-nail mesh: a rounded plate sunk into the top of the fingertip that grows past the tip into a tapered point curving slightly toward the pad.
+## Claw-nail mesh: a curved plate that rises out of a skin fold at its root and tucks under the finger's sides, then grows past the tip into a tapered point curving toward the pad.
 
-## Half-angle (from the dorsal line) the nail wraps around the finger.
-const ARC := deg_to_rad(70.0)
-const ARC_SEGS := 12
+## Half-angle (from the dorsal line) the nail wraps around the finger; the sides dive under the skin.
+const ARC := deg_to_rad(82.0)
+const ARC_SEGS := 16
 ## Sections on the finger (the nail bed) and past its tip (the free claw).
-const BED_RINGS := 9
+const BED_RINGS := 14
 const FREE_RINGS := 12
-## Share of the tip bone (t) where the bed starts and where the free claw leaves the finger.
-const BED_FROM := 0.40
+## Share of the tip bone (t) where the bed starts (buried root) and where the free claw leaves the finger.
+const BED_FROM := 0.28
 const BED_TO := 0.90
-## Inner face scale: 3 % inside the skin, so there is never a gap between nail and finger.
-const SINK := 0.97
-## Plate thickness as a share of the finger's half size.
-const THICK := 0.14
+## Top of the full-height nail above the skin, as a share of the finger's half size.
+const LIFT := 0.09
+## How far under the skin the root and side edges sit, same unit.
+const BURY := 0.07
+## Plate thickness, same unit.
+const THICK := 0.12
+## Share of the bed over which the nail rises out of the proximal fold.
+const ROOT := 0.45
+## Share of ARC (from the dorsal line) past which the sides start to dive under the skin.
+const SIDE := 0.55
 
 
 ## `rings` are `ArmFingers.build`'s tip rings ({t, centre, half_w, half_h}, centre x lateral, y
@@ -28,14 +34,17 @@ static func mesh(rings: Array, reach: float, curve_deg: float) -> ArrayMesh:
 	if span > 0.0:
 		var dy: float = (last[&"centre"] as Vector3).y - (first[&"centre"] as Vector3).y
 		tip_len = dy / span
-	# Sections: {c, hw, hh, k_out, k_in}.
+	# Sections: {c, hw, hh, out, in}; out and in are the per-arc-point scales of the two faces.
 	var secs: Array[Dictionary] = []
 	for i in BED_RINGS:
-		var t := lerpf(BED_FROM, BED_TO, float(i) / float(BED_RINGS - 1))
+		var u := float(i) / float(BED_RINGS - 1)
+		var t := lerpf(BED_FROM, BED_TO, u)
 		var r := _lerp_ring(rings, t)
-		var s := minf(float(i), 1.0)
-		secs.append({&"c": r[&"centre"], &"hw": r[&"half_w"], &"hh": r[&"half_h"],
-				&"k_out": SINK + THICK * s, &"k_in": SINK})
+		var root := smoothstep(0.0, ROOT, u)
+		var lift := PackedFloat32Array()
+		for s in ARC_SEGS + 1:
+			lift.append(lerpf(-BURY, LIFT, root * _side(s)))
+		secs.append(_sec(r[&"centre"], r[&"half_w"], r[&"half_h"], lift, 0.0))
 	var c0: Vector3 = secs[secs.size() - 1][&"c"]
 	var w0: float = secs[secs.size() - 1][&"hw"]
 	var h0: float = secs[secs.size() - 1][&"hh"]
@@ -47,15 +56,18 @@ static func mesh(rings: Array, reach: float, curve_deg: float) -> ArrayMesh:
 		var s := float(i) / float(FREE_RINGS)
 		var f := pow(1.0 - s, 0.7)
 		var c := (1.0 - s) * (1.0 - s) * c0 + 2.0 * (1.0 - s) * s * p1 + s * s * p2
-		secs.append({&"c": c, &"hw": w0 * f, &"hh": h0 * f, &"k_out": SINK + THICK,
-				&"k_in": lerpf(SINK, 0.45, smoothstep(0.0, 0.5, s))})
+		var lift := PackedFloat32Array()
+		for k in ARC_SEGS + 1:
+			var side := lerpf(_side(k), 1.0, smoothstep(0.0, 0.35, s))
+			lift.append(lerpf(-BURY, LIFT, side))
+		secs.append(_sec(c, w0 * f, h0 * f, lift, s))
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var outs: Array[PackedVector3Array] = []
 	var ins: Array[PackedVector3Array] = []
 	for sec in secs:
-		outs.append(_arc(sec, float(sec[&"k_out"])))
-		ins.append(_arc(sec, float(sec[&"k_in"])))
+		outs.append(_arc(sec, true))
+		ins.append(_arc(sec, false))
 	# Godot front faces are clockwise seen from outside: a section's arc runs from -X toward +X
 	# over the dorsal line and sections step toward the tip, so outer quads are (A, D, B) and
 	# inner quads the reverse (A, B, D); edge strips at +ARC and -ARC wind opposite to each other.
@@ -109,15 +121,37 @@ static func _lerp_ring(rings: Array, t: float) -> Dictionary:
 	return rings[rings.size() - 1]
 
 
-## The `ARC_SEGS + 1` points of one section's arc at scale `k`.
-static func _arc(sec: Dictionary, k: float) -> PackedVector3Array:
+## Dorsal-line share (0 at the edges, 1 over the top) of arc point `s`: where the sides dive.
+static func _side(s: int) -> float:
+	var a := lerpf(-ARC, ARC, float(s) / float(ARC_SEGS))
+	return 1.0 - smoothstep(SIDE * ARC, ARC, absf(a))
+
+
+## A section; `lift[s]` is the outer height over the skin, `s_free` how far past the tip (0 on
+## the bed) so the inner face narrows toward the point.
+static func _sec(c: Vector3, hw: float, hh: float, lift: PackedFloat32Array,
+		s_free: float) -> Dictionary:
+	var outs := PackedFloat32Array()
+	var ins := PackedFloat32Array()
+	for l in lift:
+		outs.append(1.0 + l)
+		var k_in := 1.0 + l - THICK
+		if s_free > 0.0:
+			k_in = minf(lerpf(k_in, 0.45, smoothstep(0.0, 0.5, s_free)), 1.0 + l - 0.02)
+		ins.append(k_in)
+	return {&"c": c, &"hw": hw, &"hh": hh, &"lift": lift, &"out": outs, &"in": ins}
+
+
+## The `ARC_SEGS + 1` points of one section's outer or inner arc, each at its own scale.
+static func _arc(sec: Dictionary, outer: bool) -> PackedVector3Array:
 	var pts := PackedVector3Array()
 	var c: Vector3 = sec[&"c"]
 	var hw: float = sec[&"hw"]
 	var hh: float = sec[&"hh"]
+	var ks: PackedFloat32Array = sec[&"out"] if outer else sec[&"in"]
 	for s in ARC_SEGS + 1:
 		var a := lerpf(-ARC, ARC, float(s) / float(ARC_SEGS))
-		pts.append(c + Vector3(sin(a) * hw * k, 0.0, cos(a) * hh * k))
+		pts.append(c + Vector3(sin(a) * hw * ks[s], 0.0, cos(a) * hh * ks[s]))
 	return pts
 
 

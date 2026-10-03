@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-361 GDScript files, 58017 lines.
+361 GDScript files, 58054 lines.
 
 ### `scenes/corridor/`
 
@@ -550,8 +550,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `arm_bulk.gd` | `ArmBulk` | 263 | Inflates a skinned arm mesh around each bone's axis so the limbs read thick. |
-| `arm_claw.gd` | `ArmClaw` | 129 | Claw-nail mesh: a rounded plate sunk into the top of the fingertip that grows past the tip into a tapered point curving slightly toward the pad. |
+| `arm_bulk.gd` | `ArmBulk` | 266 | Inflates a skinned arm mesh around each bone's axis so the limbs read thick. |
+| `arm_claw.gd` | `ArmClaw` | 163 | Claw-nail mesh: a curved plate that rises out of a skin fold at its root and tucks under the finger's sides, then grows past the tip into a tapered point curvi… |
 | `arm_dress.gd` | `ArmDress` | 233 | Dresses the goblin's arms from the van seed: fingerless glove, rings and tape on the gun hand, boxer's wrap, forearm bandage and chain on the free hand, cut-of… |
 | `arm_fingers.gd` | `ArmFingers` | 339 | Procedural finger tubes: per hand one skinned mesh of five bony finger tubes (knuckle knobs, thin shafts, flat pads, tapering tips, a seeded sideways crook) in… |
 | `arm_gesture.gd` | — | 197 | Left-hand interaction gesture on the goblin arms: a keyed one-shot (press, knock, push, pull, slide) that moves the left arm root and bends the left wrist and… |
