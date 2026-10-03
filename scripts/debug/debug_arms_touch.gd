@@ -192,9 +192,30 @@ func _grip_report(model: Node3D, data: Dictionary, p: float, body: Node3D,
 		lines.append("R grip %s mid sd/p %.3f tip sd/p %.3f %s"
 				% [String(f).trim_prefix("f_"), mid, tip, "OK" if ok else "OFF"])
 	if data.has(&"thumb"):
-		var tsd := _nearest_sd(body, data[&"thumb"][&"pts"][3]) / p
-		bad += 0 if _in_bar(tsd) else 1
-		lines.append("R grip thumb tip sd/p %.3f %s" % [tsd, "OK" if _in_bar(tsd) else "OFF"])
+		var tpts: Array = data[&"thumb"][&"pts"]
+		var tsd := _nearest_sd(body, tpts[3]) / p
+		var to_body := body.global_transform.affine_inverse()
+		var tip_b: Vector3 = to_body * Vector3(tpts[3])
+		# GripPanelL sits at side -1 in monster_grip.gd, so the near (camera) side is -x.
+		var side_x := tip_b.x / p
+		var down := Vector3(0.0, -cos(deg_to_rad(18.0)), sin(deg_to_rad(18.0)))
+		var height := (tip_b - Vector3(0.0, 0.03, -0.01)).dot(down) / p
+		var shaft: Vector3 = to_body.basis * (Vector3(tpts[3]) - Vector3(tpts[2]))
+		var fwd_deg := rad_to_deg(shaft.angle_to(Vector3(0.0, 0.0, -1.0)))
+		var near_part := "-"
+		var near_sd := INF
+		for part_name in _PARTS:
+			var mi := body.get_node_or_null(NodePath(part_name)) as MeshInstance3D
+			if mi != null:
+				var d := _box_sd(mi, mi.transform.affine_inverse() * tip_b)
+				if d < near_sd:
+					near_sd = d
+					near_part = part_name
+		var thumb_ok := (_in_bar(tsd) and side_x <= -0.15 and height >= 0.0 and height <= 0.45
+				and fwd_deg <= 40.0 and near_part == "GripPanelL")
+		bad += 0 if thumb_ok else 1
+		lines.append("R grip thumb tip sd/p %.3f side %.3f height/p %.3f fwd_deg %.1f part %s %s"
+				% [tsd, side_x, height, fwd_deg, near_part, "OK" if thumb_ok else "OFF"])
 	var web := body.get_node_or_null(^"WebPoint") as Node3D
 	if web != null and data.has(&"f_index") and data.has(&"thumb"):
 		var mid_w: Vector3 = Vector3(data[&"f_index"][&"pts"][0]).lerp(data[&"thumb"][&"pts"][0], 0.5)
