@@ -6,7 +6,7 @@ signal attack_landed(amount: float)
 signal defeated
 signal assault_finished
 
-enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH, ATTACKING_PLAYER, JUMPING, GRIPPING, CLIMBING }
+enum AssaultPhase { IDLE, APPROACH, BREACHING, ENTERING, ATTACKING_BENCH, ATTACKING_PLAYER, JUMPING, GRIPPING, CLIMBING, KNOCKED }
 
 @export var attack_damage := 8.0
 @export var attack_interval := 1.25
@@ -61,6 +61,8 @@ var _motion: _RaiderMotion
 var _wall: RefCounted
 ## True from the latch until it goes in or drops off the wall.
 var _on_wall := false
+## Shot out of a latch jump: ends `_wall_move` early and runs the fall and tumble.
+var _knocked := false
 var _anim: _RaiderAnim
 var _targeting: _RaiderTargeting
 
@@ -93,7 +95,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not _active or is_defeated:
 		return
-	if _is_wall_phase():
+	if _is_wall_phase() or assault_phase == AssaultPhase.KNOCKED:
 		_wall.step(delta)
 		_anim.step(delta, false)
 		return
@@ -198,6 +200,10 @@ func take_damage(amount) -> void:
 	if is_zero_approx(health):
 		_die()
 		return
+	if assault_phase == AssaultPhase.JUMPING and _anim.latch_jump:
+		_knocked = true
+		assault_phase = AssaultPhase.KNOCKED
+		_wall.start_fall()
 	_targeting.flash_hit()
 
 
@@ -293,10 +299,18 @@ func _breach_until_open() -> void:
 		var wait_time := _targeting.next_attack_wait()
 		# Poll so an opened window/door lets them hop in without waiting a full smash.
 		var elapsed := 0.0
+		# One rake swing per strike, timed so its impact frame shows as the damage lands.
+		var raked := false
+		if wait_time <= _anim.rake_lead_seconds():
+			_anim.start_rake()
+			raked = true
 		while elapsed < wait_time:
 			var step := minf(0.1, wait_time - elapsed)
 			await get_tree().create_timer(step).timeout
 			elapsed += step
+			if not raked and elapsed >= wait_time - _anim.rake_lead_seconds():
+				_anim.start_rake()
+				raked = true
 			if not _active or is_defeated or assigned_breach == null:
 				return
 			if assigned_breach.is_passable():
@@ -318,7 +332,17 @@ func _start_attack_loop() -> void:
 func _attack_loop() -> void:
 	while _active and is_inside_tree() and not is_defeated:
 		var wait_time := _targeting.next_attack_wait()
-		await get_tree().create_timer(wait_time).timeout
+		# The swipe starts `lead` s early so its impact frame shows as the damage lands.
+		var lead := minf(_anim.swipe_lead_seconds(), wait_time)
+		await get_tree().create_timer(wait_time - lead).timeout
+		if not _active or is_defeated:
+			break
+		var hitting := assault_phase == AssaultPhase.ATTACKING_BENCH or (
+			assault_phase == AssaultPhase.ATTACKING_PLAYER and _targeting.in_player_melee()
+		)
+		if hitting and is_agile and not is_boss:
+			_anim.start_swipe()
+		await get_tree().create_timer(lead).timeout
 		if not _active or is_defeated:
 			break
 		var outgoing := _outgoing_damage()
@@ -415,8 +439,18 @@ func _wall_move(to: Vector3, jump: bool) -> void:
 		_wall.start_jump(to)
 	else:
 		_wall.start_climb(to)
+	while not _wall.done and _active and not is_defeated and not _knocked:
+		await get_tree().physics_frame
+
+
+## After a knock: waits out the fall and tumble, then goes back to the road run.
+func _recover_from_knock() -> void:
 	while not _wall.done and _active and not is_defeated:
 		await get_tree().physics_frame
+	if not _active or is_defeated:
+		return
+	_knocked = false
+	assault_phase = AssaultPhase.APPROACH
 
 
 ## Runs up from the road (or along the wall) to the window's outside marker.
@@ -436,14 +470,20 @@ func _jump_to_wall(breach: BreachPoint) -> void:
 			if not _active or is_defeated:
 				return
 	if not _on_wall:
-		await _follow_path(_wall.approach_path(position, _wall.launch_point(grip)), 0.0, true)
-		if not _active or is_defeated:
-			return
-		assault_phase = AssaultPhase.JUMPING
-		_anim.latch_jump = true
-		await _wall_move(grip, true)
-		if not _active or is_defeated:
-			return
+		while true:
+			await _follow_path(_wall.approach_path(position, _wall.launch_point(grip)), 0.0, true)
+			if not _active or is_defeated:
+				return
+			assault_phase = AssaultPhase.JUMPING
+			_anim.latch_jump = true
+			await _wall_move(grip, true)
+			if not _active or is_defeated:
+				return
+			if not _knocked:
+				break
+			await _recover_from_knock()
+			if not _active or is_defeated:
+				return
 		_on_wall = true
 	else:
 		assault_phase = AssaultPhase.CLIMBING
@@ -474,14 +514,20 @@ func _cling_and_wait() -> void:
 		return
 	var spot: Vector3 = _wall.cling_point(i)
 	if not _on_wall:
-		await _follow_path(_wall.approach_path(position, _wall.launch_point(spot)), 0.0, true)
-		if not _active or is_defeated:
-			return
-		assault_phase = AssaultPhase.JUMPING
-		_anim.latch_jump = true
-		await _wall_move(spot, true)
-		if not _active or is_defeated:
-			return
+		while true:
+			await _follow_path(_wall.approach_path(position, _wall.launch_point(spot)), 0.0, true)
+			if not _active or is_defeated:
+				return
+			assault_phase = AssaultPhase.JUMPING
+			_anim.latch_jump = true
+			await _wall_move(spot, true)
+			if not _active or is_defeated:
+				return
+			if not _knocked:
+				break
+			await _recover_from_knock()
+			if not _active or is_defeated:
+				return
 		_on_wall = true
 	else:
 		assault_phase = AssaultPhase.CLIMBING

@@ -26,6 +26,11 @@ const LAUNCH_REAR_Z := 8.0
 const CORNER_Z := 8.6
 const JUMP_TIME := 0.8
 const JUMP_APEX := 1.1
+## Knocked out of a jump: gravity, sideways drift off the van, then the ground tumble slide.
+const FALL_GRAVITY := 9.8
+const FALL_DRIFT := 0.8
+const TUMBLE_SLIDE := 1.5
+const TUMBLE_TIME := 0.5
 const CLIMB_SPEED := 1.0
 ## How far above the breach marker the loper grips the bars: its card then spans about
 ## y 0.5..2.4 at a side window (1.07..2.48), so it crawls about 1.5 m up from the grip.
@@ -48,6 +53,12 @@ var _t := 0.0
 var _duration := 0.0
 var _arc := 0.0
 var done := true
+## True from the moment a knocked fall touches the road; the tumble slide runs after it.
+var fall_landed := false
+var _falling := false
+var _fall_vy := 0.0
+var _fall_drift := Vector3.ZERO
+var _slide_t := 0.0
 
 
 func _init(owner: Node3D) -> void:
@@ -128,6 +139,8 @@ func start_jump(to: Vector3) -> void:
 	_t = 0.0
 	_duration = JUMP_TIME
 	_arc = JUMP_APEX
+	_falling = false
+	fall_landed = false
 	done = false
 
 
@@ -137,11 +150,53 @@ func start_climb(to: Vector3) -> void:
 	_t = 0.0
 	_duration = maxf(raider.position.distance_to(to) / CLIMB_SPEED, 0.05)
 	_arc = 0.0
+	_falling = false
+	fall_landed = false
 	done = false
+
+
+## Drops the raider from where it is (shot out of a jump), drifting off the van.
+func start_fall() -> void:
+	var height := maxf(raider.position.y - ROAD_ORIGIN_Y, 0.0)
+	var fall_time := sqrt(2.0 * height / FALL_GRAVITY)
+	var out := Vector3(signf(raider.position.x), 0.0, 0.0)
+	if is_rear(raider.position):
+		out = Vector3(0.0, 0.0, 1.0)
+	_fall_drift = out * FALL_DRIFT / maxf(fall_time, 0.001)
+	if height <= 0.0:
+		_fall_drift = Vector3.ZERO
+	_fall_vy = 0.0
+	_slide_t = 0.0
+	fall_landed = false
+	_falling = true
+	done = false
+
+
+func _step_fall(delta: float) -> void:
+	var p := raider.position
+	if _falling:
+		_fall_vy -= FALL_GRAVITY * delta
+		p += _fall_drift * delta
+		p.y += _fall_vy * delta
+		if p.y <= ROAD_ORIGIN_Y:
+			p.y = ROAD_ORIGIN_Y
+			_falling = false
+			fall_landed = true
+		raider.position = p
+		return
+	var slide := minf(delta, TUMBLE_TIME - _slide_t)
+	_slide_t += slide
+	p.z += TUMBLE_SLIDE * slide / TUMBLE_TIME
+	p.y = ROAD_ORIGIN_Y
+	raider.position = p
+	done = _slide_t >= TUMBLE_TIME
 
 
 func step(delta: float) -> void:
 	if done:
+		return
+	if _falling or fall_landed:
+		_step_fall(delta)
 		return
 	_t = minf(_t + delta / _duration, 1.0)
 	var p := _from.lerp(_to, _t)

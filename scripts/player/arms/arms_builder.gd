@@ -39,12 +39,64 @@ const RIGHT_CURL := {
 ## curl alone only bends it about one axis). Swept with `arms fit` and `arms thumbs`: .01 rolled
 ## down around the back of the grip, .02 straight along the flank, .03 hooked slightly inward.
 const RIGHT_THUMB_AIM := Vector3(-36, -18, -82)
-## Live copies of the gripping hand's tunables: the `arms thumbaim`, `arms thumbcurl` and
-## `arms wrist` console commands set them and rebuild, so a thumb pose is tuned by numbers
-## instead of a screenshot per try. The constants above are their defaults.
-static var right_thumb_aim := RIGHT_THUMB_AIM
-static var right_thumb_curl := RIGHT_THUMB_CURL
-static var right_wrist_in_gun := RIGHT_WRIST_IN_GUN
+## Pose of the monster grip piece (`gun_style == &"grip"`), a separate set so tuning it leaves the
+## pistol pose alone. Same shape as the pistol constants above.
+const GRIP_WRIST_IN_GUN := Vector3(0.08, -0.13, 0.17)
+const GRIP_HAND_DIR_IN_GUN := Vector3(-0.05, 0.25, -1.0)
+const GRIP_PALM_IN_GUN := Vector3(-1.0, 0.0, 0.0)
+const GRIP_CURL := {
+	&"f_index": Vector3(20, 25, 15), &"f_middle": Vector3(46, 57, 38),
+	&"f_ring": Vector3(55, 70, 50), &"f_pinky": Vector3(55, 70, 62),
+	&"thumb": Vector3(-5, -8, 50),
+}
+## Tuned with `arms touch` on the grip: the fingers wrap the front strap, the thumb lies high on the
+## left panel (the side facing the camera) pointing forward.
+const GRIP_THUMB_AIM := Vector3(-60, -80, -55)
+## Live copies of the gripping hand's tunables: the `arms thumbaim`, `arms thumbcurl`, `arms wrist`
+## and `arms curl` console commands set them and rebuild, so a pose is tuned by numbers instead of
+## a screenshot per try. The constants above are their defaults. The `right_*` names read and write
+## the grip set while `gun_style` is grip and the pistol set otherwise.
+static var _pistol_thumb_aim := RIGHT_THUMB_AIM
+static var _pistol_thumb_curl := RIGHT_THUMB_CURL
+static var _pistol_wrist := RIGHT_WRIST_IN_GUN
+static var _pistol_curl: Dictionary = RIGHT_CURL.duplicate()
+static var _grip_thumb_aim := GRIP_THUMB_AIM
+static var _grip_wrist := GRIP_WRIST_IN_GUN
+static var _grip_curl: Dictionary = GRIP_CURL.duplicate()
+static var right_thumb_aim: Vector3:
+	get:
+		return _grip_thumb_aim if gun_style == &"grip" else _pistol_thumb_aim
+	set(v):
+		if gun_style == &"grip":
+			_grip_thumb_aim = v
+		else:
+			_pistol_thumb_aim = v
+static var right_thumb_curl: Vector3:
+	get:
+		return _grip_curl[&"thumb"] if gun_style == &"grip" else _pistol_thumb_curl
+	set(v):
+		if gun_style == &"grip":
+			_grip_curl[&"thumb"] = v
+		else:
+			_pistol_thumb_curl = v
+static var right_wrist_in_gun: Vector3:
+	get:
+		return _grip_wrist if gun_style == &"grip" else _pistol_wrist
+	set(v):
+		if gun_style == &"grip":
+			_grip_wrist = v
+		else:
+			_pistol_wrist = v
+## Finger curls of the active piece's pose, a copy; the thumb entry is `right_thumb_curl`.
+static var right_curl: Dictionary:
+	get:
+		var c: Dictionary = _grip_curl if gun_style == &"grip" else _pistol_curl
+		return c.duplicate()
+	set(v):
+		if gun_style == &"grip":
+			_grip_curl = v
+		else:
+			_pistol_curl = v
 const LEFT_CURL := {
 	&"f_index": Vector3(25, 30, 20), &"f_middle": Vector3(25, 30, 20),
 	&"f_ring": Vector3(25, 30, 20), &"f_pinky": Vector3(25, 30, 20),
@@ -74,8 +126,8 @@ const HAND_K := 1.47
 ## `&"rags"` (the old rag and glove dress) or `&"none"` (bare arms). Set by the `arms dress`
 ## console command, then rebuilt.
 static var dress_style := &"gear"
-## Held piece: &"pistol" (HeldGun) or &"grip" (MonsterGrip, the monster grip study).
-static var gun_style: StringName = &"pistol"
+## Held piece: &"grip" (MonsterGrip, the default) or &"pistol" (HeldGun).
+static var gun_style: StringName = &"grip"
 
 
 static func rng_for(seed_value: int, part_id: StringName) -> RandomNumberGenerator:
@@ -117,8 +169,8 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	if SHOW_GUN:
 		r = ArmRig.reach(model_r, ".R", shoulder_r,
 				gx * (right_wrist_in_gun * HAND_K), RIGHT_POLE,
-				(gx.basis * RIGHT_HAND_DIR_IN_GUN).normalized(),
-				(gx.basis * RIGHT_PALM_IN_GUN).normalized())
+				(gx.basis * (GRIP_HAND_DIR_IN_GUN if gun_style == &"grip" else RIGHT_HAND_DIR_IN_GUN)).normalized(),
+				(gx.basis * (GRIP_PALM_IN_GUN if gun_style == &"grip" else RIGHT_PALM_IN_GUN)).normalized())
 	else:
 		r = ArmRig.reach(model_r, ".R", shoulder_r, RIGHT_WEAVE_WRIST, RIGHT_POLE,
 				(RIGHT_WEAVE_WRIST - shoulder_r).normalized(),
@@ -127,7 +179,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 		r = ArmRig.reach(model_r, ".R", shoulder_r, RIGHT_WEAVE_WRIST, RIGHT_POLE,
 				(fore_r + Vector3.UP * WEAVE_WRIST_LIFT).normalized(),
 				RIGHT_WEAVE_PALM.normalized())
-	var curl_r := RIGHT_CURL.duplicate()
+	var curl_r := right_curl
 	curl_r[&"thumb"] = right_thumb_curl
 	ArmRig.curl(model_r, ".R", curl_r)
 	var sk_r := ArmRig.skeleton(model_r)

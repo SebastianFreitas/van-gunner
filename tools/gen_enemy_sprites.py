@@ -5,9 +5,10 @@ dark. The door raider is a humanoid gone feral: a hunched loper whose head
 hangs forward out of a furred ruff, tapered arms longer than the legs with
 the claws on the van floor, hair that trails every bob, knobbed spine,
 hanging jaw, corpse-grey skin and black eye pits, nothing bright. The loper is both the door raider and the window
-raider. door_raider.png is a 13-frame 832 x 240 sheet: row 0 the 13-frame run (a bounding charge,
+raider. door_raider.png is a 13-frame 832 x 640 sheet: row 0 the 13-frame run (a bounding charge,
 seen from the front; frame 0 is the still), row 1 the 5-frame jump take-off, row 2 a 4-frame
-front-on latch onto the van wall (reach, impact, cling). Every frame has the
+front-on latch onto the van wall (reach, impact, cling), row 3 an 8-frame front-on wall crawl
+(diagonal pairs, looping), row 4 a 6-frame front-on bar rake (hold on left, rake right), row 5 a 6-frame front-on on-foot claw swipe (left paw braced, right paw strikes), row 6 a 5-frame front-on enter (pulls in through the window), row 7 a 6-frame front-on tumble (shot out of a jump, slams the road, rolls, gets up). Every frame has the
 feral face (draw_feral_head), riding the pose's head bob and jaw lag.
 
 Art rules (.claude/rules/art-style.md, pixel art): native size, one image
@@ -21,6 +22,7 @@ deterministic. Usage:
     py -3 tools/gen_enemy_sprites.py              # writes scenes/enemies/*.png
     py -3 tools/gen_enemy_sprites.py --preview D  # also 6x previews in D
     py -3 tools/gen_enemy_sprites.py --out D      # draft somewhere else first
+    py -3 tools/gen_enemy_sprites.py --strip P    # run 0, then the latch, climb, rake, swipe, enter and tumble frames in one 6x PNG
 """
 from __future__ import annotations
 
@@ -37,9 +39,14 @@ OUT = ROOT / "scenes" / "enemies"
 # Canvas size: the loper (door and window raider) is 1.54 x 1.92 m.
 LOPER_SIZE = (64, 80)
 LOPER_FRAMES = 13
-LOPER_ROWS = 3
+LOPER_ROWS = 8
 JUMP_FRAMES = 5
 LATCH_FRAMES = 4
+CLIMB_FRAMES = 8
+RAKE_FRAMES = 6
+SWIPE_FRAMES = 6
+ENTER_FRAMES = 5
+TUMBLE_FRAMES = 6
 LOPER_SHEET = (LOPER_SIZE[0] * LOPER_FRAMES, LOPER_SIZE[1] * LOPER_ROWS)
 
 OUTLINE = (30, 20, 18)
@@ -501,11 +508,201 @@ LOPER_LATCH_POSES = [
 ]
 assert len(LOPER_LATCH_POSES) == LATCH_FRAMES
 
+# Row 3 of the sheet: the wall crawl, front-on like the latch (never a side view, never flipped
+# per side). Every frame edits the cling pose: belly to the camera, limbs in an X, elbows and
+# knees bent out, head up and bobbing 1 px against the body. Gait in diagonal pairs, like a
+# gecko up a wall: frames 0-3 the LEFT fore paw and RIGHT hind foot travel up while the RIGHT
+# fore paw and LEFT hind foot stay planted and drag down as the body rises; frames 4-7 the same
+# mirrored (RIGHT fore, LEFT hind), with the cling pose's 1 px asymmetry kept, not pixel-mirrored.
+# Frame 0 end of the push (the travelling paw 2 px low). Frame 1 paw lifting: wrist and claw
+# tips 5 px up, claws curled (1 px apart) off the wall, hind foot 4 px up. Frame 2 paw at its
+# highest (10 px above cling, tips on row 2), foot 8 px up, body 1 px up, shoulders 1 px wider.
+# Frame 3 paw planted, claws fanned wide again, body 2 px above frame 0, the other paw 4 px
+# low. Frame 7 flows back into frame 0.
+LOPER_CLIMB_POSES = [
+	dict(by=-3, hump_dy=0, head_dy=-2, shoulder_dx=2, lag=1,  # 0 push end, left paw low
+		left=((4, 30), (5, 19), [(2, 15), (4, 13), (7, 13), (10, 15)]),
+		right=((59, 28), (58, 17), [(61, 13), (59, 11), (56, 11), (53, 13)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-3, hump_dy=0, head_dy=-1, shoulder_dx=2, lag=1,  # 1 left paw lifting
+		left=((4, 26), (5, 12), [(4, 8), (5, 6), (6, 6), (7, 8)]),
+		right=((59, 28), (58, 17), [(61, 13), (59, 11), (56, 11), (53, 13)]),
+		legs=(((7, 63), (6, 74)), ((57, 60), (58, 71))), soles=True),
+	dict(by=-4, hump_dy=0, head_dy=-2, shoulder_dx=3, lag=1,  # 2 left paw highest
+		left=((3, 23), (5, 7), [(4, 3), (5, 2), (6, 2), (7, 3)]),
+		right=((59, 29), (58, 18), [(61, 14), (59, 12), (56, 12), (53, 14)]),
+		legs=(((7, 64), (6, 75)), ((57, 56), (58, 67))), soles=True),
+	dict(by=-5, hump_dy=0, head_dy=-3, shoulder_dx=2, lag=1,  # 3 left paw planted, body up
+		left=((4, 28), (5, 17), [(2, 13), (4, 11), (7, 11), (10, 13)]),
+		right=((59, 32), (58, 21), [(61, 17), (59, 15), (56, 15), (53, 17)]),
+		legs=(((7, 65), (6, 76)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-3, hump_dy=0, head_dy=-2, shoulder_dx=2, lag=1,  # 4 push end, right paw low
+		left=((4, 28), (5, 17), [(2, 13), (4, 11), (7, 11), (10, 13)]),
+		right=((59, 30), (58, 19), [(61, 15), (59, 13), (56, 13), (53, 15)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-3, hump_dy=0, head_dy=-1, shoulder_dx=2, lag=1,  # 5 right paw lifting
+		left=((4, 28), (5, 17), [(2, 13), (4, 11), (7, 11), (10, 13)]),
+		right=((59, 26), (58, 12), [(59, 8), (58, 6), (57, 6), (56, 8)]),
+		legs=(((7, 59), (6, 70)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-4, hump_dy=0, head_dy=-2, shoulder_dx=3, lag=1,  # 6 right paw highest
+		left=((4, 29), (5, 18), [(2, 14), (4, 12), (7, 12), (10, 14)]),
+		right=((60, 23), (58, 7), [(59, 3), (58, 2), (57, 2), (56, 3)]),
+		legs=(((7, 55), (6, 66)), ((57, 65), (58, 76))), soles=True),
+	dict(by=-5, hump_dy=0, head_dy=-3, shoulder_dx=2, lag=1,  # 7 right paw planted, body up
+		left=((4, 32), (5, 21), [(2, 17), (4, 15), (7, 15), (10, 17)]),
+		right=((59, 28), (58, 17), [(61, 13), (59, 11), (56, 11), (53, 13)]),
+		legs=(((7, 63), (6, 74)), ((57, 66), (58, 77))), soles=True),
+]
+assert len(LOPER_CLIMB_POSES) == CLIMB_FRAMES
+
+# Row 4 of the sheet: the bar rake, front-on like the cling (the player looks out of a barred
+# window at the loper pressed on the van's outside wall; never a side view, never mirrored).
+# Every frame starts from the cling: the LEFT fore paw holds the bars (raised, claws curled,
+# still; 1 px shake on frame 3), the RIGHT fore paw rakes. Frame 0 ready, paw raised 3 px.
+# Frame 1 wind-up: paw high at the right edge, claws wide, body up, head pulls back. Frame 2
+# swing: paw comes in across the body. Frame 3 impact: paw across the chest, claws at their
+# widest, body squashed. Frame 4 drag: claws dragged down. Frame 5 recover, flows into 0.
+# The right arm draws in front of the torso and head on frames 2-4 (right_front).
+LOPER_RAKE_POSES = [
+	dict(by=-3, hump_dy=0, head_dy=-2, shoulder_dx=2, lag=1,  # 0 ready
+		left=((4, 24), (6, 12), [(5, 8), (6, 6), (7, 6), (8, 8)]),
+		right=((60, 26), (58, 14), [(61, 10), (59, 8), (56, 8), (53, 10)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-4, hump_dy=0, head_dy=-3, shoulder_dx=3, lag=1,  # 1 wind-up, head pulls back
+		left=((4, 24), (6, 12), [(5, 8), (6, 6), (7, 6), (8, 8)]),
+		right=((62, 18), (60, 3), [(63, 2), (61, 0), (57, 0), (54, 2)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-3, hump_dy=0, head_dy=-2, shoulder_dx=2, right_front=True, lag=1,  # 2 swing, in front
+		left=((4, 24), (6, 12), [(5, 8), (6, 6), (7, 6), (8, 8)]),
+		right=((58, 22), (46, 12), [(54, 19), (49, 22), (44, 22), (39, 19)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-2, hump_dy=-1, head_dy=1, shoulder_dx=2, right_front=True, lag=1,  # 3 impact, in front
+		left=((4, 25), (6, 13), [(5, 9), (6, 7), (7, 7), (8, 9)]),
+		right=((50, 36), (30, 36), [(20, 44), (24, 46), (28, 47), (32, 47)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-3, hump_dy=0, head_dy=-2, shoulder_dx=2, right_front=True, lag=1,  # 4 drag, in front
+		left=((4, 24), (6, 12), [(5, 8), (6, 6), (7, 6), (8, 8)]),
+		right=((46, 38), (24, 42), [(18, 49), (22, 51), (26, 51), (30, 49)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-3, hump_dy=0, head_dy=-2, shoulder_dx=2, lag=1,  # 5 recover
+		left=((4, 24), (6, 12), [(5, 8), (6, 6), (7, 6), (8, 8)]),
+		right=((60, 28), (50, 22), [(54, 17), (52, 15), (49, 15), (46, 17)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+]
+assert len(LOPER_RAKE_POSES) == RAKE_FRAMES
+
+# Row 5 of the sheet: the on-foot swipe, used inside the van against the player and the vitals
+# bench. The loper stands on the van floor facing the viewer exactly as the run still draws it
+# (legs planted, never a side view, never mirrored). The LEFT fore paw stays braced on the
+# floor; the RIGHT fore paw strikes. Frame 0 ready, paw lifted off the floor. Frame 1 rear up:
+# body up, head pulls back, paw high at the right edge, claws wide. Frame 2 strike: paw comes
+# down and in across the body. Frame 3 impact: body squashed, head lunges, paw across the
+# belly, claws at their widest. Frame 4 drag: claws dragged toward the floor. Frame 5 recover,
+# paw goes back out to the right; flows into 0. The right arm draws in front on frames 2-4.
+_SW_LEGS = (((16, 66), (19, 75)), ((48, 67), (45, 75)))
+LOPER_SWIPE_POSES = [
+	dict(by=-1, hump_dy=0, head_dy=0, shoulder_dx=0, lag=0,  # 0 ready, right paw lifted
+		left=((4, 42), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((60, 46), (57, 69), [(52, 74), (56, 75), (60, 75), (63, 73)]),
+		legs=_SW_LEGS),
+	dict(by=-5, hump_dy=0, head_dy=-3, shoulder_dx=1, lag=0,  # 1 rear up, head pulls back
+		left=((4, 38), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((62, 28), (58, 12), [(62, 7), (59, 5), (55, 5), (52, 7)]),
+		legs=_SW_LEGS),
+	dict(by=-3, hump_dy=0, head_dy=-1, shoulder_dx=1, right_front=True, lag=1,  # 2 strike
+		left=((4, 40), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((58, 32), (44, 30), [(40, 36), (43, 38), (46, 38), (49, 36)]),
+		legs=_SW_LEGS),
+	dict(by=2, hump_dy=-1, head_dy=3, shoulder_dx=1, right_front=True, lag=2,  # 3 impact
+		left=((4, 44), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((50, 40), (30, 50), [(18, 58), (22, 60), (26, 61), (30, 60)]),
+		legs=_SW_LEGS),
+	dict(by=1, hump_dy=0, head_dy=2, shoulder_dx=1, right_front=True, lag=1,  # 4 drag
+		left=((4, 43), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((46, 50), (26, 62), [(18, 70), (22, 72), (26, 72), (30, 71)]),
+		legs=_SW_LEGS),
+	dict(by=0, hump_dy=0, head_dy=0, shoulder_dx=0, lag=1,  # 5 recover, paw back out
+		left=((4, 43), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((60, 48), (56, 66), [(51, 72), (55, 73), (59, 73), (62, 71)]),
+		legs=_SW_LEGS),
+]
+assert len(LOPER_SWIPE_POSES) == SWIPE_FRAMES
+
+# Row 6 of the sheet: the loper pulls itself in through a van window toward the player, front-on
+# like the run (never a side view, never flipped). Frame 0 hang: both paws high and wide on the
+# sill, head low between the arms, legs dangling low outside. Frame 1 duck: head and shoulders
+# duck forward, head bigger and lower, elbows bent out, paws still high. Frame 2 chest through:
+# body higher, the right paw reaching down to the floor, the left still pulling on the sill.
+# Frame 3 hips over: body dropping, both arms down and forward, legs bent up under the body.
+# Frame 4 landing: crouched, soles down at the cell bottom, knees wide, paws planted; it reads
+# as the start of the prowl row (run frame 1 crouch numbers). The right arm draws in front on 2.
+LOPER_ENTER_POSES = [
+	dict(by=2, hump_dy=-1, head_dy=3, shoulder_dx=2, lag=1,  # 0 hang on the sill
+		left=((3, 28), (5, 14), [(2, 9), (4, 7), (7, 7), (10, 9)]),
+		right=((60, 28), (59, 14), [(62, 9), (60, 7), (57, 7), (54, 9)]),
+		legs=(((12, 70), (16, 78)), ((52, 71), (48, 78)))),
+	dict(by=1, hump_dy=-1, head_dy=7, shoulder_dx=3, lag=2,  # 1 duck forward
+		left=((1, 30), (5, 13), [(2, 8), (4, 6), (7, 6), (10, 8)]),
+		right=((62, 30), (59, 13), [(62, 8), (60, 6), (57, 6), (54, 8)]),
+		legs=(((12, 70), (16, 78)), ((52, 71), (48, 78)))),
+	dict(by=-3, hump_dy=0, head_dy=4, shoulder_dx=2, right_front=True, lag=2,  # 2 chest through
+		left=((4, 28), (6, 14), [(3, 9), (5, 7), (8, 7), (11, 9)]),
+		right=((58, 44), (56, 72), [(51, 76), (55, 78), (59, 78), (62, 76)]),
+		legs=(((14, 70), (18, 78)), ((50, 71), (46, 78)))),
+	dict(by=0, hump_dy=0, head_dy=3, shoulder_dx=1, lag=2,  # 3 hips over, dropping
+		left=((3, 46), (8, 70), [(2, 77), (6, 78), (10, 78), (14, 77)]),
+		right=((61, 48), (56, 71), [(51, 77), (55, 78), (59, 78), (62, 76)]),
+		legs=(((14, 62), (20, 70)), ((50, 63), (44, 71)))),
+	dict(by=3, hump_dy=-1, head_dy=3, shoulder_dx=1, lag=1,  # 4 crouched landing
+		left=((2, 49), (9, 72), [(3, 79), (7, 79), (11, 79), (15, 78)]),
+		right=((62, 53), (56, 74), [(51, 78), (55, 79), (59, 79), (63, 78)]),
+		legs=(((8, 66), (14, 79)), ((56, 67), (50, 79))), soles=True),
+]
+assert len(LOPER_ENTER_POSES) == ENTER_FRAMES
+
+# Row 7 of the sheet: the window loper is shot out of its jump, slams the road, rolls and gets
+# up into the run, front-on like every row (never a side view, never flipped). Frame 0 knocked:
+# airborne, arms flung up and wide, head thrown back, legs dangling apart. Frame 1 slam: flat
+# and squashed on the road, limbs splayed to both sides, soles down. Frame 2 tuck: a ball low in
+# the cell, head down between the shoulders, arms and knees tight to the chest. Frame 3 roll: the
+# tucked ball turned half a turn (`rot`, quarter turns of the finished cell), mid somersault.
+# Frame 4 push up: crouched on all fours, head up at the viewer (enter frame 4's landing).
+# Frame 5 rising: half up in the run stance, close to run frame 0 so it hands off into the run.
+LOPER_TUMBLE_POSES = [
+	dict(by=-2, hump_dy=3, head_dy=-3, shoulder_dx=1, lag=2,  # 0 knocked, airborne
+		left=((1, 28), (3, 14), [(-1, 8), (2, 6), (5, 6), (8, 8)]),
+		right=((62, 30), (60, 16), [(63, 10), (61, 8), (58, 8), (55, 10)]),
+		legs=(((8, 66), (3, 76)), ((56, 67), (61, 77)))),
+	dict(by=14, hump_dy=6, head_dy=2, shoulder_dx=2, lag=1,  # 1 slam, flat on the road
+		left=((3, 66), (2, 77), [(0, 79), (3, 79), (6, 79), (9, 78)]),
+		right=((62, 67), (62, 77), [(55, 78), (58, 79), (61, 79), (63, 79)]),
+		legs=(((12, 76), (4, 79)), ((52, 77), (60, 79))), soles=True),
+	dict(by=12, hump_dy=2, head_dy=7, shoulder_dx=-1, lag=1,  # 2 tuck, a ball
+		left=((8, 52), (20, 60), [(18, 65), (21, 66), (24, 66), (27, 64)]),
+		right=((56, 54), (44, 61), [(37, 64), (40, 66), (43, 66), (46, 65)]),
+		legs=(((18, 62), (24, 72)), ((46, 63), (40, 73)))),
+	dict(by=12, hump_dy=2, head_dy=7, shoulder_dx=-1, lag=1, rot=2,  # 3 roll, upside down
+		left=((8, 52), (20, 60), [(18, 65), (21, 66), (24, 66), (27, 64)]),
+		right=((56, 54), (44, 61), [(37, 64), (40, 66), (43, 66), (46, 65)]),
+		legs=(((18, 62), (24, 72)), ((46, 63), (40, 73)))),
+	dict(by=4, hump_dy=-1, head_dy=1, shoulder_dx=1, lag=1,  # 4 push up on all fours
+		left=((2, 49), (9, 72), [(3, 79), (7, 79), (11, 79), (15, 78)]),
+		right=((62, 53), (56, 74), [(51, 78), (55, 79), (59, 79), (63, 78)]),
+		legs=(((8, 66), (14, 79)), ((56, 67), (50, 79))), soles=True),
+	dict(by=2, hump_dy=-1, head_dy=2, shoulder_dx=0, lag=1,  # 5 rising into the run
+		left=((4, 43), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((60, 48), (57, 73), [(52, 78), (56, 79), (60, 79), (63, 77)]),
+		legs=(((16, 66), (19, 75)), ((48, 67), (45, 75)))),
+]
+assert len(LOPER_TUMBLE_POSES) == TUMBLE_FRAMES
+
 
 def fur_sway(frame: int, poses=LOPER_POSES) -> tuple[int, int]:
 	"""Overlap and follow-through: the hair lags the body by a frame."""
-	# the jump row starts from the run's still, not from its own last frame
+	# the jump row starts from the run's still, not from its own last frame; the climb loops
 	prev = LOPER_POSES[0] if poses is not LOPER_POSES and frame == 0 else poses[frame - 1]
+	if poses in (LOPER_CLIMB_POSES, LOPER_RAKE_POSES) and frame == 0:
+		prev = poses[-1]
 	vy = poses[frame]["by"] - prev["by"]
 	return 0, max(-3, min(3, -vy))
 
@@ -618,6 +815,31 @@ def draw_feral_head(c: Canvas, hd: int, jy: int, by: int, bx: int = 0) -> None:
 		c.set(x + bx, y1 + by, BLOOD)
 
 
+def draw_arm(c: Canvas, shoulder: tuple, elbow: tuple, wrist: tuple, tips: list, seed: int,
+		sway: tuple, flare: int, front: bool = False) -> None:
+	"""One arm: tapered skin limb, furred sleeve over the upper arm, claws at the wrist."""
+	arm = c.mask(taper([shoulder, elbow, wrist], [5.0, 3.4, 2.2]))
+	c.part(arm, SKIN, SKIN_SH, SKIN_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
+	past = (elbow[0] + (wrist[0] - elbow[0]) * 0.2, elbow[1] + (wrist[1] - elbow[1]) * 0.2)
+	sleeve = c.mask(taper([shoulder, elbow, past], [5.5, 4.0, 3.2]))
+	c.part(sleeve, FUR, FUR_SH, FUR_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
+	back = {q for q in sleeve if (q[0] <= shoulder[0]) == (shoulder[0] < 32)}
+	fur_fringe(c, back, seed=seed, sway=sway, length=3 + flare)
+	if front:
+		# the raking arm crosses the face: a deep edge to part it, long bone claws
+		both = arm | sleeve
+		for x, y in both:
+			for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+				if (x + dx, y + dy) not in both:
+					c.set(x + dx, y + dy, SKIN_DEEP)
+		for tx, ty in tips:
+			c.fill(c.mask(capsule(wrist[0], wrist[1], tx, ty, 1.4, 0.9)), BONE)
+			c.set(tx, ty, BONE_HI)
+			c.set(round(wrist[0] + (tx - wrist[0]) * 0.8), round(wrist[1] + (ty - wrist[1]) * 0.8), BONE_HI)
+	else:
+		draw_claws(c, wrist[0], wrist[1], tips)
+
+
 def draw_loper(frame: int = 0, poses=LOPER_POSES) -> Canvas:
 	"""The door raider, seen from the front as it comes through the doors: the
 	furred mantle rises above and behind the head, which hangs from a hair ruff,
@@ -704,16 +926,13 @@ def draw_loper(frame: int = 0, poses=LOPER_POSES) -> Canvas:
 	# Arms: one tapered limb from inside the mantle out to elbows wider than the body,
 	# then down to the floor; bare skin forearm, a furred sleeve over the upper arm whose
 	# hair hangs off the back of the arm.
+	front = []
 	for shoulder, (elbow, wrist, tips), seed in (((14 - sdx + bx, 27 + by), p["left"], 21),
 			((50 + sdx + bx, 29 + by), p["right"], 22)):
-		arm = c.mask(taper([shoulder, elbow, wrist], [5.0, 3.4, 2.2]))
-		c.part(arm, SKIN, SKIN_SH, SKIN_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
-		past = (elbow[0] + (wrist[0] - elbow[0]) * 0.2, elbow[1] + (wrist[1] - elbow[1]) * 0.2)
-		sleeve = c.mask(taper([shoulder, elbow, past], [5.5, 4.0, 3.2]))
-		c.part(sleeve, FUR, FUR_SH, FUR_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
-		back = {q for q in sleeve if (q[0] <= shoulder[0]) == (shoulder[0] < 32)}
-		fur_fringe(c, back, seed=seed, sway=sway, length=3 + flare)
-		draw_claws(c, wrist[0], wrist[1], tips)
+		if p.get("right_front") and seed == 22:
+			front.append((shoulder, elbow, wrist, tips, seed))  # the raking arm crosses the chest
+			continue
+		draw_arm(c, shoulder, elbow, wrist, tips, seed, sway, flare)
 	# The head hangs forward below the shoulders, tilted, in front of the chest:
 	# a gaunt skull, a brow over black pits that look up at you, cheeks fallen in.
 	# A ruff of hair behind and around the top of the skull, so the head hangs out of
@@ -724,12 +943,34 @@ def draw_loper(frame: int = 0, poses=LOPER_POSES) -> Canvas:
 	c.fill(ruff, FUR_SH)
 	fur_fringe(c, ruff, seed=51, sway=sway, length=2 + flare, density=0.45, up_only=True)
 	draw_feral_head(c, hd, jy, by, bx)
+	for arm_args in front:
+		draw_arm(c, *arm_args, sway, flare, True)
+	if p.get("rot"):
+		# Quarter turns of the finished cell about its centre, exact pixel moves, clipped.
+		w, h = c.w, c.h
+		turns = p["rot"] % 4
+		turned = Canvas((w, h))
+		for x, y in c.pixels():
+			col = c.px[y][x]
+			if col is None:
+				continue
+			if turns == 1:
+				nx, ny = (w + h) // 2 - 1 - y, x + (h - w) // 2
+			elif turns == 2:
+				nx, ny = w - 1 - x, h - 1 - y
+			else:
+				nx, ny = y - (h - w) // 2, (w + h) // 2 - x - 1
+			turned.set(nx, ny, col)
+		return turned
 	return c
 
 
 def draw_loper_sheet() -> Canvas:
 	"""Row 0 the thirteen run frames, row 1 the five jump take-off frames, row 2 the four
-	latch frames, each cell exactly LOPER_SIZE."""
+	latch frames, row 3 the eight climb frames, row 4 the six rake frames, row 5 the six
+	on-foot swipe frames, row 6 the five enter frames (pulls in through the window), row 7 the
+	six tumble frames (shot out of a jump, slams, rolls, gets up); 832 x 640, each
+	cell exactly LOPER_SIZE."""
 	sheet = Canvas(LOPER_SHEET)
 	for i in range(LOPER_FRAMES):
 		sheet.blit(draw_loper(i), i * LOPER_SIZE[0])
@@ -737,6 +978,16 @@ def draw_loper_sheet() -> Canvas:
 		sheet.blit(draw_loper(i, LOPER_JUMP_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1])
 	for i in range(LATCH_FRAMES):
 		sheet.blit(draw_loper(i, LOPER_LATCH_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 2)
+	for i in range(CLIMB_FRAMES):
+		sheet.blit(draw_loper(i, LOPER_CLIMB_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 3)
+	for i in range(RAKE_FRAMES):
+		sheet.blit(draw_loper(i, LOPER_RAKE_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 4)
+	for i in range(SWIPE_FRAMES):
+		sheet.blit(draw_loper(i, LOPER_SWIPE_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 5)
+	for i in range(ENTER_FRAMES):
+		sheet.blit(draw_loper(i, LOPER_ENTER_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 6)
+	for i in range(TUMBLE_FRAMES):
+		sheet.blit(draw_loper(i, LOPER_TUMBLE_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 7)
 	return sheet
 
 
@@ -754,6 +1005,7 @@ def main() -> None:
 	ap = argparse.ArgumentParser()
 	ap.add_argument("--preview", help="folder for 6x nearest previews")
 	ap.add_argument("--out", help="write the PNGs here instead of scenes/enemies")
+	ap.add_argument("--strip", help="write one 6x PNG of run 0, then the latch, climb, rake, swipe, enter and tumble frames")
 	args = ap.parse_args()
 	out = Path(args.out) if args.out else OUT
 	out.mkdir(parents=True, exist_ok=True)
@@ -764,6 +1016,25 @@ def main() -> None:
 			Path(args.preview).mkdir(parents=True, exist_ok=True)
 			big = im.resize((im.size[0] * 6, im.size[1] * 6), Image.NEAREST)
 			big.save(Path(args.preview) / f"{name}_x6.png")
+		if args.strip:
+			write_strip(im, Path(args.strip))
+
+
+def write_strip(sheet: Image.Image, path: Path) -> None:
+	"""Run frame 0, then the latch, climb, rake, swipe, enter and tumble frames in one row at 6x, 2 px gaps."""
+	w, h = LOPER_SIZE
+	cells = [(0, 0)] + [(i, 2) for i in range(LATCH_FRAMES)] + [(i, 3) for i in range(CLIMB_FRAMES)] \
+		+ [(i, 4) for i in range(RAKE_FRAMES)] + [(i, 5) for i in range(SWIPE_FRAMES)] \
+		+ [(i, 6) for i in range(ENTER_FRAMES)] + [(i, 7) for i in range(TUMBLE_FRAMES)]
+	scale = 6
+	gap = 2
+	strip = Image.new("RGBA", (len(cells) * (w * scale + gap) - gap, h * scale), (40, 40, 40, 255))
+	for n, (col, row) in enumerate(cells):
+		cell = sheet.crop((col * w, row * h, (col + 1) * w, (row + 1) * h))
+		cell = cell.resize((w * scale, h * scale), Image.NEAREST)
+		strip.paste(cell, (n * (w * scale + gap), 0), cell)
+	path.parent.mkdir(parents=True, exist_ok=True)
+	strip.save(path)
 
 
 if __name__ == "__main__":

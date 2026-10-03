@@ -31,13 +31,22 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
 ## Beast sprites and hitboxes
 
 - `scenes/enemies/window_raider.tscn` holds the door raider, a hunched humanoid
-  feral (the loper): `Sprite3D` at `pixel_size 0.024` on `door_raider.png`, an 832 x 240 sheet:
-  row 0 thirteen 64 x 80 run frames, row 1 a 5-frame jump take-off (`hframes 13, vframes 3`;
+  feral (the loper): `Sprite3D` at `pixel_size 0.024` on `door_raider.png`, an 832 x 640 sheet:
+  row 0 thirteen 64 x 80 run frames, row 1 a 5-frame jump take-off (`hframes 13, vframes 7`;
   clip `jump`, 15 fps, no loop, plays on JUMPING), row 2 a 4-frame latch (clip `latch`, 10 fps,
   no loop: starts `LATCH_START` 0.55 s into a jump to the wall and holds its cling frame through
-  GRIPPING and CLIMBING; a drop-off jump never latches, front-on like the run, never flipped; each 1.54 x 1.92 m; frame 0 is the still,
+  GRIPPING only; a drop-off jump never latches, front-on like the run, never flipped), row 3 an
+  8-frame crawl (clip `climb`, 12 fps, loop, plays on CLIMBING once the latch finishes; diagonal
+  pairs, front-on), row 4 a 6-frame bar rake (clip `rake`, 12 fps, no loop: a window loper in
+  BREACHING rests on frame 0 and swings once per strike, `start_rake` called from
+  `_breach_until_open` `rake_lead_seconds` 0.25 s before `take_damage` so impact frame 3
+  lands with it; door lopers never rake), row 5 a 6-frame on-foot claw swipe (clip `swipe`,
+  12 fps, no loop: the one in-van attack for both ATTACKING_BENCH and ATTACKING_PLAYER,
+  `start_swipe` called from `_attack_loop` `swipe_lead_seconds` 0.25 s before each hit so impact
+  frame 3 lands with it; agile non-boss only), row 6 a 5-frame climb in over the sill (clip `enter`, 6 fps, no loop, holds
+  the last frame: played while a window loper is ENTERING), row 7 a 6-frame missed jump (clip `tumble`, 10 fps, frame 0 held while it falls: a loper hit but not killed during its latch jump goes KNOCKED, falls to the road drifting 0.8 m out, slides 1.5 m back, then runs and jumps again keeping its breach; the drop-off jump is not knockable; smoke `loper knock:`); each 1.54 x 1.92 m; frame 0 is the still,
   `window_raider_anim.gd` is a clip player: named clips in `CLIPS` (sheet row, frames, fps,
-  loop; `still`, `run`, `prowl`, `jump`, `latch` so far) set `frame_coords`, a new animation adds a sheet row
+  loop; `still`, `run`, `prowl`, `jump`, `latch`, `climb`, `rake`, `swipe`, `enter`, `tumble` so far) set `frame_coords`, a new animation adds a sheet row
   (`SHEET_ROWS`) and a clip, and `_die` plays a `death` clip, when one exists, before the
   sink and fade; `run` steps at 18 fps while the raider moves and `still` rests
   it on 0, frames 6 to 8 are airborne, 6 the kick; the boss sets `hframes 1`), centred 0.66 m below the node so its claws
