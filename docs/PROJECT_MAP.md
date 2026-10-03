@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-363 GDScript files, 58462 lines.
+364 GDScript files, 58586 lines.
 
 ### `scenes/corridor/`
 
@@ -431,7 +431,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
-| `debug_arms_commands.gd` | — | 243 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
+| `debug_arms_commands.gd` | — | 252 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
+| `debug_arms_dump.gd` | — | 115 | Writes the posed arm skeletons (both hands) to a JSON file so two poses can be diffed. |
 | `debug_arms_fit.gd` | — | 172 | Debug console `arms fit`: the right thumb's clearance from the gun parts in palm lengths, plus `arms thumbaim\|thumbcurl\|wrist x y z`, which set the builder's l… |
 | `debug_arms_frame.gd` | — | 106 | Debug `arms frame`: how much of the player camera's picture the arms and gun cover, found by drawing them white and diffing against the normal frame. |
 | `debug_arms_gear_fit.gd` | — | 290 | Debug `arms gear`: poses both arms through the weave, the shot kick and the reload, skins the arm and its sleeve on the CPU and counts skin vertices that poke… |
