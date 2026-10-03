@@ -5,8 +5,9 @@ dark. The door raider is a humanoid gone feral: a hunched loper whose head
 hangs forward out of a furred ruff, tapered arms longer than the legs with
 the claws on the van floor, hair that trails every bob, knobbed spine,
 hanging jaw, corpse-grey skin and black eye pits, nothing bright. The loper is both the door raider and the window
-raider. door_raider.png is a 13-frame 832 x 160 sheet: row 0 the 13-frame run (a bounding charge,
-seen from the front; frame 0 is the still), row 1 the 5-frame jump take-off. Every frame has the
+raider. door_raider.png is a 13-frame 832 x 240 sheet: row 0 the 13-frame run (a bounding charge,
+seen from the front; frame 0 is the still), row 1 the 5-frame jump take-off, row 2 a 4-frame
+front-on latch onto the van wall (reach, impact, cling). Every frame has the
 feral face (draw_feral_head), riding the pose's head bob and jaw lag.
 
 Art rules (.claude/rules/art-style.md, pixel art): native size, one image
@@ -36,8 +37,9 @@ OUT = ROOT / "scenes" / "enemies"
 # Canvas size: the loper (door and window raider) is 1.54 x 1.92 m.
 LOPER_SIZE = (64, 80)
 LOPER_FRAMES = 13
-LOPER_ROWS = 2
+LOPER_ROWS = 3
 JUMP_FRAMES = 5
+LATCH_FRAMES = 4
 LOPER_SHEET = (LOPER_SIZE[0] * LOPER_FRAMES, LOPER_SIZE[1] * LOPER_ROWS)
 
 OUTLINE = (30, 20, 18)
@@ -472,6 +474,33 @@ LOPER_JUMP_POSES = [
 ]
 assert len(LOPER_JUMP_POSES) == JUMP_FRAMES
 
+# Row 2 of the sheet: the latch onto the van wall, front-on. The player is inside the van
+# looking out through the glass at the wall; the loper arrives from outside and ends pressed
+# flat on it, belly to the camera, face straight at it, all four limbs splayed in an X with
+# claws hooked in (a gecko on a window). Continues from jump frame 4 (airborne, soles up).
+# Frame 0 reach: stretch, paws thrown up to the upper corners, hind legs swinging down.
+# Frame 1 impact: squash, the widest X, head sunk into the shoulders. Frame 2 pull in: elbows
+# bent out, paws drawn in. Frame 3 cling: held, head raised, claws curled, right arm higher.
+LOPER_LATCH_POSES = [
+	dict(by=-8, hump_dy=2, head_dy=6, shoulder_dx=0, lag=2,  # 0 reach
+		left=((6, 24), (5, 12), [(2, 7), (4, 5), (7, 5), (10, 7)]),
+		right=((57, 25), (58, 13), [(61, 8), (59, 6), (56, 6), (53, 8)]),
+		legs=(((10, 50), (5, 60)), ((54, 51), (59, 61))), soles=True),
+	dict(by=-2, hump_dy=-1, head_dy=1, shoulder_dx=3, lag=1,  # 1 impact
+		left=((3, 26), (2, 15), [(0, 10), (2, 8), (5, 7), (8, 8)]),
+		right=((60, 26), (61, 15), [(63, 10), (61, 8), (58, 7), (55, 8)]),
+		legs=(((6, 64), (2, 74)), ((58, 65), (62, 75))), soles=True),
+	dict(by=-3, hump_dy=0, head_dy=-1, shoulder_dx=2, lag=1,  # 2 pull in
+		left=((4, 28), (5, 17), [(2, 12), (4, 10), (7, 10), (10, 12)]),
+		right=((59, 29), (58, 18), [(61, 13), (59, 11), (56, 11), (53, 13)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-3, hump_dy=0, head_dy=-2, shoulder_dx=2, lag=1,  # 3 cling
+		left=((4, 28), (5, 17), [(2, 13), (4, 11), (7, 11), (10, 13)]),
+		right=((59, 28), (58, 17), [(61, 13), (59, 11), (56, 11), (53, 13)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+]
+assert len(LOPER_LATCH_POSES) == LATCH_FRAMES
+
 
 def fur_sway(frame: int, poses=LOPER_POSES) -> tuple[int, int]:
 	"""Overlap and follow-through: the hair lags the body by a frame."""
@@ -699,13 +728,15 @@ def draw_loper(frame: int = 0, poses=LOPER_POSES) -> Canvas:
 
 
 def draw_loper_sheet() -> Canvas:
-	"""Row 0 the thirteen run frames, row 1 the five jump take-off frames, each cell
-	exactly LOPER_SIZE."""
+	"""Row 0 the thirteen run frames, row 1 the five jump take-off frames, row 2 the four
+	latch frames, each cell exactly LOPER_SIZE."""
 	sheet = Canvas(LOPER_SHEET)
 	for i in range(LOPER_FRAMES):
 		sheet.blit(draw_loper(i), i * LOPER_SIZE[0])
 	for i in range(JUMP_FRAMES):
 		sheet.blit(draw_loper(i, LOPER_JUMP_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1])
+	for i in range(LATCH_FRAMES):
+		sheet.blit(draw_loper(i, LOPER_LATCH_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 2)
 	return sheet
 
 

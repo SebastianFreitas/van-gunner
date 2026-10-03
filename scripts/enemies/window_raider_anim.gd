@@ -7,7 +7,11 @@ extends RefCounted
 ## Columns of the sheet: the thirteen run frames.
 const SHEET_COLUMNS := 13
 ## Rows of the sheet; grows as animation PRs add them.
-const SHEET_ROWS := 2
+const SHEET_ROWS := 3
+## Seconds into the jump when the latch clip takes over: the jump lasts window_raider_wall.gd
+## JUMP_TIME 0.8 s and, at 10 fps, the latch's impact frame (index 2) starts at 0.75 s, i.e. on
+## contact. Keep the two in step.
+const LATCH_START := 0.55
 ## Run frames whose claws touch the floor (every frame but the airborne kick, fall and drop
 ## at 6-8). Inside the cabin the loper prowls on these so it does not hop around the van.
 const GROUNDED_FRAMES: Array[int] = [0, 1, 2, 3, 4, 5, 9, 10, 11, 12]
@@ -18,11 +22,18 @@ const CLIPS: Dictionary = {
 	&"run": {"row": 0, "frames": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "fps": 18.0, "loop": true},
 	# The in-cabin loop on the grounded frames.
 	&"prowl": {"row": 0, "frames": [0, 1, 2, 3, 4, 5, 9, 10, 11, 12], "fps": 18.0, "loop": true},
-	# Take-off plays in 0.33 s, then holds frame 4 (airborne) for the rest of the 0.8 s jump
-	# until W2 adds the latch.
+	# Take-off plays in 0.33 s, then holds frame 4 (airborne) until the latch takes over at
+	# LATCH_START into the 0.8 s jump.
 	&"jump": {"row": 1, "frames": [0, 1, 2, 3, 4], "fps": 15.0, "loop": false},
+	# Front-on latch onto the van wall, started LATCH_START s into the jump so the impact frame
+	# lands on contact, then holds the cling frame through GRIPPING and CLIMBING until the
+	# crawl (W4).
+	&"latch": {"row": 2, "frames": [0, 1, 2, 3], "fps": 10.0, "loop": false},
 }
 
+## False while the current jump goes down to the road (drop off the wall), so that jump keeps
+## the take-off clip and never latches.
+var latch_jump := true
 var raider: WindowRaider
 var _clock := 0.0 # seconds into the current clip
 var _clip := &"still"
@@ -87,15 +98,23 @@ func step(delta: float, moving: bool) -> void:
 	var phase := raider.assault_phase
 	# The jump is a flight, not a walk: it animates whether or not the raider "moved".
 	var jumping := phase == WindowRaider.AssaultPhase.JUMPING
-	var picked := &"jump" if jumping else &"still"
-	if moving and not jumping:
+	var on_wall := (
+		phase == WindowRaider.AssaultPhase.GRIPPING or phase == WindowRaider.AssaultPhase.CLIMBING
+	)
+	var picked := &"still"
+	if jumping:
+		var latching := _clip == &"latch" or (_clip == &"jump" and _clock >= LATCH_START)
+		picked = &"latch" if latch_jump and latching else &"jump"
+	elif on_wall and has_clip(&"latch"):
+		picked = &"latch"
+	if moving and not jumping and not on_wall:
 		var in_cabin := (
 			phase == WindowRaider.AssaultPhase.ATTACKING_BENCH
 			or phase == WindowRaider.AssaultPhase.ATTACKING_PLAYER
 		)
 		picked = &"prowl" if in_cabin else &"run"
 	play(picked)
-	if moving or jumping:
+	if moving or jumping or on_wall:
 		_clock += delta
 		var data: Dictionary = CLIPS[_clip]
 		if data["loop"]:

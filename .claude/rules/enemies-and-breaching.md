@@ -31,11 +31,13 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
 ## Beast sprites and hitboxes
 
 - `scenes/enemies/window_raider.tscn` holds the door raider, a hunched humanoid
-  feral (the loper): `Sprite3D` at `pixel_size 0.024` on `door_raider.png`, an 832 x 160 sheet:
-  row 0 thirteen 64 x 80 run frames, row 1 a 5-frame jump take-off (`hframes 13, vframes 2`;
-  clip `jump`, 15 fps, no loop, plays on JUMPING, front-on like the run, never flipped; each 1.54 x 1.92 m; frame 0 is the still,
+  feral (the loper): `Sprite3D` at `pixel_size 0.024` on `door_raider.png`, an 832 x 240 sheet:
+  row 0 thirteen 64 x 80 run frames, row 1 a 5-frame jump take-off (`hframes 13, vframes 3`;
+  clip `jump`, 15 fps, no loop, plays on JUMPING), row 2 a 4-frame latch (clip `latch`, 10 fps,
+  no loop: starts `LATCH_START` 0.55 s into a jump to the wall and holds its cling frame through
+  GRIPPING and CLIMBING; a drop-off jump never latches, front-on like the run, never flipped; each 1.54 x 1.92 m; frame 0 is the still,
   `window_raider_anim.gd` is a clip player: named clips in `CLIPS` (sheet row, frames, fps,
-  loop; `still`, `run`, `prowl` so far) set `frame_coords`, a new animation adds a sheet row
+  loop; `still`, `run`, `prowl`, `jump`, `latch` so far) set `frame_coords`, a new animation adds a sheet row
   (`SHEET_ROWS`) and a clip, and `_die` plays a `death` clip, when one exists, before the
   sink and fade; `run` steps at 18 fps while the raider moves and `still` rests
   it on 0, frames 6 to 8 are airborne, 6 the kick; the boss sets `hframes 1`), centred 0.66 m below the node so its claws

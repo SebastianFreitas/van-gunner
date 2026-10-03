@@ -440,6 +440,7 @@ func _jump_to_wall(breach: BreachPoint) -> void:
 		if not _active or is_defeated:
 			return
 		assault_phase = AssaultPhase.JUMPING
+		_anim.latch_jump = true
 		await _wall_move(grip, true)
 		if not _active or is_defeated:
 			return
@@ -477,6 +478,7 @@ func _cling_and_wait() -> void:
 		if not _active or is_defeated:
 			return
 		assault_phase = AssaultPhase.JUMPING
+		_anim.latch_jump = true
 		await _wall_move(spot, true)
 		if not _active or is_defeated:
 			return
@@ -512,6 +514,7 @@ func _drop_off_wall() -> void:
 	var x := position.x * 1.3 if absf(position.x) > 1.5 else position.x
 	var z := position.z + (1.0 if position.z > 4.5 else 0.0)
 	var land := Vector3(x, _wall.ROAD_ORIGIN_Y, z)
+	_anim.latch_jump = false
 	await _wall_move(land, true)
 	if not _active or is_defeated:
 		return

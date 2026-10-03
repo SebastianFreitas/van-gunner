@@ -57,7 +57,7 @@ func _build() -> void:
 	# door_raider.png is the loper's sheet: the run in row 0, the jump in row 1; the dummy shows
 	# frame 0, the still.
 	_sprite.hframes = 13
-	_sprite.vframes = 2
+	_sprite.vframes = 3
 	_sprite.frame = 0
 	_sprite.pixel_size = 0.006
 	_sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
