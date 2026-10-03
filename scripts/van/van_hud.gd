@@ -177,6 +177,9 @@ func show_phase_toast(next_phase: GameSession.RunPhase) -> void:
 			van.rest_toast.text = stop_toast_docked()
 			van.rest_toast.show()
 		_:
-			if van.player_containment and van.player_containment.is_rear_exit_allowed():
+			# the halt owns the exit: a COMBAT or REST change must not re-seal it
+			var travel := van.get_tree().get_first_node_in_group(&"travel_controller")
+			var halted: bool = travel != null and travel.has_method(&"is_halted") and travel.is_halted()
+			if not halted and van.player_containment and van.player_containment.is_rear_exit_allowed():
 				van._set_stop_rear_exit(false)
 			van.rest_toast.hide()

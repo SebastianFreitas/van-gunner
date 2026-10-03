@@ -20,6 +20,7 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - loot machine: LootMachine, scripts/interactions/loot_machine.gd (left-wall hopper for street-kill loot)
 - stims / tools / hotbar: ItemUsableConfig, scripts/items/item_usable_config.gd, scripts/player/usables_controller.gd, resources/items/adrenaline_stim.tres
 - chill (mode): GameSession.chill_mode, debug commands chill / unchill (freezes encounters)
+- stop / halt the van: C while EASY, TravelController.try_halt (speed 0, exit through the rear doors, Shift to go); turbo is Shift, EASY is the first C; climb back in: rear_climb.gd
 - shop lift / elevator stop: StopElevator, scripts/stops/stop_elevator.gd, scenes/corridor/stop_elevator.tscn
 - stop mouth / vestibule: scripts/stops/stop_vestibule.gd (shared entrance of every roadside stop)
 - garage / lounge: resources/side_stops/garage.tres, scripts/stops/garage_lounge.gd, scenes/corridor/garage_bay.tscn

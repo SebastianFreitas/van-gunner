@@ -1464,6 +1464,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Inter
   constant_angular_velocity=Vector3(0, 0, 0)
   window_id="left_rear"
   prompt="Interact"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -2126,6 +2127,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Inte
   constant_angular_velocity=Vector3(0, 0, 0)
   window_id="left_front"
   prompt="Interact"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -2788,6 +2790,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Inte
   constant_angular_velocity=Vector3(0, 0, 0)
   window_id="right_rear"
   prompt="Interact"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -3450,6 +3453,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Int
   constant_angular_velocity=Vector3(0, 0, 0)
   window_id="right_front"
   prompt="Interact"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -4032,6 +4036,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact StaticBo
   constant_angular_velocity=Vector3(0, 0, 0)
   side="left"
   prompt="Interact"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact/Hit CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -4535,6 +4540,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Interact StaticB
   constant_angular_velocity=Vector3(0, 0, 0)
   side="right"
   prompt="Interact"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Interact/Hit CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -5140,6 +5146,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact Stat
   constant_angular_velocity=Vector3(0, 0, 0)
   side="left"
   prompt="Interact"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -5777,6 +5784,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact Sta
   constant_angular_velocity=Vector3(0, 0, 0)
   side="right"
   prompt="Interact"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -6084,6 +6092,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/CabDoor StaticBody3D script=res://scri
   constant_linear_velocity=Vector3(0, 0, 0)
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Interact"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/CabDoor/Mesh MeshInstance3D
   unique_name_in_owner=false
   process_mode=0
@@ -6230,6 +6239,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable StaticBody3D scrip
   constant_linear_velocity=Vector3(0, 0, 0)
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Open Bench"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable/Mesh MeshInstance3D
   unique_name_in_owner=false
   process_mode=0
@@ -6380,6 +6390,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine StaticBody3D script=
   constant_linear_velocity=Vector3(0, 0, 0)
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Dispense loot"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Body MeshInstance3D
   unique_name_in_owner=false
   process_mode=0
@@ -6619,6 +6630,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/FuseBox StaticBody3D script=res:
   constant_linear_velocity=Vector3(0, 0, 0)
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Fuse box"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Props/FuseBox/Mesh MeshInstance3D
   unique_name_in_owner=false
   process_mode=0
@@ -6753,6 +6765,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CabRelay StaticBody3D script=res
   constant_linear_velocity=Vector3(0, 0, 0)
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Cab relay"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Props/CabRelay/Mesh MeshInstance3D
   unique_name_in_owner=false
   process_mode=0
@@ -6887,6 +6900,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard StaticBody3D script
   constant_linear_velocity=Vector3(0, 0, 0)
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Skill tree terminal"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard/Board MeshInstance3D
   unique_name_in_owner=false
   process_mode=0
@@ -7025,6 +7039,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard StaticBody3D script=r
   constant_linear_velocity=Vector3(0, 0, 0)
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Change class"
+  gesture=&"press"
 NODE TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard/Board MeshInstance3D
   unique_name_in_owner=false
   process_mode=0
@@ -8698,9 +8713,8 @@ NODE Systems/TravelController Node script=res://scripts/travel/travel_controller
   turn_radius=10.0
   boost_multiplier=1.75
   boost_duration=5.0
-  boost_cooldown=14.0
+  boost_cooldown=45.0
   slow_multiplier=0.42
-  slow_cooldown=14.0
   debug_speed_multiplier=5.0
   park_speed_scale=1.65
 NODE Systems/EncounterDirector Node script=res://scripts/enemies/encounter_director.gd
@@ -10084,8 +10098,8 @@ NODE HUD/Controls Label
 R  RELOAD
 E  INTERACT
 ESC  PAUSE
-SHIFT  GO
-C  EASY
+SHIFT  TURBO / GO
+C  EASY / STOP
 1-4  USE TOOL"
   label_settings=null
   horizontal_alignment=2
@@ -11390,101 +11404,6 @@ NODE HUD/DriverShoutHud/Layout/SlowWrap/SlowShout Button
   expand_icon=false
   text_direction=0
   language=""
-NODE HUD/DriverShoutHud/Layout/SlowWrap/SlowCooldown ProgressBar
-  unique_name_in_owner=true
-  process_mode=0
-  process_priority=0
-  process_physics_priority=0
-  process_thread_group=0
-  physics_interpolation_mode=2
-  auto_translate_mode=0
-  editor_description=""
-  visible=false
-  modulate=Color(1, 1, 1, 1)
-  self_modulate=Color(1, 1, 1, 1)
-  show_behind_parent=false
-  top_level=false
-  clip_children=0
-  oversampling_with_scale=0
-  light_mask=1
-  visibility_layer=1
-  z_index=0
-  z_as_relative=true
-  y_sort_enabled=false
-  texture_filter=0
-  texture_repeat=0
-  material=null
-  use_parent_material=false
-  custom_minimum_size=Vector2(0, 0)
-  custom_maximum_size=Vector2(-1, -1)
-  propagate_maximum_size=false
-  clip_contents=false
-  layout_mode=1
-  anchors_preset=12
-  anchor_left=0.0
-  anchor_top=1.0
-  anchor_right=1.0
-  anchor_bottom=1.0
-  offset_left=0.0
-  offset_top=-6.0
-  offset_right=0.0
-  offset_bottom=0.0
-  grow_horizontal=2
-  grow_vertical=0
-  rotation=0.0
-  scale=Vector2(1, 1)
-  pivot_offset=Vector2(0, 0)
-  pivot_offset_ratio=Vector2(0, 0)
-  size_flags_horizontal=1
-  size_flags_vertical=0
-  size_flags_stretch_ratio=1.0
-  offset_transform_enabled=false
-  offset_transform_position=Vector2(0, 0)
-  offset_transform_position_ratio=Vector2(0, 0)
-  offset_transform_scale=Vector2(1, 1)
-  offset_transform_rotation=0.0
-  offset_transform_pivot=Vector2(0, 0)
-  offset_transform_pivot_ratio=Vector2(0.5, 0.5)
-  offset_transform_visual_only=true
-  localize_numeral_system=true
-  layout_direction=0
-  translation_context=&""
-  tooltip_text=""
-  tooltip_auto_translate_mode=0
-  focus_neighbor_left=NodePath("")
-  focus_neighbor_top=NodePath("")
-  focus_neighbor_right=NodePath("")
-  focus_neighbor_bottom=NodePath("")
-  focus_next=NodePath("")
-  focus_previous=NodePath("")
-  focus_mode=0
-  focus_behavior_recursive=0
-  mouse_filter=2
-  mouse_behavior_recursive=0
-  mouse_force_pass_scroll_events=true
-  mouse_default_cursor_shape=0
-  shortcut_context=null
-  accessibility_name=""
-  accessibility_description=""
-  accessibility_live=0
-  accessibility_controls_nodes=[]
-  accessibility_described_by_nodes=[]
-  accessibility_labeled_by_nodes=[]
-  accessibility_flow_to_nodes=[]
-  theme=null
-  theme_type_variation=&""
-  min_value=0.0
-  max_value=1.0
-  step=0.01
-  page=0.0
-  value=0.0
-  exp_edit=false
-  rounded=false
-  allow_greater=false
-  allow_lesser=false
-  fill_mode=0
-  show_percentage=false
-  indeterminate=false
 NODE HUD/RestToast Label
   unique_name_in_owner=true
   process_mode=0
