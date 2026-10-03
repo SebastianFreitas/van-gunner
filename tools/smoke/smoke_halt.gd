@@ -9,7 +9,7 @@ func _init(owner: Node) -> void:
 	driver = owner
 
 
-## Slow, halt, step out the back (resume refused), climb back in, resume; leaves the van rolling.
+## Slow, halt, walk out an open side door, step out the back (resume refused), climb back in, resume; leaves the van rolling.
 func halt_round_trip() -> bool:
 	var rolling := [GameSession.RunPhase.TRAVELLING, GameSession.RunPhase.COMBAT,
 			GameSession.RunPhase.REST]
@@ -31,6 +31,27 @@ func halt_round_trip() -> bool:
 		step = 3
 		ok = travel.try_halt() and travel.is_halted() and travel.travel_speed == 0.0 \
 				and containment.is_rear_exit_allowed()
+	if ok:
+		step = 31
+		var doors := driver.get_tree().get_first_node_in_group(&"side_doors")
+		ok = doors != null
+		if ok:
+			var inside_pos := player.position
+			doors.open_door(&"left")
+			var door_waited := 0
+			while door_waited < 180 and not doors.is_door_passable(&"left"):
+				await driver.get_tree().physics_frame
+				door_waited += 1
+			# The leaf slides +Z when open, so take z from the closed position.
+			var door_z: float = player.get_parent().to_local(
+					doors.to_global(doors.get("_left_closed_pos"))).z
+			player.position = Vector3(-1.4, 0.1, door_z)
+			await driver.get_tree().physics_frame
+			# 2.4 m out passes the containment wall at x -3.04 (-x is the left side).
+			ok = not player.test_move(player.global_transform, Vector3(-2.4, 0.0, 0.0))
+			doors.close_door(&"left")
+			player.position = inside_pos
+			await driver.get_tree().physics_frame
 	if ok:
 		step = 4
 		player.position = Vector3(0.0, -0.85, 6.5)
