@@ -3,7 +3,7 @@ extends RefCounted
 ## Claw-nail mesh: a curved plate that rises out of a skin fold at its root and tucks under the finger's sides, then grows past the tip into a tapered point curving toward the pad.
 
 ## Half-angle (from the dorsal line) the nail wraps around the finger; the sides dive under the skin.
-const ARC := deg_to_rad(82.0)
+const ARC := deg_to_rad(66.0)
 const ARC_SEGS := 16
 ## Sections on the finger (the nail bed) and past its tip (the free claw).
 const BED_RINGS := 14
@@ -54,13 +54,16 @@ static func mesh(rings: Array, reach: float, curve_deg: float) -> ArrayMesh:
 	var p2 := c0 + Vector3(0.0, len_free * cos(th), -len_free * sin(th))
 	for i in range(1, FREE_RINGS):
 		var s := float(i) / float(FREE_RINGS)
-		var f := pow(1.0 - s, 0.7)
+		# Round (circular) taper: a quarter ellipse, with the width closing a little faster
+		# than the height.
+		var f := pow(1.0 - s * s, 0.5) * (1.0 - 0.35 * s)
+		var fw := f * (1.0 - 0.25 * smoothstep(0.0, 0.6, s))
 		var c := (1.0 - s) * (1.0 - s) * c0 + 2.0 * (1.0 - s) * s * p1 + s * s * p2
 		var lift := PackedFloat32Array()
 		for k in ARC_SEGS + 1:
 			var side := lerpf(_side(k), 1.0, smoothstep(0.0, 0.35, s))
 			lift.append(lerpf(-BURY, LIFT, side))
-		secs.append(_sec(c, w0 * f, h0 * f, lift, s))
+		secs.append(_sec(c, w0 * fw, h0 * f, lift, s))
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var outs: Array[PackedVector3Array] = []
