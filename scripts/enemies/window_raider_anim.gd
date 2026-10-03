@@ -7,7 +7,7 @@ extends RefCounted
 ## Columns of the sheet: the thirteen run frames.
 const SHEET_COLUMNS := 13
 ## Rows of the sheet; grows as animation PRs add them.
-const SHEET_ROWS := 7
+const SHEET_ROWS := 8
 ## Seconds into the jump when the latch clip takes over: the jump lasts window_raider_wall.gd
 ## JUMP_TIME 0.8 s and, at 10 fps, the latch's impact frame (index 2) starts at 0.75 s, i.e. on
 ## contact. Keep the two in step.
@@ -38,7 +38,10 @@ const CLIPS: Dictionary = {
 	&"swipe": {"row": 5, "frames": [0, 1, 2, 3, 4, 5], "fps": 12.0, "loop": false},
 		# The window loper's climb in over the sill while ENTERING (1.3 m at 1.6 m/s = 0.81 s);
 		# holds the last frame until the phase ends.
-		&"enter": {"row": 6, "frames": [0, 1, 2, 3, 4], "fps": 6.0, "loop": false},
+	&"enter": {"row": 6, "frames": [0, 1, 2, 3, 4], "fps": 6.0, "loop": false},
+	# Shot out of a jump: frame 0 is the fall, frames 1..5 (slam, roll, get up) play from the
+	# landing and hold the last frame until the phase ends.
+	&"tumble": {"row": 7, "frames": [0, 1, 2, 3, 4, 5], "fps": 10.0, "loop": false},
 }
 ## Swipe frame that shows the claws landing; start_swipe is timed so it coincides with the hit.
 const SWIPE_IMPACT_FRAME := 3
@@ -145,6 +148,7 @@ func step(delta: float, moving: bool) -> void:
 		phase == WindowRaider.AssaultPhase.GRIPPING or phase == WindowRaider.AssaultPhase.CLIMBING
 	)
 	var picked := &"still"
+	var knocked := phase == WindowRaider.AssaultPhase.KNOCKED and has_clip(&"tumble")
 	if jumping:
 		var latching := _clip == &"latch" or (_clip == &"jump" and _clock >= LATCH_START)
 		picked = &"latch" if latch_jump and latching else &"jump"
@@ -185,8 +189,17 @@ func step(delta: float, moving: bool) -> void:
 		picked = &"rake"
 	else:
 		_raking = false
+	if knocked:
+		picked = &"tumble"
 	play(picked)
-	if raking:
+	if knocked:
+		# Hold the fall frame until the landing, then start the slam on frame 1.
+		var landed: bool = raider._wall.fall_landed
+		if landed:
+			_clock = maxf(_clock, 1.0 / float(CLIPS[&"tumble"]["fps"])) + delta
+		else:
+			_clock = 0.0
+	elif raking:
 		_step_rake(delta)
 	elif swiping:
 		_step_swipe(delta)

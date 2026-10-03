@@ -5,10 +5,10 @@ dark. The door raider is a humanoid gone feral: a hunched loper whose head
 hangs forward out of a furred ruff, tapered arms longer than the legs with
 the claws on the van floor, hair that trails every bob, knobbed spine,
 hanging jaw, corpse-grey skin and black eye pits, nothing bright. The loper is both the door raider and the window
-raider. door_raider.png is a 13-frame 832 x 560 sheet: row 0 the 13-frame run (a bounding charge,
+raider. door_raider.png is a 13-frame 832 x 640 sheet: row 0 the 13-frame run (a bounding charge,
 seen from the front; frame 0 is the still), row 1 the 5-frame jump take-off, row 2 a 4-frame
 front-on latch onto the van wall (reach, impact, cling), row 3 an 8-frame front-on wall crawl
-(diagonal pairs, looping), row 4 a 6-frame front-on bar rake (hold on left, rake right), row 5 a 6-frame front-on on-foot claw swipe (left paw braced, right paw strikes), row 6 a 5-frame front-on enter (pulls in through the window). Every frame has the
+(diagonal pairs, looping), row 4 a 6-frame front-on bar rake (hold on left, rake right), row 5 a 6-frame front-on on-foot claw swipe (left paw braced, right paw strikes), row 6 a 5-frame front-on enter (pulls in through the window), row 7 a 6-frame front-on tumble (shot out of a jump, slams the road, rolls, gets up). Every frame has the
 feral face (draw_feral_head), riding the pose's head bob and jaw lag.
 
 Art rules (.claude/rules/art-style.md, pixel art): native size, one image
@@ -22,7 +22,7 @@ deterministic. Usage:
     py -3 tools/gen_enemy_sprites.py              # writes scenes/enemies/*.png
     py -3 tools/gen_enemy_sprites.py --preview D  # also 6x previews in D
     py -3 tools/gen_enemy_sprites.py --out D      # draft somewhere else first
-    py -3 tools/gen_enemy_sprites.py --strip P    # run 0, then the latch, climb, rake, swipe and enter frames in one 6x PNG
+    py -3 tools/gen_enemy_sprites.py --strip P    # run 0, then the latch, climb, rake, swipe, enter and tumble frames in one 6x PNG
 """
 from __future__ import annotations
 
@@ -39,13 +39,14 @@ OUT = ROOT / "scenes" / "enemies"
 # Canvas size: the loper (door and window raider) is 1.54 x 1.92 m.
 LOPER_SIZE = (64, 80)
 LOPER_FRAMES = 13
-LOPER_ROWS = 7
+LOPER_ROWS = 8
 JUMP_FRAMES = 5
 LATCH_FRAMES = 4
 CLIMB_FRAMES = 8
 RAKE_FRAMES = 6
 SWIPE_FRAMES = 6
 ENTER_FRAMES = 5
+TUMBLE_FRAMES = 6
 LOPER_SHEET = (LOPER_SIZE[0] * LOPER_FRAMES, LOPER_SIZE[1] * LOPER_ROWS)
 
 OUTLINE = (30, 20, 18)
@@ -659,6 +660,42 @@ LOPER_ENTER_POSES = [
 ]
 assert len(LOPER_ENTER_POSES) == ENTER_FRAMES
 
+# Row 7 of the sheet: the window loper is shot out of its jump, slams the road, rolls and gets
+# up into the run, front-on like every row (never a side view, never flipped). Frame 0 knocked:
+# airborne, arms flung up and wide, head thrown back, legs dangling apart. Frame 1 slam: flat
+# and squashed on the road, limbs splayed to both sides, soles down. Frame 2 tuck: a ball low in
+# the cell, head down between the shoulders, arms and knees tight to the chest. Frame 3 roll: the
+# tucked ball turned half a turn (`rot`, quarter turns of the finished cell), mid somersault.
+# Frame 4 push up: crouched on all fours, head up at the viewer (enter frame 4's landing).
+# Frame 5 rising: half up in the run stance, close to run frame 0 so it hands off into the run.
+LOPER_TUMBLE_POSES = [
+	dict(by=-2, hump_dy=3, head_dy=-3, shoulder_dx=1, lag=2,  # 0 knocked, airborne
+		left=((1, 28), (3, 14), [(-1, 8), (2, 6), (5, 6), (8, 8)]),
+		right=((62, 30), (60, 16), [(63, 10), (61, 8), (58, 8), (55, 10)]),
+		legs=(((8, 66), (3, 76)), ((56, 67), (61, 77)))),
+	dict(by=14, hump_dy=6, head_dy=2, shoulder_dx=2, lag=1,  # 1 slam, flat on the road
+		left=((3, 66), (2, 77), [(0, 79), (3, 79), (6, 79), (9, 78)]),
+		right=((62, 67), (62, 77), [(55, 78), (58, 79), (61, 79), (63, 79)]),
+		legs=(((12, 76), (4, 79)), ((52, 77), (60, 79))), soles=True),
+	dict(by=12, hump_dy=2, head_dy=7, shoulder_dx=-1, lag=1,  # 2 tuck, a ball
+		left=((8, 52), (20, 60), [(18, 65), (21, 66), (24, 66), (27, 64)]),
+		right=((56, 54), (44, 61), [(37, 64), (40, 66), (43, 66), (46, 65)]),
+		legs=(((18, 62), (24, 72)), ((46, 63), (40, 73)))),
+	dict(by=12, hump_dy=2, head_dy=7, shoulder_dx=-1, lag=1, rot=2,  # 3 roll, upside down
+		left=((8, 52), (20, 60), [(18, 65), (21, 66), (24, 66), (27, 64)]),
+		right=((56, 54), (44, 61), [(37, 64), (40, 66), (43, 66), (46, 65)]),
+		legs=(((18, 62), (24, 72)), ((46, 63), (40, 73)))),
+	dict(by=4, hump_dy=-1, head_dy=1, shoulder_dx=1, lag=1,  # 4 push up on all fours
+		left=((2, 49), (9, 72), [(3, 79), (7, 79), (11, 79), (15, 78)]),
+		right=((62, 53), (56, 74), [(51, 78), (55, 79), (59, 79), (63, 78)]),
+		legs=(((8, 66), (14, 79)), ((56, 67), (50, 79))), soles=True),
+	dict(by=2, hump_dy=-1, head_dy=2, shoulder_dx=0, lag=1,  # 5 rising into the run
+		left=((4, 43), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((60, 48), (57, 73), [(52, 78), (56, 79), (60, 79), (63, 77)]),
+		legs=(((16, 66), (19, 75)), ((48, 67), (45, 75)))),
+]
+assert len(LOPER_TUMBLE_POSES) == TUMBLE_FRAMES
+
 
 def fur_sway(frame: int, poses=LOPER_POSES) -> tuple[int, int]:
 	"""Overlap and follow-through: the hair lags the body by a frame."""
@@ -908,13 +945,31 @@ def draw_loper(frame: int = 0, poses=LOPER_POSES) -> Canvas:
 	draw_feral_head(c, hd, jy, by, bx)
 	for arm_args in front:
 		draw_arm(c, *arm_args, sway, flare, True)
+	if p.get("rot"):
+		# Quarter turns of the finished cell about its centre, exact pixel moves, clipped.
+		w, h = c.w, c.h
+		turns = p["rot"] % 4
+		turned = Canvas((w, h))
+		for x, y in c.pixels():
+			col = c.px[y][x]
+			if col is None:
+				continue
+			if turns == 1:
+				nx, ny = (w + h) // 2 - 1 - y, x + (h - w) // 2
+			elif turns == 2:
+				nx, ny = w - 1 - x, h - 1 - y
+			else:
+				nx, ny = y - (h - w) // 2, (w + h) // 2 - x - 1
+			turned.set(nx, ny, col)
+		return turned
 	return c
 
 
 def draw_loper_sheet() -> Canvas:
 	"""Row 0 the thirteen run frames, row 1 the five jump take-off frames, row 2 the four
 	latch frames, row 3 the eight climb frames, row 4 the six rake frames, row 5 the six
-	on-foot swipe frames, row 6 the five enter frames (pulls in through the window), each
+	on-foot swipe frames, row 6 the five enter frames (pulls in through the window), row 7 the
+	six tumble frames (shot out of a jump, slams, rolls, gets up); 832 x 640, each
 	cell exactly LOPER_SIZE."""
 	sheet = Canvas(LOPER_SHEET)
 	for i in range(LOPER_FRAMES):
@@ -931,6 +986,8 @@ def draw_loper_sheet() -> Canvas:
 		sheet.blit(draw_loper(i, LOPER_SWIPE_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 5)
 	for i in range(ENTER_FRAMES):
 		sheet.blit(draw_loper(i, LOPER_ENTER_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 6)
+	for i in range(TUMBLE_FRAMES):
+		sheet.blit(draw_loper(i, LOPER_TUMBLE_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 7)
 	return sheet
 
 
@@ -948,7 +1005,7 @@ def main() -> None:
 	ap = argparse.ArgumentParser()
 	ap.add_argument("--preview", help="folder for 6x nearest previews")
 	ap.add_argument("--out", help="write the PNGs here instead of scenes/enemies")
-	ap.add_argument("--strip", help="write one 6x PNG of run 0, then the latch, climb, rake, swipe and enter frames")
+	ap.add_argument("--strip", help="write one 6x PNG of run 0, then the latch, climb, rake, swipe, enter and tumble frames")
 	args = ap.parse_args()
 	out = Path(args.out) if args.out else OUT
 	out.mkdir(parents=True, exist_ok=True)
@@ -964,11 +1021,11 @@ def main() -> None:
 
 
 def write_strip(sheet: Image.Image, path: Path) -> None:
-	"""Run frame 0, then the latch, climb, rake, swipe and enter frames in one row at 6x, 2 px gaps."""
+	"""Run frame 0, then the latch, climb, rake, swipe, enter and tumble frames in one row at 6x, 2 px gaps."""
 	w, h = LOPER_SIZE
 	cells = [(0, 0)] + [(i, 2) for i in range(LATCH_FRAMES)] + [(i, 3) for i in range(CLIMB_FRAMES)] \
 		+ [(i, 4) for i in range(RAKE_FRAMES)] + [(i, 5) for i in range(SWIPE_FRAMES)] \
-		+ [(i, 6) for i in range(ENTER_FRAMES)]
+		+ [(i, 6) for i in range(ENTER_FRAMES)] + [(i, 7) for i in range(TUMBLE_FRAMES)]
 	scale = 6
 	gap = 2
 	strip = Image.new("RGBA", (len(cells) * (w * scale + gap) - gap, h * scale), (40, 40, 40, 255))
