@@ -16,6 +16,7 @@ const SWAY_MAX := 2.0 * PI / 180.0  ## radians, cap per axis
 const SWAY_GAIN := 0.02  ## seconds: a 100 deg/s turn reaches the cap
 const SWAY_RATE := 10.0  ## lerp rate per second
 const DRIFT_WALK_KEEP := 0.3  ## share of the idle arm drift left at full walk
+const MOVE_STALE := 0.1  ## seconds without a body move that count as standing still
 const SLAP_DROP := 0.12  ## virtual metres the left hand drops below the magazine
 ## Rig-space tuning shift for the left hand at rest; the pose constants in `ArmsBuilder` own
 ## the framing now, so this stays zero.
@@ -58,6 +59,8 @@ var _camera: Node3D
 var _body: Node3D
 var _prev_basis := Basis.IDENTITY
 var _prev_body_pos := Vector3.ZERO
+var _move_dt := 0.0  ## seconds since the body last moved
+var _body_vel := Vector3.ZERO  ## parent-local m/s from the last body move
 var _has_prev := false
 var _sway := Vector2.ZERO  ## x pitch, y yaw (radians)
 var _weave: RefCounted = null
@@ -174,6 +177,8 @@ func snap_rest() -> void:
 	_reload_t = 0.0
 	_sway = Vector2.ZERO
 	_walk.reset()
+	_move_dt = 0.0
+	_body_vel = Vector3.ZERO
 	_has_prev = false
 	_reloading = false
 	_apply()
@@ -200,12 +205,22 @@ func _process(delta: float) -> void:
 	var lateral := 0.0
 	var forward := 0.0
 	if _body != null:
-		if _has_prev:
+		if not _has_prev:
+			_move_dt = 0.0
+			_body_vel = Vector3.ZERO
+		else:
 			# Parent-local, so the van's own travel never counts as walking.
+			# The body moves on physics ticks, so velocity is measured per move,
+			# not per render frame.
+			_move_dt += delta
 			var d := _body.position - _prev_body_pos
-			var speed_v := d / delta
-			if Vector2(speed_v.x, speed_v.z).length() > 20.0:
-				speed_v = Vector3.ZERO  # a teleport or reparent, not walking
+			if d.length_squared() > 1e-10:
+				_body_vel = d / maxf(_move_dt, 0.001)
+				if Vector2(_body_vel.x, _body_vel.z).length() > 20.0:
+					_body_vel = Vector3.ZERO  # a teleport or reparent, not walking
+				_move_dt = 0.0
+			elif _move_dt > MOVE_STALE:
+				_body_vel = Vector3.ZERO
 			var parent := _body.get_parent() as Node3D
 			var pb := parent.global_basis.orthonormalized() if parent else Basis.IDENTITY
 			var fwd := Vector3.FORWARD
@@ -216,8 +231,8 @@ func _process(delta: float) -> void:
 				fwd = Vector3.FORWARD
 			fwd = fwd.normalized()
 			var right := fwd.cross(Vector3.UP)
-			lateral = speed_v.dot(right)
-			forward = speed_v.dot(fwd)
+			lateral = _body_vel.dot(right)
+			forward = _body_vel.dot(fwd)
 		_prev_body_pos = _body.position
 	if debug_walk_t >= 0.0:
 		if debug_walk_kind == &"":
