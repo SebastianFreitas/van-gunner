@@ -27,7 +27,7 @@ const WEAVE_WRIST_LIFT := 0.18  ## UP added to the forearm line: about 10 deg of
 ## Palm toward the body.
 const LEFT_HANG_PALM := Vector3(1, 0, 0)
 ## The gripping thumb's curl in degrees for joints .01/.02/.03, split out so it can be tuned live.
-const RIGHT_THUMB_CURL := Vector3(10, 0, 45)
+const RIGHT_THUMB_CURL := Vector3(10, 0, 18)
 ## Finger joint curls in degrees for joints .01/.02/.03.
 const RIGHT_CURL := {
 	&"f_index": Vector3(20, 25, 15), &"f_middle": Vector3(40, 45, 30),
