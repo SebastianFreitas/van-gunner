@@ -443,9 +443,11 @@ def fur_sway(frame: int) -> tuple[int, int]:
 
 
 FERAL_FRAMES = (0,)
-# The feral face (owner, 2026-10-03): a pale corpse face is the one light shape on the dark
-# coat, so the player finds the head (the head hitbox, rows 18-48) at a glance; two red
-# eyes and a red-gummed maw of needle fangs make it read as a monster, not a cartoon.
+# The feral face (owner, 2026-10-03): the skull keeps the dark corpse skin, and the pale
+# FACE tones only trace its edge (the lit left side, the chin, the cheekbone and jaw-hinge
+# points), so the player reads where the head (the head hitbox, rows 18-48) starts and ends
+# from as few bright pixels as possible; red eyes and a red-gummed maw of needle fangs make
+# it read as a monster, not a cartoon.
 FACE_HI = (176, 172, 150)
 FACE = (134, 132, 114)
 FACE_SH = (88, 90, 78)
@@ -462,7 +464,7 @@ def draw_feral_head(c: Canvas, hd: int, jy: int, by: int) -> None:
 	head = Canvas(LOPER_SIZE)
 	skull = head.mask(polygon([(25, 19), (30, 17), (36, 17), (40, 19), (44, 23), (47, 29),
 		(43, 33), (44, 38), (40, 42), (24, 41), (20, 37), (21, 33), (17, 29), (21, 22)]))
-	head.part(skull, FACE, FACE_SH, FACE_HI, light(29, 24, 13, 14), 0.25, -0.95)
+	head.part(skull, SKIN, SKIN_SH, SKIN_HI, light(29, 24, 13, 14), 0.25, -0.95)
 	# Matted hair cap over the crown, hanging onto the brow in jagged locks, so the
 	# skull reads long and narrow instead of a bald dome.
 	cap = head.mask(polygon([(19, 24), (22, 17), (30, 13), (37, 14), (44, 18), (46, 25),
@@ -471,7 +473,7 @@ def draw_feral_head(c: Canvas, hd: int, jy: int, by: int) -> None:
 	# Hollow cheeks under the cheekbones.
 	for pts in (((21, 31), (26, 30), (25, 36), (21, 36)),
 			((38, 31), (43, 31), (42, 37), (38, 36))):
-		head.fill(head.mask(polygon(pts)), FACE_SH)
+		head.fill(head.mask(polygon(pts)), SKIN_DEEP)
 	# The brow: a hard V pointing down at the nose, the sockets slanted under it.
 	head.fill(head.mask(polyline([(20, 22), (31, 26), (44, 21)], 1.1)), SKIN_DEEP)
 	head.fill(head.mask(polygon([(21, 24), (30, 27), (29, 30), (22, 28)])), PIT)
@@ -504,6 +506,17 @@ def draw_feral_head(c: Canvas, hd: int, jy: int, by: int) -> None:
 	for x, y0, y1 in ((27, 38, 45), (35, 39, 46)):
 		for y in range(y0, y1):
 			head.set(x, y, DROOL)
+	# The rim: pale only on the face's edge below the hair, bright on the lit left side and
+	# the chin line, the mid tone on the shadowed right side's bony points.
+	face = skull - cap - maw
+	for x, y in face:
+		if y < 23 or all((x + dx, y + dy) in skull for dx, dy in ((1, 0), (-1, 0), (0, 1))):
+			continue
+		if x <= 31:
+			head.set(x, y, FACE_HI)
+	for x, y in ((46, 29), (45, 28), (45, 30), (44, 31), (43, 37), (44, 38), (43, 39)):
+		if (x, y) in face:
+			head.set(x, y, FACE)
 	c.blit(head, 0, hd)
 	# Matted hair framing the skull, kept off the face so it stays one pale shape.
 	for x0, y0, x1, y1 in ((21, 19, 16, 31), (19, 23, 15, 34), (43, 19, 47, 31)):
@@ -511,7 +524,12 @@ def draw_feral_head(c: Canvas, hd: int, jy: int, by: int) -> None:
 	# The lower jaw hangs open and a pixel to the left, fangs up, gum along its lip.
 	jaw = Canvas(LOPER_SIZE)
 	jaw_m = jaw.mask(polygon([(22, 46), (41, 46), (39, 51), (33, 58), (29, 58), (24, 51)]))
-	jaw.part(jaw_m, FACE, FACE_SH, FACE_HI, light(31, 50, 10, 7), 0.3, -1.2)
+	jaw.part(jaw_m, SKIN, SKIN_SH, SKIN_HI, light(31, 50, 10, 7), 0.3, -1.2)
+	# The chin's rim: the lit left edge and the point, pale like the skull's.
+	for x, y in jaw_m:
+		edge = any((x + dx, y + dy) not in jaw_m for dx, dy in ((1, 0), (-1, 0), (0, 1)))
+		if edge and y > 46 and (x <= 31 or y >= 57):
+			jaw.set(x, y, FACE_HI if x <= 31 else FACE)
 	for x in range(23, 41):
 		jaw.set(x, 46, GUM)
 	for x, h in ((24, 4), (28, 2), (31, 5), (35, 3), (39, 4)):
