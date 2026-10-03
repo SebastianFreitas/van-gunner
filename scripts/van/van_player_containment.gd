@@ -6,17 +6,22 @@ extends StaticBody3D
 
 const LAYER := 16  # physics layer 5
 
-@export var half_width := 2.24 + 0.8
-@export var half_length := 4.68 + 0.8
+@export var half_width := INTERIOR_HALF_WIDTH + 0.8
+@export var half_length := INTERIOR_HALF_LENGTH + 0.8
 @export var wall_height := 3.1
 @export var wall_thickness := 0.12
 
 ## Side door bay length (leaf blocker 2.53 m) plus 0.1 m margin each way.
 const BAY_HALF_LENGTH := 2.53 * 0.5 + 0.1
+## Cabin half width; the export half_width is this plus the 0.8 m margin.
+const INTERIOR_HALF_WIDTH := 2.24
+## Cabin half length; the export half_length is this plus the 0.8 m margin.
+const INTERIOR_HALF_LENGTH := 4.68
+## Below this local y the feet are on the road (deck 0.05, road -0.9).
+const DECK_MIN_LOCAL_Y := -0.35
 
 var _rear_exit_allowed := false
 var _side_exit_allowed := false
-var _climb: RearClimb
 
 
 func _ready() -> void:
@@ -38,10 +43,6 @@ func _build() -> void:
 		Vector3(0.0, center_y, -half_length),
 		Vector3(half_width * 2.0, wall_height, wall_thickness)
 	)
-	_climb = RearClimb.new()
-	_climb.name = "RearClimb"
-	_climb.position = Vector3(0.0, 0.3, half_length + 0.25)
-	add_child(_climb)
 
 
 ## Side panels are split around each door bay so the bay can open while halted.
@@ -106,6 +107,14 @@ func horizontal_clearance(world_pos: Vector3) -> float:
 	return Vector2(dx, dz).length()
 
 
+## True while the feet are on the van's deck inside the cabin walls: no margin, so standing
+## outside against the hull or on the rear ramp is outside.
+func is_inside_interior(world_pos: Vector3) -> bool:
+	var local := to_local(world_pos)
+	return local.y > DECK_MIN_LOCAL_Y \
+			and absf(local.x) <= INTERIOR_HALF_WIDTH and absf(local.z) <= INTERIOR_HALF_LENGTH
+
+
 func set_rear_exit_allowed(allowed: bool) -> void:
 	if _rear_exit_allowed == allowed:
 		return
@@ -131,8 +140,7 @@ func set_side_exit_allowed(allowed: bool) -> void:
 ## The exit used while the van is halted mid-street: the rear and both side door
 ## bays are open. The closed door leaves still block (their Blocker bodies are on
 ## layer 1), so the player leaves only through a door they opened. Side stops keep
-## calling set_rear_exit_allowed alone: rear-only, no climb prompt, level floor.
+## calling set_rear_exit_allowed alone: rear-only, level floor. The player gets back in by jumping onto the deck (a mantle).
 func set_halt_exit(allowed: bool) -> void:
 	set_rear_exit_allowed(allowed)
 	set_side_exit_allowed(allowed)
-	_climb.set_active(allowed)
