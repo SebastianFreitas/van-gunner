@@ -160,6 +160,12 @@ Surfaces, in the road's recipe:
   Viewmodel surfaces under 0.4 m from the camera on the 0.18-scaled arms
   rig are the one exception: grain about 60/m virtual, mottle about 6/m,
   ribs 2..3 cm, with the same albedo, roughness and metallic budget.
+  The arms draw through their own 50 degree lens (`GunViewmodel.VIEWMODEL_FOV`,
+  `scenes/player/viewmodel_fov.gdshaderinc`): the include must keep the signs
+  of `PROJECTION_MATRIX[0][0]` and `[1][1]` (Godot Vulkan bakes a Y flip in, so
+  [1][1] is negative); a positive focal term drew the arms rotated 180 degrees
+  while `arms frame` (Godot-native `fov_override`) still counted them right.
+  After any lens change, Read one player-view shot.
   Sidewalk dirt (where the walk is gone) is packed earth with broad tone
   drift and damp darker spots (`packed`), gravel only in noise patches
   about a fifth of the ground (coarse 0.22 m cells at 15%, fine 0.07 m at

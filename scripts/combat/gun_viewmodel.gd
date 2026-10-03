@@ -7,7 +7,7 @@ const ArmKick := preload("res://scripts/player/arms/arm_kick.gd")
 
 const RIG_SCALE := 0.18
 ## Vertical FOV the arms and gun draw with (the world camera is 78); 0 = the camera's own.
-const VIEWMODEL_FOV := 0.0
+const VIEWMODEL_FOV := 50.0
 const RELOAD_ROLL := -35.0 * PI / 180.0
 const RELOAD_DIP := 0.1  ## virtual metres
 const SWAY_MAX := 2.0 * PI / 180.0  ## radians, cap per axis

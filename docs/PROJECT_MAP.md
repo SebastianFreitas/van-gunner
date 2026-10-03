@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-360 GDScript files, 57544 lines.
+360 GDScript files, 57599 lines.
 
 ### `scenes/corridor/`
 
@@ -433,7 +433,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
 | `debug_arms_commands.gd` | — | 214 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
 | `debug_arms_fit.gd` | — | 172 | Debug console `arms fit`: the right thumb's clearance from the gun parts in palm lengths, plus `arms thumbaim\|thumbcurl\|wrist x y z`, which set the builder's l… |
-| `debug_arms_frame.gd` | — | 78 | Debug `arms frame`: how much of the player camera's picture the arms and gun cover, found by drawing them white and diffing against the normal frame. |
+| `debug_arms_frame.gd` | — | 106 | Debug `arms frame`: how much of the player camera's picture the arms and gun cover, found by drawing them white and diffing against the normal frame. |
 | `debug_arms_gear_fit.gd` | — | 290 | Debug `arms gear`: poses both arms through the weave, the shot kick and the reload, skins the arm and its sleeve on the CPU and counts skin vertices that poke… |
 | `debug_arms_hands.gd` | — | 99 | The monster-hand bar (hand as long as the forearm, finger shaft over a quarter of its length, neighbours not merged) measured on the posed skeleton. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
@@ -568,7 +568,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `arm_wrap.gd` | `ArmWrap` | 249 | Shrinkwrap bands: low-poly tubes built from the skinned arm mesh's own cross-sections, so wraps, gloves, cuffs and rings hug the hand instead of floating as cy… |
 | `arms_builder.gd` | `ArmsBuilder` | 207 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
 | `held_gun.gd` | `HeldGun` | 140 | The Desert-Eagle-style pistol the arms hold: a shared holder (grip, guard, trigger, frame) plus a per-gun barrel block. |
-| `viewmodel_fov.gd` | `ViewmodelFov` | 40 | Sets the viewmodel FOV override on every arm shader and base material under a rig. |
+| `viewmodel_fov.gd` | `ViewmodelFov` | 67 | Sets the viewmodel FOV override on every arm shader and base material under a rig and turns shadow casting off. |
 
 ### `scripts/stops/`
 
