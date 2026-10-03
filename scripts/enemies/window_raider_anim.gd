@@ -7,7 +7,7 @@ extends RefCounted
 ## Columns of the sheet: the thirteen run frames.
 const SHEET_COLUMNS := 13
 ## Rows of the sheet; grows as animation PRs add them.
-const SHEET_ROWS := 5
+const SHEET_ROWS := 6
 ## Seconds into the jump when the latch clip takes over: the jump lasts window_raider_wall.gd
 ## JUMP_TIME 0.8 s and, at 10 fps, the latch's impact frame (index 2) starts at 0.75 s, i.e. on
 ## contact. Keep the two in step.
@@ -34,7 +34,11 @@ const CLIPS: Dictionary = {
 	&"climb": {"row": 3, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 12.0, "loop": true},
 	# One swing at the window bars while BREACHING; frame 0 is the ready pose it rests on.
 	&"rake": {"row": 4, "frames": [0, 1, 2, 3, 4, 5], "fps": 12.0, "loop": false},
+	# One claw swipe at the bench or the player inside the van; frame 0 is the ready pose.
+	&"swipe": {"row": 5, "frames": [0, 1, 2, 3, 4, 5], "fps": 12.0, "loop": false},
 }
+## Swipe frame that shows the claws landing; start_swipe is timed so it coincides with the hit.
+const SWIPE_IMPACT_FRAME := 3
 ## Rake frame that shows the claws landing on the bars; start_rake is timed so it coincides
 ## with the breach point taking damage.
 const RAKE_IMPACT_FRAME := 3
@@ -46,6 +50,7 @@ var raider: WindowRaider
 var _clock := 0.0 # seconds into the current clip
 var _clip := &"still"
 var _raking := false # a rake swing is playing; false rests on its frame 0
+var _swiping := false # a swipe is playing; false falls back to prowl/still
 
 
 func _init(owner: WindowRaider) -> void:
@@ -85,6 +90,19 @@ func start_rake() -> void:
 		_clip = &"rake"
 		_clock = 0.0
 		_raking = true
+
+
+## Seconds from the start of a swipe to its impact frame.
+func swipe_lead_seconds() -> float:
+	return SWIPE_IMPACT_FRAME / float(CLIPS[&"swipe"]["fps"])
+
+
+## Starts one swipe from frame 0, restarting it if one is already playing.
+func start_swipe() -> void:
+	if drives_sprite() and has_clip(&"swipe"):
+		_clip = &"swipe"
+		_clock = 0.0
+		_swiping = true
 
 
 ## Switches to a clip from its first frame; does nothing if it is already the current one.
@@ -139,12 +157,17 @@ func step(delta: float, moving: bool) -> void:
 			)
 			if not unfinished:
 				picked = &"climb"
+	var in_cabin := (
+		phase == WindowRaider.AssaultPhase.ATTACKING_BENCH
+		or phase == WindowRaider.AssaultPhase.ATTACKING_PLAYER
+	)
 	if moving and not jumping and not on_wall:
-		var in_cabin := (
-			phase == WindowRaider.AssaultPhase.ATTACKING_BENCH
-			or phase == WindowRaider.AssaultPhase.ATTACKING_PLAYER
-		)
 		picked = &"prowl" if in_cabin else &"run"
+	var swiping := _swiping and in_cabin and has_clip(&"swipe")
+	if swiping:
+		picked = &"swipe"
+	else:
+		_swiping = false
 	var raking := (
 		phase == WindowRaider.AssaultPhase.BREACHING
 		and raider.is_agile and not raider.is_boss and has_clip(&"rake")
@@ -156,12 +179,24 @@ func step(delta: float, moving: bool) -> void:
 	play(picked)
 	if raking:
 		_step_rake(delta)
+	elif swiping:
+		_step_swipe(delta)
 	elif moving or jumping or on_wall:
 		_clock += delta
 		var data: Dictionary = CLIPS[_clip]
 		if data["loop"]:
 			var frames: Array = data["frames"]
 			_clock = fmod(_clock, frames.size() / float(data["fps"]))
+	show_clip_at(_clock, _clip)
+
+
+## Advances a playing swipe; when it ends the swipe flag clears so step falls back to
+## prowl/still on the next frame.
+func _step_swipe(delta: float) -> void:
+	_clock += delta
+	if _clock >= clip_seconds(&"swipe"):
+		_clock = 0.0
+		_swiping = false
 	show_clip_at(_clock, _clip)
 
 

@@ -326,7 +326,17 @@ func _start_attack_loop() -> void:
 func _attack_loop() -> void:
 	while _active and is_inside_tree() and not is_defeated:
 		var wait_time := _targeting.next_attack_wait()
-		await get_tree().create_timer(wait_time).timeout
+		# The swipe starts `lead` s early so its impact frame shows as the damage lands.
+		var lead := minf(_anim.swipe_lead_seconds(), wait_time)
+		await get_tree().create_timer(wait_time - lead).timeout
+		if not _active or is_defeated:
+			break
+		var hitting := assault_phase == AssaultPhase.ATTACKING_BENCH or (
+			assault_phase == AssaultPhase.ATTACKING_PLAYER and _targeting.in_player_melee()
+		)
+		if hitting and is_agile and not is_boss:
+			_anim.start_swipe()
+		await get_tree().create_timer(lead).timeout
 		if not _active or is_defeated:
 			break
 		var outgoing := _outgoing_damage()
