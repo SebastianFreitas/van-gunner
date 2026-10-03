@@ -74,6 +74,8 @@ const HAND_K := 1.47
 ## `&"rags"` (the old rag and glove dress) or `&"none"` (bare arms). Set by the `arms dress`
 ## console command, then rebuilt.
 static var dress_style := &"gear"
+## Held piece: &"pistol" (HeldGun) or &"grip" (MonsterGrip, the monster grip study).
+static var gun_style: StringName = &"pistol"
 
 
 static func rng_for(seed_value: int, part_id: StringName) -> RandomNumberGenerator:
@@ -102,8 +104,13 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	right.add_child(model_r)
 	# Parented at once: gear and skin layers aim at the camera, found through the ancestors.
 	rig.add_child(right)
-	var gun_root := HeldGun.build(rng_for(seed_value, &"arm_gun"),
-			ArmRig.palm_len(model_r) * HAND_K)
+	var gun_root: Node3D
+	if gun_style == &"grip":
+		gun_root = MonsterGrip.build(rng_for(seed_value, &"arm_gun"),
+				ArmRig.palm_len(model_r) * HAND_K)
+	else:
+		gun_root = HeldGun.build(rng_for(seed_value, &"arm_gun"),
+				ArmRig.palm_len(model_r) * HAND_K)
 	gun_root.visible = SHOW_GUN
 	var shoulder_r := RIGHT_SHOULDER + _jitter(rng_r)
 	var r: Dictionary

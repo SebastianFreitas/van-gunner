@@ -26,7 +26,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -102,6 +102,22 @@ func cmd_arms(args: Array) -> String:
 		ArmsBuilder.dress_style = StringName(arg)
 		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
 		return "arms dress: " + arg
+	if args[0] == "gun":
+		if args.size() < 2:
+			return "arms gun: " + str(ArmsBuilder.gun_style)
+		var arg := str(args[1])
+		if arg != "grip" and arg != "pistol":
+			return USAGE
+		if not vm.has_method(&"rebuild_arms"):
+			return "arms: no viewmodel"
+		ArmsBuilder.gun_style = StringName(arg)
+		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
+		if arg == "pistol":
+			return "arms gun: pistol"
+		var roots: Dictionary = vm.get("_roots")
+		var gun_root := roots.get("gun_root") as Node3D
+		var palm := HeldGun.palm_len_of(gun_root) if gun_root != null else 0.22
+		return "arms gun: grip | " + MonsterGrip.size_report(palm)
 	if args[0] == "fov":
 		if args.size() < 2:
 			return "arms fov %.1f (default %.1f, 0 = world camera)" % [
