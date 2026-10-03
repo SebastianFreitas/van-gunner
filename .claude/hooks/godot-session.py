@@ -45,6 +45,15 @@ def main():
     root = git("rev-parse", "--show-toplevel")
     if not root:
         return
+    # docs/PROJECT_MAP.md is gitignored, so every session builds it itself.
+    gen = os.path.join(root, "tools", "gen_context.py")
+    if os.path.exists(gen):
+        try:
+            subprocess.run([sys.executable, gen], cwd=root,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                           timeout=30)
+        except Exception:
+            pass
     lines = []
     if godot_missing(root):
         lines.append(

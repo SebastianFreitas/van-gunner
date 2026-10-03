@@ -388,7 +388,7 @@ def land(branch: str, ref: str, args) -> int:
         return 1
 
     subject, msg = squash_message(branch, base, ref)
-    sha = git("commit-tree", tree, "-p", main_sha, "-F", "-", stdin=msg)
+    sha = git("commit-tree", tree, "-p", main_sha, "-p", git("rev-parse", ref), "-F", "-", stdin=msg)
 
     main_moved = base != main_sha
     final = verify(sha, main_moved, args, let_through)

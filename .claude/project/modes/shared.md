@@ -18,3 +18,5 @@
   owner asks): a conflict in `docs/PROJECT_MAP.md` resolves by
   regenerating it; after the last merge re-run the check and the smoke
   test.
+
+- `docs/PROJECT_MAP.md` is gitignored and rebuilt at session start; where a line above says to commit or resolve it, skip that. Commit lands a branch with its tip as a second parent, so a branch that keeps going after it landed never conflicts with its own landed work.

@@ -19,7 +19,7 @@ paths:
 - `tools/hand_shots.py` renders the first-person arms in one pose from the `arms cam` views (front, side, left, top, elbow) into `<out>/<view>.png` in a single Godot launch: it builds `arms` console lines from a named pose (or takes raw ones) and runs `probe.py --shot <dir> --views ...`, whose runner switches `arms cam` per view, waits three frames and saves the viewport. Like every shot it needs the Windows hidden desktop; cloud containers cannot render it.
 - `tools/shot_stats.py <shots_dir>` is pure Python (PIL): mean and p95 linear luminance, clipped share and saturation per `--shots` PNG, checked against the targets table in `.claude/rules/art-style.md`.
 - `tools/gap_check.py <shots_dir> [--strict]` is pure Python (PIL): it counts magenta pixels in the `g01`.. gap-light views that `smoke.py --shots` saves (`gap_views` in `smoke_shots_closeups.gd`, shot with `gaplight on` or `out`). It fails when the control view (the left side door open) is under 1 % magenta, and under `--strict` when any other view has a magenta pixel. The `g` views are judged by it, never by `shots.py compare`.
-- `tools/gen_context.py` is pure Python and writes `docs/PROJECT_MAP.md`; it skips `.claude/` and reads the balance file from `HEAD`, so the map is the same in every checkout.
+- `tools/gen_context.py` is pure Python and writes `docs/PROJECT_MAP.md`, which is gitignored (parallel branches kept conflicting on it) and rebuilt by `godot-session.py` at every session start and by Commit; it skips `.claude/` and reads the balance file from `HEAD`, so the map is the same in every checkout.
 
 ## Design choices
 

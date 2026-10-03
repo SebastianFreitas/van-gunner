@@ -33,3 +33,5 @@
   test too when `main` moved since the branch was cut; `--smoke` always
   runs it). When `docs/PROJECT_MAP.md` is the only conflict merging
   `main` back, it takes `main`'s copy.
+
+- `docs/PROJECT_MAP.md` is gitignored and rebuilt at session start; where a line above says to commit or resolve it, skip that. Commit lands a branch with its tip as a second parent, so a branch that keeps going after it landed never conflicts with its own landed work.
