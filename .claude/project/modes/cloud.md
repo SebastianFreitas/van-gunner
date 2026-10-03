@@ -36,3 +36,5 @@
   combined tree in the try checkout (the smoke test too when `main` moved;
   `--smoke` always runs it). On a conflict or a failed check it lands
   nothing and says why.
+
+- `docs/PROJECT_MAP.md` is gitignored and rebuilt at session start; where a line above says to commit or resolve it, skip that. Commit lands a branch with its tip as a second parent, so a branch that keeps going after it landed never conflicts with its own landed work.
