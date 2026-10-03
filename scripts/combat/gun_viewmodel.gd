@@ -286,8 +286,12 @@ func _process(delta: float) -> void:
 	var weave_at := debug_weave_t if debug_weave_t >= 0.0 else (
 			WEAVE_SANDBOX_T if SaveSandbox.enabled else _weave_t)
 	var hold := debug_weave_t < 0.0 and SaveSandbox.enabled
+	# The left hand's own actions duck the idle wrist routine; walking and shooting don't.
+	var pin := maxf(debug_gesture_t, maxf(debug_inspect_t, debug_reload_t)) >= 0.0
+	var busy: bool = pin or _reloading or (_inspect and _inspect.is_playing(_kick_clock))
+	busy = busy or (_gesture and _gesture.is_playing(_kick_clock))
 	if _weave:
-		_weave.update(weave_at, 0.0 if hold else 1.0)
+		_weave.update(weave_at, _weave.wrist_scale(delta, hold, busy, pin or debug_weave_t >= 0.0))
 	var clock := fmod(_kick_clock + delta, 3600.0)
 	if clock < _kick_clock and _kick:
 		_kick.clear()

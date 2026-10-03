@@ -24,6 +24,9 @@ const DEV_THUMB := 12.0  ## degrees, the smaller sideways peak toward the thumb 
 ## the left rig +x is mostly thumb-ward with some palm-ward, which +z (extension) cancels
 ## (measured in `.claude/plans/idle-wrist-research.md` round 1; tuned by `arms wristang dev`).
 const DEV_AXIS := Vector3(0.877, 0.0, 0.480)
+## Seconds for a full duck fade: only long enough to avoid a pop, the routine need not be gone
+## by a gesture's contact time (0.12-0.16 s).
+const DUCK_S := 0.35
 
 var period := 3.6
 var routine := 10.8
@@ -35,6 +38,7 @@ var wrist := Vector3.ZERO
 var forearm := 0.0
 var flex := 0.0  ## degrees of downward flex of the last sample (negative = up)
 var dev := 0.0  ## degrees toward the thumb of the last sample (negative = toward the pinky)
+var _scale := 1.0  ## smoothed 0..1 duck level before the smoothstep, see `scale_step`
 var _phase := 0.0
 var _norm := 1.0
 ## Absolute seconds where the routine's rt = 0: the flex's big down peak lands on the finger
@@ -73,10 +77,25 @@ func bind(sk: Skeleton3D) -> void:
 	_fa_pose = sk.get_bone_pose_rotation(_fa)
 
 
+## The beat_scale to pass to `sample` this frame: the routine fades out while the left hand
+## is `busy` with something else and back in after. `hold` (the sandbox hold) is 0 and fades in
+## from rest if it ends; `snap` (a debug pin) skips the fade so pinned poses are exact.
+func scale_step(delta: float, hold: bool, busy: bool, snap: bool) -> float:
+	if hold:
+		_scale = 0.0
+		return 0.0
+	var target := 0.0 if busy else 1.0
+	if snap:
+		_scale = target
+	else:
+		_scale = move_toward(_scale, target, delta / DUCK_S)
+	return smoothstep(0.0, 1.0, _scale)
+
+
 ## Samples the routine at time `t` and twists the forearm bone. Allocation-free per frame.
 func sample(t: float, beat_scale := 1.0) -> void:
 	rt = fposmod(t - _origin, routine)
-	var tw := (_raw(rt) - _rest_raw) * _norm
+	var tw := (_raw(rt) - _rest_raw) * _norm * beat_scale
 	flex = _flex(rt) * beat_scale
 	dev = _dev(rt) * beat_scale
 	wrist = (Vector3(0.0, tw * (1.0 - FOREARM_SHARE), 0.0) + FLEX_AXIS * flex

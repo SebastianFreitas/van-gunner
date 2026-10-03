@@ -256,6 +256,10 @@ func _scan(t0: float, t1: float) -> String:
 	var hi := Vector3(-INF, -INF, -INF)
 	var peak_jump := 0.0
 	var peak_t := t0
+	var peak_total := 0.0  # largest total rotation away from the posed wrist, all axes together
+	var total_t := t0
+	var peak_axis := 0.0  # largest single euler component
+	var axis_t := t0
 	var prev := Quaternion.IDENTITY
 	for i in steps + 1:
 		var t := t0 + i * DT
@@ -264,6 +268,14 @@ func _scan(t0: float, t1: float) -> String:
 		var ang := _angles(q_rel)
 		lo = lo.min(ang)
 		hi = hi.max(ang)
+		var total := rad_to_deg(2.0 * acos(clampf(absf(q_rel.w), 0.0, 1.0)))
+		if total > peak_total:
+			peak_total = total
+			total_t = t
+		var axis := maxf(absf(ang.x), maxf(absf(ang.y), absf(ang.z)))
+		if axis > peak_axis:
+			peak_axis = axis
+			axis_t = t
 		if i > 0:
 			var jump := rad_to_deg(2.0 * acos(clampf(absf((prev.inverse() * q_rel).w), 0.0, 1.0)))
 			if jump > peak_jump:
@@ -276,4 +288,6 @@ func _scan(t0: float, t1: float) -> String:
 			% [lo.x, hi.x, lo.y, hi.y]
 			+ " | dev(z) min %+.1f max %+.1f deg\n" % [lo.z, hi.z]
 			+ "  peak speed %.1f deg/s at t=%.2f | max jump %.2f deg/frame at t=%.2f"
-			% [peak_jump / DT, peak_t, peak_jump, peak_t])
+			% [peak_jump / DT, peak_t, peak_jump, peak_t]
+			+ "\n  largest total rotation %.1f deg at t=%.2f | largest axis %.1f deg at t=%.2f"
+			% [peak_total, total_t, peak_axis, axis_t])
