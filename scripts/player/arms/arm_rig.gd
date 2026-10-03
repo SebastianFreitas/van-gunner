@@ -227,5 +227,6 @@ static func add_claws(model: Node3D, suffix: String, fingers: Dictionary, claw_k
 		sk.add_child(att)
 		var dorsal: Vector3 = d[&"dorsal"]
 		var lateral: Vector3 = d[&"lateral"]
-		ArmParts.mesh(att, "Claw", ArmClaw.mesh(tip_rings, horn_len, curve_deg), mat,
+		ArmParts.mesh(att, "Claw", ArmClaw.mesh(tip_rings, horn_len, curve_deg,
+					ArmClaw.THUMB_BED_FROM if f == &"thumb" else ArmClaw.BED_FROM), mat,
 				Vector3.ZERO, Basis(lateral, Vector3.UP, dorsal))
