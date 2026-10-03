@@ -4,6 +4,12 @@ extends CharacterBody3D
 
 signal interaction_prompt_changed(text: String)
 signal shot_fired(hit: bool)
+## A climb began; the hook for a future climb animation.
+@warning_ignore("unused_signal")
+signal mantle_started(rise: float, landing: Vector3)
+## The climb ended with the player on the ledge; the hook for a future climb animation.
+@warning_ignore("unused_signal")
+signal mantle_finished
 
 @export var move_speed := 4.5
 @export var acceleration := 16.0
@@ -14,7 +20,7 @@ signal shot_fired(hit: bool)
 @export var movement_reference_path: NodePath
 
 const _REAR_DOOR_INTERACT_SCRIPT := preload("res://scripts/van/rear_door_interact.gd")
-const _JUMP_CLEARANCE := 1.0
+const _MANTLE := preload("res://scripts/player/player_mantle.gd")
 
 @onready var head: Node3D = $Head
 @onready var interaction_ray: RayCast3D = $Head/Camera3D/InteractionRay
@@ -34,6 +40,8 @@ var current_class: ClassDefinition
 ## Debug fly mode: no gravity, no collision, moves along the camera's full look direction.
 var ghost := false
 var _ghost_saved_mask := 0
+## The step and climb helper (player_mantle.gd), made at the end of _ready.
+var _mantle: RefCounted
 
 
 func _ready() -> void:
@@ -47,6 +55,7 @@ func _ready() -> void:
 	weapon.fired.connect(func(hit: bool) -> void: shot_fired.emit(hit))
 	GameSession.class_changed.connect(_on_class_changed)
 	apply_class(ClassCatalog.load_or_basic(GameSession.class_id))
+	_mantle = _MANTLE.new(self)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -133,18 +142,32 @@ func _on_class_changed(class_id: StringName) -> void:
 	apply_class(ClassCatalog.load_or_basic(class_id))
 
 
-func _can_jump_outside_van() -> bool:
+## Climbs onto the ledge the player faces, when jumping is allowed here.
+func try_mantle() -> bool:
+	return _can_mantle() and _mantle.try_climb()
+
+
+func is_mantling() -> bool:
+	return _mantle.is_climbing()
+
+
+## The van-side part of the jump rule: false only when standing inside the van interior.
+func _can_mantle() -> bool:
+	var van := get_tree().get_first_node_in_group(&"van_run")
+	if van == null:
+		return true
+	var containment := van.get("player_containment") as VanPlayerContainment
+	if containment == null:
+		return true
+	return not containment.is_inside_interior(global_position)
+
+
+func _can_jump() -> bool:
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return false
 	if _ui_wants_free_cursor():
 		return false
-	var van := get_tree().get_first_node_in_group(&"van_run")
-	if van == null:
-		return false
-	var containment := van.get("player_containment") as VanPlayerContainment
-	if containment == null:
-		return false
-	return containment.horizontal_clearance(global_position) > _JUMP_CLEARANCE
+	return _can_mantle()
 
 
 func _ui_wants_free_cursor() -> bool:
@@ -198,10 +221,25 @@ func _physics_process(delta: float) -> void:
 			velocity += Vector3.UP * move_speed * 2.5
 		move_and_slide()
 		return
+	if _mantle.is_climbing():
+		_mantle.step_climb(delta)
+		_mantle.update_head(delta)
+		_jump_queued = false
+		_update_interaction()
+		return
 	var reference_basis := _movement_reference.global_basis.orthonormalized()
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
-	elif _jump_queued and _can_jump_outside_van():
+		if Input.is_action_pressed("jump") and velocity.y < 2.0 \
+				and _can_jump() and try_mantle():
+			_jump_queued = false
+			_update_interaction()
+			return
+	elif _jump_queued and _can_jump() and _mantle.try_climb():
+		_jump_queued = false
+		_update_interaction()
+		return
+	elif _jump_queued and _can_jump():
 		velocity.y = jump_velocity
 	else:
 		velocity.y = 0.0
@@ -228,72 +266,18 @@ func _physics_process(delta: float) -> void:
 	velocity.x = world_horizontal_velocity.x
 	velocity.z = world_horizontal_velocity.z
 	if is_on_floor() and wish_direction.length_squared() > 0.01:
-		_try_step_up(wish_direction)
+		_mantle.try_step(wish_direction)
 	move_and_slide()
 	if is_on_floor() and wish_direction.length_squared() > 0.01:
-		if _try_step_up(wish_direction):
+		if _mantle.try_step(wish_direction):
 			move_and_slide()
 	var resulting_local_velocity := reference_basis.inverse() * velocity
 	_local_horizontal_velocity.x = resulting_local_velocity.x
 	_local_horizontal_velocity.z = resulting_local_velocity.z
+	_mantle.update_head(delta)
 	if Input.is_action_pressed("shoot") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		weapon.try_fire()
 	_update_interaction()
-
-
-func _try_step_up(wish_direction: Vector3) -> bool:
-	if not is_on_floor():
-		return false
-
-	var direction := Vector3(wish_direction.x, 0.0, wish_direction.z)
-	if direction.length_squared() < 0.01:
-		return false
-	direction = direction.normalized()
-
-	var space := get_world_3d().direct_space_state
-	var exclude := [get_rid()]
-
-	var foot := global_position + Vector3.UP * 0.05
-	var query := PhysicsRayQueryParameters3D.create(
-		foot,
-		foot + direction * step_check_distance
-	)
-	query.exclude = exclude
-	query.collision_mask = collision_mask
-	var low_hit := space.intersect_ray(query)
-	if low_hit.is_empty():
-		return false
-	if low_hit.normal.y > 0.55:
-		return false
-
-	var head_pos := global_position + Vector3.UP * (step_height + 0.05)
-	query = PhysicsRayQueryParameters3D.create(
-		head_pos,
-		head_pos + direction * step_check_distance
-	)
-	query.exclude = exclude
-	query.collision_mask = collision_mask
-	if not space.intersect_ray(query).is_empty():
-		return false
-
-	var probe := head_pos + direction * step_check_distance
-	query = PhysicsRayQueryParameters3D.create(
-		probe,
-		probe + Vector3.DOWN * (step_height + 0.1)
-	)
-	query.exclude = exclude
-	query.collision_mask = collision_mask
-	var floor_hit := space.intersect_ray(query)
-	if floor_hit.is_empty():
-		return false
-
-	var rise: float = floor_hit.position.y - global_position.y
-	if rise <= 0.01 or rise > step_height:
-		return false
-
-	global_position.y += rise
-	velocity.y = 0.0
-	return true
 
 
 func _update_interaction() -> void:

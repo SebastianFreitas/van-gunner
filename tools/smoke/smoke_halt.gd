@@ -58,17 +58,35 @@ func halt_round_trip() -> bool:
 		await driver.get_tree().physics_frame
 		await driver.get_tree().physics_frame
 		ok = not van.request_driver_boost() and travel.is_halted()
-	var climb := driver.get_tree().get_first_node_in_group(&"rear_climb") as RearClimb
 	if ok:
 		step = 5
-		ok = climb != null and climb.get_interaction_prompt() != ""
-	if ok:
-		climb.interact(player)
+		# The rear doors swing open in 0.9 s; their closed leaves would block the climb.
+		var rear := driver.get_tree().get_first_node_in_group(&"rear_doors")
+		rear.open()
+		for _i in 75:
+			await driver.get_tree().physics_frame
+		# On the road behind the open rear, facing -z into the van.
+		player.position = Vector3(0.0, -0.9, 5.9)
+		player.rotation.y = 0.0
 		await driver.get_tree().physics_frame
-		ok = player.position.y > -0.35 \
-				and not player.test_move(player.global_transform, Vector3.ZERO)
+		await driver.get_tree().physics_frame
+		# Outside, against the van, is not inside.
+		ok = not van.request_driver_boost()
+		ok = ok and player.try_mantle()
+		if not ok:
+			driver._fail("halt round trip step 5: mantle did not start")
+			return false
+		var mantle_waited := 0
+		while mantle_waited < 90 and player.is_mantling():
+			await driver.get_tree().physics_frame
+			mantle_waited += 1
 	if ok:
 		step = 6
+		ok = player.position.y > -0.35 \
+				and not player.test_move(player.global_transform, Vector3.ZERO)
+		if ok:
+			driver._log("halt mantle: rise ok")
+	if ok:
 		ok = van.request_driver_boost() and not travel.is_halted() and travel.travel_speed > 0.0 \
 				and not containment.is_rear_exit_allowed()
 	if not ok:
