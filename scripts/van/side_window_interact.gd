@@ -12,6 +12,13 @@ func get_interaction_prompt() -> String:
 	return windows.get_window_prompt(StringName(window_id))
 
 
+func get_gesture() -> StringName:
+	var windows := _windows()
+	if windows == null:
+		return &"press"
+	return &"pull" if windows.is_window_open(StringName(window_id)) else &"push"
+
+
 func interact(_actor: Node3D) -> void:
 	var windows := _windows()
 	if windows:

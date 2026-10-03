@@ -12,6 +12,13 @@ func get_interaction_prompt() -> String:
 	return doors.get_door_prompt(StringName(side))
 
 
+func get_gesture() -> StringName:
+	var doors := _doors()
+	if doors == null:
+		return &"press"
+	return &"slide_close" if doors.is_door_open(StringName(side)) else &"slide_open"
+
+
 func interact(_actor: Node3D) -> void:
 	var doors := _doors()
 	if doors:

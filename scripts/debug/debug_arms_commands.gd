@@ -5,6 +5,7 @@ const _Fit := preload("res://scripts/debug/debug_arms_fit.gd")
 const _GearFit := preload("res://scripts/debug/debug_arms_gear_fit.gd")
 const _HandsCheck := preload("res://scripts/debug/debug_arms_hands.gd")
 const _Frame := preload("res://scripts/debug/debug_arms_frame.gd")
+const _Gesture := preload("res://scripts/player/arms/arm_gesture.gd")
 
 const CAM_NAME := &"ArmsDebugCam"
 ## Camera offsets from the focus point in Weapon space (metres); `left` aims at the left hand,
@@ -20,7 +21,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms hands | arms dress <gear|rags|none> | arms fov [deg] | arms frame"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms hands | arms dress <gear|rags|none> | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind>"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -46,6 +47,8 @@ func cmd_arms(args: Array) -> String:
 			return "arms reload off"
 		vm.debug_reload_t = clampf(float(arg), 0.0, 1.0)
 		return "arms reload " + str(vm.debug_reload_t)
+	if args[0] == "gesture" and args.size() >= 2:
+		return _gesture(vm, args)
 	if args[0] == "weave" and args.size() >= 2:
 		var arg := str(args[1])
 		if arg == "off":
@@ -144,6 +147,34 @@ func _thumbs(vm: Node) -> String:
 		lines.append("thumbs %s: angle %.0f shaft x%.2f len x%.2f" % [h, angle, shaft, len_x])
 	lines.append("THUMBS OK" if ok else "THUMBS CHECK")
 	return "\n".join(lines)
+
+
+## `arms gesture <kind> <seconds|contact>`, `off` and `play <kind>`: pins or plays a left-hand gesture.
+func _gesture(vm: Node, args: Array) -> String:
+	var kinds: Array = _Gesture.KINDS
+	if str(args[1]) == "off":
+		vm.debug_gesture_t = -1.0
+		return "arms gesture off"
+	if str(args[1]) == "play" and args.size() >= 3:
+		var play_kind := StringName(str(args[2]))
+		if not kinds.has(play_kind):
+			return "arms gesture: kinds " + ", ".join(kinds)
+		vm.play_gesture(play_kind)
+		return "arms gesture play " + str(play_kind)
+	var kind := StringName(str(args[1]))
+	if not kinds.has(kind) or args.size() < 3:
+		return "arms gesture: kinds " + ", ".join(kinds)
+	var arg := str(args[2])
+	var t := 0.0
+	if arg == "contact":
+		t = float(_Gesture.CONTACT[kind])
+	elif arg.is_valid_float():
+		t = maxf(float(arg), 0.0)
+	else:
+		return USAGE
+	vm.debug_gesture_kind = kind
+	vm.debug_gesture_t = t
+	return "arms gesture %s %s" % [kind, t]
 
 
 func _cam(vm: Node, view: StringName) -> String:

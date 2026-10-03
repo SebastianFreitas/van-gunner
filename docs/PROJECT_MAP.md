@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-360 GDScript files, 57728 lines.
+361 GDScript files, 58054 lines.
 
 ### `scenes/corridor/`
 
@@ -403,7 +403,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `gun_controller.gd` | `GunController` | 317 | Hit/miss for the HUD once the first pellet resolves. |
 | `gun_stats.gd` | `GunStats` | 46 | Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance. |
 | `gun_stats_controller.gd` | `GunStatsController` | 153 | Rebuilds a gun's effective stats from its base stats, class and modifiers. |
-| `gun_viewmodel.gd` | `GunViewmodel` | 284 | First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; shot kick and reload cant. |
+| `gun_viewmodel.gd` | `GunViewmodel` | 314 | First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; shot kick and reload cant. |
 | `projectile.gd` | `Projectile` | 341 | A bullet: flies, ricochets off scenery and resolves damage on hit. |
 | `projectile_pool.gd` | — | 82 | Reuses Projectile nodes to avoid instantiate/free churn during heavy fire. |
 | `stat_modifier.gd` | `StatModifier` | 14 | A single additive or multiplicative modifier applied to a named gun stat. |
@@ -431,7 +431,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
-| `debug_arms_commands.gd` | — | 214 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
+| `debug_arms_commands.gd` | — | 245 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
 | `debug_arms_fit.gd` | — | 172 | Debug console `arms fit`: the right thumb's clearance from the gun parts in palm lengths, plus `arms thumbaim\|thumbcurl\|wrist x y z`, which set the builder's l… |
 | `debug_arms_frame.gd` | — | 106 | Debug `arms frame`: how much of the player camera's picture the arms and gun cover, found by drawing them white and diffing against the normal frame. |
 | `debug_arms_gear_fit.gd` | — | 290 | Debug `arms gear`: poses both arms through the weave, the shot kick and the reload, skins the arm and its sleeve on the CPU and counts skin vertices that poke… |
@@ -453,7 +453,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `dialogue_choice.gd` | `DialogueChoice` | 21 | One option in an NPC talk. |
-| `npc_talk.gd` | `NpcTalk` | 116 | Look + E opens talk. |
+| `npc_talk.gd` | `NpcTalk` | 120 | Look + E opens talk. |
 
 ### `scripts/enemies/`
 
@@ -480,10 +480,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `cab_door.gd` | — | 198 | Cab door leaf in the front wall's doorway (x ±0.775, y 0..2.30): a recessed panel with a barred pass-through window into the cab. |
+| `cab_door.gd` | — | 204 | Cab door leaf in the front wall's doorway (x ±0.775, y 0..2.30): a recessed panel with a barred pass-through window into the cab. |
 | `class_board.gd` | — | 21 | Wall board where the run's class is picked. |
 | `crafting_table.gd` | `CraftingTable` | 10 | Interactable crafting table in the van; E opens the bench screen. |
-| `interactable.gd` | `Interactable` | 14 | Base class for world objects the player can interact with. |
+| `interactable.gd` | `Interactable` | 22 | Base class for world objects the player can interact with. |
 | `loot_machine.gd` | `LootMachine` | 31 | Left-wall hopper. |
 | `request_board.gd` | — | 9 | Interactable request board in the van; E opens the van schematic (skill tree HUD). |
 
@@ -542,7 +542,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `boon_behavior_registry.gd` | `BoonBehaviorRegistry` | 142 | Dispatches combat events to registered boon behavior handlers. |
 | `boon_combat.gd` | `BoonCombat` | 216 | Thin dispatcher for boon combat logic. |
 | `boon_traits.gd` | `BoonTraits` | 75 | Stores passive boon modifiers that combat systems query at runtime. |
-| `fps_player.gd` | `FpsPlayer` | 305 | The first-person player controller: movement, interaction and shooting input. |
+| `fps_player.gd` | `FpsPlayer` | 327 | The first-person player controller: movement, interaction and shooting input. |
 | `usable_state.gd` | `UsableState` | 27 | Runtime state for one equipped usable item: charges and cooldown remaining. |
 | `usables_controller.gd` | `UsablesController` | 166 | Owns the player's usable item slots and boon inventory for the run. |
 
@@ -554,6 +554,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `arm_claw.gd` | `ArmClaw` | 163 | Claw-nail mesh: a curved plate that rises out of a skin fold at its root and tucks under the finger's sides, then grows past the tip into a tapered point curvi… |
 | `arm_dress.gd` | `ArmDress` | 233 | Dresses the goblin's arms from the van seed: fingerless glove, rings and tape on the gun hand, boxer's wrap, forearm bandage and chain on the free hand, cut-of… |
 | `arm_fingers.gd` | `ArmFingers` | 339 | Procedural finger tubes: per hand one skinned mesh of five bony finger tubes (knuckle knobs, thin shafts, flat pads, tapering tips, a seeded sideways crook) in… |
+| `arm_gesture.gd` | — | 197 | Left-hand interaction gesture on the goblin arms: a keyed one-shot (press, knock, push, pull, slide) that moves the left arm root and bends the left wrist and… |
 | `arm_kick.gd` | — | 213 | Shot impact on the goblin arms: a time-sampled kick (root slide, forearm lift about the elbow, hand and gun flex about the wrist, trigger pull and grip squeeze… |
 | `arm_materials.gd` | `ArmMaterials` | 148 | Materials for the first-person goblin arms and pipe rifle: grime-shaded skin, cloth and steel, flat darks for the rest. |
 | `arm_muscle.gd` | `ArmMuscle` | 161 | Seeded muscle masses, rebuilt normals and vein coordinates for the inflated arm mesh. |
@@ -723,7 +724,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `iron_cross_build.gd` | — | 347 | Builds IronCross's scrap +: two bent rebar bars, a pipe sleeve, blobby welds, a seeded centre. |
 | `iron_cross_geo.gd` | — | 298 | Mesh builder for IronCross: rods, boxes, bolts and weld blobs that follow the bowed side wall. |
 | `rear_door_frame.gd` | — | 143 | Fixed steel frame on the cabin side of the rear doors, covering the leaves' clearance slits. |
-| `rear_door_interact.gd` | — | 23 | Layer-2-only hit target on a rear door leaf. |
+| `rear_door_interact.gd` | — | 30 | Layer-2-only hit target on a rear door leaf. |
 | `rear_door_leaf_build.gd` | — | 117 | Builds the rear leaves' curved bodies, their liner material and the centre-seam astragal (D55). |
 | `rear_door_lighting.gd` | — | 27 | Puts the rear leaves' outward-visible parts on layers 1+2 so street lights reach them (D15). |
 | `rear_door_lips.gd` | — | 193 | Steel lips and the outer astragal on the rear leaves' street face, covering their slits from outside. |
@@ -731,13 +732,13 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `rear_window_lip.gd` | — | 157 | Rear window lip: dark lip riding on each rear leaf, closing the slot between the vaulted skin and the window's cabin frame. |
 | `roof_edge_seal.gd` | — | 93 | Roof edge seal: dark steel strip closing the band between the side skin's top and the roof lip along each long edge. |
 | `room_zone.gd` | `RoomZone` | 15 | Marks a van interior zone; tells GameSession which room the player is in. |
-| `side_door_interact.gd` | — | 23 | Layer-2-only hit target on a side door leaf. |
+| `side_door_interact.gd` | — | 30 | Layer-2-only hit target on a side door leaf. |
 | `side_door_leaf.gd` | — | 336 | Builds the side door leaf meshes (body, trim, frames, latch) onto SideDoors nodes. |
 | `side_door_stops.gd` | — | 188 | Steel stop strips round each side door bay on the cabin side, covering the leaf's clearance. |
 | `side_doors.gd` | — | 339 | Sliding cargo-style side doors. |
 | `side_window_exterior.gd` | — | 50 | Adds the dark-tinted exterior pane that rides a side cargo window's sash. |
 | `side_window_fixtures.gd` | — | 178 | Side window hardware: the fixed stop ring and hinge rail on the wall, and the two gooseneck strap hinges riding each sash. |
-| `side_window_interact.gd` | — | 23 | Layer-2 hit target on a side window sash. |
+| `side_window_interact.gd` | — | 30 | Layer-2 hit target on a side window sash. |
 | `side_windows.gd` | — | 397 | Side cargo windows — top-hinged sashes that tip vertically outward. |
 | `van.gd` | — | 398 | Van root script: wires up the van's HUD, overlays, act deck and route choices. |
 | `van_body_profile.gd` | `VanBodyProfile` | 193 | One cross-section for the whole van body: the inner liner outline (floor, bowed sides, roof vault) and an outer skin offset from it, so inside and outside piec… |
@@ -835,8 +836,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `smoke_driver.gd` | — | 384 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 181 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
-| `smoke_shots.gd` | — | 401 | Screenshots for tools/smoke.py --shots. |
-| `smoke_shots_closeups.gd` | — | 303 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
+| `smoke_shots.gd` | — | 397 | Screenshots for tools/smoke.py --shots. |
+| `smoke_shots_closeups.gd` | — | 314 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 
 ### `tools/van_audit/`
