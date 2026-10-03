@@ -26,7 +26,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms curl <f_index|f_middle|f_ring|f_pinky> <a> <b> <c> | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms curl <f_index|f_middle|f_ring|f_pinky> <a> <b> <c> | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off | arms inspect <sec|play|off>"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -54,6 +54,17 @@ func cmd_arms(args: Array) -> String:
 		return "arms reload " + str(vm.debug_reload_t)
 	if args[0] == "gesture" and args.size() >= 2:
 		return _gesture(vm, args)
+	if args[0] == "inspect" and args.size() >= 2:
+		var arg := str(args[1])
+		if arg == "play":
+			return "arms inspect play" if vm.play_inspect() else "arms inspect: busy"
+		if arg == "off":
+			vm.debug_inspect_t = -1.0
+			return "arms inspect off"
+		if not arg.is_valid_float():
+			return USAGE
+		vm.debug_inspect_t = maxf(float(arg), 0.0)
+		return "arms inspect " + str(vm.debug_inspect_t)
 	if args[0] == "weave" and args.size() >= 2:
 		var arg := str(args[1])
 		if arg == "off":

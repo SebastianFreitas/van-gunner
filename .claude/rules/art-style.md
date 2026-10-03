@@ -143,6 +143,12 @@ Geometry:
   built after the arms join the camera (facing angles need it). `arms gear`
   checks each sleeve's own-bone (upper-arm) skin through every pose and must say
   `GEAR OK`.
+  Gun inspect (owner 2026-10-03): hold E 0.4 s looking at nothing usable;
+  `ArmInspect` turns gun and right arm about the grip (left side, rolled to the
+  right side, forearm sweep and roll), then the left hand up (back, palm,
+  forearm inner and outer), 3 s, rigid root offsets on top of the weave; shot,
+  reload and gestures cancel it; identity under SaveSandbox; `arms inspect
+  <sec|play|off>` pins it.
 - No bitmap textures on 3D surfaces (no photos, no painted PNGs, no
   `NoiseTexture2D`). All surface detail comes from the shader.
 
