@@ -109,6 +109,9 @@ func _physics_process(delta: float) -> void:
 		moving = not _move_arrived
 	elif _attach_marker and is_instance_valid(_attach_marker):
 		_snap_to_marker(_attach_marker)
+		# The loper grips the bars above the marker; door raiders and the boss keep its height.
+		if is_agile and not is_boss and assault_phase == AssaultPhase.BREACHING:
+			position.y += _wall.ATTACK_RISE
 		_motion.keep_feet_on_road()
 	_anim.step(delta, moving)
 
@@ -447,7 +450,7 @@ func _jump_to_wall(breach: BreachPoint) -> void:
 		if not _active or is_defeated:
 			return
 	assault_phase = AssaultPhase.CLIMBING
-	await _wall_move(marker, false)
+	await _wall_move(marker + Vector3(0.0, _wall.ATTACK_RISE, 0.0), false)
 
 
 ## Hangs on a free wall spot until a window opens up; drops back down if it is across the van.

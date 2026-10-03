@@ -5,7 +5,7 @@ extends RefCounted
 ## Loper origin when its feet stand on the road.
 const ROAD_ORIGIN_Y := VanWheels.ROAD_Y + 1.62
 ## Origin height when it first latches on the wall (claws about 0.7 m under the floor).
-const GRIP_Y := 0.9
+const GRIP_Y := 0.6
 ## Origin height while clinging and waiting.
 const CLING_Y := 1.2
 ## How far the body centre sits off the skin.
@@ -20,13 +20,16 @@ const BOW_OUT := 0.18
 ## Rear doors' outer face (4.71 + 0.22).
 const REAR_SKIN_Z := 4.93
 ## Road points just outside OUTSIDE_KEEP_OUT.
-const LAUNCH_SIDE_X := 4.3
-const LAUNCH_REAR_Z := 6.2
+const LAUNCH_SIDE_X := 6.0
+const LAUNCH_REAR_Z := 8.0
 ## Behind the grown rear-leaf keep-out, where a run-up turns the corner.
-const CORNER_Z := 8.2
-const JUMP_TIME := 0.55
-const JUMP_APEX := 0.7
-const CLIMB_SPEED := 1.6
+const CORNER_Z := 8.6
+const JUMP_TIME := 0.8
+const JUMP_APEX := 1.1
+const CLIMB_SPEED := 1.0
+## How far above the breach marker the loper grips the bars: its card then spans about
+## y 0.5..2.4 at a side window (1.07..2.48), so it crawls about 1.5 m up from the grip.
+const ATTACK_RISE := 0.5
 ## Waiting spots on the walls; x holds only the side sign, the real x comes from side_point.
 const CLING_SPOTS: Array[Vector3] = [
 	Vector3(-1, CLING_Y, 4.2),
