@@ -345,7 +345,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-368 GDScript files, 59064 lines.
+368 GDScript files, 59135 lines.
 
 ### `scenes/corridor/`
 
@@ -764,7 +764,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_hull_mesh.gd` | `VanHullMesh` | 401 | XY end-cap slabs that follow VanSideWall's bow and VanCeiling's barrel vault. |
 | `van_lighting.gd` | `VanLighting` | 56 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) lights the corridor through openings without washing the cabin. |
 | `van_overlays.gd` | — | 238 | Modal overlays: bench, skill tree, class panel, debug console, pause menu, mouse passthrough. |
-| `van_player_containment.gd` | `VanPlayerContainment` | 89 | Invisible shell that keeps the player inside the van. |
+| `van_player_containment.gd` | `VanPlayerContainment` | 139 | Invisible shell that keeps the player inside the van. |
 | `van_route_choice.gd` | — | 287 | Builds and refreshes the ROUTE_CHOICE panel: card art, stop labels, highlight state. |
 | `van_side_wall.gd` | `VanSideWall` | 368 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
 | `van_side_wall_jambs.gd` | — | 175 | Door jambs for VanSideWall: the frame ring's lip inside each side door bay, without the outer return the wall's reveal owns. |
@@ -844,7 +844,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `smoke_driver.gd` | — | 394 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
-| `smoke_halt.gd` | — | 58 | Smoke step: the C-C halt, exit, climb-in and Shift resume round trip. |
+| `smoke_halt.gd` | — | 79 | Smoke step: the C-C halt, exit, climb-in and Shift resume round trip. |
 | `smoke_route.gd` | — | 181 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
 | `smoke_shots.gd` | — | 401 | Screenshots for tools/smoke.py --shots. |
 | `smoke_shots_closeups.gd` | — | 314 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
