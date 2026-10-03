@@ -35,6 +35,9 @@ var _interact_pending := false
 var _movement_reference: Node3D
 var _local_horizontal_velocity := Vector3.ZERO
 var _jump_queued := false
+## Seconds after a jump press the airborne player keeps trying to mantle a ledge.
+const MANTLE_BUFFER_TIME := 0.6
+var _mantle_buffer := 0.0
 ## The equipped class; applied on ready and again whenever GameSession changes it.
 var current_class: ClassDefinition
 ## Debug fly mode: no gravity, no collision, moves along the camera's full look direction.
@@ -83,6 +86,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_close_open_dialogue()
 	elif event.is_action_pressed("jump"):
 		_jump_queued = true
+		_mantle_buffer = MANTLE_BUFFER_TIME
 	elif event.is_action_pressed("reload") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		weapon.try_reload()
 	elif event.is_action_pressed("use_slot_1"):
@@ -163,7 +167,8 @@ func _can_mantle() -> bool:
 
 
 func _can_jump() -> bool:
-	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+	# The sandbox never captures the mouse, so the smoke's real-input jump needs this.
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not SaveSandbox.enabled:
 		return false
 	if _ui_wants_free_cursor():
 		return false
@@ -228,14 +233,19 @@ func _physics_process(delta: float) -> void:
 		_update_interaction()
 		return
 	var reference_basis := _movement_reference.global_basis.orthonormalized()
+	_mantle_buffer = maxf(_mantle_buffer - delta, 0.0)
+	if is_on_floor():
+		_mantle.note_floor()
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
-		if Input.is_action_pressed("jump") and velocity.y < 2.0 \
+		if (_mantle_buffer > 0.0 or Input.is_action_pressed("jump")) \
 				and _can_jump() and try_mantle():
+			_mantle_buffer = 0.0
 			_jump_queued = false
 			_update_interaction()
 			return
 	elif _jump_queued and _can_jump() and _mantle.try_climb():
+		_mantle_buffer = 0.0
 		_jump_queued = false
 		_update_interaction()
 		return
@@ -243,6 +253,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y = jump_velocity
 	else:
 		velocity.y = 0.0
+		_mantle_buffer = 0.0
 	_jump_queued = false
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")

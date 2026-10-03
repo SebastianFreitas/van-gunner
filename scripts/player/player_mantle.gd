@@ -2,9 +2,9 @@ extends RefCounted
 ## The player's mantles: the silent step over low edges and the timed climb onto ledges up to chest height.
 
 ## Highest ledge, above the feet, the climb can reach.
-const CLIMB_MAX_RISE := 1.3
+const CLIMB_MAX_RISE := 1.6
 ## Horizontal distances ahead of the capsule centre where a ledge is looked for.
-const CLIMB_REACHES := [0.5, 0.75, 1.0]
+const CLIMB_REACHES := [0.35, 0.55, 0.75, 1.0]
 ## How far past the ledge edge the player lands.
 const LAND_AHEAD := 0.25
 ## Upward speed of the climb, m/s.
@@ -18,6 +18,8 @@ var _player: FpsPlayer
 var _head_base_y := 0.0
 ## How far the head is lowered below its rest height after a step, eased back to zero.
 var _head_drop := 0.0
+## World y of the feet the last frame the player was on the floor.
+var _last_floor_y := 0.0
 var _climbing := false
 var _rising := false
 var _t := 0.0
@@ -100,6 +102,11 @@ func update_head(delta: float) -> void:
 	_player.head.position.y = _head_base_y - _head_drop
 
 
+## Remembers the feet height while on the floor, so an airborne mantle ignores the ground left.
+func note_floor() -> void:
+	_last_floor_y = _player.global_position.y
+
+
 ## Looks for a ledge ahead in the horizontal world direction the capsule fits on.
 ## Returns { "landing": Vector3 (world), "rise": float }, or {} when there is none.
 func find_ledge(direction: Vector3) -> Dictionary:
@@ -107,19 +114,26 @@ func find_ledge(direction: Vector3) -> Dictionary:
 	var origin := _player.global_position
 	var step_height := _player.step_height
 	var shape_node := _player.get_node("CollisionShape3D") as CollisionShape3D
+	var airborne := not _player.is_on_floor()
+	# Mid-jump the feet may already be level with or above the ledge top.
+	var min_rise := -0.3 if airborne else step_height
+	var ray_bottom := -0.4 if airborne else step_height * 0.5
 	for reach: float in CLIMB_REACHES:
 		var column := origin + direction * reach
 		var query := PhysicsRayQueryParameters3D.create(
 			column + Vector3.UP * (CLIMB_MAX_RISE + 0.1),
-			column + Vector3.UP * (step_height * 0.5)
+			column + Vector3.UP * ray_bottom
 		)
 		query.exclude = [_player.get_rid()]
 		query.collision_mask = _player.collision_mask
 		var hit := space.intersect_ray(query)
 		if hit.is_empty() or hit.normal.y < 0.7:
 			continue
+		# Airborne, only a ledge clearly above the floor the player left counts.
+		if airborne and hit.position.y <= _last_floor_y + step_height:
+			continue
 		var rise: float = hit.position.y - origin.y
-		if rise <= step_height or rise > CLIMB_MAX_RISE:
+		if rise <= min_rise or rise > CLIMB_MAX_RISE:
 			continue
 		# 0.12 up keeps the capsule clear of a ramp slope or deck lip under the landing.
 		var landing: Vector3 = hit.position + direction * LAND_AHEAD + Vector3.UP * 0.12
@@ -131,7 +145,7 @@ func find_ledge(direction: Vector3) -> Dictionary:
 		shape_query.exclude = [_player.get_rid()]
 		if not space.intersect_shape(shape_query, 1).is_empty():
 			continue
-		if _player.test_move(_player.global_transform, Vector3.UP * (rise + 0.04)):
+		if _player.test_move(_player.global_transform, Vector3.UP * (maxf(rise, 0.0) + 0.04)):
 			continue
 		return {"landing": landing, "rise": rise}
 	return {}
