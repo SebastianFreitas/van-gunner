@@ -118,13 +118,18 @@ Geometry:
   The hands never rest: `ArmWeave` (`scripts/player/arms/arm_weave.gd`)
   rolls both hands' fingers index to pinky in hooked witch curls on a 3.6 s
   period with a slow second harmonic, wrists circling, both hands
-  raised in front, palms down and inward, thumbs held out; it runs
+  raised in front, palms down and inward; the free left thumb swings out
+  opposite the index and curls back toward its tip in an open C, as if holding
+  an invisible can (`LEFT_THUMB_*`, console `arms lthumb` tunes it live); it runs
   through idle, walking, shooting and reloading, and holds still at t 1.1 under `SaveSandbox` so shots
   compare (`arms weave <s>|off` pins it). With the gun shown the right hand
   grips it instead (`ArmWeave._update_grip`: squeeze, trigger lift, thumb
-  wave), the thumb hooked over the beavertail onto the frame's left flank
-  (`RIGHT_THUMB_AIM`); `arms fit` prints the thumb's clearance from the gun
-  parts and must say `FIT OK`.
+  wave), the thumb wrapping the grip's far side under the slide and pointing
+  forward, a C with the trigger finger (`RIGHT_THUMB_AIM`, `RIGHT_THUMB_CURL`);
+  `arms fit` prints the thumb's clearance from the gun parts and must say
+  `FIT OK`. `arms thumbs` prints per hand the thumb's angle to the index,
+  gap/p, hook, up and fwd against the bars in `debug_arms_thumbs.gd`, then
+  `THUMBS OK` or `THUMBS CHECK`.
   Arm dressing (`ArmsBuilder.dress_style`, console `arms dress gear|rags|none`):
   `gear` (default) is one wrecked T-shirt sleeve on each arm (`ArmSleeve`, a
   skinned tube on the upper arm only, hem torn and open just above the elbow at
