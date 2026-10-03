@@ -21,8 +21,8 @@ const THUMB_SPREAD_SIGN := -1.0  ## settled by the round 9 axis sheet (top view,
 const THUMB_SPREAD_AXIS := Vector3.RIGHT  ## the thumb .01 axis that splays it from the index
 ## The left thumb's spread axis un-curls it, so the right-hand numbers bend it ~60 deg backwards
 ## (a permanent thumbs-up); the free hand rests with its own flex and almost no spread.
-const LEFT_THUMB_BASE := Vector3(20.0, 25.0, 30.0)  ## degrees flex of the left thumb at rest
-const LEFT_THUMB_SPREAD := 5.0  ## degrees, replaces THUMB_SPREAD + THUMB_FAN on the left only
+const LEFT_THUMB_BASE := Vector3(12.0, 16.0, 20.0)  ## degrees flex of the left thumb at rest
+const LEFT_THUMB_SPREAD := 10.0  ## degrees, replaces THUMB_SPREAD + THUMB_FAN on the left only
 const THUMB_ARC := 7.0 ## degrees of slow opposition swing on the spread, toward the index
 const SPREAD := 6.0  ## degrees of side sway on each .01 bone, alternating sign
 ## Static abduction in degrees between neighbouring fingers about Vector3.BACK on each .01,
