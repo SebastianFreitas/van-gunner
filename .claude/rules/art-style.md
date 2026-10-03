@@ -298,12 +298,19 @@ knobs poking through), in a mangy soot-black coat (sRGB 42,34,28 fur, 25,21,18
 shadow, 64,53,42 highlight, bare skin patches), never balls joined by
 ellipses: tapered limbs with fur sleeves and hip tufts, a furred rump, and hair
 tufts on every edge that trail the bob by a frame and flare on landing; arms
-longer than the legs with the claws on the floor, a tilted
-gaunt skull with a dark brow over black eye pits (one pale pixel each, looking
-up), a round hanging jaw with uneven teeth over a dark red throat, a torn
-shoulder and blood down the belly. Corpse grey-green skin (sRGB 72,78,68 base,
-42,46,40 shadow, 104,110,96 highlight), bone and teeth under 0.35 linear,
-nothing above the albedo budget, so it reads as a shape the dark swallows.
+longer than the legs with the claws on the floor, a torn shoulder and blood
+down the belly. The head is the feral face (owner, 2026-10-03, every run frame,
+`draw_feral_head`): a long angular skull, never round, under a matted hair cap,
+a hard V brow over slanted black sockets with red eyes (sRGB 214,30,22, one
+255,214,120 hot pixel each), a bare nasal pit, and a maw split into the cheeks
+with red gums, tapered hooked fangs (two long upper canines, never even human
+teeth) and a hanging pointed jaw with its fangs up. Corpse grey-green skin
+(sRGB 72,78,68 base, 42,46,40 shadow, 104,110,96 highlight), so the body reads
+as a shape the dark swallows. The one exception is the face, so the player
+finds the head hitbox: pale rim pixels (sRGB 176,172,150, mid 134,132,114) only
+on the face's edges that face the upper-left light (left temple and cheek, the
+jaw's left edge), about 20 pixels; never a pale fill, never on the chin or the
+right side, and no marks under the eyes (they read as blushing).
 Asymmetry (the tilted head, one arm lower, uneven teeth) is what keeps a
 sprite from reading as cute. The window raider is still the first-pass
 yellow cat crawler (80 x 48, 1.15 m tall, so it fits a side window) and waits

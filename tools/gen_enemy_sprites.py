@@ -7,8 +7,8 @@ the claws on the van floor, hair that trails every bob, knobbed spine,
 hanging jaw, corpse-grey skin and black eye pits, nothing bright. The window raider (the low yellow crawler that
 fits through a side window) is still the first pass and waits for its own
 redraw. door_raider.png is a 13-frame 832 x 80 run sheet (a bounding charge,
-seen from the front); frame 0 is the still. Frame 0 alone has the
-feral face (draw_feral_head), a trial before the other frames get it.
+seen from the front); frame 0 is the still. Every frame has the
+feral face (draw_feral_head), riding the pose's head bob and jaw lag.
 
 Art rules (.claude/rules/art-style.md, pixel art): native size, one image
 pixel = one art pixel at pixel_size 0.024 (2.4 cm); flat colours, no
@@ -442,8 +442,7 @@ def fur_sway(frame: int) -> tuple[int, int]:
 	return 0, max(-3, min(3, -vy))
 
 
-FERAL_FRAMES = (0,)
-# The feral face (owner, 2026-10-03): the skull keeps the dark corpse skin, and the pale
+# The feral face on every run frame (owner, 2026-10-03): the skull keeps the dark corpse skin, and the pale
 # FACE tones only trace its edge (the lit left side, the chin, the cheekbone and jaw-hinge
 # points), so the player reads where the head (the head hitbox, rows 18-48) starts and ends
 # from as few bright pixels as possible; red eyes and a red-gummed maw of needle fangs make
@@ -471,7 +470,7 @@ def draw_fang(c: Canvas, x: int, y: int, w: int, length: int, lean: int = 0,
 
 
 def draw_feral_head(c: Canvas, hd: int, jy: int, by: int) -> None:
-	"""The feral head for FERAL_FRAMES: a long, angular, tilted skull with sharp
+	"""The feral head for every run frame: a long, angular, tilted skull with sharp
 	cheekbones and hollow cheeks, a V brow over slanted black sockets with burning red
 	eyes, a bare nasal pit, and a maw split almost ear to ear, red gums peeled back over
 	uneven needle fangs, the lower jaw hanging open with its fangs up and drool between."""
@@ -653,51 +652,7 @@ def draw_loper(frame: int = 0) -> Canvas:
 		(42, 15 + hd), (46, 24 + hd), (47, 34 + by)]))
 	c.fill(ruff, FUR_SH)
 	fur_fringe(c, ruff, seed=51, sway=sway, length=2 + flare, density=0.45, up_only=True)
-	if frame in FERAL_FRAMES:
-		draw_feral_head(c, hd, jy, by)
-		return c
-	head = Canvas(LOPER_SIZE)
-	kx, ky, krx, kry = 32, 29, 9, 11
-	skull_oval = ellipse(kx, ky, krx, kry)
-	skull = head.mask(lambda x, y: skull_oval(x - (y - ky) * 0.12, y))
-	head.part(skull, SKIN, SKIN_SH, SKIN_HI, light(kx, ky, krx, kry), 0.2, -1.0)
-	head.fill(head.mask(capsule(24, 24, 40, 23, 1.2)), SKIN_DEEP)
-	head.fill(head.mask(ellipse(27, 27.5, 3.6, 2.4)), PIT)
-	head.fill(head.mask(ellipse(36.5, 27, 3.0, 2.1)), PIT)
-	head.set(28, 27, GLINT)
-	head.set(36, 26, GLINT)
-	head.fill({p for p in skull if p[1] >= 31 and (p[0] <= 26 or p[0] >= 38)}, SKIN_SH)
-	head.set(31, 32, PIT)
-	head.set(33, 32, PIT)
-	# The mouth stays with the skull: a round black mouth, a dark red throat, uneven
-	# teeth on top; the lower jaw hangs below it on its own layer.
-	mouth = head.mask(both(ellipse(31.5, 40, 8.5, 6), lambda x, y: y >= 35))
-	head.outline(mouth)
-	head.fill(mouth, PIT)
-	head.fill({p for p in mouth if p[1] >= 41}, GUM)
-	for x, depth in ((25, 2), (27, 3), (30, 2), (32, 4), (35, 2), (38, 3)):
-		for y in range(35, 35 + depth):
-			head.set(x, y, TEETH)
-	c.blit(head, 0, hd)
-	# Matted hair from the ruff past the cheeks, the ends trailing the bob and flicking.
-	for x0, y0, x1, y1 in ((25, 19, 20, 31), (23, 23, 17, 32), (28, 18, 27, 21),
-			(40, 20, 44, 29)):
-		draw_strand(c, x0, y0 + hd, x1, y1 + jy + sway[1])
-	# The jaw hangs open and off to one side, swinging a beat behind the head.
-	jaw = Canvas(LOPER_SIZE)
-	jaw_m = jaw.mask(both(ellipse(30, 48, 7.5, 5.5), lambda x, y: y >= 44))
-	jaw.part(jaw_m, SKIN, SKIN_SH, SKIN_HI, light(30, 48, 8, 5), 0.2, -1.1)
-	for x, top in ((25, 43), (28, 42), (32, 43), (35, 42)):
-		for y in range(top, 45):
-			jaw.set(x, y, TEETH)
-	# Blood on the chin, dripping down the belly.
-	for x, y in ((28, 50), (29, 51), (30, 51), (33, 50), (34, 51), (31, 52)):
-		jaw.set(x, y, BLOOD_DARK)
-	c.blit(jaw, 0, jy)
-	for x, y0, y1 in ((28, 52, 57), (33, 52, 61), (31, 53, 55)):
-		for y in range(y0 + by, y1 + by):
-			c.set(x, y, BLOOD_DARK)
-		c.set(x, y1 + by, BLOOD)
+	draw_feral_head(c, hd, jy, by)
 	return c
 
 
