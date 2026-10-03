@@ -8,7 +8,7 @@ hanging jaw, corpse-grey skin and black eye pits, nothing bright. The loper is b
 raider. door_raider.png is a 13-frame 832 x 320 sheet: row 0 the 13-frame run (a bounding charge,
 seen from the front; frame 0 is the still), row 1 the 5-frame jump take-off, row 2 a 4-frame
 front-on latch onto the van wall (reach, impact, cling), row 3 an 8-frame front-on wall crawl
-(diagonal pairs, looping). Every frame has the
+(diagonal pairs, looping), row 4 a 6-frame front-on bar rake (hold on left, rake right). Every frame has the
 feral face (draw_feral_head), riding the pose's head bob and jaw lag.
 
 Art rules (.claude/rules/art-style.md, pixel art): native size, one image
@@ -39,10 +39,11 @@ OUT = ROOT / "scenes" / "enemies"
 # Canvas size: the loper (door and window raider) is 1.54 x 1.92 m.
 LOPER_SIZE = (64, 80)
 LOPER_FRAMES = 13
-LOPER_ROWS = 4
+LOPER_ROWS = 5
 JUMP_FRAMES = 5
 LATCH_FRAMES = 4
 CLIMB_FRAMES = 8
+RAKE_FRAMES = 6
 LOPER_SHEET = (LOPER_SIZE[0] * LOPER_FRAMES, LOPER_SIZE[1] * LOPER_ROWS)
 
 OUTLINE = (30, 20, 18)
@@ -551,12 +552,48 @@ LOPER_CLIMB_POSES = [
 ]
 assert len(LOPER_CLIMB_POSES) == CLIMB_FRAMES
 
+# Row 4 of the sheet: the bar rake, front-on like the cling (the player looks out of a barred
+# window at the loper pressed on the van's outside wall; never a side view, never mirrored).
+# Every frame starts from the cling: the LEFT fore paw holds the bars (raised, claws curled,
+# still; 1 px shake on frame 3), the RIGHT fore paw rakes. Frame 0 ready, paw raised 3 px.
+# Frame 1 wind-up: paw high at the right edge, claws wide, body up, head pulls back. Frame 2
+# swing: paw comes in across the body. Frame 3 impact: paw across the chest, claws at their
+# widest, body squashed. Frame 4 drag: claws dragged down. Frame 5 recover, flows into 0.
+# The right arm draws in front of the torso and head on frames 2-4 (right_front).
+LOPER_RAKE_POSES = [
+	dict(by=-3, hump_dy=0, head_dy=-2, shoulder_dx=2, lag=1,  # 0 ready
+		left=((4, 24), (6, 12), [(5, 8), (6, 6), (7, 6), (8, 8)]),
+		right=((60, 26), (58, 14), [(61, 10), (59, 8), (56, 8), (53, 10)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-4, hump_dy=0, head_dy=-3, shoulder_dx=3, lag=1,  # 1 wind-up, head pulls back
+		left=((4, 24), (6, 12), [(5, 8), (6, 6), (7, 6), (8, 8)]),
+		right=((62, 18), (60, 3), [(63, 2), (61, 0), (57, 0), (54, 2)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-3, hump_dy=0, head_dy=-2, shoulder_dx=2, right_front=True, lag=1,  # 2 swing, in front
+		left=((4, 24), (6, 12), [(5, 8), (6, 6), (7, 6), (8, 8)]),
+		right=((58, 22), (46, 12), [(54, 19), (49, 22), (44, 22), (39, 19)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-2, hump_dy=-1, head_dy=1, shoulder_dx=2, right_front=True, lag=1,  # 3 impact, in front
+		left=((4, 25), (6, 13), [(5, 9), (6, 7), (7, 7), (8, 9)]),
+		right=((50, 36), (30, 36), [(20, 44), (24, 46), (28, 47), (32, 47)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-3, hump_dy=0, head_dy=-2, shoulder_dx=2, right_front=True, lag=1,  # 4 drag, in front
+		left=((4, 24), (6, 12), [(5, 8), (6, 6), (7, 6), (8, 8)]),
+		right=((46, 38), (24, 42), [(18, 49), (22, 51), (26, 51), (30, 49)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+	dict(by=-3, hump_dy=0, head_dy=-2, shoulder_dx=2, lag=1,  # 5 recover
+		left=((4, 24), (6, 12), [(5, 8), (6, 6), (7, 6), (8, 8)]),
+		right=((60, 28), (50, 22), [(54, 17), (52, 15), (49, 15), (46, 17)]),
+		legs=(((7, 63), (6, 74)), ((57, 64), (58, 75))), soles=True),
+]
+assert len(LOPER_RAKE_POSES) == RAKE_FRAMES
+
 
 def fur_sway(frame: int, poses=LOPER_POSES) -> tuple[int, int]:
 	"""Overlap and follow-through: the hair lags the body by a frame."""
 	# the jump row starts from the run's still, not from its own last frame; the climb loops
 	prev = LOPER_POSES[0] if poses is not LOPER_POSES and frame == 0 else poses[frame - 1]
-	if poses is LOPER_CLIMB_POSES and frame == 0:
+	if poses in (LOPER_CLIMB_POSES, LOPER_RAKE_POSES) and frame == 0:
 		prev = poses[-1]
 	vy = poses[frame]["by"] - prev["by"]
 	return 0, max(-3, min(3, -vy))
@@ -670,6 +707,31 @@ def draw_feral_head(c: Canvas, hd: int, jy: int, by: int, bx: int = 0) -> None:
 		c.set(x + bx, y1 + by, BLOOD)
 
 
+def draw_arm(c: Canvas, shoulder: tuple, elbow: tuple, wrist: tuple, tips: list, seed: int,
+		sway: tuple, flare: int, front: bool = False) -> None:
+	"""One arm: tapered skin limb, furred sleeve over the upper arm, claws at the wrist."""
+	arm = c.mask(taper([shoulder, elbow, wrist], [5.0, 3.4, 2.2]))
+	c.part(arm, SKIN, SKIN_SH, SKIN_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
+	past = (elbow[0] + (wrist[0] - elbow[0]) * 0.2, elbow[1] + (wrist[1] - elbow[1]) * 0.2)
+	sleeve = c.mask(taper([shoulder, elbow, past], [5.5, 4.0, 3.2]))
+	c.part(sleeve, FUR, FUR_SH, FUR_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
+	back = {q for q in sleeve if (q[0] <= shoulder[0]) == (shoulder[0] < 32)}
+	fur_fringe(c, back, seed=seed, sway=sway, length=3 + flare)
+	if front:
+		# the raking arm crosses the face: a deep edge to part it, long bone claws
+		both = arm | sleeve
+		for x, y in both:
+			for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+				if (x + dx, y + dy) not in both:
+					c.set(x + dx, y + dy, SKIN_DEEP)
+		for tx, ty in tips:
+			c.fill(c.mask(capsule(wrist[0], wrist[1], tx, ty, 1.4, 0.9)), BONE)
+			c.set(tx, ty, BONE_HI)
+			c.set(round(wrist[0] + (tx - wrist[0]) * 0.8), round(wrist[1] + (ty - wrist[1]) * 0.8), BONE_HI)
+	else:
+		draw_claws(c, wrist[0], wrist[1], tips)
+
+
 def draw_loper(frame: int = 0, poses=LOPER_POSES) -> Canvas:
 	"""The door raider, seen from the front as it comes through the doors: the
 	furred mantle rises above and behind the head, which hangs from a hair ruff,
@@ -756,16 +818,13 @@ def draw_loper(frame: int = 0, poses=LOPER_POSES) -> Canvas:
 	# Arms: one tapered limb from inside the mantle out to elbows wider than the body,
 	# then down to the floor; bare skin forearm, a furred sleeve over the upper arm whose
 	# hair hangs off the back of the arm.
+	front = []
 	for shoulder, (elbow, wrist, tips), seed in (((14 - sdx + bx, 27 + by), p["left"], 21),
 			((50 + sdx + bx, 29 + by), p["right"], 22)):
-		arm = c.mask(taper([shoulder, elbow, wrist], [5.0, 3.4, 2.2]))
-		c.part(arm, SKIN, SKIN_SH, SKIN_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
-		past = (elbow[0] + (wrist[0] - elbow[0]) * 0.2, elbow[1] + (wrist[1] - elbow[1]) * 0.2)
-		sleeve = c.mask(taper([shoulder, elbow, past], [5.5, 4.0, 3.2]))
-		c.part(sleeve, FUR, FUR_SH, FUR_HI, light(elbow[0], elbow[1], 10, 24), 0.2, -0.95)
-		back = {q for q in sleeve if (q[0] <= shoulder[0]) == (shoulder[0] < 32)}
-		fur_fringe(c, back, seed=seed, sway=sway, length=3 + flare)
-		draw_claws(c, wrist[0], wrist[1], tips)
+		if p.get("right_front") and seed == 22:
+			front.append((shoulder, elbow, wrist, tips, seed))  # the raking arm crosses the chest
+			continue
+		draw_arm(c, shoulder, elbow, wrist, tips, seed, sway, flare)
 	# The head hangs forward below the shoulders, tilted, in front of the chest:
 	# a gaunt skull, a brow over black pits that look up at you, cheeks fallen in.
 	# A ruff of hair behind and around the top of the skull, so the head hangs out of
@@ -776,6 +835,8 @@ def draw_loper(frame: int = 0, poses=LOPER_POSES) -> Canvas:
 	c.fill(ruff, FUR_SH)
 	fur_fringe(c, ruff, seed=51, sway=sway, length=2 + flare, density=0.45, up_only=True)
 	draw_feral_head(c, hd, jy, by, bx)
+	for arm_args in front:
+		draw_arm(c, *arm_args, sway, flare, True)
 	return c
 
 
@@ -791,6 +852,8 @@ def draw_loper_sheet() -> Canvas:
 		sheet.blit(draw_loper(i, LOPER_LATCH_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 2)
 	for i in range(CLIMB_FRAMES):
 		sheet.blit(draw_loper(i, LOPER_CLIMB_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 3)
+	for i in range(RAKE_FRAMES):
+		sheet.blit(draw_loper(i, LOPER_RAKE_POSES), i * LOPER_SIZE[0], LOPER_SIZE[1] * 4)
 	return sheet
 
 
@@ -826,7 +889,8 @@ def main() -> None:
 def write_strip(sheet: Image.Image, path: Path) -> None:
 	"""Run frame 0, the latch frames and the climb frames in one row at 6x, 2 px gaps."""
 	w, h = LOPER_SIZE
-	cells = [(0, 0)] + [(i, 2) for i in range(LATCH_FRAMES)] + [(i, 3) for i in range(CLIMB_FRAMES)]
+	cells = [(0, 0)] + [(i, 2) for i in range(LATCH_FRAMES)] + [(i, 3) for i in range(CLIMB_FRAMES)] \
+		+ [(i, 4) for i in range(RAKE_FRAMES)]
 	scale = 6
 	gap = 2
 	strip = Image.new("RGBA", (len(cells) * (w * scale + gap) - gap, h * scale), (40, 40, 40, 255))

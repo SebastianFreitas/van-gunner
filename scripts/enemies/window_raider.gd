@@ -293,10 +293,18 @@ func _breach_until_open() -> void:
 		var wait_time := _targeting.next_attack_wait()
 		# Poll so an opened window/door lets them hop in without waiting a full smash.
 		var elapsed := 0.0
+		# One rake swing per strike, timed so its impact frame shows as the damage lands.
+		var raked := false
+		if wait_time <= _anim.rake_lead_seconds():
+			_anim.start_rake()
+			raked = true
 		while elapsed < wait_time:
 			var step := minf(0.1, wait_time - elapsed)
 			await get_tree().create_timer(step).timeout
 			elapsed += step
+			if not raked and elapsed >= wait_time - _anim.rake_lead_seconds():
+				_anim.start_rake()
+				raked = true
 			if not _active or is_defeated or assigned_breach == null:
 				return
 			if assigned_breach.is_passable():

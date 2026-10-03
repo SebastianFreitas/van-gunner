@@ -7,7 +7,7 @@ extends RefCounted
 ## Columns of the sheet: the thirteen run frames.
 const SHEET_COLUMNS := 13
 ## Rows of the sheet; grows as animation PRs add them.
-const SHEET_ROWS := 4
+const SHEET_ROWS := 5
 ## Seconds into the jump when the latch clip takes over: the jump lasts window_raider_wall.gd
 ## JUMP_TIME 0.8 s and, at 10 fps, the latch's impact frame (index 2) starts at 0.75 s, i.e. on
 ## contact. Keep the two in step.
@@ -32,7 +32,12 @@ const CLIPS: Dictionary = {
 	# Front-on wall crawl on CLIMBING. 12 fps: one 8-frame cycle (two strides of ~0.34 m) is
 	# ~0.67 m at the wall helper's CLIMB_SPEED 1.0 m/s, so the paws don't skate.
 	&"climb": {"row": 3, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 12.0, "loop": true},
+	# One swing at the window bars while BREACHING; frame 0 is the ready pose it rests on.
+	&"rake": {"row": 4, "frames": [0, 1, 2, 3, 4, 5], "fps": 12.0, "loop": false},
 }
+## Rake frame that shows the claws landing on the bars; start_rake is timed so it coincides
+## with the breach point taking damage.
+const RAKE_IMPACT_FRAME := 3
 
 ## False while the current jump goes down to the road (drop off the wall), so that jump keeps
 ## the take-off clip and never latches.
@@ -40,6 +45,7 @@ var latch_jump := true
 var raider: WindowRaider
 var _clock := 0.0 # seconds into the current clip
 var _clip := &"still"
+var _raking := false # a rake swing is playing; false rests on its frame 0
 
 
 func _init(owner: WindowRaider) -> void:
@@ -66,6 +72,19 @@ func clip_seconds(clip: StringName) -> float:
 		return 0.0
 	var frames: Array = data["frames"]
 	return frames.size() / float(data["fps"])
+
+
+## Seconds from the start of a rake swing to its impact frame.
+func rake_lead_seconds() -> float:
+	return RAKE_IMPACT_FRAME / float(CLIPS[&"rake"]["fps"])
+
+
+## Starts one rake swing from frame 0, restarting it if one is already playing.
+func start_rake() -> void:
+	if drives_sprite() and has_clip(&"rake"):
+		_clip = &"rake"
+		_clock = 0.0
+		_raking = true
 
 
 ## Switches to a clip from its first frame; does nothing if it is already the current one.
@@ -126,11 +145,32 @@ func step(delta: float, moving: bool) -> void:
 			or phase == WindowRaider.AssaultPhase.ATTACKING_PLAYER
 		)
 		picked = &"prowl" if in_cabin else &"run"
+	var raking := (
+		phase == WindowRaider.AssaultPhase.BREACHING
+		and raider.is_agile and not raider.is_boss and has_clip(&"rake")
+	)
+	if raking:
+		picked = &"rake"
+	else:
+		_raking = false
 	play(picked)
-	if moving or jumping or on_wall:
+	if raking:
+		_step_rake(delta)
+	elif moving or jumping or on_wall:
 		_clock += delta
 		var data: Dictionary = CLIPS[_clip]
 		if data["loop"]:
 			var frames: Array = data["frames"]
 			_clock = fmod(_clock, frames.size() / float(data["fps"]))
+	show_clip_at(_clock, _clip)
+
+
+## Advances a playing rake swing; when it ends the clock resets so frame 0 (ready) shows
+## until start_rake plays the next one.
+func _step_rake(delta: float) -> void:
+	if _raking:
+		_clock += delta
+		if _clock >= clip_seconds(&"rake"):
+			_clock = 0.0
+			_raking = false
 	show_clip_at(_clock, _clip)
