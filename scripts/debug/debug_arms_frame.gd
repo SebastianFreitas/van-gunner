@@ -5,10 +5,10 @@ extends RefCounted
 const _STEP := 2
 const _THRESHOLD := 0.25
 ## Bars on the share of the screen the viewmodel may cover, in percent.
-const COVER_MIN := 12.0
-const COVER_MAX := 28.0
+const COVER_MIN := 10.0
+const COVER_MAX := 35.0
 ## Viewmodel pixels above the lower third (y < 2/3 of the height), percent of the screen.
-const UPPER_MAX := 2.0
+const UPPER_MAX := 10.0
 ## The crosshair zone in screen fractions, and how much of its own pixels the viewmodel may fill.
 const AIM_ZONE := Rect2(0.35, 0.30, 0.30, 0.30)
 const AIM_MAX := 0.5

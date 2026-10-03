@@ -2,7 +2,7 @@ class_name ArmsBuilder
 extends RefCounted
 ## Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed.
 
-const RIGHT_SHOULDER := Vector3(2.1, -0.68, -0.2)
+const RIGHT_SHOULDER := Vector3(1.12, -0.72, -0.27)
 const RIGHT_POLE := Vector3(1.0, -0.2, 0.3)
 ## Wrist, finger direction and palm normal on the grip, in gun space.
 const RIGHT_WRIST_IN_GUN := Vector3(0.08, -0.13, 0.17)

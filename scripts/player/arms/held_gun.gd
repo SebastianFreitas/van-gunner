@@ -3,7 +3,7 @@ extends RefCounted
 ## The Desert-Eagle-style pistol the arms hold: a shared holder (grip, guard, trigger, frame) plus a per-gun barrel block.
 
 ## Grip centre in rig space (camera at the origin, -Z forward, +X right).
-const GRIP := Vector3(0.39, -0.41, -1.15)
+const GRIP := Vector3(0.41, -0.45, -1.60)
 ## Gun yawed inward so the muzzle points at the screen centre.
 const CANT := 8.0 * PI / 180.0
 ## Rake of the grip: its bottom sits further back than its top.
