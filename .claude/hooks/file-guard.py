@@ -1,4 +1,5 @@
-"""File guard (PreToolUse on Read, Write, Edit, MultiEdit, NotebookEdit; runs
+"""File guard (PreToolUse on Read, Write, Edit, MultiEdit, NotebookEdit, Bash,
+PowerShell; runs
 in the main session and inside subagents alike): keeps agents inside the
 token and ownership rules that .claude/rules/workflow.md already states in
 prose. Project-neutral: the project root is the first folder above the file
@@ -17,6 +18,11 @@ repo is allowed.
 - In the main session (no agent_id), source files are the implementer
   subagent's job, built from a spec (workflow.md Main session role); the main
   session itself may still make a single-line Edit.
+- Bash and PowerShell writes to a source or generated file (redirects, tee,
+  sed -i, cp/mv/install, python open(..., 'w'), Set-Content) are refused in
+  the main session too: they skipped the Write/Edit check, and in cloud
+  threads the main session wrote code itself that way (2026-10-03). Found by
+  regex, not a shell parser; subagents may write source.
 
 The project tunes this through an optional .claude/project/file-guard.json
 (read once per call; missing or bad JSON means no config):
@@ -37,6 +43,7 @@ Never fails the hook: any error allows the call (exit 0).
 """
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -143,11 +150,74 @@ def main_session_violation(tool_name: str, tool_input: dict) -> bool:
     return False
 
 
+def unquote(word: str) -> str:
+    return word.strip().strip("'\"")
+
+
+def bash_write_targets(command: str) -> list[str]:
+    out: list[str] = []
+    for m in re.finditer(r"(?<![\w<>&-])(\d?)>>?(?!&)[ \t]*([^\s;|&<>()]+)", command):
+        if m.group(1) in ("", "1") and unquote(m.group(2)) != "/dev/null":
+            out.append(unquote(m.group(2)))
+    start = r"(?:^|[\s;|&(])"
+    for m in re.finditer(start + r"tee\b([^\n;|&]*)", command):
+        out += [unquote(w) for w in m.group(1).split() if not w.startswith("-")]
+    for m in re.finditer(start + r"sed\b([^\n|&]*)", command):
+        args = m.group(1)
+        if re.search(r"\s(-[A-Za-z]*i\S*|--in-place\S*)(?=\s|$)", args):
+            out += [unquote(w) for w in args.split() if not w.startswith("-")]
+    for m in re.finditer(start + r"(?:cp|mv|install)\s+([^\n;|&]*)", command):
+        words = [unquote(w) for w in m.group(1).split() if not w.startswith("-")]
+        if words:
+            out.append(words[-1])
+    if re.search(r"\b(?:python3?|py)\b", command):
+        out += re.findall(r"open\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"][wax]", command)
+        out += re.findall(
+            r"Path\(\s*['\"]([^'\"]+)['\"]\s*\)\.write_(?:text|bytes)\(", command)
+    for m in re.finditer(r"(?i)\b(?:Set-Content|Add-Content|Out-File)\b([^\n;|]*)", command):
+        args = m.group(1)
+        named = re.search(r"(?i)-(?:File)?Path\s+(\S+)", args)
+        if named:
+            out.append(unquote(named.group(1)))
+        else:
+            words = [w for w in args.split() if not w.startswith("-")]
+            if words:
+                out.append(unquote(words[0]))
+    return out
+
+
+def bash_violation(d: dict, tool_input: dict) -> None:
+    command = tool_input.get("command") or ""
+    base = d.get("cwd") or os.getcwd()
+    for target in bash_write_targets(command):
+        path = os.path.abspath(os.path.join(base, target))
+        root = find_root(path)
+        if root is None:
+            continue
+        rel = os.path.relpath(path, root).replace("\\", "/")
+        cfg = load_config(root)
+        why = generated_reason(rel, cfg)
+        if why is not None:
+            deny(f"{rel} is {why}.")
+            return
+        suffixes, source_files = source_rule(cfg)
+        if ext(path) in suffixes or rel in source_files:
+            deny(f"Main session: {rel} is a source file; Bash writes to source "
+                 "files are refused like Write/Edit. Write a spec and hand it to "
+                 "the implementer subagent (.claude/rules/workflow.md Main "
+                 "session role).")
+            return
+
+
 def main() -> None:
     d = json.load(sys.stdin)
     tool_name = d.get("tool_name") or ""
     tool_input = d.get("tool_input") or {}
-    path = tool_input.get("file_path") or tool_input.get("notebook_path")
+    if tool_name in ("Bash", "PowerShell"):
+        if not d.get("agent_id"):
+            bash_violation(d, tool_input)
+        return
+    path =tool_input.get("file_path") or tool_input.get("notebook_path")
     if not path:
         return
     cwd = d.get("cwd") or os.getcwd()

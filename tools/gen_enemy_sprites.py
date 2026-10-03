@@ -7,7 +7,8 @@ the claws on the van floor, hair that trails every bob, knobbed spine,
 hanging jaw, corpse-grey skin and black eye pits, nothing bright. The window raider (the low yellow crawler that
 fits through a side window) is still the first pass and waits for its own
 redraw. door_raider.png is a 13-frame 832 x 80 run sheet (a bounding charge,
-seen from the front); frame 0 is the still.
+seen from the front); frame 0 is the still. Frame 0 alone has the
+feral face (draw_feral_head), a trial before the other frames get it.
 
 Art rules (.claude/rules/art-style.md, pixel art): native size, one image
 pixel = one art pixel at pixel_size 0.024 (2.4 cm); flat colours, no
@@ -441,6 +442,90 @@ def fur_sway(frame: int) -> tuple[int, int]:
 	return 0, max(-3, min(3, -vy))
 
 
+FERAL_FRAMES = (0,)
+# The feral face (owner, 2026-10-03): a pale corpse face is the one light shape on the dark
+# coat, so the player finds the head (the head hitbox, rows 18-48) at a glance; two red
+# eyes and a red-gummed maw of needle fangs make it read as a monster, not a cartoon.
+FACE_HI = (176, 172, 150)
+FACE = (134, 132, 114)
+FACE_SH = (88, 90, 78)
+EYE_RED = (214, 30, 22)
+EYE_HOT = (255, 214, 120)
+DROOL = (150, 160, 140)
+
+
+def draw_feral_head(c: Canvas, hd: int, jy: int, by: int) -> None:
+	"""The feral head for FERAL_FRAMES: a long, angular, tilted skull with sharp
+	cheekbones and hollow cheeks, a V brow over slanted black sockets with burning red
+	eyes, a bare nasal pit, and a maw split almost ear to ear, red gums peeled back over
+	uneven needle fangs, the lower jaw hanging open with its fangs up and drool between."""
+	head = Canvas(LOPER_SIZE)
+	skull = head.mask(polygon([(25, 19), (30, 17), (36, 17), (40, 19), (44, 23), (47, 29),
+		(43, 33), (44, 38), (40, 42), (24, 41), (20, 37), (21, 33), (17, 29), (21, 22)]))
+	head.part(skull, FACE, FACE_SH, FACE_HI, light(29, 24, 13, 14), 0.25, -0.95)
+	# Matted hair cap over the crown, hanging onto the brow in jagged locks, so the
+	# skull reads long and narrow instead of a bald dome.
+	cap = head.mask(polygon([(19, 24), (22, 17), (30, 13), (37, 14), (44, 18), (46, 25),
+		(42, 21), (40, 24), (37, 20), (34, 23), (31, 19), (28, 23), (25, 20), (22, 25)]))
+	head.part(cap, FUR, FUR_SH, FUR_HI, light(30, 18, 14, 6), 0.3, -0.9)
+	# Hollow cheeks under the cheekbones.
+	for pts in (((21, 31), (26, 30), (25, 36), (21, 36)),
+			((38, 31), (43, 31), (42, 37), (38, 36))):
+		head.fill(head.mask(polygon(pts)), FACE_SH)
+	# The brow: a hard V pointing down at the nose, the sockets slanted under it.
+	head.fill(head.mask(polyline([(20, 22), (31, 26), (44, 21)], 1.1)), SKIN_DEEP)
+	head.fill(head.mask(polygon([(21, 24), (30, 27), (29, 30), (22, 28)])), PIT)
+	head.fill(head.mask(polygon([(33, 27), (43, 23), (43, 28), (35, 30)])), PIT)
+	# Eyes: a red iris with one hot pixel, the right one a pixel lower (the head tilts).
+	for ex, ey in ((26, 27), (38, 27)):
+		for dx in (-1, 0, 1):
+			head.set(ex + dx, ey, EYE_RED)
+		head.set(ex, ey + 1, EYE_RED)
+		head.set(ex, ey, EYE_HOT)
+	# Nasal pit and two slits, no nose.
+	head.fill(head.mask(polygon([(30, 30), (34, 30), (32, 34)])), PIT)
+	# The maw: lips peeled back almost ear to ear, red gum along the top, black throat.
+	# Its corners run up into the cheeks, past where a mouth should stop.
+	maw = head.mask(polygon([(19, 32), (21, 33), (25, 35), (31, 36), (38, 35), (43, 33),
+		(46, 31), (44, 35), (40, 47), (25, 47), (21, 36)]))
+	head.outline(maw)
+	head.fill(maw, PIT)
+	head.fill({p for p in maw if p[1] <= 37}, GUM)
+	head.fill({p for p in maw if 41 <= p[1] and 26 <= p[0] <= 39}, MOUTH)
+	# Upper fangs: uneven needles, the canines longest and a pixel wide at the root.
+	for x, depth, wide in ((22, 3, 0), (25, 6, 1), (29, 3, 0), (33, 4, 0), (38, 7, 1),
+			(42, 3, 0)):
+		for y in range(36, 36 + depth):
+			head.set(x, y, TEETH)
+		if wide:
+			for y in range(36, 36 + depth - 3):
+				head.set(x + 1, y, WHITE_SH)
+	# Drool hanging between the fangs.
+	for x, y0, y1 in ((27, 38, 45), (35, 39, 46)):
+		for y in range(y0, y1):
+			head.set(x, y, DROOL)
+	c.blit(head, 0, hd)
+	# Matted hair framing the skull, kept off the face so it stays one pale shape.
+	for x0, y0, x1, y1 in ((21, 19, 16, 31), (19, 23, 15, 34), (43, 19, 47, 31)):
+		draw_strand(c, x0, y0 + hd, x1, y1 + jy)
+	# The lower jaw hangs open and a pixel to the left, fangs up, gum along its lip.
+	jaw = Canvas(LOPER_SIZE)
+	jaw_m = jaw.mask(polygon([(22, 46), (41, 46), (39, 51), (33, 58), (29, 58), (24, 51)]))
+	jaw.part(jaw_m, FACE, FACE_SH, FACE_HI, light(31, 50, 10, 7), 0.3, -1.2)
+	for x in range(23, 41):
+		jaw.set(x, 46, GUM)
+	for x, h in ((24, 4), (28, 2), (31, 5), (35, 3), (39, 4)):
+		for y in range(46 - h, 47):
+			jaw.set(x, y, TEETH)
+	for x, y in ((28, 53), (29, 54), (30, 55), (33, 53), (34, 54), (31, 56)):
+		jaw.set(x, y, BLOOD_DARK)
+	c.blit(jaw, -1, jy)
+	for x, y0, y1 in ((29, 58, 61), (32, 58, 63), (30, 58, 59)):
+		for y in range(y0 + by, y1 + by):
+			c.set(x, y, BLOOD_DARK)
+		c.set(x, y1 + by, BLOOD)
+
+
 def draw_loper(frame: int = 0) -> Canvas:
 	"""The door raider, seen from the front as it comes through the doors: the
 	furred mantle rises above and behind the head, which hangs from a hair ruff,
@@ -543,6 +628,9 @@ def draw_loper(frame: int = 0) -> Canvas:
 		(42, 15 + hd), (46, 24 + hd), (47, 34 + by)]))
 	c.fill(ruff, FUR_SH)
 	fur_fringe(c, ruff, seed=51, sway=sway, length=2 + flare, density=0.45, up_only=True)
+	if frame in FERAL_FRAMES:
+		draw_feral_head(c, hd, jy, by)
+		return c
 	head = Canvas(LOPER_SIZE)
 	kx, ky, krx, kry = 32, 29, 9, 11
 	skull_oval = ellipse(kx, ky, krx, kry)

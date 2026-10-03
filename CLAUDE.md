@@ -69,7 +69,7 @@ A task step, like a plan phase, is one context: verify it, commit it, tick it, a
 | Interactables, NPC talk | `scripts/interactions/`, `scripts/dialogue/npc_talk.gd`, `scripts/ui/dialogue_hud.gd` |
 | Loot hopper, death popups | `scripts/core/loot_collector.gd`, `scripts/interactions/loot_machine.gd` |
 | Weld kit (look-at repair) | `scripts/items/effects/repair_window_bars_effect.gd` |
-| Yell at the driver (Shift GO / C EASY) | `travel_controller.gd` boost/slow, `scripts/van/van_driver_talk.gd`, `scripts/ui/driver_shout_hud.gd` |
+| Yell at the driver (Shift TURBO or go / C EASY then STOP), halt, climb back in | `travel_controller.gd` boost/slow/halt, `scripts/van/van_driver_talk.gd`, `van_halt.gd`, `rear_climb.gd`, `scripts/ui/driver_shout_hud.gd` |
 | Pause menu | `scripts/ui/pause_menu.gd` |
 | Debug console (`H`) | `scripts/debug/` (`DebugCommands.run(line)`) |
 | Audio | `scripts/audio/`, `resources/audio/sound_bank.tres` |

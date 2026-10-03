@@ -12,7 +12,6 @@ signal slow_pressed
 @onready var slow_button: Button = %SlowShout
 @onready var slow_wrap: Control = $Layout/SlowWrap
 @onready var boost_cooldown: ProgressBar = %BoostCooldown
-@onready var slow_cooldown: ProgressBar = %SlowCooldown
 
 
 func _ready() -> void:
@@ -20,7 +19,6 @@ func _ready() -> void:
 	boost_button.focus_mode = Control.FOCUS_NONE
 	slow_button.focus_mode = Control.FOCUS_NONE
 	boost_cooldown.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	slow_cooldown.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	boost_button.pressed.connect(func() -> void: boost_pressed.emit())
 	slow_button.pressed.connect(func() -> void: slow_pressed.emit())
 
@@ -45,23 +43,32 @@ func _refresh() -> void:
 		boost_button.disabled = false
 		boost_button.text = "SHIFT  LET'S GO"
 		_set_bar(boost_cooldown, 0.0, false)
-		_set_bar(slow_cooldown, 0.0, false)
 		return
 
-	hint_label.text = "YELL AT THE DRIVER"
 	slow_wrap.visible = true
 
 	var travel := _travel()
 	if travel == null:
+		hint_label.text = "YELL AT THE DRIVER"
 		boost_button.disabled = true
 		slow_button.disabled = true
-		boost_button.text = "SHIFT  GO"
+		boost_button.text = "SHIFT  TURBO"
 		slow_button.text = "C  EASY"
 		_set_bar(boost_cooldown, 0.0, false)
-		_set_bar(slow_cooldown, 0.0, false)
 		return
 
-	if travel.is_boosting():
+	var halted := travel.is_halted()
+	var slowing := travel.is_slowing()
+	if halted:
+		hint_label.text = "STOPPED - SHIFT TO GO"
+	else:
+		hint_label.text = "YELL AT THE DRIVER"
+
+	if halted or slowing:
+		boost_button.disabled = false
+		boost_button.text = "SHIFT  LET'S GO"
+		_set_bar(boost_cooldown, 0.0, false)
+	elif travel.is_boosting():
 		boost_button.disabled = true
 		boost_button.text = "SHIFT  FLOORING IT"
 		var boost_fill := 0.0
@@ -78,28 +85,18 @@ func _refresh() -> void:
 		_set_bar(boost_cooldown, cd_fill, travel.get_boost_cooldown_remaining() > 0.0)
 	else:
 		boost_button.disabled = false
-		boost_button.text = "SHIFT  GO"
+		boost_button.text = "SHIFT  TURBO"
 		_set_bar(boost_cooldown, 0.0, false)
 
-	if travel.is_slowing():
-		slow_button.disabled = false
-		slow_button.text = "C  LET'S GO"
-		_set_bar(slow_cooldown, 1.0, false)
-	elif not travel.can_slow():
-		var wait := ceili(travel.get_slow_cooldown_remaining())
+	if halted:
 		slow_button.disabled = true
-		if wait > 0:
-			slow_button.text = "C  WAIT %ds" % wait
-		else:
-			slow_button.text = "C  EASY"
-		var cd_fill := 0.0
-		if travel.slow_cooldown > 0.0:
-			cd_fill = 1.0 - travel.get_slow_cooldown_remaining() / travel.slow_cooldown
-		_set_bar(slow_cooldown, cd_fill, travel.get_slow_cooldown_remaining() > 0.0)
+		slow_button.text = "C  STOPPED"
+	elif slowing:
+		slow_button.disabled = false
+		slow_button.text = "C  STOP"
 	else:
 		slow_button.disabled = false
 		slow_button.text = "C  EASY"
-		_set_bar(slow_cooldown, 0.0, false)
 
 
 func _set_bar(bar: ProgressBar, value: float, shown: bool) -> void:

@@ -77,6 +77,19 @@ func _ready() -> void:
 	GameSession.session_loaded.connect(_on_session_loaded)
 
 
+func _exit_tree() -> void:
+	# A cached polyphonic playback keeps its last stream alive, and Godot reports
+	# that as a leaked resource at exit.
+	for player: AudioStreamPlayer in _bus_players.values():
+		if is_instance_valid(player):
+			player.stop()
+	# stop() only fades the playback out; the mix thread frees it a step or two later.
+	if not _bus_players.is_empty():
+		OS.delay_msec(300)
+	_bus_playbacks.clear()
+	_bus_players.clear()
+
+
 func _load_bank() -> void:
 	# CACHE_MODE_REPLACE so an Inspector save wins over a stale cache, same as
 	# GameBalance does with game_balance.tres.

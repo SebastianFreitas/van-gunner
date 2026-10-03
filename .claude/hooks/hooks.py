@@ -43,7 +43,7 @@ TABLE = {
     "PreToolUse": [
         ("Bash|PowerShell", "git-guard.py"),
         ("Bash|PowerShell", "review-guard.py"),
-        ("Read|Write|Edit|MultiEdit|NotebookEdit", "file-guard.py"),
+        ("Read|Write|Edit|MultiEdit|NotebookEdit|Bash|PowerShell", "file-guard.py"),
         ("Agent|Task", "agent-guard.py"),
         (None, "context-watch.py"),
     ],

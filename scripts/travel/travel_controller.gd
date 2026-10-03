@@ -37,6 +37,9 @@ const _TravelWorld := preload("res://scripts/travel/travel_world.gd")
 const _TravelRoutes := preload("res://scripts/travel/travel_routes.gd")
 const _TravelStops := preload("res://scripts/travel/travel_stops.gd")
 
+## The van fully stopped (true) or got going again (false).
+signal halted_changed(halted: bool)
+
 ## Overwritten in _ready from MetaProgression → GameBalance van speed curve.
 ## Live value includes temporary driver boosts (raiders read this every frame).
 @export var travel_speed := 8.0
@@ -62,10 +65,10 @@ const _TravelStops := preload("res://scripts/travel/travel_stops.gd")
 @export var turn_radius := 10.0
 @export var boost_multiplier := 1.75
 @export var boost_duration := 5.0
-@export var boost_cooldown := 14.0
+## Seconds before the next turbo, big on purpose (owner).
+@export var boost_cooldown := 45.0
 ## Hold-the-line: raiders close faster until the player shouts let's go.
 @export var slow_multiplier := 0.42
-@export var slow_cooldown := 14.0
 @export var debug_speed_multiplier := 5.0
 ## Park-in / pull-out as a multiple of live travel speed. 1.65 is 3× the old 0.55 crawl.
 @export var park_speed_scale := 1.65
@@ -101,7 +104,7 @@ var _base_travel_speed := 8.0
 var _boost_remaining := 0.0
 var _boost_cooldown_remaining := 0.0
 var _slowing := false
-var _slow_cooldown_remaining := 0.0
+var _halted := false
 var _debug_speed_mode := false
 
 ## Per-direction stop on the live fork. Every offered road gets one.
@@ -167,6 +170,9 @@ func _on_van_speed_changed(_level: int, speed: float) -> void:
 
 
 func _refresh_travel_speed() -> void:
+	if _halted:
+		travel_speed = 0.0
+		return
 	var mult := 1.0
 	if _debug_speed_mode:
 		mult = debug_speed_multiplier
@@ -215,6 +221,8 @@ func can_boost() -> bool:
 	return (
 		_boost_remaining <= 0.0
 		and _boost_cooldown_remaining <= 0.0
+		and not _slowing
+		and not _halted
 		and _speed_order_phase_ok()
 	)
 
@@ -236,7 +244,6 @@ func get_boost_remaining() -> float:
 func try_boost() -> bool:
 	if not can_boost():
 		return false
-	_slowing = false
 	_boost_remaining = boost_duration
 	_boost_cooldown_remaining = boost_cooldown
 	_refresh_travel_speed()
@@ -244,38 +251,62 @@ func try_boost() -> bool:
 
 
 func can_slow() -> bool:
-	return (
-		not _slowing
-		and _boost_remaining <= 0.0
-		and _slow_cooldown_remaining <= 0.0
-		and _speed_order_phase_ok()
-	)
+	return _speed_order_phase_ok() and not _slowing and not _halted
 
 
 func is_slowing() -> bool:
 	return _slowing
 
 
-func get_slow_cooldown_remaining() -> float:
-	return maxf(_slow_cooldown_remaining, 0.0)
+func is_halted() -> bool:
+	return _halted
 
 
-## Drop speed until try_resume_speed(). C / HUD while already slow is let's go, not this.
+## Drop speed until try_resume_speed(). No cooldown. A running turbo is cancelled but its
+## cooldown keeps running.
 func try_slow() -> bool:
 	if not can_slow():
 		return false
+	_boost_remaining = 0.0
 	_slowing = true
-	_slow_cooldown_remaining = slow_cooldown
 	_refresh_travel_speed()
 	return true
 
 
-## Cancel a hold-back. Always free while slowing — cooldown already started on try_slow.
-func try_resume_speed() -> bool:
-	if not _slowing:
+## Halting is only allowed while the road is rolling (or resting), not at forks or stops.
+func _halt_phase_ok() -> bool:
+	return (
+		GameSession.phase == GameSession.RunPhase.TRAVELLING
+		or GameSession.phase == GameSession.RunPhase.COMBAT
+		or GameSession.phase == GameSession.RunPhase.REST
+	)
+
+
+func can_halt() -> bool:
+	return _slowing and not _halted and _halt_phase_ok()
+
+
+## Full stop from the slow state. Shift (try_resume_speed) gets the van going again.
+func try_halt() -> bool:
+	if not can_halt():
 		return false
 	_slowing = false
+	_halted = true
 	_refresh_travel_speed()
+	halted_changed.emit(true)
+	return true
+
+
+## Back to normal cruise from slow or halted. Always free, no turbo and no cooldown.
+func try_resume_speed() -> bool:
+	if not _slowing and not _halted:
+		return false
+	var was_halted := _halted
+	_slowing = false
+	_halted = false
+	_refresh_travel_speed()
+	if was_halted:
+		halted_changed.emit(false)
 	return true
 
 
@@ -395,8 +426,6 @@ func _tick_speed_orders(delta: float) -> void:
 			_refresh_travel_speed()
 	if _boost_cooldown_remaining > 0.0:
 		_boost_cooldown_remaining = maxf(0.0, _boost_cooldown_remaining - delta)
-	if _slow_cooldown_remaining > 0.0:
-		_slow_cooldown_remaining = maxf(0.0, _slow_cooldown_remaining - delta)
 
 
 func _should_scroll() -> bool:
@@ -442,6 +471,16 @@ func _on_phase_changed(next_phase: GameSession.RunPhase) -> void:
 		if _slowing:
 			_slowing = false
 			_refresh_travel_speed()
+	# The halt outlives the reveal, boss pick, route fork and turn: Shift is the way out.
+	if _halted and next_phase in [
+		GameSession.RunPhase.IDLE,
+		GameSession.RunPhase.GAME_OVER,
+		GameSession.RunPhase.STOP,
+		GameSession.RunPhase.PARKING,
+	]:
+		_halted = false
+		halted_changed.emit(false)
+		_refresh_travel_speed()
 	if next_phase == GameSession.RunPhase.TRAVELLING:
 		_maybe_start_intro()
 		_maybe_resume_act_flow()

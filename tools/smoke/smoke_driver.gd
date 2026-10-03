@@ -9,6 +9,7 @@ extends Node
 
 const _WATCHDOG_SECONDS := 270.0
 const _Fingerprint :=preload("res://tools/smoke/smoke_fingerprint.gd")
+const _Halt := preload("res://tools/smoke/smoke_halt.gd")
 const _Route := preload("res://tools/smoke/smoke_route.gd")
 const _Shots := preload("res://tools/smoke/smoke_shots.gd")
 
@@ -19,6 +20,8 @@ var _watchdog: SceneTreeTimer
 var _last_route_direction: StringName = &""
 ## Route helper for the fork/side-stop pass; held so it lives through the awaits.
 var _route: RefCounted
+## Halt round trip helper; held so it lives through the awaits.
+var _halt: RefCounted
 ## Screenshot taker (tools/smoke.py --shots); null in the headless run.
 var _shots: _Shots
 
@@ -220,6 +223,9 @@ func _run_pass(_van: Node) -> bool:
 	await _frames(5)
 	if GameSession.phase != GameSession.RunPhase.TRAVELLING:
 		_fail("expected TRAVELLING phase after begin_run, got %d" % GameSession.phase)
+		return false
+	_halt = _Halt.new(self)
+	if not await _halt.halt_round_trip():
 		return false
 	await _seconds(3.0)
 
