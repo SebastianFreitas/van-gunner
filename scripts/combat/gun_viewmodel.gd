@@ -4,6 +4,7 @@ extends Node3D
 
 const ArmWeave := preload("res://scripts/player/arms/arm_weave.gd")
 const ArmKick := preload("res://scripts/player/arms/arm_kick.gd")
+const ArmGesture := preload("res://scripts/player/arms/arm_gesture.gd")
 
 const RIG_SCALE := 0.18
 ## Vertical FOV the arms and gun draw with (the world camera is 78); 0 = the camera's own.
@@ -37,6 +38,9 @@ var debug_reload_t := -1.0
 var debug_weave_t := -1.0
 ## >= 0 pins one shot's kick at this time, from arms shot.
 var debug_shot_t := -1.0
+## Pins the left-hand gesture `debug_gesture_kind` at this many seconds; negative = off.
+var debug_gesture_kind: StringName = &""
+var debug_gesture_t := -1.0
 ## Current viewmodel FOV in degrees, reapplied after every `rebuild_arms`.
 var viewmodel_fov := VIEWMODEL_FOV
 @onready var _rig: Node3D = $Rig
@@ -57,6 +61,7 @@ var _bob_phase := 0.0
 var _weave: RefCounted = null
 var _weave_t := 0.0
 var _kick: RefCounted = null
+var _gesture: RefCounted = null
 var _kick_clock := 0.0
 var _shots := 0
 var _bob_amount := 0.0  ## 0..1 eased walking factor
@@ -84,6 +89,7 @@ func rebuild_arms(seed_value: int) -> void:
 	_arms_seed = seed_value
 	_weave = null
 	_kick = null
+	_gesture = null
 	for child in _rig.get_children():
 		_rig.remove_child(child)
 		child.queue_free()
@@ -96,6 +102,7 @@ func rebuild_arms(seed_value: int) -> void:
 	_weave = ArmWeave.new(_arm_model("right_root"), _arm_model("left_root"), seed_value,
 			ArmsBuilder.SHOW_GUN)
 	_kick = ArmKick.new(_arm_model("right_root"), _roots.get("gun_root") as Node3D)
+	_gesture = ArmGesture.new(_arm_model("left_root"))
 	ViewmodelFov.apply(_rig, viewmodel_fov)
 	_apply()
 
@@ -133,12 +140,22 @@ func play_shot() -> void:
 	_shots += 1
 
 
+## Starts a left-hand interaction gesture; returns the contact delay in seconds. While
+## reloading (the left hand is busy) or without arms nothing plays and the delay is 0.
+func play_gesture(kind: StringName) -> float:
+	if _reloading or _gesture == null:
+		return 0.0
+	return _gesture.play(kind, _kick_clock)
+
+
 func play_reload(duration: float) -> void:
 	var d := maxf(duration, 0.05)
 	if _reload_tween != null and _reload_tween.is_valid():
 		_reload_tween.kill()
 	if _kick:
 		_kick.clear()
+	if _gesture:
+		_gesture.clear()
 	_reloading = true
 	_reload_tween = create_tween()
 	_reload_tween.tween_method(_set_reload_t, 0.0, 1.0, d)
@@ -150,6 +167,8 @@ func snap_rest() -> void:
 		_reload_tween.kill()
 	if _kick:
 		_kick.clear()
+	if _gesture:
+		_gesture.clear()
 	_reload_t = 0.0
 	_sway = Vector2.ZERO
 	_bob_amount = 0.0
@@ -195,6 +214,8 @@ func _process(delta: float) -> void:
 	var clock := fmod(_kick_clock + delta, 3600.0)
 	if clock < _kick_clock and _kick:
 		_kick.clear()
+		if _gesture:
+			_gesture.clear()
 	_kick_clock = clock
 	if _kick:
 		if debug_shot_t >= 0.0:
@@ -203,6 +224,14 @@ func _process(delta: float) -> void:
 			_kick.pin(10.0)  # fully settled, keeps smoke stills comparable
 		else:
 			_kick.sample(_kick_clock)
+	if _gesture:
+		if debug_gesture_t >= 0.0:
+			_gesture.pin(debug_gesture_kind, debug_gesture_t)
+		elif SaveSandbox.enabled:
+			_gesture.settle()  # no gesture, keeps smoke stills comparable
+		else:
+			_gesture.sample(_kick_clock)
+		_gesture.apply_bones()
 	_apply()
 
 
@@ -251,6 +280,7 @@ func _reload_curves(t: float) -> Vector3:
 func _apply() -> void:
 	var kick_r: Transform3D = _kick.right_offset() if _kick else Transform3D.IDENTITY
 	var kick_l: Transform3D = _kick.left_offset() if _kick else Transform3D.IDENTITY
+	var gest_l: Transform3D = _gesture.left_offset() if _gesture else Transform3D.IDENTITY
 	var kick_w: Transform3D = _kick.wrist_offset() if _kick else Transform3D.IDENTITY
 	var grip := Transform3D(Basis.IDENTITY, HeldGun.GRIP)
 	var k := _reload_curves(_reload_t if debug_reload_t < 0.0 else debug_reload_t)
@@ -280,4 +310,4 @@ func _apply() -> void:
 	if right != null:
 		right.transform = right_x
 	if left != null:
-		left.transform = m * kick_l * Transform3D(tilt_l, off) * drift_l
+		left.transform = m * kick_l * gest_l * Transform3D(tilt_l, off) * drift_l

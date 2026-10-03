@@ -228,13 +228,7 @@ func van_views_closeups() -> void:
 	var previous := get_viewport().get_camera_3d()
 	print("SMOKE: " + DebugCommands.run("floodlight on"))
 	var player := get_tree().get_first_node_in_group(&"player") as Node3D
-	# The scripts' own tween durations, summed, plus a settle margin.
-	var settle: float = (
-		side_doors.recess_duration + side_doors.slide_duration
-		+ side_doors.grip_retract_duration + side_doors.mount_retract_duration
-		+ side_windows.open_duration + side_windows.grip_retract_duration
-		+ side_windows.mount_retract_duration + 0.3
-	)
+	var settle: float = _CloseupViews.settle(side_doors, side_windows)
 	var open_doors: Array[StringName] = []
 	var open_windows: Array[StringName] = []
 	for view in _CloseupViews.views(rig):
@@ -276,15 +270,17 @@ func arm_views() -> void:
 	for view in ["front", "side", "left", "top", "elbow"]:
 		DebugCommands.run("arms cam " + view)
 		await _save("arms-" + view, "a")
-	DebugCommands.run("arms reload 0.5")
-	DebugCommands.run("arms cam front")
-	await _save("arms-reload", "a")
-	DebugCommands.run("arms reload off")
-	DebugCommands.run("arms weave 2.9")
-	DebugCommands.run("arms cam front")
-	await _save("arms-weave", "a")
-	DebugCommands.run("arms weave off")
+	for pin: Array in [["reload", "0.5"], ["weave", "2.9"]]:
+		DebugCommands.run("arms %s %s" % pin)
+		DebugCommands.run("arms cam front")
+		await _save("arms-" + pin[0], "a")
+		DebugCommands.run("arms %s off" % pin[0])
 	DebugCommands.run("arms cam off")
+	for kind in ["press", "knock", "push", "pull", "slide_open"]:
+		DebugCommands.run("arms gesture %s contact" % kind)
+		print("SMOKE: gesture %s: %s" % [kind, DebugCommands.run("arms frame")])
+		await _save("arms-g-" + kind, "a")
+	DebugCommands.run("arms gesture off")
 	for layer in hidden:
 		layer.visible = true
 

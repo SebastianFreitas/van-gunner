@@ -48,6 +48,10 @@ func get_interaction_prompt() -> String:
 	return prompt
 
 
+func get_gesture() -> StringName:
+	return &""
+
+
 func interact(actor: Node3D) -> void:
 	if actor == null:
 		return

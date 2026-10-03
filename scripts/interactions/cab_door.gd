@@ -182,6 +182,12 @@ func get_interaction_prompt() -> String:
 	return "E  TALK TO THE DRIVER"
 
 
+func get_gesture() -> StringName:
+	if GameSession.phase == GameSession.RunPhase.GAME_OVER:
+		return &""
+	return &"knock"
+
+
 func interact(_actor: Node3D) -> void:
 	if GameSession.phase == GameSession.RunPhase.GAME_OVER:
 		return

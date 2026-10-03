@@ -25,6 +25,7 @@ const _JUMP_CLEARANCE := 1.0
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 var _current_interactable: Interactable
+var _interact_pending := false
 var _movement_reference: Node3D
 var _local_horizontal_velocity := Vector3.ZERO
 var _jump_queued := false
@@ -68,7 +69,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 	elif event.is_action_pressed("interact"):
 		if _current_interactable:
-			_current_interactable.interact(self)
+			_interact_with(_current_interactable)
 		else:
 			_close_open_dialogue()
 	elif event.is_action_pressed("jump"):
@@ -95,6 +96,27 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		else:
 			usables.try_use_slot(3)
+
+
+func _interact_with(target: Interactable) -> void:
+	if _interact_pending:
+		return
+	var kind := target.get_gesture()
+	var delay := 0.0
+	if kind != &"":
+		var vm := get_tree().get_first_node_in_group(&"gun_viewmodel")
+		if vm and vm.has_method(&"play_gesture"):
+			delay = vm.play_gesture(kind)
+	if SaveSandbox.enabled:
+		delay = 0.0
+	if delay > 0.0:
+		_interact_pending = true
+		await get_tree().create_timer(delay).timeout
+		_interact_pending = false
+		if not is_instance_valid(target):
+			return
+	# The door, window or board reacts when the hand touches it, not on the key press.
+	target.interact(self)
 
 
 func get_look_interactable() -> Interactable:

@@ -118,6 +118,17 @@ static func views(rig: Node3D) -> Array[Dictionary]:
 	return result
 
 
+## Seconds to wait after opening or closing the side doors and windows: the scripts' own
+## tween durations, summed, plus a settle margin.
+static func settle(side_doors: Node, side_windows: Node) -> float:
+	return (
+		side_doors.recess_duration + side_doors.slide_duration
+		+ side_doors.grip_retract_duration + side_doors.mount_retract_duration
+		+ side_windows.open_duration + side_windows.grip_retract_duration
+		+ side_windows.mount_retract_duration + 0.3
+	)
+
+
 ## One row per gap-light view: {label, from, target, mode, doors}, all rig-local. Read with
 ## gaplight on (`mode` "on": from the cabin) or out (`mode` "out": from the street). `doors`
 ## lists the side doors to open (only the control opens one).
