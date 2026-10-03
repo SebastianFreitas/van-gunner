@@ -14,7 +14,9 @@ const FORE: Array = [
 	[0.30, 0.20, 110.0, 50.0, 0.28],	# flexors
 	[0.35, 0.22, -80.0, 45.0, 0.25],	# extensors
 ]
-const MASK := {&"DEF-forearm": 1.0, &"DEF-upper_arm": 0.6, &"DEF-hand": 0.7}
+## Raised-vein strength per bone. The hand is 1.0 (was 0.7): the palm was deflated on 2026-10-03,
+## so the veins carry onto the leaner back of the hand.
+const MASK := {&"DEF-forearm": 1.0, &"DEF-upper_arm": 0.6, &"DEF-hand": 1.0}
 
 
 static func apply(arrays: Array, new_verts: PackedVector3Array, heads: Dictionary,

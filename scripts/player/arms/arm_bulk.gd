@@ -8,8 +8,10 @@ const FOREARM_ELBOW_GAIN := 2.8
 const FOREARM_WRIST_GAIN := 2.1
 ## Gain the forearm ramp ends at. Aimed at the first hand ring, not at the hand bone's nominal
 ## gain: hand vertices blend several bones, so their ring sits well under the bone's own gain.
-## Raised from 1.5 with the hand gains (1.55 -> 1.85) for the monster hands (2026-10-02).
-const WRIST_END_GAIN := 1.8
+## Raised to 1.8 with the hand gains for the monster hands (2026-10-02), then lowered to 1.45 with
+## the hand gains (1.85 -> 1.45) on 2026-10-03: the palm read as an inflated pillow behind the
+## fingers.
+const WRIST_END_GAIN := 1.45
 ## Extra on the palm gain over the knuckle half of each palm bone: the knuckle row is the widest
 ## point of a hand. Only slightly above neutral: the procedural finger tubes' knobs carry most of
 ## the knuckle swell.
@@ -36,14 +38,15 @@ const WRIST_RAMP_START := 0.5
 const GAIN: Array = [
 	["DEF-forearm", FOREARM_ELBOW_GAIN],
 	["DEF-upper_arm", 2.5],
-	["DEF-hand", 1.85],
+	# Hand and palm gains halved above neutral on 2026-10-03 so the palm matches the finger tubes.
+	["DEF-hand", 1.45],
 	# ".01" is the metacarpal (thenar mass), tapered to the tip.
-	["DEF-thumb.01", 1.9],
+	["DEF-thumb.01", 1.5],
 	["DEF-thumb.02", FINGER_CORE],
 	["DEF-thumb.03", TIP_CORE],
-	["DEF-palm.01", 1.85],
-	["DEF-palm.04", 1.85],
-	["DEF-palm", 1.75],
+	["DEF-palm.01", 1.45],
+	["DEF-palm.04", 1.45],
+	["DEF-palm", 1.4],
 	["DEF-f_", 1.0],
 ]
 
