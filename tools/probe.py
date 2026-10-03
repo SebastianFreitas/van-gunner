@@ -6,7 +6,8 @@ Loads one scene headless and evaluates an expression against its root, or, with 
 scene, boots the run (`SceneRouter.go_to_van()`, the van at IDLE) with the save
 sandbox on. `--cmd` lines run through the debug console (`DebugCommands.run`) in
 order before `--eval` and `--shot`. `--shot` renders in a real window on a hidden
-Win32 desktop (never visible, never takes focus); with `--every`/`--max` it writes
+Win32 desktop (never visible, never takes focus), or under `xvfb-run` on Linux;
+with `--every`/`--max` it writes
 `<stem>-01.png`...; with `--views` (--shot is then a directory) it writes one
 `<view>.png` per `arms cam` view. Fails on any output line with SCRIPT ERROR / Parse Error / ERROR:,
 a non-zero exit, a timeout, a missing `PROBE: done` line or a missing PNG.
@@ -14,6 +15,7 @@ a non-zero exit, a timeout, a missing `PROBE: done` line or a missing PNG.
 import argparse
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 
@@ -112,13 +114,20 @@ def run_godot(
     exe: str, opts: argparse.Namespace, user: list[str], shot: pathlib.Path | None
 ) -> tuple[int, str] | int:
     if shot is not None:
-        if sys.platform != "win32":
-            print("PROBE FAILED: --shot needs the Windows hidden desktop")
-            return 1
         args = [
             exe, "--path", str(ROOT),
             "--resolution", "1440x720", "res://tools/probe/probe_runner.tscn", "--", *user,
         ]
+        if sys.platform != "win32":
+            # Linux (cloud sessions): a virtual X screen instead of the hidden desktop. Mesa has
+            # no Vulkan surface there and the container has no sound card; both log ERROR: lines.
+            if shutil.which("xvfb-run") is None:
+                print("PROBE FAILED: --shot needs the Windows hidden desktop or xvfb-run on Linux")
+                return 1
+            args = [
+                "xvfb-run", "-a", "-s", "-screen 0 1920x1080x24", *args[:3],
+                "--rendering-driver", "opengl3", "--audio-driver", "Dummy", *args[3:],
+            ]
     else:
         args = [
             exe, "--headless", "--path", str(ROOT),
