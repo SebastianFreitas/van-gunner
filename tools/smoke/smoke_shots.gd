@@ -270,12 +270,16 @@ func arm_views() -> void:
 	for view in ["front", "side", "left", "top", "elbow"]:
 		DebugCommands.run("arms cam " + view)
 		await _save("arms-" + view, "a")
-	for pin: Array in [["reload", "0.5"], ["weave", "2.9"]]:
+	for pin: Array in [["reload", "0.5"], ["weave", "2.9"], ["walk", "0.75"]]:
 		DebugCommands.run("arms %s %s" % pin)
 		DebugCommands.run("arms cam front")
 		await _save("arms-" + pin[0], "a")
 		DebugCommands.run("arms %s off" % pin[0])
 	DebugCommands.run("arms cam off")
+	DebugCommands.run("arms walk 0.75")
+	print("SMOKE: walk 0.75: %s" % DebugCommands.run("arms frame"))
+	await _save("arms-walk-view", "a")
+	DebugCommands.run("arms walk off")
 	for kind in ["press", "knock", "push", "pull", "slide_open"]:
 		DebugCommands.run("arms gesture %s contact" % kind)
 		print("SMOKE: gesture %s: %s" % [kind, DebugCommands.run("arms frame")])
