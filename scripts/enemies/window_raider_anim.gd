@@ -59,20 +59,6 @@ func play(clip: StringName) -> void:
 	if clip != _clip:
 		_clip = clip
 		_clock = 0.0
-		# Only the jump frames are drawn facing a side; every other clip is front-on.
-		if clip != &"jump" and drives_sprite():
-			raider.sprite.flip_h = false
-
-
-## Flips the sprite so the jump frames, drawn springing toward image right, point along
-## `world_dir` as the camera sees it (the van, for a jump onto the wall).
-func face_toward(world_dir: Vector3) -> void:
-	if not drives_sprite():
-		return
-	var camera := raider.get_viewport().get_camera_3d()
-	if camera == null:
-		return
-	raider.sprite.flip_h = camera.global_basis.x.dot(world_dir) < 0.0
 
 
 ## Shows the frame a clip has reached after `seconds`. Seconds come first so a Tween's

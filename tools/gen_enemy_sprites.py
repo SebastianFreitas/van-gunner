@@ -435,40 +435,40 @@ LOPER_POSES = [
 ]
 assert len(LOPER_POSES) == LOPER_FRAMES
 
-# Row 1 of the sheet: the jump take-off, same pose format plus bx (default 0), a horizontal
-# body shift in pixels (positive is image right, the way the loper springs; the game flips
-# the sprite for the other side). It moves the chest, mantle, hump, shoulders, hips and head
-# like by does; arms and legs stay absolute points. The airborne body narrows (negative
-# shoulder_dx) so the shifted mantle stays inside the 64 px cell.
-# Frame 0 settle: lower than the run's crouch, head dropped, both claw sets flat on row 79,
-# knees wide. Frame 1 coil: the deepest crouch, weight loaded back (bx -2), right arm drawn
-# in, claws still on the floor. Frame 2 push: body rising and leaning forward, the left leg
-# extending down-left, the right arm lifting off the floor to the up-right. Frame 3 launch:
-# body stretched, legs straight down-left with only the toe claws on row 79, both arms
-# reaching up-right, the jaw open wider. Frame 4 spring: airborne, held for the rest of the
-# jump; a diagonal from bottom-left to top-right, arms up with claws spread, legs trailing
-# soles-on, nothing on row 79.
+# Row 1 of the sheet: the jump, front-on like the run (the sprite is never flipped). Same
+# pose format as the run table; bx is left out (0), the body stays centred (draw_loper still
+# supports it). It is the run's rising half (frames 0 to 6) with the body higher and the
+# limbs thrown out further, and the same limits: the hump rises at most 5 px net.
+# Frame 0 crouch: run frame 1 deeper, hips low, knees wide, head low, elbows bowed out, claws
+# on row 79. Frame 1 push: run frame 2 stronger, body up, hind legs straight under it, arms
+# stretched long with claws still on row 79. Frame 2 paws-rise: run frame 3 more extreme, both
+# paws lifted high and wide, hind feet planted. Frame 3 lift-off: run frame 4 pushed on, paws
+# tucked high under the chest, rump showing, left toes the last thing on the floor. Frame 4
+# airborne: run frame 6 (kick) pushed on, held for the rest of the jump; body highest, both
+# hind feet sole-on at the top corners, rump and tail-bone above the hump, paws reaching
+# down and out, nothing on row 79.
 LOPER_JUMP_POSES = [
-	dict(by=5, hump_dy=-1, head_dy=4, shoulder_dx=2, lag=1,  # 0 settle
-		left=((1, 53), (8, 73), [(2, 79), (6, 79), (10, 79), (14, 78)]),
-		right=((62, 57), (56, 75), [(51, 78), (55, 79), (59, 79), (63, 78)]),
-		legs=(((10, 70), (19, 75)), ((54, 71), (45, 75)))),
-	dict(by=8, hump_dy=-5, head_dy=3, shoulder_dx=1, lag=1, bx=-2,  # 1 coil
-		left=((2, 56), (9, 74), [(3, 79), (7, 79), (11, 79), (15, 78)]),
-		right=((52, 55), (50, 73), [(46, 78), (50, 79), (54, 79), (57, 78)]),
-		legs=(((9, 72), (18, 75)), ((50, 72), (42, 75)))),
-	dict(by=2, hump_dy=-2, head_dy=3, shoulder_dx=0, lag=1, bx=2,  # 2 push
-		left=((3, 43), (8, 70), [(2, 79), (6, 79), (10, 79), (14, 78)]),
-		right=((61, 44), (62, 58), [(57, 63), (60, 65), (62, 65), (63, 63)]),
-		legs=(((20, 67), (13, 75)), ((46, 66), (44, 75)))),
-	dict(by=-4, hump_dy=0, head_dy=3, shoulder_dx=-3, lag=3, bx=5,  # 3 launch
-		left=((34, 28), (46, 18), [(52, 12), (54, 15), (53, 19)]),
-		right=((58, 22), (59, 14), [(61, 7), (63, 10), (63, 13)]),
-		legs=(((24, 64), (16, 75)), ((34, 64), (26, 75)))),
-	dict(by=-8, hump_dy=4, head_dy=8, shoulder_dx=-5, lag=3, bx=7,  # 4 spring
-		left=((38, 14), (48, 8), [(52, 2), (56, 4), (58, 8), (57, 12)]),
-		right=((59, 16), (60, 10), [(58, 3), (61, 4), (63, 7)]),
-		legs=(((24, 56), (14, 66)), ((34, 58), (24, 70))), soles=True),
+	dict(by=6, hump_dy=-2, head_dy=4, shoulder_dx=2, lag=1,  # 0 crouch
+		left=((0, 52), (8, 73), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((63, 56), (56, 75), [(51, 78), (55, 79), (59, 79), (63, 78)]),
+		legs=(((9, 71), (19, 75)), ((55, 72), (45, 75)))),
+	dict(by=-4, hump_dy=-1, head_dy=2, shoulder_dx=0, lag=1,  # 1 push
+		left=((5, 38), (8, 71), [(2, 79), (6, 79), (10, 79), (14, 78)]),
+		right=((59, 42), (57, 72), [(52, 78), (56, 79), (60, 79), (63, 77)]),
+		legs=(((21, 66), (20, 75)), ((43, 67), (44, 75)))),
+	dict(by=-7, hump_dy=2, head_dy=2, shoulder_dx=1, lag=2,  # 2 paws-rise
+		left=((3, 36), (6, 54), [(1, 60), (4, 62), (8, 62), (11, 60)]),
+		right=((61, 38), (58, 55), [(53, 61), (56, 63), (60, 63), (63, 61)]),
+		legs=(((20, 63), (20, 75)), ((44, 62), (45, 75)))),
+	dict(by=-9, hump_dy=4, head_dy=4, shoulder_dx=-1, lag=2,  # 3 lift-off
+		left=((3, 31), (15, 46), [(11, 50), (14, 52), (17, 52), (19, 50)]),
+		right=((61, 33), (49, 47), [(45, 51), (48, 53), (51, 53), (53, 51)]),
+		legs=(((17, 62), (19, 75)), ((47, 56), (46, 64))), rump=(6, 7, 5, ())),
+	dict(by=-10, hump_dy=5, head_dy=14, shoulder_dx=0, lag=4,  # 4 airborne
+		left=((4, 38), (7, 58), [(2, 65), (6, 67), (10, 67), (14, 65)]),
+		right=((60, 40), (57, 60), [(50, 65), (54, 67), (58, 67), (62, 65)]),
+		legs=(((7, 26), (3, 11)), ((57, 27), (61, 12))), rump=(8, 8, 7, (1, 3, 5)),
+		soles=True),
 ]
 assert len(LOPER_JUMP_POSES) == JUMP_FRAMES
 

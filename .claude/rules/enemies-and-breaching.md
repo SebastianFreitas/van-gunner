@@ -33,7 +33,7 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
 - `scenes/enemies/window_raider.tscn` holds the door raider, a hunched humanoid
   feral (the loper): `Sprite3D` at `pixel_size 0.024` on `door_raider.png`, an 832 x 160 sheet:
   row 0 thirteen 64 x 80 run frames, row 1 a 5-frame jump take-off (`hframes 13, vframes 2`;
-  clip `jump`, 15 fps, no loop, plays on JUMPING with the sprite flipped toward the van; each 1.54 x 1.92 m; frame 0 is the still,
+  clip `jump`, 15 fps, no loop, plays on JUMPING, front-on like the run, never flipped; each 1.54 x 1.92 m; frame 0 is the still,
   `window_raider_anim.gd` is a clip player: named clips in `CLIPS` (sheet row, frames, fps,
   loop; `still`, `run`, `prowl` so far) set `frame_coords`, a new animation adds a sheet row
   (`SHEET_ROWS`) and a clip, and `_die` plays a `death` clip, when one exists, before the
