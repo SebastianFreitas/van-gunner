@@ -80,7 +80,7 @@ hand beyond the default).
   is toward the thumb on the LEFT rig (the code only says the left rig's Z points the other way,
   `arm_weave.gd:159`), and record the angular-speed measurement of today's wrist circle as the
   "before". No behaviour change; commit the readout and the research file.
-- [ ] 2. **Twist, always on.** Replace `WRIST_ROLL` 6 sin(b/2) with a slow twist of up to 30
+- [x] 2. **Twist, always on.** Replace `WRIST_ROLL` 6 sin(b/2) with a slow twist of up to 30
   degrees, split with `DEF-forearm.001`, in the new helper with a seeded phase and a routine
   clock `rt = fposmod(t, 3*PERIOD)` that later steps share. Twist envelope bigger in roll 2.
   Rest at the sandbox hold. Measure the twist range and speed with the readout, judge the skin at

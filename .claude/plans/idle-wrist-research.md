@@ -66,3 +66,28 @@ moves it).
 - Still `player` at weave 1.1 (`hand_shots.py --pose "arms weave 1.1"`): the left hand is a
   curled claw at the lower-left, palm toward screen centre, fingertips at about mid-screen height,
   clear of the HUD. That is the baseline look for the later rounds.
+
+## Round 2 (step 2: twist, always on)
+
+**Built:** `arm_wrist_routine.gd` (`ArmWristRoutine`, no class_name) owns the routine clock `rt =
+fposmod(t, 10.8)` and the left twist: carrier `-cos(TAU*rt/10.8 + phase)` (phase seeded +-0.5 rad,
+peak in the middle of roll 2) times an envelope of 0.55 outside roll 2 and a raised cosine up to 1.0
+over roll 2, anchored to exactly 0 at the sandbox hold (t 1.1, so smoke stills stay `same`) and
+normalised to 30 deg total. Two thirds go to `DEF-hand.L` (wrist euler y, replaces the left's
+`WRIST_ROLL`; the right keeps it), one third to `DEF-forearm.L.001` about its local Y (the hand is
+its child, so the hand turns the full 30).
+
+**Numbers (`arms wristang`, left wrist):** t=1.1 twist(y) +0.0, forearm.001 -39.2 (rest, unchanged);
+t=5.4 twist(y) +19.8, forearm.001 -29.3 (+9.9), total +29.7. Scan 0..10.8 s: twist(y) -5.2..+20.0
+(was -6.3..+6.0), flex -8.1..+8.0 and dev -8.0..+9.6 unchanged, peak speed 16.6 deg/s (same, still
+the circle), max jump 0.28 deg/frame. Wrist and forearm turn the same way (sign check passed).
+Checks: `arms fit` FIT OK, `gear` GEAR OK, `touch` TOUCH CHECK 18 (limit 20), check and smoke clean.
+`arms thumbs` prints `THUMBS CHECK` with BAR hook on the left (thumb-local, not wrist-driven; not
+compared against a pre-change run in this round, so step 3 should read it against `main` first).
+
+**Worse:** the twist is one-sided (about -2 to +30 deg, because the anchor at t=1.1 sits near the
+carrier's trough), so the hand only ever turns thumb-palm-ward; the speed bar has plenty of room (twist
+alone peaks near 17 deg/s) but steps 3 and 4 add beats on top of it. **Why:** zero at the hold plus a
+single swing per routine. **Solve if it reads stiff in play:** a second, faster carrier; left for step 5.
+Still `player` at weave 5.4 (twist peak): the left hand sits low-left, claws clear, no wrung or
+inverted skin, HUD clear.
