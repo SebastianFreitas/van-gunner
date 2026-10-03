@@ -151,8 +151,8 @@ text = "LMB  SHOOT
 R  RELOAD
 E  INTERACT
 ESC  PAUSE
-SHIFT  GO
-C  EASY
+SHIFT  TURBO / GO
+C  EASY / STOP
 1-4  USE TOOL"
 horizontal_alignment = 2
 

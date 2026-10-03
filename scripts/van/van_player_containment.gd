@@ -12,6 +12,7 @@ const LAYER := 16  # physics layer 5
 @export var wall_thickness := 0.12
 
 var _rear_exit_allowed := false
+var _climb: RearClimb
 
 
 func _ready() -> void:
@@ -43,6 +44,10 @@ func _build() -> void:
 		Vector3(0.0, center_y, -half_length),
 		Vector3(half_width * 2.0, wall_height, wall_thickness)
 	)
+	_climb = RearClimb.new()
+	_climb.name = "RearClimb"
+	_climb.position = Vector3(0.0, 0.3, half_length + 0.25)
+	add_child(_climb)
 
 
 func _add_panel(panel_name: StringName, pos: Vector3, size: Vector3) -> void:
@@ -74,3 +79,10 @@ func set_rear_exit_allowed(allowed: bool) -> void:
 	var rear := get_node_or_null("Rear") as CollisionShape3D
 	if rear:
 		rear.disabled = allowed
+
+
+## The exit used while the van is halted mid-street. Side stops keep calling
+## set_rear_exit_allowed alone: no climb prompt, their floor is level.
+func set_halt_exit(allowed: bool) -> void:
+	set_rear_exit_allowed(allowed)
+	_climb.set_active(allowed)
