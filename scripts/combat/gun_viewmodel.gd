@@ -16,6 +16,8 @@ const SWAY_MAX := 2.0 * PI / 180.0  ## radians, cap per axis
 const SWAY_GAIN := 0.02  ## seconds: a 100 deg/s turn reaches the cap
 const SWAY_RATE := 10.0  ## lerp rate per second
 const DRIFT_WALK_KEEP := 0.3  ## share of the idle arm drift left at full walk
+## Hz-ish rate of the velocity low-pass; smooths what tick/render beat is left.
+const VEL_SMOOTH := 12.0
 const MOVE_STALE := 0.1  ## seconds without a body move that count as standing still
 const SLAP_DROP := 0.12  ## virtual metres the left hand drops below the magazine
 ## Rig-space tuning shift for the left hand at rest; the pose constants in `ArmsBuilder` own
@@ -60,7 +62,9 @@ var _body: Node3D
 var _prev_basis := Basis.IDENTITY
 var _prev_body_pos := Vector3.ZERO
 var _move_dt := 0.0  ## seconds since the body last moved
-var _body_vel := Vector3.ZERO  ## parent-local m/s from the last body move
+var _last_move_tick := 0  ## physics frame of the last body move
+var _raw_vel := Vector3.ZERO  ## parent-local m/s from the last body move, held between moves
+var _body_vel := Vector3.ZERO  ## _raw_vel low-passed; what the walk layer reads
 var _has_prev := false
 var _sway := Vector2.ZERO  ## x pitch, y yaw (radians)
 var _weave: RefCounted = null
@@ -178,6 +182,7 @@ func snap_rest() -> void:
 	_sway = Vector2.ZERO
 	_walk.reset()
 	_move_dt = 0.0
+	_raw_vel = Vector3.ZERO
 	_body_vel = Vector3.ZERO
 	_has_prev = false
 	_reloading = false
@@ -207,7 +212,9 @@ func _process(delta: float) -> void:
 	if _body != null:
 		if not _has_prev:
 			_move_dt = 0.0
+			_raw_vel = Vector3.ZERO
 			_body_vel = Vector3.ZERO
+			_last_move_tick = Engine.get_physics_frames()
 		else:
 			# Parent-local, so the van's own travel never counts as walking.
 			# The body moves on physics ticks, so velocity is measured per move,
@@ -215,12 +222,18 @@ func _process(delta: float) -> void:
 			_move_dt += delta
 			var d := _body.position - _prev_body_pos
 			if d.length_squared() > 1e-10:
-				_body_vel = d / maxf(_move_dt, 0.001)
-				if Vector2(_body_vel.x, _body_vel.z).length() > 20.0:
-					_body_vel = Vector3.ZERO  # a teleport or reparent, not walking
+				# True physics time between moves, so a 144 fps beat of 2 or 3 render
+				# frames per tick doesn't flicker the speed.
+				var now := Engine.get_physics_frames()
+				var ticks := 1 if _move_dt > MOVE_STALE else maxi(now - _last_move_tick, 1)
+				_raw_vel = d / (ticks / float(Engine.physics_ticks_per_second))
+				if Vector2(_raw_vel.x, _raw_vel.z).length() > 20.0:
+					_raw_vel = Vector3.ZERO  # a teleport or reparent, not walking
+				_last_move_tick = now
 				_move_dt = 0.0
 			elif _move_dt > MOVE_STALE:
-				_body_vel = Vector3.ZERO
+				_raw_vel = Vector3.ZERO
+			_body_vel = _body_vel.lerp(_raw_vel, 1.0 - exp(-delta * VEL_SMOOTH))
 			var parent := _body.get_parent() as Node3D
 			var pb := parent.global_basis.orthonormalized() if parent else Basis.IDENTITY
 			var fwd := Vector3.FORWARD

@@ -1,7 +1,7 @@
 extends RefCounted
 ## Walk layer for the first-person arms: a footstep-locked figure-8 with roll, a footfall dip, strafe lean, a start/stop lag spring and a free left-arm swing, blended in by walking speed.
 
-const STRIDE := 0.75  ## metres per step; one cycle (TAU) is two steps
+const STRIDE := 2.5  ## metres per step: 1.8 steps/s at WALK_SPEED (0.9 Hz cycle), a heavy lumber
 const WALK_SPEED := 4.5  ## m/s that counts as full walk (fps_player move_speed)
 const AMOUNT_RATE := 6.0  ## exp-smoothing per second for amount and lean
 const SIDE := 0.035  ## rig units, lateral sway at the half rate
@@ -19,8 +19,9 @@ const SWING_FWD := 0.12  ## rig units, left arm fore/aft
 const SWING_UP := 0.10  ## rig units, rise on the forward swing
 const SWING_IN := 0.04  ## rig units toward the centre on the forward swing
 const SWING_PITCH := 10.0  ## degrees, hand tips up on the forward swing
-const SWING_F := 3.0  ## Hz, left swing spring
-const SWING_ZETA := 0.5
+const SWING_F := 2.2  ## Hz, left swing spring: well above the 0.9 Hz cycle, so it follows with
+## a small lag and no resonance gain
+const SWING_ZETA := 0.7
 const SIM_DT := 1.0 / 120.0  ## fixed step for pinned start/stop
 
 var _phase := 0.0
