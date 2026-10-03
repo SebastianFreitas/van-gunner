@@ -4,9 +4,18 @@ extends RefCounted
 
 const _STEP := 2
 const _THRESHOLD := 0.25
+## Bars on the share of the screen the viewmodel may cover, in percent.
+const COVER_MIN := 12.0
+const COVER_MAX := 28.0
+## Viewmodel pixels above the lower third (y < 2/3 of the height), percent of the screen.
+const UPPER_MAX := 2.0
+## The crosshair zone in screen fractions, and how much of its own pixels the viewmodel may fill.
+const AIM_ZONE := Rect2(0.35, 0.30, 0.30, 0.30)
+const AIM_MAX := 0.5
 
 
-## One line: share of the screen, bounding box, rule-of-thirds cells, fov and image size.
+## One line: share of the screen, bounding box, rule-of-thirds cells, upper and aim shares, fov,
+## image size and OK or BAD with the bars that failed.
 func run(vm: Node) -> String:
 	if DisplayServer.get_name() == "headless":
 		return "FRAME n/a (headless, no renderer)"
@@ -36,6 +45,10 @@ func run(vm: Node) -> String:
 	var w := mini(base.get_width(), lit.get_width())
 	var h := mini(base.get_height(), lit.get_height())
 	var count := 0
+	var upper := 0
+	var aim := 0
+	var zone := Rect2(AIM_ZONE.position.x * w, AIM_ZONE.position.y * h,
+			AIM_ZONE.size.x * w, AIM_ZONE.size.y * h)
 	var min_x := w
 	var max_x := -1
 	var min_y := h
@@ -45,6 +58,10 @@ func run(vm: Node) -> String:
 			var d := absf(lit.get_pixel(x, y).get_luminance() - base.get_pixel(x, y).get_luminance())
 			if d > _THRESHOLD:
 				count += 1
+				if y * 3 < h * 2:
+					upper += 1
+				if zone.has_point(Vector2(x, y)):
+					aim += 1
 				min_x = mini(min_x, x)
 				max_x = maxi(max_x, x)
 				min_y = mini(min_y, y)
@@ -58,9 +75,20 @@ func run(vm: Node) -> String:
 		var fy0 := float(min_y) / h
 		var fy1 := float(max_y) / h
 		var pct := float(count * _STEP * _STEP) * 100.0 / (float(w) * float(h))
-		line = "FRAME %.1f%% box x %.2f..%.2f y %.2f..%.2f thirds x %d-%d y %d-%d fov %.1f %dx%d" % [
+		var upper_pct := float(upper * _STEP * _STEP) * 100.0 / (float(w) * float(h))
+		var aim_pct := float(aim * _STEP * _STEP) * 100.0 / (zone.size.x * zone.size.y)
+		var bad: Array[String] = []
+		if pct < COVER_MIN or pct > COVER_MAX:
+			bad.append("cover")
+		if upper_pct > UPPER_MAX:
+			bad.append("upper")
+		if aim_pct > AIM_MAX:
+			bad.append("aim")
+		var verdict := "OK" if bad.is_empty() else "BAD " + " ".join(bad)
+		line = ("FRAME %.1f%% box x %.2f..%.2f y %.2f..%.2f thirds x %d-%d y %d-%d "
+				+ "upper %.1f%% aim %.1f%% fov %.1f %dx%d %s") % [
 			pct, fx0, fx1, fy0, fy1, _third(fx0), _third(fx1), _third(fy0), _third(fy1),
-			vm.viewmodel_fov, w, h]
+			upper_pct, aim_pct, vm.viewmodel_fov, w, h, verdict]
 	print(line)
 	return line
 

@@ -1,7 +1,8 @@
 class_name ViewmodelFov
 extends RefCounted
-## Sets the viewmodel FOV override on every arm shader and base material under a rig. The rig
-## gets its own material copies, so world props sharing the original resources are untouched.
+## Sets the viewmodel FOV override on every arm shader and base material under a rig and turns
+## shadow casting off. The rig gets its own material copies, so world props sharing the original
+## resources are untouched.
 
 
 ## Applies `fov_deg` (0 = the camera's own) to rig-owned copies of every material under `root`.
@@ -15,6 +16,8 @@ static func apply(root: Node, fov_deg: float) -> void:
 static func _walk(node: Node, fov_deg: float, seen: Dictionary) -> void:
 	var geo := node as GeometryInstance3D
 	if geo != null:
+		# The shadow pass skips the lens, so a lens-drawn mesh would cast from where it is not seen.
+		geo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		# Assign copies back into the slots; writing into the mesh would leak to shared users.
 		if geo.material_override != null:
 			geo.material_override = _own(geo.material_override, fov_deg, seen)

@@ -2,18 +2,18 @@ class_name ArmsBuilder
 extends RefCounted
 ## Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed.
 
-const RIGHT_SHOULDER := Vector3(1.15, -1.05, 0.0)
+const RIGHT_SHOULDER := Vector3(2.1, -0.68, -0.2)
 const RIGHT_POLE := Vector3(1.0, -0.2, 0.3)
 ## Wrist, finger direction and palm normal on the grip, in gun space.
 const RIGHT_WRIST_IN_GUN := Vector3(0.08, -0.13, 0.17)
 const RIGHT_HAND_DIR_IN_GUN := Vector3(-0.05, 0.25, -1.0)
 const RIGHT_PALM_IN_GUN := Vector3(-1.0, 0.0, 0.0)
 ## Low and off-frame left of the camera (camera = 0.18 * rig point), so only the forearm and hand show.
-const LEFT_SHOULDER := Vector3(-1.2, -1.3, -0.45)
+const LEFT_SHOULDER := Vector3(-1.35, -1.35, -0.3)
 ## The held pistol is shown while the hand pose is reworked around its holder.
 const SHOW_GUN := true
 ## Where the relaxed left wrist sits when shown (looking down, reloading): the lower-left of the frame.
-const LEFT_SHOWN_WRIST := Vector3(-0.95, -0.62, -1.05)
+const LEFT_SHOWN_WRIST := Vector3(-1.1, -0.62, -1.25)
 const LEFT_HANG_POLE := Vector3(-1.0, -0.6, 0.2)
 const LEFT_HANG_HAND_DIR := Vector3(0.1, -0.5, -1.0)
 ## How far the straightened left hand droops below its forearm line (a relaxed hang).
