@@ -231,5 +231,8 @@ static func add_claws(model: Node3D, suffix: String, fingers: Dictionary, claw_k
 		ArmParts.mesh(att, "Claw", ArmClaw.mesh(tip_rings, horn_len, curve_deg,
 					ArmClaw.THUMB_BED_FROM if thumb else ArmClaw.BED_FROM,
 					ArmClaw.THUMB_BURY if thumb else ArmClaw.BURY,
-					ArmClaw.THUMB_ROOT_LIFT if thumb else 0.0), mat,
+					ArmClaw.THUMB_ROOT_LIFT if thumb else 0.0,
+						ArmClaw.THUMB_WIDTH if thumb else 1.0,
+						ArmClaw.THUMB_THICK if thumb else ArmClaw.THICK,
+						ArmClaw.THUMB_ROOT_SIDE if thumb else ArmClaw.SIDE), mat,
 				Vector3.ZERO, Basis(lateral, Vector3.UP, dorsal))

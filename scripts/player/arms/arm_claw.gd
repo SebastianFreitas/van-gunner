@@ -17,6 +17,11 @@ const THUMB_BED_FROM := 0.52
 ## and lift the root higher above the skin (same unit as LIFT, fading out over ROOT).
 const THUMB_BURY := 0.0
 const THUMB_ROOT_LIFT := 0.12
+## The thumb nail is narrower than the tip (share of its half width), thinner, and its root is
+## a rounded dome (the sides dive from the dorsal line outward) instead of a flat wide base.
+const THUMB_WIDTH := 0.78
+const THUMB_THICK := 0.07
+const THUMB_ROOT_SIDE := 0.15
 ## Top of the full-height nail above the skin, as a share of the finger's half size.
 const LIFT := 0.2
 ## How far under the skin the root and side edges sit, same unit.
@@ -33,7 +38,8 @@ const SIDE := 0.55
 ## along the bone, z dorsal). Origin and axes are those of the rings; `reach` is how far the
 ## point clears the finger's pole and `curve_deg` how far it hooks toward the pad (-Z).
 static func mesh(rings: Array, reach: float, curve_deg: float,
-		bed_from: float = BED_FROM, bury: float = BURY, root_lift: float = 0.0) -> ArrayMesh:
+		bed_from: float = BED_FROM, bury: float = BURY, root_lift: float = 0.0,
+		width: float = 1.0, thick: float = THICK, root_side: float = SIDE) -> ArrayMesh:
 	var first: Dictionary = rings[0]
 	var last: Dictionary = rings[rings.size() - 1]
 	var span := float(last[&"t"]) - float(first[&"t"])
@@ -52,8 +58,8 @@ static func mesh(rings: Array, reach: float, curve_deg: float,
 		var base := -bury
 		var top := LIFT + root_lift * (1.0 - root)
 		for s in ARC_SEGS + 1:
-			lift.append(lerpf(base, top, root * _side(s)))
-		secs.append(_sec(r[&"centre"], r[&"half_w"], r[&"half_h"], lift, 0.0))
+			lift.append(lerpf(base, top, root * _side(s, lerpf(root_side, SIDE, root))))
+		secs.append(_sec(r[&"centre"], float(r[&"half_w"]) * width, r[&"half_h"], lift, 0.0, thick))
 	var c0: Vector3 = secs[secs.size() - 1][&"c"]
 	var w0: float = secs[secs.size() - 1][&"hw"]
 	var h0: float = secs[secs.size() - 1][&"hh"]
@@ -70,9 +76,9 @@ static func mesh(rings: Array, reach: float, curve_deg: float,
 		var c := (1.0 - s) * (1.0 - s) * c0 + 2.0 * (1.0 - s) * s * p1 + s * s * p2
 		var lift := PackedFloat32Array()
 		for k in ARC_SEGS + 1:
-			var side := lerpf(_side(k), 1.0, smoothstep(0.0, 0.35, s))
+			var side := lerpf(_side(k, SIDE), 1.0, smoothstep(0.0, 0.35, s))
 			lift.append(lerpf(-BURY, LIFT, side))
-		secs.append(_sec(c, w0 * fw, h0 * f, lift, s))
+		secs.append(_sec(c, w0 * fw, h0 * f, lift, s, thick))
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var outs: Array[PackedVector3Array] = []
@@ -134,20 +140,20 @@ static func _lerp_ring(rings: Array, t: float) -> Dictionary:
 
 
 ## Dorsal-line share (0 at the edges, 1 over the top) of arc point `s`: where the sides dive.
-static func _side(s: int) -> float:
+static func _side(s: int, from: float) -> float:
 	var a := lerpf(-ARC, ARC, float(s) / float(ARC_SEGS))
-	return 1.0 - smoothstep(SIDE * ARC, ARC, absf(a))
+	return 1.0 - smoothstep(from * ARC, ARC, absf(a))
 
 
 ## A section; `lift[s]` is the outer height over the skin, `s_free` how far past the tip (0 on
 ## the bed) so the inner face narrows toward the point.
 static func _sec(c: Vector3, hw: float, hh: float, lift: PackedFloat32Array,
-		s_free: float) -> Dictionary:
+		s_free: float, thick: float) -> Dictionary:
 	var outs := PackedFloat32Array()
 	var ins := PackedFloat32Array()
 	for l in lift:
 		outs.append(1.0 + l)
-		var k_in := 1.0 + l - THICK
+		var k_in := 1.0 + l - thick
 		if s_free > 0.0:
 			k_in = minf(lerpf(k_in, 0.45, smoothstep(0.0, 0.5, s_free)), 1.0 + l - 0.02)
 		ins.append(k_in)
