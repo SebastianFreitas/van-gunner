@@ -11,6 +11,8 @@ const NAIL_H := 0.85
 const NAIL_FROM := 0.55
 ## Thumb shaft radius as a multiple of the index finger's shaft radius.
 const THUMB_R := 1.35
+## Degrees the left thumb's pad hint turns about its bone, so its nail sits on top.
+const LEFT_THUMB_TWIST := 60.0
 
 
 ## Builds `Skin_fingers` under the arm skeleton and returns, per finger in `ArmRig.FINGERS`,
@@ -88,6 +90,10 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 					- ArmSkinMesh.ring_frame(mi, sk, names[2], 0.0).origin
 			if toward.length() >= 1e-4:
 				pad = toward
+				# The left thumb's frame lands a quarter turn off: twist it back about the bone.
+				if suffix == ".L":
+					var axis := ArmSkinMesh.ring_frame(mi, sk, names[2], 0.0).basis.y.normalized()
+					pad = pad.rotated(axis, deg_to_rad(LEFT_THUMB_TWIST))
 	var r0 := _root_radius(root_pts, lens[first])
 	# The thumb is sized from the index's shaft, not its own thin glb root.
 	var use_ref := thumb and ref_r > 0.0
