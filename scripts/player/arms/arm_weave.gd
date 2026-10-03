@@ -10,8 +10,13 @@ const PERIOD := 3.6  ## seconds per main finger roll
 const ROLL_LAG := 0.9  ## radians of phase lag index -> middle -> ring -> pinky
 const HARMONIC := 0.37  ## second, slower wave as a multiple of PERIOD's frequency
 const HARMONIC_K := 0.3  ## its share of the amplitude, so the loop never reads as a loop
-const BASE := Vector3(35.0, 55.0, 45.0)  ## degrees curl of joints .01/.02/.03: always hooked
-const SWING := Vector3(14.0, 22.0, 18.0)  ## degrees of weave around BASE per joint
+## Degrees curl of joints .01/.02/.03 for index, middle, ring, pinky: a relaxed resting
+## cascade, DIP about half of PIP.
+const BASE: Array[Vector3] = [
+	Vector3(18.0, 28.0, 14.0), Vector3(24.0, 36.0, 18.0),
+	Vector3(30.0, 42.0, 22.0), Vector3(36.0, 48.0, 26.0),
+]
+const SWING := Vector3(6.0, 9.0, 5.0)  ## degrees of weave around BASE per joint
 const THUMB_BASE := Vector3(4.0, 10.0, 18.0)  ## degrees flex of thumb .01/.02/.03: tip bent
 const THUMB_SWING := Vector3(3.0, 6.0, 9.0)
 const THUMB_SPREAD := 42.0  ## degrees the thumb .01 bone is held splayed from the index
@@ -23,7 +28,7 @@ const THUMB_SPREAD_AXIS := Vector3.RIGHT  ## the thumb .01 axis that splays it f
 ## (a permanent thumbs-up); the free hand has its own flex, spread and swing axis.
 ## The axis swings the thumb out opposite the index, the base curls it back toward the index
 ## tip into an open C.
-const LEFT_THUMB_BASE := Vector3(12.0, 11.0, 44.0)  ## degrees flex of the left thumb at rest
+const LEFT_THUMB_BASE := Vector3(12.0, 14.0, 18.0)  ## degrees flex of the left thumb at rest
 const LEFT_THUMB_SPREAD := 79.0  ## degrees, replaces THUMB_SPREAD + THUMB_FAN on the left only
 ## Left thumb .01 swing-away axis, bone-local (normalized where it is used).
 const LEFT_THUMB_SPREAD_AXIS := Vector3(0.50, 0.01, -0.86)
@@ -34,6 +39,9 @@ const SPREAD := 6.0  ## degrees of side sway on each .01 bone, alternating sign
 ## Static abduction in degrees between neighbouring fingers about Vector3.BACK on each .01,
 ## so fingers twice as thick keep their gaps.
 const SPLAY := 14.0
+## Extra fan degrees per finger on the left hand only: curled fingers converge toward the
+## thumb side of the wrist, so the tips sit in a row instead of stacked on each other.
+const LEFT_FAN_OFFSET: Array[float] = [-3.0, 5.0, -10.0, -18.0]
 const SPLAY_SIGN := 1.0  ## flips the splay if the rig's Z points the other way
 const GRIP_SPLAY_K := 0.75  ## share of the splay the gripping hand uses
 const WRIST_CIRCLE := 8.0  ## degrees, wrist pitch and yaw 90 deg apart
@@ -162,7 +170,7 @@ func update(t: float) -> void:
 			if finger < 4:
 				a = w + phase - finger * ROLL_LAG
 				var wave := _wave(a)
-				deg = lerpf(BASE[j] + SWING[j] * wave, OPEN_CURL[j] + SWING[j] * wave * 0.3, f)
+				deg = lerpf(BASE[finger][j] +SWING[j] * wave, OPEN_CURL[j] + SWING[j] * wave * 0.3, f)
 			else:
 				a = w * 0.5 + phase + PI
 				var wave := _wave(a)
@@ -181,7 +189,8 @@ func update(t: float) -> void:
 						+ THUMB_ARC * sin(a * 0.5 + 0.9)) * THUMB_SPREAD_SIGN * lerpf(1.0, 1.25, f)))
 			if j == 0 and finger < 4:
 				var side := 1.0 if finger % 2 == 0 else -1.0
-				var fan := (float(finger) - 1.5) * SPLAY * SPLAY_SIGN * side_sign
+				var fan := (float(finger) - 1.5) * SPLAY * SPLAY_SIGN * side_sign \
+						+ (LEFT_FAN_OFFSET[finger] if hand_side == 1 else 0.0)
 				rot = rot * Quaternion(Vector3.BACK, deg_to_rad(fan
 						+ SPREAD * sin(a + 0.7) * side * lerpf(1.0, OPEN_SPREAD_K, f)))
 			sk.set_bone_pose_rotation(joint[&"bone"], rot)
