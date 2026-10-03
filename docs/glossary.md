@@ -2,9 +2,9 @@
 
 Owner's words → code names. Add a line when the owner uses a word the code does not.
 
-- loper: WindowRaider, scripts/enemies/window_raider.gd (+ _motion/_anim/_look/_targeting); the hunched door beast, scenes/enemies/window_raider.tscn, door_raider.png
+- loper: WindowRaider, scripts/enemies/window_raider.gd (+ _motion/_anim/_targeting); the hunched beast at the doors and the windows, scenes/enemies/window_raider.tscn, door_raider.png
 - door goon / door raider: the loper at a rear-door BreachPoint; resources/enemies/door_raider.tres (breach_point.gd)
-- crawler / window climber: the agile WindowRaider at a window; agile_raider.png, resources/enemies/agile_raider.tres, window_raider_look.gd fit_crawler
+- window loper / window climber: the agile WindowRaider (the loper) at a side or rear-door window; resources/enemies/agile_raider.tres. The green crawler art (agile_raider.png) was retired in 2026-10.
 - Wanjna: BikerBoss, scripts/enemies/biker_boss.gd, resources/enemies/biker_boss.tres, scenes/enemies/wanjna.png (extends WindowRaider)
 - window bars / bars / chains: IronCross, scripts/van/iron_cross.gd (+ _build/_geo; chains and padlock in iron_cross_build.gd)
 - broken bars: BrokenIronCross, scripts/van/broken_iron_cross.gd (after a window breach)

@@ -24,7 +24,7 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
 
 ## Raiders
 
-- **`is_elite` is explicit.** Agile (window climbing, green tint) does not imply elite loot. Set elite on the raider export, or via `mark_as_boss()` / `spawn_boss` in `encounter_spawner.gd`.
+- **`is_elite` is explicit.** Agile (window climbing) does not imply elite loot. Set elite on the raider export, or via `mark_as_boss()` / `spawn_boss` in `encounter_spawner.gd`.
 - `window_raider.gd` keeps its state, every `await` chain (assault, breach, attack loop, interior combat, retreat, death) and every method `BikerBoss` inherits or overrides. It stays over 400 lines for that reason. Per-frame chase math is in `window_raider_motion.gd`; targeting, lookups and the hit flash are in `window_raider_targeting.gd`. Helpers pass the raider node, never themselves, to `BreachPoint`, `CabinNav` and `BreachController`.
 - **`BikerBoss extends WindowRaider`** and calls `_snap_to_marker`, `_clear_motion`, `_current_van_speed`, `_apply_status_move_speed`, `_outgoing_damage`, `_release_breach` and `_breach_controller` as inherited methods. Moving or renaming any of them breaks the boss.
 
@@ -37,11 +37,11 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
   loop; `still`, `run`, `prowl` so far) set `frame_coords`, a new animation adds a sheet row
   (`SHEET_ROWS`) and a clip, and `_die` plays a `death` clip, when one exists, before the
   sink and fade; `run` steps at 18 fps while the raider moves and `still` rests
-  it on 0, frames 6 to 8 are airborne, 6 the kick; the crawler and the boss set `hframes 1`), centred 0.66 m below the node so its claws
+  it on 0, frames 6 to 8 are airborne, 6 the kick; the boss sets `hframes 1`), centred 0.66 m below the node so its claws
   sit at -1.62, the van floor under the 1.62 m breach markers. Outside (APPROACH and
   BREACHING) `window_raider_motion.gd` holds the loper's origin at `VanWheels.ROAD_Y + 1.62`
   so its feet stand on the road, 0.9 m under the floor, and ENTERING hops it up onto the
-  floor over the last `HOP_RUN` 1.3 m; the crawler and the boss keep the marker heights. The body hitbox
+  floor over the last `HOP_RUN` 1.3 m; the window loper and the boss keep the marker heights. The body hitbox
   is a cylinder (r 0.7, h 1.75 at y -0.75: floor to the top of the hump) and the
   head a sphere (r 0.36 at y -0.5: the skull and the hanging jaw), both
   orientation-free because the sprite is a billboard and the node is not.
@@ -54,19 +54,20 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
   `OUTSIDE_KEEP_OUT`: the body, both open rear-door leaves' swing, and the wheels. That
   puts it at z 5.85 at the rear doors, x ±3.6 at the side doors and x ±4.15 at the rear
   corners. Inside, `_clamp_in` holds it in the cabin shrunk by 0.85. ENTERING is exempt,
-  and the crawler and the boss are never cleared. The bulkhead passage (1.55 m wide) is
+  the window loper is not pushed out outside, and the boss is never cleared. The bulkhead passage (1.55 m wide) is
   not cleared, so a brief clip there is expected.
   `EnemyHealthBar.height` sets the bar's height per scene.
-- The window crawler (`agile_raider.png`, 80 x 48) is fitted at `_ready` by
-  `window_raider_look.gd`: sprite centred on the node (at a window the node
-  is in the opening) with a 16 px `Sprite3D.offset` so the head drawn on the
-  left sits over the origin (a node offset would not follow the billboard),
-  a cylinder body (r 0.75, h 0.65) and a head sphere (r 0.36). The body and
-  tail trailing to the right have no hitbox yet.
+- The window raider is the loper too (`agile_raider.tres`, `is_agile` true): same scene
+  defaults, sheet, hitboxes and clips; `is_agile` only adds the `agile` group (window pool in
+  `breach_controller.gd`) and exempts it from the road hold, so outside it floats at the
+  1.62 m window marker with its claws at the van floor. That float is a placeholder until the
+  wall-grip step (JUMPING, GRIPPING, CLIMBING). Inside the cabin it is clamped like the door
+  loper; only the boss skips `clear_point`. The green crawler (`agile_raider.png`,
+  `window_raider_look.gd`) was retired (owner, 2026-10-03).
 - `biker_boss.tscn` overrides the sprite back to `pixel_size 0.006`, zero
   offset and the old capsule plus sphere, so Wanjna is unchanged until the
   pixel-art pass redraws it.
-- Both PNGs come from `py -3 tools/gen_enemy_sprites.py` (`--out`,
+- The loper's sheet comes from `py -3 tools/gen_enemy_sprites.py` (`--out`,
   `--preview` to draft outside the repo); never paint over them.
 
 ## Encounters

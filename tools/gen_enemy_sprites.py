@@ -4,9 +4,8 @@ Owner's design (2026-10-01, second pass): creepy, not cute, Darkest Dungeon
 dark. The door raider is a humanoid gone feral: a hunched loper whose head
 hangs forward out of a furred ruff, tapered arms longer than the legs with
 the claws on the van floor, hair that trails every bob, knobbed spine,
-hanging jaw, corpse-grey skin and black eye pits, nothing bright. The window raider (the low yellow crawler that
-fits through a side window) is still the first pass and waits for its own
-redraw. door_raider.png is a 13-frame 832 x 80 run sheet (a bounding charge,
+hanging jaw, corpse-grey skin and black eye pits, nothing bright. The loper is both the door raider and the window
+raider. door_raider.png is a 13-frame 832 x 80 run sheet (a bounding charge,
 seen from the front); frame 0 is the still. Every frame has the
 feral face (draw_feral_head), riding the pose's head bob and jaw lag.
 
@@ -34,11 +33,10 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "scenes" / "enemies"
 
-# Canvas sizes: the fat beast is 1.92 x 1.73 m, the crawler 1.92 x 1.15 m.
+# Canvas size: the loper (door and window raider) is 1.54 x 1.92 m.
 LOPER_SIZE = (64, 80)
 LOPER_FRAMES = 13
 LOPER_SHEET = (LOPER_SIZE[0] * LOPER_FRAMES, LOPER_SIZE[1])
-CRAWLER_SIZE = (80, 48)
 
 OUTLINE = (30, 20, 18)
 
@@ -664,33 +662,6 @@ def draw_loper_sheet() -> Canvas:
 	return sheet
 
 
-def draw_crawler() -> Canvas:
-	c = Canvas(CRAWLER_SIZE)
-	hx, hy, hrx, hry = 24, 26, 15, 12
-	# Low body, rising toward the rear, with the hips a little fuller.
-	body = c.mask(capsule(30, 30, 68, 22, 10, 9))
-	c.part(body, YEL, YEL_SH, YEL_HI, light(49, 26, 24, 10, 0.5, 0.8), 0.5, -0.9)
-	spine = c.mask(both(
-		lambda x, y: 30 <= x <= 72 and (x, y) in body,
-		lambda x, y: (x, y - 1) not in body or (x, y - 2) not in body
-			or (x, y - 3) not in body or (x, y - 4) not in body))
-	c.fill(spine, WHITE_HI)
-	c.fill({p for p in spine if p[0] > 60}, WHITE)
-	draw_tail(c, [(70, 18), (76, 11), (75, 4), (69, 2)], 3.0, 72, 7)
-	# Legs splayed wide: a crawl that squeezes through a window.
-	draw_leg(c, 58, 32, 53, 43, 3.5, 5, 2.5)
-	draw_leg(c, 69, 30, 75, 43, 3.5, 5, 2.5)
-	draw_leg(c, 15, 33, 7, 43, 3.5, 5, 2.5)
-	draw_leg(c, 33, 33, 41, 43, 3.5, 5, 2.5)
-	head = c.mask(ellipse(hx, hy, hrx, hry))
-	c.part(head, YEL, YEL_SH, YEL_HI, light(hx, hy, hrx, hry), 0.5, -0.85)
-	c.fill({(x, y) for x, y in body if abs(x - hx) <= 2 and y < hy - hry + 1}, WHITE_HI)
-	draw_face(c, head, hx, hy, hrx, hry, eye_dx=7, eye_ry=2, stripe_w=5,
-		mouth_cy=34, mouth_rx=9, mouth_ry=3, tongue_cy=39, tongue_rx=5, tongue_ry=7,
-		ear_pts=[[(11, 18), (14, 6), (21, 16)], [(27, 16), (34, 5), (37, 18)]])
-	return c
-
-
 def check(im: Image.Image, name: str, size: tuple[int, int]) -> None:
 	cols = set(im.getdata())
 	alphas = {p[3] for p in cols}
@@ -708,8 +679,7 @@ def main() -> None:
 	args = ap.parse_args()
 	out = Path(args.out) if args.out else OUT
 	out.mkdir(parents=True, exist_ok=True)
-	for name, drawer, size in (("door_raider", draw_loper_sheet, LOPER_SHEET),
-			("agile_raider", draw_crawler, CRAWLER_SIZE)):
+	for name, drawer, size in (("door_raider", draw_loper_sheet, LOPER_SHEET),):
 		im = drawer().save(out / f"{name}.png")
 		check(im, name, size)
 		if args.preview:

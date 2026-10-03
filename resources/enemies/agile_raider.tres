@@ -6,6 +6,6 @@
 [resource]
 script = ExtResource("1")
 id = &"agile_raider"
-display_name = "Window Raider"
+display_name = "Window Loper"
 scene = ExtResource("2")
 is_agile = true

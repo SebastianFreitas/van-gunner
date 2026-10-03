@@ -46,13 +46,15 @@ func keep_feet_on_road() -> void:
 
 
 ## Where the loper may stand for its phase: outside it stays off the van's body, door leaves
-## and wheels, inside it stays off the cabin walls. Other phases and the other beasts pass.
+## and wheels, inside it stays off the cabin walls. The window loper floats at its marker
+## outside, so only road walkers are pushed out; every non-boss raider is clamped inside.
+## Other phases and the boss pass.
 func clear_point(p: Vector3) -> Vector3:
-	if not _walks_on_road():
+	if raider.is_boss:
 		return p
 	var phase: int = raider.assault_phase
 	if phase == WindowRaider.AssaultPhase.APPROACH or phase == WindowRaider.AssaultPhase.BREACHING:
-		return _push_out(p)
+		return _push_out(p) if _walks_on_road() else p
 	if (
 		phase == WindowRaider.AssaultPhase.ATTACKING_BENCH
 		or phase == WindowRaider.AssaultPhase.ATTACKING_PLAYER

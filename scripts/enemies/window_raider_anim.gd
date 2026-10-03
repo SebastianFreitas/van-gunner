@@ -2,7 +2,7 @@ extends RefCounted
 ## Plays named clips from the loper's sheet (door_raider.png, 64 x 80 cells, SHEET_COLUMNS x
 ## SHEET_ROWS): each clip is a sheet row with its frames, fps and loop flag, and new animations
 ## add a row and a clip here. Does nothing for a sprite whose hframes/vframes are not the
-## sheet's (the window crawler, the biker boss: 1 x 1).
+## sheet's (the biker boss: 1 x 1).
 
 ## Columns of the sheet: the thirteen run frames.
 const SHEET_COLUMNS := 13
