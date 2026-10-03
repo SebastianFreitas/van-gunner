@@ -19,6 +19,9 @@ const KNUCKLE_RAMP_START := 0.5
 ## Glb finger segments shrink to a thin core hidden inside the procedural finger tubes
 ## (ArmFingers); never bulked, so it stays hidden.
 const FINGER_CORE := 0.55
+## The glb's own fingertip (".03") collapses to a sliver on its bone line: at FINGER_CORE its tip
+## still poked out beside the procedural tube and claw as a second, human nail.
+const TIP_CORE := 0.05
 ## Along a finger's ".01" bone (and the thumb's ".02"), the gain ramps from 1.0 to FINGER_CORE
 ## between these fractions of the bone length, so the tube's knuckle knob covers the step.
 const FINGER_RAMP := Vector2(0.10, 0.35)
@@ -37,7 +40,7 @@ const GAIN: Array = [
 	# ".01" is the metacarpal (thenar mass), tapered to the tip.
 	["DEF-thumb.01", 1.9],
 	["DEF-thumb.02", FINGER_CORE],
-	["DEF-thumb.03", FINGER_CORE],
+	["DEF-thumb.03", TIP_CORE],
 	["DEF-palm.01", 1.85],
 	["DEF-palm.04", 1.85],
 	["DEF-palm", 1.75],
@@ -59,14 +62,14 @@ static func _raw_gain(bone_name: String) -> float:
 		if bone_name.contains(".02."):
 			g = FINGER_CORE
 		elif bone_name.contains(".03."):
-			g = FINGER_CORE
+			g = TIP_CORE
 	return g
 
 
 static func _gain_for(bone_name: String, bulk: float) -> float:
 	var g := _raw_gain(bone_name)
-	# A finger core must stay thin under any bulk, or it would poke out of its tube.
-	if g == FINGER_CORE:
+	# Finger cores and tips must stay thin under any bulk, or they would poke out of their tube.
+	if g == FINGER_CORE or g == TIP_CORE:
 		return g
 	return _bulked(g, bulk)
 
