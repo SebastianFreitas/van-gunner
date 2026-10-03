@@ -8,15 +8,17 @@ const ARC_SEGS := 16
 ## Sections on the finger (the nail bed) and past its tip (the free claw).
 const BED_RINGS := 14
 const FREE_RINGS := 12
-## Share of the tip bone (t) where the bed starts (buried root) and where the free claw leaves the finger.
-const BED_FROM := 0.28
+## Share of the tip bone (t) where the bed starts (buried root; the thumb passes its own) and where the free claw leaves the finger.
+const BED_FROM := 0.36
 const BED_TO := 0.90
+## The thumb bends hardest at its tip joint, so its skin swells over an early root: start later.
+const THUMB_BED_FROM := 0.52
 ## Top of the full-height nail above the skin, as a share of the finger's half size.
-const LIFT := 0.09
+const LIFT := 0.2
 ## How far under the skin the root and side edges sit, same unit.
 const BURY := 0.07
 ## Plate thickness, same unit.
-const THICK := 0.12
+const THICK := 0.1
 ## Share of the bed over which the nail rises out of the proximal fold.
 const ROOT := 0.45
 ## Share of ARC (from the dorsal line) past which the sides start to dive under the skin.
@@ -26,7 +28,8 @@ const SIDE := 0.55
 ## `rings` are `ArmFingers.build`'s tip rings ({t, centre, half_w, half_h}, centre x lateral, y
 ## along the bone, z dorsal). Origin and axes are those of the rings; `reach` is how far the
 ## point clears the finger's pole and `curve_deg` how far it hooks toward the pad (-Z).
-static func mesh(rings: Array, reach: float, curve_deg: float) -> ArrayMesh:
+static func mesh(rings: Array, reach: float, curve_deg: float,
+		bed_from: float = BED_FROM) -> ArrayMesh:
 	var first: Dictionary = rings[0]
 	var last: Dictionary = rings[rings.size() - 1]
 	var span := float(last[&"t"]) - float(first[&"t"])
@@ -38,7 +41,7 @@ static func mesh(rings: Array, reach: float, curve_deg: float) -> ArrayMesh:
 	var secs: Array[Dictionary] = []
 	for i in BED_RINGS:
 		var u := float(i) / float(BED_RINGS - 1)
-		var t := lerpf(BED_FROM, BED_TO, u)
+		var t := lerpf(bed_from, BED_TO, u)
 		var r := _lerp_ring(rings, t)
 		var root := smoothstep(0.0, ROOT, u)
 		var lift := PackedFloat32Array()
