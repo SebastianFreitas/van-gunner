@@ -5,6 +5,8 @@ extends Node
 ## SceneRouter.go_to_van() frees the current scene, then the worker parses
 ## --probe-* user args, drives DebugCommands and/or takes a screenshot, and quits
 ## with a nonzero exit on any failure so tools/probe.py can report it.
+## With --probe-views=a,b the --probe-shot value is a directory and each `arms cam` view
+## is saved to <dir>/<view>.png in one launch.
 
 var _done := false
 
@@ -136,6 +138,9 @@ func _run_eval(text: String, target: Node) -> void:
 
 func _take_shots(args: Dictionary) -> void:
 	var path: String = String(args["probe-shot"])
+	if args.has("probe-views"):
+		await _take_view_shots(path, String(args["probe-views"]))
+		return
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var every: float = float(args.get("probe-every", "0"))
 	var max_shots: int = int(args.get("probe-max", "0"))
@@ -149,6 +154,27 @@ func _take_shots(args: Dictionary) -> void:
 				await get_tree().create_timer(every).timeout
 	else:
 		await _save_shot(path)
+
+
+## One PNG per `arms cam` view into the directory `dir`, named `<view>.png`.
+func _take_view_shots(dir: String, views: String) -> void:
+	DirAccess.make_dir_recursive_absolute(dir)
+	for raw in views.split(","):
+		var view: String = raw.strip_edges()
+		if view.is_empty():
+			continue
+		var out: String = DebugCommands.run("arms cam " + view)
+		print("PROBE VIEW %s" % view)
+		print("  " + out)
+		if out != "arms cam " + view:
+			_fail("arms cam %s: %s" % [view, out])
+			return
+		for i in range(3):
+			await get_tree().process_frame
+		await _save_shot(dir.path_join(view + ".png"))
+		if _done:
+			return
+	DebugCommands.run("arms cam off")
 
 
 func _save_shot(path: String) -> void:
