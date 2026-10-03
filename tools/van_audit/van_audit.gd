@@ -2,6 +2,8 @@ extends Node
 ## Headless van audit entry scene: collects every visible triangle of the van, checks
 ## it and writes a report. Mirrors tools/probe: the entry scene spawns a worker under
 ## the root because SceneRouter.go_to_van() frees the current scene.
+## `--audit-passes=a,b` runs only those of closed, half, open, win_half, win_open, tail
+## (default all), so tools/smoke.py can shard the run.
 
 const AuditMesh := preload("res://tools/van_audit/van_audit_mesh.gd")
 const AuditStates := preload("res://tools/van_audit/van_audit_states.gd")
@@ -11,6 +13,7 @@ const AuditLeaks := preload("res://tools/van_audit/van_audit_leaks.gd")
 const AuditFlicker := preload("res://tools/van_audit/van_audit_flicker.gd")
 const AuditProbe := preload("res://tools/van_audit/van_audit_probe.gd")
 const RIG_PATH := ^"TravelPath/VanFollow/VanRig"
+const ALL_PASSES: PackedStringArray = ["closed", "half", "open", "win_half", "win_open", "tail"]
 
 var rig: Node3D
 var tris: RefCounted
@@ -53,6 +56,9 @@ func _run() -> void:
 		_fail("could not find van rig at %s" % String(RIG_PATH))
 		return
 
+	var passes := _parse_passes()
+	if _done:
+		return
 	var seed_arg := _user_arg("--van-seed=")
 	if seed_arg != "":
 		var look := get_tree().get_first_node_in_group(VanLook.GROUP) as VanLook
@@ -84,14 +90,16 @@ func _run() -> void:
 		_done = true
 		get_tree().quit(0)
 		return
-	check_height()
+	if passes.has("tail"):
+		check_height()
 
 	var states := AuditStates.new(rig)
 	var roots: Dictionary = states.moving_roots()
 	var closed_boxes: Dictionary = _closed_boxes(roots)
 
-	AuditFlicker.check_flicker(tris, self, "closed", {})
-	AuditOverlap.check_clip(tris, self, "closed", roots)
+	if passes.has("closed"):
+		AuditFlicker.check_flicker(tris, self, "closed", {})
+		AuditOverlap.check_clip(tris, self, "closed", roots)
 
 	var door_roots: Dictionary = {}
 	var front_roots: Dictionary = {}
@@ -104,6 +112,8 @@ func _run() -> void:
 	var state_fractions: PackedFloat32Array = [0.5, 1.0, 0.5, 1.0]
 	for i in range(state_names.size()):
 		var pose_name: String = state_names[i]
+		if not passes.has(pose_name):
+			continue
 		var front: bool = pose_name.begins_with("win_")
 		states.pose(0.0)
 		states.pose_front(0.0)
@@ -125,6 +135,10 @@ func _run() -> void:
 	states.pose(0.0)
 	states.pose_front(0.0)
 	collect()
+	if not passes.has("tail"):
+		write_report()
+		get_tree().quit(0)
+		return
 
 	var gaps := AuditGaps.new()
 	var proxies := gaps.build_proxies(tris, rig)
@@ -139,6 +153,20 @@ func _run() -> void:
 
 	write_report()
 	get_tree().quit(0)
+
+
+## Pass names from `--audit-passes=`; all of them when absent. Fails on an unknown name.
+func _parse_passes() -> PackedStringArray:
+	var arg := _user_arg("--audit-passes=")
+	if arg == "":
+		return ALL_PASSES
+	var out := PackedStringArray()
+	for pass_name in arg.split(","):
+		if not ALL_PASSES.has(pass_name):
+			_fail("unknown audit pass '%s'" % pass_name)
+			return out
+		out.append(pass_name)
+	return out
 
 
 ## Stops every MachineMotion and restores its parts to their rest pose; animated fan, flywheel

@@ -22,12 +22,6 @@ func fork_pass() -> bool:
 
 	driver._log(DebugCommands.run("speed"))
 
-	var stress := DebugCommands.run("facade stress 1")
-	driver._log(stress)
-	if not stress.begins_with("OK"):
-		driver._fail("facade stress: " + stress)
-		return false
-
 	if not _assert_walk_wreck_share(travel):
 		return false
 

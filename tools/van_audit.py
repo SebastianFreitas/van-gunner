@@ -64,6 +64,79 @@ def main() -> int:
     )
 
 
+PASSES = ("closed", "half", "open", "win_half", "win_open", "tail")
+
+
+def build_args(
+    out: pathlib.Path, probes: list[str] | None = None, van_seed: int | None = None,
+    plant_flicker: bool = False, passes: list[str] | None = None,
+) -> list[str]:
+    """The Godot command line for one audit launch; `passes` None runs them all."""
+    args = [
+        godot_exe(), "--headless", "--path", str(ROOT),
+        "res://tools/van_audit/van_audit.tscn", "--", "--smoke-sandbox",
+        "--audit-out=" + out.as_posix(),
+    ]
+    args += ["--probe=" + probe for probe in probes or []]
+    if van_seed is not None:
+        args.append(f"--van-seed={van_seed}")
+    if plant_flicker:
+        args.append("--plant-flicker")
+    if passes:
+        args.append("--audit-passes=" + ",".join(passes))
+    return args
+
+
+def summary_counts(text: str) -> dict[str, int]:
+    """Sums every `AUDIT SUMMARY K=V ...` line in the output into one dict."""
+    counts: dict[str, int] = {}
+    for line in text.splitlines():
+        match = SUMMARY.match(ANSI.sub("", line.rstrip()))
+        if match:
+            for pair in match.group(1).split():
+                key, _, value = pair.partition("=")
+                if value:
+                    counts[key] = counts.get(key, 0) + int(value)
+    return counts
+
+
+def judge(
+    stdout_text: str, returncode: int, strict: bool, probes: bool = False,
+) -> tuple[int, str]:
+    """Judges one audit launch's output; returns (exit code, the lines to print)."""
+    lines = [ANSI.sub("", line.rstrip()) for line in stdout_text.splitlines()]
+    out = [line for line in lines if line.startswith("AUDIT")]
+
+    hits = [line for line in lines if FAILURE.search(line)]
+    out += ["   " + hit for hit in hits]
+    warnings = [line for line in lines if "WARNING:" in line]
+    out.append(f"   {len(warnings)} warning(s)")
+    out.append(f"   exit {returncode}, {len(hits)} failure line(s)")
+
+    def done(code: int, last: str | None = None) -> tuple[int, str]:
+        if last:
+            out.append(last)
+        return code, "\n".join(out)
+
+    if hits:
+        return done(1, f"VAN AUDIT FAILED: {len(hits)} failure line(s)")
+    if returncode != 0:
+        return done(1, f"VAN AUDIT FAILED: exit code {returncode}")
+    if probes:
+        return done(0)
+    if not any(line == "AUDIT DONE" for line in lines):
+        return done(1, "VAN AUDIT FAILED: missing 'AUDIT DONE' line")
+
+    summary = ""
+    for line in lines:
+        match = SUMMARY.match(line)
+        if match:
+            summary = match.group(1).strip()
+    if any(value != 0 for value in summary_counts(stdout_text).values()):
+        return done(1 if strict else 0, f"VAN AUDIT FINDINGS: {summary}")
+    return done(0, "VAN AUDIT CLEAN")
+
+
 def run(
     out: pathlib.Path, strict: bool = False, timeout: int = 600,
     probes: list[str] | None = None, van_seed: int | None = None,
@@ -73,23 +146,10 @@ def run(
     out.parent.mkdir(parents=True, exist_ok=True)
 
     seed_import_cache(ROOT)
-    exe = godot_exe()
-    args = [
-        exe, "--headless", "--path", str(ROOT),
-        "res://tools/van_audit/van_audit.tscn", "--", "--smoke-sandbox",
-        "--audit-out=" + out.as_posix(),
-    ]
-    args += ["--probe=" + probe for probe in probes]
-    extra = ""
-    if van_seed is not None:
-        args.append(f"--van-seed={van_seed}")
-        extra += f" --van-seed={van_seed}"
-    if plant_flicker:
-        args.append("--plant-flicker")
-        extra += " --plant-flicker"
+    args = build_args(out, probes, van_seed, plant_flicker)
     print(
         "== van_audit: godot --headless --path . res://tools/van_audit/van_audit.tscn "
-        "-- --smoke-sandbox --audit-out=" + out.as_posix() + extra
+        "-- " + " ".join(args[args.index("--") + 1:])
     )
 
     with project_lock(ROOT):
@@ -108,47 +168,9 @@ def run(
             print("VAN AUDIT FAILED: timed out")
             return 1
 
-    lines = [ANSI.sub("", line.rstrip()) for line in (proc.stdout + proc.stderr).splitlines()]
-    for line in lines:
-        if line.startswith("AUDIT"):
-            print(line)
-
-    hits = [line for line in lines if FAILURE.search(line)]
-    for hit in hits:
-        print("   " + hit)
-    warnings = [line for line in lines if "WARNING:" in line]
-    print(f"   {len(warnings)} warning(s)")
-    print(f"   exit {proc.returncode}, {len(hits)} failure line(s)")
-
-    if hits:
-        print(f"VAN AUDIT FAILED: {len(hits)} failure line(s)")
-        return 1
-    if proc.returncode != 0:
-        print(f"VAN AUDIT FAILED: exit code {proc.returncode}")
-        return 1
-    if probes:
-        return 0
-    if not any(line == "AUDIT DONE" for line in lines):
-        print("VAN AUDIT FAILED: missing 'AUDIT DONE' line")
-        return 1
-
-    summary = ""
-    findings = False
-    for line in lines:
-        match = SUMMARY.match(line)
-        if match:
-            summary = match.group(1).strip()
-            for pair in summary.split():
-                _, _, value = pair.partition("=")
-                if value and int(value) != 0:
-                    findings = True
-
-    if findings:
-        print(f"VAN AUDIT FINDINGS: {summary}")
-        return 1 if strict else 0
-
-    print("VAN AUDIT CLEAN")
-    return 0
+    code, text = judge(proc.stdout + proc.stderr, proc.returncode, strict, bool(probes))
+    print(text)
+    return code
 
 
 if __name__ == "__main__":

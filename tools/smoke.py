@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Headless smoke test for van-gunner: `py -3 tools/smoke.py [--bless]`.
 
-Runs one Godot pass that plays a full van run headlessly (class pick, boons,
+Runs several Godot jobs in parallel (tools/smoke_jobs.py, at most `--jobs N`, default
+min(cpu count, 6); `--serial` is `--jobs 1`; about 100 s wall on 4 cores, 260 s serial):
+the game run, five facade stress shards and six van audit shards, longest first. The
+game run plays a full van run headlessly (class pick, boons,
 bench, combat, rest offer) with the save sandbox on, so it never touches a
 real save on disk. Fails on any output line containing SCRIPT ERROR, Parse
 Error or ERROR:, on a non-zero exit, on a timeout, or if the run does not log
@@ -10,9 +13,9 @@ Error or ERROR:, on a non-zero exit, on a timeout, or if the run does not log
 The run writes a deterministic fingerprint of class stats, loot pools, the
 act deck and wave plans to tools/smoke/fingerprint.txt. Without `--bless`,
 this is diffed against the committed tools/smoke/fingerprint.baseline.txt;
-with `--bless`, the baseline is overwritten after a clean run. The headless run then
-also runs `tools/van_audit.py --strict` (about 50 s) and fails on any audit finding;
-`--plant-flicker` plants a coplanar box pair in the audit to prove it fails.
+with `--bless`, the baseline is overwritten after a clean run. The headless run's
+audit shards (`van_audit.PASSES`, summed) fail on any audit finding; `--plant-flicker`
+runs one unsharded audit with a coplanar box pair planted to prove it fails.
 
 `--shots DIR` plays the same run in a real window instead of headless, since
 headless Godot renders nothing, and saves PNGs to DIR at four checkpoints (idle,
@@ -33,13 +36,13 @@ import difflib
 import os
 import pathlib
 import re
-import subprocess
 import sys
 import time
 
 import check
 import hidden_desktop
 import van_audit
+from smoke_jobs import Job, run_jobs
 from godot_env import godot_exe, has_import_cache, project_lock, seed_import_cache, stamp_clean
 
 
@@ -55,16 +58,106 @@ FINGERPRINT = ROOT / "tools" / "smoke" / "fingerprint.txt"
 BASELINE = ROOT / "tools" / "smoke" / "fingerprint.baseline.txt"
 
 
-def _audit_ok(opts: argparse.Namespace) -> bool:
-    """Runs the van audit in strict mode; it takes its own project lock."""
-    code = van_audit.run(
-        ROOT / ".godot" / "van_audit" / "report.txt", strict=True,
-        timeout=TIMEOUT_SECONDS, plant_flicker=opts.plant_flicker,
-    )
-    if code != 0:
-        print("SMOKE FAILED: van audit (strict) failed; report at .godot/van_audit/report.txt")
+STRESS_SHARDS = 5
+# Estimated seconds alone, for the longest-first start order.
+EST_GAME, EST_STRESS = 38.0, 17.0
+EST_AUDIT = {"closed": 40.0, "tail": 19.0}
+
+
+def _lines(job: Job) -> list[str]:
+    return [ANSI.sub("", line.rstrip()) for line in job.output.splitlines()]
+
+
+def _job_failed(job: Job, label: str) -> bool:
+    """Prints why a job could not even produce output (timeout, no start)."""
+    if job.timed_out:
+        print(f"   timed out after {TIMEOUT_SECONDS}s")
+        print(f"SMOKE FAILED: {label} timed out")
+        return True
+    if job.error:
+        print(f"SMOKE FAILED: {label} could not start: {job.error}")
+        return True
+    return False
+
+
+def _game_ok(job: Job) -> bool:
+    if _job_failed(job, "game run"):
+        return False
+    lines = _lines(job)
+    hits = [line for line in lines if FAILURE.search(line)]
+    for hit in hits:
+        print("   " + hit)
+    warnings = [line for line in lines if "WARNING:" in line]
+    print(f"   {len(warnings)} warning(s)")
+    smoke_lines = [line for line in lines if line.startswith("SMOKE:")]
+    for line in smoke_lines:
+        print("   " + line)
+    print(f"   exit {job.returncode}, {len(hits)} failure line(s)")
+
+    if hits:
+        print(f"SMOKE FAILED: {len(hits)} failure line(s)")
+        return False
+    if job.returncode != 0:
+        print(f"SMOKE FAILED: exit code {job.returncode}")
+        return False
+    if not any(line == "SMOKE: done" for line in smoke_lines):
+        print("SMOKE FAILED: missing 'SMOKE: done' line")
+        return False
+    if not FINGERPRINT.exists():
+        print("SMOKE FAILED: missing fingerprint.txt")
         return False
     return True
+
+
+def _stress_ok(jobs: list[Job]) -> bool:
+    ok = True
+    for job in jobs:
+        label = f"facade stress shard {job.name.removeprefix('stress ')}"
+        lines = _lines(job)
+        stress = [line for line in lines if line.startswith("STRESS")]
+        hits = [line for line in lines if FAILURE.search(line)]
+        if _job_failed(job, label):
+            ok = False
+        elif hits or job.returncode != 0 or "STRESS: done" not in lines:
+            for line in stress + hits:
+                print("   " + line)
+            print(f"   exit {job.returncode}, {len(hits)} failure line(s)")
+            print(f"SMOKE FAILED: {label}")
+            ok = False
+        else:
+            for line in stress:
+                if line.startswith("STRESS: OK stress"):
+                    print("   " + line)
+    return ok
+
+
+def _audit_ok(jobs: list[Job]) -> bool:
+    """Judges the audit shards (errors only), then the summed counts strictly."""
+    ok = True
+    totals: dict[str, int] = {}
+    for job in jobs:
+        print(f"   {job.name}:")
+        if _job_failed(job, job.name):
+            ok = False
+            continue
+        code, text = van_audit.judge(job.output, job.returncode, False)
+        for line in text.splitlines():
+            if not line.startswith(("AUDIT SUMMARY", "VAN AUDIT CLEAN", "VAN AUDIT FINDINGS")):
+                print("   " + line)
+        if code != 0:
+            ok = False
+        for key, value in van_audit.summary_counts(job.output).items():
+            totals[key] = totals.get(key, 0) + value
+    summary = " ".join(f"{key}={value}" for key, value in totals.items())
+    print("AUDIT SUMMARY " + summary)
+    if any(totals.values()):
+        print(f"VAN AUDIT FINDINGS: {summary}")
+        ok = False
+    elif ok:
+        print("VAN AUDIT CLEAN")
+    if not ok:
+        print("SMOKE FAILED: van audit (strict) failed; reports at .godot/van_audit/")
+    return ok
 
 
 def main() -> int:
@@ -84,7 +177,13 @@ def main() -> int:
         "--plant-flicker", action="store_true",
         help="plant a coplanar box pair in the audit to prove the strict audit fails",
     )
+    parser.add_argument(
+        "--jobs", type=int, default=min(os.cpu_count() or 2, 6), metavar="N",
+        help="run at most N Godot jobs at once (default min(cpu count, 6))",
+    )
+    parser.add_argument("--serial", action="store_true", help="same as --jobs 1")
     opts = parser.parse_args()
+    max_jobs = 1 if opts.serial else max(opts.jobs, 1)
 
     if opts.plant_flicker and opts.shots:
         print("SMOKE FAILED: --plant-flicker needs the headless run")
@@ -116,6 +215,7 @@ def main() -> int:
 
     seed_import_cache(ROOT)
     exe = godot_exe()
+    game_blocking = None
     if shots is not None:
         args = [
             exe, "--path", str(ROOT),
@@ -129,14 +229,46 @@ def main() -> int:
             f"--smoke-sandbox --smoke-shots={shots.as_posix()}"
             + (f" --smoke-van-seeds={opts.van_seeds}" if opts.van_seeds > 0 else "")
         )
+        if sys.platform == "win32":
+            def game_blocking() -> tuple[int, str]:
+                return hidden_desktop.run_hidden(args, ROOT, TIMEOUT_SECONDS)
     else:
         args = [
             exe, "--headless", "--path", str(ROOT),
             "res://tools/smoke/smoke_test.tscn", "--", "--smoke-sandbox",
         ]
         print("== smoke: godot --headless --path . res://tools/smoke/smoke_test.tscn -- --smoke-sandbox")
+
+    game = Job("game", args, EST_GAME, game_blocking)
+    stress = [
+        Job(
+            f"stress {i}/{STRESS_SHARDS}",
+            [
+                exe, "--headless", "--path", str(ROOT), "res://tools/smoke/facade_stress.tscn",
+                "--", "--smoke-sandbox", f"--stress-shard={i}/{STRESS_SHARDS}",
+            ],
+            EST_STRESS,
+        )
+        for i in range(STRESS_SHARDS)
+    ]
+    audit: list[Job] = []
+    report_dir = ROOT / ".godot" / "van_audit"
+    if shots is None and opts.plant_flicker:
+        report_dir.mkdir(parents=True, exist_ok=True)
+        audit.append(Job(
+            "audit", van_audit.build_args(report_dir / "report.txt", plant_flicker=True), 155.0,
+        ))
+    elif shots is None:
+        report_dir.mkdir(parents=True, exist_ok=True)
+        for name in van_audit.PASSES:
+            audit.append(Job(
+                f"audit {name}",
+                van_audit.build_args(report_dir / f"report_{name}.txt", passes=[name]),
+                EST_AUDIT.get(name, 30.0),
+            ))
+
+    wall_start = time.time()
     with project_lock(ROOT):
-        started = time.time()
         if not has_import_cache(ROOT):
             # The game never imports: without the cache every texture and class lookup
             # fails and the run hangs until the timeout, so a longer timeout would not
@@ -147,63 +279,23 @@ def main() -> int:
             if import_hits:
                 print(f"SMOKE FAILED: import scan printed {len(import_hits)} failure line(s)")
                 return 1
-        if shots is not None and sys.platform == "win32":
-            try:
-                returncode, output = hidden_desktop.run_hidden(args, ROOT, TIMEOUT_SECONDS)
-            except subprocess.TimeoutExpired:
-                print(f"   timed out after {TIMEOUT_SECONDS}s")
-                print("SMOKE FAILED: timed out")
-                return 1
-            except OSError as err:
-                print(f"SMOKE FAILED: could not start Godot on a hidden desktop: {err}")
-                return 1
-        else:
-            try:
-                proc = subprocess.run(
-                    args,
-                    cwd=ROOT,
-                    capture_output=True,
-                    encoding="utf-8",
-                    errors="replace",
-                    timeout=TIMEOUT_SECONDS,
-                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-                )
-            except subprocess.TimeoutExpired:
-                print(f"   timed out after {TIMEOUT_SECONDS}s")
-                print("SMOKE FAILED: timed out")
-                return 1
-            returncode, output = proc.returncode, proc.stdout + proc.stderr
+        run_jobs([game] + stress + audit, max_jobs, ROOT, TIMEOUT_SECONDS)
+    started = game.start
+    wall = f"   wall {time.time() - wall_start:.0f} s (jobs {max_jobs})"
 
-    lines = [ANSI.sub("", line.rstrip()) for line in output.splitlines()]
-    hits = [line for line in lines if FAILURE.search(line)]
-    for hit in hits:
-        print("   " + hit)
-    warnings = [line for line in lines if "WARNING:" in line]
-    print(f"   {len(warnings)} warning(s)")
-    smoke_lines = [line for line in lines if line.startswith("SMOKE:")]
-    for line in smoke_lines:
-        print("   " + line)
-    print(f"   exit {returncode}, {len(hits)} failure line(s)")
-
-    if hits:
-        print(f"SMOKE FAILED: {len(hits)} failure line(s)")
+    if not _game_ok(game):
         return 1
-    if returncode != 0:
-        print(f"SMOKE FAILED: exit code {returncode}")
+    if not _stress_ok(stress):
         return 1
-    if not any(line == "SMOKE: done" for line in smoke_lines):
-        print("SMOKE FAILED: missing 'SMOKE: done' line")
-        return 1
-    if not FINGERPRINT.exists():
-        print("SMOKE FAILED: missing fingerprint.txt")
-        return 1
+    audit_ok = shots is not None or _audit_ok(audit)
 
     if opts.bless:
         BASELINE.write_bytes(FINGERPRINT.read_bytes())
         print("BASELINE WRITTEN")
-        if shots is None and not _audit_ok(opts):
+        if not audit_ok:
             return 1
         stamp_clean(ROOT, "smoke", started)
+        print(wall)
         print("SMOKE CLEAN")
         return 0
 
@@ -224,7 +316,7 @@ def main() -> int:
         print("SMOKE FAILED: fingerprint differs from baseline")
         return 1
 
-    if shots is None and not _audit_ok(opts):
+    if not audit_ok:
         return 1
     stamp_clean(ROOT, "smoke", started)
     if shots is not None:
@@ -232,6 +324,7 @@ def main() -> int:
         print(f"   {len(pngs)} shot(s) in {shots}:")
         for png in pngs:
             print("     " + png.name)
+    print(wall)
     print("SMOKE CLEAN")
     return 0
 

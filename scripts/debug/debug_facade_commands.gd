@@ -16,6 +16,7 @@ const OPENING_SIDE_STREET := 1
 const OPENING_BAY := 2
 
 const _MAX_STRESS_FAIL_LINES := 20
+const _STRESS_USAGE := "usage: facade stress [seeds] [shard/count]"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 
@@ -69,7 +70,7 @@ func _usage() -> String:
 		+ "facade stats                     tile / mesh / light / material counts\n"
 		+ "facade dump [left|right]         nearest tile's plans and prop node names\n"
 		+ "facade check                     mouth keep-out audit over every alive tile\n"
-		+ "facade stress [seeds]            build + audit every district x piece x opening\n"
+		+ "facade stress [seeds] [i/n]      build + audit every district x piece x opening\n"
 		+ "facade art [sheet <path>]       street-art pool stats, or save its atlas as a PNG\n"
 		+ "facade faces                     triangles per mesh family over every alive tile\n"
 		+ "facade perf                      draw calls and primitives of the current frame"
@@ -247,10 +248,22 @@ func _cmd_check(_args: Array) -> String:
 
 
 ## Every district x set-piece (plus "none") x opening case x seed, built in isolation and freed.
+## Optional second arg `shard/count` builds only every count-th case, so shards can run in
+## parallel processes and together cover exactly the full set.
 func _cmd_stress(args: Array) -> String:
 	var seeds := 2
 	if not args.is_empty() and String(args[0]).is_valid_int():
 		seeds = maxi(1, int(args[0]))
+	var shard := 0
+	var shard_count := 1
+	if args.size() > 1:
+		var parts := String(args[1]).split("/")
+		if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+			return _STRESS_USAGE
+		shard = int(parts[0])
+		shard_count = int(parts[1])
+		if shard_count < 1 or shard < 0 or shard >= shard_count:
+			return _STRESS_USAGE
 	var previous_forced := _FacadeSetPieces.forced_id
 	var stress_host := Node3D.new()
 	stress_host.name = "FacadeStressHost"
@@ -264,11 +277,15 @@ func _cmd_stress(args: Array) -> String:
 		[OPENING_NONE, OPENING_NONE], [OPENING_BAY, OPENING_NONE], [OPENING_NONE, OPENING_BAY]
 	]
 	var builds := 0
+	var flat_index := -1
 	var fail_lines: Array[String] = []
 	for district_idx in _FacadeRegistry.district_count():
 		for id: StringName in ids:
 			for opening_case: Array in opening_cases:
 				for seed_value in seeds:
+					flat_index += 1
+					if flat_index % shard_count != shard:
+						continue
 					builds += 1
 					var line := _stress_build(
 						stress_host, district_idx, id, opening_case, seed_value
