@@ -126,8 +126,8 @@ const HAND_K := 1.47
 ## `&"rags"` (the old rag and glove dress) or `&"none"` (bare arms). Set by the `arms dress`
 ## console command, then rebuilt.
 static var dress_style := &"gear"
-## Held piece: &"pistol" (HeldGun) or &"grip" (MonsterGrip, the monster grip study).
-static var gun_style: StringName = &"pistol"
+## Held piece: &"grip" (MonsterGrip, the default) or &"pistol" (HeldGun).
+static var gun_style: StringName = &"grip"
 
 
 static func rng_for(seed_value: int, part_id: StringName) -> RandomNumberGenerator:
