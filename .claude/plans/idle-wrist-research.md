@@ -91,3 +91,25 @@ alone peaks near 17 deg/s) but steps 3 and 4 add beats on top of it. **Why:** ze
 single swing per routine. **Solve if it reads stiff in play:** a second, faster carrier; left for step 5.
 Still `player` at weave 5.4 (twist peak): the left hand sits low-left, claws clear, no wrung or
 inverted skin, HUD clear.
+
+## Round 3 (step 3: flex/extend beat in roll 1)
+
+**Built:** the routine clock now starts at a seeded origin so the beat's big down peak (u 0.30 of
+roll 1) sits on the left fingers' mean curl crest (`ArmWristRoutine._origin`, from the weave's
+`crest_phase`); keys 0 -> +30 down (u 0.30) -> -20 up (u 0.80) -> 0 (u 1.0), smoothstep per leg, equal
+leg speeds (41.7 deg/s). Driven along `FLEX_AXIS` (0.463, 0, -0.886) euler deg per deg, so it is a pure
+flexion on the left rig. At the `SaveSandbox` hold the viewmodel passes `beat_scale` 0, so smoke
+stills stay `same`; pins (`arms weave <t>`) get the full beat. Twist is anchored to the hold through
+the new origin.
+
+**Numbers:** `arms wristang flex 30`: palm-ward 53.6 deg, sideways -0.2 (FLEX PURE); `flex -20`:
+sideways 0.2 (FLEX PURE). Scan 0..10.8 s: flex(x) -17.2..+20.1, twist(y) -2.2..+20.0, dev(z)
+-32.4..+19.1 (the x/z split is the flex axis plus the circle), peak speed 52.3 deg/s at t 1.17,
+max jump 0.87 deg/frame (bar 1.5). Checks: `arms fit` FIT OK, `gear` GEAR OK, `touch` TOUCH CHECK 18,
+`arms thumbs` identical to before the step (L angle 66, hook 79, BAR hook), check and smoke clean.
+
+**Worse:** peak speed 52 deg/s is over the 40 bar. **Why:** 30 down + 20 up in one 3.6 s beat is 100
+deg of travel, which needs at least 41.7 deg/s with eased legs before the circle (16.6) is added.
+**Loosened with a note (owner's ranges kept):** the beat-roll speed bar is 55 deg/s total; step 5 may
+slow the circle during the beat if it reads fast. Still to look at: a pinned still at the down peak
+(not captured this round; context ran out), and step 5 judges the skin at the extremes.

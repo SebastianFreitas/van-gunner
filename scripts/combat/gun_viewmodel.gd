@@ -285,8 +285,9 @@ func _process(delta: float) -> void:
 	_weave_t = fmod(_weave_t + delta, 3600.0)
 	var weave_at := debug_weave_t if debug_weave_t >= 0.0 else (
 			WEAVE_SANDBOX_T if SaveSandbox.enabled else _weave_t)
+	var hold := debug_weave_t < 0.0 and SaveSandbox.enabled
 	if _weave:
-		_weave.update(weave_at)
+		_weave.update(weave_at, 0.0 if hold else 1.0)
 	var clock := fmod(_kick_clock + delta, 3600.0)
 	if clock < _kick_clock and _kick:
 		_kick.clear()

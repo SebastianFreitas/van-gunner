@@ -85,7 +85,7 @@ hand beyond the default).
   clock `rt = fposmod(t, 3*PERIOD)` that later steps share. Twist envelope bigger in roll 2.
   Rest at the sandbox hold. Measure the twist range and speed with the readout, judge the skin at
   the extremes (`arms cam elbow`, `player`). Round in the research file; commit.
-- [ ] 3. **Flex/extend beat in roll 1.** One smoothstep beat over `rt` 0 to `PERIOD`: down to 30
+- [x] 3. **Flex/extend beat in roll 1.** One smoothstep beat over `rt` 0 to `PERIOD`: down to 30
   then back through neutral to 20 up, peak timed on the finger roll's crest. Check the finger
   curl does not collide with the palm at the down peak (`arms touch`). Round; commit.
 - [ ] 4. **Deviation beat in roll 3.** Same shape, sideways, 20 toward the pinky, 12 toward the

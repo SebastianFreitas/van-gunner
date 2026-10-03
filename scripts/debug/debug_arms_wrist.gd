@@ -1,7 +1,11 @@
 extends RefCounted
-## Debug console `arms wristang`: the left wrist's flex, twist and deviation in degrees against the posed wrist, the forearm.001 twist, an axis-sign experiment and a range and speed scan.
+## Debug console `arms wristang`: the left wrist's flex, twist and deviation in degrees against the posed wrist, the forearm.001 twist, an axis-sign experiment, a flex-axis purity check and a range and speed scan.
 
-const USAGE := "arms wristang [t|axes|scan [t0 t1]]"
+const USAGE := "arms wristang [t|axes|flex [deg]|scan [t0 t1]]"
+const ROUTINE := "res://scripts/player/arms/arm_wrist_routine.gd"
+## The bones the palm frame is built from.
+const BONES := {&"mid": "DEF-f_middle.01.L", &"tip": "DEF-f_middle.03.L",
+		&"thumb": "DEF-thumb.01.L", &"pinky": "DEF-f_pinky.01.L"}
 const NO_WRIST := "arms wristang: no left wrist"
 ## Scan step, one frame at 60 fps.
 const DT := 1.0 / 60.0
@@ -15,9 +19,11 @@ var _sk: Skeleton3D = null
 var _wrist := -1
 ## The posed wrist the weave turns from (`wrist_pose`), so zero euler means the rest of the weave.
 var _pose := Quaternion.IDENTITY
+## Why `_palm_frame` returned empty, as the lines `axes` and `flex` print.
+var _frame_err := ""
 
 
-## Prints the left wrist's angles for `arms wristang [t|axes|scan [t0 t1]]`; `args[0]` is
+## Prints the left wrist's angles for `arms wristang [t|axes|flex [deg]|scan [t0 t1]]`; `args[0]` is
 ## "wristang". Read-only apart from posing the bones, which the viewmodel overwrites next frame.
 func run(vm: Node, args: Array) -> String:
 	_weave = vm.get("_weave")
@@ -36,6 +42,12 @@ func run(vm: Node, args: Array) -> String:
 	var word := str(args[1])
 	if word == "axes":
 		return _axes()
+	if word == "flex":
+		if args.size() == 2:
+			return _flex(30.0)
+		if args.size() == 3 and str(args[2]).is_valid_float():
+			return _flex(str(args[2]).to_float())
+		return USAGE
 	if word == "scan":
 		if args.size() == 2:
 			return _scan(0.0, 10.8)
@@ -94,32 +106,27 @@ func _turn(euler_deg: Vector3) -> void:
 	_sk.force_update_all_bone_transforms()
 
 
-## For +10 degrees on each euler axis, how the middle fingertip and thumb base move against
-## the palm-ward (finger curl) direction and the thumb-to-pinky side, so the signs get named.
-func _axes() -> String:
-	var names := {&"mid": "DEF-f_middle.01.L", &"tip": "DEF-f_middle.03.L",
-			&"thumb": "DEF-thumb.01.L", &"pinky": "DEF-f_pinky.01.L"}
+## The palm frame at zero turn: middle fingertip bone and rest position, hand axis, thumb side
+## and palm-ward direction. Empty, with the reason in `_frame_err`, when a bone is missing or the
+## curl has no palm-ward part.
+func _palm_frame() -> Dictionary:
 	var bones := {}
-	var lines: Array[String] = []
-	for key: StringName in names:
-		bones[key] = _sk.find_bone(names[key])
+	var missing: Array[String] = []
+	for key: StringName in BONES:
+		bones[key] = _sk.find_bone(BONES[key])
 		if bones[key] == -1:
-			lines.append("axes: bone %s not found" % names[key])
-	if not lines.is_empty():
-		for axis_name in ["x", "y", "z"]:
-			lines.append("axes +%ddeg %s: skipped" % [int(AXIS_DEG), axis_name])
-		return "\n".join(lines)
+			missing.append("axes: bone %s not found" % BONES[key])
+	if not missing.is_empty():
+		_frame_err = "\n".join(missing)
+		return {}
 	var mid: int = bones[&"mid"]
 	var tip: int = bones[&"tip"]
-	var thumb: int = bones[&"thumb"]
-	var pinky: int = bones[&"pinky"]
 	_turn(Vector3.ZERO)
 	var tip0 := _pos(tip)
-	var thumb0 := _pos(thumb)
 	var hand_axis := _pos(mid) - _sk.get_bone_global_pose(_wrist).origin
 	var hand_len := hand_axis.length()
 	var hand_dir := hand_axis.normalized()
-	var side := _pos(thumb) - _pos(pinky)
+	var side := _pos(bones[&"thumb"]) - _pos(bones[&"pinky"])
 	side = (side - hand_dir * side.dot(hand_dir)).normalized()
 	# A palm-ward move is the one a positive finger curl makes, written the way the weave does.
 	var joint_rot := _sk.get_bone_pose_rotation(mid)
@@ -133,8 +140,32 @@ func _axes() -> String:
 	var palm := d_curl - hand_dir * d_curl.dot(hand_dir) - side * d_curl.dot(side)
 	if palm.length() < hand_len * 1e-4:
 		_weave.call(&"update", 0.0)
-		return "axes: curl displacement has no palm-ward part"
-	palm = palm.normalized()
+		_frame_err = "axes: curl displacement has no palm-ward part"
+		return {}
+	return {&"tip": tip, &"tip0": tip0, &"hand_dir": hand_dir, &"side": side,
+			&"palm": palm.normalized(), &"hand_len": hand_len}
+
+
+## For +10 degrees on each euler axis, how the middle fingertip and thumb base move against
+## the palm-ward (finger curl) direction and the thumb-to-pinky side, so the signs get named.
+func _axes() -> String:
+	var frame := _palm_frame()
+	if frame.is_empty():
+		var skipped: Array[String] = [_frame_err]
+		if _frame_err.contains("not found"):
+			for axis_name in ["x", "y", "z"]:
+				skipped.append("axes +%ddeg %s: skipped" % [int(AXIS_DEG), axis_name])
+		return "\n".join(skipped)
+	var tip: int = frame[&"tip"]
+	var tip0: Vector3 = frame[&"tip0"]
+	var hand_len: float = frame[&"hand_len"]
+	var hand_dir: Vector3 = frame[&"hand_dir"]
+	var side: Vector3 = frame[&"side"]
+	var palm: Vector3 = frame[&"palm"]
+	# The frame left the wrist at zero, so the thumb base is read where it rests.
+	var thumb := _sk.find_bone(BONES[&"thumb"])
+	var thumb0 := _pos(thumb)
+	var lines: Array[String] = []
 	lines.append("palm frame: |a.s|=%.2f |a.p|=%.2f |s.p|=%.2f" % [absf(hand_dir.dot(side)),
 			absf(hand_dir.dot(palm)), absf(side.dot(palm))])
 	# A hand is 8 to 10 cm: only a metre scale skeleton is printed in centimetres.
@@ -180,6 +211,32 @@ func _axes() -> String:
 				String.num(d_tip.length() * k, dec), unit, fracs, verdict])
 	_weave.call(&"update", 0.0)
 	return "\n".join(lines)
+
+
+## Turns the wrist by the routine's flex axis times `deg` (downward flexion) and says how much of
+## the fingertip's move is palm-ward and how much sideways, so the axis can be checked as pure.
+func _flex(deg: float) -> String:
+	var consts: Dictionary = (load(ROUTINE) as Script).get_script_constant_map()
+	if not consts.has("FLEX_AXIS"):
+		return "flex: ArmWristRoutine.FLEX_AXIS missing"
+	var axis: Vector3 = consts["FLEX_AXIS"]
+	var frame := _palm_frame()
+	if frame.is_empty():
+		return _frame_err
+	var tip: int = frame[&"tip"]
+	_turn(axis * deg)
+	var d := _pos(tip) - (frame[&"tip0"] as Vector3)
+	var dl := maxf(d.length(), 1e-9)
+	var a := d.dot(frame[&"hand_dir"]) / dl
+	var s := d.dot(frame[&"side"]) / dl
+	var p := d.dot(frame[&"palm"]) / dl
+	var sideways := rad_to_deg(asin(clampf(s, -1.0, 1.0)))
+	var palmward := rad_to_deg(asin(clampf(p, -1.0, 1.0)))
+	var pure := absf(sideways) <= 5.0 and signf(palmward) == signf(deg)
+	_weave.call(&"update", 0.0)
+	return ("wristang flex %+.0f deg down: tip a=%+.2f s=%+.2f p=%+.2f"
+			+ " -> palm-ward %.1f deg, sideways %.1f deg %s") % [deg, a, s, p, palmward,
+			sideways, "FLEX PURE" if pure else "FLEX SKEWED"]
 
 
 ## Range, peak angular speed and largest per-frame jump of the wrist over t0..t1. `t` only
