@@ -13,6 +13,10 @@ const BED_FROM := 0.36
 const BED_TO := 0.90
 ## The thumb bends hardest at its tip joint, so its skin swells over an early root: start later.
 const THUMB_BED_FROM := 0.52
+## The thumb skin swells over the nail root and the buried base z-fought with it: start unburied
+## and lift the root higher above the skin (same unit as LIFT, fading out over ROOT).
+const THUMB_BURY := 0.0
+const THUMB_ROOT_LIFT := 0.12
 ## Top of the full-height nail above the skin, as a share of the finger's half size.
 const LIFT := 0.2
 ## How far under the skin the root and side edges sit, same unit.
@@ -29,7 +33,7 @@ const SIDE := 0.55
 ## along the bone, z dorsal). Origin and axes are those of the rings; `reach` is how far the
 ## point clears the finger's pole and `curve_deg` how far it hooks toward the pad (-Z).
 static func mesh(rings: Array, reach: float, curve_deg: float,
-		bed_from: float = BED_FROM) -> ArrayMesh:
+		bed_from: float = BED_FROM, bury: float = BURY, root_lift: float = 0.0) -> ArrayMesh:
 	var first: Dictionary = rings[0]
 	var last: Dictionary = rings[rings.size() - 1]
 	var span := float(last[&"t"]) - float(first[&"t"])
@@ -45,8 +49,10 @@ static func mesh(rings: Array, reach: float, curve_deg: float,
 		var r := _lerp_ring(rings, t)
 		var root := smoothstep(0.0, ROOT, u)
 		var lift := PackedFloat32Array()
+		var base := -bury
+		var top := LIFT + root_lift * (1.0 - root)
 		for s in ARC_SEGS + 1:
-			lift.append(lerpf(-BURY, LIFT, root * _side(s)))
+			lift.append(lerpf(base, top, root * _side(s)))
 		secs.append(_sec(r[&"centre"], r[&"half_w"], r[&"half_h"], lift, 0.0))
 	var c0: Vector3 = secs[secs.size() - 1][&"c"]
 	var w0: float = secs[secs.size() - 1][&"hw"]
