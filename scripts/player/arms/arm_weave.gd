@@ -7,6 +7,7 @@ extends RefCounted
 ## The wrists circle the posed hand (the orientation ArmRig.reach chose), not the glb rest.
 
 const ArmCreep := preload("res://scripts/player/arms/arm_creep.gd")
+const ArmWristRoutine := preload("res://scripts/player/arms/arm_wrist_routine.gd")
 
 const PERIOD := 3.6  ## seconds per main finger roll
 const ROLL_LAG := 0.9  ## radians of phase lag index -> middle -> ring -> pinky
@@ -47,7 +48,8 @@ const LEFT_FAN_OFFSET: Array[float] = [-3.0, 5.0, -10.0, -18.0]
 const SPLAY_SIGN := 1.0  ## flips the splay if the rig's Z points the other way
 const GRIP_SPLAY_K := 0.75  ## share of the splay the gripping hand uses
 const WRIST_CIRCLE := 8.0  ## degrees, wrist pitch and yaw 90 deg apart
-const WRIST_ROLL := 6.0  ## degrees, slow roll at half speed
+## degrees, slow roll at half speed; right hand only, the left hand's twist is ArmWristRoutine
+const WRIST_ROLL := 6.0
 const RIGHT_WRIST_BASE := Vector3(0.0, 0.0, 0.0)  ## degrees XYZ on top of the posed hand
 const LEFT_WRIST_BASE := Vector3(0.0, 0.0, 0.0)
 const ARM_DRIFT := Vector3(0.04, 0.035, 0.03)  ## rig-space metres of slow figure-eight per arm root
@@ -93,6 +95,8 @@ var _arm_x: Array[Transform3D] = [Transform3D.IDENTITY, Transform3D.IDENTITY]
 var _creep_l: ArmCreep
 ## Finger twitches only for the gun hand (no stretches, no wrist drift).
 var _creep_r: ArmCreep
+## Keyed wrist routine (twist) for the free left hand.
+var _routine: ArmWristRoutine
 
 
 func _init(arm_right: Node3D, arm_left: Node3D, seed_value: int, grip_right := false) -> void:
@@ -103,12 +107,16 @@ func _init(arm_right: Node3D, arm_left: Node3D, seed_value: int, grip_right := f
 	_phase[1] = right_phase + PI
 	_creep_l = ArmCreep.new(rng, 1.0, false)
 	_creep_r = ArmCreep.new(rng, grip_creep_scale, true)
+	_routine = ArmWristRoutine.new(rng, PERIOD)
 	if _grip_right:
 		_add_grip(arm_right)
 	else:
 		_add_hand(arm_right, ".R", RIGHT_WRIST_BASE, right_phase)
 	# The hands weave out of step.
 	_add_hand(arm_left, ".L", LEFT_WRIST_BASE, right_phase + PI)
+	for entry in _hands:
+		if entry[&"suffix"] == ".L":
+			_routine.bind(entry[&"sk"])
 
 
 ## Records the right hand's finger joints with the grip curl the builder already posed.
@@ -165,6 +173,7 @@ func update(t: float) -> void:
 	if _grip_right:
 		_update_grip(t, w)
 	_creep_l.sample(t)
+	_routine.sample(t)
 	for hand in _hands:
 		var sk: Skeleton3D = hand[&"sk"]
 		if not is_instance_valid(sk):
@@ -214,10 +223,11 @@ func update(t: float) -> void:
 			continue
 		var b := w * 0.8 + phase
 		var wrist_base: Vector3 = hand[&"wrist_base"]
-		var e := wrist_base + Vector3(WRIST_CIRCLE * sin(b), WRIST_ROLL * sin(b * 0.5),
-				WRIST_CIRCLE * cos(b))
+		var roll := WRIST_ROLL * sin(b * 0.5) if hand_side == 0 else 0.0
+		var e := wrist_base + Vector3(WRIST_CIRCLE * sin(b), roll, WRIST_CIRCLE * cos(b))
 		e.x -= OPEN_WRIST_PITCH * f
 		if hand_side == 1:
+			e += _routine.wrist
 			e += _creep_l.wrist
 		var wrist_pose: Quaternion = hand[&"wrist_pose"]
 		sk.set_bone_pose_rotation(wrist, wrist_pose * Quaternion.from_euler(e * (PI / 180.0)))

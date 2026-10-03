@@ -8,6 +8,7 @@ const _Touch := preload("res://scripts/debug/debug_arms_touch.gd")
 const _GearFit := preload("res://scripts/debug/debug_arms_gear_fit.gd")
 const _HandsCheck := preload("res://scripts/debug/debug_arms_hands.gd")
 const _Dump := preload("res://scripts/debug/debug_arms_dump.gd")
+const _Wrist := preload("res://scripts/debug/debug_arms_wrist.gd")
 const _Frame :=preload("res://scripts/debug/debug_arms_frame.gd")
 const _Gesture := preload("res://scripts/player/arms/arm_gesture.gd")
 const _Weave := preload("res://scripts/player/arms/arm_weave.gd")
@@ -26,7 +27,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms curl <f_index|f_middle|f_ring|f_pinky> <a> <b> <c> | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off | arms inspect <sec|play|off>"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms curl <f_index|f_middle|f_ring|f_pinky> <a> <b> <c> | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off | arms inspect <sec|play|off> | arms wristang [t|axes|scan [t0 t1]]"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -163,6 +164,8 @@ func cmd_arms(args: Array) -> String:
 		return _GearFit.new(host).run(vm)
 	if args[0] == "thumbs":
 		return _Thumbs.new().run(vm)
+	if args[0] == "wristang":
+		return _Wrist.new().run(vm, args)
 	if args[0] == "ik":
 		return _Ik.new().run(vm)
 	if args[0] == "touch":
