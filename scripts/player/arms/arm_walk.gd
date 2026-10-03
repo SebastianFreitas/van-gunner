@@ -15,13 +15,12 @@ const LAG_MAX := 0.08  ## rig units clamp per axis
 const LAG_PITCH := 0.6  ## degrees per m/s of forward lag, clamped to 3
 const LAG_F := 2.5  ## Hz, velocity spring
 const LAG_ZETA := 0.4  ## under-damped: one visible overshoot
-const SWING_FWD := 0.12  ## rig units, left arm fore/aft
-const SWING_UP := 0.10  ## rig units, rise on the forward swing
-const SWING_IN := 0.04  ## rig units toward the centre on the forward swing
-const SWING_PITCH := 10.0  ## degrees, hand tips up on the forward swing
-const SWING_F := 2.2  ## Hz, left swing spring: well above the 0.9 Hz cycle, so it follows with
-## a small lag and no resonance gain
-const SWING_ZETA := 0.7
+const SWING_FWD := 0.035  ## rig units, left arm fore/aft: a loose pendulum, not a punch
+const SWING_DIP := 0.025  ## rig units, the hand drops with each footfall like the rest of the rig
+const SWING_PITCH := 3.0  ## degrees, hand tips up on the forward swing
+const SWING_F := 4.5  ## Hz, left swing spring: far above the 0.9 Hz cycle, so the hand stays in
+## step with the footfalls (about 15 degrees of lag) and has no resonance gain
+const SWING_ZETA := 0.8
 const SIM_DT := 1.0 / 120.0  ## fixed step for pinned start/stop
 
 var _phase := 0.0
@@ -127,11 +126,11 @@ func rig_offset(pivot: Vector3) -> Transform3D:
 	)
 
 
-## Free left-arm swing: back and low on the back swing, forward, up and inward on the forward one.
+## Free left-arm swing: a small fore/aft pendulum in step with the feet, dipping on each footfall.
 func left_offset() -> Transform3D:
 	var s := _swing
-	var f := maxf(s, 0.0)
+	var c := 0.5 * (1.0 + cos(2.0 * _phase))  # 1 at footfall
 	return Transform3D(
 		Basis(Vector3.RIGHT, deg_to_rad(SWING_PITCH * s)),
-		Vector3(SWING_IN * f, SWING_UP * pow(f, 1.5), -SWING_FWD * s)
+		Vector3(0.0, -_amount * SWING_DIP * c * c, -SWING_FWD * s)
 	)
