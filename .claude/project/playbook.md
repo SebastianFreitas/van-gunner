@@ -52,7 +52,8 @@ container has only `python3`.
   `<stem>-01.png`…. Fails on any error line, a non-zero exit, a timeout
   or a missing PNG; prints `PROBE CLEAN`. No verify stamp: it never
   replaces check or smoke.
-- **Hand shots:** `py -3 tools/hand_shots.py --out <scratchpad>/hands [--pose NAME | --pose "<arms console line>"]... [--views front,side,left,top,elbow] [--dress gear|rags|none]`: boots the run at IDLE once, applies the pose, saves `<view>.png` per `arms cam` view (probe `--shot DIR --views`, hidden desktop, Windows only). `--list` prints the named poses (rest, weave, reload, shot, knock, press, push, pull, slide, walk).
+- **Hand shots:** `py -3 tools/hand_shots.py --out <scratchpad>/hands [--pose NAME | --pose "<arms console line>"]... [--views front,side,left,top,elbow,player] [--dress gear|rags|none]`: boots the run at IDLE once, applies the pose, saves `<view>.png` per view (probe `--shot DIR --views`; hidden desktop on Windows, xvfb-run on Linux). `--list` prints the named poses (rest, weave, reload, shot, knock, press, push, pull, slide_open, slide_close, walk).
+- **Pose sheet:** `py -3 tools/pose_sheet.py --out <scratchpad>/sheets [--pose NAME]... [--views front,side,top,player] [--dress gear|rags|none] [--keep]`: one `<pose>.png` grid per named pose (default all), one Godot launch each.
 - **Shots:** `py -3 tools/shots.py capture <name> [--van-seeds N]` runs
   `smoke.py --shots` into `.godot/shots/<name>/` (per checkout,
   gitignored, kept between sessions; a full windowed smoke on the hidden
