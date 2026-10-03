@@ -1,44 +1,99 @@
 extends RefCounted
-## Steps the door raider's thirteen-frame run sheet: Sprite3D.frame advances at RUN_FPS while
-## the raider moves and rests on frame 0 (the still) when it stands. Does nothing for a
-## single-frame sprite (the window crawler, the biker boss), whose hframes is 1.
+## Plays named clips from the loper's sheet (door_raider.png, 64 x 80 cells, SHEET_COLUMNS x
+## SHEET_ROWS): each clip is a sheet row with its frames, fps and loop flag, and new animations
+## add a row and a clip here. Does nothing for a sprite whose hframes/vframes are not the
+## sheet's (the window crawler, the biker boss: 1 x 1).
 
-const RUN_FPS := 18.0
-const RUN_FRAMES := 13
+## Columns of the sheet: the thirteen run frames.
+const SHEET_COLUMNS := 13
+## Rows of the sheet; grows as animation PRs add them.
+const SHEET_ROWS := 1
 ## Run frames whose claws touch the floor (every frame but the airborne kick, fall and drop
 ## at 6-8). Inside the cabin the loper prowls on these so it does not hop around the van.
 const GROUNDED_FRAMES: Array[int] = [0, 1, 2, 3, 4, 5, 9, 10, 11, 12]
+## Clips by name: {"row": sheet row, "frames": columns in play order, "fps", "loop"}.
+## No death clip yet: W7/W8 add it, and _die then holds it before the fade.
+const CLIPS: Dictionary = {
+	&"still": {"row": 0, "frames": [0], "fps": 1.0, "loop": true},
+	&"run": {"row": 0, "frames": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "fps": 18.0, "loop": true},
+	# The in-cabin loop on the grounded frames.
+	&"prowl": {"row": 0, "frames": [0, 1, 2, 3, 4, 5, 9, 10, 11, 12], "fps": 18.0, "loop": true},
+}
 
 var raider: WindowRaider
-var _clock := 0.0
+var _clock := 0.0 # seconds into the current clip
+var _clip := &"still"
 
 
 func _init(owner: WindowRaider) -> void:
 	raider = owner
 
 
+## True when the sprite is laid out as this sheet.
+func drives_sprite() -> bool:
+	var sprite := raider.sprite
+	return sprite != null and sprite.hframes == SHEET_COLUMNS and sprite.vframes == SHEET_ROWS
+
+
+## True when CLIPS has a clip of this name.
+func has_clip(clip: StringName) -> bool:
+	return CLIPS.has(clip)
+
+
+## Length of a one-shot clip in seconds; 0.0 for a missing or looping clip or a foreign sprite.
+func clip_seconds(clip: StringName) -> float:
+	if not CLIPS.has(clip) or not drives_sprite():
+		return 0.0
+	var data: Dictionary = CLIPS[clip]
+	if data["loop"]:
+		return 0.0
+	var frames: Array = data["frames"]
+	return frames.size() / float(data["fps"])
+
+
+## Switches to a clip from its first frame; does nothing if it is already the current one.
+func play(clip: StringName) -> void:
+	if clip != _clip:
+		_clip = clip
+		_clock = 0.0
+
+
+## Shows the frame a clip has reached after `seconds`. Seconds come first so a Tween's
+## tween_method can bind the clip name.
+func show_clip_at(seconds: float, clip: StringName) -> void:
+	if not drives_sprite() or not CLIPS.has(clip):
+		return
+	var data: Dictionary = CLIPS[clip]
+	var frames: Array = data["frames"]
+	var index := int(seconds * float(data["fps"]))
+	if data["loop"]:
+		index = posmod(index, frames.size())
+	else:
+		index = mini(index, frames.size() - 1)
+	var target := Vector2i(frames[index], data["row"])
+	# A Sprite3D property write is a redraw, so only write when the frame changes.
+	if raider.sprite.frame_coords != target:
+		raider.sprite.frame_coords = target
+
+
 ## Called by the raider once per physics frame with whether it moved this frame. Inside the
 ## cabin (attacking the bench or the player) it loops only the grounded frames.
 func step(delta: float, moving: bool) -> void:
-	var sprite := raider.sprite
-	if sprite == null or sprite.hframes < RUN_FRAMES:
+	if not drives_sprite():
 		return
-	if not moving:
-		_clock = 0.0
-		if sprite.frame != 0:
-			sprite.frame = 0
-		return
-	var phase := raider.assault_phase
-	var next := 0
-	if (
-		phase == WindowRaider.AssaultPhase.ATTACKING_BENCH
-		or phase == WindowRaider.AssaultPhase.ATTACKING_PLAYER
-	):
-		_clock = fmod(_clock + delta * RUN_FPS, float(GROUNDED_FRAMES.size()))
-		next = GROUNDED_FRAMES[mini(int(_clock), GROUNDED_FRAMES.size() - 1)]
-	else:
-		_clock = fmod(_clock + delta * RUN_FPS, float(RUN_FRAMES))
-		next = int(_clock)
-	# A Sprite3D property write is a redraw, so only write when the frame changes.
-	if sprite.frame != next:
-		sprite.frame = next
+	var picked := &"still"
+	if moving:
+		var phase := raider.assault_phase
+		var in_cabin := (
+			phase == WindowRaider.AssaultPhase.ATTACKING_BENCH
+			or phase == WindowRaider.AssaultPhase.ATTACKING_PLAYER
+		)
+		picked = &"prowl" if in_cabin else &"run"
+	play(picked)
+	if moving:
+		_clock += delta
+		var data: Dictionary = CLIPS[_clip]
+		if data["loop"]:
+			var frames: Array = data["frames"]
+			_clock = fmod(_clock, frames.size() / float(data["fps"]))
+	show_clip_at(_clock, _clip)

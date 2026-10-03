@@ -211,11 +211,14 @@ func _die() -> void:
 	GameSession.notify_enemy_defeated(self)
 	defeated.emit()
 	assault_finished.emit()
+	var hold := _anim.clip_seconds(&"death")
 	var tween := create_tween()
-	tween.set_parallel()
+	if hold > 0.0:
+		# The death clip plays out before the body sinks.
+		tween.tween_method(_anim.show_clip_at.bind(&"death"), 0.0, hold, hold)
 	tween.tween_property(self, "position:y", position.y - 1.5, 0.3)
-	tween.tween_property(sprite, "modulate:a", 0.0, 0.3)
-	tween.chain().tween_callback(queue_free)
+	tween.parallel().tween_property(sprite, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(queue_free)
 
 
 func _run_assault() -> void:

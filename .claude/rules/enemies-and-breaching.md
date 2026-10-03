@@ -33,7 +33,10 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
 - `scenes/enemies/window_raider.tscn` holds the door raider, a hunched humanoid
   feral (the loper): `Sprite3D` at `pixel_size 0.024` on `door_raider.png`, an 832 x 80 sheet of
   thirteen 64 x 80 run frames (`hframes 13`, each 1.54 x 1.92 m; frame 0 is the still,
-  `window_raider_anim.gd` steps `frame` at 18 fps while the raider moves and rests
+  `window_raider_anim.gd` is a clip player: named clips in `CLIPS` (sheet row, frames, fps,
+  loop; `still`, `run`, `prowl` so far) set `frame_coords`, a new animation adds a sheet row
+  (`SHEET_ROWS`) and a clip, and `_die` plays a `death` clip, when one exists, before the
+  sink and fade; `run` steps at 18 fps while the raider moves and `still` rests
   it on 0, frames 6 to 8 are airborne, 6 the kick; the crawler and the boss set `hframes 1`), centred 0.66 m below the node so its claws
   sit at -1.62, the van floor under the 1.62 m breach markers. Outside (APPROACH and
   BREACHING) `window_raider_motion.gd` holds the loper's origin at `VanWheels.ROAD_Y + 1.62`
