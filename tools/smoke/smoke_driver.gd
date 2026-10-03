@@ -76,6 +76,10 @@ func _run() -> void:
 	var ik_lines := DebugCommands.run("arms ik").split("\n")
 	for ik_line in ik_lines.slice(maxi(ik_lines.size() - 3, 0)):
 		_log("arms ik: " + ik_line)
+	# Print-only, like the IK bars: never fails smoke and never enters the fingerprint.
+	var touch_lines := DebugCommands.run("arms touch").split("\n")
+	for touch_line in touch_lines.slice(maxi(touch_lines.size() - 3, 0)):
+		_log("arms touch: " + touch_line)
 	var pinned := _shots.pin_van() if _shots != null else -1.0
 	await _shot("idle")
 	if _shots != null:

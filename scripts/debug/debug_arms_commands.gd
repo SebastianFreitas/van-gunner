@@ -4,6 +4,7 @@ extends RefCounted
 const _Fit := preload("res://scripts/debug/debug_arms_fit.gd")
 const _Thumbs := preload("res://scripts/debug/debug_arms_thumbs.gd")
 const _Ik := preload("res://scripts/debug/debug_arms_ik.gd")
+const _Touch := preload("res://scripts/debug/debug_arms_touch.gd")
 const _GearFit := preload("res://scripts/debug/debug_arms_gear_fit.gd")
 const _HandsCheck := preload("res://scripts/debug/debug_arms_hands.gd")
 const _Dump := preload("res://scripts/debug/debug_arms_dump.gd")
@@ -25,7 +26,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms ik | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -122,6 +123,8 @@ func cmd_arms(args: Array) -> String:
 		return _Thumbs.new().run(vm)
 	if args[0] == "ik":
 		return _Ik.new().run(vm)
+	if args[0] == "touch":
+		return _Touch.new().run(vm)
 	if args[0] == "lthumb":
 		return _lthumb(args)
 	if args[0] == "hands":
