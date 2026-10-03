@@ -9,14 +9,14 @@ const ARC_SEGS := 16
 const BED_RINGS := 14
 const FREE_RINGS := 12
 ## Share of the tip bone (t) where the bed starts (buried root) and where the free claw leaves the finger.
-const BED_FROM := 0.28
+const BED_FROM := 0.36
 const BED_TO := 0.90
 ## Top of the full-height nail above the skin, as a share of the finger's half size.
-const LIFT := 0.09
+const LIFT := 0.2
 ## How far under the skin the root and side edges sit, same unit.
 const BURY := 0.07
 ## Plate thickness, same unit.
-const THICK := 0.12
+const THICK := 0.1
 ## Share of the bed over which the nail rises out of the proximal fold.
 const ROOT := 0.45
 ## Share of ARC (from the dorsal line) past which the sides start to dive under the skin.
