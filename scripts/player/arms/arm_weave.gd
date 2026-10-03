@@ -28,7 +28,7 @@ const THUMB_SPREAD_AXIS := Vector3.RIGHT  ## the thumb .01 axis that splays it f
 ## (a permanent thumbs-up); the free hand has its own flex, spread and swing axis.
 ## The axis swings the thumb out opposite the index, the base curls it back toward the index
 ## tip into an open C.
-const LEFT_THUMB_BASE := Vector3(12.0, 11.0, 44.0)  ## degrees flex of the left thumb at rest
+const LEFT_THUMB_BASE := Vector3(12.0, 14.0, 18.0)  ## degrees flex of the left thumb at rest
 const LEFT_THUMB_SPREAD := 79.0  ## degrees, replaces THUMB_SPREAD + THUMB_FAN on the left only
 ## Left thumb .01 swing-away axis, bone-local (normalized where it is used).
 const LEFT_THUMB_SPREAD_AXIS := Vector3(0.50, 0.01, -0.86)
