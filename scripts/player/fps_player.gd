@@ -21,6 +21,10 @@ signal mantle_finished
 
 const _REAR_DOOR_INTERACT_SCRIPT := preload("res://scripts/van/rear_door_interact.gd")
 const _MANTLE := preload("res://scripts/player/player_mantle.gd")
+## Eye height in metres above the feet: the one number that sets how tall the player is.
+const EYE_HEIGHT := 2.0
+## The capsule reaches this far above the eye; keep the total under the cab door notch (2.30 m).
+const HEAD_CLEARANCE := 0.2
 
 @onready var head: Node3D = $Head
 @onready var interaction_ray: RayCast3D = $Head/Camera3D/InteractionRay
@@ -52,6 +56,7 @@ var _mantle: RefCounted
 
 
 func _ready() -> void:
+	_apply_height()
 	if not SaveSandbox.enabled:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	floor_snap_length = 0.2
@@ -63,6 +68,19 @@ func _ready() -> void:
 	GameSession.class_changed.connect(_on_class_changed)
 	apply_class(ClassCatalog.load_or_basic(GameSession.class_id))
 	_mantle = _MANTLE.new(self)
+
+
+## Sizes head, collision capsule and body mesh from EYE_HEIGHT; runs before the mantle helper
+## reads the head's rest height.
+func _apply_height() -> void:
+	var capsule_height := EYE_HEIGHT + HEAD_CLEARANCE
+	head.position.y = EYE_HEIGHT
+	var shape := ($CollisionShape3D as CollisionShape3D)
+	(shape.shape as CapsuleShape3D).height = capsule_height
+	shape.position.y = capsule_height * 0.5
+	var body := ($BodyMesh as MeshInstance3D)
+	(body.mesh as CapsuleMesh).height = capsule_height
+	body.position.y = capsule_height * 0.5
 
 
 func _unhandled_input(event: InputEvent) -> void:

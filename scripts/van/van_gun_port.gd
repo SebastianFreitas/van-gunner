@@ -2,7 +2,7 @@ class_name VanGunPort
 extends Node3D
 ## A slot gun port on a side door leaf: welded frame and a steel plate sliding in a track, seen from inside and outside.
 
-const EYE_Y := 1.62           ## rig-space height of the slot centre, just under the 1.65 m camera
+const EYE_Y := FpsPlayer.EYE_HEIGHT - 0.03  ## rig-space height of the slot centre, just under the camera
 const PORT_Z := -0.55         ## leaf-local z of the slot centre (toward the cab)
 const SLOT_HALF_Z := 0.42
 const SLOT_HALF_Y := 0.16
