@@ -1,6 +1,6 @@
 class_name MonsterGrip
 extends RefCounted
-## The monster-hand grip study: only the part the hand holds (grip, trigger, guard), no barrel or frame.
+## The monster-hand grip study plus the redneck railgun barrel: grip, trigger, guard (here) and receiver and barrel (RedneckBarrel).
 
 ## Measured from the right hand (arms dump): palm_len 0.198, knuckle span 0.292 m (index to pinky 0.214
 ## plus one knuckle spacing 0.078). That span is in the same space as the gun's p = palm_len *
@@ -58,7 +58,10 @@ static func build(rng: RandomNumberGenerator, palm_len: float = 0.22) -> Node3D:
 			Basis(Vector3.RIGHT, deg_to_rad(25.0)))
 	ArmParts.mesh(body, "TopStub", ArmParts.box(Vector3(0.8 * wid, 0.1 * p, 0.95 * dep)), steel,
 			_TOP + Vector3(0.0, 0.05 * p, 0.0))
+	var t := trigger_point(p)
+	var guard_front_z := t.z + 0.30 * p - GUARD_L_K * p
 	_build_guard(body, p, steel)
+	var muzzle := RedneckBarrel.build(body, p, rng, guard_front_z, t.y + 0.25 * p)
 	for entry: Array in [["GripCentre", centre], ["TriggerPoint", trigger_point(p)],
 			["WebPoint", web_point(p)], ["GripBottom", grip_bottom(p)]]:
 		var m := Marker3D.new()
@@ -66,10 +69,8 @@ static func build(rng: RandomNumberGenerator, palm_len: float = 0.22) -> Node3D:
 		m.position = entry[1] as Vector3
 		body.add_child(m)
 	# The viewmodel reads HeldGun's statics for the muzzle and the left hand, so point them at
-	# this piece: shots leave from just ahead of the guard's front, not from inside the hand.
-	var t := trigger_point(p)
-	var guard_front_z := t.z + 0.30 * p - GUARD_L_K * p
-	muzzle_in_gun_set(Vector3(0.0, t.y + 0.25 * p, guard_front_z - 0.05 * p),
+	# this piece: shots leave from the barrel tip, not from inside the hand.
+	muzzle_in_gun_set(muzzle,
 			centre + gb * Vector3(0.0, -0.2 * glen, -0.55 * dep), grip_bottom(p))
 	root.set_meta(&"lamp_local", HeldGun.gun_xform() * Vector3(0.0, 0.03, -0.6 * p))
 	return root

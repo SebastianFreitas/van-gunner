@@ -58,6 +58,18 @@ static func steel(seed_offset: float) -> ShaderMaterial:
 			60.0, 6.0, 0.0, 0.7, 0.82, 0.3, seed_offset)
 
 
+## Rusted plate: oxide brown, rough.
+static func rust(seed_offset: float) -> ShaderMaterial:
+	return surface(Color(0.20, 0.12, 0.08), Color(0.10, 0.06, 0.05), Color(0.08, 0.08, 0.06),
+			60.0, 6.0, 0.0, 0.85, 0.9, 0.2, seed_offset)
+
+
+## Dull scavenged aluminium: pale grey, matte.
+static func dull_alu(seed_offset: float) -> ShaderMaterial:
+	return surface(Color(0.30, 0.31, 0.30), Color(0.15, 0.15, 0.15), Color(0.08, 0.08, 0.06),
+			60.0, 6.0, 0.0, 0.75, 0.85, 0.3, seed_offset)
+
+
 ## Worn T-shirt cloth shader behind the two sleeves.
 const CLOTH_SHADER := preload("res://scenes/player/arm_cloth.gdshader")
 
