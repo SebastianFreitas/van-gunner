@@ -215,6 +215,15 @@ float facade_relief(vec2 p, vec2 fw) {
 	if (string_course(p)) {
 		h += 0.06;
 	}
+	// Roofline: a cornice band with a thin lip step on top, so the wall ends in a ledge.
+	if (collapse_y <= 0.0 && style != 6 && p.y <= facade_height) {
+		if (p.y > facade_height - 0.5) {
+			h += 0.14;
+		}
+		if (p.y > facade_height - 0.15) {
+			h += 0.04;
+		}
+	}
 	if (p.y < ground_height) {
 		float unit_w = facade_width / ground_units;
 		float ux = p.x - floor(p.x / unit_w) * unit_w;
@@ -700,8 +709,32 @@ void apply_overlays(vec2 p, inout vec3 albedo, inout vec3 emission, inout float 
 	}
 }
 
+// View direction in wall space (x along UV.x, y along UV.y, z out of the wall), built from
+// screen derivatives because the mesh has no reliable tangents.
+vec3 wall_view(vec3 vertex, vec2 uv, vec3 normal, vec3 view) {
+	vec3 dp1 = dFdx(vertex);
+	vec3 dp2 = dFdy(vertex);
+	vec2 duv1 = dFdx(uv);
+	vec2 duv2 = dFdy(uv);
+	vec3 n = normalize(normal);
+	vec3 dp2perp = cross(dp2, n);
+	vec3 dp1perp = cross(n, dp1);
+	vec3 t = dp2perp * duv1.x + dp1perp * duv2.x;
+	vec3 b = dp2perp * duv1.y + dp1perp * duv2.y;
+	float det = max(dot(t, t), dot(b, b));
+	if (det < 1e-20) {
+		return vec3(0.0, 0.0, 1.0);
+	}
+	t = normalize(t);
+	b = normalize(b);
+	vec3 v = normalize(vec3(dot(view, t), dot(view, b), dot(view, n)));
+	v.z = max(v.z, 0.25);
+	return v;
+}
+
 // Full look: ground zone or wall skin, then the window grid, then the overlays.
-void facade_shade(vec2 p, out vec3 albedo, out vec3 emission, out float rough, out float metal, vec2 fw) {
+// view_w is the wall-space view vector from wall_view, used to set windows back.
+void facade_shade(vec2 p, out vec3 albedo, out vec3 emission, out float rough, out float metal, vec2 fw, vec3 view_w) {
 	float sk = fbm(p * 0.35 + seed);
 	if (p.y < ground_height) {
 		shade_ground(p, sk, albedo, emission, rough, metal, fw);
@@ -726,7 +759,32 @@ void facade_shade(vec2 p, out vec3 albedo, out vec3 emission, out float rough, o
 			}
 		}
 	} else if (w_pane > 0.5) {
-		shade_window(p, w_id, w_local, albedo, emission, rough, metal, fw);
+		if (style == 3 || p.y < ground_height) {
+			shade_window(p, w_id, w_local, albedo, emission, rough, metal, fw);
+		} else {
+			// The glass sits RECESS_M behind the wall: follow the eye ray to that plane.
+			const float RECESS_M = 0.15;
+			vec2 p2 = p - view_w.xy / view_w.z * RECESS_M;
+			vec2 id2;
+			vec2 local2;
+			float pane2;
+			float frame2;
+			window_cell(p2, id2, local2, pane2, frame2);
+			if (pane2 > 0.5 && id2 == w_id) {
+				shade_window(p2, id2, local2, albedo, emission, rough, metal, fw);
+				vec2 sz = local2 * vec2(window_w, window_h);
+				float edge_dist = min(min(sz.x, window_w - sz.x), min(sz.y, window_h - sz.y));
+				float inner = mix(0.55, 1.0, smoothstep(0.0, 0.25, edge_dist));
+				albedo *= inner;
+				emission *= inner;
+			} else {
+				// The ray hits the side of the opening: a dark reveal.
+				albedo = accent_color * 0.35;
+				emission = vec3(0.0);
+				rough = 0.9;
+				metal = 0.0;
+			}
+		}
 	}
 	if (w_pane < 0.5) {
 		apply_overlays(p, albedo, emission, rough, metal, fw);
@@ -748,12 +806,45 @@ void fragment() {
 	vec3 emission;
 	float rough;
 	float metal;
-	facade_shade(p, albedo, emission, rough, metal, fw);
+	vec3 view_w = wall_view(VERTEX, UV, NORMAL, VIEW);
+	facade_shade(p, albedo, emission, rough, metal, fw, view_w);
 	if (collapsing && p.y > edge - 1.5) {
 		albedo = vec3(0.16, 0.15, 0.14) * (0.6 + 0.5 * noise21(p * 4.0));
 		emission = vec3(0.0);
 		if (mod(p.y - ground_height, floor_height) < 0.3) {
 			albedo = vec3(0.32, 0.31, 0.29);
+		}
+	}
+	if (!collapsing && style != 6) {
+		// Baked occlusion, albedo only and only ever darker.
+		if (p.y <= facade_height) {
+			float under = smoothstep(facade_height - 1.6, facade_height - 0.5, p.y)
+				* (1.0 - smoothstep(facade_height - 0.5, facade_height - 0.45, p.y));
+			albedo *= 1.0 - 0.45 * under;
+			if (p.y > facade_height - 0.5) {
+				albedo *= 0.9;
+			}
+		}
+		if (band_every > 0.0 && p.y >= ground_height) {
+			float wy = p.y - ground_height;
+			float row = floor(wy / floor_height);
+			float below = floor_height - (wy - row * floor_height);
+			if (mod(row + 1.0, band_every) < 0.5 && below < 0.4) {
+				albedo *= 1.0 - 0.25 * (1.0 - smoothstep(0.0, 0.4, below));
+			}
+		}
+		if (style != 3 && p.y >= ground_height) {
+			vec2 s_id;
+			vec2 s_local;
+			float s_pane;
+			float s_frame;
+			window_cell(p, s_id, s_local, s_pane, s_frame);
+			if (s_pane < 0.5) {
+				window_cell(p + vec2(0.0, 0.3), s_id, s_local, s_pane, s_frame);
+				if (s_pane > 0.5) {
+					albedo *= 0.8;
+				}
+			}
 		}
 	}
 	float e = 0.008;
