@@ -7,7 +7,7 @@ extends RefCounted
 ## Columns of the sheet: the thirteen run frames.
 const SHEET_COLUMNS := 13
 ## Rows of the sheet; grows as animation PRs add them.
-const SHEET_ROWS := 3
+const SHEET_ROWS := 4
 ## Seconds into the jump when the latch clip takes over: the jump lasts window_raider_wall.gd
 ## JUMP_TIME 0.8 s and, at 10 fps, the latch's impact frame (index 2) starts at 0.75 s, i.e. on
 ## contact. Keep the two in step.
@@ -26,9 +26,12 @@ const CLIPS: Dictionary = {
 	# LATCH_START into the 0.8 s jump.
 	&"jump": {"row": 1, "frames": [0, 1, 2, 3, 4], "fps": 15.0, "loop": false},
 	# Front-on latch onto the van wall, started LATCH_START s into the jump so the impact frame
-	# lands on contact, then holds the cling frame through GRIPPING and CLIMBING until the
-	# crawl (W4).
+	# lands on contact, then holds the cling frame through GRIPPING; CLIMBING hands over to
+	# the crawl once the latch reaches its last frame.
 	&"latch": {"row": 2, "frames": [0, 1, 2, 3], "fps": 10.0, "loop": false},
+	# Front-on wall crawl on CLIMBING. 12 fps: one 8-frame cycle (two strides of ~0.34 m) is
+	# ~0.67 m at the wall helper's CLIMB_SPEED 1.0 m/s, so the paws don't skate.
+	&"climb": {"row": 3, "frames": [0, 1, 2, 3, 4, 5, 6, 7], "fps": 12.0, "loop": true},
 }
 
 ## False while the current jump goes down to the road (drop off the wall), so that jump keeps
@@ -107,6 +110,16 @@ func step(delta: float, moving: bool) -> void:
 		picked = &"latch" if latch_jump and latching else &"jump"
 	elif on_wall and has_clip(&"latch"):
 		picked = &"latch"
+		if phase == WindowRaider.AssaultPhase.CLIMBING and has_clip(&"climb"):
+			# Let the latch's impact and pull-in finish; a CLIMBING that starts from GRIPPING
+			# already has the latch done and goes straight to the crawl.
+			var latch_frames: Array = CLIPS[&"latch"]["frames"]
+			var unfinished := (
+				_clip == &"latch"
+				and int(_clock * float(CLIPS[&"latch"]["fps"])) < latch_frames.size() - 1
+			)
+			if not unfinished:
+				picked = &"climb"
 	if moving and not jumping and not on_wall:
 		var in_cabin := (
 			phase == WindowRaider.AssaultPhase.ATTACKING_BENCH
