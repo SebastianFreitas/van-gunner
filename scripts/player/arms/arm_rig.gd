@@ -215,13 +215,15 @@ static func add_claws(model: Node3D, suffix: String, fingers: Dictionary, claw_k
 		var horn_len := claw_k * tip_len
 		if horn_len <= 0.0 or bed_r <= 0.0:
 			continue
+		var tip_rings: Array = d[&"tip_rings"]
+		if tip_rings.size() < 2:
+			push_warning("ArmRig: finger %s has too few tip rings for a nail" % f)
+			continue
 		var att := BoneAttachment3D.new()
 		att.name = "Claw_" + String(f)
 		att.bone_name = sk.get_bone_name(i3)
 		sk.add_child(att)
 		var dorsal: Vector3 = d[&"dorsal"]
 		var lateral: Vector3 = d[&"lateral"]
-		var crook: float = d[&"crook"]
-		var at := Vector3(0.0, 0.5 * tip_len, 0.0) + dorsal * 0.92 * bed_r + lateral * crook
-		ArmParts.mesh(att, "Claw", ArmClaw.mesh(0.5 * tip_len, horn_len, 1.5 * bed_r,
-				0.35 * bed_r, curve_deg), mat, at, Basis(lateral, Vector3.UP, dorsal))
+		ArmParts.mesh(att, "Claw", ArmClaw.mesh(tip_rings, horn_len, curve_deg), mat,
+				Vector3.ZERO, Basis(lateral, Vector3.UP, dorsal))
