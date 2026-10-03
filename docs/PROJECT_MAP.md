@@ -80,23 +80,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `enum Opening { NONE, SIDE_STREET, BAY }`
 
-**`scripts/acts/act_card_definition.gd`**
-
-- `enum Polarity { BLESSING = 0, DANGER = 1, }`
-
-**`scripts/acts/act_deck_controller.gd`**
-
-- `signal reveal_resolved`
-- `signal boss_pick_resolved`
-
-**`scripts/acts/boon_reward_controller.gd`**
-
-- `signal rest_resolved`
-
-**`scripts/classes/class_definition.gd`**
-
-- `enum Family { BASIC, SHOTGUN, MACHINEGUN, SNIPER }`
-
 **`scripts/combat/grenade.gd`**
 
 - `signal exploded(world_position: Vector3)`
@@ -122,30 +105,109 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `enum Mode { ADD, MULTIPLY, }`
 
-**`scripts/core/game_session.gd`**
+**`scripts/ui/act_reveal_panel.gd`**
 
-- `signal phase_changed(phase: RunPhase)`
-- `signal van_health_changed(current: float, maximum: float)`
-- `signal player_health_changed(current: float, maximum: float)`
-- `signal route_chosen(direction: StringName, step: int)`
-- `signal wave_changed(wave: int)`
-- `signal room_changed(room: StringName)`
-- `signal coins_changed(total: int)`
-- `signal enemy_defeated(enemy: Node)`
-- `signal session_loaded`
-- `signal chill_mode_changed(enabled: bool)`
-- `signal class_changed(class_id: StringName)`
-- `enum RunPhase { IDLE, TRAVELLING, COMBAT, ROUTE_CHOICE, TURNING, GAME_OVER, REST, PARKING, STOP, ACT_REVEAL, BOSS_PICK, }`
+- `signal reveal_finished`
+- `signal boss_cards_picked(card_ids: Array)`
+- `enum Mode { ACT_REVEAL, BOSS_PICK }`
 
-**`scripts/core/loot_collector.gd`**
+**`scripts/ui/bench_screen.gd`**
 
-- `signal queue_changed`
+- `signal closed`
 
-**`scripts/core/meta_progression.gd`**
+**`scripts/ui/boon_choice_panel.gd`**
 
-- `signal van_speed_changed(level: int, speed: float)`
-- `signal rare_parts_changed(total: int)`
-- `signal tree_changed`
+- `signal choice_made(item: ItemDefinition)`
+
+**`scripts/ui/class_panel.gd`**
+
+- `signal closed`
+
+**`scripts/ui/debug_console.gd`**
+
+- `signal opened`
+- `signal closed`
+
+**`scripts/ui/driver_shout_hud.gd`**
+
+- `signal boost_pressed`
+- `signal slow_pressed`
+
+**`scripts/ui/pause_menu.gd`**
+
+- `signal opened`
+- `signal closed`
+- `signal quit_to_menu_requested`
+- `signal quit_game_requested`
+
+**`scripts/ui/skill_tree_hud.gd`**
+
+- `signal closed`
+
+**`scripts/items/item_definition.gd`**
+
+- `enum ItemKind { MONEY = 0, BOON = 1, TOOL = 2, CONSUMABLE = 3, }`
+
+**`scripts/items/item_usable_config.gd`**
+
+- `enum RechargeMode { NONE, COOLDOWN, ON_KILL, }`
+
+**`scripts/items/pickup.gd`**
+
+- `enum _AnimState { SPIN, FACE }`
+
+**`scripts/van/breakable_glass.gd`**
+
+- `signal shattered`
+
+**`scripts/van/rear_doors.gd`**
+
+- `signal opened`
+- `signal closed`
+- `signal door_changed(side: StringName, is_open: bool)`
+- `signal glass_shattered(side: StringName)`
+
+**`scripts/van/side_doors.gd`**
+
+- `signal opened`
+- `signal closed`
+- `signal door_changed(side: StringName, is_open: bool)`
+- `signal passage_changed(side: StringName, is_passable: bool)`
+
+**`scripts/van/side_windows.gd`**
+
+- `signal opened`
+- `signal closed`
+- `signal window_changed(window_id: StringName, is_open: bool)`
+
+**`scripts/van/van_bulkhead.gd`**
+
+- `enum OpeningSide { LEFT, RIGHT }`
+
+**`scripts/van/van_side_wall_panel.gd`**
+
+- `enum Part { ALL, FACES, RETURNS }`
+
+**`scripts/van/van_vital.gd`**
+
+- `signal health_changed(current: float, maximum: float)`
+
+**`scripts/van/look/machine_damage.gd`**
+
+- `signal state_changed(state: int)`
+- `enum State { HEALTHY, HURT, DYING }`
+
+**`scripts/van/look/van_look.gd`**
+
+- `signal look_rebuilt(seed_value: int)`
+
+**`scripts/meta/skill_node_definition.gd`**
+
+- `enum Branch { ORIGIN = 0, UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, }`
+
+**`scripts/classes/class_definition.gd`**
+
+- `enum Family { BASIC, SHOTGUN, MACHINEGUN, SNIPER }`
 
 **`scripts/enemies/biker_boss.gd`**
 
@@ -180,21 +242,18 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `signal opened`
 
-**`scripts/items/item_definition.gd`**
+**`scripts/acts/act_card_definition.gd`**
 
-- `enum ItemKind { MONEY = 0, BOON = 1, TOOL = 2, CONSUMABLE = 3, }`
+- `enum Polarity { BLESSING = 0, DANGER = 1, }`
 
-**`scripts/items/item_usable_config.gd`**
+**`scripts/acts/act_deck_controller.gd`**
 
-- `enum RechargeMode { NONE, COOLDOWN, ON_KILL, }`
+- `signal reveal_resolved`
+- `signal boss_pick_resolved`
 
-**`scripts/items/pickup.gd`**
+**`scripts/acts/boon_reward_controller.gd`**
 
-- `enum _AnimState { SPIN, FACE }`
-
-**`scripts/meta/skill_node_definition.gd`**
-
-- `enum Branch { ORIGIN = 0, UP = 1, DOWN = 2, LEFT = 3, RIGHT = 4, }`
+- `signal rest_resolved`
 
 **`scripts/player/boon_traits.gd`**
 
@@ -211,6 +270,31 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `signal boons_changed`
 - `signal item_acquired(item: ItemDefinition, charges: int, slot_index: int)`
 - `signal usable_activated(item: ItemDefinition, success: bool)`
+
+**`scripts/core/game_session.gd`**
+
+- `signal phase_changed(phase: RunPhase)`
+- `signal van_health_changed(current: float, maximum: float)`
+- `signal player_health_changed(current: float, maximum: float)`
+- `signal route_chosen(direction: StringName, step: int)`
+- `signal wave_changed(wave: int)`
+- `signal room_changed(room: StringName)`
+- `signal coins_changed(total: int)`
+- `signal enemy_defeated(enemy: Node)`
+- `signal session_loaded`
+- `signal chill_mode_changed(enabled: bool)`
+- `signal class_changed(class_id: StringName)`
+- `enum RunPhase { IDLE, TRAVELLING, COMBAT, ROUTE_CHOICE, TURNING, GAME_OVER, REST, PARKING, STOP, ACT_REVEAL, BOSS_PICK, }`
+
+**`scripts/core/loot_collector.gd`**
+
+- `signal queue_changed`
+
+**`scripts/core/meta_progression.gd`**
+
+- `signal van_speed_changed(level: int, speed: float)`
+- `signal rare_parts_changed(total: int)`
+- `signal tree_changed`
 
 **`scripts/stops/side_stop_definition.gd`**
 
@@ -258,94 +342,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 - `enum Kind { WANTED, FESTIVAL, NOTICE }`
 
-**`scripts/ui/act_reveal_panel.gd`**
-
-- `signal reveal_finished`
-- `signal boss_cards_picked(card_ids: Array)`
-- `enum Mode { ACT_REVEAL, BOSS_PICK }`
-
-**`scripts/ui/bench_screen.gd`**
-
-- `signal closed`
-
-**`scripts/ui/boon_choice_panel.gd`**
-
-- `signal choice_made(item: ItemDefinition)`
-
-**`scripts/ui/class_panel.gd`**
-
-- `signal closed`
-
-**`scripts/ui/debug_console.gd`**
-
-- `signal opened`
-- `signal closed`
-
-**`scripts/ui/driver_shout_hud.gd`**
-
-- `signal boost_pressed`
-- `signal slow_pressed`
-
-**`scripts/ui/pause_menu.gd`**
-
-- `signal opened`
-- `signal closed`
-- `signal quit_to_menu_requested`
-- `signal quit_game_requested`
-
-**`scripts/ui/skill_tree_hud.gd`**
-
-- `signal closed`
-
-**`scripts/van/breakable_glass.gd`**
-
-- `signal shattered`
-
-**`scripts/van/rear_doors.gd`**
-
-- `signal opened`
-- `signal closed`
-- `signal door_changed(side: StringName, is_open: bool)`
-- `signal glass_shattered(side: StringName)`
-
-**`scripts/van/side_doors.gd`**
-
-- `signal opened`
-- `signal closed`
-- `signal door_changed(side: StringName, is_open: bool)`
-- `signal passage_changed(side: StringName, is_passable: bool)`
-
-**`scripts/van/side_windows.gd`**
-
-- `signal opened`
-- `signal closed`
-- `signal window_changed(window_id: StringName, is_open: bool)`
-
-**`scripts/van/van_bulkhead.gd`**
-
-- `enum OpeningSide { LEFT, RIGHT }`
-
-**`scripts/van/van_side_wall_panel.gd`**
-
-- `enum Part { ALL, FACES, RETURNS }`
-
-**`scripts/van/van_vital.gd`**
-
-- `signal health_changed(current: float, maximum: float)`
-
-**`scripts/van/look/machine_damage.gd`**
-
-- `signal state_changed(state: int)`
-- `enum State { HEALTHY, HURT, DYING }`
-
-**`scripts/van/look/van_look.gd`**
-
-- `signal look_rebuilt(seed_value: int)`
-
 
 ## Script index
 
-367 GDScript files, 58834 lines.
+367 GDScript files, 58905 lines.
 
 ### `scenes/corridor/`
 
@@ -763,7 +763,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `van_hull_mesh.gd` | `VanHullMesh` | 401 | XY end-cap slabs that follow VanSideWall's bow and VanCeiling's barrel vault. |
 | `van_lighting.gd` | `VanLighting` | 56 | Marks van interior meshes as render layer 2 so DoorSpill (cull mask layer 1) lights the corridor through openings without washing the cabin. |
 | `van_overlays.gd` | — | 238 | Modal overlays: bench, skill tree, class panel, debug console, pause menu, mouse passthrough. |
-| `van_player_containment.gd` | `VanPlayerContainment` | 89 | Invisible shell that keeps the player inside the van. |
+| `van_player_containment.gd` | `VanPlayerContainment` | 139 | Invisible shell that keeps the player inside the van. |
 | `van_route_choice.gd` | — | 287 | Builds and refreshes the ROUTE_CHOICE panel: card art, stop labels, highlight state. |
 | `van_side_wall.gd` | `VanSideWall` | 368 | Curved cargo-van side liners: wider at the floor, bowed out at the waist, tapering in toward the roof — with punched openings for windows / side doors. |
 | `van_side_wall_jambs.gd` | — | 175 | Door jambs for VanSideWall: the frame ring's lip inside each side door bay, without the outer return the wall's reveal owns. |
@@ -843,7 +843,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 |---|---|---|---|
 | `smoke_driver.gd` | — | 390 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
-| `smoke_halt.gd` | — | 58 | Smoke step: the C-C halt, exit, climb-in and Shift resume round trip. |
+| `smoke_halt.gd` | — | 79 | Smoke step: the C-C halt, exit, climb-in and Shift resume round trip. |
 | `smoke_route.gd` | — | 181 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
 | `smoke_shots.gd` | — | 401 | Screenshots for tools/smoke.py --shots. |
 | `smoke_shots_closeups.gd` | — | 314 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
@@ -868,7 +868,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | Scene | Nodes | Root type |
 |---|---|---|
-| `scenes/boot/boot.tscn` | 3 | Control |
 | `scenes/combat/projectile.tscn` | 4 | Area3D |
 | `scenes/corridor/act_statue.tscn` | 5 | Node3D |
 | `scenes/corridor/corridor_crossroads.tscn` | 21 | Node3D |
@@ -882,11 +881,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/corridor/stop_elevator.tscn` | 1 | Node3D |
 | `scenes/corridor/stop_vestibule.tscn` | 4 | Node3D |
 | `scenes/corridor/warehouse_bay.tscn` | 1 | Node3D |
-| `scenes/enemies/biker_boss.tscn` | 7 |  |
-| `scenes/enemies/window_raider.tscn` | 9 | Node3D |
-| `scenes/items/pickup.tscn` | 3 | Area3D |
-| `scenes/player/player.tscn` | 13 | CharacterBody3D |
-| `scenes/shop/shop_offer.tscn` | 3 | StaticBody3D |
 | `scenes/ui/bench_screen.tscn` | 24 | Control |
 | `scenes/ui/damage_number.tscn` | 1 | Label |
 | `scenes/ui/debug_console.tscn` | 8 | Control |
@@ -897,6 +891,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/ui/run_hud.tscn` | 43 | CanvasLayer |
 | `scenes/ui/skill_tree_hud.tscn` | 19 | Control |
 | `scenes/ui/usable_slot.tscn` | 6 | PanelContainer |
+| `scenes/boot/boot.tscn` | 3 | Control |
+| `scenes/items/pickup.tscn` | 3 | Area3D |
 | `scenes/van/broken_iron_cross.tscn` | 1 | Node3D |
 | `scenes/van/class_board.tscn` | 4 | StaticBody3D |
 | `scenes/van/iron_cross.tscn` | 1 | Node3D |
@@ -910,6 +906,10 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `scenes/van/van_shell.tscn` | 184 | StaticBody3D |
 | `scenes/van/van_side_wall.tscn` | 1 | Node3D |
 | `scenes/van/van_vital_dummy.tscn` | 5 | StaticBody3D |
+| `scenes/enemies/biker_boss.tscn` | 7 |  |
+| `scenes/enemies/window_raider.tscn` | 9 | Node3D |
+| `scenes/shop/shop_offer.tscn` | 3 | StaticBody3D |
+| `scenes/player/player.tscn` | 13 | CharacterBody3D |
 | `tools/probe/probe_runner.tscn` | 1 | Node |
 | `tools/scene_dump/scene_dump.tscn` | 1 | Node |
 | `tools/smoke/smoke_test.tscn` | 1 | Node |
@@ -926,8 +926,6 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `scenes/corridor/industrial_surface.gdshader`
 - `scenes/corridor/paving_surface.gdshader`
 - `scenes/corridor/sidewalk_surface.gdshader`
-- `scenes/player/arm_cloth.gdshader`
-- `scenes/player/arm_surface.gdshader`
 - `scenes/van/crt_screen.gdshader`
 - `scenes/van/van_ceiling.gdshader`
 - `scenes/van/van_exterior.gdshader`
@@ -938,6 +936,8 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 - `scenes/van/van_viga.gdshader`
 - `scenes/van/van_wall.gdshader`
 - `scenes/van/van_window_exterior.gdshader`
+- `scenes/player/arm_cloth.gdshader`
+- `scenes/player/arm_surface.gdshader`
 
 ## Balance sheet (`resources/balance/game_balance.tres`)
 
