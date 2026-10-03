@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-361 GDScript files, 58070 lines.
+362 GDScript files, 58283 lines.
 
 ### `scenes/corridor/`
 
@@ -403,7 +403,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `gun_controller.gd` | `GunController` | 317 | Hit/miss for the HUD once the first pellet resolves. |
 | `gun_stats.gd` | `GunStats` | 46 | Defaults match game_balance.tres; GunStatsController still re-seeds from GameBalance. |
 | `gun_stats_controller.gd` | `GunStatsController` | 153 | Rebuilds a gun's effective stats from its base stats, class and modifiers. |
-| `gun_viewmodel.gd` | `GunViewmodel` | 314 | First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; shot kick and reload cant. |
+| `gun_viewmodel.gd` | `GunViewmodel` | 365 | First-person goblin arms and pipe rifle on a 0.18-scaled rig under the camera, rebuilt from the van seed; shot kick and reload cant. |
 | `projectile.gd` | `Projectile` | 341 | A bullet: flies, ricochets off scenery and resolves damage on hit. |
 | `projectile_pool.gd` | — | 82 | Reuses Projectile nodes to avoid instantiate/free churn during heavy fire. |
 | `stat_modifier.gd` | `StatModifier` | 14 | A single additive or multiplicative modifier applied to a named gun stat. |
@@ -431,7 +431,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
-| `debug_arms_commands.gd` | — | 245 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
+| `debug_arms_commands.gd` | — | 266 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
 | `debug_arms_fit.gd` | — | 172 | Debug console `arms fit`: the right thumb's clearance from the gun parts in palm lengths, plus `arms thumbaim\|thumbcurl\|wrist x y z`, which set the builder's l… |
 | `debug_arms_frame.gd` | — | 106 | Debug `arms frame`: how much of the player camera's picture the arms and gun cover, found by drawing them white and diffing against the normal frame. |
 | `debug_arms_gear_fit.gd` | — | 290 | Debug `arms gear`: poses both arms through the weave, the shot kick and the reload, skins the arm and its sleeve on the CPU and counts skin vertices that poke… |
@@ -565,6 +565,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `arm_skin_mesh.gd` | `ArmSkinMesh` | 268 | Builds skinned cloth meshes on an arm skeleton: ring frames, averaged ring weights, tube indices. |
 | `arm_sleeve.gd` | `ArmSleeve` | 181 | Builds the oversized torn T-shirt sleeve as a skinned tube on the upper arm, above the elbow. |
 | `arm_tattoo_font.gd` | `ArmTattooFont` | 184 | Block-capital stroke font: lays a short text out as line segments for the arm tattoo shader. |
+| `arm_walk.gd` | — | 137 | Walk layer for the first-person arms: a footstep-locked figure-8 with roll, a footfall dip, strafe lean, a start/stop lag spring and a free left-arm swing, ble… |
 | `arm_weave.gd` | — | 258 | Drives the goblin's idle hands each frame: the witch-finger weave, and a grip idle on the gun hand when the gun is shown. |
 | `arm_wrap.gd` | `ArmWrap` | 249 | Shrinkwrap bands: low-poly tubes built from the skinned arm mesh's own cross-sections, so wraps, gloves, cuffs and rings hug the hand instead of floating as cy… |
 | `arms_builder.gd` | `ArmsBuilder` | 212 | Builds seeded skinned goblin arms (CC0 rigged model, grime skin) posed by ArmRig on the pipe rifle, dressed from the van seed. |
@@ -836,7 +837,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | `smoke_driver.gd` | — | 384 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 181 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
-| `smoke_shots.gd` | — | 397 | Screenshots for tools/smoke.py --shots. |
+| `smoke_shots.gd` | — | 401 | Screenshots for tools/smoke.py --shots. |
 | `smoke_shots_closeups.gd` | — | 314 | Builds the close-up view list for tools/smoke.py --shots: door and window seams, the side doors and windows from inside and outside, and the rear roof line. |
 | `smoke_test.gd` | — | 13 | Headless smoke test entry scene. |
 

@@ -5,6 +5,7 @@ extends Node3D
 const ArmWeave := preload("res://scripts/player/arms/arm_weave.gd")
 const ArmKick := preload("res://scripts/player/arms/arm_kick.gd")
 const ArmGesture := preload("res://scripts/player/arms/arm_gesture.gd")
+const ArmWalk := preload("res://scripts/player/arms/arm_walk.gd")
 
 const RIG_SCALE := 0.18
 ## Vertical FOV the arms and gun draw with (the world camera is 78); 0 = the camera's own.
@@ -14,10 +15,10 @@ const RELOAD_DIP := 0.1  ## virtual metres
 const SWAY_MAX := 2.0 * PI / 180.0  ## radians, cap per axis
 const SWAY_GAIN := 0.02  ## seconds: a 100 deg/s turn reaches the cap
 const SWAY_RATE := 10.0  ## lerp rate per second
-const BOB_UP := 0.02  ## virtual metres
-const BOB_SIDE := 0.015  ## virtual metres
-const BOB_FREQ := 8.0  ## rad/s at walking speed
-const BOB_WALK_SPEED := 4.0  ## m/s that counts as a full bob
+const DRIFT_WALK_KEEP := 0.3  ## share of the idle arm drift left at full walk
+## Hz-ish rate of the velocity low-pass; smooths what tick/render beat is left.
+const VEL_SMOOTH := 12.0
+const MOVE_STALE := 0.1  ## seconds without a body move that count as standing still
 const SLAP_DROP := 0.12  ## virtual metres the left hand drops below the magazine
 ## Rig-space tuning shift for the left hand at rest; the pose constants in `ArmsBuilder` own
 ## the framing now, so this stays zero.
@@ -41,6 +42,11 @@ var debug_shot_t := -1.0
 ## Pins the left-hand gesture `debug_gesture_kind` at this many seconds; negative = off.
 var debug_gesture_kind: StringName = &""
 var debug_gesture_t := -1.0
+## >= 0 pins the walk cycle (0..1) at `debug_walk_amount` strength, from arms walk.
+var debug_walk_t := -1.0
+var debug_walk_amount := 1.0
+## `&"start"` or `&"stop"` pins that walk transition at `debug_walk_t` seconds.
+var debug_walk_kind: StringName = &""
 ## Current viewmodel FOV in degrees, reapplied after every `rebuild_arms`.
 var viewmodel_fov := VIEWMODEL_FOV
 @onready var _rig: Node3D = $Rig
@@ -55,16 +61,19 @@ var _camera: Node3D
 var _body: Node3D
 var _prev_basis := Basis.IDENTITY
 var _prev_body_pos := Vector3.ZERO
+var _move_dt := 0.0  ## seconds since the body last moved
+var _last_move_tick := 0  ## physics frame of the last body move
+var _raw_vel := Vector3.ZERO  ## parent-local m/s from the last body move, held between moves
+var _body_vel := Vector3.ZERO  ## _raw_vel low-passed; what the walk layer reads
 var _has_prev := false
 var _sway := Vector2.ZERO  ## x pitch, y yaw (radians)
-var _bob_phase := 0.0
 var _weave: RefCounted = null
 var _weave_t := 0.0
 var _kick: RefCounted = null
 var _gesture: RefCounted = null
 var _kick_clock := 0.0
 var _shots := 0
-var _bob_amount := 0.0  ## 0..1 eased walking factor
+var _walk: RefCounted = ArmWalk.new()
 
 
 func _ready() -> void:
@@ -171,8 +180,10 @@ func snap_rest() -> void:
 		_gesture.clear()
 	_reload_t = 0.0
 	_sway = Vector2.ZERO
-	_bob_amount = 0.0
-	_bob_phase = 0.0
+	_walk.reset()
+	_move_dt = 0.0
+	_raw_vel = Vector3.ZERO
+	_body_vel = Vector3.ZERO
 	_has_prev = false
 	_reloading = false
 	_apply()
@@ -196,15 +207,55 @@ func _process(delta: float) -> void:
 			)
 			_sway = _sway.lerp(target, 1.0 - exp(-SWAY_RATE * delta))
 		_prev_basis = cur
+	var lateral := 0.0
+	var forward := 0.0
 	if _body != null:
-		if _has_prev:
+		if not _has_prev:
+			_move_dt = 0.0
+			_raw_vel = Vector3.ZERO
+			_body_vel = Vector3.ZERO
+			_last_move_tick = Engine.get_physics_frames()
+		else:
 			# Parent-local, so the van's own travel never counts as walking.
+			# The body moves on physics ticks, so velocity is measured per move,
+			# not per render frame.
+			_move_dt += delta
 			var d := _body.position - _prev_body_pos
-			var speed := Vector2(d.x, d.z).length() / delta
-			var want := clampf(speed / BOB_WALK_SPEED, 0.0, 1.0)
-			_bob_amount = lerpf(_bob_amount, want, 1.0 - exp(-8.0 * delta))
-			_bob_phase = fmod(_bob_phase + BOB_FREQ * delta * _bob_amount, TAU)
+			if d.length_squared() > 1e-10:
+				# True physics time between moves, so a 144 fps beat of 2 or 3 render
+				# frames per tick doesn't flicker the speed.
+				var now := Engine.get_physics_frames()
+				var ticks := 1 if _move_dt > MOVE_STALE else maxi(now - _last_move_tick, 1)
+				_raw_vel = d / (ticks / float(Engine.physics_ticks_per_second))
+				if Vector2(_raw_vel.x, _raw_vel.z).length() > 20.0:
+					_raw_vel = Vector3.ZERO  # a teleport or reparent, not walking
+				_last_move_tick = now
+				_move_dt = 0.0
+			elif _move_dt > MOVE_STALE:
+				_raw_vel = Vector3.ZERO
+			_body_vel = _body_vel.lerp(_raw_vel, 1.0 - exp(-delta * VEL_SMOOTH))
+			var parent := _body.get_parent() as Node3D
+			var pb := parent.global_basis.orthonormalized() if parent else Basis.IDENTITY
+			var fwd := Vector3.FORWARD
+			if _camera != null:
+				fwd = pb.inverse() * -_camera.global_basis.z
+			fwd.y = 0.0
+			if fwd.length() < 0.01:
+				fwd = Vector3.FORWARD
+			fwd = fwd.normalized()
+			var right := fwd.cross(Vector3.UP)
+			lateral = _body_vel.dot(right)
+			forward = _body_vel.dot(fwd)
 		_prev_body_pos = _body.position
+	if debug_walk_t >= 0.0:
+		if debug_walk_kind == &"":
+			_walk.pin_cycle(debug_walk_t, debug_walk_amount)
+		else:
+			_walk.pin_transition(debug_walk_kind, debug_walk_t)
+	elif SaveSandbox.enabled:
+		_walk.reset()  # keeps smoke stills comparable
+	else:
+		_walk.step(delta, lateral, forward)
 	_has_prev = true
 	_weave_t = fmod(_weave_t + delta, 3600.0)
 	var weave_at := debug_weave_t if debug_weave_t >= 0.0 else (
@@ -248,16 +299,11 @@ func arms_focus(which: StringName) -> Vector3:
 	return transform * (_rig.transform * HeldGun.gun_xform().origin)
 
 
-## Look sway and walk bob applied on top of the shot kick to the rifle and both arms.
+## Look sway and the walk layer (ArmWalk) applied to the rifle and both arms.
 func _motion() -> Transform3D:
 	return Transform3D(
-		Basis(Vector3.UP, _sway.y) * Basis(Vector3.RIGHT, _sway.x),
-		Vector3(
-			BOB_SIDE * _bob_amount * sin(_bob_phase),
-			BOB_UP * _bob_amount * sin(2.0 * _bob_phase),
-			0.0
-		)
-	)
+		Basis(Vector3.UP, _sway.y) * Basis(Vector3.RIGHT, _sway.x), Vector3.ZERO
+	) * _walk.rig_offset(HeldGun.GRIP)
 
 
 ## Reload timeline t 0..1 as x cant, y left-hand reach to the magazine, z slap (two humps).
@@ -300,6 +346,10 @@ func _apply() -> void:
 	var rest_r := Transform3D(Basis.from_euler(RIGHT_REST_TILT * (PI / 180.0)), RIGHT_REST)
 	var drift_r: Transform3D = _weave.arm_offset(0) if _weave else Transform3D.IDENTITY
 	var drift_l: Transform3D = _weave.arm_offset(1) if _weave else Transform3D.IDENTITY
+	# Walking takes over the arm motion, so the idle drift fades out with it.
+	var keep := lerpf(1.0, DRIFT_WALK_KEEP, _walk.amount())
+	drift_r = Transform3D.IDENTITY.interpolate_with(drift_r, keep)
+	drift_l = Transform3D.IDENTITY.interpolate_with(drift_l, keep)
 	var right_x := gun_x * rest_r * drift_r * kick_r
 	var tilt_l := Basis.from_euler(LEFT_REST_TILT * (1.0 - shown) * (PI / 180.0))
 	var gun := _roots.get("gun_root") as Node3D
@@ -310,4 +360,5 @@ func _apply() -> void:
 	if right != null:
 		right.transform = right_x
 	if left != null:
-		left.transform = m * kick_l * gest_l * Transform3D(tilt_l, off) * drift_l
+		left.transform = (m * _walk.left_offset() * kick_l * gest_l
+				* Transform3D(tilt_l, off) * drift_l)
