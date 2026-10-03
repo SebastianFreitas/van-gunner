@@ -342,7 +342,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 ## Script index
 
-364 GDScript files, 58586 lines.
+365 GDScript files, 58816 lines.
 
 ### `scenes/corridor/`
 
@@ -431,15 +431,16 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 | File | class_name | LOC | Summary |
 |---|---|---|---|
 | `debug_act_commands.gd` | — | 77 | Debug console commands: act. |
-| `debug_arms_commands.gd` | — | 252 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
+| `debug_arms_commands.gd` | — | 255 | Debug console `arms`: frames the first-person arms from fixed angles and freezes poses. |
 | `debug_arms_dump.gd` | — | 115 | Writes the posed arm skeletons (both hands) to a JSON file so two poses can be diffed. |
 | `debug_arms_fit.gd` | — | 172 | Debug console `arms fit`: the right thumb's clearance from the gun parts in palm lengths, plus `arms thumbaim\|thumbcurl\|wrist x y z`, which set the builder's l… |
 | `debug_arms_frame.gd` | — | 106 | Debug `arms frame`: how much of the player camera's picture the arms and gun cover, found by drawing them white and diffing against the normal frame. |
 | `debug_arms_gear_fit.gd` | — | 290 | Debug `arms gear`: poses both arms through the weave, the shot kick and the reload, skins the arm and its sleeve on the CPU and counts skin vertices that poke… |
 | `debug_arms_hands.gd` | — | 99 | The monster-hand bar (hand as long as the forearm, finger shaft over a quarter of its length, neighbours not merged) measured on the posed skeleton. |
+| `debug_arms_ik.gd` | — | 222 | Debug console `arms ik`: sweeps ArmRig.reach over targets and poles, then bars the thumb nail. |
 | `debug_arms_thumbs.gd` | — | 139 | Debug console `arms thumbs`: per hand, the thumb against the index (angle, C gap, hook, how far it points up and forward), with bars. |
 | `debug_catalog.gd` | — | 231 | Debug console command catalog: the `list` command plus the formatting and id-listing helpers shared by other command groups and by DebugCommands.get_completion… |
-| `debug_commands.gd` | — | 264 | Parses and runs debug console commands. |
+| `debug_commands.gd` | — | 265 | Parses and runs debug console commands. |
 | `debug_config.gd` | `DebugConfig` | 7 | Set true to ship the console in a release export. |
 | `debug_facade_commands.gd` | — | 342 | Debug console commands for the street facades: force a district or set-piece, reseed the tiles in view, print stats and plans, and run the keep-out stress audi… |
 | `debug_facade_render_commands.gd` | — | 87 | Debug console commands: facade render stats (`facade faces`, `facade perf`), reached from debug_facade_commands.gd. |
@@ -836,7 +837,7 @@ Looked up: `act_deck_controller`, `agile`, `boon_reward_controller`, `breach_con
 
 | File | class_name | LOC | Summary |
 |---|---|---|---|
-| `smoke_driver.gd` | — | 384 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
+| `smoke_driver.gd` | — | 388 | Drives a full headless playthrough of one van run to prove the game boots, the class/boon/rest UI flows work end to end, and the balance numbers stay determini… |
 | `smoke_fingerprint.gd` | — | 106 | Static helpers that build the smoke driver's fingerprint lines (class stats, pools, act deck, waves, rest offer) and write them to user://. |
 | `smoke_route.gd` | — | 181 | Drives the fork/side-stop portion of the smoke run (route.gd -> route choice -> stop -> back to travelling). |
 | `smoke_shots.gd` | — | 401 | Screenshots for tools/smoke.py --shots. |
