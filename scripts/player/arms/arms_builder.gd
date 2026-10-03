@@ -50,8 +50,8 @@ const GRIP_CURL := {
 	&"thumb": Vector3(-5, -8, 50),
 }
 ## Tuned with `arms touch` on the grip: the fingers wrap the front strap, the thumb lies high on the
-## left panel (the side facing the camera) pointing forward.
-const GRIP_THUMB_AIM := Vector3(-60, -80, -55)
+## left panel (the side facing the camera), crossing the back strap so it stays out of the core.
+const GRIP_THUMB_AIM := Vector3(-65, -70, -20)
 ## Live copies of the gripping hand's tunables: the `arms thumbaim`, `arms thumbcurl`, `arms wrist`
 ## and `arms curl` console commands set them and rebuild, so a pose is tuned by numbers instead of
 ## a screenshot per try. The constants above are their defaults. The `right_*` names read and write
