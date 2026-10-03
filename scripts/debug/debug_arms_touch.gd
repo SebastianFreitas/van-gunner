@@ -7,8 +7,21 @@ extends RefCounted
 ## bar: the check is print-only.
 const TRIGGER_MAX_P := 0.25
 
+## Monster grip bars (grip report only), in palm lengths: a finger or thumb point may sit this far
+## inside / outside the nearest part, the web may be this far from its marker, and the palm origin
+## may be buried no deeper than PALM_MIN_P.
+const GRIP_IN_P := -0.06
+const GRIP_OUT_P := 0.10
+const WEB_MAX_P := 0.30
+const PALM_MIN_P := -0.02
+
 const _PARTS: Array[String] = ["GripCore", "GripPanelL", "GripPanelR", "Frame", "Beavertail",
-		"Barrel", "Trigger", "GuardRear", "GuardBottom", "GuardFront", "GuardJoin"]
+		"Barrel", "Trigger", "GuardRear", "GuardBottom", "GuardFront", "GuardJoin",
+		"FrontStrap", "BackStrap", "Groove0", "Groove1", "Groove2", "Groove3", "Pommel",
+		"TopStub", "TriggerUpper", "TriggerLower"]
+
+## Set by the last trigger check: 1 when the right index is too far, so the grip report counts it.
+var _trigger_bad := 0
 
 
 ## Read-only readout ending TOUCH OK or TOUCH CHECK <n> (clips plus a far trigger finger).
@@ -36,6 +49,8 @@ func run(vm: Node) -> String:
 		counted += _tip_in_fingers(data, h, p, lines)
 		if body != null:
 			counted += _tip_in_gun(data, h, p, body, lines)
+			if h == "R" and body.get_node_or_null(^"GripCentre") != null:
+				_grip_report(model, data, p, body, lines)
 	var text := "\n".join(lines)
 	text += ("\n" if text != "" else "") + ("TOUCH OK" if counted == 0 else "TOUCH CHECK %d" % counted)
 	print(text)
@@ -135,8 +150,19 @@ func _tip_in_gun(data: Dictionary, h: String, p: float, body: Node3D,
 			counted += 1
 		lines.append("%s %s tip nearest %s sd/p %.3f %s"
 				% [h, f, part, best / p, "CLIP" if best < 0.0 else "OK"])
+	_trigger_bad = 0
 	if h != "R" or not data.has(&"f_index"):
 		return counted
+	var marker := body.get_node_or_null(^"TriggerPoint") as Node3D
+	if marker != null:
+		# Monster grip: no Trigger mesh, so measure the index pad to the marker instead.
+		var pts: Array = data[&"f_index"][&"pts"]
+		var pad: Vector3 = Vector3(pts[2]).lerp(pts[3], 0.6)
+		var dist := pad.distance_to(marker.global_position) / p
+		_trigger_bad = 0 if dist <= TRIGGER_MAX_P else 1
+		lines.append("R trigger gap/p %.3f (bar <= %.2f) %s"
+				% [dist, TRIGGER_MAX_P, "OK" if _trigger_bad == 0 else "FAR"])
+		return counted + _trigger_bad
 	var trigger := body.get_node_or_null(^"Trigger") as MeshInstance3D
 	if trigger == null:
 		lines.append("R trigger: no Trigger node")
@@ -148,6 +174,78 @@ func _tip_in_gun(data: Dictionary, h: String, p: float, body: Node3D,
 	lines.append("R index tip to trigger gap/p %.3f (bar <= %.2f) %s"
 			% [gap, TRIGGER_MAX_P, "OK" if gap <= TRIGGER_MAX_P else "FAR"])
 	return counted
+
+
+## Right-hand clasp on the monster grip, in palm lengths; ends GRIP OK or GRIP CHECK <n>. Not
+## counted by TOUCH CHECK.
+func _grip_report(model: Node3D, data: Dictionary, p: float, body: Node3D,
+		lines: Array[String]) -> void:
+	var bad := _trigger_bad
+	for f: StringName in [&"f_middle", &"f_ring", &"f_pinky"]:
+		if not data.has(f):
+			continue
+		var pts: Array = data[f][&"pts"]
+		var mid := _nearest_sd(body, Vector3(pts[1]).lerp(pts[2], 0.5)) / p
+		var tip := _nearest_sd(body, pts[3]) / p
+		var ok := _in_bar(mid) and _in_bar(tip)
+		bad += 0 if ok else 1
+		lines.append("R grip %s mid sd/p %.3f tip sd/p %.3f %s"
+				% [String(f).trim_prefix("f_"), mid, tip, "OK" if ok else "OFF"])
+	if data.has(&"thumb"):
+		var tpts: Array = data[&"thumb"][&"pts"]
+		var tsd := _nearest_sd(body, tpts[3]) / p
+		var to_body := body.global_transform.affine_inverse()
+		var tip_b: Vector3 = to_body * Vector3(tpts[3])
+		# GripPanelL sits at side -1 in monster_grip.gd, so the near (camera) side is -x.
+		var side_x := tip_b.x / p
+		var down := Vector3(0.0, -cos(deg_to_rad(18.0)), sin(deg_to_rad(18.0)))
+		var height := (tip_b - Vector3(0.0, 0.03, -0.01)).dot(down) / p
+		var shaft: Vector3 = to_body.basis * (Vector3(tpts[3]) - Vector3(tpts[2]))
+		var fwd_deg := rad_to_deg(shaft.angle_to(Vector3(0.0, 0.0, -1.0)))
+		var near_part := "-"
+		var near_sd := INF
+		for part_name in _PARTS:
+			var mi := body.get_node_or_null(NodePath(part_name)) as MeshInstance3D
+			if mi != null:
+				var d := _box_sd(mi, mi.transform.affine_inverse() * tip_b)
+				if d < near_sd:
+					near_sd = d
+					near_part = part_name
+		var thumb_ok := (_in_bar(tsd) and side_x <= -0.15 and height >= 0.0 and height <= 0.45
+				and fwd_deg <= 40.0 and near_part == "GripPanelL")
+		bad += 0 if thumb_ok else 1
+		lines.append("R grip thumb tip sd/p %.3f side %.3f height/p %.3f fwd_deg %.1f part %s %s"
+				% [tsd, side_x, height, fwd_deg, near_part, "OK" if thumb_ok else "OFF"])
+	var web := body.get_node_or_null(^"WebPoint") as Node3D
+	if web != null and data.has(&"f_index") and data.has(&"thumb"):
+		var mid_w: Vector3 = Vector3(data[&"f_index"][&"pts"][0]).lerp(data[&"thumb"][&"pts"][0], 0.5)
+		var gap := mid_w.distance_to(web.global_position) / p
+		bad += 0 if gap <= WEB_MAX_P else 1
+		lines.append("R grip web gap/p %.3f (bar <= %.2f) %s"
+				% [gap, WEB_MAX_P, "OK" if gap <= WEB_MAX_P else "FAR"])
+	var sk := ArmRig.skeleton(model)
+	var hand_i := sk.find_bone("DEF-hand.R")
+	if hand_i != -1:
+		var palm := _nearest_sd(body, sk.global_transform * sk.get_bone_global_pose(hand_i).origin) / p
+		bad += 0 if palm >= PALM_MIN_P else 1
+		lines.append("R grip palm sd/p %.3f %s" % [palm, "OK" if palm >= PALM_MIN_P else "CLIP"])
+	lines.append("GRIP OK" if bad == 0 else "GRIP CHECK %d" % bad)
+
+
+## True when a signed distance in palm lengths is a clasp: skin on the part, not buried or off it.
+func _in_bar(sd_p: float) -> bool:
+	return sd_p >= GRIP_IN_P and sd_p <= GRIP_OUT_P
+
+
+## Signed distance from a world point to the nearest gun part's box; INF when none exist.
+func _nearest_sd(body: Node3D, world_pt: Vector3) -> float:
+	var q := body.global_transform.affine_inverse() * world_pt
+	var best := INF
+	for part_name in _PARTS:
+		var mi := body.get_node_or_null(NodePath(part_name)) as MeshInstance3D
+		if mi != null:
+			best = minf(best, _box_sd(mi, mi.transform.affine_inverse() * q))
+	return best
 
 
 ## Signed distance from `q` (in the gun part's parent space) to the part's box; negative inside.

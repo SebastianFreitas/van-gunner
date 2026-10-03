@@ -65,8 +65,21 @@ static func build(rng: RandomNumberGenerator, palm_len: float = 0.22) -> Node3D:
 		m.name = entry[0] as String
 		m.position = entry[1] as Vector3
 		body.add_child(m)
+	# The viewmodel reads HeldGun's statics for the muzzle and the left hand, so point them at
+	# this piece: shots leave from just ahead of the guard's front, not from inside the hand.
+	var t := trigger_point(p)
+	var guard_front_z := t.z + 0.30 * p - GUARD_L_K * p
+	muzzle_in_gun_set(Vector3(0.0, t.y + 0.25 * p, guard_front_z - 0.05 * p),
+			centre + gb * Vector3(0.0, -0.2 * glen, -0.55 * dep), grip_bottom(p))
 	root.set_meta(&"lamp_local", HeldGun.gun_xform() * Vector3(0.0, 0.03, -0.6 * p))
 	return root
+
+
+## Writes HeldGun's gun-space points (muzzle, fore-end, mag slap) for this piece.
+static func muzzle_in_gun_set(muzzle: Vector3, fore_end: Vector3, mag_slap: Vector3) -> void:
+	HeldGun.muzzle_in_gun = muzzle
+	HeldGun.fore_end_in_gun = fore_end
+	HeldGun.mag_slap_in_gun = mag_slap
 
 
 ## Trigger guard of four limbs, big enough for a thick finger, and the two-box trigger blade.

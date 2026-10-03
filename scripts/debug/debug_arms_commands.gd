@@ -26,7 +26,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms curl <f_index|f_middle|f_ring|f_pinky> <a> <b> <c> | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -102,6 +102,21 @@ func cmd_arms(args: Array) -> String:
 		ArmsBuilder.dress_style = StringName(arg)
 		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
 		return "arms dress: " + arg
+	if args[0] == "curl":
+		var fingers: Array[StringName] = [&"f_index", &"f_middle", &"f_ring", &"f_pinky"]
+		if args.size() != 5 or not fingers.has(StringName(str(args[1]))):
+			return USAGE
+		for i in range(2, 5):
+			if not str(args[i]).is_valid_float():
+				return USAGE
+		if not vm.has_method(&"rebuild_arms"):
+			return "arms: no viewmodel"
+		var curl := ArmsBuilder.right_curl
+		curl[StringName(str(args[1]))] = Vector3(
+				float(str(args[2])), float(str(args[3])), float(str(args[4])))
+		ArmsBuilder.right_curl = curl
+		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
+		return "arms curl %s %s" % [str(args[1]), str(curl[StringName(str(args[1]))])]
 	if args[0] == "gun":
 		if args.size() < 2:
 			return "arms gun: " + str(ArmsBuilder.gun_style)
