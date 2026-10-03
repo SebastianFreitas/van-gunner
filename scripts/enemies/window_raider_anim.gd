@@ -7,7 +7,7 @@ extends RefCounted
 ## Columns of the sheet: the thirteen run frames.
 const SHEET_COLUMNS := 13
 ## Rows of the sheet; grows as animation PRs add them.
-const SHEET_ROWS := 1
+const SHEET_ROWS := 2
 ## Run frames whose claws touch the floor (every frame but the airborne kick, fall and drop
 ## at 6-8). Inside the cabin the loper prowls on these so it does not hop around the van.
 const GROUNDED_FRAMES: Array[int] = [0, 1, 2, 3, 4, 5, 9, 10, 11, 12]
@@ -18,6 +18,9 @@ const CLIPS: Dictionary = {
 	&"run": {"row": 0, "frames": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "fps": 18.0, "loop": true},
 	# The in-cabin loop on the grounded frames.
 	&"prowl": {"row": 0, "frames": [0, 1, 2, 3, 4, 5, 9, 10, 11, 12], "fps": 18.0, "loop": true},
+	# Take-off plays in 0.33 s, then holds frame 4 (airborne) for the rest of the 0.8 s jump
+	# until W2 adds the latch.
+	&"jump": {"row": 1, "frames": [0, 1, 2, 3, 4], "fps": 15.0, "loop": false},
 }
 
 var raider: WindowRaider
@@ -56,6 +59,20 @@ func play(clip: StringName) -> void:
 	if clip != _clip:
 		_clip = clip
 		_clock = 0.0
+		# Only the jump frames are drawn facing a side; every other clip is front-on.
+		if clip != &"jump" and drives_sprite():
+			raider.sprite.flip_h = false
+
+
+## Flips the sprite so the jump frames, drawn springing toward image right, point along
+## `world_dir` as the camera sees it (the van, for a jump onto the wall).
+func face_toward(world_dir: Vector3) -> void:
+	if not drives_sprite():
+		return
+	var camera := raider.get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	raider.sprite.flip_h = camera.global_basis.x.dot(world_dir) < 0.0
 
 
 ## Shows the frame a clip has reached after `seconds`. Seconds come first so a Tween's
@@ -81,16 +98,18 @@ func show_clip_at(seconds: float, clip: StringName) -> void:
 func step(delta: float, moving: bool) -> void:
 	if not drives_sprite():
 		return
-	var picked := &"still"
-	if moving:
-		var phase := raider.assault_phase
+	var phase := raider.assault_phase
+	# The jump is a flight, not a walk: it animates whether or not the raider "moved".
+	var jumping := phase == WindowRaider.AssaultPhase.JUMPING
+	var picked := &"jump" if jumping else &"still"
+	if moving and not jumping:
 		var in_cabin := (
 			phase == WindowRaider.AssaultPhase.ATTACKING_BENCH
 			or phase == WindowRaider.AssaultPhase.ATTACKING_PLAYER
 		)
 		picked = &"prowl" if in_cabin else &"run"
 	play(picked)
-	if moving:
+	if moving or jumping:
 		_clock += delta
 		var data: Dictionary = CLIPS[_clip]
 		if data["loop"]:
