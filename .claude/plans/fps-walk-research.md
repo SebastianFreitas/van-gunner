@@ -53,3 +53,16 @@ Smoke saves `a*-arms-walk` at cycle 0.75 (left arm forward peak).
 ## Rounds
 
 (one line per commit: worse / why / solve, with the numbers)
+
+1. Build (2026-10-03). FRAME cover/aim/upper at cycle 0: 8.7/0.0/0.4, 0.25: 6.1/0.9/0.7,
+   0.5: 8.7/0.0/0.3, 0.75: 12.3/0.5/3.5 (box x-min 0.00); rest pose 13.6/23.4/3.2. Bar 1 pass
+   (idle views `same`; 02/05/11 back views and v04 moved 0.2-1.0 because the old bob kept a
+   residue in the smoke and the walk now resets under SaveSandbox). Bar 2 pass (x-min 0.00,
+   cover +6.2). Bar 3 fails at 0.25 only: aim 0.9 > 0.5. Worse: the gun's top edge enters the
+   aim box at the top of the step (no dip there). Tried YAW 1.2 -> 0.5: aim stayed 0.9, so not
+   yaw; reverted. Open: the rest pose itself sits at aim 23.4, so the bar line may want to read
+   "never above rest" instead; owner's call. Bar 4: cycle series max step 16.6% vs 2x median
+   17.0 (pass, no snap); start series can't show settling by pixels (the cycle keeps moving),
+   by the spring constants (2.5 Hz, zeta 0.4) one overshoot of about 25% and under 1% left by
+   1.0 s. Bar 5: still at 0.75 shows the left claw forward-up in the lower left and the gun
+   hand dropped and rolled (ROLL 3.5 deg, DIP 0.05).

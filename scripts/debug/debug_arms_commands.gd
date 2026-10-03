@@ -21,7 +21,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms hands | arms dress <gear|rags|none> | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind>"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms gear | arms thumbs | arms hands | arms dress <gear|rags|none> | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -58,6 +58,27 @@ func cmd_arms(args: Array) -> String:
 			return USAGE
 		vm.debug_weave_t = maxf(float(arg), 0.0)
 		return "arms weave " + str(vm.debug_weave_t)
+	if args[0] == "walk" and args.size() >= 2:
+		var arg := str(args[1])
+		if arg == "off":
+			vm.debug_walk_t = -1.0
+			vm.debug_walk_kind = &""
+			vm.debug_walk_amount = 1.0
+			return "arms walk off"
+		if arg == "start" or arg == "stop":
+			if args.size() < 3 or not str(args[2]).is_valid_float():
+				return USAGE
+			vm.debug_walk_kind = StringName(arg)
+			vm.debug_walk_t = maxf(float(str(args[2])), 0.0)
+			return "arms walk %s %s" % [arg, str(vm.debug_walk_t)]
+		if not arg.is_valid_float():
+			return USAGE
+		vm.debug_walk_kind = &""
+		vm.debug_walk_t = fposmod(float(arg), 1.0)
+		vm.debug_walk_amount = 1.0
+		if args.size() >= 3:
+			vm.debug_walk_amount = clampf(float(str(args[2])), 0.0, 1.0)
+		return "arms walk " + str(vm.debug_walk_t)
 	if args[0] == "shot" and args.size() >= 2:
 		var arg := str(args[1])
 		if arg == "off":
