@@ -75,6 +75,8 @@ const TRIGGER_LIFT := Vector3(-14.0, -8.0, -4.0)  ## degrees per index joint at 
 static var left_thumb_base := LEFT_THUMB_BASE
 static var left_thumb_spread := LEFT_THUMB_SPREAD
 static var left_thumb_axis := LEFT_THUMB_SPREAD_AXIS
+## Strength of the gun hand's creep twitches (1.0 = the free left hand's). Tune here.
+static var grip_creep_scale := 0.25
 
 ## True when the gun is shown: the right hand grips it instead of weaving.
 var _grip_right := false
@@ -89,6 +91,8 @@ var _phase: Array[float] = [0.0, PI]
 var _arm_x: Array[Transform3D] = [Transform3D.IDENTITY, Transform3D.IDENTITY]
 ## Tics, stretches and drift for the free (left) hand.
 var _creep_l: ArmCreep
+## Finger twitches only for the gun hand (no stretches, no wrist drift).
+var _creep_r: ArmCreep
 
 
 func _init(arm_right: Node3D, arm_left: Node3D, seed_value: int, grip_right := false) -> void:
@@ -98,6 +102,7 @@ func _init(arm_right: Node3D, arm_left: Node3D, seed_value: int, grip_right := f
 	_phase[0] = right_phase
 	_phase[1] = right_phase + PI
 	_creep_l = ArmCreep.new(rng, 1.0, false)
+	_creep_r = ArmCreep.new(rng, grip_creep_scale, true)
 	if _grip_right:
 		_add_grip(arm_right)
 	else:
@@ -231,6 +236,7 @@ func _update_grip(t: float, w: float) -> void:
 	if not is_instance_valid(_grip_sk):
 		return
 	var lift := _trigger(t)
+	_creep_r.sample(t)
 	for joint in _grip:
 		var finger: int = joint[&"finger"]
 		var j: int = joint[&"j"]
@@ -241,6 +247,7 @@ func _update_grip(t: float, w: float) -> void:
 			deg = GRIP_SQUEEZE * _wave(w * 0.6 + finger * 0.4)
 		else:
 			deg = THUMB_GRIP * _wave(w * 0.45 + 2.0)
+		deg += _creep_r.curl[finger * 3 + j]
 		var base: Quaternion = joint[&"base"]
 		var rot := base * Quaternion(Vector3.RIGHT, deg_to_rad(deg) * ArmRig.CURL_SIGN)
 		if j == 0 and finger < 4:

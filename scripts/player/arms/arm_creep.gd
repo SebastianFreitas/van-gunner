@@ -138,7 +138,7 @@ func sample(t: float) -> void:
 			curl[f * 3 + j] += d * DRIFT_JOINT[j]
 	if not _fingers_only:
 		wrist += Vector3(_drift(u, 5), _drift(u, 6), _drift(u, 7)) * (DRIFT_WRIST * _scale)
-	var fade := smoothstep(START, START + FADE, u)
+	var fade := smoothstep(START, START + FADE, u) * (1.0 - smoothstep(LOOP - FADE, LOOP, u))
 	for i in 15:
 		curl[i] *= fade
 	for i in 5:
