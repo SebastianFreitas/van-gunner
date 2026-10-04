@@ -1,5 +1,5 @@
 extends RefCounted
-## Gates the idle hand layers: a seeded active/rest cycle while the player stands still, muted while walking, shooting or busy.
+## Gates the idle hand layers: a seeded active/rest cycle while standing, half strength while walking, muted while shooting or busy.
 
 ## Live idle clock speed (the weave slows to this share of real time).
 const TEMPO := 0.6
@@ -19,6 +19,14 @@ const FADE_IN := 1.8
 const FADE_REST := 1.2
 ## Seconds for a full 1 -> 0 move when interrupted.
 const FADE_CUT := 0.2
+## Raw weight held while walking, so the hands keep curling and a stop never starts from nothing.
+const WALK_FLOOR := 0.5
+## Seconds for a full 1 -> 0 move while walking pulls the weight down to WALK_FLOOR.
+const FADE_WALK := 0.6
+## Still seconds before idle resumes after a walk; short so the hands come back fast on a stop.
+const SETTLE_WALK := 0.25
+## Seconds for a full 0 -> 1 move when idle resumes after a walk (quicker than FADE_IN).
+const FADE_STOP := 0.9
 
 var _rng: RandomNumberGenerator
 var _still := 0.0
@@ -28,6 +36,8 @@ var _active := false
 var _raw := 0.0
 ## True once the player has stood still for SETTLE seconds.
 var _settled := false
+## True when the last interruption was a walk: settle with SETTLE_WALK and rise with FADE_STOP.
+var _from_walk := false
 
 
 func _init(seed_value: int) -> void:
@@ -47,15 +57,25 @@ func step(delta: float, walk: float, busy: bool, snap: bool) -> float:
 		_raw = 1.0
 		return weight()
 	_since_shot = minf(_since_shot + delta, 999.0)
-	var interrupted := busy or walk > WALK_GATE or _since_shot < SHOT_HOLD
+	var interrupted := busy or _since_shot < SHOT_HOLD
 	if interrupted:
 		_still = 0.0
 		_settled = false
+		_from_walk = false
 		_raw = move_toward(_raw, 0.0, delta / FADE_CUT)
 		return weight()
+	if walk > WALK_GATE:
+		_still = 0.0
+		_settled = false
+		_from_walk = true
+		var fade := FADE_WALK if _raw > WALK_FLOOR else FADE_IN
+		_raw = move_toward(_raw, WALK_FLOOR, delta / fade)
+		return weight()
 	_still += delta
-	if _still < SETTLE:
-		_raw = move_toward(_raw, 0.0, delta / FADE_REST)
+	if _still < (SETTLE_WALK if _from_walk else SETTLE):
+		# After a walk the weight holds at its floor instead of sinking toward 0.
+		if not _from_walk:
+			_raw = move_toward(_raw, 0.0, delta / FADE_REST)
 		return weight()
 	if not _settled:
 		_settled = true
@@ -64,10 +84,11 @@ func step(delta: float, walk: float, busy: bool, snap: bool) -> float:
 	_phase_left -= delta
 	if _phase_left <= 0.0:
 		_active = not _active
+		_from_walk = false
 		var span := ACTIVE if _active else REST
 		_phase_left = _rng.randf_range(span.x, span.y)
 	if _active:
-		_raw = move_toward(_raw, 1.0, delta / FADE_IN)
+		_raw = move_toward(_raw, 1.0, delta / (FADE_STOP if _from_walk else FADE_IN))
 	else:
 		_raw = move_toward(_raw, 0.0, delta / FADE_REST)
 	return weight()
