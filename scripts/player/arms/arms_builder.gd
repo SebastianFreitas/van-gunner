@@ -48,7 +48,7 @@ const GRIP_PALM_IN_GUN := Vector3(-1.0, 0.0, 0.0)
 const GRIP_CURL := {
 	&"f_index": Vector3(20, 25, 15), &"f_middle": Vector3(46, 57, 38),
 	&"f_ring": Vector3(55, 70, 50), &"f_pinky": Vector3(55, 70, 62),
-	&"thumb": Vector3(-5, -8, 22),
+	&"thumb": Vector3(-5, -8, 78),
 }
 ## Tuned with `arms touch` on the grip: the fingers wrap the front strap, the thumb lies high on the
 ## left panel (the side facing the camera), crossing the back strap so it stays out of the core.
