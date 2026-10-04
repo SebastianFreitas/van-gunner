@@ -36,6 +36,9 @@ const LEFT_THUMB_BASE := Vector3(12.0, 14.0, 18.0)  ## degrees flex of the left 
 const LEFT_THUMB_SPREAD := 79.0  ## degrees, replaces THUMB_SPREAD + THUMB_FAN on the left only
 ## Left thumb .01 swing-away axis, bone-local (normalized where it is used).
 const LEFT_THUMB_SPREAD_AXIS := Vector3(0.50, 0.01, -0.86)
+## Extra euler (degrees, x y z) on the left thumb's palm joint DEF-thumb.01.L, after its
+## flex and spread, so the whole thumb can be turned from the console (`arms lthumbaim`).
+const LEFT_THUMB_AIM := Vector3.ZERO
 ## Share of THUMB_SWING the left thumb keeps, so its weave stays inside the open C.
 const LEFT_THUMB_SWING_K := 0.5
 const THUMB_ARC := 7.0 ## degrees of slow opposition swing on the spread, toward the index
@@ -78,6 +81,8 @@ const TRIGGER_LIFT := Vector3(-14.0, -8.0, -4.0)  ## degrees per index joint at 
 static var left_thumb_base := LEFT_THUMB_BASE
 static var left_thumb_spread := LEFT_THUMB_SPREAD
 static var left_thumb_axis := LEFT_THUMB_SPREAD_AXIS
+## Live copy of LEFT_THUMB_AIM, set by `arms lthumbaim`.
+static var left_thumb_aim := LEFT_THUMB_AIM
 ## Strength of the gun hand's creep twitches (1.0 = the free left hand's). Tune here.
 static var grip_creep_scale := 0.25
 
@@ -230,6 +235,8 @@ func update(t: float, beat_scale := 1.0) -> void:
 				var creep_spread := _creep_l.splay[4] * k if hand_side == 1 else 0.0
 				rot = rot * Quaternion(spread_axis, deg_to_rad((spread + creep_spread
 						+ THUMB_ARC * sin(a * 0.5 + 0.9) * k) * THUMB_SPREAD_SIGN * lerpf(1.0, 1.25, f)))
+				if hand_side == 1 and left_thumb_aim != Vector3.ZERO:
+					rot = rot * Quaternion.from_euler(left_thumb_aim * (PI / 180.0))
 			if j == 0 and finger < 4:
 				var side := 1.0 if finger % 2 == 0 else -1.0
 				var fan := (float(finger) - 1.5) * SPLAY * SPLAY_SIGN * side_sign \

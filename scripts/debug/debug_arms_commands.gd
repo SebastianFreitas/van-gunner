@@ -27,7 +27,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms curl <f_index|f_middle|f_ring|f_pinky> <a> <b> <c> | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off | arms inspect <sec|play|off> | arms wristang [t|axes|scan [t0 t1]]"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms curl <f_index|f_middle|f_ring|f_pinky> <a> <b> <c> | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms lthumbaim [x y z] | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off | arms inspect <sec|play|off> | arms wristang [t|axes|scan [t0 t1]]"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -172,6 +172,8 @@ func cmd_arms(args: Array) -> String:
 		return _Touch.new().run(vm)
 	if args[0] == "lthumb":
 		return _lthumb(args)
+	if args[0] == "lthumbaim":
+		return _lthumbaim(args)
 	if args[0] == "hands":
 		return _HandsCheck.new().run(vm)
 	if args[0] == "dump":
@@ -189,6 +191,9 @@ func cmd_arms(args: Array) -> String:
 
 ## `arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az>`: live-tunes the free left thumb's rest pose.
 func _lthumb(args: Array) -> String:
+	if args.size() == 1:
+		return "lthumb base %s spread %.1f axis %s" % [
+				_Weave.left_thumb_base, _Weave.left_thumb_spread, _Weave.left_thumb_axis]
 	if args.size() != 8:
 		return USAGE
 	var n: Array[float] = []
@@ -205,6 +210,21 @@ func _lthumb(args: Array) -> String:
 	var ax: Vector3 = _Weave.left_thumb_axis
 	return "lthumb base (%.0f, %.0f, %.0f) spread %.0f axis (%.2f, %.2f, %.2f)" % [
 			n[0], n[1], n[2], n[3], ax.x, ax.y, ax.z]
+
+
+## `arms lthumbaim [x y z]`: shows or sets the extra euler on the left thumb's palm joint.
+func _lthumbaim(args: Array) -> String:
+	if args.size() == 1:
+		return "lthumbaim %s (euler degrees on DEF-thumb.01.L, after flex and spread)" % (
+				_Weave.left_thumb_aim)
+	if args.size() != 4:
+		return USAGE
+	for i in range(1, 4):
+		if not str(args[i]).is_valid_float():
+			return USAGE
+	_Weave.left_thumb_aim = Vector3(
+			float(str(args[1])), float(str(args[2])), float(str(args[3])))
+	return "lthumbaim set to %s" % _Weave.left_thumb_aim
 
 
 ## `arms gesture <kind> <seconds|contact>`, `off` and `play <kind>`: pins or plays a left-hand gesture.
