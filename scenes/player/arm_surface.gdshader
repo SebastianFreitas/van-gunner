@@ -32,6 +32,16 @@ uniform float vein_width : hint_range(0.004, 0.06) = 0.022;
 // Peak ridge height in view metres (the rig is 0.18-scaled): 0.4 x the half width x 0.18.
 uniform float vein_height : hint_range(0.0, 0.004) = 0.0008;
 
+// Saggy old-meat bump (skin only): 0 is off, so cloth and steel, which share this shader, stay
+// as they are. Shades folds and wrinkles from the rest chart so they do not swim when the hand bends.
+uniform float skin_bump : hint_range(0.0, 1.0) = 0.0;
+// Frequency of the big saggy folds, in rest-space units.
+uniform float sag_scale = 0.0;
+// Frequency of the fine wrinkles, in rest-space units.
+uniform float wrinkle_scale = 0.0;
+// Peak fold slope scale in view metres per unit of height gradient (the rig is 0.18-scaled).
+const float SKIN_BUMP_HEIGHT = 0.0015;
+
 // Painted crown highlight: a fixed view-space key, up and toward the camera's left, so the
 // ridge's lit flank and shaded flank read even where the arm lamp does not reach.
 const vec3 VEIN_KEY = normalize(vec3(-0.3, 0.8, 0.52));
@@ -68,6 +78,11 @@ float tri_fbm(vec3 p, vec3 w, float scale) {
 float tri_noise(vec3 p, vec3 w, float scale) {
 	return noise21(p.zy * scale) * w.x + noise21(p.xz * scale) * w.y
 			+ noise21(p.xy * scale) * w.z;
+}
+
+// Fold height in the rest chart: big sags plus fine wrinkles, triplanar on the rest normal's weights.
+float skin_height(vec3 rest, vec3 w) {
+	return 0.7 * tri_fbm(rest, w, sag_scale) + 0.3 * tri_fbm(rest, w, wrinkle_scale);
 }
 
 // Veins from two side projections of the across coordinates, blended so there is no seam.
@@ -136,6 +151,31 @@ void fragment() {
 		col = mix(col, crest, vn * 0.5);
 		col *= 1.0 + clamp(lit * 0.35, -0.20, 0.15);
 	}
+	// Saggy skin: tilt the normal by the fold height's gradient, darken and roughen the hollows.
+	float fold_dark = 0.0;
+	if (skin_bump > 0.0) {
+		vec3 rest = rest_data.xyz;
+		float eps = 0.25 / wrinkle_scale;
+		float h = skin_height(rest, w);
+		vec3 g = vec3(
+				skin_height(rest + vec3(eps, 0.0, 0.0), w) - skin_height(rest - vec3(eps, 0.0, 0.0), w),
+				skin_height(rest + vec3(0.0, eps, 0.0), w) - skin_height(rest - vec3(0.0, eps, 0.0), w),
+				skin_height(rest + vec3(0.0, 0.0, eps), w) - skin_height(rest - vec3(0.0, 0.0, eps), w)
+		) / (2.0 * eps);
+		g -= dot(g, n) * n; // slope along the surface only
+		// Same screen-space mapping as the vein ridge: height change per pixel, then the tilt.
+		float hx = skin_bump * SKIN_BUMP_HEIGHT * dot(g, dFdx(rest));
+		float hy = skin_bump * SKIN_BUMP_HEIGHT * dot(g, dFdy(rest));
+		vec3 sdx = dFdx(VERTEX);
+		vec3 sdy = dFdy(VERTEX);
+		vec3 s1 = cross(sdy, NORMAL);
+		vec3 s2 = cross(NORMAL, sdx);
+		float sdet = dot(sdx, s1);
+		vec3 grad_view = sign(sdet) * (hx * s1 + hy * s2);
+		NORMAL = normalize(abs(sdet) * NORMAL - grad_view);
+		fold_dark = smoothstep(0.55, 0.2, h);
+		col *= mix(1.0, 0.82, skin_bump * fold_dark);
+	}
 	// Dirt: fbm-masked grime that collects in the hollows.
 	float dirt_mask = smoothstep(0.55, 0.85, tri_fbm(p + vec3(31.7, 9.3, 17.1), w, mottle_m * 0.7));
 	col = mix(col, dirt_color, dirt_mask * grime);
@@ -147,7 +187,8 @@ void fragment() {
 	}
 
 	ALBEDO = col;
-	ROUGHNESS = clamp(roughness_value - 0.04 * (grain - 0.5) - 0.25 * vn, 0.60, 0.95);
+	ROUGHNESS = clamp(roughness_value - 0.04 * (grain - 0.5) - 0.25 * vn
+			+ 0.05 * skin_bump * fold_dark, 0.60, 0.95);
 	METALLIC = metallic_value;
 	SPECULAR = 0.5 + 0.2 * vn;
 	if (use_rest_pos) {

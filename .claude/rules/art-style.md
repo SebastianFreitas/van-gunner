@@ -126,6 +126,14 @@ Geometry:
   knobs 1.12 r2 and 1.10 r3, and a squarer bony ring (lateral squash 0.86,
   diagonals pushed out 1.10, pad 0.80). Thumbs keep the old round tube and
   never take it. Both hands share the code.
+  Fingers (owner, 2026-10-04: joints read as a line, "each bone a piece
+  instead of a hand"; wanted gnarled, tree-like, saggy old meat): each finger
+  is one gnarled tube with no pinch at the joints (end rings `.78` and `.92`
+  stay near knob radius, `_ring_weights` blends 0.3/0.7). Seeded lumps
+  (`LUMP_RING`, `LUMP_VERT`, hashed by finger, bone, ring and sector, no rng
+  draws) and a palm-side `SAG` break up the silhouette. The skin shader's
+  `skin_bump` (sag and wrinkle fbm in rest space) folds the skin only, never
+  nails or other materials. Thumbs keep their old numbers.
   The hands never rest: `ArmWeave` (`scripts/player/arms/arm_weave.gd`)
   rolls both hands' fingers index to pinky in hooked witch curls on a 3.6 s
   period with a slow second harmonic, wrists circling, both hands
