@@ -115,6 +115,17 @@ Geometry:
   into the skin so they never float, then taper to a point curving 15-30
   degrees toward the pad (owner, 2026-10-03: the old 6-sided horns floated
   and looked too low-poly).
+  Knuckles (owner, 2026-10-04, third pass: finger-tube knobs read first as a
+  row of teeth, then as round lumps; wanted an old labourer's muscular hand):
+  the knuckle is the palm's own skin. `ArmKnuckles.apply` (run in
+  `ArmBulk.inflate` before `ArmMuscle`) lifts the back of the palm into a ridge
+  at each `.01` head (`PEAK` 0.18 mean head spacing, about 0.3 finger radius)
+  and sinks a groove midway between heads (`GROOVE` 0.16), both running back
+  three quarters of the palm bone and thinning to a 0.35 tendon line. The
+  finger tubes carry no ball: `ArmFingers` root knob 1.0 r on the axis, shaft
+  knobs 1.12 r2 and 1.10 r3, and a squarer bony ring (lateral squash 0.86,
+  diagonals pushed out 1.10, pad 0.80). Thumbs keep the old round tube and
+  never take it. Both hands share the code.
   The hands never rest: `ArmWeave` (`scripts/player/arms/arm_weave.gd`)
   rolls both hands' fingers index to pinky in hooked witch curls on a 3.6 s
   period with a slow second harmonic, wrists circling, both hands
