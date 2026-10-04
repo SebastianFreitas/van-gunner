@@ -47,11 +47,11 @@ const GRIP_PALM_IN_GUN := Vector3(-1.0, 0.0, 0.0)
 const GRIP_CURL := {
 	&"f_index": Vector3(20, 25, 15), &"f_middle": Vector3(46, 57, 38),
 	&"f_ring": Vector3(55, 70, 50), &"f_pinky": Vector3(55, 70, 62),
-	&"thumb": Vector3(-5, -8, 50),
+	&"thumb": Vector3(15, 20, 8),
 }
-## Tuned with `arms touch` on the grip: the fingers wrap the front strap, the thumb lies high on the
-## left panel (the side facing the camera), crossing the back strap so it stays out of the core.
-const GRIP_THUMB_AIM := Vector3(-65, -70, -20)
+## Tuned with `arms touch` on the grip: a thumbs-forward pistol hold, the thumb nearly straight
+## along the left panel (the camera side) toward the muzzle, pad on the gun, nail out and down.
+const GRIP_THUMB_AIM := Vector3(-45, -85, -30)
 ## Live copies of the gripping hand's tunables: the `arms thumbaim`, `arms thumbcurl`, `arms wrist`
 ## and `arms curl` console commands set them and rebuild, so a pose is tuned by numbers instead of
 ## a screenshot per try. The constants above are their defaults. The `right_*` names read and write

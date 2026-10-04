@@ -191,17 +191,28 @@ func _grip_report(model: Node3D, data: Dictionary, p: float, body: Node3D,
 		bad += 0 if ok else 1
 		lines.append("R grip %s mid sd/p %.3f tip sd/p %.3f %s"
 				% [String(f).trim_prefix("f_"), mid, tip, "OK" if ok else "OFF"])
+	var sk := ArmRig.skeleton(model)
 	if data.has(&"thumb"):
 		var tpts: Array = data[&"thumb"][&"pts"]
 		var tsd := _nearest_sd(body, tpts[3]) / p
 		var to_body := body.global_transform.affine_inverse()
 		var tip_b: Vector3 = to_body * Vector3(tpts[3])
-		# GripPanelL sits at side -1 in monster_grip.gd, so the near (camera) side is -x.
+		# GripPanelL sits at side -1 in monster_grip.gd, so the near (camera) side is -x. The grip
+		# is raked 18 deg back, so its down axis (monster_grip `_down`) is (0, -cos 18, sin 18).
 		var side_x := tip_b.x / p
 		var down := Vector3(0.0, -cos(deg_to_rad(18.0)), sin(deg_to_rad(18.0)))
 		var height := (tip_b - Vector3(0.0, 0.03, -0.01)).dot(down) / p
-		var shaft: Vector3 = to_body.basis * (Vector3(tpts[3]) - Vector3(tpts[2]))
+		var shaft: Vector3 = to_body.basis * (Vector3(tpts[3]) - Vector3(tpts[1]))
 		var fwd_deg := rad_to_deg(shaft.angle_to(Vector3(0.0, 0.0, -1.0)))
+		var ip_deg := rad_to_deg((Vector3(tpts[2]) - Vector3(tpts[1])).angle_to(
+				Vector3(tpts[3]) - Vector3(tpts[2])))
+		# The nail is -basis.z: on the index and middle .01 bones +z points palmward (-x, the
+		# palm faces the grip), so -z is the dorsal side, and the thumb bones share that roll.
+		var nail := Vector3.ZERO
+		var t3 := sk.find_bone("DEF-thumb.03.R")
+		if t3 != -1:
+			nail = -(to_body.basis * sk.global_transform.basis
+					* sk.get_bone_global_pose(t3).basis).z.normalized()
 		var near_part := "-"
 		var near_sd := INF
 		for part_name in _PARTS:
@@ -211,11 +222,15 @@ func _grip_report(model: Node3D, data: Dictionary, p: float, body: Node3D,
 				if d < near_sd:
 					near_sd = d
 					near_part = part_name
-		var thumb_ok := (_in_bar(tsd) and side_x <= -0.15 and height >= 0.0 and height <= 0.45
-				and fwd_deg <= 40.0 and near_part == "GripPanelL")
+		# A forward thumb runs past the panel onto the frame above the guard, as on a real pistol,
+		# so any part counts as long as the tip touches it on the near side.
+		var thumb_ok := (_in_bar(tsd) and side_x <= -0.15 and height >= 0.0 and height <= 0.35
+				and fwd_deg <= 30.0 and nail.x < 0.0 and nail.y < -0.2 and ip_deg <= 20.0)
 		bad += 0 if thumb_ok else 1
-		lines.append("R grip thumb tip sd/p %.3f side %.3f height/p %.3f fwd_deg %.1f part %s %s"
-				% [tsd, side_x, height, fwd_deg, near_part, "OK" if thumb_ok else "OFF"])
+		lines.append(("R grip thumb tip sd/p %.3f side %.3f height/p %.3f fwd_deg %.1f"
+				+ " nail (%.2f,%.2f,%.2f) ip_deg %.1f part %s %s")
+				% [tsd, side_x, height, fwd_deg, nail.x, nail.y, nail.z, ip_deg, near_part,
+				"OK" if thumb_ok else "OFF"])
 	var web := body.get_node_or_null(^"WebPoint") as Node3D
 	if web != null and data.has(&"f_index") and data.has(&"thumb"):
 		var mid_w: Vector3 = Vector3(data[&"f_index"][&"pts"][0]).lerp(data[&"thumb"][&"pts"][0], 0.5)
@@ -223,7 +238,6 @@ func _grip_report(model: Node3D, data: Dictionary, p: float, body: Node3D,
 		bad += 0 if gap <= WEB_MAX_P else 1
 		lines.append("R grip web gap/p %.3f (bar <= %.2f) %s"
 				% [gap, WEB_MAX_P, "OK" if gap <= WEB_MAX_P else "FAR"])
-	var sk := ArmRig.skeleton(model)
 	var hand_i := sk.find_bone("DEF-hand.R")
 	if hand_i != -1:
 		var palm := _nearest_sd(body, sk.global_transform * sk.get_bone_global_pose(hand_i).origin) / p
