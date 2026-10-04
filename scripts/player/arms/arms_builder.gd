@@ -44,10 +44,11 @@ const RIGHT_THUMB_AIM := Vector3(-36, -18, -82)
 const GRIP_WRIST_IN_GUN := Vector3(0.08, -0.13, 0.17)
 const GRIP_HAND_DIR_IN_GUN := Vector3(-0.05, 0.25, -1.0)
 const GRIP_PALM_IN_GUN := Vector3(-1.0, 0.0, 0.0)
+## The thumb's .03 value tips its nail slightly down from the player's POV (owner, 2026-10-04).
 const GRIP_CURL := {
 	&"f_index": Vector3(20, 25, 15), &"f_middle": Vector3(46, 57, 38),
 	&"f_ring": Vector3(55, 70, 50), &"f_pinky": Vector3(55, 70, 62),
-	&"thumb": Vector3(-5, -8, 50),
+	&"thumb": Vector3(-5, -8, 22),
 }
 ## Tuned with `arms touch` on the grip: the fingers wrap the front strap, the thumb lies high on the
 ## left panel (the side facing the camera), crossing the back strap so it stays out of the core.
