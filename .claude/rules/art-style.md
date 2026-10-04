@@ -124,8 +124,9 @@ Geometry:
   three quarters of the palm bone and thinning to a 0.35 tendon line. The
   finger tubes carry no ball: `ArmFingers` root knob 1.0 r on the axis, shaft
   knobs 1.12 r2 and 1.10 r3, and a squarer bony ring (lateral squash 0.86,
-  diagonals pushed out 1.10, pad 0.80). Thumbs keep the old round tube and
-  never take it. Both hands share the code.
+  diagonals pushed out 1.10, pad 0.80). Thumbs take the same bony ring,
+  lumps, knots and sag (owner, 2026-10-04) but keep their own radii and
+  profiles, so grip and pose are untouched. Both hands share the code.
   Fingers (owner, 2026-10-04: joints read as a line, "each bone a piece
   instead of a hand"; wanted gnarled, tree-like, saggy old meat): each finger
   is one gnarled tube with no pinch at the joints (end rings `.78` and `.92`
@@ -138,7 +139,7 @@ Geometry:
   crease). Keep them rare and uneven, never a grid (owner: "looks like a
   pattern"): 18% of cells, a radius and height per knot, and an fbm warp in
   `knot_at`. Mesh `KNOT_SPARSE` 0.88. Plus fine wrinkle fbm in rest space, on skin only, never nails or
-  other materials. Thumbs keep their old numbers.
+  other materials. Thumbs get the same knots and sag.
   The hands never rest: `ArmWeave` (`scripts/player/arms/arm_weave.gd`)
   rolls both hands' fingers index to pinky in hooked witch curls on a 3.6 s
   period with a slow second harmonic, wrists circling, both hands

@@ -106,7 +106,7 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 		&"verts": PackedVector3Array(), &"centres": PackedVector3Array(), &"wts": [],
 		&"rings": 0, &"names": names, &"binds": binds, &"lens": lens,
 		&"cr": cr, &"r1": shaft[1], &"r2": shaft[2], &"r3": shaft[3], &"pad": pad,
-		&"tip_rings": [], &"bony": not thumb, &"name": f,
+		&"tip_rings": [], &"bony": true, &"name": f,
 	}
 	var tip_prof := _tip_profile(knob[3], shaft[3], not thumb)
 	for j in range(first, 4):
