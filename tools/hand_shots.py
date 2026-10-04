@@ -2,7 +2,8 @@
 """Render the first-person goblin arms in chosen poses from fixed cameras, one Godot launch.
 
 Usage: `py -3 tools/hand_shots.py --out DIR [--pose NAME | --pose "<console line>"]...
-[--views front,side,left,top,elbow,player] [--dress gear|rags|none] [--timeout S]`.
+[--views front,side,left,top,elbow,gunleft,player] [--dress gear|rags|none] [--lamp]
+[--timeout S]`.
 
 Runs `tools/probe.py` with the pose's `arms` console lines and `--views`, so DIR gets one
 `<view>.png` per camera. `--list` prints the named poses and exits.
@@ -16,9 +17,9 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-# The first five are the `arms cam` views in scripts/debug/debug_arms_commands.gd (`VIEWS`);
+# All but `player` are the `arms cam` views in scripts/debug/debug_arms_commands.gd (`VIEWS`);
 # `player` is the player's own camera (handled in tools/probe/probe_runner.gd).
-VIEW_NAMES = ["front", "side", "left", "top", "elbow", "player"]
+VIEW_NAMES = ["front", "side", "left", "top", "elbow", "gunleft", "player"]
 
 POSES: dict[str, list[str]] = {
     "rest": [],  # the arms as they hang, no pose forced
@@ -44,6 +45,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--views", default=",".join(VIEW_NAMES), help="comma list of cameras")
     parser.add_argument("--dress", choices=["gear", "rags", "none"], help="arms dress value")
+    parser.add_argument("--lamp", action="store_true", help="light the player view (arms lamp on)")
     parser.add_argument("--timeout", type=int, default=180, help="timeout in seconds")
     parser.add_argument("--list", action="store_true", help="print the poses and exit")
     opts = parser.parse_args()
@@ -65,6 +67,8 @@ def parse_args() -> argparse.Namespace:
 
 def pose_lines(opts: argparse.Namespace) -> list[str]:
     lines = [f"arms dress {opts.dress}"] if opts.dress else []
+    if opts.lamp:
+        lines.insert(0, "arms lamp on")
     for pose in opts.pose or ["rest"]:
         lines.extend(POSES[pose] if " " not in pose else [pose])
     return lines

@@ -14,20 +14,25 @@ const _Gesture := preload("res://scripts/player/arms/arm_gesture.gd")
 const _Weave := preload("res://scripts/player/arms/arm_weave.gd")
 
 const CAM_NAME := &"ArmsDebugCam"
+const LAMP_NAME := &"ArmsLamp"
+## Warm white for the debug lamps.
+const LAMP_COLOR := Color(1.0, 0.92, 0.8)
 ## Camera offsets from the focus point in Weapon space (metres); `left` aims at the left hand,
 ## `elbow` at the left elbow, from below and to its left. The hands are half again as big, so
 ## the close-ups step back.
+## `gunleft` looks at the right hand from the gun's left side, where the thumb lies.
 const VIEWS := {
 	&"front": Vector3(0.0, 0.042, -0.448),
 	&"side": Vector3(-0.42, 0.07, -0.07),
 	&"left": Vector3(0.07, 0.112, -0.42),
 	&"top": Vector3(0.0, 0.42, 0.028),
 	&"elbow": Vector3(-0.14, -0.168, -0.392),
+	&"gunleft": Vector3(0.42, 0.07, -0.07),
 }
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms curl <f_index|f_middle|f_ring|f_pinky> <a> <b> <c> | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off | arms inspect <sec|play|off> | arms wristang [t|axes|scan [t0 t1]]"
+const USAGE := "arms cam <front|side|left|top|elbow|gunleft|off> | arms lamp on|off | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbcurl [a b c] | arms wrist [x y z] | arms curl <f_index|f_middle|f_ring|f_pinky> <a> <b> <c> | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off | arms inspect <sec|play|off> | arms wristang [t|axes|scan [t0 t1]]"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -154,6 +159,29 @@ func cmd_arms(args: Array) -> String:
 			return USAGE
 		vm.set_viewmodel_fov(float(arg))
 		return "arms fov -> %.1f" % float(arg)
+	if args[0] == "lamp" and args.size() >= 2:
+		var arg := str(args[1])
+		if arg != "on" and arg != "off":
+			return USAGE
+		var player_cam := vm.get_parent().get_parent() as Camera3D
+		if player_cam == null:
+			return "arms lamp: no player camera"
+		var old_lamp := player_cam.get_node_or_null(NodePath(LAMP_NAME))
+		if old_lamp != null:
+			player_cam.remove_child(old_lamp)
+			old_lamp.free()
+		if arg == "off":
+			return "arms lamp off"
+		# The player view of the hands is otherwise black; a lamp on the camera is a source.
+		var lamp := OmniLight3D.new()
+		lamp.name = LAMP_NAME
+		lamp.light_energy = 1.2
+		lamp.omni_range = 1.5
+		lamp.light_color = LAMP_COLOR
+		lamp.shadow_enabled = false
+		lamp.position = Vector3(0.15, 0.12, -0.05)
+		player_cam.add_child(lamp)
+		return "arms lamp on"
 	if args[0] == "frame":
 		if vm.get_parent().get_node_or_null(NodePath(CAM_NAME)) != null:
 			return "FRAME n/a (arms cam on; run arms cam off)"
@@ -259,6 +287,16 @@ func _cam(vm: Node, view: StringName) -> String:
 	if player_cam != null:
 		cam.cull_mask = player_cam.cull_mask
 	parent.add_child(cam)
+	# Debug views are close-ups with no light of their own; the lamp is a source you can point at
+	# (art-style rule: light only from sources). A child of the camera, so it goes with it.
+	var cam_light := OmniLight3D.new()
+	cam_light.name = &"ArmsCamLight"
+	cam_light.light_energy = 1.5
+	cam_light.omni_range = 1.5
+	cam_light.light_color = LAMP_COLOR
+	cam_light.shadow_enabled = false
+	cam_light.position = Vector3(0.08, 0.10, 0.0)
+	cam.add_child(cam_light)
 	_hide_body(vm)
 	var left_view := view == &"left" or view == &"elbow"
 	var focus: Vector3 = vm.arms_focus(&"left" if left_view else &"right")
