@@ -129,11 +129,14 @@ Geometry:
   Fingers (owner, 2026-10-04: joints read as a line, "each bone a piece
   instead of a hand"; wanted gnarled, tree-like, saggy old meat): each finger
   is one gnarled tube with no pinch at the joints (end rings `.78` and `.92`
-  stay near knob radius, `_ring_weights` blends 0.3/0.7). Seeded lumps
-  (`LUMP_RING`, `LUMP_VERT`, hashed by finger, bone, ring and sector, no rng
-  draws) and a palm-side `SAG` break up the silhouette. The skin shader's
-  `skin_bump` (sag and wrinkle fbm in rest space) folds the skin only, never
-  nails or other materials. Thumbs keep their old numbers.
+  stay near knob radius, `_ring_weights` blends 0.3/0.7). Lumps are sharp
+  knots, never round blobs (owner, 2026-10-04: "very round"): a slight
+  `LUMP_RING` 0.03 wobble plus sparse single-vertex `KNOT` peaks (noise above
+  `KNOT_SPARSE`, crowded toward the joints; hashed by finger, bone, ring and
+  sector, no rng draws) and a palm-side `SAG`. The skin shader's `skin_bump`
+  is cone cell-noise knots (`knot_height`, flat skin between, hard base
+  crease) plus fine wrinkle fbm in rest space, on skin only, never nails or
+  other materials. Thumbs keep their old numbers.
   The hands never rest: `ArmWeave` (`scripts/player/arms/arm_weave.gd`)
   rolls both hands' fingers index to pinky in hooked witch curls on a 3.6 s
   period with a slow second harmonic, wrists circling, both hands

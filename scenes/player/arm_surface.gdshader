@@ -35,7 +35,7 @@ uniform float vein_height : hint_range(0.0, 0.004) = 0.0008;
 // Saggy old-meat bump (skin only): 0 is off, so cloth and steel, which share this shader, stay
 // as they are. Shades folds and wrinkles from the rest chart so they do not swim when the hand bends.
 uniform float skin_bump : hint_range(0.0, 1.0) = 0.0;
-// Frequency of the big saggy folds, in rest-space units.
+// Frequency of the sharp knots, in rest-space units.
 uniform float sag_scale = 0.0;
 // Frequency of the fine wrinkles, in rest-space units.
 uniform float wrinkle_scale = 0.0;
@@ -80,9 +80,36 @@ float tri_noise(vec3 p, vec3 w, float scale) {
 			+ noise21(p.xy * scale) * w.z;
 }
 
-// Fold height in the rest chart: big sags plus fine wrinkles, triplanar on the rest normal's weights.
+vec3 knot_hash(vec3 c) {
+	vec3 q = vec3(dot(c, vec3(127.1, 311.7, 74.7)), dot(c, vec3(269.5, 183.3, 246.1)),
+			dot(c, vec3(113.5, 271.9, 124.6)));
+	return fract(sin(q) * 43758.5453);
+}
+
+// Sharp knots: a cone (pointed top, hard crease at its base) at a jittered point in a sparse
+// share of the cells, flat skin between them.
+float knot_height(vec3 p) {
+	vec3 cell = floor(p);
+	float best = 0.0;
+	for (int x = -1; x <= 1; x++) {
+		for (int y = -1; y <= 1; y++) {
+			for (int z = -1; z <= 1; z++) {
+				vec3 c = cell + vec3(float(x), float(y), float(z));
+				vec3 hv = knot_hash(c);
+				if (knot_hash(c + vec3(19.3, 7.1, 43.7)).x >= 0.45) {
+					continue;
+				}
+				vec3 pt = c + 0.15 + 0.7 * hv;
+				best = max(best, max(0.0, 1.0 - length(p - pt) / 0.42));
+			}
+		}
+	}
+	return best;
+}
+
+// Fold height in the rest chart: sharp knots plus fine wrinkles, triplanar on the rest normal's weights.
 float skin_height(vec3 rest, vec3 w) {
-	return 0.7 * tri_fbm(rest, w, sag_scale) + 0.3 * tri_fbm(rest, w, wrinkle_scale);
+	return 0.75 * knot_height(rest * sag_scale) + 0.25 * tri_fbm(rest, w, wrinkle_scale);
 }
 
 // Veins from two side projections of the across coordinates, blended so there is no seam.
@@ -156,7 +183,6 @@ void fragment() {
 	if (skin_bump > 0.0) {
 		vec3 rest = rest_data.xyz;
 		float eps = 0.25 / wrinkle_scale;
-		float h = skin_height(rest, w);
 		vec3 g = vec3(
 				skin_height(rest + vec3(eps, 0.0, 0.0), w) - skin_height(rest - vec3(eps, 0.0, 0.0), w),
 				skin_height(rest + vec3(0.0, eps, 0.0), w) - skin_height(rest - vec3(0.0, eps, 0.0), w),
@@ -173,7 +199,10 @@ void fragment() {
 		float sdet = dot(sdx, s1);
 		vec3 grad_view = sign(sdet) * (hx * s1 + hy * s2);
 		NORMAL = normalize(abs(sdet) * NORMAL - grad_view);
-		fold_dark = smoothstep(0.55, 0.2, h);
+		float kh = knot_height(rest * sag_scale);
+		float wrinkle = tri_fbm(rest, w, wrinkle_scale);
+		fold_dark = smoothstep(0.5, 0.25, wrinkle) * 0.6
+				+ smoothstep(0.0, 0.08, kh) * smoothstep(0.3, 0.1, kh) * 0.4;
 		col *= mix(1.0, 0.82, skin_bump * fold_dark);
 	}
 	// Dirt: fbm-masked grime that collects in the hollows.

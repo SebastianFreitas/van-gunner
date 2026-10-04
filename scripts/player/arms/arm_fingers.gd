@@ -14,9 +14,10 @@ const NAIL_H := 0.85
 const NAIL_FROM := 0.55
 ## Thumb shaft radius as a multiple of the index finger's shaft radius.
 const THUMB_R := 1.35
-## Old-meat lumpiness: per-ring radius wobble, per-vertex radial wobble and a palm-side sag, all as fractions of the ring radius.
-const LUMP_RING := 0.07
-const LUMP_VERT := 0.06
+## Old-meat lumpiness: slight per-ring radius wobble, sparse peaked knots (mostly at the joints) and a palm-side sag, all as fractions of the ring radius.
+const LUMP_RING := 0.03
+const KNOT := 0.22
+const KNOT_SPARSE := 0.6
 const SAG := 0.10
 
 
@@ -184,7 +185,7 @@ static func _segment(mi: MeshInstance3D, sk: Skeleton3D, fg: Dictionary, j: int,
 			# Flesh hangs mid-bone, not at the joints.
 			c -= ax[0] * SAG * rad * clampf(sin(PI * p.x), 0.0, 1.0)
 		var h := NAIL_H if j == 3 and p.x >= NAIL_FROM else 1.0
-		_ring(fv, c, ax[0], ax[1], rad, h, bony, fname if lumpy else &"", j, i)
+		_ring(fv, c, ax[0], ax[1], rad, h, bony, fname if lumpy else &"", j, i, p.x)
 		if j == 3:
 			var tips: Array = fg[&"tip_rings"]
 			tips.append({&"t": p.x, &"centre": c, &"half_w": 0.92 * rad, &"half_h": rad * h})
@@ -202,10 +203,10 @@ static func _noise(f: StringName, j: int, i: int, s: int) -> float:
 
 
 ## Eight points around centre `c`: sector 0 on the dorsal side, the pad half flattened. A
-## non-empty `lump_f` adds the per-vertex wobble of ring `i` of bone `j`.
+## non-empty `lump_f` pushes sparse knots out of ring `i` of bone `j` (`t` along the bone).
 static func _ring(fv: PackedVector3Array, c: Vector3, dorsal: Vector3, lateral: Vector3,
 		radius: float, dorsal_h: float, bony: bool = false, lump_f: StringName = &"",
-		j: int = 0, i: int = 0) -> void:
+		j: int = 0, i: int = 0, t: float = 0.5) -> void:
 	var pad_h := BONY_PAD_H if bony else PAD_H
 	var side := BONY_SQUASH if bony else 0.92
 	for s in SECTORS:
@@ -213,7 +214,10 @@ static func _ring(fv: PackedVector3Array, c: Vector3, dorsal: Vector3, lateral: 
 		var h := dorsal_h if cos(a) >= 0.0 else pad_h
 		var off := dorsal * cos(a) * radius * h + lateral * sin(a) * radius * side
 		if lump_f != &"":
-			off *= 1.0 + LUMP_VERT * _noise(lump_f, j, i, s)
+			var k := maxf(0.0, _noise(lump_f, j, i, s) - KNOT_SPARSE) / (1.0 - KNOT_SPARSE)
+			# Knots crowd the joints, like arthritic nodes; mid-bone stays mostly flat.
+			var at_joint := 1.0 - 0.7 * clampf(sin(PI * clampf(t, 0.0, 1.0)), 0.0, 1.0)
+			off *= 1.0 + KNOT * k * at_joint
 		fv.append(c + off * (BONY_CORNER if bony and s % 2 == 1 else 1.0))
 
 
