@@ -44,14 +44,21 @@ const RIGHT_THUMB_AIM := Vector3(-36, -18, -82)
 const GRIP_WRIST_IN_GUN := Vector3(0.08, -0.13, 0.17)
 const GRIP_HAND_DIR_IN_GUN := Vector3(-0.05, 0.25, -1.0)
 const GRIP_PALM_IN_GUN := Vector3(-1.0, 0.0, 0.0)
+## The thumb's .03 value tips its nail slightly down from the player's POV (owner, 2026-10-04).
 const GRIP_CURL := {
 	&"f_index": Vector3(20, 25, 15), &"f_middle": Vector3(46, 57, 38),
 	&"f_ring": Vector3(55, 70, 50), &"f_pinky": Vector3(55, 70, 62),
-	&"thumb": Vector3(-5, -8, 50),
+	&"thumb": Vector3(-5, -8, 78),
 }
 ## Tuned with `arms touch` on the grip: the fingers wrap the front strap, the thumb lies high on the
 ## left panel (the side facing the camera), crossing the back strap so it stays out of the core.
 const GRIP_THUMB_AIM := Vector3(-65, -70, -20)
+## Screen-space turn of the right thumb at its palm joint, degrees about the rig axes:
+## x rolls it about its own length, y swings the nail toward you (+) or away (-),
+## z turns the nail down (+) or up (-) on screen; the thumb lies along screen -X in the grip.
+## Swept live with `arms thumbturn` and approved by the owner on 2026-10-04.
+const GRIP_THUMB_TURN := Vector3(-50, -10, -5)
+const RIGHT_THUMB_TURN := Vector3.ZERO
 ## Live copies of the gripping hand's tunables: the `arms thumbaim`, `arms thumbcurl`, `arms wrist`
 ## and `arms curl` console commands set them and rebuild, so a pose is tuned by numbers instead of
 ## a screenshot per try. The constants above are their defaults. The `right_*` names read and write
@@ -61,6 +68,8 @@ static var _pistol_thumb_curl := RIGHT_THUMB_CURL
 static var _pistol_wrist := RIGHT_WRIST_IN_GUN
 static var _pistol_curl: Dictionary = RIGHT_CURL.duplicate()
 static var _grip_thumb_aim := GRIP_THUMB_AIM
+static var _pistol_thumb_turn := RIGHT_THUMB_TURN
+static var _grip_thumb_turn := GRIP_THUMB_TURN
 static var _grip_wrist := GRIP_WRIST_IN_GUN
 static var _grip_curl: Dictionary = GRIP_CURL.duplicate()
 static var right_thumb_aim: Vector3:
@@ -71,6 +80,14 @@ static var right_thumb_aim: Vector3:
 			_grip_thumb_aim = v
 		else:
 			_pistol_thumb_aim = v
+static var right_thumb_turn: Vector3:
+	get:
+		return _grip_thumb_turn if gun_style == &"grip" else _pistol_thumb_turn
+	set(v):
+		if gun_style == &"grip":
+			_grip_thumb_turn = v
+		else:
+			_pistol_thumb_turn = v
 static var right_thumb_curl: Vector3:
 	get:
 		return _grip_curl[&"thumb"] if gun_style == &"grip" else _pistol_thumb_curl
@@ -190,6 +207,8 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	ArmRig.stretch_tips(model_r, ".R", TIP_K)
 	ArmRig.stretch_thumb(model_r, ".R", THUMB_STRETCH)
 	ArmRig.scale_hand(model_r, ".R", HAND_K)
+	if SHOW_GUN:
+		_turn_thumb(rig, sk_r, right_thumb_turn)
 	var fingers_r := ArmFingers.build(model_r, ".R", GIRTH, rng_r, skin_r)
 	model_r.set_meta(&"fingers", fingers_r)
 	ArmRig.add_claws(model_r, ".R", fingers_r, CLAW_K, CLAW_CURVE, claw)
@@ -269,3 +288,32 @@ static func _jitter(rng: RandomNumberGenerator) -> Vector3:
 		rng.randf_range(-ELBOW_JITTER, ELBOW_JITTER),
 		rng.randf_range(-ELBOW_JITTER, ELBOW_JITTER),
 		rng.randf_range(-ELBOW_JITTER, ELBOW_JITTER))
+
+
+## Rotates DEF-thumb.01.R about its own head by screen-space degrees (rig axes). It
+## rotates about the screen axes (right-hand rule), so each number moves it the way the player
+## sees it instead of along the bone's local axes.
+static func _turn_thumb(rig: Node3D, sk: Skeleton3D, turn_deg: Vector3) -> void:
+	if turn_deg == Vector3.ZERO:
+		return
+	var bone := sk.find_bone("DEF-thumb.01.R")
+	if bone == -1:
+		return
+	# Skeleton basis expressed in rig space, from the local transforms (the rig may be
+	# outside the tree while a probe builds it, so no global_transform).
+	var sk_to_rig := Basis.IDENTITY
+	var n: Node3D = sk
+	while n != null and n != rig:
+		sk_to_rig = n.transform.basis * sk_to_rig
+		n = n.get_parent() as Node3D
+	var q_b := sk_to_rig.get_rotation_quaternion()
+	var r_rig := (Quaternion(Vector3.BACK, deg_to_rad(turn_deg.z))
+			* Quaternion(Vector3.UP, deg_to_rad(turn_deg.y))
+			* Quaternion(Vector3.RIGHT, deg_to_rad(turn_deg.x)))
+	var r_sk := q_b.inverse() * r_rig * q_b
+	sk.force_update_all_bone_transforms()
+	var parent := sk.get_bone_parent(bone)
+	var q_p := Quaternion.IDENTITY
+	if parent != -1:
+		q_p = sk.get_bone_global_pose(parent).basis.get_rotation_quaternion()
+	sk.set_bone_pose_rotation(bone, q_p.inverse() * r_sk * q_p * sk.get_bone_pose_rotation(bone))
