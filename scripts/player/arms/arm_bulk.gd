@@ -215,6 +215,8 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 				sum += w
 			if sum > 0.0:
 				new_verts[i] = acc / sum
+		ArmKnuckles.apply(new_verts, arrays[Mesh.ARRAY_NORMAL], bones, weights, per,
+				bone_names, inv_poses, side)
 		ArmMuscle.apply(arrays, new_verts, heads, bone_names, muscle_seed, bulk,
 				side == ".L")
 		_rest_channels(arrays, mi)

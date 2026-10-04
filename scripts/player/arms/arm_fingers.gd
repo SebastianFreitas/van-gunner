@@ -6,6 +6,9 @@ extends RefCounted
 const SECTORS := 8
 ## Dorsal half-width kept on the flat pad side of a ring.
 const PAD_H := 0.86
+const BONY_SQUASH := 0.86  ## lateral squash of a finger ring (thumb keeps 0.92)
+const BONY_CORNER := 1.10  ## the four diagonal sectors pushed out so the ring reads square
+const BONY_PAD_H := 0.80  ## flatter pad side for the fingers (thumb keeps PAD_H)
 ## Dorsal half-width of the nail bed, on the distal rings from this fraction of the tip on.
 const NAIL_H := 0.85
 const NAIL_FROM := 0.55
@@ -98,7 +101,7 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 		&"verts": PackedVector3Array(), &"centres": PackedVector3Array(), &"wts": [],
 		&"rings": 0, &"names": names, &"binds": binds, &"lens": lens,
 		&"cr": cr, &"r1": shaft[1], &"r2": shaft[2], &"r3": shaft[3], &"pad": pad,
-		&"tip_rings": [],
+		&"tip_rings": [], &"bony": not thumb,
 	}
 	var tip_prof := _tip_profile(knob[3], shaft[3])
 	for j in range(first, 4):
@@ -106,7 +109,7 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 		if j == 1:
 			prof = _root_profile(knob[j], shaft[j], knob[j + 1])
 		elif j != 3:
-			prof = _shaft_profile(knob[j], shaft[j], knob[j + 1])
+			prof = _shaft_profile(knob[j], shaft[j], knob[j + 1], not thumb)
 		_segment(mi, sk, fg, j, prof)
 	# The pole closes the tip on the finger's own (crooked) axis, weighted to .03 only.
 	var base := ArmSkinMesh.ring_frame(mi, sk, names[3], 0.0)
@@ -166,7 +169,7 @@ static func _segment(mi: MeshInstance3D, sk: Skeleton3D, fg: Dictionary, j: int,
 		var c := base.origin + y * p.x * lens[j] + ax[0] * p.z * p.y \
 				+ ax[1] * _crook(j, p.x, fg)
 		var h := NAIL_H if j == 3 and p.x >= NAIL_FROM else 1.0
-		_ring(fv, c, ax[0], ax[1], p.y, h)
+		_ring(fv, c, ax[0], ax[1], p.y, h, fg[&"bony"])
 		if j == 3:
 			var tips: Array = fg[&"tip_rings"]
 			tips.append({&"t": p.x, &"centre": c, &"half_w": 0.92 * p.y, &"half_h": p.y * h})
@@ -179,20 +182,22 @@ static func _segment(mi: MeshInstance3D, sk: Skeleton3D, fg: Dictionary, j: int,
 
 ## Eight points around centre `c`: sector 0 on the dorsal side, the pad half flattened.
 static func _ring(fv: PackedVector3Array, c: Vector3, dorsal: Vector3, lateral: Vector3,
-		radius: float, dorsal_h: float) -> void:
+		radius: float, dorsal_h: float, bony: bool = false) -> void:
+	var pad_h := BONY_PAD_H if bony else PAD_H
+	var side := BONY_SQUASH if bony else 0.92
 	for s in SECTORS:
 		var a := TAU * float(s) / float(SECTORS)
-		var h := dorsal_h if cos(a) >= 0.0 else PAD_H
-		fv.append(c + dorsal * cos(a) * radius * h + lateral * sin(a) * radius * 0.92)
+		var h := dorsal_h if cos(a) >= 0.0 else pad_h
+		var off := dorsal * cos(a) * radius * h + lateral * sin(a) * radius * side
+		fv.append(c + off * (BONY_CORNER if bony and s % 2 == 1 else 1.0))
 
 
 ## Knuckle bone (".01") rings: the first ring sits a quarter bone back inside the palm so the
-## tube grows out of it; the knob `k` rides only slightly high (its top lands about 0.1..0.4 r
-## above the palm's back at the middle and ring fingers, buried at the index and pinky edges,
-## like a real knuckle row), then the shaft `r` swells into the next knob `kn`.
+## tube flows straight out of it with no knob of its own (the knuckle is the palm's ridge, see
+## `ArmKnuckles`), then the shaft `r` swells into the next knob `kn`.
 static func _root_profile(k: float, r: float, kn: float) -> Array[Vector3]:
 	var p: Array[Vector3] = [
-		Vector3(-0.25, 0.95 * r, 0.0), Vector3(0.00, k, 0.30), Vector3(0.14, 0.96 * k, 0.15),
+		Vector3(-0.25, 0.95 * r, 0.0), Vector3(0.00, k, 0.0), Vector3(0.14, 0.98 * k, 0.0),
 		Vector3(0.30, r, 0.0), Vector3(0.55, 0.95 * r, 0.0), Vector3(0.80, 1.05 * r, 0.0),
 		Vector3(0.92, 0.88 * kn, 0.10),
 	]
@@ -200,9 +205,10 @@ static func _root_profile(k: float, r: float, kn: float) -> Array[Vector3]:
 
 
 ## Shaft bone rings: head knob `k`, thin shaft `r`, swelling into the next knob `kn`.
-static func _shaft_profile(k: float, r: float, kn: float) -> Array[Vector3]:
+static func _shaft_profile(k: float, r: float, kn: float, bony: bool) -> Array[Vector3]:
 	var p: Array[Vector3] = [
-		Vector3(0.00, k, 0.18), Vector3(0.14, 0.96 * k, 0.12), Vector3(0.30, r, 0.0),
+		Vector3(0.00, k, 0.10 if bony else 0.18), Vector3(0.14, 0.96 * k, 0.06 if bony else 0.12),
+		Vector3(0.30, r, 0.0),
 		Vector3(0.55, 0.95 * r, 0.0), Vector3(0.80, 1.05 * r, 0.0),
 		Vector3(0.92, 0.88 * kn, 0.10),
 	]
@@ -242,9 +248,9 @@ static func _radii(r0: float, girth: float, thumb: bool, ref: bool = false) -> A
 		r[3] = 0.78 * r[1]
 		# A 1.4 knob was as tall as the palm is thick and read as separate balls; neighbours
 		# overlap sideways into one ridge on purpose.
-		k[1] = 1.12 * r[1]
-		k[2] = 1.35 * r[2]
-	k[3] = (1.22 if thumb else 1.25) * r[3]
+		k[1] = 1.0 * r[1]
+		k[2] = 1.12 * r[2]
+	k[3] = (1.22 if thumb else 1.10) * r[3]
 	return [r, k]
 
 
