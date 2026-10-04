@@ -6,9 +6,6 @@ extends RefCounted
 const SECTORS := 8
 ## Dorsal half-width kept on the flat pad side of a ring.
 const PAD_H := 0.86
-## Pad half-width of the knuckle rings on a finger's ".01": flat underneath, so the knob
-## rises on the back of the hand while the palm side stays flush.
-const KNUCKLE_PAD := 0.55
 ## Dorsal half-width of the nail bed, on the distal rings from this fraction of the tip on.
 const NAIL_H := 0.85
 const NAIL_FROM := 0.55
@@ -169,8 +166,7 @@ static func _segment(mi: MeshInstance3D, sk: Skeleton3D, fg: Dictionary, j: int,
 		var c := base.origin + y * p.x * lens[j] + ax[0] * p.z * p.y \
 				+ ax[1] * _crook(j, p.x, fg)
 		var h := NAIL_H if j == 3 and p.x >= NAIL_FROM else 1.0
-		var pad_h := KNUCKLE_PAD if j == 1 and p.x <= 0.12 else PAD_H
-		_ring(fv, c, ax[0], ax[1], p.y, h, pad_h)
+		_ring(fv, c, ax[0], ax[1], p.y, h)
 		if j == 3:
 			var tips: Array = fg[&"tip_rings"]
 			tips.append({&"t": p.x, &"centre": c, &"half_w": 0.92 * p.y, &"half_h": p.y * h})
@@ -181,20 +177,22 @@ static func _segment(mi: MeshInstance3D, sk: Skeleton3D, fg: Dictionary, j: int,
 		fg[&"rings"] = int(fg[&"rings"]) + 1
 
 
-## Eight points around centre `c`: sector 0 on the dorsal side, the pad half flattened to `pad_h`.
+## Eight points around centre `c`: sector 0 on the dorsal side, the pad half flattened.
 static func _ring(fv: PackedVector3Array, c: Vector3, dorsal: Vector3, lateral: Vector3,
-		radius: float, dorsal_h: float, pad_h: float = PAD_H) -> void:
+		radius: float, dorsal_h: float) -> void:
 	for s in SECTORS:
 		var a := TAU * float(s) / float(SECTORS)
-		var h := dorsal_h if cos(a) >= 0.0 else pad_h
+		var h := dorsal_h if cos(a) >= 0.0 else PAD_H
 		fv.append(c + dorsal * cos(a) * radius * h + lateral * sin(a) * radius * 0.92)
 
 
-## Knuckle bone (".01") rings: one ring sunk into the palm so the tube grows out of it, the
-## knob `k` riding on the back of the hand, then the shaft `r` swelling into the next knob `kn`.
+## Knuckle bone (".01") rings: the first ring sits a quarter bone back inside the palm so the
+## tube grows out of it; the knob `k` rides only slightly high (its top lands about 0.1..0.4 r
+## above the palm's back at the middle and ring fingers, buried at the index and pinky edges,
+## like a real knuckle row), then the shaft `r` swells into the next knob `kn`.
 static func _root_profile(k: float, r: float, kn: float) -> Array[Vector3]:
 	var p: Array[Vector3] = [
-		Vector3(-0.12, 0.80 * r, 0.10), Vector3(0.00, k, 0.45), Vector3(0.12, 0.92 * k, 0.32),
+		Vector3(-0.25, 0.95 * r, 0.0), Vector3(0.00, k, 0.30), Vector3(0.14, 0.96 * k, 0.15),
 		Vector3(0.30, r, 0.0), Vector3(0.55, 0.95 * r, 0.0), Vector3(0.80, 1.05 * r, 0.0),
 		Vector3(0.92, 0.88 * kn, 0.10),
 	]
@@ -242,7 +240,9 @@ static func _radii(r0: float, girth: float, thumb: bool, ref: bool = false) -> A
 		r[1] = girth * r0
 		r[2] = 0.90 * r[1]
 		r[3] = 0.78 * r[1]
-		k[1] = 1.40 * r[1]
+		# A 1.4 knob was as tall as the palm is thick and read as separate balls; neighbours
+		# overlap sideways into one ridge on purpose.
+		k[1] = 1.12 * r[1]
 		k[2] = 1.35 * r[2]
 	k[3] = (1.22 if thumb else 1.25) * r[3]
 	return [r, k]
@@ -272,7 +272,7 @@ static func _axes(frame: Transform3D, pad_hint: Vector3 = Vector3.DOWN) -> Packe
 ## Own bone, blended with the parent near the head and the next tube bone near the tail.
 static func _ring_weights(own: int, parent: int, nxt: int, t: float) -> Dictionary:
 	if t < 0.2 and parent >= 0:
-		var pw := 0.5 * (1.0 - t / 0.2)
+		var pw := minf(0.5 * (1.0 - t / 0.2), 1.0)
 		return {own: 1.0 - pw, parent: pw}
 	if t > 0.8 and nxt >= 0:
 		var cw := 0.5 * (t - 0.8) / 0.2

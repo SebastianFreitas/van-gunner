@@ -115,11 +115,16 @@ Geometry:
   into the skin so they never float, then taper to a point curving 15-30
   degrees toward the pad (owner, 2026-10-03: the old 6-sided horns floated
   and looked too low-poly).
-  Knuckles (owner, 2026-10-04: the finger roots read as lumps glued under the
-  palm, no knuckles): each finger's `.01` rings use `ArmFingers._root_profile`,
-  one ring sunk into the palm, then the knob shifted 0.45 toward the back of
-  the hand and flattened underneath (`KNUCKLE_PAD` 0.55), so a bony knuckle row
-  rises on the back while the palm side stays flush. Thumbs start at `.02` and
+  Knuckles (owner, 2026-10-04: the finger roots read as lumps glued to the
+  palm, no knuckles; a first fix with a 1.4r knob shifted 0.45 dorsal read as a
+  row of teeth on a flat slab): the palm's back already sits 1.1..1.9 r above
+  each `.01` axis and the heads are only 1.5..1.9 r apart, so a knuckle must be
+  a low ridge, not a ball. `ArmFingers._root_profile` starts the tube a quarter
+  bone back inside the palm (riding fully on the palm bone), the knob is 1.12 r
+  shifted 0.30 dorsal so it peeks about 0.1..0.4 r above the back at the middle
+  and ring fingers and stays buried at the index and pinky, and neighbours
+  overlap sideways into one ridge. `ArmBulk.KNUCKLE_GAIN` is 1.05: at 1.15 the
+  knuckle half of the palm became a flat-topped slab. Thumbs start at `.02` and
   never take it. Both hands share the code.
   The hands never rest: `ArmWeave` (`scripts/player/arms/arm_weave.gd`)
   rolls both hands' fingers index to pinky in hooked witch curls on a 3.6 s

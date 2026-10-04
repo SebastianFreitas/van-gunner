@@ -14,8 +14,9 @@ const FOREARM_WRIST_GAIN := 2.1
 const WRIST_END_GAIN := 1.45
 ## Extra on the palm gain over the knuckle half of each palm bone: the knuckle row is the widest
 ## point of a hand. Only slightly above neutral: the procedural finger tubes' knobs carry most of
-## the knuckle swell.
-const KNUCKLE_GAIN := 1.15
+## the knuckle swell. Lowered on 2026-10-04: at 1.15 the knuckle half of the palm became a
+## flat-topped slab the finger roots stuck out of.
+const KNUCKLE_GAIN := 1.05
 ## Fraction of the palm bone where the knuckle boost starts.
 const KNUCKLE_RAMP_START := 0.5
 ## Glb finger segments shrink to a thin core hidden inside the procedural finger tubes
