@@ -32,6 +32,16 @@ uniform float vein_width : hint_range(0.004, 0.06) = 0.022;
 // Peak ridge height in view metres (the rig is 0.18-scaled): 0.4 x the half width x 0.18.
 uniform float vein_height : hint_range(0.0, 0.004) = 0.0008;
 
+// Saggy old-meat bump (skin only): 0 is off, so cloth and steel, which share this shader, stay
+// as they are. Shades folds and wrinkles from the rest chart so they do not swim when the hand bends.
+uniform float skin_bump : hint_range(0.0, 1.0) = 0.0;
+// Frequency of the sharp knots, in rest-space units.
+uniform float sag_scale = 0.0;
+// Frequency of the fine wrinkles, in rest-space units.
+uniform float wrinkle_scale = 0.0;
+// Peak fold slope scale in view metres per unit of height gradient (the rig is 0.18-scaled).
+const float SKIN_BUMP_HEIGHT = 0.0015;
+
 // Painted crown highlight: a fixed view-space key, up and toward the camera's left, so the
 // ridge's lit flank and shaded flank read even where the arm lamp does not reach.
 const vec3 VEIN_KEY = normalize(vec3(-0.3, 0.8, 0.52));
@@ -68,6 +78,47 @@ float tri_fbm(vec3 p, vec3 w, float scale) {
 float tri_noise(vec3 p, vec3 w, float scale) {
 	return noise21(p.zy * scale) * w.x + noise21(p.xz * scale) * w.y
 			+ noise21(p.xy * scale) * w.z;
+}
+
+vec3 knot_hash(vec3 c) {
+	vec3 q = vec3(dot(c, vec3(127.1, 311.7, 74.7)), dot(c, vec3(269.5, 183.3, 246.1)),
+			dot(c, vec3(113.5, 271.9, 124.6)));
+	return fract(sin(q) * 43758.5453);
+}
+
+// Sharp knots: a cone (pointed top, hard crease at its base) at a jittered point in a sparse
+// share of the cells, flat skin between them.
+float knot_height(vec3 p) {
+	vec3 cell = floor(p);
+	float best = 0.0;
+	for (int x = -1; x <= 1; x++) {
+		for (int y = -1; y <= 1; y++) {
+			for (int z = -1; z <= 1; z++) {
+				vec3 c = cell + vec3(float(x), float(y), float(z));
+				vec3 hv = knot_hash(c);
+				vec3 kv = knot_hash(c + vec3(19.3, 7.1, 43.7));
+				if (kv.x >= 0.18) {
+					continue;
+				}
+				vec3 pt = c + 0.15 + 0.7 * hv;
+				float rad = mix(0.18, 0.48, kv.y);
+				float hgt = mix(0.35, 1.0, kv.z);
+				best = max(best, hgt * max(0.0, 1.0 - length(p - pt) / rad));
+			}
+		}
+	}
+	return best;
+}
+
+// Fold height in the rest chart: sharp knots plus fine wrinkles, triplanar on the rest normal's weights.
+float knot_at(vec3 rest) {
+	vec3 q = rest * sag_scale;
+	q += 0.6 * vec3(fbm(q.yz * 0.37), fbm(q.zx * 0.37), fbm(q.xy * 0.37)) - 0.3;
+	return knot_height(q);
+}
+
+float skin_height(vec3 rest, vec3 w) {
+	return 0.75 * knot_at(rest) + 0.25 * tri_fbm(rest, w, wrinkle_scale);
 }
 
 // Veins from two side projections of the across coordinates, blended so there is no seam.
@@ -136,6 +187,33 @@ void fragment() {
 		col = mix(col, crest, vn * 0.5);
 		col *= 1.0 + clamp(lit * 0.35, -0.20, 0.15);
 	}
+	// Saggy skin: tilt the normal by the fold height's gradient, darken and roughen the hollows.
+	float fold_dark = 0.0;
+	if (skin_bump > 0.0) {
+		vec3 rest = rest_data.xyz;
+		float eps = 0.25 / wrinkle_scale;
+		vec3 g = vec3(
+				skin_height(rest + vec3(eps, 0.0, 0.0), w) - skin_height(rest - vec3(eps, 0.0, 0.0), w),
+				skin_height(rest + vec3(0.0, eps, 0.0), w) - skin_height(rest - vec3(0.0, eps, 0.0), w),
+				skin_height(rest + vec3(0.0, 0.0, eps), w) - skin_height(rest - vec3(0.0, 0.0, eps), w)
+		) / (2.0 * eps);
+		g -= dot(g, n) * n; // slope along the surface only
+		// Same screen-space mapping as the vein ridge: height change per pixel, then the tilt.
+		float hx = skin_bump * SKIN_BUMP_HEIGHT * dot(g, dFdx(rest));
+		float hy = skin_bump * SKIN_BUMP_HEIGHT * dot(g, dFdy(rest));
+		vec3 sdx = dFdx(VERTEX);
+		vec3 sdy = dFdy(VERTEX);
+		vec3 s1 = cross(sdy, NORMAL);
+		vec3 s2 = cross(NORMAL, sdx);
+		float sdet = dot(sdx, s1);
+		vec3 grad_view = sign(sdet) * (hx * s1 + hy * s2);
+		NORMAL = normalize(abs(sdet) * NORMAL - grad_view);
+		float kh = knot_at(rest);
+		float wrinkle = tri_fbm(rest, w, wrinkle_scale);
+		fold_dark = smoothstep(0.5, 0.25, wrinkle) * 0.6
+				+ smoothstep(0.0, 0.08, kh) * smoothstep(0.3, 0.1, kh) * 0.4;
+		col *= mix(1.0, 0.82, skin_bump * fold_dark);
+	}
 	// Dirt: fbm-masked grime that collects in the hollows.
 	float dirt_mask = smoothstep(0.55, 0.85, tri_fbm(p + vec3(31.7, 9.3, 17.1), w, mottle_m * 0.7));
 	col = mix(col, dirt_color, dirt_mask * grime);
@@ -147,7 +225,8 @@ void fragment() {
 	}
 
 	ALBEDO = col;
-	ROUGHNESS = clamp(roughness_value - 0.04 * (grain - 0.5) - 0.25 * vn, 0.60, 0.95);
+	ROUGHNESS = clamp(roughness_value - 0.04 * (grain - 0.5) - 0.25 * vn
+			+ 0.05 * skin_bump * fold_dark, 0.60, 0.95);
 	METALLIC = metallic_value;
 	SPECULAR = 0.5 + 0.2 * vn;
 	if (use_rest_pos) {

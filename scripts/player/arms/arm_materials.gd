@@ -37,6 +37,11 @@ static func skin(rng: RandomNumberGenerator) -> ShaderMaterial:
 	var mat := surface(base, Color(0.13, 0.17, 0.14), Color(0.08, 0.08, 0.06), 60.0, 6.0, 0.0,
 			0.45, 0.88, 0.0, rng.randf_range(0.0, 100.0))
 	mat.set_shader_parameter(&"vein_strength", rng.randf_range(0.7, 1.0))
+	# Measured palm bone length 0.125 rest units, so a finger is about 0.11: sag_scale 36 gives
+	# about 4 big folds per finger, wrinkle_scale 216 (6x) the fine ones.
+	mat.set_shader_parameter(&"skin_bump", 0.85)
+	mat.set_shader_parameter(&"sag_scale", 36.0)
+	mat.set_shader_parameter(&"wrinkle_scale", 216.0)
 	mat.set_shader_parameter(&"use_rest_pos", true)
 	return mat
 

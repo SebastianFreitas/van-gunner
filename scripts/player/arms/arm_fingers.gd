@@ -14,6 +14,11 @@ const NAIL_H := 0.85
 const NAIL_FROM := 0.55
 ## Thumb shaft radius as a multiple of the index finger's shaft radius.
 const THUMB_R := 1.35
+## Old-meat lumpiness: slight per-ring radius wobble, sparse peaked knots (mostly at the joints) and a palm-side sag, all as fractions of the ring radius.
+const LUMP_RING := 0.03
+const KNOT := 0.30
+const KNOT_SPARSE := 0.88
+const SAG := 0.10
 
 
 ## Builds `Skin_fingers` under the arm skeleton and returns, per finger in `ArmRig.FINGERS`,
@@ -101,9 +106,9 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 		&"verts": PackedVector3Array(), &"centres": PackedVector3Array(), &"wts": [],
 		&"rings": 0, &"names": names, &"binds": binds, &"lens": lens,
 		&"cr": cr, &"r1": shaft[1], &"r2": shaft[2], &"r3": shaft[3], &"pad": pad,
-		&"tip_rings": [], &"bony": not thumb,
+		&"tip_rings": [], &"bony": true, &"name": f,
 	}
-	var tip_prof := _tip_profile(knob[3], shaft[3])
+	var tip_prof := _tip_profile(knob[3], shaft[3], not thumb)
 	for j in range(first, 4):
 		var prof := tip_prof
 		if j == 1:
@@ -165,14 +170,25 @@ static func _segment(mi: MeshInstance3D, sk: Skeleton3D, fg: Dictionary, j: int,
 	var ax := _axes(base, pad)
 	var parent := _parent_bind(mi, sk, names[j])
 	var nxt := binds[j + 1] if j < 3 else -1
-	for p in prof:
-		var c := base.origin + y * p.x * lens[j] + ax[0] * p.z * p.y \
+	var bony: bool = fg[&"bony"]
+	var fname: StringName = fg[&"name"]
+	for i in prof.size():
+		var p := prof[i]
+		# Claws are fitted to the .03 tip rings, so those stay smooth.
+		var lumpy := bony and not (j == 3 and p.x >= 0.78)
+		var rad := p.y
+		if lumpy:
+			rad *= 1.0 + LUMP_RING * _noise(fname, j, i, -1)
+		var c := base.origin + y * p.x * lens[j] + ax[0] * p.z * rad \
 				+ ax[1] * _crook(j, p.x, fg)
+		if lumpy and p.x >= 0.0 and p.x <= 1.0:
+			# Flesh hangs mid-bone, not at the joints.
+			c -= ax[0] * SAG * rad * clampf(sin(PI * p.x), 0.0, 1.0)
 		var h := NAIL_H if j == 3 and p.x >= NAIL_FROM else 1.0
-		_ring(fv, c, ax[0], ax[1], p.y, h, fg[&"bony"])
+		_ring(fv, c, ax[0], ax[1], rad, h, bony, fname if lumpy else &"", j, i, p.x)
 		if j == 3:
 			var tips: Array = fg[&"tip_rings"]
-			tips.append({&"t": p.x, &"centre": c, &"half_w": 0.92 * p.y, &"half_h": p.y * h})
+			tips.append({&"t": p.x, &"centre": c, &"half_w": 0.92 * rad, &"half_h": rad * h})
 		centres.append(c)
 		var w := _ring_weights(binds[j], parent, nxt, p.x)
 		for _s in SECTORS:
@@ -180,15 +196,28 @@ static func _segment(mi: MeshInstance3D, sk: Skeleton3D, fg: Dictionary, j: int,
 		fg[&"rings"] = int(fg[&"rings"]) + 1
 
 
-## Eight points around centre `c`: sector 0 on the dorsal side, the pad half flattened.
+## Seeded wobble in [-1, 1]: finger, bone, ring and sector only, so both hands and every run
+## match and the shared rng stream is untouched.
+static func _noise(f: StringName, j: int, i: int, s: int) -> float:
+	return float(absi(hash([f, j, i, s])) % 2001) / 1000.0 - 1.0
+
+
+## Eight points around centre `c`: sector 0 on the dorsal side, the pad half flattened. A
+## non-empty `lump_f` pushes sparse knots out of ring `i` of bone `j` (`t` along the bone).
 static func _ring(fv: PackedVector3Array, c: Vector3, dorsal: Vector3, lateral: Vector3,
-		radius: float, dorsal_h: float, bony: bool = false) -> void:
+		radius: float, dorsal_h: float, bony: bool = false, lump_f: StringName = &"",
+		j: int = 0, i: int = 0, t: float = 0.5) -> void:
 	var pad_h := BONY_PAD_H if bony else PAD_H
 	var side := BONY_SQUASH if bony else 0.92
 	for s in SECTORS:
 		var a := TAU * float(s) / float(SECTORS)
 		var h := dorsal_h if cos(a) >= 0.0 else pad_h
 		var off := dorsal * cos(a) * radius * h + lateral * sin(a) * radius * side
+		if lump_f != &"":
+			var k := maxf(0.0, _noise(lump_f, j, i, s) - KNOT_SPARSE) / (1.0 - KNOT_SPARSE)
+			# Knots crowd the joints, like arthritic nodes; mid-bone stays mostly flat.
+			var at_joint := 1.0 - 0.7 * clampf(sin(PI * clampf(t, 0.0, 1.0)), 0.0, 1.0)
+			off *= 1.0 + KNOT * k * at_joint
 		fv.append(c + off * (BONY_CORNER if bony and s % 2 == 1 else 1.0))
 
 
@@ -198,8 +227,8 @@ static func _ring(fv: PackedVector3Array, c: Vector3, dorsal: Vector3, lateral: 
 static func _root_profile(k: float, r: float, kn: float) -> Array[Vector3]:
 	var p: Array[Vector3] = [
 		Vector3(-0.25, 0.95 * r, 0.0), Vector3(0.00, k, 0.0), Vector3(0.14, 0.98 * k, 0.0),
-		Vector3(0.30, r, 0.0), Vector3(0.55, 0.95 * r, 0.0), Vector3(0.80, 1.05 * r, 0.0),
-		Vector3(0.92, 0.88 * kn, 0.10),
+		Vector3(0.30, r, 0.0), Vector3(0.55, 0.95 * r, 0.0),
+		Vector3(0.78, lerpf(r, kn, 0.45), 0.04), Vector3(0.92, 1.02 * kn, 0.10),
 	]
 	return p
 
@@ -209,16 +238,23 @@ static func _shaft_profile(k: float, r: float, kn: float, bony: bool) -> Array[V
 	var p: Array[Vector3] = [
 		Vector3(0.00, k, 0.10 if bony else 0.18), Vector3(0.14, 0.96 * k, 0.06 if bony else 0.12),
 		Vector3(0.30, r, 0.0),
-		Vector3(0.55, 0.95 * r, 0.0), Vector3(0.80, 1.05 * r, 0.0),
-		Vector3(0.92, 0.88 * kn, 0.10),
+		Vector3(0.55, 0.95 * r, 0.0),
 	]
+	if bony:
+		p.append(Vector3(0.78, lerpf(r, kn, 0.45), 0.04))
+		p.append(Vector3(0.92, 1.02 * kn, 0.10))
+	else:
+		p.append(Vector3(0.80, 1.05 * r, 0.0))
+		p.append(Vector3(0.92, 0.88 * kn, 0.10))
 	return p
 
 
 ## Distal bone rings: knob `k3`, shaft `r3`, a tapering tip whose pad side sits low.
-static func _tip_profile(k3: float, r3: float) -> Array[Vector3]:
+static func _tip_profile(k3: float, r3: float, bony: bool = false) -> Array[Vector3]:
 	var p: Array[Vector3] = [
-		Vector3(0.00, k3, 0.18), Vector3(0.14, 0.95 * k3, 0.10), Vector3(0.32, r3, 0.0),
+		Vector3(0.00, k3, 0.18),
+		Vector3(0.14, 0.98 * k3, 0.12) if bony else Vector3(0.14, 0.95 * k3, 0.10),
+		Vector3(0.32, r3, 0.0),
 		Vector3(0.55, 0.90 * r3, 0.0), Vector3(0.78, 0.72 * r3, 0.0),
 		Vector3(0.95, 0.50 * r3, -0.10), Vector3(1.00, 0.30 * r3, -0.10),
 	]
@@ -277,11 +313,11 @@ static func _axes(frame: Transform3D, pad_hint: Vector3 = Vector3.DOWN) -> Packe
 
 ## Own bone, blended with the parent near the head and the next tube bone near the tail.
 static func _ring_weights(own: int, parent: int, nxt: int, t: float) -> Dictionary:
-	if t < 0.2 and parent >= 0:
-		var pw := minf(0.5 * (1.0 - t / 0.2), 1.0)
+	if t < 0.3 and parent >= 0:
+		var pw := minf(0.5 * (1.0 - t / 0.3), 1.0)
 		return {own: 1.0 - pw, parent: pw}
-	if t > 0.8 and nxt >= 0:
-		var cw := 0.5 * (t - 0.8) / 0.2
+	if t > 0.7 and nxt >= 0:
+		var cw := 0.5 * (t - 0.7) / 0.3
 		return {own: 1.0 - cw, nxt: cw}
 	return {own: 1.0}
 
