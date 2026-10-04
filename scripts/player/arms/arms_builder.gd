@@ -56,7 +56,8 @@ const GRIP_THUMB_AIM := Vector3(-65, -70, -20)
 ## Screen-space turn of the right thumb at its palm joint, degrees about the rig axes:
 ## x rolls it about its own length, y swings the nail toward you (+) or away (-),
 ## z turns the nail down (+) or up (-) on screen; the thumb lies along screen -X in the grip.
-const GRIP_THUMB_TURN := Vector3.ZERO
+## Swept live with `arms thumbturn` and approved by the owner on 2026-10-04.
+const GRIP_THUMB_TURN := Vector3(-50, -10, -5)
 const RIGHT_THUMB_TURN := Vector3.ZERO
 ## Live copies of the gripping hand's tunables: the `arms thumbaim`, `arms thumbcurl`, `arms wrist`
 ## and `arms curl` console commands set them and rebuild, so a pose is tuned by numbers instead of
