@@ -134,12 +134,14 @@ func run(vm: Node) -> String:
 	return text
 
 
-## `which` is "thumbaim", "thumbcurl" or "wrist"; with fewer than three numeric args it prints
+## `which` is "thumbaim", "thumbturn", "thumbcurl" or "wrist"; with fewer than three numeric args it prints
 ## the current value, otherwise it sets the tunable, rebuilds the arms and returns the new fit.
 func tune(vm: Node, which: String, args: Array) -> String:
 	var current: Vector3
 	if which == "thumbaim":
 		current = ArmsBuilder.right_thumb_aim
+	elif which == "thumbturn":
+		current = ArmsBuilder.right_thumb_turn
 	elif which == "thumbcurl":
 		current = ArmsBuilder.right_thumb_curl
 	elif which == "wrist":
@@ -150,10 +152,14 @@ func tune(vm: Node, which: String, args: Array) -> String:
 		return "arms %s (%.2f, %.2f, %.2f)" % [which, current.x, current.y, current.z]
 	for i in 3:
 		if not str(args[i]).is_valid_float():
+			if which == "thumbturn":
+				return "arms thumbturn <roll> <toward> <down>"
 			return "arms %s <x> <y> <z>" % which
 	var v := Vector3(float(str(args[0])), float(str(args[1])), float(str(args[2])))
 	if which == "thumbaim":
 		ArmsBuilder.right_thumb_aim = v
+	elif which == "thumbturn":
+		ArmsBuilder.right_thumb_turn = v
 	elif which == "thumbcurl":
 		ArmsBuilder.right_thumb_curl = v
 	else:
@@ -161,6 +167,8 @@ func tune(vm: Node, which: String, args: Array) -> String:
 	if not vm.has_method(&"rebuild_arms"):
 		return "arms: no viewmodel"
 	vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
+	if which == "thumbturn":
+		return "thumbturn %s (screen degrees: x rolls, y nail toward you, z nail down)\n" % v + run(vm)
 	return "arms %s (%.2f, %.2f, %.2f)\n" % [which, v.x, v.y, v.z] + run(vm)
 
 
