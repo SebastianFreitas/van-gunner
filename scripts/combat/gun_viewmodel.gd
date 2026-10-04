@@ -155,6 +155,8 @@ func play_shot() -> void:
 	if _kick:
 		_kick.fire(_kick_clock, _shots)
 	_shots += 1
+	if _weave:
+		_weave.note_shot()
 
 
 ## Starts a left-hand interaction gesture; returns the contact delay in seconds. While
@@ -282,16 +284,16 @@ func _process(delta: float) -> void:
 	else:
 		_walk.step(delta, lateral, forward)
 	_has_prev = true
-	_weave_t = fmod(_weave_t + delta, 3600.0)
+	_weave_t = fmod(_weave_t + delta * ArmWeave.ArmIdleGate.TEMPO, 3600.0)
 	var weave_at := debug_weave_t if debug_weave_t >= 0.0 else (
 			WEAVE_SANDBOX_T if SaveSandbox.enabled else _weave_t)
 	var hold := debug_weave_t < 0.0 and SaveSandbox.enabled
-	# The left hand's own actions duck the idle wrist routine; walking and shooting don't.
 	var pin := maxf(debug_gesture_t, maxf(debug_inspect_t, debug_reload_t)) >= 0.0
 	var busy: bool = pin or _reloading or (_inspect and _inspect.is_playing(_kick_clock))
 	busy = busy or (_gesture and _gesture.is_playing(_kick_clock))
 	if _weave:
-		_weave.update(weave_at, _weave.wrist_scale(delta, hold, busy, pin or debug_weave_t >= 0.0))
+		_weave.update(weave_at, _weave.wrist_scale(delta, hold, busy,
+				pin or debug_weave_t >= 0.0, _walk.amount() if _walk else 0.0))
 	var clock := fmod(_kick_clock + delta, 3600.0)
 	if clock < _kick_clock and _kick:
 		_kick.clear()
