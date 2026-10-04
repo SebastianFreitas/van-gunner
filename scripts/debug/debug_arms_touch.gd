@@ -197,15 +197,13 @@ func _grip_report(model: Node3D, data: Dictionary, p: float, body: Node3D,
 		var tsd := _nearest_sd(body, tpts[3]) / p
 		var to_body := body.global_transform.affine_inverse()
 		var tip_b: Vector3 = to_body * Vector3(tpts[3])
-		# GripPanelL sits at side -1 in monster_grip.gd, so the near (camera) side is -x. The grip
-		# is raked 18 deg back, so its down axis (monster_grip `_down`) is (0, -cos 18, sin 18).
-		var side_x := tip_b.x / p
-		var down := Vector3(0.0, -cos(deg_to_rad(18.0)), sin(deg_to_rad(18.0)))
-		var height := (tip_b - Vector3(0.0, 0.03, -0.01)).dot(down) / p
-		var shaft: Vector3 = to_body.basis * (Vector3(tpts[3]) - Vector3(tpts[1]))
-		var fwd_deg := rad_to_deg(shaft.angle_to(Vector3(0.0, 0.0, -1.0)))
-		var ip_deg := rad_to_deg((Vector3(tpts[2]) - Vector3(tpts[1])).angle_to(
-				Vector3(tpts[3]) - Vector3(tpts[2])))
+		# The owner's thumb wraps the grip with its first bone (.02) level and along the barrel
+		# (-z), and the tip (.03) bent a little down from it.
+		var b2: Vector3 = (to_body.basis * (Vector3(tpts[2]) - Vector3(tpts[1]))).normalized()
+		var b3: Vector3 = (to_body.basis * (Vector3(tpts[3]) - Vector3(tpts[2]))).normalized()
+		var pitch_deg := rad_to_deg(asin(clampf(b2.y, -1.0, 1.0)))
+		var yaw_deg := rad_to_deg(Vector2(b2.x, b2.z).angle_to(Vector2(0.0, -1.0)))
+		var tip_down := pitch_deg - rad_to_deg(asin(clampf(b3.y, -1.0, 1.0)))
 		# The nail is -basis.z: on the index and middle .01 bones +z points palmward (-x, the
 		# palm faces the grip), so -z is the dorsal side, and the thumb bones share that roll.
 		var nail := Vector3.ZERO
@@ -222,14 +220,13 @@ func _grip_report(model: Node3D, data: Dictionary, p: float, body: Node3D,
 				if d < near_sd:
 					near_sd = d
 					near_part = part_name
-		# A forward thumb runs past the panel onto the frame above the guard, as on a real pistol,
-		# so any part counts as long as the tip touches it on the near side.
-		var thumb_ok := (_in_bar(tsd) and side_x <= -0.15 and height >= 0.0 and height <= 0.35
-				and fwd_deg <= 30.0 and nail.x < 0.0 and nail.y < -0.2 and ip_deg <= 20.0)
+		# Nail up and slightly to the gun's right (+x).
+		var thumb_ok := (absf(pitch_deg) <= 10.0 and absf(yaw_deg) <= 15.0 and tip_down >= 10.0
+				and tip_down <= 25.0 and nail.y > 0.4 and nail.x > 0.0)
 		bad += 0 if thumb_ok else 1
-		lines.append(("R grip thumb tip sd/p %.3f side %.3f height/p %.3f fwd_deg %.1f"
-				+ " nail (%.2f,%.2f,%.2f) ip_deg %.1f part %s %s")
-				% [tsd, side_x, height, fwd_deg, nail.x, nail.y, nail.z, ip_deg, near_part,
+		lines.append(("R grip thumb .02 pitch %.1f yaw %.1f tip_down %.1f nail (%.2f,%.2f,%.2f)"
+				+ " tip sd/p %.3f part %s %s")
+				% [pitch_deg, yaw_deg, tip_down, nail.x, nail.y, nail.z, tsd, near_part,
 				"OK" if thumb_ok else "OFF"])
 	var web := body.get_node_or_null(^"WebPoint") as Node3D
 	if web != null and data.has(&"f_index") and data.has(&"thumb"):
