@@ -8,6 +8,7 @@ extends RefCounted
 
 const ArmCreep := preload("res://scripts/player/arms/arm_creep.gd")
 const ArmWristRoutine := preload("res://scripts/player/arms/arm_wrist_routine.gd")
+const ArmIdleGate := preload("res://scripts/player/arms/arm_idle_gate.gd")
 
 const PERIOD := 3.6  ## seconds per main finger roll
 const ROLL_LAG := 0.9  ## radians of phase lag index -> middle -> ring -> pinky
@@ -97,6 +98,8 @@ var _creep_l: ArmCreep
 var _creep_r: ArmCreep
 ## Keyed wrist routine (twist) for the free left hand.
 var _routine: ArmWristRoutine
+## Fades the idle layers in and out: rest while walking, shooting or busy.
+var _gate: ArmIdleGate
 
 
 func _init(arm_right: Node3D, arm_left: Node3D, seed_value: int, grip_right := false) -> void:
@@ -117,6 +120,8 @@ func _init(arm_right: Node3D, arm_left: Node3D, seed_value: int, grip_right := f
 	for entry in _hands:
 		if entry[&"suffix"] == ".L":
 			_routine.bind(entry[&"sk"])
+	# Own seeded stream: drawing from `rng` would reseed the creep schedules.
+	_gate = ArmIdleGate.new(seed_value)
 
 
 ## Records the right hand's finger joints with the grip curl the builder already posed.
@@ -167,8 +172,15 @@ func _add_hand(model: Node3D, suffix: String, wrist_base: Vector3, phase: float)
 			&"side_sign": 1.0 if suffix == ".R" else -1.0})
 
 
+## Marks a shot so the idle layers mute for a while.
+func note_shot() -> void:
+	_gate.note_shot()
+
+
 ## The beat_scale for `update`: the wrist routine's smoothed duck (see ArmWristRoutine.scale_step).
-func wrist_scale(delta: float, hold: bool, busy: bool, snap: bool) -> float:
+## Walking, shooting and the left hand's own actions mute the idle layers through the gate.
+func wrist_scale(delta: float, hold: bool, busy: bool, snap: bool, walk := 0.0) -> float:
+	_gate.step(delta, walk, busy, snap or hold)
 	return _routine.scale_step(delta, hold, busy, snap)
 
 
@@ -176,10 +188,11 @@ func wrist_scale(delta: float, hold: bool, busy: bool, snap: bool) -> float:
 ## beats at rest (the sandbox hold). Allocation-free per frame.
 func update(t: float, beat_scale := 1.0) -> void:
 	var w := TAU * t / PERIOD
+	var k := _gate.weight()
 	if _grip_right:
 		_update_grip(t, w)
 	_creep_l.sample(t)
-	_routine.sample(t, beat_scale)
+	_routine.sample(t, beat_scale * k)
 	for hand in _hands:
 		var sk: Skeleton3D = hand[&"sk"]
 		if not is_instance_valid(sk):
@@ -187,7 +200,7 @@ func update(t: float, beat_scale := 1.0) -> void:
 		var phase: float = hand[&"phase"]
 		var hand_side := 0 if hand[&"suffix"] == ".R" else 1
 		var side_sign: float = hand[&"side_sign"]
-		var f := _flourish(t, hand_side)
+		var f := _flourish(t, hand_side) * k
 		for joint in hand[&"joints"]:
 			var finger: int = joint[&"finger"]
 			var j: int = joint[&"j"]
@@ -196,16 +209,17 @@ func update(t: float, beat_scale := 1.0) -> void:
 			if finger < 4:
 				a = w + phase - finger * ROLL_LAG
 				var wave := _wave(a)
-				deg = lerpf(BASE[finger][j] +SWING[j] * wave, OPEN_CURL[j] + SWING[j] * wave * 0.3, f)
+				deg = lerpf(BASE[finger][j] + SWING[j] * wave * k,
+						OPEN_CURL[j] + SWING[j] * wave * 0.3 * k, f)
 			else:
 				a = w * 0.5 + phase + PI
 				var wave := _wave(a)
 				var thumb_base := left_thumb_base if hand_side == 1 else THUMB_BASE
 				var swing: float = THUMB_SWING[j] * (LEFT_THUMB_SWING_K if hand_side == 1 else 1.0)
-				deg = lerpf(thumb_base[j] + swing * wave,
-						OPEN_THUMB[j] + swing * wave * 0.3, f)
+				deg = lerpf(thumb_base[j] + swing * wave * k,
+						OPEN_THUMB[j] + swing * wave * 0.3 * k, f)
 			if hand_side == 1:
-				deg += _creep_l.curl[finger * 3 + j]
+				deg += _creep_l.curl[finger * 3 + j] * k
 			var rot: Quaternion = joint[&"rest"] * Quaternion(Vector3.RIGHT,
 					deg_to_rad(deg) * ArmRig.CURL_SIGN)
 			if j == 0 and finger == 4:
@@ -213,35 +227,36 @@ func update(t: float, beat_scale := 1.0) -> void:
 				var spread := left_thumb_spread if hand_side == 1 else THUMB_SPREAD + THUMB_FAN
 				var spread_axis := left_thumb_axis.normalized() if hand_side == 1 \
 							else THUMB_SPREAD_AXIS
-				var creep_spread := _creep_l.splay[4] if hand_side == 1 else 0.0
+				var creep_spread := _creep_l.splay[4] * k if hand_side == 1 else 0.0
 				rot = rot * Quaternion(spread_axis, deg_to_rad((spread + creep_spread
-						+ THUMB_ARC * sin(a * 0.5 + 0.9)) * THUMB_SPREAD_SIGN * lerpf(1.0, 1.25, f)))
+						+ THUMB_ARC * sin(a * 0.5 + 0.9) * k) * THUMB_SPREAD_SIGN * lerpf(1.0, 1.25, f)))
 			if j == 0 and finger < 4:
 				var side := 1.0 if finger % 2 == 0 else -1.0
 				var fan := (float(finger) - 1.5) * SPLAY * SPLAY_SIGN * side_sign \
 						+ (LEFT_FAN_OFFSET[finger] if hand_side == 1 else 0.0)
-				var creep_fan := _creep_l.splay[finger] if hand_side == 1 else 0.0
+				var creep_fan := _creep_l.splay[finger] * k if hand_side == 1 else 0.0
 				rot = rot * Quaternion(Vector3.BACK, deg_to_rad(fan + creep_fan
-						+ SPREAD * sin(a + 0.7) * side * lerpf(1.0, OPEN_SPREAD_K, f)))
+						+ SPREAD * sin(a + 0.7) * side * lerpf(1.0, OPEN_SPREAD_K, f) * k))
 			sk.set_bone_pose_rotation(joint[&"bone"], rot)
 		var wrist: int = hand[&"wrist"]
 		if wrist == -1:
 			continue
 		var b := w * 0.8 + phase
 		var wrist_base: Vector3 = hand[&"wrist_base"]
-		var roll := WRIST_ROLL * sin(b * 0.5) if hand_side == 0 else 0.0
-		var e := wrist_base + Vector3(WRIST_CIRCLE * sin(b), roll, WRIST_CIRCLE * cos(b))
+		var roll := WRIST_ROLL * sin(b * 0.5) * k if hand_side == 0 else 0.0
+		var e := wrist_base + Vector3(WRIST_CIRCLE * sin(b) * k, roll,
+				WRIST_CIRCLE * cos(b) * k)
 		e.x -= OPEN_WRIST_PITCH * f
 		if hand_side == 1:
 			e += _routine.wrist
-			e += _creep_l.wrist
+			e += _creep_l.wrist * k
 		var wrist_pose: Quaternion = hand[&"wrist_pose"]
 		sk.set_bone_pose_rotation(wrist, wrist_pose * Quaternion.from_euler(e * (PI / 180.0)))
 	for side in 2:
 		var p := w * DRIFT_RATE + _phase[side]
 		var pos := Vector3(ARM_DRIFT.x * sin(p), ARM_DRIFT.y * sin(2.0 * p + 0.4),
-				ARM_DRIFT.z * cos(p))
-		var tilt := ARM_TILT * Vector3(sin(p + 1.0), sin(0.5 * p), cos(p))
+				ARM_DRIFT.z * cos(p)) * k
+		var tilt := ARM_TILT * Vector3(sin(p + 1.0), sin(0.5 * p), cos(p)) * k
 		_arm_x[side] = Transform3D(Basis.from_euler(tilt * (PI / 180.0)), pos)
 
 
@@ -252,18 +267,19 @@ func _update_grip(t: float, w: float) -> void:
 	if not is_instance_valid(_grip_sk):
 		return
 	var lift := _trigger(t)
+	var k := _gate.weight()
 	_creep_r.sample(t)
 	for joint in _grip:
 		var finger: int = joint[&"finger"]
 		var j: int = joint[&"j"]
 		var deg := 0.0
 		if finger == 0:
-			deg = TRIGGER_LIFT[j] * lift
+			deg = TRIGGER_LIFT[j] * lift * k
 		elif finger < 4:
-			deg = GRIP_SQUEEZE * _wave(w * 0.6 + finger * 0.4)
+			deg = GRIP_SQUEEZE * _wave(w * 0.6 + finger * 0.4) * k
 		else:
-			deg = THUMB_GRIP * _wave(w * 0.45 + 2.0)
-		deg += _creep_r.curl[finger * 3 + j]
+			deg = THUMB_GRIP * _wave(w * 0.45 + 2.0) * k
+		deg += _creep_r.curl[finger * 3 + j] * k
 		var base: Quaternion = joint[&"base"]
 		var rot := base * Quaternion(Vector3.RIGHT, deg_to_rad(deg) * ArmRig.CURL_SIGN)
 		if j == 0 and finger < 4:
