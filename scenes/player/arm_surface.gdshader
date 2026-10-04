@@ -96,11 +96,14 @@ float knot_height(vec3 p) {
 			for (int z = -1; z <= 1; z++) {
 				vec3 c = cell + vec3(float(x), float(y), float(z));
 				vec3 hv = knot_hash(c);
-				if (knot_hash(c + vec3(19.3, 7.1, 43.7)).x >= 0.45) {
+				vec3 kv = knot_hash(c + vec3(19.3, 7.1, 43.7));
+				if (kv.x >= 0.18) {
 					continue;
 				}
 				vec3 pt = c + 0.15 + 0.7 * hv;
-				best = max(best, max(0.0, 1.0 - length(p - pt) / 0.42));
+				float rad = mix(0.18, 0.48, kv.y);
+				float hgt = mix(0.35, 1.0, kv.z);
+				best = max(best, hgt * max(0.0, 1.0 - length(p - pt) / rad));
 			}
 		}
 	}
@@ -108,8 +111,14 @@ float knot_height(vec3 p) {
 }
 
 // Fold height in the rest chart: sharp knots plus fine wrinkles, triplanar on the rest normal's weights.
+float knot_at(vec3 rest) {
+	vec3 q = rest * sag_scale;
+	q += 0.6 * vec3(fbm(q.yz * 0.37), fbm(q.zx * 0.37), fbm(q.xy * 0.37)) - 0.3;
+	return knot_height(q);
+}
+
 float skin_height(vec3 rest, vec3 w) {
-	return 0.75 * knot_height(rest * sag_scale) + 0.25 * tri_fbm(rest, w, wrinkle_scale);
+	return 0.75 * knot_at(rest) + 0.25 * tri_fbm(rest, w, wrinkle_scale);
 }
 
 // Veins from two side projections of the across coordinates, blended so there is no seam.
@@ -199,7 +208,7 @@ void fragment() {
 		float sdet = dot(sdx, s1);
 		vec3 grad_view = sign(sdet) * (hx * s1 + hy * s2);
 		NORMAL = normalize(abs(sdet) * NORMAL - grad_view);
-		float kh = knot_height(rest * sag_scale);
+		float kh = knot_at(rest);
 		float wrinkle = tri_fbm(rest, w, wrinkle_scale);
 		fold_dark = smoothstep(0.5, 0.25, wrinkle) * 0.6
 				+ smoothstep(0.0, 0.08, kh) * smoothstep(0.3, 0.1, kh) * 0.4;

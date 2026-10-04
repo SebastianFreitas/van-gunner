@@ -135,7 +135,9 @@ Geometry:
   `KNOT_SPARSE`, crowded toward the joints; hashed by finger, bone, ring and
   sector, no rng draws) and a palm-side `SAG`. The skin shader's `skin_bump`
   is cone cell-noise knots (`knot_height`, flat skin between, hard base
-  crease) plus fine wrinkle fbm in rest space, on skin only, never nails or
+  crease). Keep them rare and uneven, never a grid (owner: "looks like a
+  pattern"): 18% of cells, a radius and height per knot, and an fbm warp in
+  `knot_at`. Mesh `KNOT_SPARSE` 0.88. Plus fine wrinkle fbm in rest space, on skin only, never nails or
   other materials. Thumbs keep their old numbers.
   The hands never rest: `ArmWeave` (`scripts/player/arms/arm_weave.gd`)
   rolls both hands' fingers index to pinky in hooked witch curls on a 3.6 s

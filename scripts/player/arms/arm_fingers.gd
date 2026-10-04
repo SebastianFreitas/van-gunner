@@ -16,8 +16,8 @@ const NAIL_FROM := 0.55
 const THUMB_R := 1.35
 ## Old-meat lumpiness: slight per-ring radius wobble, sparse peaked knots (mostly at the joints) and a palm-side sag, all as fractions of the ring radius.
 const LUMP_RING := 0.03
-const KNOT := 0.22
-const KNOT_SPARSE := 0.6
+const KNOT := 0.30
+const KNOT_SPARSE := 0.88
 const SAG := 0.10
 
 
