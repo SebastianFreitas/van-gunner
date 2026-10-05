@@ -71,11 +71,12 @@ theme_override_constants/separation = 8
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.82, 0.62, 1)
 theme_override_font_sizes/font_size = 13
+clip_text = true
 text = "console  ·  Tab complete/fill  ·  ↑↓ history  ·  PgUp/PgDn scroll  ·  Ctrl+L clear  ·  Esc close"
 
 [node name="Output" type="RichTextLabel" parent="Panel/Layout"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 170)
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 size_flags_vertical = 3
 focus_mode = 0
@@ -104,6 +105,17 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.62, 0.52, 1)
 theme_override_font_sizes/font_size = 12
+clip_text = true
 text = "Tab completes commands and item ids  ·  list boons"
+
+[node name="ResizeGrip" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 558.0
+offset_top = 0.0
+offset_right = 572.0
+offset_bottom = 14.0
+mouse_filter = 0
+mouse_default_cursor_shape = 11
+color = Color(0.9, 0.95, 0.9, 0.25)
 
 [connection signal="text_submitted" from="Panel/Layout/InputLine" to="." method="_on_input_submitted"]

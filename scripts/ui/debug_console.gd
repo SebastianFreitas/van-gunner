@@ -9,6 +9,10 @@ signal closed
 const MAX_LINES := 200
 const MAX_HISTORY := 50
 const PROMPT := "> "
+const Frame := preload("res://scripts/ui/debug_console_frame.gd")
+
+## Panel offsets (left, top, width, height) kept across scene reloads; empty = tscn default.
+static var _saved_rect := Rect2()
 
 @onready var output: RichTextLabel = %Output
 @onready var input_line: LineEdit = %InputLine
@@ -20,6 +24,7 @@ var _history_index := -1
 var _completion_index := -1
 var _completion_key := ""
 var _keep_input_focus := false
+var _frame: RefCounted
 
 
 func _ready() -> void:
@@ -27,6 +32,7 @@ func _ready() -> void:
 		queue_free()
 		return
 	add_to_group(&"debug_console")
+	_frame = Frame.new(self, _saved_rect)
 	_apply_closed_state()
 	set_process(true)
 	input_line.keep_editing_on_text_submit = true
@@ -93,6 +99,7 @@ func open() -> void:
 		_focus_input()
 		return
 	show()
+	_frame.clamp_to_viewport()
 	mouse_filter = MOUSE_FILTER_STOP
 	input_line.text = ""
 	_keep_input_focus = true
@@ -115,6 +122,10 @@ func toggle() -> void:
 		close()
 	else:
 		open()
+
+
+func _save_rect(rect: Rect2) -> void:
+	_saved_rect = rect
 
 
 func _apply_closed_state() -> void:
