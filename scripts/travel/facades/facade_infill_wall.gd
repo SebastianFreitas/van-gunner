@@ -13,10 +13,10 @@ const PILLAR := 0.45
 
 ## Brick wall with pillars, concrete caps and, in a wide enough gap, a rusted sheet gate.
 static func _brick_wall(
-	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, keep_out: RefCounted,
+	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, g: float, keep_out: RefCounted,
 	rng: RandomNumberGenerator
 ) -> void:
-	var xf := _FacadePlan.FACE_X
+	var xf := _FacadePlan.FACE_X + g
 	var w := z_b - z_a
 	var h := rng.randf_range(2.0, 2.8)
 	var half := PILLAR * 0.5
@@ -57,7 +57,7 @@ static func _brick_wall(
 		if k == gate_run:
 			var mid := (runs[k].x + runs[k].y) * 0.5
 			pieces = [Vector2(runs[k].x, mid - gate_w * 0.5), Vector2(mid + gate_w * 0.5, runs[k].y)]
-			_gate_sheet(gst, sx, mid, gate_w, h, keep_out)
+			_gate_sheet(gst, sx, g, mid, gate_w, h, keep_out)
 		for pc in pieces:
 			if pc.y - pc.x > 0.05:
 				if _FacadeInfill._wall_quad(wst, sx, xf, pc.x, pc.y, 0.0, h, z_a, 0.0, keep_out):
@@ -82,9 +82,9 @@ static func _brick_wall(
 
 ## A rusted sheet in the wall plane with two frame bars on its street side.
 static func _gate_sheet(
-	st: SurfaceTool, sx: float, z_mid: float, width: float, h: float, keep_out: RefCounted
+	st: SurfaceTool, sx: float, g: float, z_mid: float, width: float, h: float, keep_out: RefCounted
 ) -> void:
-	var xf := _FacadePlan.FACE_X
+	var xf := _FacadePlan.FACE_X + g
 	_FacadeMeshKit.add_box(st, Vector3(sx * (xf + 0.15), 0.05 + (h - 0.2) * 0.5, z_mid),
 		Vector3(0.04, h - 0.2, width), keep_out)
 	for by: float in [0.25, h - 0.35]:

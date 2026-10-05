@@ -23,10 +23,13 @@ func build(ctx: Dictionary) -> void:
 	var pipes: Array[Vector3] = []
 	for i in 3:
 		var z: float = _PIPE_ZS[i] + rng.randf_range(-0.3, 0.3)
+		var reach_l := 9.2 + _FacadePlan.recess_at(ctx[&"plans_left"], z - 0.6, z + 0.6)
+		var reach_r := 9.2 + _FacadePlan.recess_at(ctx[&"plans_right"], z - 0.6, z + 0.6)
 		var center := Vector3(0.0, _BASE_Y + _PIPE_YS[i], z)
 		pipes.append(center)
 		_FacadeMeshKit.add_cylinder_node(
-			host, "Pipe%d" % i, 0.6, 0.6, 18.4, center, rust, true, keep_out, _ALONG_X
+			host, "Pipe%d" % i, 0.6, 0.6, reach_l + reach_r,
+			Vector3((reach_r - reach_l) * 0.5, center.y, z), rust, true, keep_out, _ALONG_X
 		)
 	var iron := _FacadeMaterials.iron_material()
 	var mid := pipes[1]

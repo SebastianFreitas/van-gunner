@@ -36,3 +36,7 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - hands / arms / sausages: scripts/player/arms/ (arm_bulk.gd for hand and finger taper), arms_builder.gd
 - war-rig: the van's look, .claude/rules/van-look.md; scripts/van/look/
 - fps counter / stats: the perf overlay, PerfOverlay, scripts/ui/perf_overlay.gd (F3 cycles off, FPS, full; console `perf`), numbers from scripts/debug/perf_stats.gd
+- bars over the road / overheads: scripts/travel/facades/facade_overheads.gd, set_pieces/pedestrian_bridge.gd, set_pieces/pipe_bridge.gd
+- setback / recess / widened road: a lot's `recess` in facade_plan.gd; the floor runs in road_floor_runs.gd
+- plaza: a recessed lot paved with flagstones to the wall (kind 1 run, road_floor_wreck_plaza.gd)
+- build-out: a recessed lot whose sidewalk widens to the wall instead of the road (kind 2 run)

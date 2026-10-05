@@ -20,11 +20,14 @@ const _FacadeOverheads := preload("res://scripts/travel/facades/facade_overheads
 const _FacadeStreetArt := preload("res://scripts/travel/facades/facade_street_art.gd")
 const _FacadeInfill := preload("res://scripts/travel/facades/facade_infill.gd")
 const _FacadeOvergrowth := preload("res://scripts/travel/facades/facade_overgrowth.gd")
+const _FacadePier := preload("res://scripts/travel/facades/facade_pier.gd")
 const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
 
 const SIDE_NAMES: Array[String] = ["Left", "Right"]
 const SIDE_SIGNS: Array[float] = [-1.0, 1.0]
 const FACADES_NODE := "Facades"
+## Set pieces whose side keeps its recess: spans and atmosphere, which claim no lot.
+const KEEPS_RECESS: Array[StringName] = [&"pedestrian_bridge", &"pipe_bridge", &"power_outage"]
 
 var segment: Node3D
 var tile_seed := 0
@@ -119,6 +122,14 @@ func facade_root(side_idx: int) -> Node3D:
 	return facades.get_node_or_null(SIDE_NAMES[side_idx]) as Node3D
 
 
+## A set piece claims lots on the street line, so its side drops every recess.
+func _zero_recess(side_plans: Array[Dictionary]) -> void:
+	for plan in side_plans:
+		if plan.has(&"recess"):
+			plan[&"recess"] = 0.0
+			plan[&"plaza"] = false
+
+
 func rebuild_side(side_idx: int) -> void:
 	var perf_t := PerfStats.begin()
 	var facades := _facades_host()
@@ -149,6 +160,8 @@ func rebuild_side(side_idx: int) -> void:
 	if _rare_targets(side_idx):
 		var piece: FacadeSetPiece = _rare[&"piece"]
 		if piece.can_apply(plans_out):
+			if not KEEPS_RECESS.has(piece.id):
+				_zero_recess(plans_out)
 			var target := piece.pick_plan(plans_out, rng)
 			piece.apply_plans(plans_out, rng)
 			_rare_plan_index = target
@@ -181,6 +194,7 @@ func rebuild_side(side_idx: int) -> void:
 		_FacadeStreetArt.build(
 			root, plans_out[i], prop_plan, SIDE_SIGNS[side_idx], i, keep_out, district_res
 		)
+	_FacadePier.build(root, plans_out, SIDE_SIGNS[side_idx], keep_out)
 	var force_dead := rare_id() == &"power_outage"
 	_FacadeFixtures.build_fixtures(
 		root, plans_out, SIDE_SIGNS[side_idx], keep_out, rng, district_res, force_dead

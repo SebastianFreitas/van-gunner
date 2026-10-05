@@ -39,3 +39,6 @@ furniture_chance = 0.3
 overhead_chance = 0.55
 graffiti_amount = 0.8
 poster_amount = 0.35
+recess_mild_chance = 0.4
+recess_deep_chance = 0.1
+recess_side_chance = 0.12

@@ -17,30 +17,35 @@ func build(ctx: Dictionary) -> void:
 	var rng: RandomNumberGenerator = ctx[&"rng"]
 	var z_mid := rng.randf_range(-3.0, 3.0)
 	var wall_y := _BASE_Y + 10.5
+	# Each end reaches its side's recessed face: 9.2 + recess (a plain street keeps 9.2).
+	var reach_l := 9.2 + _FacadePlan.recess_at(ctx[&"plans_left"], z_mid - 1.6, z_mid + 1.6)
+	var reach_r := 9.2 + _FacadePlan.recess_at(ctx[&"plans_right"], z_mid - 1.6, z_mid + 1.6)
+	var span_x := (reach_r - reach_l) * 0.5
+	var span_len := reach_l + reach_r
 	var shell_st := SurfaceTool.new()
 	shell_st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var shell_added := false
 	shell_added = _FacadeMeshKit.add_box(
-		shell_st, Vector3(0.0, _BASE_Y + 9.125, z_mid), Vector3(18.4, 0.25, 3.0), keep_out
+		shell_st, Vector3(span_x, _BASE_Y + 9.125, z_mid), Vector3(span_len, 0.25, 3.0), keep_out
 	) or shell_added
 	shell_added = _FacadeMeshKit.add_box(
-		shell_st, Vector3(0.0, _BASE_Y + 12.0, z_mid), Vector3(18.4, 0.2, 3.0), keep_out
+		shell_st, Vector3(span_x, _BASE_Y + 12.0, z_mid), Vector3(span_len, 0.2, 3.0), keep_out
 	) or shell_added
-	var wall_size := Vector3(18.4, 2.6, 0.15)
+	var wall_size := Vector3(span_len, 2.6, 0.15)
 	var glow_st := SurfaceTool.new()
 	glow_st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var glow_added := false
 	for wall_sign: float in [-1.0, 1.0]:
 		var wz := z_mid + wall_sign * 1.45
-		if _FacadeMeshKit.add_box(shell_st, Vector3(0.0, wall_y, wz), wall_size, keep_out):
+		if _FacadeMeshKit.add_box(shell_st, Vector3(span_x, wall_y, wz), wall_size, keep_out):
 			shell_added = true
 			var glow_z := wz + wall_sign * (wall_size.z * 0.5 + 0.01)
 			glow_added = _FacadeMeshKit.add_box(
-				glow_st, Vector3(0.0, wall_y, glow_z), Vector3(18.0, 0.9, 0.02), keep_out
+				glow_st, Vector3(span_x, wall_y, glow_z), Vector3(span_len - 0.4, 0.9, 0.02), keep_out
 			) or glow_added
-	for portal_sign: float in [-1.0, 1.0]:
+	for portal_x: float in [-reach_l, reach_r]:
 		shell_added = _FacadeMeshKit.add_box(
-			shell_st, Vector3(portal_sign * 9.2, wall_y, z_mid), Vector3(0.4, 3.2, 3.2), keep_out
+			shell_st, Vector3(portal_x, wall_y, z_mid), Vector3(0.4, 3.2, 3.2), keep_out
 		) or shell_added
 	if shell_added:
 		_FacadeMeshKit.commit(host, shell_st, "Bridge", _FacadeMaterials.concrete_material(), true)

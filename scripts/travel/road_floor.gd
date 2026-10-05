@@ -14,6 +14,7 @@ const RoadFloorDetails = preload("res://scripts/travel/road_floor_details.gd")
 const RoadFloorMaterials = preload("res://scripts/travel/road_floor_materials.gd")
 const RoadFloorWreck := preload("res://scripts/travel/road_floor_wreck.gd")
 const _Boxes := preload("res://scripts/travel/road_floor_boxes.gd")
+const _Runs := preload("res://scripts/travel/road_floor_runs.gd")
 
 @export var span_x := 18.0
 @export var span_z := 20.0
@@ -48,6 +49,9 @@ const _Boxes := preload("res://scripts/travel/road_floor_boxes.gd")
 ## Per side (0 = left, x < 0; 1 = right) an Array[Vector3] of (z0, z1, ruin tier) in
 ## tile-local z, from the facade plans; read by road_floor_wreck.gd.
 var wreck_spans: Array = [[], []]
+## Per side the facade ground runs, Vector4(z0, z1, recess, kind 0 walk / 1 plaza / 2 build-out);
+## empty or one zero run lays the plain walk.
+var ground_runs: Array = [[], []]
 ## Per side the z of every bollard and utility box on the walk, so no slab under one goes missing.
 var dressing_z: Array = [[], []]
 
@@ -104,14 +108,26 @@ func _set_tree_walkable(root: Node, walkable: bool) -> void:
 		_set_tree_walkable(child, walkable)
 
 
-## Seed the floor's details and hand it the buildings' ruin spans, then rebuild.
-func set_sidewalk_wreck(tile_seed: int, left: Array[Vector3], right: Array[Vector3]) -> void:
+## Seed the floor's details and hand it the buildings' ruin spans and ground runs, then rebuild.
+func set_sidewalk_wreck(tile_seed: int, left: Array[Vector3], right: Array[Vector3],
+		runs_left: Array = [], runs_right: Array = []) -> void:
 	var new_seed := tile_seed if tile_seed != 0 else 1
 	var new_spans: Array = [left.duplicate(), right.duplicate()]
-	if not (_built and new_seed == detail_seed and new_spans == wreck_spans):
+	var new_runs: Array = [runs_left.duplicate(), runs_right.duplicate()]
+	if not (_built and new_seed == detail_seed and new_spans == wreck_spans
+			and new_runs == ground_runs):
 		detail_seed = new_seed
 		wreck_spans = new_spans
+		ground_runs = new_runs
 		rebuild()
+
+
+## The ground run covering tile-local z on a side; Vector4.ZERO when none covers it.
+func run_at(side_idx: int, z: float) -> Vector4:
+	for v: Vector4 in ground_runs[side_idx]:
+		if v.x <= z and z <= v.y:
+			return v
+	return Vector4.ZERO
 
 
 ## Open a side to continuous road (drops sidewalk/curb/gutter on that edge).
@@ -265,39 +281,8 @@ func _build() -> void:
 	var walk_span := _sidewalk_span_z()
 	var walk_len: float = walk_span.x
 	var walk_cz: float = walk_span.y
-	# Wrecked: the bed keeps its collision but draws nothing; the soil grid replaces it.
-	for side_idx in 2:
-		if not (sidewalk_left if side_idx == 0 else sidewalk_right):
-			continue
-		_add_box_centered(
-			"SidewalkLeft" if side_idx == 0 else "SidewalkRight",
-			Vector3(sidewalk_width, walk_thickness, walk_len),
-			Vector3((-1.0 if side_idx == 0 else 1.0) * walk_center_x,
-				slab_bottom + walk_thickness * 0.5, walk_cz),
-			sidewalk_material,
-			true,
-			not wreck
-		)
-
-	var gutter_top := road_surface_y - gutter_depth
-	var gutter_thickness := gutter_top - slab_bottom
-	var gutter_center_x := gutter_inner + gutter_width * 0.5
-	if sidewalk_left:
-		_add_box_centered(
-			"GutterLeft",
-			Vector3(gutter_width, gutter_thickness, walk_len),
-			Vector3(-gutter_center_x, slab_bottom + gutter_thickness * 0.5, walk_cz),
-			gutter_mat,
-			true
-		)
-	if sidewalk_right:
-		_add_box_centered(
-			"GutterRight",
-			Vector3(gutter_width, gutter_thickness, walk_len),
-			Vector3(gutter_center_x, slab_bottom + gutter_thickness * 0.5, walk_cz),
-			gutter_mat,
-			true
-		)
+	_Runs.new(self).build_sides(walk_thickness, walk_center_x, walk_span, gutter_inner,
+		slab_bottom, road_mat, gutter_mat, wreck)
 
 	var curb_w := curb_face_depth
 	var curb_h := curb_height + 0.02

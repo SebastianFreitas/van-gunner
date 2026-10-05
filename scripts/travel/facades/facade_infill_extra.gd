@@ -27,10 +27,10 @@ static func _timber(key: StringName, color: Color) -> ShaderMaterial:
 
 ## Plywood panels on posts with seam strips and street-art posters over them.
 static func hoarding(
-	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, keep_out: RefCounted,
+	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, g: float, keep_out: RefCounted,
 	rng: RandomNumberGenerator, district: FacadeDistrict
 ) -> void:
-	var xf := _FacadePlan.FACE_X
+	var xf := _FacadePlan.FACE_X + g
 	var w := z_b - z_a
 	var n := maxi(1, ceili(w / PANEL_W))
 	var panels: Array[SurfaceTool] = []
@@ -74,6 +74,7 @@ static func hoarding(
 			_timber(&"ruin_joist", Color(0.09, 0.07, 0.05)), false)
 	var pseudo := {
 		&"z0": z_a, &"z1": z_b, &"width": w, &"height": PANEL_H, &"setback": 0.0,
+		&"recess": g,
 		&"mouth": false, &"rare": &"", &"suppress": [], &"ground_kind": _FacadePlan.GROUND_BLANK,
 		&"ruin": 0, &"floors": 0, &"ruin_holes": [], &"ruin_cols": [],
 		&"params": {
@@ -86,10 +87,10 @@ static func hoarding(
 
 ## Overlapping rusted corrugated sheets, each a slightly yawed quad, on thin posts.
 static func corrugated(
-	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, keep_out: RefCounted,
+	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, g: float, keep_out: RefCounted,
 	rng: RandomNumberGenerator
 ) -> void:
-	var xf := _FacadePlan.FACE_X
+	var xf := _FacadePlan.FACE_X + g
 	var w := z_b - z_a
 	var h := rng.randf_range(2.0, 2.3)
 	var posts := SurfaceTool.new()
@@ -155,19 +156,19 @@ static func _sheet(
 
 ## In 30% of gaps, either a utility box or a wooden pole in front of the filler.
 static func furniture(
-	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, keep_out: RefCounted,
+	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, g: float, keep_out: RefCounted,
 	rng: RandomNumberGenerator
 ) -> void:
 	if rng.randf() >= 0.3:
 		return
 	if rng.randf() < 0.5:
-		_utility_box(root, sx, z_a, z_b, gi, keep_out, rng)
+		_utility_box(root, sx, z_a, z_b, gi, g, keep_out, rng)
 	else:
-		_pole(root, sx, z_a, z_b, gi, keep_out, rng)
+		_pole(root, sx, z_a, z_b, gi, g, keep_out, rng)
 
 
 static func _utility_box(
-	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, keep_out: RefCounted,
+	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, g: float, keep_out: RefCounted,
 	rng: RandomNumberGenerator
 ) -> void:
 	if z_b - z_a < 1.4:
@@ -177,33 +178,33 @@ static func _utility_box(
 		&"infill_utility", Color(0.09, 0.10, 0.09), 0.85, 0.3, Color.BLACK, 0.0
 	))
 	var box := _FacadeMeshKit.add_box_node(root, "InfillUtility%d" % gi, Vector3(0.4, 1.2, 0.6),
-		Vector3(sx * 8.4, BOTTOM + 0.6, z), Vector3.ZERO, mat, false, keep_out)
+		Vector3(sx * (8.4 + g), BOTTOM + 0.6, z), Vector3.ZERO, mat, false, keep_out)
 	if box == null:
 		return
 	var handle := _FacadeMaterials.prop_material(
 		&"infill_handle", Color(0.04, 0.04, 0.035), 0.85, 0.3, Color.BLACK, 0.0
 	)
 	_FacadeMeshKit.add_box_node(root, "InfillUtilityHandle%d" % gi, Vector3(0.02, 0.03, 0.5),
-		Vector3(sx * 8.19, BOTTOM + 0.6, z), Vector3.ZERO, handle, false, keep_out)
+		Vector3(sx * (8.19 + g), BOTTOM + 0.6, z), Vector3.ZERO, handle, false, keep_out)
 
 
 static func _pole(
-	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, keep_out: RefCounted,
+	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, g: float, keep_out: RefCounted,
 	rng: RandomNumberGenerator
 ) -> void:
 	var h := rng.randf_range(7.0, 9.0)
 	var z := rng.randf_range(z_a + 0.3, z_b - 0.3) if z_b - z_a >= 0.6 else (z_a + z_b) * 0.5
 	var timber := _timber(&"infill_pole", Color(0.08, 0.065, 0.05))
 	var pole := _FacadeMeshKit.add_cylinder_node(root, "InfillPole%d" % gi, 0.125, 0.125, h,
-		Vector3(sx * 8.0, BOTTOM + h * 0.5, z), timber, false, keep_out)
+		Vector3(sx * (8.0 + g), BOTTOM + h * 0.5, z), timber, false, keep_out)
 	if pole == null:
 		return
 	var bar_y := BOTTOM + h - 0.6
 	_FacadeMeshKit.add_box_node(root, "InfillPoleBar%d" % gi, Vector3(0.12, 0.12, 1.6),
-		Vector3(sx * 8.0, bar_y, z), Vector3.ZERO, timber, false, keep_out)
+		Vector3(sx * (8.0 + g), bar_y, z), Vector3.ZERO, timber, false, keep_out)
 	var glass := _FacadeMaterials.prop_material(
 		&"infill_insulator", Color(0.12, 0.12, 0.11), 0.85, 0.0, Color.BLACK, 0.0
 	)
 	for dz: float in [-0.6, 0.6]:
 		_FacadeMeshKit.add_box_node(root, "InfillPoleInsulator%d" % gi, Vector3(0.1, 0.15, 0.1),
-			Vector3(sx * 8.0, bar_y + 0.135, z + dz), Vector3.ZERO, glass, false, keep_out)
+			Vector3(sx * (8.0 + g), bar_y + 0.135, z + dz), Vector3.ZERO, glass, false, keep_out)

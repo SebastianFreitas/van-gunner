@@ -7,6 +7,8 @@ enum Opening { NONE, SIDE_STREET, BAY }
 const DISTRICT_COUNT := 5
 const SIDE_STREET_CORNER_INSET := 0.85
 const _CorridorFacades := preload("res://scripts/travel/facades/corridor_facades.gd")
+const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
+const _RunWalls := preload("res://scenes/corridor/corridor_run_walls.gd")
 
 @onready var _road_floor: RoadFloor = $RoadFloor
 @onready var _left_wall_collision: CollisionShape3D = $Surfaces/LeftWallCollision
@@ -20,6 +22,9 @@ var _facades: _CorridorFacades
 var _tile_seed := 0
 var _has_tile_seed := false
 var _building := false
+## Per side (0 left, 1 right): open for a side street or stop bay. The tscn wall boxes are also off
+## on a recessed side, so they no longer say whether a side is open.
+var _side_open: Array[bool] = [false, false]
 
 
 func _ready() -> void:
@@ -54,8 +59,8 @@ func end_build() -> void:
 	_building = false
 	if _road_floor == null:
 		return
-	var left_open := _left_wall_collision.disabled
-	var right_open := _right_wall_collision.disabled
+	var left_open := _side_open[0]
+	var right_open := _side_open[1]
 	# Set directly: set_side_openings would build the floor before the wreck spans are in.
 	_road_floor.sidewalk_left = not left_open
 	_road_floor.sidewalk_right = not right_open
@@ -143,6 +148,10 @@ func facade_root(side: StringName) -> Node3D:
 	return _facades.facade_root(_CorridorFacades.side_index(side))
 
 
+func facade_plans(side: StringName) -> Array:
+	return _facades.plans(_CorridorFacades.side_index(side))
+
+
 func district() -> int:
 	return _facades.district
 
@@ -164,6 +173,7 @@ func _set_side_street(side: StringName, enabled: bool, opening: int = -1) -> voi
 	var side_street := _side_street_left if is_left else _side_street_right
 
 	wall_collision.disabled = enabled
+	_side_open[0 if is_left else 1] = enabled
 	wall_upper_collision.disabled = enabled
 	side_street.visible = enabled
 	_ensure_facades()
@@ -185,10 +195,9 @@ func _set_side_street(side: StringName, enabled: bool, opening: int = -1) -> voi
 func _sync_road_openings() -> void:
 	if _road_floor == null or _building:
 		return
-	# Wall collision disabled means the side is open (side street or stop bay).
-	# Drop sidewalk there so branch / bay road meets flush carriageway.
-	var left_open := _left_wall_collision.disabled
-	var right_open := _right_wall_collision.disabled
+	# An open side (side street or stop bay) drops its sidewalk so branch / bay road meets flush carriageway.
+	var left_open := _side_open[0]
+	var right_open := _side_open[1]
 	_road_floor.set_side_openings(left_open, right_open)
 	_sync_side_street_branch_trims(left_open, right_open)
 	_build_side_street_corner_returns(left_open, right_open)
@@ -197,7 +206,8 @@ func _sync_road_openings() -> void:
 
 ## Hand the floor each side's building ruin spans (tile-local z; RoadFloor sits at the segment
 ## origin, unrotated) so the wrecked sidewalk matches the buildings beside it. Facade side 0
-## (Left, built at x < 0) maps to the floor's left, side 1 (Right, x > 0) to its right.
+## (Left, built at x < 0) maps to the floor's left, side 1 (Right, x > 0) to its right. It also
+## passes each side's ground runs (`FacadePlan.ground_runs`) so the floor follows recessed lots.
 func _push_sidewalk_wreck() -> void:
 	if _road_floor == null or not _has_tile_seed or _building:
 		return
@@ -215,7 +225,23 @@ func _push_sidewalk_wreck() -> void:
 	left.assign(spans[0])
 	var right: Array[Vector3] = []
 	right.assign(spans[1])
-	_road_floor.set_sidewalk_wreck(_tile_seed, left, right)
+	var runs_left: Array[Vector4] = _FacadePlan.ground_runs(_facades.plans(0))
+	var runs_right: Array[Vector4] = _FacadePlan.ground_runs(_facades.plans(1))
+	_road_floor.set_sidewalk_wreck(_tile_seed, left, right, runs_left, runs_right)
+	_sync_wall_collision(runs_left, runs_right)
+
+
+## The tscn boxes stand for a closed side with one flat run; a recessed side gets RunWalls instead,
+## an open side neither.
+func _sync_wall_collision(runs_left: Array[Vector4], runs_right: Array[Vector4]) -> void:
+	for side_idx in 2:
+		var runs := runs_left if side_idx == 0 else runs_right
+		var on := not _side_open[side_idx] and _RunWalls.is_plain(runs)
+		var lower := _left_wall_collision if side_idx == 0 else _right_wall_collision
+		var upper := _left_wall_upper_collision if side_idx == 0 else _right_wall_upper_collision
+		lower.disabled = not on
+		upper.disabled = not on
+		_RunWalls.rebuild(self, side_idx, runs, _side_open[side_idx])
 
 
 func _sync_side_street_branch_trims(left_open: bool, right_open: bool) -> void:

@@ -89,6 +89,10 @@ static func build_rubble(
 	var z_lo := float(plan[&"z0"]) + 0.3
 	var z_hi := float(plan[&"z1"]) - 0.3
 	var reach := absf(_FacadePlan.face_x(plan, side_sign)) + 0.2
+	# A recessed lot's kerb moves back with it; a plaza lot keeps the kerb where it was.
+	var kerb_r := 0.0
+	if not bool(plan.get(&"plaza", false)):
+		kerb_r = float(plan.get(&"recess", 0.0))
 	var st := _begin()
 	var emitted := 0
 	for z in _rubble_spots(rng, cols, holes, tier, full):
@@ -98,7 +102,7 @@ static func build_rubble(
 		var basis := Basis.from_euler(Vector3(
 			rng.randf_range(-0.45, 0.45), rng.randf_range(0.0, TAU), rng.randf_range(-0.45, 0.45)
 		))
-		var lo := 7.75 + 0.5 * maxf(size.x, maxf(size.y, size.z))
+		var lo := 7.75 + kerb_r + 0.5 * maxf(size.x, maxf(size.y, size.z))
 		if lo > reach:
 			continue
 		var pos := Vector3(side_sign * rng.randf_range(lo, reach), 0.0, clampf(z, z_lo, z_hi))

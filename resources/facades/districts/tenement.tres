@@ -38,3 +38,6 @@ awning_chance = 0.5
 furniture_chance = 0.5
 graffiti_amount = 0.9
 poster_amount = 0.7
+recess_mild_chance = 0.4
+recess_deep_chance = 0.1
+recess_side_chance = 0.12

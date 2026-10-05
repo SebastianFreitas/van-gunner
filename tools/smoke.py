@@ -182,6 +182,10 @@ def main() -> int:
         help="run at most N Godot jobs at once (default min(cpu count, 6))",
     )
     parser.add_argument("--serial", action="store_true", help="same as --jobs 1")
+    parser.add_argument(
+        "--pre", action="append", default=[], metavar="LINE",
+        help="debug console line to run before the van scene loads (repeatable)",
+    )
     opts = parser.parse_args()
     max_jobs = 1 if opts.serial else max(opts.jobs, 1)
 
@@ -224,10 +228,12 @@ def main() -> int:
         ]
         if opts.van_seeds > 0:
             args.append("--smoke-van-seeds=" + str(opts.van_seeds))
+        args += ["--smoke-pre=" + line for line in opts.pre]
         print(
             "== smoke: godot --path . (hidden desktop) res://tools/smoke/smoke_test.tscn -- "
             f"--smoke-sandbox --smoke-shots={shots.as_posix()}"
             + (f" --smoke-van-seeds={opts.van_seeds}" if opts.van_seeds > 0 else "")
+            + "".join(f" --smoke-pre={line}" for line in opts.pre)
         )
         if sys.platform == "win32":
             def game_blocking() -> tuple[int, str]:
@@ -237,7 +243,11 @@ def main() -> int:
             exe, "--headless", "--path", str(ROOT),
             "res://tools/smoke/smoke_test.tscn", "--", "--smoke-sandbox",
         ]
-        print("== smoke: godot --headless --path . res://tools/smoke/smoke_test.tscn -- --smoke-sandbox")
+        args += ["--smoke-pre=" + line for line in opts.pre]
+        print(
+            "== smoke: godot --headless --path . res://tools/smoke/smoke_test.tscn -- --smoke-sandbox"
+            + "".join(f" --smoke-pre={line}" for line in opts.pre)
+        )
 
     game = Job("game", args, EST_GAME, game_blocking)
     stress = [

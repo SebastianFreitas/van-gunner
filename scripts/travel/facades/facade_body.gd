@@ -146,8 +146,9 @@ static func _add_roof(
 	)
 
 
-## An end return at z; a deep body keeps the old one to the 9.6 wall plane at a tile edge (|z| 10,
+## An end return at z; a deep body keeps the old one to the wall plane at a tile edge (|z| 10,
 ## where the neighbour's side-street flank plate lies) and continues to its deep back 5 cm inside.
+## The wall plane is 9.6 or the face, whichever is deeper, so a recessed face has no fin.
 static func _add_ends(
 	st: SurfaceTool, x_face: float, x_back: float, deep: bool, z: float, y_a: float, y_b: float,
 	y0: float, w: float, normal_z: float
@@ -155,8 +156,9 @@ static func _add_ends(
 	if not deep or absf(z) < 9.99:
 		_add_end_return(st, x_face, x_back, z, y_a, y_b, y0, w, normal_z)
 		return
-	var x_wall := signf(x_back) * 9.6
-	_add_end_return(st, x_face, x_wall, z, y_a, y_b, y0, w, normal_z)
+	var x_wall := signf(x_back) * maxf(9.6, absf(x_face))
+	if absf(x_wall - x_face) >= 0.001:
+		_add_end_return(st, x_face, x_wall, z, y_a, y_b, y0, w, normal_z)
 	_add_end_return(
 		st, x_wall, x_back, z - normal_z * 0.05, y_a, y_b, y0, w + absf(x_wall - x_face), normal_z
 	)

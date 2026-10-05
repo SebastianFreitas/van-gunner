@@ -59,3 +59,16 @@ extends Resource
 @export_range(0.0, 1.0) var graffiti_amount := 0.6
 ## Pasted paper posters on this district's walls: 0 none, 1 heavy.
 @export_range(0.0, 1.0) var poster_amount := 0.5
+
+## Chance a lot steps back 1-3 m from the street line (range below).
+@export var recess_mild_chance := 0.0
+## Chance a lot steps back 4-6 m from the street line (range below).
+@export var recess_deep_chance := 0.0
+## Mild recess depth range, metres.
+@export var recess_mild_range := Vector2(1.0, 3.0)
+## Deep recess depth range, metres.
+@export var recess_deep_range := Vector2(4.0, 6.0)
+## Chance the whole tile side steps back together by one whole-metre depth.
+@export var recess_side_chance := 0.0
+## A lot here stepped back 3 m or more gets a flagstone plaza instead of a wider road.
+@export var plaza := false

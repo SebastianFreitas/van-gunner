@@ -9,42 +9,48 @@ const _FacadeKeepOut := preload("res://scripts/travel/facades/facade_keep_out.gd
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
 const _FacadeMeshKit := preload("res://scripts/travel/facades/facade_mesh_kit.gd")
 
-const _LENGTH := 18.4
+const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
+
+## Half the span at a flat face; each end is buried 0.4 m behind its face (9.6 at r 0).
+const _HALF := 9.2
 ## A quarter turn about z lays a cylinder's height axis along x (see add_cylinder_node).
 const _ALONG_X := Vector3(0.0, 0.0, PI * 0.5)
 
 
 ## Only when district.overhead_chance passes rng.randf() does one of the four kinds get built.
 static func build(
-	host: Node3D, _plans_left: Array, _plans_right: Array, keep_out: RefCounted,
+	host: Node3D, plans_left: Array, plans_right: Array, keep_out: RefCounted,
 	rng: RandomNumberGenerator, district: FacadeDistrict
 ) -> void:
 	if rng.randf() >= district.overhead_chance:
 		return
 	match rng.randi() % 4:
 		0:
-			_build_pipe_bridge(host, keep_out, rng)
+			_build_pipe_bridge(host, plans_left, plans_right, keep_out, rng)
 		1:
-			_build_catwalk(host, keep_out)
+			_build_catwalk(host, plans_left, plans_right, keep_out)
 		2:
-			_build_truss(host, keep_out)
+			_build_truss(host, plans_left, plans_right, keep_out)
 		_:
-			_build_ribs(host, keep_out)
+			_build_ribs(host, plans_left, plans_right, keep_out)
 
 
 ## Two rusty pipes at a shared z, with four hanger straps reaching up to a fixed point above them.
 static func _build_pipe_bridge(
-	host: Node3D, keep_out: RefCounted, rng: RandomNumberGenerator
+	host: Node3D, plans_left: Array, plans_right: Array, keep_out: RefCounted,
+	rng: RandomNumberGenerator
 ) -> void:
 	var z := rng.randf_range(-7.0, 7.0)
+	var reach_l := _HALF + _FacadePlan.recess_at(plans_left, z - 0.35, z + 0.35)
+	var reach_r := _HALF + _FacadePlan.recess_at(plans_right, z - 0.35, z + 0.35)
 	var rust := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.rust_pipe_material())
 	_FacadeMeshKit.add_cylinder_node(
-		host, "OverheadPipeLow", 0.35, 0.35, _LENGTH, Vector3(0.0, 10.5, z), rust, true, keep_out,
-		_ALONG_X
+		host, "OverheadPipeLow", 0.35, 0.35, reach_l + reach_r,
+		Vector3((reach_r - reach_l) * 0.5, 10.5, z), rust, true, keep_out, _ALONG_X
 	)
 	_FacadeMeshKit.add_cylinder_node(
-		host, "OverheadPipeHigh", 0.35, 0.35, _LENGTH, Vector3(0.0, 11.6, z), rust, true, keep_out,
-		_ALONG_X
+		host, "OverheadPipeHigh", 0.35, 0.35, reach_l + reach_r,
+		Vector3((reach_r - reach_l) * 0.5, 11.6, z), rust, true, keep_out, _ALONG_X
 	)
 	var hanger_st := SurfaceTool.new()
 	hanger_st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -59,11 +65,16 @@ static func _build_pipe_bridge(
 
 
 ## A steel catwalk floor with two top rails and posts every 2 m along both edges.
-static func _build_catwalk(host: Node3D, keep_out: RefCounted) -> void:
+static func _build_catwalk(
+	host: Node3D, plans_left: Array, plans_right: Array, keep_out: RefCounted
+) -> void:
+	var reach_l := _HALF + _FacadePlan.recess_at(plans_left, -1.0, 1.0)
+	var reach_r := _HALF + _FacadePlan.recess_at(plans_right, -1.0, 1.0)
+	var mid := (reach_r - reach_l) * 0.5
 	var iron := _FacadeMaterials.iron_material()
 	var floor_mat := _FacadeGrimeMaterials.from_prop(iron)
 	_FacadeMeshKit.add_box_node(
-		host, "OverheadCatwalkFloor", Vector3(_LENGTH, 0.15, 2.0), Vector3(0.0, 9.6, 0.0),
+		host, "OverheadCatwalkFloor", Vector3(reach_l + reach_r, 0.15, 2.0), Vector3(mid, 9.6, 0.0),
 		Vector3.ZERO, floor_mat, true, keep_out
 	)
 	var rail_st := SurfaceTool.new()
@@ -72,11 +83,11 @@ static func _build_catwalk(host: Node3D, keep_out: RefCounted) -> void:
 	for edge_z: float in [-1.0, 1.0]:
 		added = (
 			_FacadeMeshKit.add_box(
-				rail_st, Vector3(0.0, 10.7, edge_z), Vector3(_LENGTH, 0.05, 0.05), keep_out
+				rail_st, Vector3(mid, 10.7, edge_z), Vector3(reach_l + reach_r, 0.05, 0.05), keep_out
 			) or added
 		)
-		var x := -_LENGTH * 0.5 + 1.0
-		while x < _LENGTH * 0.5:
+		var x := -reach_l + 1.0
+		while x < reach_r:
 			added = (
 				_FacadeMeshKit.add_box(
 					rail_st, Vector3(x, 10.15, edge_z), Vector3(0.05, 1.1, 0.05), keep_out
@@ -88,20 +99,25 @@ static func _build_catwalk(host: Node3D, keep_out: RefCounted) -> void:
 
 
 ## Two horizontal chords with 8 alternating diagonal braces between them.
-static func _build_truss(host: Node3D, keep_out: RefCounted) -> void:
+static func _build_truss(
+	host: Node3D, plans_left: Array, plans_right: Array, keep_out: RefCounted
+) -> void:
+	var reach_l := _HALF + _FacadePlan.recess_at(plans_left, -0.2, 0.2)
+	var reach_r := _HALF + _FacadePlan.recess_at(plans_right, -0.2, 0.2)
 	var iron := _FacadeMaterials.iron_material()
 	var chord_st := SurfaceTool.new()
 	chord_st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var added := false
-	var chord_size := Vector3(_LENGTH, 0.4, 0.4)
+	var chord_size := Vector3(reach_l + reach_r, 0.4, 0.4)
 	for y: float in [12.0, 13.4]:
-		var c := Vector3(0.0, y, 0.0)
+		var c := Vector3((reach_r - reach_l) * 0.5, y, 0.0)
 		added = _FacadeMeshKit.add_box(chord_st, c, chord_size, keep_out) or added
 	if added:
 		var chord_mat := _FacadeGrimeMaterials.from_prop(iron)
 		_FacadeMeshKit.commit(host, chord_st, "OverheadTrussChords", chord_mat, true)
-	for i in 8:
-		var x := -_LENGTH * 0.5 + (_LENGTH / 8.0) * (float(i) + 0.5)
+	var panels := roundi((reach_l + reach_r) / 2.3)
+	for i in panels:
+		var x := -reach_l + ((reach_l + reach_r) / float(panels)) * (float(i) + 0.5)
 		var yaw := 0.6 if i % 2 == 0 else -0.6
 		_FacadeMeshKit.add_box_node(
 			host, "OverheadTrussDiag%d" % i, Vector3(0.15, 1.6, 0.15), Vector3(x, 12.7, 0.0),
@@ -114,7 +130,11 @@ static func _build_truss(host: Node3D, keep_out: RefCounted) -> void:
 ## Three separate meshes (right posts, left posts, beams): a merged mesh's AABB would span both
 ## the ground-level posts and the full-width beam at once, straddling the lane even though no
 ## single box in it does.
-static func _build_ribs(host: Node3D, keep_out: RefCounted) -> void:
+static func _build_ribs(
+	host: Node3D, plans_left: Array, plans_right: Array, keep_out: RefCounted
+) -> void:
+	var recess_l := _FacadePlan.recess_at(plans_left, -7.3, 7.3)
+	var recess_r := _FacadePlan.recess_at(plans_right, -7.3, 7.3)
 	var concrete := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.concrete_material())
 	var left_keep_out := _FacadeKeepOut.new(-1.0, 0)
 	var right_st := SurfaceTool.new()
@@ -128,16 +148,21 @@ static func _build_ribs(host: Node3D, keep_out: RefCounted) -> void:
 	var beam_added := false
 	for z: float in [-7.0, 0.0, 7.0]:
 		right_added = (
-			_FacadeMeshKit.add_box(right_st, Vector3(8.3, 6.0, z), Vector3(0.5, 12.0, 0.5), keep_out)
+			_FacadeMeshKit.add_box(
+				right_st, Vector3(8.3 + recess_r, 6.0, z), Vector3(0.5, 12.0, 0.5), keep_out
+			)
 			or right_added
 		)
-		var left_post := Vector3(-8.3, 6.0, z)
+		var left_post := Vector3(-(8.3 + recess_l), 6.0, z)
 		left_added = (
 			_FacadeMeshKit.add_box(left_st, left_post, Vector3(0.5, 12.0, 0.5), left_keep_out)
 			or left_added
 		)
 		beam_added = (
-			_FacadeMeshKit.add_box(beam_st, Vector3(0.0, 12.0, z), Vector3(18.0, 0.5, 0.55), keep_out)
+			_FacadeMeshKit.add_box(
+				beam_st, Vector3((recess_r - recess_l) * 0.5, 12.0, z),
+				Vector3(18.0 + recess_l + recess_r, 0.5, 0.55), keep_out
+			)
 			or beam_added
 		)
 	if right_added:

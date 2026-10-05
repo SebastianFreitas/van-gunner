@@ -6,6 +6,7 @@ const _PavingMesh := preload("res://scripts/travel/road_floor_paving_mesh.gd")
 const _WreckCurb := preload("res://scripts/travel/road_floor_wreck_curb.gd")
 const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
 const _WreckGround = preload("res://scripts/travel/road_floor_wreck_ground.gd")
+const _WreckPlaza = preload("res://scripts/travel/road_floor_wreck_plaza.gd")
 
 const PIT_DEPTH := 0.12 ## collision bed top sits this far under the walk top, under the dirt
 const JOINT := 0.03
@@ -24,11 +25,14 @@ enum Piece { FLAT, MISSING_PIECE, TILTED, SUNK, FRAGMENT }
 var road: RoadFloor
 var _xform := Transform3D.IDENTITY
 var _side_idx := 0
+## Added to every rng salt for this run: 0 for the first run, i * 7919 for run i.
+var _run_salt := 0
 var _soil := _PavingMesh.new()
 var _tiles := _PavingMesh.new()
 var _setts := _PavingMesh.new()
 var _rubble := _PavingMesh.new()
 var _curb := _PavingMesh.new()
+var _flags := _PavingMesh.new()
 var _sign := 1.0
 var _z_start := 0.0
 var _z_end := 0.0
@@ -56,11 +60,8 @@ func build(side_idx: int, walk_len: float, walk_cz: float, walk_inner_x: float,
 	if walk_len <= 0.0 or _width <= 0.0:
 		return
 	_sign = -1.0 if side_idx == 0 else 1.0
-	_z_start = walk_cz - walk_len * 0.5
-	_z_end = walk_cz + walk_len * 0.5
 	_top = sidewalk_top
 	_bed_y = sidewalk_top - PIT_DEPTH
-	_inner = absf(walk_inner_x)
 	_gutter_top_y = gutter_top_y
 	_curb_depth = curb_depth
 	_kept.clear()
@@ -69,15 +70,34 @@ func build(side_idx: int, walk_len: float, walk_cz: float, walk_inner_x: float,
 			_kept.append(dz)
 	_side_idx = side_idx
 	_xform = road.global_transform if road.is_inside_tree() else Transform3D.IDENTITY
-	_layout()
-	_build_tiles(side_idx)
-	_build_setts(side_idx)
-	var rng_ground := RandomNumberGenerator.new()
-	rng_ground.seed = road._seed_value(497 + side_idx * 1000)
-	_WreckGround.new().build(self, rng_ground, _soil, _rubble, _tiles)
-	var rng_curb := RandomNumberGenerator.new()
-	rng_curb.seed = road._seed_value(297 + side_idx * 1000)
-	_WreckCurb.new().build(self, side_idx, _sign, rng_curb, _curb, _rubble)
+	var samples := 0
+	var count := 0
+	var i := 0
+	var runs: Array = _runs(side_idx, walk_len, walk_cz, absf(walk_inner_x))
+	for run: Vector4 in runs:
+		_z_start = run.x
+		_z_end = run.y
+		_inner = run.z
+		_width = run.w
+		_run_salt = i * 7919
+		_layout()
+		_build_tiles(side_idx)
+		_build_setts(side_idx)
+		var rng_ground := RandomNumberGenerator.new()
+		rng_ground.seed = road._seed_value(497 + side_idx * 1000 + _run_salt)
+		_WreckGround.new().build(self, rng_ground, _soil, _rubble, _tiles)
+		var rng_curb := RandomNumberGenerator.new()
+		rng_curb.seed = road._seed_value(297 + side_idx * 1000 + _run_salt)
+		_WreckCurb.new().build(self, side_idx, _sign, rng_curb, _curb, _rubble)
+		var z := _z_start + 0.125
+		while z < _z_end:
+			samples += 1
+			if damage_at(_inner + _width * 0.5, z) > 0.0:
+				count += 1
+			z += 0.25
+		i += 1
+	_WreckPlaza.new().build(self, side_idx, walk_len, walk_cz)
+	var returns: int = _WreckCurb.new().build_returns(self, side_idx, _sign, runs, _curb)
 	var tag := "Left" if side_idx == 0 else "Right"
 	_soil.commit(road, "WalkSoil" + tag,
 			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_SOIL))
@@ -89,15 +109,37 @@ func build(side_idx: int, walk_len: float, walk_cz: float, walk_inner_x: float,
 			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_TILE))
 	_setts.commit(road, "WalkSetts" + tag,
 			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_SETT))
-	var samples := 0
-	var count := 0
-	var z := _z_start + 0.125
-	while z < _z_end:
-		samples += 1
-		if damage_at(_inner + _width * 0.5, z) > 0.0:
-			count += 1
-		z += 0.25
+	_flags.commit(road, "WalkFlags" + tag,
+			RoadFloorMaterials.paving_mat(RoadFloorMaterials.PAVING_TILE))
 	road.set_meta(StringName("walk_gone_%d" % side_idx), Vector2(count * 0.25, samples * 0.25))
+	road.set_meta(StringName("kerb_returns_%d" % side_idx), returns)
+
+
+## The paving pieces for one side as Vector4(z_start, z_end, inner, width). A plain side is
+## one run with today's values; a recessed, plaza or build-out side gets one per ground run.
+func _runs(side_idx: int, walk_len: float, walk_cz: float, inner0: float) -> Array:
+	var z0 := walk_cz - walk_len * 0.5
+	var z1 := walk_cz + walk_len * 0.5
+	var w := road.sidewalk_width
+	if road.ground_runs.size() != 2 or road.ground_runs[side_idx].is_empty() \
+			or (road.ground_runs[side_idx].size() == 1
+			and (road.ground_runs[side_idx][0] as Vector4).z == 0.0):
+		return [Vector4(z0, z1, inner0, w)]
+	var out: Array = []
+	for run: Vector4 in road.ground_runs[side_idx]:
+		var a := maxf(run.x, z0)
+		var b := minf(run.y, z1)
+		if b - a < 0.01:
+			continue
+		var inner := inner0
+		var width := w
+		match int(run.w):
+			0:
+				inner = inner0 + run.z
+			2:
+				width = w + run.z
+		out.append(Vector4(a, b, inner, width))
+	return out
 
 
 ## Tile-local (x_abs outward from the road axis, z along the walk) to world XZ.
@@ -192,7 +234,7 @@ func _build_columns(side_idx: int, salt: int, is_tile: bool) -> void:
 	var w := _tile_w if is_tile else _sett_w
 	var x0 := _inner if is_tile else _inner + _tile_cols * _tile_w
 	var rng := RandomNumberGenerator.new()
-	rng.seed = road._seed_value(salt + side_idx * 1000)
+	rng.seed = road._seed_value(salt + side_idx * 1000 + _run_salt)
 	var cells: Array = []
 	var states: Array = []
 	var tones: Array = []
@@ -273,7 +315,7 @@ func _flat_sides(states: Array, c: int, r: int, cols: int, is_tile: bool) -> int
 
 
 func _emit(rng: RandomNumberGenerator, out: _PavingMesh, state: int, at: Vector2, cell: Vector2,
-		tier: int, e: float, tone: float, sides: int) -> void:
+		tier: int, e: float, tone: float, sides: int, tilt_scale := 1.0) -> void:
 	var w := cell.x
 	var length := cell.y
 	var zone := _WreckMap.zone(e)
@@ -290,6 +332,7 @@ func _emit(rng: RandomNumberGenerator, out: _PavingMesh, state: int, at: Vector2
 				deg = rng.randf_range(4.0, 14.0)
 			elif zone == _WreckMap.Zone.ROUGH:
 				deg = rng.randf_range(1.0, 5.0)
+			deg *= tilt_scale
 			var a := deg_to_rad(deg)
 			var on_x := rng.randf() < 0.5
 			var s := 1.0 if rng.randf() < 0.5 else -1.0

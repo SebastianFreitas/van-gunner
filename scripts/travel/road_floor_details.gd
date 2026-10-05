@@ -32,7 +32,9 @@ func build_drains(
 				continue
 			if side > 0.0 and not road.sidewalk_right:
 				continue
-			var gx: float = side * (gutter_inner + road.gutter_width * 0.5)
+			var run: Vector4 = road.run_at(0 if side < 0.0 else 1, z)
+			var kerb_r: float = run.z if int(run.w) == 0 else 0.0
+			var gx: float = side * (gutter_inner + road.gutter_width * 0.5 + kerb_r)
 			# Frame
 			road._add_box_centered(
 				"DrainFrame_%d_%s" % [i, "L" if side < 0.0 else "R"],
@@ -142,11 +144,12 @@ func build_sidewalk_dressing(
 				continue
 			if rng.randf() > 0.55:
 				continue
-			var bx := side * (half_x - 0.35)
 			var bw := rng.randf_range(0.35, 0.55)
 			var bh := rng.randf_range(0.55, 0.85)
 			var bd := rng.randf_range(0.28, 0.4)
 			var bz := z + rng.randf_range(-0.3, 0.3)
+			var box_run: Vector4 = road.run_at(0 if side < 0.0 else 1, bz)
+			var bx := side * (half_x - 0.35 + box_run.z)
 			road.dressing_z[0 if side < 0.0 else 1].append(bz)
 			road._add_box_centered(
 				"UtilityBox_%d_%s" % [i, "L" if side < 0.0 else "R"],
@@ -169,7 +172,9 @@ func build_sidewalk_dressing(
 				continue
 			if rng.randf() > 0.4:
 				continue
-			var bx := side * (walk_inner + 0.28)
+			var bol_run: Vector4 = road.run_at(0 if side < 0.0 else 1, z)
+			var bol_kerb: float = bol_run.z if int(bol_run.w) == 0 else 0.0
+			var bx := side * (walk_inner + 0.28 + bol_kerb)
 			var h := 0.55
 			road.dressing_z[0 if side < 0.0 else 1].append(z)
 			road._add_box_centered(

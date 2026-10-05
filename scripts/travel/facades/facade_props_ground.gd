@@ -226,7 +226,7 @@ static func _build_furniture(
 		var u := 0.8 + rng.randf() * (width - 1.6)
 		if doorway_us.any(func(du: float) -> bool: return absf(u - du) < 1.2):
 			continue
-		_place_furniture(host, kind, i, ss * STRIP_X, _z_at(plan, ss, u), ko)
+		_place_furniture(host, kind, i, ss * (STRIP_X + float(plan.get(&"recess", 0.0))), _z_at(plan, ss, u), ko)
 
 
 ## Simple sidewalk furniture: [node prefix, size], one gated box in the piece's own material.

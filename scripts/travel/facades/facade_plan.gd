@@ -47,6 +47,16 @@ const SPLITS := [
 	[7.0, 7.0, 6.0],
 ]
 const SPLIT_WEIGHTS := [0.34, 0.15, 0.15, 0.16, 0.07, 0.07, 0.06]
+## Deepest recess a lot can step back, metres.
+const RECESS_MAX := 6.0
+## Kerb build-out length at a tile end, metres.
+const BUILD_OUT := 0.75
+
+## Debug force: when >= 0 every tile-side lot's recess.
+static var forced_recess := -1.0
+## Debug force: every recessed tile-side lot is a plaza.
+static var forced_plaza := false
+
 
 static func plan_side(
 	rng: RandomNumberGenerator, district: FacadeDistrict, opening: int, neighborhood_seed: int,
@@ -93,6 +103,15 @@ static func plan_length(
 	# Gap decisions never draw from `rng`, so its sequence is the same with or without gaps.
 	var gap_rng := RandomNumberGenerator.new()
 	gap_rng.seed = hash([rng.state, &"gaps"])
+	# Recess decisions have their own salted stream and never draw from `rng` either.
+	var recess_rng := RandomNumberGenerator.new()
+	recess_rng.seed = hash([rng.state, &"recess"])
+	var side_r := -1.0
+	if with_gaps and recess_rng.randf() < district.recess_side_chance:
+		var total := district.recess_mild_chance + district.recess_deep_chance
+		var deep_side := total > 0.0 and recess_rng.randf() * total < district.recess_deep_chance
+		var side_range := district.recess_deep_range if deep_side else district.recess_mild_range
+		side_r = float(roundi(lerpf(side_range.x, side_range.y, recess_rng.randf())))
 	var split_index := _weighted_index(rng, SPLIT_WEIGHTS)
 	var scale := length / 20.0
 	var widths: Array = SPLITS[split_index]
@@ -154,6 +173,36 @@ static func plan_length(
 			plans[-1][&"depth"] = PLAIN_DEPTH
 			plans[-1][&"gap_lo"] = lo
 			plans[-1][&"gap_hi"] = hi
+			var r := 0.0
+			var u := 0.0
+			var t := 0.0
+			if side_r < 0.0:
+				u = recess_rng.randf()
+				t = recess_rng.randf()
+			if side_r >= 0.0:
+				r = side_r
+			elif u < district.recess_deep_chance:
+				r = snappedf(lerpf(district.recess_deep_range.x, district.recess_deep_range.y, t), 0.25)
+			elif u < district.recess_deep_chance + district.recess_mild_chance:
+				r = snappedf(lerpf(district.recess_mild_range.x, district.recess_mild_range.y, t), 0.25)
+			if forced_recess >= 0.0:
+				r = forced_recess
+			var tall_floors := maxi(
+				MIN_FLOORS, roundi((district.tall_min - GROUND_HEIGHT - PARAPET) / FLOOR_HEIGHT)
+			)
+			var tall_h := minf(GROUND_HEIGHT + tall_floors * FLOOR_HEIGHT + PARAPET, MAX_HEIGHT)
+			var plaza := (
+				height >= tall_h - 0.001 or (district.plaza and r >= 3.0)
+				or (forced_plaza and r > 0.0)
+			)
+			if plaza:
+				r = roundf(r)
+			if joined:
+				r = float(prev[&"recess"])
+				plaza = bool(prev[&"plaza"])
+			plans[-1][&"recess"] = r
+			plans[-1][&"plaza"] = plaza
+			plans[-1][&"joined"] = joined
 		prev = plans[-1]
 		if wreck_at.is_valid():
 			plans[-1][&"walk_wreck"] = float(wreck_at.call(
@@ -244,4 +293,93 @@ static func roofline_y(plan: Dictionary) -> float:
 
 
 static func face_x(plan: Dictionary, side_sign: float) -> float:
-	return side_sign * (FACE_X - float(plan.get(&"setback", 0.0)))
+	return side_sign * (
+		FACE_X - float(plan.get(&"setback", 0.0)) + float(plan.get(&"recess", 0.0))
+	)
+
+
+## The step-back a gap's infill follows: the larger recess of the plans just before and after z.
+static func gap_recess(plans: Array, z: float) -> float:
+	var prev := -1
+	var next := -1
+	for i in plans.size():
+		if plans[i][&"z1"] <= z:
+			prev = i
+		if next < 0 and plans[i][&"z0"] >= z:
+			next = i
+	var r := 0.0
+	if prev >= 0:
+		r = maxf(r, float(plans[prev].get(&"recess", 0.0)))
+	if next >= 0:
+		r = maxf(r, float(plans[next].get(&"recess", 0.0)))
+	return r
+
+
+## The largest recess of the lots whose z extent touches z0..z1; over a gap, the nearer lot's.
+static func recess_at(plans: Array, z0: float, z1: float) -> float:
+	var r := 0.0
+	var touched := false
+	var best := INF
+	var near_r := 0.0
+	for plan: Dictionary in plans:
+		var pr := float(plan.get(&"recess", 0.0))
+		var d := maxf(maxf(float(plan[&"z0"]) - z1, z0 - float(plan[&"z1"])), 0.0)
+		if d <= 0.0:
+			touched = true
+			r = maxf(r, pr)
+		elif d < best:
+			best = d
+			near_r = pr
+	return r if touched else near_r
+
+
+## A side's ground as (z0, z1, r, kind) runs covering z -10..10; kind 0 walk, 1 plaza,
+## 2 build-out.
+static func ground_runs(plans: Array) -> Array[Vector4]:
+	var flat: Array[Vector4] = [Vector4(-TILE_HALF_Z, TILE_HALF_Z, 0.0, 0.0)]
+	if plans.is_empty():
+		return flat
+	var any_recess := false
+	for plan: Dictionary in plans:
+		if bool(plan.get(&"mouth", false)):
+			return flat
+		if float(plan.get(&"recess", 0.0)) != 0.0:
+			any_recess = true
+	if not any_recess:
+		return flat
+	var lots: Array[Vector4] = []
+	for plan: Dictionary in plans:
+		var r := float(plan.get(&"recess", 0.0))
+		var kind := 1.0 if bool(plan.get(&"plaza", false)) and r > 0.0 else 0.0
+		lots.append(Vector4(float(plan[&"z0"]), float(plan[&"z1"]), r, kind))
+	lots[0].x = -TILE_HALF_Z
+	lots[-1].y = TILE_HALF_Z
+	for i in lots.size() - 1:
+		if lots[i].z >= lots[i + 1].z:
+			lots[i].y = lots[i + 1].x
+		else:
+			lots[i + 1].x = lots[i].y
+	var runs: Array[Vector4] = []
+	for lot in lots:
+		if not runs.is_empty():
+			var last := runs[-1]
+			if absf(last.z - lot.z) < 0.001 and absf(last.w - lot.w) < 0.001:
+				runs[-1].y = lot.y
+				continue
+		runs.append(lot)
+	var first := runs[0]
+	var end := runs[-1]
+	var min_len := BUILD_OUT * (2.0 if runs.size() == 1 else 1.0)
+	var front: Array[Vector4] = []
+	var back: Array[Vector4] = []
+	if first.w == 0.0 and first.z > 0.0 and first.y - first.x > min_len:
+		front.append(Vector4(first.x, first.x + BUILD_OUT, first.z, 2.0))
+		runs[0].x = first.x + BUILD_OUT
+	if end.w == 0.0 and end.z > 0.0 and end.y - end.x > min_len:
+		back.append(Vector4(end.y - BUILD_OUT, end.y, end.z, 2.0))
+		runs[-1].y = end.y - BUILD_OUT
+	var out: Array[Vector4] = []
+	out.append_array(front)
+	out.append_array(runs)
+	out.append_array(back)
+	return out

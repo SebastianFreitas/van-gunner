@@ -9,6 +9,7 @@ const _FacadeAudit := preload("res://scripts/travel/facades/facade_audit.gd")
 const _CorridorSegmentScene := preload("res://scenes/corridor/corridor_segment.tscn")
 const _DebugStreetArt := preload("res://scripts/debug/debug_street_art_commands.gd")
 const _DebugFacadeRender := preload("res://scripts/debug/debug_facade_render_commands.gd")
+const _DebugFacadeRecess := preload("res://scripts/debug/debug_facade_recess_commands.gd")
 const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
 
 const OPENING_NONE := 0  # mirrors corridor_segment.gd's Opening enum
@@ -28,7 +29,7 @@ func _init(owner: Node) -> void:
 ## Sub-command names, for DebugCommands.get_completion_context.
 func sub_commands() -> Array[String]:
 	return ["help", "list", "district", "rare", "reseed", "stats", "dump", "check",
-		"stress", "art", "faces", "perf"]
+		"stress", "art", "faces", "perf", "recess", "plaza"]
 
 
 func cmd_facade(args: Array) -> String:
@@ -57,8 +58,19 @@ func cmd_facade(args: Array) -> String:
 			return _DebugStreetArt.run(rest)
 		"faces", "perf":
 			return _DebugFacadeRender.run(args)
+		"recess":
+			return _DebugFacadeRecess.run_recess(rest, _rebuild_live)
+		"plaza":
+			return _DebugFacadeRecess.run_plaza(rest, _rebuild_live)
 		_:
 			return "Unknown facade sub-command: %s  (try facade help)" % sub
+
+
+## Rebuilds the live tiles the way `facade reseed` does, for the recess and plaza forces.
+func _rebuild_live() -> String:
+	if host._find_travel_controller() == null:
+		return "new tiles use it"
+	return _cmd_reseed([])
 
 
 func _usage() -> String:
@@ -73,7 +85,9 @@ func _usage() -> String:
 		+ "facade stress [seeds] [i/n]      build + audit every district x piece x opening\n"
 		+ "facade art [sheet <path>]       street-art pool stats, or save its atlas as a PNG\n"
 		+ "facade faces                     triangles per mesh family over every alive tile\n"
-		+ "facade perf                      draw calls and primitives of the current frame"
+		+ "facade perf                      draw calls and primitives of the current frame\n"
+		+ "facade recess <m|off>          force every street lot's step-back (0..6 m) and reseed\n"
+		+ "facade plaza <on|off>           force every stepped-back lot to a plaza and reseed"
 	)
 
 
@@ -278,6 +292,7 @@ func _cmd_stress(args: Array) -> String:
 	]
 	var builds := 0
 	var flat_index := -1
+	var recess_counts := {&"forced": 0, &"forced_lots": 0, &"unforced": 0, &"unforced_lots": 0}
 	var fail_lines: Array[String] = []
 	for district_idx in _FacadeRegistry.district_count():
 		for id: StringName in ids:
@@ -288,15 +303,23 @@ func _cmd_stress(args: Array) -> String:
 						continue
 					builds += 1
 					var line := _stress_build(
-						stress_host, district_idx, id, opening_case, seed_value
+						stress_host, district_idx, id, opening_case, seed_value, flat_index,
+						recess_counts
 					)
 					if not line.is_empty():
 						fail_lines.append(line)
 	host.remove_child(stress_host)
 	stress_host.free()
 	_FacadeSetPieces.forced_id = previous_forced
+	_DebugFacadeRecess.stress_restore()
 	if fail_lines.is_empty():
-		return "OK stress: %d builds, 0 violations" % builds
+		return (
+			"OK stress: %d builds, 0 violations, recess lots forced: %d of %d, "
+			+ "recess lots unforced: %d of %d"
+		) % [
+			builds, int(recess_counts[&"forced"]), int(recess_counts[&"forced_lots"]),
+			int(recess_counts[&"unforced"]), int(recess_counts[&"unforced_lots"])
+		]
 	if fail_lines.size() > _MAX_STRESS_FAIL_LINES:
 		var shown := fail_lines.slice(0, _MAX_STRESS_FAIL_LINES)
 		shown.append("... and %d more" % (fail_lines.size() - _MAX_STRESS_FAIL_LINES))
@@ -306,8 +329,10 @@ func _cmd_stress(args: Array) -> String:
 
 ## One build: configure, open_bay if the case has one, both audits, free. FAIL line or "".
 func _stress_build(
-	stress_host: Node3D, district_idx: int, id: StringName, opening_case: Array, seed_value: int
+	stress_host: Node3D, district_idx: int, id: StringName, opening_case: Array, seed_value: int,
+	flat_index: int, recess_counts: Dictionary
 ) -> String:
+	var forced := _DebugFacadeRecess.stress_force(flat_index)
 	_FacadeSetPieces.forced_id = id
 	var tile := _CorridorSegmentScene.instantiate() as Node3D
 	tile.begin_build()
@@ -328,6 +353,12 @@ func _stress_build(
 	violations.append_array(_FacadeAudit.tile_lane_violations(tile, lane_counts))
 	if int(lane_counts.get(&"checked", 0)) == 0:
 		violations.append("lane audit checked zero nodes")
+	var recess_audit := {&"lots": 0, &"recess_lots": 0}
+	violations.append_array(_FacadeAudit.tile_recess_violations(tile, recess_audit))
+	var key := &"forced" if forced else &"unforced"
+	var lots_key := &"forced_lots" if forced else &"unforced_lots"
+	recess_counts[key] = int(recess_counts[key]) + int(recess_audit[&"recess_lots"])
+	recess_counts[lots_key] = int(recess_counts[lots_key]) + int(recess_audit[&"lots"])
 	stress_host.remove_child(tile)
 	tile.free()
 	if violations.is_empty():

@@ -65,8 +65,11 @@ static func build(
 			continue
 		var blades := _new_st()
 		var green := rng.randi_range(0, 2)
+		var gap_face := _FacadePlan.FACE_X + _FacadePlan.gap_recess(
+			plans, (spans[gi].x + spans[gi].y) * 0.5
+		)
 		for _k in roundi(GAP_CLUMPS_PER_M * w):
-			_clump(blades, side_sign, _FacadePlan.FACE_X, spans[gi].x, spans[gi].y,
+			_clump(blades, side_sign, gap_face, spans[gi].x, spans[gi].y,
 				GAP_GROWTH_HEIGHT, keep_out, rng)
 		_commit(root, blades, "GrowthGap%d" % gi, GREEN_KEYS[green], GREENS[green])
 

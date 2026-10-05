@@ -53,20 +53,21 @@ static func build(
 		var z_a := spans[gi].x
 		var z_b := spans[gi].y
 		var w := z_b - z_a
+		var g := _FacadePlan.gap_recess(plans, (z_a + z_b) * 0.5)
 		if w < MIN_GAP:
 			continue
-		_yard(root, side_sign, z_a, z_b, gi, keep_out)
-		_party_wall(root, side_sign, z_a, z_b, gi, keep_out, rng)
+		_yard(root, side_sign, z_a, z_b, gi, g, keep_out)
+		_party_wall(root, side_sign, z_a, z_b, gi, g, keep_out, rng)
 		var roll := rng.randi_range(0, 99)
 		if roll >= 30 and roll < 60 and w >= 1.0:
-			_FacadeInfillWall._brick_wall(root, side_sign, z_a, z_b, gi, keep_out, rng)
+			_FacadeInfillWall._brick_wall(root, side_sign, z_a, z_b, gi, g, keep_out, rng)
 		elif roll >= 60 and roll < 80:
-			_FacadeInfillExtra.hoarding(root, side_sign, z_a, z_b, gi, keep_out, rng, district)
+			_FacadeInfillExtra.hoarding(root, side_sign, z_a, z_b, gi, g, keep_out, rng, district)
 		elif roll >= 80:
-			_FacadeInfillExtra.corrugated(root, side_sign, z_a, z_b, gi, keep_out, rng)
+			_FacadeInfillExtra.corrugated(root, side_sign, z_a, z_b, gi, g, keep_out, rng)
 		else:
-			_palisade(root, side_sign, z_a, z_b, gi, keep_out, rng)
-		_FacadeInfillExtra.furniture(root, side_sign, z_a, z_b, gi, keep_out, rng)
+			_palisade(root, side_sign, z_a, z_b, gi, g, keep_out, rng)
+		_FacadeInfillExtra.furniture(root, side_sign, z_a, z_b, gi, g, keep_out, rng)
 
 
 static func _steel() -> ShaderMaterial:
@@ -130,12 +131,12 @@ static func _wall_quad(
 
 
 static func _yard(
-	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, keep_out: RefCounted
+	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, g: float, keep_out: RefCounted
 ) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	_FacadeMeshKit.add_box(
-		st, Vector3(sx * (_FacadePlan.FACE_X + YARD_DEPTH * 0.5), -0.26, (z_a + z_b) * 0.5),
+		st, Vector3(sx * (_FacadePlan.FACE_X + g + YARD_DEPTH * 0.5), -0.26, (z_a + z_b) * 0.5),
 		Vector3(YARD_DEPTH, 0.4, z_b - z_a), keep_out
 	)
 	var material := _FacadeGrimeMaterials.from_prop(_FacadeMaterials.prop_material(
@@ -147,7 +148,7 @@ static func _yard(
 
 ## A blank concrete wall behind the yard, so the gap never shows the sky or the void.
 static func _party_wall(
-	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, keep_out: RefCounted,
+	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, g: float, keep_out: RefCounted,
 	rng: RandomNumberGenerator
 ) -> void:
 	var h := rng.randf_range(4.0, 9.0)
@@ -160,7 +161,7 @@ static func _party_wall(
 	var z1 := minf(z_b + 0.2, 9.95)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_wall_quad(st, sx, PARTY_X, z0, z1, -0.4, h, z0, 0.4, keep_out)
+	_wall_quad(st, sx, PARTY_X + g, z0, z1, -0.4, h, z0, 0.4, keep_out)
 	if _FacadeMeshKit.has_geometry(st):
 		_FacadeMeshKit.commit(
 			root, st, "InfillParty%d" % gi, _FacadeMaterials.facade_material(params), false
@@ -170,10 +171,10 @@ static func _party_wall(
 ## Steel palisade: posts, 0.25 m pitch pales with points, two rails, and a rusted gate ajar
 ## into the yard when the gap is 2 m or wider.
 static func _palisade(
-	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, keep_out: RefCounted,
+	root: Node3D, sx: float, z_a: float, z_b: float, gi: int, g: float, keep_out: RefCounted,
 	rng: RandomNumberGenerator
 ) -> void:
-	var xf := _FacadePlan.FACE_X
+	var xf := _FacadePlan.FACE_X + g
 	var w := z_b - z_a
 	var h := rng.randf_range(2.0, 2.4)
 	var has_gate := w >= 2.0

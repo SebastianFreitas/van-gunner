@@ -88,6 +88,104 @@ func build(wreck, side_idx: int, side_sign: float, rng: RandomNumberGenerator, c
 				_PavingMesh.SIDE_ALL, true)
 
 
+## Kerb returns across the shallower run's end wherever two touching runs' kerb lines differ;
+## returns how many.
+func build_returns(wreck, side_idx: int, side_sign: float, runs: Array, curb: Object) -> int:
+	var curb_depth: float = wreck._curb_depth
+	if curb_depth <= 0.0:
+		return 0
+	var top: float = wreck._top
+	var gutter_top_y: float = wreck._gutter_top_y
+	var road: Node = wreck.road
+	var y_bot := gutter_top_y - 0.04
+	var height := top + 0.02 - y_bot
+	var count := 0
+	for b in range(runs.size() - 1):
+		var a: Vector4 = runs[b]
+		var n: Vector4 = runs[b + 1]
+		if absf(a.y - n.x) >= 0.01 or absf(a.z - n.z) <= 0.01:
+			continue
+		count += 1
+		var x0 := minf(a.z, n.z)
+		var x1 := maxf(a.z, n.z)
+		var z_lo := n.x
+		var lean := -1.0
+		if a.z < n.z:
+			z_lo = a.y - curb_depth
+			lean = 1.0
+		var zc := z_lo + curb_depth * 0.5
+		var rng := RandomNumberGenerator.new()
+		rng.seed = road._seed_value(397 + side_idx * 1000 + b * 7919)
+		var cuts: Array[float] = []
+		var p := x0
+		while p < x1:
+			cuts.append(p)
+			p += CURB_LEN
+		cuts.append(x1)
+		if cuts.size() > 2 and cuts[cuts.size() - 1] - cuts[cuts.size() - 2] < MIN_PIECE:
+			cuts.remove_at(cuts.size() - 2)
+		for c in range(cuts.size() - 1):
+			var p0: float = cuts[c]
+			var p1: float = cuts[c + 1]
+			var xm := (p0 + p1) * 0.5
+			var r_miss := rng.randf()
+			var r_knock := rng.randf()
+			var tone := rng.randf()
+			var tier: int = wreck.tier_at(side_idx, zc)
+			var e: float = wreck.damage_at(xm, zc)
+			var tint := maxf(tier / 3.0, _WreckMap.wreck_tint(e))
+			var t := _WreckMap.band_t(e)
+			var missing := false
+			var knocked := false
+			var scale := 0.35 + 0.3 * t
+			match _WreckMap.zone(e):
+				_WreckMap.Zone.GONE:
+					continue
+				_WreckMap.Zone.FRAGMENT:
+					missing = r_miss < 0.2 + 0.4 * t
+					knocked = not missing
+					scale = 0.5 + 0.5 * t
+				_WreckMap.Zone.ROUGH:
+					missing = r_miss < MISSING[tier]
+					knocked = r_knock < KNOCKED[tier] + 0.1 + 0.2 * t
+				_:
+					missing = r_miss < MISSING[tier] * 0.5
+					knocked = r_knock < KNOCKED[tier] * 0.5
+			if missing:
+				continue
+			var size := Vector3(p1 - p0 - JOINT, height, curb_depth)
+			var centre := Vector3(side_sign * xm, y_bot + height * 0.5, zc)
+			if not knocked:
+				var sides := _PavingMesh.SIDE_NEG_X | _PavingMesh.SIDE_POS_X \
+						| _PavingMesh.SIDE_NEG_Z | _PavingMesh.SIDE_POS_Z
+				curb.add_block(size, Transform3D(Basis(), centre), tint, tone, CHAMFER, sides,
+						false)
+				continue
+			var yaw_deg := rng.randf_range(4.0, 12.0) * scale
+			var shift := rng.randf_range(0.03, 0.10) * scale
+			var drop := rng.randf_range(0.03, 0.10) * scale
+			if rng.randf() < 0.5:
+				yaw_deg = -yaw_deg
+			var lean_deg := rng.randf_range(4.0, 14.0) * scale
+			# The top leans toward the deeper run, pivoting on the bottom edge.
+			var basis := Basis(Vector3.UP, deg_to_rad(yaw_deg)) \
+					* Basis(Vector3.RIGHT, lean * deg_to_rad(lean_deg))
+			var pivot := Vector3(centre.x, y_bot, zc)
+			var origin := pivot + basis * Vector3(0.0, height * 0.5, 0.0)
+			origin += Vector3(0.0, -drop, lean * shift)
+			var high := -INF
+			for sx in [-1.0, 1.0]:
+				for sz in [-1.0, 1.0]:
+					var corner := origin + basis * Vector3(sx * size.x * 0.5, height * 0.5,
+							sz * curb_depth * 0.5)
+					high = maxf(high, corner.y)
+			if high > top + 0.06:
+				origin.y -= high - (top + 0.06)
+			curb.add_block(size, Transform3D(basis, origin), tint, tone, CHAMFER,
+					_PavingMesh.SIDE_ALL, true)
+	return count
+
+
 ## One small lump of granite in the gutter where a block is gone.
 func _add_chunks(wreck, side_sign: float, rng: RandomNumberGenerator, rubble: Object, z0: float,
 		z1: float) -> void:
