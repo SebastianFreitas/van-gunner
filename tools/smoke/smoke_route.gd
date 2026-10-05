@@ -6,6 +6,7 @@ extends RefCounted
 ## to hold onto and await through.
 
 const _WreckMap = preload("res://scripts/travel/road_floor_wreck_map.gd")
+const _Seeds = preload("res://tools/smoke/smoke_seeds.gd")
 
 var driver: Node
 
@@ -25,10 +26,12 @@ func fork_pass() -> bool:
 	if not _assert_walk_wreck_share(travel):
 		return false
 
+	driver.get_tree().node_added.connect(_Seeds.pin_shop_stock)
 	if not await drive_side_stop(travel, "stop elevator shop", "elevator"):
 		return false
 	if not await drive_side_stop(travel, "stop garage", "rear-park"):
 		return false
+	driver.get_tree().node_added.disconnect(_Seeds.pin_shop_stock)
 
 	driver._log(DebugCommands.run("unspeed"))
 	driver._log(DebugCommands.run("chill"))
@@ -63,6 +66,7 @@ func drive_side_stop(travel: TravelController, stop_command: String, label: Stri
 	if label == "rear-park" and not _assert_bay_mouth_clear(travel):
 		return false
 
+	_Seeds.settle_player(driver.get_tree())
 	await driver._shot(label + "-stop")
 	await driver._frames(10)
 	travel.leave_stop()
@@ -127,7 +131,7 @@ func _assert_bay_mouth_clear(travel: TravelController) -> bool:
 ## same REST phase and replays the same act-deck calls the director makes once a
 ## rest break resolves, instead of waiting on a sequence nothing ever starts.
 func force_route_choice(travel: TravelController, timeout_s: float) -> bool:
-	GameSession.set_phase(GameSession.RunPhase.REST)
+	_Seeds.enter_rest()
 	await mirror_rest_break_wait(travel)
 
 	var act_deck := driver.get_tree().get_first_node_in_group(&"act_deck_controller") as ActDeckController

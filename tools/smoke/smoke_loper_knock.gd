@@ -1,13 +1,15 @@
 extends RefCounted
 ## Smoke check: a loper shot out of its jump falls, tumbles and runs back to jump again.
 
+const _Seeds := preload("res://tools/smoke/smoke_seeds.gd")
+
 
 func run(driver: Node) -> void:
 	var tree := driver.get_tree()
 	var before: Array[int] = []
 	for node in tree.get_nodes_in_group(&"agile"):
 		before.append(node.get_instance_id())
-	var reply: String = str(DebugCommands.run("summon loper"))
+	var reply: String = _Seeds.summon("loper", 1)
 	var raider: WindowRaider = null
 	for node in tree.get_nodes_in_group(&"agile"):
 		if not before.has(node.get_instance_id()):

@@ -1,6 +1,7 @@
 extends RefCounted
 ## Smoke check: summons a window loper and watches its assault phases; fails only when it never climbs.
 
+const _Seeds := preload("res://tools/smoke/smoke_seeds.gd")
 const _STOP_PHASES: Array[String] = ["BREACHING", "ENTERING", "ATTACKING_BENCH", "ATTACKING_PLAYER"]
 
 
@@ -9,7 +10,7 @@ func run(driver: Node) -> void:
 	var before: Array[int] = []
 	for node in tree.get_nodes_in_group(&"agile"):
 		before.append(node.get_instance_id())
-	var reply: String = str(DebugCommands.run("summon loper"))
+	var reply: String = _Seeds.summon("loper", 1)
 	var raider: WindowRaider = null
 	for node in tree.get_nodes_in_group(&"agile"):
 		if not before.has(node.get_instance_id()):

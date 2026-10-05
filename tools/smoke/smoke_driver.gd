@@ -13,6 +13,7 @@ const _Halt := preload("res://tools/smoke/smoke_halt.gd")
 const _LoperClimb := preload("res://tools/smoke/smoke_loper_climb.gd")
 const _LoperKnock := preload("res://tools/smoke/smoke_loper_knock.gd")
 const _Route := preload("res://tools/smoke/smoke_route.gd")
+const _Seeds := preload("res://tools/smoke/smoke_seeds.gd")
 const _Shots := preload("res://tools/smoke/smoke_shots.gd")
 
 var _watchdog: SceneTreeTimer
@@ -53,7 +54,6 @@ func _run() -> void:
 		return
 
 	var mtimes := _record_user_mtimes()
-
 	var lines := PackedStringArray()
 	seed(12345)
 	_Fingerprint.fingerprint_class_stats(lines)
@@ -235,8 +235,7 @@ func _run_pass(_van: Node) -> bool:
 		return false
 	await _seconds(3.0)
 
-	for _i in range(2):
-		_log(DebugCommands.run("summon enemy"))
+	_log(_Seeds.summon("enemy", 2))
 	await _LoperClimb.new().run(self)
 	await _LoperKnock.new().run(self)
 
@@ -268,7 +267,7 @@ func _rest_offer_pass(van: Node) -> bool:
 		_fail("no boon_reward_controller node found")
 		return false
 
-	GameSession.set_phase(GameSession.RunPhase.REST)
+	_Seeds.enter_rest()
 	await _frames(5)
 	if not rewards.is_awaiting_resolution():
 		_fail("boon_reward_controller did not start awaiting resolution")

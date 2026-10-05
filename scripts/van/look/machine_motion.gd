@@ -2,6 +2,8 @@ class_name MachineMotion
 extends Node
 ## Drives every moving part of one van machine (spin, pump, wobble, flicker) from a single _process, scaled by its damage state.
 
+const _SaveSandbox := preload("res://scripts/core/save_sandbox.gd")
+
 ## The damage state's multiplier on all motion.
 var speed_scale := 1.0
 ## 0 is steady; 1 is a flicker that drops to black.
@@ -9,6 +11,15 @@ var flicker_amount := 0.0
 
 var _time := 0.0
 var _entries: Array[Dictionary] = []
+
+
+func _ready() -> void:
+	if _SaveSandbox.enabled:
+		# The smoke's shots compare against fixed tolerances (tools/shots.py): spin and
+		# pump poses followed each run's frame count, and every flicker entry drew two
+		# global randf() per frame, which shifted each gameplay roll after it. Under the
+		# test sandbox the machine holds its rest pose and its lights sit at base.
+		set_process(false)
 
 
 func add_spin(target: Node3D, axis: Vector3, rad_per_sec: float) -> void:
@@ -49,6 +60,8 @@ func add_flicker(target: Object, property: StringName, base: float) -> void:
 		&"property": property,
 		&"base": base,
 	})
+	if _SaveSandbox.enabled:
+		target.set(property, base)
 
 
 func clear() -> void:
