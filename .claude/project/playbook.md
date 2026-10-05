@@ -52,6 +52,27 @@ container has only `python3`.
   `<stem>-01.png`…. Fails on any error line, a non-zero exit, a timeout
   or a missing PNG; prints `PROBE CLEAN`. No verify stamp: it never
   replaces check or smoke.
+- **Perf:** `py -3 tools/perf.py [--seconds N] [--save NAME] [--compare
+  NAME] [--all] [--vsync] [--timeout S]`. Runs the real game with the real
+  renderer on the hidden desktop (`--smoke-sandbox`, vsync off): opens the
+  van, measures IDLE, then (speed and chill on) takes the first fork,
+  waits for the stop, leaves it and waits for TRAVELLING, turns speed
+  mode off and measures a normal-speed drive on an open street (`cruise`,
+  `--seconds` long), a 5x drive down the same street for its full length
+  (`rush`) and a fight with speed mode off (`combat`). Prints `PERF
+  key=value` lines: open times, FPS, frame-time percentiles, hitches over
+  25 ms with the build that caused each, draw calls, and count/avg/max ms
+  per `PerfStats` span (`tile_spawn`, `road_floor`, `facade_side`,
+  `arms_build`, `van_look`, `van_load`, `street_art`). `--save` writes
+  `.godot/perf/NAME.json` (per checkout, gitignored); `--compare` prints
+  before, after and the change. `--timeout` defaults to 320 s. Ends `PERF
+  CLEAN`. No verify stamp. FPS and hitch counts swing with whatever else
+  uses the GPU (the same code read 14 fps and 104 fps in one afternoon
+  with a game running beside it), while span counts and span milliseconds
+  stayed within about 10 %. Compare counts and span milliseconds between
+  runs; compare FPS and hitches only between runs taken with nothing else
+  on the GPU; to compare old code with new, measure both in the same
+  sitting.
 - **Hand shots:** `py -3 tools/hand_shots.py --out <scratchpad>/hands [--pose NAME | --pose "<arms console line>"]... [--views front,side,left,top,elbow,player] [--dress gear|rags|none]`: boots the run at IDLE once, applies the pose, saves `<view>.png` per view (probe `--shot DIR --views`; hidden desktop on Windows, xvfb-run on Linux). `--list` prints the named poses (rest, weave, reload, shot, knock, press, push, pull, slide_open, slide_close, walk).
 - **Pose sheet:** `py -3 tools/pose_sheet.py --out <scratchpad>/sheets [--pose NAME]... [--views front,side,top,player] [--dress gear|rags|none] [--keep]`: one `<pose>.png` grid per named pose (default all), one Godot launch each.
 - **Shots:** `py -3 tools/shots.py capture <name> [--van-seeds N]` runs

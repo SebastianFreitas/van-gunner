@@ -66,7 +66,9 @@ func rebuild() -> void:
 		child.free()
 	_body = null
 	_built = false
+	var perf_t := PerfStats.begin()
 	_build()
+	PerfStats.end(&"road_floor", perf_t)
 
 
 ## Hide the slab *and* its walk collision. Visibility alone leaves a street-height

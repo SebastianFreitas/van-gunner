@@ -82,6 +82,8 @@ func _arg_candidates(
 			return PackedStringArray(_DebugCatalog.class_id_strings())
 		"facade":
 			return host._facade.sub_commands()
+		"perf":
+			return PackedStringArray(["off", "fps", "full", "log", "spans", "reset", "hitch"])
 	return PackedStringArray()
 
 

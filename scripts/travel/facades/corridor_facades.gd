@@ -110,6 +110,7 @@ func facade_root(side_idx: int) -> Node3D:
 
 
 func rebuild_side(side_idx: int) -> void:
+	var perf_t := PerfStats.begin()
 	var facades := _facades_host()
 	var old := facades.get_node_or_null(SIDE_NAMES[side_idx])
 	if old:
@@ -197,6 +198,7 @@ func rebuild_side(side_idx: int) -> void:
 	root.set_meta(&"district", district)
 	root.set_meta(&"opening", _openings[side_idx])
 	_built[side_idx] = true
+	PerfStats.end(&"facade_side", perf_t)
 
 
 func describe() -> String:

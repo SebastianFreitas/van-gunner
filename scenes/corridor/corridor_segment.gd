@@ -19,6 +19,7 @@ const _CorridorFacades := preload("res://scripts/travel/facades/corridor_facades
 var _facades: _CorridorFacades
 var _tile_seed := 0
 var _has_tile_seed := false
+var _building := false
 
 
 func _ready() -> void:
@@ -29,6 +30,32 @@ func _ready() -> void:
 func _ensure_facades() -> void:
 	if _facades == null:
 		_facades = _CorridorFacades.new(self)
+
+
+## Call before add_child. Until end_build() the road floor is not built, so it is built once from
+## its final seed, wreck spans and openings instead of once per configure / opening push.
+func begin_build() -> void:
+	_building = true
+	var floor_node := get_node_or_null(^"RoadFloor") as RoadFloor
+	if floor_node != null:
+		floor_node.rebuild_on_ready = false
+
+
+## Builds the road floor once, after configure and apply_side_streets. Does nothing unless
+## begin_build() ran.
+func end_build() -> void:
+	if not _building:
+		return
+	_building = false
+	if _road_floor == null:
+		return
+	var left_open := _left_wall_collision.disabled
+	var right_open := _right_wall_collision.disabled
+	# Set directly: set_side_openings would build the floor before the wreck spans are in.
+	_road_floor.sidewalk_left = not left_open
+	_road_floor.sidewalk_right = not right_open
+	_push_sidewalk_wreck()
+	_sync_road_openings()
 
 
 func configure(tile_seed: int, district_idx: int, neighborhood_seed: int, allow_rare: bool) -> bool:
@@ -114,7 +141,7 @@ func _set_side_street(side: StringName, enabled: bool, opening: int = -1) -> voi
 
 
 func _sync_road_openings() -> void:
-	if _road_floor == null:
+	if _road_floor == null or _building:
 		return
 	# Wall collision disabled means the side is open (side street or stop bay).
 	# Drop sidewalk there so branch / bay road meets flush carriageway.
@@ -130,7 +157,7 @@ func _sync_road_openings() -> void:
 ## origin, unrotated) so the wrecked sidewalk matches the buildings beside it. Facade side 0
 ## (Left, built at x < 0) maps to the floor's left, side 1 (Right, x > 0) to its right.
 func _push_sidewalk_wreck() -> void:
-	if _road_floor == null or not _has_tile_seed:
+	if _road_floor == null or not _has_tile_seed or _building:
 		return
 	var spans: Array[Array] = [[], []]
 	for side_idx in 2:

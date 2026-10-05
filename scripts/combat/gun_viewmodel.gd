@@ -83,8 +83,11 @@ var _walk: RefCounted = ArmWalk.new()
 func _ready() -> void:
 	add_to_group(&"gun_viewmodel")
 	_rig.scale = Vector3.ONE * RIG_SCALE
-	# The Player node sits before VanLook in van.tscn, so wait a frame for the group.
-	await get_tree().process_frame
+	# VanLook sits after the Player in van.tscn and joins its group in its own _ready; the
+	# scene's top node emits ready once every child is ready, still before the first frame.
+	var top := _scene_top()
+	if not top.is_node_ready():
+		await top.ready
 	if not is_inside_tree():
 		return
 	_camera = get_parent().get_parent() as Node3D
@@ -95,6 +98,14 @@ func _ready() -> void:
 		rebuild_arms(_look.van_seed)
 	else:
 		rebuild_arms(VanLook.DEFAULT_VAN_SEED)
+
+
+## The ancestor directly under the window root: the running scene this viewmodel belongs to.
+func _scene_top() -> Node:
+	var node: Node = self
+	while node.get_parent() != null and node.get_parent() != get_tree().root:
+		node = node.get_parent()
+	return node
 
 
 ## Frees the old arms and rifle and builds a fresh set from the van seed.
@@ -340,20 +351,6 @@ func _motion() -> Transform3D:
 	) * _walk.rig_offset(HeldGun.GRIP)
 
 
-## Reload timeline t 0..1 as x cant, y left-hand reach to the magazine, z slap (two humps).
-func _reload_curves(t: float) -> Vector3:
-	var c := 0.0
-	if t < 0.75:
-		c = smoothstep(0.0, 0.25, t)
-	else:
-		c = 1.0 - smoothstep(0.75, 1.0, t)
-	var z := 0.0
-	if t >= 0.25 and t < 0.75:
-		var u := (t - 0.25) / 0.5
-		z = sin(PI * fmod(u * 2.0, 1.0))
-	return Vector3(c, c, z)
-
-
 ## Poses the rifle and both arms: sway and bob on all three, the shot kick on each arm and the
 ## rifle, the gun inspect (about the grip and the left wrist), the reload cant (about the grip)
 ## on the rifle and the right arm only; the left hand reaches under the magazine and slaps.
@@ -365,7 +362,7 @@ func _apply() -> void:
 	var insp_l: Transform3D = _inspect.left_offset() if _inspect else Transform3D.IDENTITY
 	var kick_w: Transform3D = _kick.wrist_offset() if _kick else Transform3D.IDENTITY
 	var grip := Transform3D(Basis.IDENTITY, HeldGun.GRIP)
-	var k := _reload_curves(_reload_t if debug_reload_t < 0.0 else debug_reload_t)
+	var k := HeldGun.reload_curves(_reload_t if debug_reload_t < 0.0 else debug_reload_t)
 	var roll := Transform3D(
 		Basis(Vector3.BACK, RELOAD_ROLL * k.x), Vector3(0.0, -RELOAD_DIP * k.x, 0.0)
 	)

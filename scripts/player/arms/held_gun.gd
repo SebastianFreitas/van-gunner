@@ -137,3 +137,17 @@ static func _build_barrel(body: Node3D, p: float, rng: RandomNumberGenerator) ->
 	ArmParts.mesh(body, "Bore", ArmParts.cyl(0.10 * p, 0.04 * p, 0.10 * p), rubber,
 			Vector3(0.0, y0 + 0.25 * p, 0.20 * p - 2.80 * p - 0.01),
 			ArmParts.along(Vector3.FORWARD))
+
+
+## Reload timeline t 0..1 as x cant, y left-hand reach to the magazine, z slap (two humps).
+static func reload_curves(t: float) -> Vector3:
+	var c := 0.0
+	if t < 0.75:
+		c = smoothstep(0.0, 0.25, t)
+	else:
+		c = 1.0 - smoothstep(0.75, 1.0, t)
+	var z := 0.0
+	if t >= 0.25 and t < 0.75:
+		var u := (t - 0.25) / 0.5
+		z = sin(PI * fmod(u * 2.0, 1.0))
+	return Vector3(c, c, z)

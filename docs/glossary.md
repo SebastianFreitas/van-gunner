@@ -35,3 +35,4 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - sidewalk wreck / broken paving: scripts/travel/road_floor_wreck_map.gd (+ road_floor_wreck*.gd), facade_wreck.gd
 - hands / arms / sausages: scripts/player/arms/ (arm_bulk.gd for hand and finger taper), arms_builder.gd
 - war-rig: the van's look, .claude/rules/van-shell-and-hud.md "Van look"; scripts/van/look/
+- fps counter / stats: the perf overlay, PerfOverlay, scripts/ui/perf_overlay.gd (F3 cycles off, FPS, full; console `perf`), numbers from scripts/debug/perf_stats.gd

@@ -52,7 +52,10 @@ func spawn_route_segments_until(target_progress: float) -> void:
 
 
 func spawn_world_segment(world_transform: Transform3D, route_progress: float = NAN) -> Node3D:
+	var perf_t := PerfStats.begin()
 	var segment := tc.segment_scene.instantiate() as Node3D
+	if segment.has_method(&"begin_build"):
+		segment.begin_build()
 	tc.corridor_root.add_child(segment)
 	segment.global_transform = world_transform
 	if is_finite(route_progress):
@@ -71,8 +74,11 @@ func spawn_world_segment(world_transform: Transform3D, route_progress: float = N
 	if segment.has_method(&"apply_side_streets"):
 		var side_streets := pick_side_streets()
 		segment.apply_side_streets(side_streets.x != 0, side_streets.y != 0)
+	if segment.has_method(&"end_build"):
+		segment.end_build()
 	tc._world_pieces.append(segment)
 	tc._segment_index += 1
+	PerfStats.end(&"tile_spawn", perf_t)
 	return segment
 
 
@@ -263,5 +269,6 @@ func prune_world() -> void:
 			continue
 		if piece.global_position.distance_to(tc.van_rig.global_position) <= tc.world_cull_distance:
 			continue
+		PerfStats.mark(&"tile_free")
 		piece.queue_free()
 		tc._world_pieces.remove_at(index)

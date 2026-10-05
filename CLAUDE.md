@@ -72,6 +72,7 @@ A task step, like a plan phase, is one context: verify it, commit it, tick it, a
 | Yell at the driver (Shift TURBO or go / C EASY then STOP), halt, mantle back in | `travel_controller.gd` boost/slow/halt, `scripts/van/van_driver_talk.gd`, `van_halt.gd`, `scripts/player/player_mantle.gd`, `scripts/ui/driver_shout_hud.gd` |
 | Pause menu | `scripts/ui/pause_menu.gd` |
 | Debug console (`H`) | `scripts/debug/` (`DebugCommands.run(line)`) |
+| Perf overlay (`F3`, console `perf`), build spans, benchmark | `scripts/debug/perf_stats.gd` (`PerfStats.begin/end/mark`), `scripts/ui/perf_overlay.gd` (autoload `PerfOverlay`), `scripts/debug/debug_perf_commands.gd`, `tools/perf.py`, `tools/perf/` |
 | Audio | `scripts/audio/`, `resources/audio/sound_bank.tres` |
 | Smoke test and screenshots | `tools/smoke/`, `tools/smoke.py` |
 | Scene dump | `tools/scene_dump/`, `tools/scene_dump.py` |
