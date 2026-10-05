@@ -66,3 +66,12 @@ Smoke saves `a*-arms-walk` at cycle 0.75 (left arm forward peak).
    by the spring constants (2.5 Hz, zeta 0.4) one overshoot of about 25% and under 1% left by
    1.0 s. Bar 5: still at 0.75 shows the left claw forward-up in the lower left and the gun
    hand dropped and rolled (ROLL 3.5 deg, DIP 0.05).
+2. Stop crossfade, weighted step, surge, breath (2026-10-05). Worse: `arms walk stop` series
+   decayed 14.5 -> 0.30% per 0.1 s step and went dead at 1.9 s (dead: [19]); the idle waited
+   about 1.4 s for the walk to end before rising. Why: a hard stride clamp plus an idle gate
+   that only opened after the walk. Solve: the stride eases into the planted foot, the idle
+   weight is a pure function of the walk amount (crossfade), and ArmBreath adds a breath that
+   deepens over 3 s of moving and calms over 5 s. After: 13.6 -> 1.66% monotonic to 1.5 s, then
+   rising to 2.9% at 1.9 s as idle and breath take over; dead: none (mean 3.52 -> 4.39%). Steps
+   1-4 still pass the 6% absolute jump flag, but that is the stride at speed (the start series
+   flags every step, 6.3-12.8%), not a snap. FRAME at walk 0.75: 9.4/0.0/0.2.

@@ -1,5 +1,5 @@
 extends RefCounted
-## Walk layer for the first-person arms: a footstep-locked figure-8 with roll, a footfall dip, strafe lean, a start/stop lag spring and a free left-arm swing, blended in by walking speed.
+## Walk layer for the first-person arms: a footstep-locked figure-8 with roll, a footfall dip, strafe lean, a start/stop lag spring and a free left-arm swing, blended in by walking speed. The last step eases into the planted foot, each step lands with a fast drop and slow rise plus a forward surge, and an ArmBreath layer adds breathing on top.
 
 const STRIDE := 2.5  ## metres per step: 1.8 steps/s at WALK_SPEED (0.9 Hz cycle), a heavy lumber
 const WALK_SPEED := 4.5  ## m/s that counts as full walk (fps_player move_speed)
@@ -30,7 +30,14 @@ const SIM_DT := 1.0 / 120.0  ## fixed step for pinned start/stop
 const PHASE_COAST := 3.0
 ## m/s-equivalent floor on the phase after a stop, so the stride always reaches its rest point
 const SETTLE_RATE := 1.2
+const SETTLE_LO := 0.2  ## m/s: below this the stride is fully in its settle
+const SETTLE_HI := 1.2  ## m/s: above this the stride runs on distance alone
+const SETTLE_EASE := 4.0  ## 1/s: how fast the last step closes on the planted foot
+const STEP_SKEW := 0.3  ## 0..0.5: fast drop into the footfall, slow rise out of it
+const SURGE := 0.03  ## rig units the rig pushes forward at each footfall
+const SURGE_LAG := 0.6  ## radians the surge trails the footfall
 
+var _breath := ArmBreath.new()
 var _phase := 0.0
 var _phase_speed := 0.0  ## m/s driving the phase: follows real speed, coasts down on a stop
 var _amount := 0.0
@@ -61,16 +68,20 @@ func _sub_step(delta: float) -> void:
 	var target := clampf(_vel.length() / WALK_SPEED, 0.0, 1.0)
 	var ka := k if target > _amount else 1.0 - exp(-AMOUNT_FALL * delta)
 	_amount = lerpf(_amount, target, ka)
+	_breath.step(delta, _amount)
 	_lean = lerpf(_lean, clampf(_vel.x / WALK_SPEED, -1.0, 1.0), k)
 	var speed := _vel.length()
 	var kp := k if speed > _phase_speed else 1.0 - exp(-PHASE_COAST * delta)
 	_phase_speed = lerpf(_phase_speed, speed, kp)
 	var dp := _phase_speed * delta / STRIDE * PI
-	if speed < 0.2:
-		# Rest points are multiples of PI: the side sway is centred and a foot is planted.
-		# Settle onto the next one and hold there, never stepping past it.
+	# Rest points are multiples of PI: the side sway is centred and a foot is planted. Blend
+	# toward easing onto the next one as speed falls, so no threshold ever switches the rule.
+	var settle := 1.0 - smoothstep(SETTLE_LO, SETTLE_HI, speed)
+	if settle > 0.0:
 		var rest := ceilf(_phase / PI) * PI
-		dp = minf(maxf(dp, SETTLE_RATE * delta / STRIDE * PI), rest - _phase)
+		var coast := maxf(dp, SETTLE_RATE * delta / STRIDE * PI)
+		var eased := minf(coast, (rest - _phase) * (1.0 - exp(-SETTLE_EASE * delta)))
+		dp = lerpf(dp, eased, settle)
 	_phase = fmod(_phase + dp, TAU)
 	var w := TAU * LAG_F
 	_vs_vel += (w * w * (_vel - _vs) - 2.0 * LAG_ZETA * w * _vs_vel) * delta
@@ -99,6 +110,7 @@ func pin_transition(kind: StringName, seconds: float) -> void:
 		_phase = PI * 0.5  # start mid-stride so the pinned stop shows the stride finishing
 		_amount = 1.0
 		_swing = 0.0
+	_breath.seed_exert(1.0 if kind == &"stop" else 0.0)
 	var n := int(seconds / SIM_DT)
 	for i in n:
 		step(SIM_DT, 0.0, WALK_SPEED if kind == &"start" else 0.0)
@@ -114,6 +126,7 @@ func reset() -> void:
 	_vel = Vector2.ZERO
 	_swing = 0.0
 	_swing_vel = 0.0
+	_breath.reset()
 
 
 func amount() -> float:
@@ -124,18 +137,26 @@ func amount() -> float:
 func rig_offset(pivot: Vector3) -> Transform3D:
 	var a := _amount
 	var p := _phase
-	var c := 0.5 * (1.0 + cos(2.0 * p))  # 1 at footfall (p = 0 and PI)
+	# Warped phase: a fast drop into each footfall, a slow rise out of it; equal to p when planted.
+	var pw := p - STEP_SKEW * 0.5 * (1.0 - cos(2.0 * p))
+	var c := 0.5 * (1.0 + cos(2.0 * pw))  # 1 at footfall (p = 0 and PI)
 	var pos := Vector3(
 		a * SIDE * (sin(p) + 0.15 * sin(3.0 * p + 1.1)), -a * DIP * c * c - a * CARRY_DROP, 0.0
 	)
+	# Forward is -z: the rig pushes forward just after each footfall and pulls back mid-step.
+	pos.z -= a * SURGE * cos(2.0 * pw - SURGE_LAG)
 	var dv := _vs - _vel
 	# Forward is -z in rig space: a forward start has dv.y < 0, so the arms lag toward the camera.
 	pos.x += clampf(dv.x * LAG_GAIN, -LAG_MAX, LAG_MAX)
 	pos.z -= clampf(dv.y * LAG_GAIN, -LAG_MAX, LAG_MAX)
 	var roll := -a * ROLL * sin(p) - LEAN * _lean
 	var yaw := a * YAW * sin(p + 0.3)
-	var cp := 0.5 * (1.0 + cos(2.0 * (p - 0.25)))  # muzzle dips just after footfall
+	var cp := 0.5 * (1.0 + cos(2.0 * (pw - 0.25)))  # muzzle dips just after footfall
 	var pitch := -a * PITCH * cp * cp - a * CARRY_PITCH + clampf(-dv.y * LAG_PITCH, -3.0, 3.0)
+	# Breath: a positive pitch lifts the muzzle (CARRY_PITCH lowers it with a minus).
+	pos += _breath.pos()
+	pitch += _breath.rot_deg().x
+	roll += _breath.rot_deg().z
 	var b := (
 		Basis(Vector3.UP, deg_to_rad(yaw))
 		* Basis(Vector3.RIGHT, deg_to_rad(pitch))
