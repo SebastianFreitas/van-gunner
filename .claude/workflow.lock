@@ -7,7 +7,7 @@
     ".claude/agents/plan-reviewer.md": "fe3f06d63605a85b3363d07d959850dcdee5de7a6ae004420a27b2ef16e9edcd",
     ".claude/agents/plan-writer.md": "24f47fdf3379939328f4a8e01e61594bbe6a78192a7db605342abf41b6e1c730",
     ".claude/agents/reviewer.md": "34a6ae8db7ba942491c3399bcffab37996cbfdbbd5b0119a911c77e86800ace0",
-    ".claude/hooks/agent-guard.py": "e3822907195845cd80bfec93df858e67fa40c31eb62f1c80481fd42021337609",
+    ".claude/hooks/agent-guard.py": "c21f1005ffcd0eabe0500d71eef33e8e24e9c4c1a7e56ff42703e0bb5e42abaf",
     ".claude/hooks/context-watch.py": "551220917f63cf0ce2b97eb79e2e67e326771427a3d065b039ddd951179cf849",
     ".claude/hooks/file-guard.py": "8f790c4f2f931533f2b9a472f64fadbc679ac153a047f2c2d270068f037eed69",
     ".claude/hooks/git-guard.py": "01908a6081787d77657ad3b4a3f12b98e91feb4d3d7d7181a69a6e2b35874a42",

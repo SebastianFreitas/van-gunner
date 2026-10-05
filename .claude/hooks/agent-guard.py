@@ -13,9 +13,14 @@ no foreground flag; review of 2026-10-01). Parallel subagents are
 several Agent calls in one message, which run at the same time and
 return together, so the foreground loses nothing.
 
+Under AUTOPLAN=1 a call with no run_in_background key passes too: the
+headless CLI's Agent tool has no such field and runs every call in the
+foreground (street-setbacks phase 1, 2026-10-05).
+
 Never fails the hook: any error allows the call (exit 0).
 """
 import json
+import os
 import sys
 
 
@@ -23,6 +28,10 @@ def main():
     d = json.load(sys.stdin)
     ti = d.get("tool_input") or {}
     if ti.get("run_in_background") is False:
+        return
+    # Headless autoplan sessions (AUTOPLAN=1) have no background agents, so
+    # their Agent tool has no run_in_background field: a missing key is foreground.
+    if os.environ.get("AUTOPLAN") == "1" and "run_in_background" not in ti:
         return
     who = ti.get("subagent_type") or "subagent"
     print(json.dumps({"hookSpecificOutput": {
