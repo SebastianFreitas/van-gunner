@@ -41,7 +41,7 @@ NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 # runs of one unchanged tree on 2026-09-28 (workflow-port phase 7, D11;
 # 05-combat-back, v04 and v16 re-measured 2026-10-01 once the IDLE van pin
 # in smoke_shots.gd made the exterior views deterministic).
-# 04-combat-front, 05-combat-back, 02-idle-back re-measured 2026-10-05 as the
+# 04-combat-front, 05-combat-back, 02-idle-back, 11-rear-park-stop-back re-measured 2026-10-05 as the
 # largest diff over four captures, after smoke_seeds.gd pinned the smoke's own
 # rolls and MachineMotion held still. The floor keeps a fully deterministic
 # view from flagging float jitter; views measured at 0 rely on it. Unknown
@@ -61,7 +61,7 @@ TOLERANCE: dict[str, float] = {
 	"08-elevator-stop-back": 0.218,
 	"09-elevator-stop-outside": 0.136,
 	"10-rear-park-stop-front": 0.118,
-	"11-rear-park-stop-back": 0.292,
+	"11-rear-park-stop-back": 0.980,
 	"12-rear-park-stop-outside": 0.014,
 	"v01-idle-van-side-front": 0.0,
 	"v02-idle-van-side-rear": 0.0,
