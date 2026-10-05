@@ -39,6 +39,14 @@ uniform float skin_bump : hint_range(0.0, 1.0) = 0.0;
 uniform float sag_scale = 0.0;
 // Frequency of the fine wrinkles, in rest-space units.
 uniform float wrinkle_scale = 0.0;
+// Rare big blights on the back of the hand (warts, scabs, pit scars): cell frequency and height gain.
+uniform float blight_scale = 3.2;
+uniform float blight_gain = 20.0;
+// Vertex lift of a blight as a fraction of one blight cell (scale-free).
+uniform float blight_lift = 0.30;
+// Palm-side calluses: cell frequency and height gain.
+uniform float callus_scale = 26.0;
+uniform float callus_gain = 4.0;
 // Peak fold slope scale in view metres per unit of height gradient (the rig is 0.18-scaled).
 const float SKIN_BUMP_HEIGHT = 0.0015;
 
@@ -60,12 +68,21 @@ varying vec4 rest_data;
 
 // Skin layers (tattoo, scars, wounds, grazes, dirt); read vein_data, so it follows the varyings.
 #include "res://scenes/player/arm_skin_layers.gdshaderinc"
+// Blights and calluses; need fbm and noise21 from grime and the uniforms above.
+#include "res://scenes/player/arm_skin_blights.gdshaderinc"
 
 void vertex() {
 	rest_data = use_rest_pos ? CUSTOM1 : vec4(VERTEX, 0.0);
 	obj_pos = rest_data.xyz;
 	obj_normal = use_rest_pos ? CUSTOM2.xyz : NORMAL;
 	vein_data = CUSTOM0;
+	if (skin_bump > 0.0) {
+		// Real relief for the blights: lift along the normal by the rest-chart blight height.
+		float v_dorsal = smoothstep(-0.15, 0.30, normalize(obj_normal).y);
+		float v_accept = mix(0.12, 0.55, rest_data.w);
+		float v_h = blight_height(rest_data.xyz, v_accept);
+		VERTEX += NORMAL * (blight_lift / blight_scale) * v_dorsal * skin_bump * v_h;
+	}
 	if (!IN_SHADOW_PASS) {
 		apply_viewmodel_fov(PROJECTION_MATRIX);
 	}
@@ -117,8 +134,10 @@ float knot_at(vec3 rest) {
 	return knot_height(q);
 }
 
-float skin_height(vec3 rest, vec3 w) {
-	return 0.75 * knot_at(rest) + 0.25 * tri_fbm(rest, w, wrinkle_scale);
+float skin_height(vec3 rest, vec3 w, float accept, float dorsal, float palm) {
+	float callus = callus_height(rest);
+	return 0.75 * knot_at(rest) + 0.25 * tri_fbm(rest, w, wrinkle_scale) * (1.0 - 0.8 * callus * palm)
+			+ blight_gain * dorsal * blight_height(rest, accept) + callus_gain * palm * callus;
 }
 
 // Veins from two side projections of the across coordinates, blended so there is no seam.
@@ -189,13 +208,23 @@ void fragment() {
 	}
 	// Saggy skin: tilt the normal by the fold height's gradient, darken and roughen the hollows.
 	float fold_dark = 0.0;
+	float scab_mask = 0.0;
+	float callus_rough = 0.0;
 	if (skin_bump > 0.0) {
 		vec3 rest = rest_data.xyz;
 		float eps = 0.25 / wrinkle_scale;
+		// Rest normal faces +Y on the back of the hand (palm down); blights stay off the palm side.
+		float hand = rest_data.w;
+		float dorsal = smoothstep(-0.15, 0.30, n.y);
+		float palm = smoothstep(-0.20, -0.55, n.y) * hand;
+		float accept = mix(0.12, 0.55, hand);
 		vec3 g = vec3(
-				skin_height(rest + vec3(eps, 0.0, 0.0), w) - skin_height(rest - vec3(eps, 0.0, 0.0), w),
-				skin_height(rest + vec3(0.0, eps, 0.0), w) - skin_height(rest - vec3(0.0, eps, 0.0), w),
-				skin_height(rest + vec3(0.0, 0.0, eps), w) - skin_height(rest - vec3(0.0, 0.0, eps), w)
+				skin_height(rest + vec3(eps, 0.0, 0.0), w, accept, dorsal, palm)
+						- skin_height(rest - vec3(eps, 0.0, 0.0), w, accept, dorsal, palm),
+				skin_height(rest + vec3(0.0, eps, 0.0), w, accept, dorsal, palm)
+						- skin_height(rest - vec3(0.0, eps, 0.0), w, accept, dorsal, palm),
+				skin_height(rest + vec3(0.0, 0.0, eps), w, accept, dorsal, palm)
+						- skin_height(rest - vec3(0.0, 0.0, eps), w, accept, dorsal, palm)
 		) / (2.0 * eps);
 		g -= dot(g, n) * n; // slope along the surface only
 		// Same screen-space mapping as the vein ridge: height change per pixel, then the tilt.
@@ -213,6 +242,13 @@ void fragment() {
 		fold_dark = smoothstep(0.5, 0.25, wrinkle) * 0.6
 				+ smoothstep(0.0, 0.08, kh) * smoothstep(0.3, 0.1, kh) * 0.4;
 		col *= mix(1.0, 0.82, skin_bump * fold_dark);
+		float bm = dorsal * skin_bump;
+		vec3 binfo = blight_info(rest, accept);
+		col = blight_tint(col, binfo, bm);
+		scab_mask = (binfo.y > 0.5 && binfo.y < 1.5) ? bm * smoothstep(1.0, 0.75, binfo.z) : 0.0;
+		float callus = callus_height(rest);
+		col = mix(col, col * vec3(1.12, 1.05, 0.78), palm * skin_bump * callus * 0.7);
+		callus_rough = palm * skin_bump * callus;
 	}
 	// Dirt: fbm-masked grime that collects in the hollows.
 	float dirt_mask = smoothstep(0.55, 0.85, tri_fbm(p + vec3(31.7, 9.3, 17.1), w, mottle_m * 0.7));
@@ -226,7 +262,7 @@ void fragment() {
 
 	ALBEDO = col;
 	ROUGHNESS = clamp(roughness_value - 0.04 * (grain - 0.5) - 0.25 * vn
-			+ 0.05 * skin_bump * fold_dark, 0.60, 0.95);
+			+ 0.05 * skin_bump * fold_dark + 0.08 * scab_mask - 0.10 * callus_rough, 0.60, 0.95);
 	METALLIC = metallic_value;
 	SPECULAR = 0.5 + 0.2 * vn;
 	if (use_rest_pos) {
