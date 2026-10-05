@@ -119,29 +119,51 @@ static var right_curl: Dictionary:
 			_grip_curl = v
 		else:
 			_pistol_curl = v
-## Right index aim per gun style, degrees per joint .01/.02/.03: x extra curl, y twist along the
-## finger, z side swing, all bone-local, on top of the curl (`arms ridx`). Zero changes nothing.
-static var _pistol_ridx_aim: Array = [Vector3.ZERO, Vector3.ZERO, Vector3.ZERO]
-static var _grip_ridx_aim: Array = [Vector3.ZERO, Vector3.ZERO, Vector3.ZERO]
-## Right index knuckle shift per gun style, centimetres, bone-local (`arms ridx shift`).
-static var _pistol_ridx_shift := Vector3.ZERO
-static var _grip_ridx_shift := Vector3.ZERO
-static var right_index_aim: Array:
-	get:
-		return (_grip_ridx_aim if gun_style == &"grip" else _pistol_ridx_aim).duplicate()
-	set(v):
-		if gun_style == &"grip":
-			_grip_ridx_aim = v
-		else:
-			_pistol_ridx_aim = v
-static var right_index_shift: Vector3:
-	get:
-		return _grip_ridx_shift if gun_style == &"grip" else _pistol_ridx_shift
-	set(v):
-		if gun_style == &"grip":
-			_grip_ridx_shift = v
-		else:
-			_pistol_ridx_shift = v
+## Right finger aim per gun style, finger id -> degrees per joint .01/.02/.03: x extra curl, y twist
+## along the finger, z side swing, all bone-local, on top of the curl (`arms ridx` etc.).
+static var _pistol_fingers := _zero_fingers()
+static var _grip_fingers := _zero_fingers()
+## Right finger knuckle shift per gun style, finger id -> centimetres, bone-local (`arms ridx shift`).
+static var _pistol_shifts := _zero_shifts()
+static var _grip_shifts := _zero_shifts()
+
+
+static func _zero_fingers() -> Dictionary:
+	var d := {}
+	for f: StringName in [&"f_index", &"f_middle", &"f_ring", &"f_pinky"]:
+		d[f] = [Vector3.ZERO, Vector3.ZERO, Vector3.ZERO]
+	return d
+
+
+static func _zero_shifts() -> Dictionary:
+	var d := {}
+	for f: StringName in [&"f_index", &"f_middle", &"f_ring", &"f_pinky"]:
+		d[f] = Vector3.ZERO
+	return d
+
+
+## The current gun style's curl/twist/side aim triple for one right finger bone.
+static func finger_aim(f: StringName) -> Array:
+	var d: Dictionary = _grip_fingers if gun_style == &"grip" else _pistol_fingers
+	return (d[f] as Array).duplicate()
+
+
+## Stores the aim triple for one right finger bone under the current gun style.
+static func set_finger_aim(f: StringName, a: Array) -> void:
+	var d: Dictionary = _grip_fingers if gun_style == &"grip" else _pistol_fingers
+	d[f] = a
+
+
+## The current gun style's knuckle shift for one right finger bone.
+static func finger_shift(f: StringName) -> Vector3:
+	var d: Dictionary = _grip_shifts if gun_style == &"grip" else _pistol_shifts
+	return d[f]
+
+
+## Stores the knuckle shift for one right finger bone under the current gun style.
+static func set_finger_shift(f: StringName, v: Vector3) -> void:
+	var d: Dictionary = _grip_shifts if gun_style == &"grip" else _pistol_shifts
+	d[f] = v
 const LEFT_CURL := {
 	&"f_index": Vector3(25, 30, 20), &"f_middle": Vector3(25, 30, 20),
 	&"f_ring": Vector3(25, 30, 20), &"f_pinky": Vector3(25, 30, 20),
@@ -227,7 +249,8 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	var curl_r := right_curl
 	curl_r[&"thumb"] = right_thumb_curl
 	ArmRig.curl(model_r, ".R", curl_r)
-	ArmRig.aim_joints(model_r, "DEF-f_index.0%d.R", right_index_aim, right_index_shift)
+	for f: StringName in [&"f_index", &"f_middle", &"f_ring", &"f_pinky"]:
+		ArmRig.aim_joints(model_r, "DEF-%s.0%%d.R" % f, finger_aim(f), finger_shift(f))
 	var sk_r := ArmRig.skeleton(model_r)
 	var thumb_i := sk_r.find_bone("DEF-thumb.01.R")
 	if SHOW_GUN and thumb_i != -1:

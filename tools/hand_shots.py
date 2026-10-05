@@ -16,7 +16,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-# The first five are the `arms cam` views in scripts/debug/debug_arms_commands.gd (`VIEWS`);
+# The first five are the `arms cam` views in scripts/debug/debug_arms_cam.gd (`VIEWS`);
 # `player` is the player's own camera (handled in tools/probe/probe_runner.gd).
 VIEW_NAMES = ["front", "side", "left", "top", "elbow", "player"]
 
