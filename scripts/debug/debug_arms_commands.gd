@@ -18,7 +18,7 @@ const _Weave := preload("res://scripts/player/arms/arm_weave.gd")
 ## Every subcommand `cmd_arms` handles; the one list behind `sub_commands()`, hints and usage.
 const SUBS: PackedStringArray = [
 	"cam", "curl", "dress", "dump", "fit", "fov", "frame", "gear", "gesture", "gun", "hands",
-	"ik", "inspect", "lthumb", "lthumbaim", "lthumbroll", "reload", "ridx", "rmid", "rpinky",
+	"ik", "inspect", "lthumb", "lthumbaim", "lthumbroll", "reload", "rall", "ridx", "rmid", "rpinky",
 	"rring", "shot", "thumbaim", "thumbcurl", "thumbroll", "thumbs", "thumbturn", "touch",
 	"walk", "weave", "wrist", "wristang",
 ]
@@ -163,7 +163,7 @@ func cmd_arms(args: Array) -> String:
 		ArmsBuilder.right_curl = curl
 		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
 		return "arms curl %s %s" % [str(args[1]), str(curl[StringName(str(args[1]))])]
-	if str(args[0]) in ["ridx", "rmid", "rring", "rpinky"]:
+	if str(args[0]) in ["ridx", "rmid", "rring", "rpinky", "rall"]:
 		return _hints().rfinger_apply(args, vm)
 	if args[0] == "gun":
 		if args.size() < 2:

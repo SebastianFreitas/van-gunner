@@ -61,7 +61,7 @@ func _arg_candidates(
 			if arg_index == 2 and prev_args.size() >= 2 and prev_args[1] == "cam":
 				return PackedStringArray(["front", "side", "rside", "left", "top", "under",
 						"trig", "rtrig", "back", "elbow", "orbit", "off"])
-			if arg_index == 2 and prev_args.size() >= 2 and prev_args[1] in ["ridx", "rmid", "rring", "rpinky"]:
+			if arg_index == 2 and prev_args.size() >= 2 and prev_args[1] in ["ridx", "rmid", "rring", "rpinky", "rall"]:
 				return PackedStringArray(["1", "2", "3", "shift", "reset"])
 	if arg_index != 1:
 		return PackedStringArray()
@@ -102,7 +102,7 @@ func _hint(parts: PackedStringArray, arg_index: int) -> String:
 func _fill(parts: PackedStringArray, after_space: bool, at_end: bool) -> String:
 	if not at_end or not after_space or parts.is_empty() or parts[0] != "arms":
 		return ""
-	if parts.size() == 3 and parts[1] in ["ridx", "rmid", "rring", "rpinky"]:
+	if parts.size() == 3 and parts[1] in ["ridx", "rmid", "rring", "rpinky", "rall"]:
 		return host._arms.current_args_for(parts[1], parts[2])
 	if parts.size() == 2 and parts[1] != "curl":
 		return host._arms.current_args_for(parts[1], "")
