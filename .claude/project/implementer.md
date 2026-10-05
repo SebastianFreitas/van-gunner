@@ -43,6 +43,11 @@
   and pass the owner node, never themselves, to other systems. When a
   helper reads its owner through an untyped variable, `:=` can't infer
   the type: give those locals explicit types.
+- A Callable does not keep a `RefCounted` alive: `Helper.new(x).build.bind(...)`
+  stored for later fails with "call function 'null::build (Callable)' on
+  a null instance", because the temporary helper is freed first. Store a
+  lambda that creates the helper when it runs, or keep the helper in a
+  field.
 
 ## Layout
 

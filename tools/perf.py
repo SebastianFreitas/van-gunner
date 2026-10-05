@@ -32,7 +32,10 @@ PAIR = re.compile(r"^PERF ([^\s=]+)=(\S+)$")
 SCENE = "res://tools/perf/perf_test.tscn"
 KEY_SUFFIXES = (".fps_avg", ".fps_low1", ".ms_p99", ".ms_max", ".hitches", ".draws")
 KEY_EXACT = ("open.van_ready_ms", "open.arms_ms")
-KEY_PARTS = (".span.tile_spawn.", ".span.road_floor.", ".span.facade_side.")
+KEY_PARTS = (
+    ".span.tile_spawn.", ".span.road_floor.", ".span.facade_side.",
+    ".span.tile_step.", ".span.road_wreck.",
+)
 
 
 def parse_args() -> argparse.Namespace:

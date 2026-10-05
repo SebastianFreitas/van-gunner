@@ -6,9 +6,13 @@ extends RefCounted
 const RARE_START_SEGMENT := 6
 const RARE_COOLDOWN := 3
 
+const _TileBuildQueue := preload("res://scripts/travel/tile_build_queue.gd")
+
 ## Untyped on purpose: TravelController and ActDeckController avoid class_name cycles,
 ## so helpers don't name the controller's class either.
 var tc: Node
+## Build steps of tiles spawned ahead of the van, drained a few per frame.
+var _queue := _TileBuildQueue.new()
 
 
 func _init(owner: Node) -> void:
@@ -38,20 +42,39 @@ func configure_initial_route() -> void:
 func spawn_segments_ahead() -> void:
 	if tc._segment_spawning_paused:
 		return
-	spawn_route_segments_until(tc.van_follow.progress + tc.segment_ahead_distance)
+	spawn_route_segments_until(tc.van_follow.progress + tc.segment_ahead_distance, true)
 
 
-func spawn_route_segments_until(target_progress: float) -> void:
+func step_builds() -> void:
+	_queue.step()
+
+
+func flush_builds() -> void:
+	_queue.flush()
+
+
+func spawn_route_segments_until(target_progress: float, sliced := false) -> void:
 	var route_end: float = tc.travel_path.curve.get_baked_length()
 	while tc._next_segment_progress <= target_progress and tc._next_segment_progress < route_end:
 		spawn_world_segment(
 			sample_route_transform(tc._next_segment_progress),
-			tc._next_segment_progress
+			tc._next_segment_progress,
+			sliced
 		)
 		tc._next_segment_progress += tc.segment_length
 
 
-func spawn_world_segment(world_transform: Transform3D, route_progress: float = NAN) -> Node3D:
+func _note_rare(took_rare: bool) -> void:
+	if took_rare:
+		tc._rare_cooldown = RARE_COOLDOWN
+	elif tc._rare_cooldown > 0:
+		tc._rare_cooldown -= 1
+
+
+func spawn_world_segment(
+	world_transform: Transform3D, route_progress: float = NAN, sliced := false
+) -> Node3D:
+	flush_builds()
 	var perf_t := PerfStats.begin()
 	var segment := tc.segment_scene.instantiate() as Node3D
 	if segment.has_method(&"begin_build"):
@@ -61,21 +84,31 @@ func spawn_world_segment(world_transform: Transform3D, route_progress: float = N
 	if is_finite(route_progress):
 		segment.set_meta(&"route_progress", route_progress)
 		segment.set_meta(&"route_gen", tc._route_gen)
-	if segment.has_method(&"configure"):
+	if sliced and segment.has_method(&"build_steps"):
 		var district := pick_district()
 		var seed_value: int = hash([GameSession.run_seed, tc._segment_index])
 		var neighborhood_seed: int = hash([GameSession.run_seed, tc._neighborhood_start])
 		var allow_rare: bool = tc._segment_index >= RARE_START_SEGMENT and tc._rare_cooldown <= 0
-		var took_rare: bool = segment.configure(seed_value, district, neighborhood_seed, allow_rare)
-		if took_rare:
-			tc._rare_cooldown = RARE_COOLDOWN
-		elif tc._rare_cooldown > 0:
-			tc._rare_cooldown -= 1
-	if segment.has_method(&"apply_side_streets"):
 		var side_streets := pick_side_streets()
-		segment.apply_side_streets(side_streets.x != 0, side_streets.y != 0)
-	if segment.has_method(&"end_build"):
-		segment.end_build()
+		_queue.add(segment, segment.build_steps(
+			seed_value, district, neighborhood_seed, allow_rare,
+			side_streets.x != 0, side_streets.y != 0, _note_rare
+		))
+	else:
+		if segment.has_method(&"configure"):
+			var district := pick_district()
+			var seed_value: int = hash([GameSession.run_seed, tc._segment_index])
+			var neighborhood_seed: int = hash([GameSession.run_seed, tc._neighborhood_start])
+			var allow_rare: bool = tc._segment_index >= RARE_START_SEGMENT and tc._rare_cooldown <= 0
+			var took_rare: bool = segment.configure(
+				seed_value, district, neighborhood_seed, allow_rare
+			)
+			_note_rare(took_rare)
+		if segment.has_method(&"apply_side_streets"):
+			var side_streets := pick_side_streets()
+			segment.apply_side_streets(side_streets.x != 0, side_streets.y != 0)
+		if segment.has_method(&"end_build"):
+			segment.end_build()
 	tc._world_pieces.append(segment)
 	tc._segment_index += 1
 	PerfStats.end(&"tile_spawn", perf_t)
@@ -104,6 +137,7 @@ func upcoming_corridor_progress(tiles_ahead: int) -> float:
 
 
 func corridor_segment_near_progress(route_progress: float) -> Node3D:
+	flush_builds()
 	var best: Node3D
 	var best_dist := INF
 	for piece in tc._world_pieces:

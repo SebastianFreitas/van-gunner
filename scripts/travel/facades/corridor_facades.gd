@@ -56,6 +56,14 @@ static func side_index(side: StringName) -> int:
 
 
 func configure(seed_: int, district_: int, neighborhood_seed_: int, allow_rare_: bool) -> bool:
+	configure_begin(seed_, district_, neighborhood_seed_, allow_rare_)
+	rebuild_side(0)
+	rebuild_side(1)
+	return configure_finish()
+
+
+## configure() without the builds: stores the tile's inputs and rolls its set-piece.
+func configure_begin(seed_: int, district_: int, neighborhood_seed_: int, allow_rare_: bool) -> void:
 	tile_seed = seed_
 	district = district_
 	neighborhood_seed = neighborhood_seed_
@@ -66,8 +74,10 @@ func configure(seed_: int, district_: int, neighborhood_seed_: int, allow_rare_:
 	tile_rng.seed = hash([tile_seed, &"rare"])
 	_tile_rng_seed = tile_rng.seed
 	_rare = _FacadeSetPieces.roll(tile_rng, district_res, allow_rare, _openings)
-	rebuild_side(0)
-	rebuild_side(1)
+
+
+## The span or overhead that follows both sides; true when the tile kept a set-piece.
+func configure_finish() -> bool:
 	if not _rare.is_empty() and (_rare[&"piece"] as FacadeSetPiece).span:
 		_build_span()
 	if _rare.is_empty() and _openings == [0, 0]:

@@ -62,8 +62,9 @@ container has only `python3`.
   (`rush`) and a fight with speed mode off (`combat`). Prints `PERF
   key=value` lines: open times, FPS, frame-time percentiles, hitches over
   25 ms with the build that caused each, draw calls, and count/avg/max ms
-  per `PerfStats` span (`tile_spawn`, `road_floor`, `facade_side`,
-  `arms_build`, `van_look`, `van_load`, `street_art`). `--save` writes
+  per `PerfStats` span (`tile_spawn`, `tile_step`, `road_floor`,
+  `road_wreck`, `facade_side`, `arms_build`, `van_look`, `van_load`,
+  `street_art`). `--save` writes
   `.godot/perf/NAME.json` (per checkout, gitignored); `--compare` prints
   before, after and the change. `--timeout` defaults to 320 s. Ends `PERF
   CLEAN`. No verify stamp. FPS and hitch counts swing with whatever else

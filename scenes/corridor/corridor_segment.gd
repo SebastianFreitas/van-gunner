@@ -74,6 +74,43 @@ func configure(tile_seed: int, district_idx: int, neighborhood_seed: int, allow_
 	return has_rare
 
 
+## The tile's build as ordered steps for a caller that spreads them over frames: run in order they
+## equal configure() + apply_side_streets() + end_build(). on_rare gets configure()'s result.
+func build_steps(
+	tile_seed: int, district_idx: int, neighborhood_seed: int, allow_rare: bool,
+	left: bool, right: bool, on_rare: Callable
+) -> Array[Callable]:
+	var steps: Array[Callable] = []
+	steps.append(func() -> void:
+		_ensure_facades()
+		_facades.configure_begin(
+			tile_seed, clampi(district_idx, 0, DISTRICT_COUNT - 1), neighborhood_seed, allow_rare
+		)
+		_facades.rebuild_side(0)
+	)
+	steps.append(func() -> void:
+		_facades.rebuild_side(1)
+	)
+	steps.append(func() -> void:
+		on_rare.call(_facades.configure_finish())
+		_tile_seed = tile_seed
+		_has_tile_seed = true
+		apply_side_streets(left, right)
+	)
+	steps.append(func() -> void:
+		# A floor that does not rebuild in end_build must not keep the flag.
+		for floor_node: RoadFloor in _tile_floors():
+			floor_node.defer_wreck = true
+		end_build()
+		for floor_node: RoadFloor in _tile_floors():
+			floor_node.defer_wreck = false
+	)
+	# Main floor two sides, then each branch floor two sides; an entry with nothing pending is a no-op.
+	for _i in 6:
+		steps.append(_build_floor_wreck)
+	return steps
+
+
 func apply_side_streets(left: bool, right: bool) -> void:
 	_set_side_street(&"left", left)
 	_set_side_street(&"right", right)
@@ -223,6 +260,23 @@ func _build_side_street_corner_returns(left_open: bool, right_open: bool) -> voi
 			right_w = right_road.sidewalk_width
 		_road_floor.spawn_corner_return(host, 1.0, 1.0, main_w, right_w, "RightPos", outward)
 		_road_floor.spawn_corner_return(host, 1.0, -1.0, main_w, right_w, "RightNeg", outward)
+
+
+## Lays one pending wreck side, from the first floor that has one.
+func _build_floor_wreck() -> void:
+	for floor_node: RoadFloor in _tile_floors():
+		if floor_node.build_pending_wreck():
+			return
+
+
+func _tile_floors() -> Array[RoadFloor]:
+	var floors: Array[RoadFloor] = []
+	for floor_node: RoadFloor in [
+		_road_floor, _side_street_road(_side_street_left), _side_street_road(_side_street_right)
+	]:
+		if floor_node != null:
+			floors.append(floor_node)
+	return floors
 
 
 func _side_street_road(side_street: Node3D) -> RoadFloor:

@@ -388,6 +388,7 @@ func leave_shop() -> void:
 
 func _physics_process(delta: float) -> void:
 	_tick_speed_orders(delta)
+	_world.step_builds()
 	if _turn_state == TurnState.ELEVATING:
 		_stops.sync_elevator_platform()
 		_stops.keep_player_on_van_rig()

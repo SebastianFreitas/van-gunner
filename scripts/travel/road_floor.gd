@@ -13,6 +13,7 @@ extends Node3D
 const RoadFloorDetails = preload("res://scripts/travel/road_floor_details.gd")
 const RoadFloorMaterials = preload("res://scripts/travel/road_floor_materials.gd")
 const RoadFloorWreck := preload("res://scripts/travel/road_floor_wreck.gd")
+const _Boxes := preload("res://scripts/travel/road_floor_boxes.gd")
 
 @export var span_x := 18.0
 @export var span_z := 20.0
@@ -51,6 +52,10 @@ var wreck_spans: Array = [[], []]
 var dressing_z: Array = [[], []]
 
 var _built := false
+## Set true before a rebuild to leave the sidewalk wreck sides unbuilt; build_pending_wreck() lays
+## them one per call. One-shot: the rebuild that reads it clears it.
+var defer_wreck := false
+var _pending_wreck: Array[Callable] = []
 var _body: StaticBody3D
 
 
@@ -66,9 +71,20 @@ func rebuild() -> void:
 		child.free()
 	_body = null
 	_built = false
+	_pending_wreck.clear()
 	var perf_t := PerfStats.begin()
 	_build()
 	PerfStats.end(&"road_floor", perf_t)
+
+
+## Lays one sidewalk wreck side a deferred rebuild left over. False when nothing was pending.
+func build_pending_wreck() -> bool:
+	if _pending_wreck.is_empty():
+		return false
+	var perf_t := PerfStats.begin()
+	_pending_wreck.pop_front().call()
+	PerfStats.end(&"road_wreck", perf_t)
+	return true
 
 
 ## Hide the slab *and* its walk collision. Visibility alone leaves a street-height
@@ -312,10 +328,18 @@ func _build() -> void:
 		for side_idx in 2:
 			if (side_idx == 0 and not sidewalk_left) or (side_idx == 1 and not sidewalk_right):
 				continue
-			RoadFloorWreck.new(self).build(
-				side_idx, walk_len, walk_cz, road_half, sidewalk_top,
-				road_surface_y - gutter_depth, curb_face_depth
-			)
+			# A lambda, not `.build.bind(...)`: a bound Callable does not keep the RefCounted
+			# helper alive, so it would be freed before the deferred call.
+			var lay := func() -> void:
+				RoadFloorWreck.new(self).build(
+					side_idx, walk_len, walk_cz, road_half, sidewalk_top,
+					road_surface_y - gutter_depth, curb_face_depth
+				)
+			if defer_wreck:
+				_pending_wreck.append(lay)
+			else:
+				lay.call()
+	defer_wreck = false
 
 
 func _add_box_centered(
@@ -339,33 +363,7 @@ func _add_box_centered_to(
 	collision_body: StaticBody3D = null,
 	visual := true
 ) -> void:
-	if visual:
-		var box := BoxMesh.new()
-		box.size = size
-		var mi := MeshInstance3D.new()
-		mi.name = node_name
-		mi.mesh = box
-		mi.material_override = material
-		mi.position = pos
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-		host.add_child(mi)
-
-	var body := collision_body
-	if body == null and collide and include_collision:
-		body = host.get_node_or_null("CornerSurfaces") as StaticBody3D
-		if body == null:
-			body = StaticBody3D.new()
-			body.name = "CornerSurfaces"
-			host.add_child(body)
-
-	if collide and include_collision and body:
-		var col := CollisionShape3D.new()
-		col.name = "%sCollision" % node_name
-		var shape := BoxShape3D.new()
-		shape.size = size
-		col.shape = shape
-		col.position = pos
-		body.add_child(col)
+	_Boxes.add_box(self, host, node_name, size, pos, material, collide, collision_body, visual)
 
 
 func _seed_value(salt: int) -> int:
