@@ -7,7 +7,12 @@ signal opened
 signal closed
 
 const MAX_LINES := 200
+const MAX_HISTORY := 50
 const PROMPT := "> "
+const Frame := preload("res://scripts/ui/debug_console_frame.gd")
+
+## Panel offsets (left, top, width, height) kept across scene reloads; empty = tscn default.
+static var _saved_rect := Rect2()
 
 @onready var output: RichTextLabel = %Output
 @onready var input_line: LineEdit = %InputLine
@@ -19,12 +24,15 @@ var _history_index := -1
 var _completion_index := -1
 var _completion_key := ""
 var _keep_input_focus := false
+var _frame: RefCounted
 
 
 func _ready() -> void:
 	if not DebugConfig.ENABLED:
 		queue_free()
 		return
+	add_to_group(&"debug_console")
+	_frame = Frame.new(self, _saved_rect)
 	_apply_closed_state()
 	set_process(true)
 	input_line.keep_editing_on_text_submit = true
@@ -34,6 +42,11 @@ func _ready() -> void:
 	input_line.focus_exited.connect(_on_input_focus_exited)
 	output.focus_mode = Control.FOCUS_NONE
 	_log("Debug console ready. H to open, Esc to close. Try: help, list boons, give <tab>")
+
+
+## Game code polls this to ignore movement and action keys while the player types.
+func is_typing() -> bool:
+	return is_visible_in_tree()
 
 
 func _process(_delta: float) -> void:
@@ -54,6 +67,18 @@ func _input(event: InputEvent) -> void:
 		close()
 		get_viewport().set_input_as_handled()
 		return
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_PAGEUP or event.keycode == KEY_PAGEDOWN:
+			var bar := output.get_v_scroll_bar()
+			var direction := -1.0 if event.keycode == KEY_PAGEUP else 1.0
+			bar.value += direction * bar.page
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_L and event.ctrl_pressed and not event.echo:
+			_lines = PackedStringArray()
+			output.text = ""
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if not input_line.has_focus():
 			_steal_key_into_input(event as InputEventKey)
@@ -74,6 +99,7 @@ func open() -> void:
 		_focus_input()
 		return
 	show()
+	_frame.clamp_to_viewport()
 	mouse_filter = MOUSE_FILTER_STOP
 	input_line.text = ""
 	_keep_input_focus = true
@@ -96,6 +122,10 @@ func toggle() -> void:
 		close()
 	else:
 		open()
+
+
+func _save_rect(rect: Rect2) -> void:
+	_saved_rect = rect
 
 
 func _apply_closed_state() -> void:
@@ -160,6 +190,8 @@ func _log(text: String) -> void:
 func _push_history(line: String) -> void:
 	if _history.is_empty() or _history[_history.size() - 1] != line:
 		_history.append(line)
+		if _history.size() > MAX_HISTORY:
+			_history.remove_at(0)
 	_history_index = _history.size()
 
 
@@ -187,6 +219,10 @@ func _apply_tab_completion(reverse: bool) -> void:
 	var ctx: Dictionary = DebugCommands.get_completion_context(text, caret)
 	var matches: Array = ctx.get("matches", [])
 	if matches.is_empty():
+		var fill: String = ctx.get("fill", "")
+		if not fill.is_empty():
+			input_line.text = text.substr(0, caret) + fill + text.substr(caret)
+			input_line.caret_column = caret + fill.length()
 		_update_suggestion()
 		return
 
@@ -245,6 +281,10 @@ func _update_suggestion() -> void:
 	)
 	var matches: Array = ctx.get("matches", [])
 	if matches.is_empty():
+		var usage: String = ctx.get("hint", "")
+		if not usage.is_empty():
+			suggestion.text = usage
+			return
 		suggestion.text = "Tab completes commands and item ids  ·  list boons"
 		return
 	var preview: PackedStringArray = PackedStringArray()

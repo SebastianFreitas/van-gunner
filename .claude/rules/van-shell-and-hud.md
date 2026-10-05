@@ -44,7 +44,9 @@ Any non-interactive HUD control must be `MOUSE_FILTER_IGNORE`, otherwise clickin
 
 ## Debug console
 
-`DebugCommands` (autoload) keeps `run`, help, completion and the `_commands` table in a fixed key order; each command group lives in `scripts/debug/debug_*_commands.gd` and list/id helpers in `debug_catalog.gd`. Add a command by adding a `cmd_x` method to the right group and one entry in `_register_commands`.
+`DebugCommands` (autoload) keeps `run`, help, completion and the `_commands` table in a fixed key order; each command group lives in `scripts/debug/debug_*_commands.gd` and list/id helpers in `debug_catalog.gd`. Add a command by adding a `cmd_x` method to the right group, one entry in `_register_commands` and one line in `_usage_lines()` (help is built from it; a missing line asserts). Completion lives in `debug_completion.gd` (`_arg_candidates` is the one source of argument lists). `arms` subs come from `SUBS` in `debug_arms_commands.gd`; their hints and current-value read-backs are in `debug_arms_hints.gd`, so a new arms sub needs a `SUBS` entry and an `INFO` line there. Tab on `arms <sub> ` with nothing after it fills the current values.
+
+The console sits bottom-left and is in group `debug_console` with `is_typing()`. Event handlers are swallowed by its `_unhandled_input`, but `Input.*` polling ignores that: any game code that polls keys (like `fps_player.gd` movement, jump, shoot, interact hold) must check `is_typing()` through the group, or typing WASD walks the player.
 
 In game, **H** opens it. `help` lists commands; `list commands|boons|items|classes|cards|stops|sounds|tree` enumerates content. `stop <id>` forces that side stop on the next fork (`stop rare_shop` or `stop elevator shop` for the elevator), `class <id>` equips a class in any phase, `parts [n]` grants Rare Parts, `tree_reset` wipes the schematic, `sound <cue>` auditions a cue. `speed` fast-forwards and auto-resolves reveals and boon picks, so it skips the panels; don't use it to test UI. `chill` / `unchill` pause and resume encounters without leaving the run. The main scene is `scenes/boot/boot.tscn`.
 
