@@ -186,7 +186,8 @@ static func build(mi: MeshInstance3D, sk: Skeleton3D, node_name: StringName,
 	node.skin = mi.skin
 	node.skeleton = NodePath("..")
 	node.transform = mi.transform
-	node.cast_shadow = mi.cast_shadow
+	# The shadow pass skips the viewmodel lens, so a rig shadow would land off its mesh.
+	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	node.layers = mi.layers
 	node.material_override = mat
 	sk.add_child(node)

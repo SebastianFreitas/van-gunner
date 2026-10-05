@@ -20,7 +20,7 @@ uniform vec4 wound_d[4]; // xyz long direction, w elongation
 uniform int knuckle_count = 0;
 uniform vec4 knuckles[4]; // xyz centre, w radius
 uniform float dirt_amount = 0.0;
-uniform vec3 dirt_tone = vec3(0.012, 0.010, 0.007); // linear, the skin is only about 0.06
+uniform vec3 dirt_tone = vec3(0.030, 0.024, 0.016); // linear, the skin is only about 0.06
 uniform vec3 blood_tone = vec3(0.07, 0.010, 0.007); // linear
 uniform int tat_count = 0;
 uniform vec4 tat_segs[64]; // x0 y0 x1 y1 in box units
@@ -165,9 +165,9 @@ void sk_dirt(vec3 p, float hand, float axis_d, float fw, inout vec3 albedo, inou
 			+ (1.0 - wu) * noise21(vec2(axis_d * 2.0, vein_data.y * 64.0) + vec2(5.3, 8.1));
 	float streak = mix(0.2, smoothstep(0.50, 0.80, sn), sk_fade(1.0 / 64.0, fw));
 	mask += k * 0.35 * streak;
-	mask += k * 0.5 * smoothstep(0.58, 0.62, f);
+	mask += k * 0.25 * smoothstep(0.56, 0.64, f);
 	mask = clamp(mask, 0.0, 1.0);
-	albedo = mix(albedo, dirt_tone, mask * 0.85);
+	albedo = mix(albedo, dirt_tone, mask * 0.6);
 	rough = min(rough + 0.05 * mask, 0.95);
 }
 

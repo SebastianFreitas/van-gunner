@@ -33,6 +33,7 @@ static func apply(mat: ShaderMaterial, model: Node3D, side: String, rng: RandomN
 	_scars(mat, model, mi, sk, side, rng, box)
 	_wounds(mat, model, mi, sk, side, rng)
 	_knuckles(mat, model, mi, sk, side, rng)
+	ArmSkinFolds.apply(mat, mi, sk, side)
 	mat.set_shader_parameter(&"dirt_amount", rng.randf_range(0.6, 0.9))
 
 

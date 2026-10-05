@@ -127,6 +127,47 @@ Geometry:
   diagonals pushed out 1.10, pad 0.80). Thumbs take the same bony ring,
   lumps, knots and sag (owner, 2026-10-04) but keep their own radii and
   profiles, so grip and pose are untouched. Both hands share the code.
+  Knuckle creases and back-of-hand tendons are shading only (owner's
+  reference: stacked wrinkle folds, tendons fanning from the wrist):
+  `arm_skin_folds.gdshaderinc` adds a signed relief to `skin_height` from
+  rest-space joints and cords that `ArmSkinFolds.apply` sets per arm with
+  no rng draw; it never reaches vertex(), so it cannot cover a claw. Veins
+  read by shade as well as tilt (`vein_shade`, `vein_wrist`, `vein_wrap`).
+  No rig mesh casts a shadow (`ViewmodelFov._walk`, and `ArmSkinMesh.build`
+  at creation): the shadow pass skips the viewmodel lens, so one would land
+  off its mesh. The dark patch on the back of the left hand was the dirt
+  layer, not a cast shadow and not the wound (`sk_dirt` off: hand back 59
+  to 85; `sk_wounds` off: no change), so `dirt_tone` is lifted and the
+  dirt mix eased to 0.6: hand back 59 to 75, against 86 with no layers.
+  The skin normal tilt is capped at `MAX_SKIN_TILT`, a guard only: the
+  forearm's black stipple did not move at any cap (STIPPLE 34 at 1.2, 0.8
+  and 0.5). It drops to 14 with the tilt off, so the tilt at its ordinary
+  strength prints most of it, and it is still open (42 after the lighter
+  dirt and the deeper folds).
+  One fixed hand (owner, 2026-10-05): skin tone, scars, wounds and dirt
+  hash from ArmsBuilder.HAND_LOOK_SEED, never the van seed. Muscle lumps,
+  the shoulder offset and each finger's sideways crook hash from
+  HAND_SHAPE_SEED 1337, the seed the posture and the claws were tuned
+  under, for every van seed. Never change it or swap the crook for a
+  table: seed 7 with a hand-picked table turned the left hand 1.7 degrees
+  and moved its fingertips sideways up to 0.015, a posture change the
+  owner forbids. The skin shader's `seed_offset` is shape too: it places
+  the wart domes `arm_surface.gdshader` lifts out of the skin along the
+  normals (and shifts the veins and grime mottle), so the builder sets it
+  to the constant `HAND_SKIN_OFFSET` 91.165, seed 1337's draw. On seed 7's
+  2.32 the domes sat on the index, middle and ring fingertips and swelled
+  them over the claws (crop pixels differing from the pre-branch shot:
+  8693 of 40000, 290 with the constant) while the finger mesh, bones and
+  claw boxes were equal: a swallowed claw can be shader lift, so compare
+  the material's uniforms as well as the mesh. Only the thumb claw grows
+  out of a cuticle fold: its tube's dorsal skin swells CUTICLE_H 1.20 just
+  behind the nail root and drops onto the plate. The four fingers have no
+  fold (owner, 2026-10-05: the nails were "swallowed by the finger", only
+  a tip showed; "the nails were kinda fine"): a finger claw rises out of
+  the skin from tip-bone t .36 to .60 (ArmClaw.BED_FROM), so a fold at .48
+  stood above its root. Any skin fold must end behind the claw root and
+  never rise above the claw; check claw top minus skin top, not the look
+  from far away. Only the tattoo text and the cloth still follow the van.
   Fingers (owner, 2026-10-04: joints read as a line, "each bone a piece
   instead of a hand"; wanted gnarled, tree-like, saggy old meat): each finger
   is one gnarled tube with no pinch at the joints (end rings `.78` and `.92`

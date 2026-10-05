@@ -1,17 +1,21 @@
 class_name ArmFingers
 extends RefCounted
-## Procedural finger tubes: per hand one skinned mesh of five bony finger tubes (knuckle knobs, thin shafts, flat pads, tapering tips, a seeded sideways crook) in the glb skin's bind space.
+## Procedural finger tubes: per hand one skinned mesh of five bony finger tubes (knuckle knobs, thin shafts, flat pads, tapering tips, a fixed sideways crook) in the glb skin's bind space.
 
 ## Vertices per ring.
 const SECTORS := 8
-## Dorsal half-width kept on the flat pad side of a ring.
-const PAD_H := 0.86
-const BONY_SQUASH := 0.86  ## lateral squash of a finger ring (thumb keeps 0.92)
+const BONY_SQUASH := 0.86  ## lateral squash of a finger ring
 const BONY_CORNER := 1.10  ## the four diagonal sectors pushed out so the ring reads square
-const BONY_PAD_H := 0.80  ## flatter pad side for the fingers (thumb keeps PAD_H)
+const BONY_PAD_H := 0.80  ## dorsal half-width kept on the flat pad side of a ring
 ## Dorsal half-width of the nail bed, on the distal rings from this fraction of the tip on.
 const NAIL_H := 0.85
 const NAIL_FROM := 0.55
+## Cuticle fold: the dorsal skin swells to this height factor just behind the nail root, so
+## the claw grows out from under a lip of skin.
+const CUTICLE_H := 1.20
+const CUTICLE_BACK := 0.07  ## how far behind the nail root (.03 bone t) the lip peaks
+const CUTICLE_W := 0.09  ## half width of the lip's rise on the knuckle side, in t
+const THUMB_NAIL_FROM := 0.52  ## where the thumb's nail starts (ArmClaw.THUMB_BED_FROM)
 ## Thumb shaft radius as a multiple of the index finger's shaft radius.
 const THUMB_R := 1.35
 ## Old-meat lumpiness: slight per-ring radius wobble, sparse peaked knots (mostly at the joints) and a palm-side sag, all as fractions of the ring radius.
@@ -27,11 +31,11 @@ const SAG := 0.10
 static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumberGenerator,
 		mat: Material) -> Dictionary:
 	var sk := ArmRig.skeleton(model)
-	var mi := _glb_mesh(sk)
+	var mi := ArmFingerGlb.glb_mesh(sk)
 	if mi == null or mi.skin == null or not (mi.mesh is ArrayMesh):
 		push_warning("ArmFingers: no skinned arm mesh, no finger tubes")
 		return {}
-	var own := _owned(mi)
+	var own := ArmFingerGlb.owned(mi)
 	var verts := PackedVector3Array()
 	var bones := PackedInt32Array()
 	var weights := PackedFloat32Array()
@@ -39,7 +43,6 @@ static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumber
 	var out := {}
 	var ref_r := 0.0
 	for f in ArmRig.FINGERS:
-		# Drawn even when the finger is skipped, so one missing bone keeps the others' crooks.
 		var cr := rng.randf_range(-0.40, 0.40) * (0.0 if f == &"thumb" else 1.0)
 		var fg := _finger(mi, sk, own, f, suffix, girth, cr, ref_r)
 		if fg.is_empty():
@@ -86,7 +89,7 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 		lens[j] = ArmWrap.bone_len(mi, sk, names[j])
 	var root_pts: PackedVector3Array = own.get(binds[first], PackedVector3Array())
 	var tip_pts: PackedVector3Array = own.get(binds[3], PackedVector3Array())
-	lens[3] = _tip_len(tip_pts, lens[2])
+	lens[3] = ArmFingerGlb.tip_len(tip_pts, lens[2])
 	# Pads face down; the thumb's faces the index finger, turning its flat pad and claw inward.
 	var pad := Vector3.DOWN
 	if thumb:
@@ -96,7 +99,7 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 					- ArmSkinMesh.ring_frame(mi, sk, names[2], 0.0).origin
 			if toward.length() >= 1e-4:
 				pad = toward
-	var r0 := _root_radius(root_pts, lens[first])
+	var r0 := ArmFingerGlb.root_radius(root_pts, lens[first])
 	# The thumb is sized from the index's shaft, not its own thin glb root.
 	var use_ref := thumb and ref_r > 0.0
 	var rk := _radii(ref_r if use_ref else r0, girth, thumb, use_ref)
@@ -106,9 +109,9 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 		&"verts": PackedVector3Array(), &"centres": PackedVector3Array(), &"wts": [],
 		&"rings": 0, &"names": names, &"binds": binds, &"lens": lens,
 		&"cr": cr, &"r1": shaft[1], &"r2": shaft[2], &"r3": shaft[3], &"pad": pad,
-		&"tip_rings": [], &"bony": true, &"name": f,
+		&"tip_rings": [], &"name": f, &"nail_from": THUMB_NAIL_FROM if thumb else NAIL_FROM,
 	}
-	var tip_prof := _tip_profile(knob[3], shaft[3], not thumb)
+	var tip_prof := _tip_profile(knob[3], shaft[3], not thumb, fg[&"nail_from"])
 	for j in range(first, 4):
 		var prof := tip_prof
 		if j == 1:
@@ -170,23 +173,33 @@ static func _segment(mi: MeshInstance3D, sk: Skeleton3D, fg: Dictionary, j: int,
 	var ax := _axes(base, pad)
 	var parent := _parent_bind(mi, sk, names[j])
 	var nxt := binds[j + 1] if j < 3 else -1
-	var bony: bool = fg[&"bony"]
 	var fname: StringName = fg[&"name"]
+	var thumb_tip := j == 3 and fname == &"thumb"
 	for i in prof.size():
 		var p := prof[i]
 		# Claws are fitted to the .03 tip rings, so those stay smooth.
-		var lumpy := bony and not (j == 3 and p.x >= 0.78)
+		var lumpy := not (j == 3 and p.x >= 0.78)
+		# `d` is the distance past the cuticle lip's peak (-1 where there is no lip: every bone
+		# but the thumb's .03). The two lip rings `_tip_profile` adds (d 0 and 0.03) stay smooth
+		# like the tip but still sag; `ni` is the ring index without them, so the other rings
+		# keep their wobble.
+		var d: float = p.x - fg[&"nail_from"] + CUTICLE_BACK if thumb_tip else -1.0
+		var lip := d > -0.001 and d < 0.031
+		var ni := i - (2 if d > 0.0 else 0)
 		var rad := p.y
-		if lumpy:
-			rad *= 1.0 + LUMP_RING * _noise(fname, j, i, -1)
+		if lumpy and not lip:
+			rad *= 1.0 + LUMP_RING * _noise(fname, j, ni, -1)
 		var c := base.origin + y * p.x * lens[j] + ax[0] * p.z * rad \
 				+ ax[1] * _crook(j, p.x, fg)
 		if lumpy and p.x >= 0.0 and p.x <= 1.0:
 			# Flesh hangs mid-bone, not at the joints.
 			c -= ax[0] * SAG * rad * clampf(sin(PI * p.x), 0.0, 1.0)
 		var h := NAIL_H if j == 3 and p.x >= NAIL_FROM else 1.0
-		_ring(fv, c, ax[0], ax[1], rad, h, bony, fname if lumpy else &"", j, i, p.x)
-		if j == 3:
+		# The skin swells into a lip behind the nail root: slow rise, sharp drop onto the plate.
+		var lift := 1.0 - smoothstep(0.0, 0.03 if d > 0.0 else CUTICLE_W, absf(d))
+		h *= 1.0 + (CUTICLE_H - 1.0) * lift
+		_ring(fv, c, ax[0], ax[1], rad, h, fname if lumpy and not lip else &"", j, ni, p.x)
+		if j == 3 and not lip:
 			var tips: Array = fg[&"tip_rings"]
 			tips.append({&"t": p.x, &"centre": c, &"half_w": 0.92 * rad, &"half_h": rad * h})
 		centres.append(c)
@@ -205,20 +218,18 @@ static func _noise(f: StringName, j: int, i: int, s: int) -> float:
 ## Eight points around centre `c`: sector 0 on the dorsal side, the pad half flattened. A
 ## non-empty `lump_f` pushes sparse knots out of ring `i` of bone `j` (`t` along the bone).
 static func _ring(fv: PackedVector3Array, c: Vector3, dorsal: Vector3, lateral: Vector3,
-		radius: float, dorsal_h: float, bony: bool = false, lump_f: StringName = &"",
-		j: int = 0, i: int = 0, t: float = 0.5) -> void:
-	var pad_h := BONY_PAD_H if bony else PAD_H
-	var side := BONY_SQUASH if bony else 0.92
+		radius: float, dorsal_h: float, lump_f: StringName = &"", j: int = 0, i: int = 0,
+		t: float = 0.5) -> void:
 	for s in SECTORS:
 		var a := TAU * float(s) / float(SECTORS)
-		var h := dorsal_h if cos(a) >= 0.0 else pad_h
-		var off := dorsal * cos(a) * radius * h + lateral * sin(a) * radius * side
+		var h := dorsal_h if cos(a) >= 0.0 else BONY_PAD_H
+		var off := dorsal * cos(a) * radius * h + lateral * sin(a) * radius * BONY_SQUASH
 		if lump_f != &"":
 			var k := maxf(0.0, _noise(lump_f, j, i, s) - KNOT_SPARSE) / (1.0 - KNOT_SPARSE)
 			# Knots crowd the joints, like arthritic nodes; mid-bone stays mostly flat.
 			var at_joint := 1.0 - 0.7 * clampf(sin(PI * clampf(t, 0.0, 1.0)), 0.0, 1.0)
 			off *= 1.0 + KNOT * k * at_joint
-		fv.append(c + off * (BONY_CORNER if bony and s % 2 == 1 else 1.0))
+		fv.append(c + off * (BONY_CORNER if s % 2 == 1 else 1.0))
 
 
 ## Knuckle bone (".01") rings: the first ring sits a quarter bone back inside the palm so the
@@ -249,8 +260,11 @@ static func _shaft_profile(k: float, r: float, kn: float, bony: bool) -> Array[V
 	return p
 
 
-## Distal bone rings: knob `k3`, shaft `r3`, a tapering tip whose pad side sits low.
-static func _tip_profile(k3: float, r3: float, bony: bool = false) -> Array[Vector3]:
+## Distal bone rings: knob `k3`, shaft `r3`, a tapering tip whose pad side sits low. The thumb
+## (`not bony`) also gets two rings on the cuticle lip just behind its nail root (`nail_from`),
+## on the profile's own line.
+static func _tip_profile(k3: float, r3: float, bony: bool = false,
+		nail_from: float = NAIL_FROM) -> Array[Vector3]:
 	var p: Array[Vector3] = [
 		Vector3(0.00, k3, 0.18),
 		Vector3(0.14, 0.98 * k3, 0.12) if bony else Vector3(0.14, 0.95 * k3, 0.10),
@@ -258,6 +272,13 @@ static func _tip_profile(k3: float, r3: float, bony: bool = false) -> Array[Vect
 		Vector3(0.55, 0.90 * r3, 0.0), Vector3(0.78, 0.72 * r3, 0.0),
 		Vector3(0.95, 0.50 * r3, -0.10), Vector3(1.00, 0.30 * r3, -0.10),
 	]
+	# A finger claw rises out of the skin from t .36 to .60 (`ArmClaw.BED_FROM`), so a lip at .48
+	# stands above its root and swallows the nail. The thumb's root starts at .52, past its lip.
+	if bony:
+		return p
+	# Both fall between the rings at .32 and .55, so they slot in at index 3 (higher one first).
+	for t: float in [nail_from - CUTICLE_BACK + 0.03, nail_from - CUTICLE_BACK]:
+		p.insert(3, p[2].lerp(p[3], inverse_lerp(p[2].x, p[3].x, t)))
 	return p
 
 
@@ -344,56 +365,3 @@ static func _cap(fv: PackedVector3Array, rings: int, last_c: Vector3) -> PackedI
 			out[i + 1] = out[i + 2]
 			out[i + 2] = tmp
 	return out
-
-
-## The arm skeleton's glb mesh: first skinned MeshInstance3D child (as ArmSkinMesh._arm_mesh).
-static func _glb_mesh(sk: Skeleton3D) -> MeshInstance3D:
-	if sk == null:
-		return null
-	for c in sk.get_children():
-		if c is MeshInstance3D and (c as MeshInstance3D).skin != null:
-			return c as MeshInstance3D
-	return null
-
-
-## Glb vertices in bone space per bind index, those the bind holds at weight 0.5 or more.
-static func _owned(mi: MeshInstance3D) -> Dictionary:
-	var arrays := (mi.mesh as ArrayMesh).surface_get_arrays(0)
-	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-	var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
-	var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
-	var per := int(float(bones.size()) / maxf(float(verts.size()), 1.0))
-	var out := {}
-	if per == 0 or weights.size() < verts.size() * per:
-		return out
-	for k in verts.size():
-		for m in per:
-			if weights[k * per + m] >= 0.5:
-				var b := bones[k * per + m]
-				var pts: PackedVector3Array = out.get(b, PackedVector3Array())
-				pts.append(mi.skin.get_bind_pose(b) * verts[k])
-				out[b] = pts
-	return out
-
-
-## The leaf bone's length: its highest owned vertex, or 0.8 x the parent's with too few.
-static func _tip_len(pts: PackedVector3Array, len02: float) -> float:
-	if pts.size() < 3:
-		return 0.8 * len02
-	var top := pts[0].y
-	for p in pts:
-		top = maxf(top, p.y)
-	return top
-
-
-## The un-shrunk root's radius: 90th percentile of the owned vertices just past the head.
-static func _root_radius(pts: PackedVector3Array, length: float) -> float:
-	var rs: Array[float] = []
-	for p in pts:
-		var u := p.y / length
-		if u >= 0.02 and u <= 0.10:
-			rs.append(Vector2(p.x, p.z).length())
-	if rs.size() < 6:
-		return 0.26 * length
-	rs.sort()
-	return rs[int(0.9 * float(rs.size() - 1))]

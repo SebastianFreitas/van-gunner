@@ -31,6 +31,12 @@ uniform float vein_around_m = 6.0;
 uniform float vein_width : hint_range(0.004, 0.06) = 0.022;
 // Peak ridge height in view metres (the rig is 0.18-scaled): 0.4 x the half width x 0.18.
 uniform float vein_height : hint_range(0.0, 0.004) = 0.0008;
+// How dark a vein's flanks get; the crown lifts by half as much.
+uniform float vein_shade : hint_range(0.0, 0.6) = 0.0;
+// Extra vein relief around the wrist, where the hand weight crosses from 0 to 1.
+uniform float vein_wrist : hint_range(0.0, 2.0) = 0.0;
+// Sideways jog of the veins across the wrist, so they wrap it like roots.
+uniform float vein_wrap : hint_range(0.0, 2.0) = 0.0;
 
 // Saggy old-meat bump (skin only): 0 is off, so cloth and steel, which share this shader, stay
 // as they are. Shades folds and wrinkles from the rest chart so they do not swim when the hand bends.
@@ -51,6 +57,8 @@ uniform float hand_blight_accept = 0.4;
 uniform float hand_blight_gain = 6.0;
 // Peak fold slope scale in view metres per unit of height gradient (the rig is 0.18-scaled).
 const float SKIN_BUMP_HEIGHT = 0.0015;
+// Largest tilt (tangent of the angle, about 50 degrees) the skin relief may give the normal.
+const float MAX_SKIN_TILT = 0.8;
 
 // Painted crown highlight: a fixed view-space key, up and toward the camera's left, so the
 // ridge's lit flank and shaded flank read even where the arm lamp does not reach.
@@ -72,6 +80,7 @@ varying vec4 rest_data;
 #include "res://scenes/player/arm_skin_layers.gdshaderinc"
 // Blights; need fbm, noise21 and crack_field from grime and the uniforms above.
 #include "res://scenes/player/arm_skin_blights.gdshaderinc"
+#include "res://scenes/player/arm_skin_folds.gdshaderinc"
 
 // Back-of-limb mask; on the hand it starts lower so the tilted finger tops get blights too.
 float blight_dorsal(float ny, float hand) {
@@ -144,7 +153,13 @@ float knot_at(vec3 rest) {
 	return knot_height(q);
 }
 
-float skin_height(vec3 rest, vec3 w, float accept, float dorsal, float hand) {
+// A wrinkle cell under about 1.5 px is one random normal per pixel, which stipples the
+// light's edge with black dots, so the fine wrinkles fade out before that.
+float wrinkle_fade(float fw) {
+	return 1.0 - smoothstep(0.25 / wrinkle_scale, 0.75 / wrinkle_scale, fw);
+}
+
+float skin_height(vec3 rest, vec3 w, float accept, float dorsal, float hand, float fw) {
 	vec4 f = blight_field(rest, blight_scale, accept, 1.0);
 	vec2 wq = rest.xz * blight_scale * 12.0 + vec2(rest.y * blight_scale * 12.0);
 	float wart_skin = f.x * 0.12 * (noise21(wq) - 0.5); // fine bumpy wart skin, shading only
@@ -153,18 +168,23 @@ float skin_height(vec3 rest, vec3 w, float accept, float dorsal, float hand) {
 		vec4 fh = blight_field(rest, hand_blight_scale, hand_blight_accept, 1.0);
 		h += hand * (hand_blight_gain / blight_gain) * blight_height(fh);
 	}
-	return 0.75 * knot_at(rest) + 0.25 * tri_fbm(rest, w, wrinkle_scale) + blight_gain * dorsal * h;
+	// Creases and tendons ride the same height field, so they tilt the light like the knots.
+	float folds = (fold_height > 0.0)
+			? fold_height * fold_relief(rest, normalize(obj_normal), fw) : 0.0;
+	return 0.75 * knot_at(rest) + 0.25 * wrinkle_fade(fw) * tri_fbm(rest, w, wrinkle_scale)
+			+ blight_gain * dorsal * h + folds;
 }
 
 // Veins from two side projections of the across coordinates, blended so there is no seam.
 // x is the crest profile, y and z its screen derivatives; fw is the mesh units per pixel.
-vec3 vein_field(vec4 c, float fw) {
+vec3 vein_field(vec4 c, float fw, float hand) {
 	float wu = abs(c.y) / max(abs(c.y) + abs(c.z), 1e-4);
 	vec3 sum = vec3(0.0);
 	for (int i = 0; i < 2; i++) {
 		float s = (i == 0) ? c.z : c.y;
 		float ws = (i == 0) ? wu : 1.0 - wu;
 		vec2 q = vec2(c.x * vein_along_m, s * vein_around_m) + vec2(seed_offset);
+		q.y += vein_wrap * hand; // the jog across the wrist
 		q.y += (fbm(q * 0.7) - 0.5) * 1.6; // wiggle and branching
 		for (int k = 0; k < 2; k++) {
 			// Layer 0 is the main vein, layer 1 a thinner branch on its own noise.
@@ -205,7 +225,9 @@ void fragment() {
 	// Veins: a raised soft ridge, tilted by its analytic slope, with a painted crown highlight.
 	float vn = 0.0;
 	if (vein_strength > 0.0) {
-		vec3 vf = vein_field(vein_data, fw) * vein_strength;
+		float wrist = 4.0 * rest_data.w * (1.0 - rest_data.w);
+		vec3 vf = vein_field(vein_data, fw, rest_data.w) * vein_strength
+				* (1.0 + vein_wrist * wrist);
 		vn = min(vf.x, 1.0);
 		vec3 dpdx = dFdx(VERTEX);
 		vec3 dpdy = dFdy(VERTEX);
@@ -215,11 +237,20 @@ void fragment() {
 		vec3 r2 = cross(NORMAL, dpdx);
 		float det = dot(dpdx, r1);
 		vec3 grad = sign(det) * (hx * r1 + hy * r2);
+		// Same cap as the folds below: a steep ridge edge must not print a black pixel.
+		float tilt = length(grad);
+		float tilt_cap = MAX_SKIN_TILT * max(abs(det), 1e-8);
+		if (tilt > tilt_cap) {
+			grad *= tilt_cap / tilt;
+		}
 		vec3 n_old = NORMAL;
 		NORMAL = normalize(abs(det) * NORMAL - grad);
 		float lit = dot(NORMAL, VEIN_KEY) - dot(n_old, VEIN_KEY);
-		vec3 crest = col * vec3(0.90, 1.00, 1.04) * 1.06;
-		col = mix(col, crest, vn * 0.5);
+		// The cord's flanks sink into shade and its crown catches the lamp, so a vein reads
+		// across the cabin and not only when the light rakes it.
+		col *= 1.0 - vein_shade * 4.0 * vn * (1.0 - vn);
+		vec3 crest = col * vec3(0.90, 1.00, 1.04) * (1.06 + 0.5 * vein_shade);
+		col = mix(col, crest, vn * vn * 0.6);
 		col *= 1.0 + clamp(lit * 0.35, -0.20, 0.15);
 	}
 	// Saggy skin: tilt the normal by the fold height's gradient, darken and roughen the hollows.
@@ -234,12 +265,12 @@ void fragment() {
 		float dorsal = blight_dorsal(n.y, hand);
 		float accept = mix(0.12, 0.55, hand);
 		vec3 g = vec3(
-				skin_height(rest + vec3(eps, 0.0, 0.0), w, accept, dorsal, hand)
-						- skin_height(rest - vec3(eps, 0.0, 0.0), w, accept, dorsal, hand),
-				skin_height(rest + vec3(0.0, eps, 0.0), w, accept, dorsal, hand)
-						- skin_height(rest - vec3(0.0, eps, 0.0), w, accept, dorsal, hand),
-				skin_height(rest + vec3(0.0, 0.0, eps), w, accept, dorsal, hand)
-						- skin_height(rest - vec3(0.0, 0.0, eps), w, accept, dorsal, hand)
+				skin_height(rest + vec3(eps, 0.0, 0.0), w, accept, dorsal, hand, fw)
+						- skin_height(rest - vec3(eps, 0.0, 0.0), w, accept, dorsal, hand, fw),
+				skin_height(rest + vec3(0.0, eps, 0.0), w, accept, dorsal, hand, fw)
+						- skin_height(rest - vec3(0.0, eps, 0.0), w, accept, dorsal, hand, fw),
+				skin_height(rest + vec3(0.0, 0.0, eps), w, accept, dorsal, hand, fw)
+						- skin_height(rest - vec3(0.0, 0.0, eps), w, accept, dorsal, hand, fw)
 		) / (2.0 * eps);
 		g -= dot(g, n) * n; // slope along the surface only
 		// Same screen-space mapping as the vein ridge: height change per pixel, then the tilt.
@@ -251,12 +282,25 @@ void fragment() {
 		vec3 s2 = cross(NORMAL, sdx);
 		float sdet = dot(sdx, s1);
 		vec3 grad_view = sign(sdet) * (hx * s1 + hy * s2);
+		// A steep edge must not turn the normal away from both lamps and print a black pixel.
+		float tilt = length(grad_view);
+		float tilt_cap = MAX_SKIN_TILT * max(abs(sdet), 1e-8);
+		if (tilt > tilt_cap) {
+			grad_view *= tilt_cap / tilt;
+		}
 		NORMAL = normalize(abs(sdet) * NORMAL - grad_view);
 		float kh = knot_at(rest);
-		float wrinkle = tri_fbm(rest, w, wrinkle_scale);
+		float wrinkle = mix(0.5, tri_fbm(rest, w, wrinkle_scale), wrinkle_fade(fw));
 		fold_dark = smoothstep(0.5, 0.25, wrinkle) * 0.6
 				+ smoothstep(0.0, 0.08, kh) * smoothstep(0.3, 0.1, kh) * 0.4;
 		col *= mix(1.0, 0.82, skin_bump * fold_dark);
+		if (fold_height > 0.0) {
+			// Crease floors go dark and tendon crowns catch a little light, so both read under
+			// the cabin's dim lamp and not only when it rakes them.
+			float relief = fold_relief(rest, n, fw);
+			col *= 1.0 - fold_shade * max(-relief, 0.0);
+			col *= 1.0 + tendon_light * max(relief, 0.0);
+		}
 		vec4 bf = blight_field(rest, blight_scale, accept, 1.0);
 		if (hand > 0.01) {
 			bf = min(bf + hand * blight_field(rest, hand_blight_scale, hand_blight_accept, 1.0),

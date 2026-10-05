@@ -191,6 +191,20 @@ const CLAW_CURVE := 22.0
 ## the index shaft is over a quarter of its length. HAND_K scales the hand and the gun grip.
 const GIRTH := 2.10
 const HAND_K := 1.47
+## The hands are one fixed design (owner, 2026-10-05): skin tone, scars, wounds and dirt
+## hash from this, never from the van seed.
+const HAND_LOOK_SEED := 7
+## Part ids whose streams use HAND_LOOK_SEED instead of the van seed.
+const FIXED_LOOK_PARTS: Array[StringName] = [&"arms", &"arm_skin_r", &"arm_skin_l"]
+## The shape and pose streams (muscle lumps, the shoulder offset, each finger's sideways
+## crook) are fixed too, at the seed the posture and the claws were tuned under. Any other
+## value turns the hand and swings the fingertips, a posture change the owner forbids.
+const HAND_SHAPE_SEED := 1337
+## Part ids whose streams use HAND_SHAPE_SEED instead of the van seed.
+const FIXED_SHAPE_PARTS: Array[StringName] = [&"arm_right", &"arm_left"]
+## The skin's `seed_offset`, seed 1337's draw: it places the wart domes the shader lifts out of
+## the skin, so it is shape. Seed 7's 2.32 put domes on three fingertips and buried the claws.
+const HAND_SKIN_OFFSET := 91.1654968261719
 
 ## Hand dressing: `&"gear"` (a wrecked T-shirt sleeve on each arm plus the skin layers),
 ## `&"rags"` (the old rag and glove dress) or `&"none"` (bare arms). Set by the `arms dress`
@@ -202,7 +216,12 @@ static var gun_style: StringName = &"grip"
 
 static func rng_for(seed_value: int, part_id: StringName) -> RandomNumberGenerator:
 	var rng := RandomNumberGenerator.new()
-	rng.seed = hash([seed_value, part_id])
+	var look_seed := seed_value
+	if part_id in FIXED_LOOK_PARTS:
+		look_seed = HAND_LOOK_SEED
+	elif part_id in FIXED_SHAPE_PARTS:
+		look_seed = HAND_SHAPE_SEED
+	rng.seed = hash([look_seed, part_id])
 	return rng
 
 
@@ -210,6 +229,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	var perf_t := PerfStats.begin()
 	var rng := rng_for(seed_value, &"arms")
 	var skin := ArmMaterials.skin(rng)
+	skin.set_shader_parameter(&"seed_offset", HAND_SKIN_OFFSET)
 	# One copy per arm so the skin layers' uniforms (tattoo, scars) differ between the arms.
 	var skin_r := skin.duplicate() as ShaderMaterial
 	var skin_l := skin.duplicate() as ShaderMaterial
