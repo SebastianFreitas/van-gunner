@@ -1,6 +1,6 @@
 {
   "master": "C:/Users/Traff/Desktop/sebas/claude-workflow",
-  "commit": "33c311433d7732cffe20b60cbcee6d85864cd5a4",
+  "commit": "3fe1ea2c6009b3bf5e02e5f91f84521cd3f09107",
   "files": {
     ".claude/agents/implementer-wt.md": "6e4cd7f1254cca146f3361a8f056b5b5834b6185c44ad0376fc877183317fcbb",
     ".claude/agents/implementer.md": "08974ffc4db178a3f5b9a0c66eb9abadc1b20a05cd95685d88eb98117aa060ac",
@@ -30,7 +30,7 @@
     ".claude/skills/plan/interview.md": "1c1e275f9367e7cdf36e4c794e4e00d5c05a0116b886f449c9218c3ea568f4fb",
     ".claude/skills/plan/run.md": "0d610869b8f2465d50fcdd4d684f36525ce18b8e6fd83f6d3ff824c29421cd2c",
     ".claude/skills/plan/unattended.md": "eab898b321dfb21d3ab6407ed1f462644215f1072fa93f87ee8a4e561d923bc9",
-    "tools/autoplan.py": "adff30a5a8d546ca134a40047e963a73820224041ed8c40a4ae223b3f2b75d97",
+    "tools/autoplan.py": "7bb358680ee5a1029f9f32ceafa1dd1384e3149f96cfbd2ac2e7573cd75a5f28",
     "tools/cleanup.py": "71108a1cc531c1beaada08f99c5269024843b6f035c0d575a0ef2ed603401c25",
     "tools/try.py": "8b99b9a9b721c72df9de747ece1e232d11b3462cf59971e6a2fcd36d3cc99645",
     "tools/try_commit.py": "19503ac68b4bf50488e538459ae1f3d444d037f58d974447586ac962e907527e"

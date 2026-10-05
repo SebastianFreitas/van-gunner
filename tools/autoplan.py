@@ -98,7 +98,8 @@ def state_path(name: str) -> Path:
 
 
 def find_claude(explicit: str | None) -> str:
-    """Resolve the claude CLI path: explicit, PATH, or newest installed version."""
+    """Resolve the claude CLI path: explicit, PATH, or newest installed version
+    (<version>/claude.exe or <version>/<hash>/claude.exe)."""
     if explicit:
         if explicit.lower().endswith((".cmd", ".bat")):
             print("Pass the claude.exe path, not a .cmd shim.")
@@ -118,7 +119,7 @@ def find_claude(explicit: str | None) -> str:
             for pkg in packages.iterdir():
                 if pkg.is_dir() and pkg.name.startswith("Claude_"):
                     bases.append(pkg / "LocalCache" / "Roaming" / "Claude" / "claude-code")
-    best_dir = None
+    best_exe = None
     best_key = None
     for base in bases:
         if not base.is_dir():
@@ -135,16 +136,31 @@ def find_claude(explicit: str | None) -> str:
                     break
             if parts is None:
                 continue
-            if not (d / "claude.exe").exists():
+            exe = None
+            if (d / "claude.exe").exists():
+                exe = d / "claude.exe"
+            else:
+                newest = None
+                try:
+                    for s in d.iterdir():
+                        if not s.is_dir():
+                            continue
+                        if not ((s / "claude.exe").exists() and (s / ".verified").exists()):
+                            continue
+                        mtime = (s / "claude.exe").stat().st_mtime
+                        if newest is None or mtime > newest:
+                            newest = mtime
+                            exe = s / "claude.exe"
+                except OSError:
+                    continue
+            if exe is None:
                 continue
             key = tuple(parts)
             if best_key is None or key > best_key:
                 best_key = key
-                best_dir = d
-    if best_dir is not None:
-        exe = best_dir / "claude.exe"
-        if exe.exists():
-            return str(exe)
+                best_exe = exe
+    if best_exe is not None:
+        return str(best_exe)
     print("Claude Code CLI not found. Install it (see https://code.claude.com/docs) or pass --claude PATH.")
     sys.exit(1)
 
