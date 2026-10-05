@@ -212,7 +212,7 @@ func rfinger_apply(args: Array, vm: Node) -> String:
 	var n := args.size()
 	if n == 2 and str(args[1]) == "reset":
 		for s in _rsubs(sub):
-			ArmsBuilder.set_finger_aim(RFINGER[s], [Vector3.ZERO, Vector3.ZERO, Vector3.ZERO])
+			ArmsBuilder.set_finger_aim(RFINGER[s], [ArmsBuilder.RIGHT_FINGER_KNUCKLE_AIM, Vector3.ZERO, Vector3.ZERO])
 			ArmsBuilder.set_finger_shift(RFINGER[s], Vector3.ZERO)
 		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
 		return "arms %s reset" % sub

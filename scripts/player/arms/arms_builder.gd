@@ -62,6 +62,9 @@ const RIGHT_THUMB_TURN := Vector3.ZERO
 ## Degrees, spins the thumb's tip bone about its own length (twists the nail sideways); the rest
 ## of the thumb stays put (`arms thumbroll`).
 const RIGHT_THUMB_ROLL := 50.0
+## Default knuckle swing that lowers the four gun-hand fingers onto the grip; owner-tuned with
+## `arms rall 1 0 0 35`.
+const RIGHT_FINGER_KNUCKLE_AIM := Vector3(0.0, 0.0, 35.0)
 ## Live copy of RIGHT_THUMB_ROLL; one value for both grip and pistol.
 static var right_thumb_roll := RIGHT_THUMB_ROLL
 ## Live copies of the gripping hand's tunables: the `arms thumbaim`, `arms thumbcurl`, `arms wrist`
@@ -131,7 +134,7 @@ static var _grip_shifts := _zero_shifts()
 static func _zero_fingers() -> Dictionary:
 	var d := {}
 	for f: StringName in [&"f_index", &"f_middle", &"f_ring", &"f_pinky"]:
-		d[f] = [Vector3.ZERO, Vector3.ZERO, Vector3.ZERO]
+		d[f] = [RIGHT_FINGER_KNUCKLE_AIM, Vector3.ZERO, Vector3.ZERO]
 	return d
 
 
