@@ -17,7 +17,12 @@ for any task longer than a quick fix; this mode is for small changes.
   edit first, or to run the task in a worktree session. If a foreign edit
   breaks a check, report it; do not fix it.
 - Commit straight to `main`, no branches (git-guard refuses `git
-  checkout` and `git switch` here). This mode runs the project's
+  checkout` and `git switch` here), but **only on the owner's OK**: their
+  latest message must say commit, merge or land (owner, 2026-10-02:
+  a chat here committed onto `main` while a worktree run was mid-way,
+  and the run had to merge it in at start). Until then the change stays
+  uncommitted and the report's Commit line asks for "commit it";
+  git-guard refuses the commit otherwise. This mode runs the project's
   landing steps itself before such a commit (the project's notes below
   name them); worktree and cloud never do.
 - **Never push, never pull, never merge anything into `main`.** Commit
@@ -35,9 +40,11 @@ for any task longer than a quick fix; this mode is for small changes.
 ### Report commands
 
 - **Try:** the project's notes below give the command.
-- **Commit:** no command: say "Already committed as <sha> on `main`;
-  review it in GitHub Desktop and push there (new sessions start from
-  `origin/main`, so they miss it until it is pushed)."
+- **Commit:** no command. Before the owner's OK: "Not committed yet:
+  reply \"commit it\" and I commit <the paths> onto `main`." After it:
+  "Committed as <sha> on `main`; review it in GitHub Desktop and push
+  there (new sessions start from `origin/main`, so they miss it until
+  it is pushed)."
 
 ### Merging by hand
 

@@ -8,8 +8,10 @@ Called by tools/try.py (`--commit`, or typing `commit` at its prompt).
    branch changes.
 2. Build the squash without touching the main checkout's files:
    `git merge-tree --write-tree` of main and the branch, then
-   `git commit-tree` on main. Conflicts stop here, except a conflict
-   limited to the project's REGENERATED paths, which step 3 rebuilds.
+   `git commit-tree` on main. The commit has one parent (main), so the
+   branch's own commits and merges never reach main's history. Conflicts
+   stop here, except a conflict limited to the project's REGENERATED
+   paths, which step 3 rebuilds.
 3. Check the result out in the try checkout (../<project>-try), let the
    project rebuild what it generates (before_commit; whatever it changes
    is folded into the commit) and run the project's checks (verify).
@@ -17,8 +19,9 @@ Called by tools/try.py (`--commit`, or typing `commit` at its prompt).
 4. `git merge --ff-only` in the main checkout. The owner's uncommitted
    edits stay; git refuses, and nothing lands, only when the branch
    changes one of those files.
-5. Merge main back into the session's worktree branch when it is local
-   and clean, so its next round starts from this commit.
+5. Move the session's branch to main when its worktree is clean and has
+   nothing newer than what landed (`git reset --keep main`), so its next
+   round starts from this commit and lists only new work.
 6. Push main to origin. The app cuts new worktrees from origin/main, so an
    unpushed main means every new session starts without this commit
    (owner, 2026-10-01). A failed push leaves the commit on local main and
@@ -255,21 +258,21 @@ def dirty_overlap(tree: str) -> list[str]:
 
 def squash_message(branch: str, base: str, ref: str) -> tuple[str, str]:
     commits = git("rev-list", "--reverse", "--no-merges", f"{base}..{ref}").splitlines()
-    if len(commits) == 1:
-        msg = git("log", "-1", "--format=%B", commits[0])
-    else:
-        subject = git("log", "-1", "--format=%s", commits[-1])
-        titles = git("log", "--reverse", "--no-merges", "--format=- %s", f"{base}..{ref}")
-        trailer_lines = git(
-            "log", "--format=%(trailers:key=Co-Authored-By,valueonly)", f"{base}..{ref}"
-        ).splitlines()
-        trailers = []
-        for t in trailer_lines:
-            if t and t not in trailers:
-                trailers.append(t)
-        msg = subject + "\n\nSquashed from " + branch + ":\n" + titles
-        if trailers:
-            msg += "\n\n" + "\n".join("Co-Authored-By: " + t for t in trailers)
+    tip_msg = git("log", "-1", "--format=%B", commits[-1])
+    msg = "\n".join(l for l in tip_msg.splitlines() if not l.startswith("Co-Authored-By:")).rstrip()
+    subjects = []
+    for s in git("log", "--reverse", "--no-merges", "--format=%s", f"{base}..{ref}").splitlines():
+        if s not in subjects:
+            subjects.append(s)
+    msg += "\n\nSquashed from " + branch + ":\n" + "\n".join("- " + s for s in subjects)
+    trailers = []
+    for t in git(
+        "log", "--format=%(trailers:key=Co-Authored-By,valueonly)", f"{base}..{ref}"
+    ).splitlines():
+        if t and t not in trailers:
+            trailers.append(t)
+    if trailers:
+        msg += "\n\n" + "\n".join("Co-Authored-By: " + t for t in trailers)
 
     return msg.splitlines()[0], msg.strip() + "\n"
 
@@ -314,40 +317,32 @@ def verify(sha: str, main_moved: bool, args, let_through: list[str]) -> str | No
     return sha
 
 
-def sync_worktree(branch: str) -> None:
+def sync_worktree(branch: str, landed_sha: str) -> None:
     wt = worktree_of(branch)
     if wt is None:
+        tip = git("rev-parse", "--verify", "-q", f"refs/heads/{branch}", check=False)
+        if tip == landed_sha:
+            git_run("branch", "-f", branch, "main")
         return
-    if git("status", "--porcelain", cwd=wt, check=False) == "":
-        r = git_run("merge", "-q", "--no-edit", "main", cwd=wt)
-        if r.returncode != 0:
-            conflicts = [
-                p for p in git("diff", "--name-only", "--diff-filter=U", cwd=wt, check=False).splitlines() if p
-            ]
-            regenerated = project_const("REGENERATED", ())
-            if conflicts and all(p in regenerated for p in conflicts):
-                # main's copy was regenerated on the combined tree when the branch landed, so it wins.
-                for p in conflicts:
-                    git_run("checkout", "--theirs", "--", p, cwd=wt)
-                    git_run("add", "--", p, cwd=wt)
-                done = git_run("commit", "--no-edit", "-q", cwd=wt)
-                if done.returncode == 0:
-                    print(
-                        f"Merged main back into {branch} (taking main's {', '.join(conflicts)}), "
-                        "so the next round there starts from this commit."
-                    )
-                    return
-            git_run("merge", "--abort", cwd=wt)
-            print(
-                f"Could not merge main back into {branch} ({wt}); ask Claude in that "
-                "session to merge main before its next round."
-            )
-        else:
-            print(f"Merged main back into {branch}, so the next round there starts from this commit.")
-    else:
+    if git("status", "--porcelain", cwd=wt, check=False) != "":
         print(
             f"{branch} was not synced (uncommitted files in {wt}); ask Claude there to "
             "merge main before its next round."
+        )
+    elif git("rev-parse", "HEAD", cwd=wt, check=False) == landed_sha:
+        r = git_run("reset", "-q", "--keep", "main", cwd=wt)
+        if r.returncode == 0:
+            print(f"Moved {branch} to main, so the next round there starts from this commit.")
+        else:
+            print(r.stderr.strip(), file=sys.stderr)
+            print(
+                f"Could not move {branch} to main ({wt}); ask Claude in that session to "
+                "run git merge main before its next round."
+            )
+    else:
+        print(
+            f"{branch} has commits newer than what landed, so it was left as is; "
+            "they land with its next Commit."
         )
 
 
@@ -387,8 +382,9 @@ def land(branch: str, ref: str, args) -> int:
         print("Commit or discard them in GitHub Desktop, then run this again.")
         return 1
 
+    ref_sha = git("rev-parse", ref)
     subject, msg = squash_message(branch, base, ref)
-    sha = git("commit-tree", tree, "-p", main_sha, "-p", git("rev-parse", ref), "-F", "-", stdin=msg)
+    sha = git("commit-tree", tree, "-p", main_sha, "-F", "-", stdin=msg)
 
     main_moved = base != main_sha
     final = verify(sha, main_moved, args, let_through)
@@ -406,7 +402,7 @@ def land(branch: str, ref: str, args) -> int:
         )
         return 1
 
-    sync_worktree(branch)
+    sync_worktree(branch, ref_sha)
     print(f"Committed {git('rev-parse', '--short', 'HEAD')} on main: {subject}")
     push_main()
 
@@ -417,4 +413,8 @@ def land(branch: str, ref: str, args) -> int:
     cleanup = ROOT / "tools" / "cleanup.py"
     if cleanup.exists():
         subprocess.run([sys.executable, str(cleanup), "--quiet", "--keep", branch], cwd=ROOT)
+    print(
+        f"LANDED: {branch} is done. Its session can be archived; a follow-up "
+        "there commits on the same branch and lands again."
+    )
     return 0

@@ -9,8 +9,9 @@ lacks commits from local `main`. It shares only `.git` with the main checkout, s
 other session touches these files and there are no foreign edits.
 
 - **Commit on this branch, by path. Never push, never open a PR, never
-  merge into `main`** (merging `main` INTO this branch is fine and is how
-  you resolve a conflict the owner reports). The branch stays local;
+  merge into `main`** (merging `main` INTO this branch is fine: at
+  session start when the hook prints WORKTREE BEHIND MAIN, or to resolve
+  a conflict the owner reports; never mid-run on your own). The branch stays local;
   `try.py` reads it from here.
 - **Landing steps are not yours.** Never run a step the project's notes
   below reserve for landing (a cache-bust, a version bump) and never
@@ -41,8 +42,9 @@ checkout>` with the path in the `MODE:` line.
   builds one squash commit on top of local `main` without touching the
   main checkout's files, runs the project's landing steps and checks on
   the combined tree in the `-try` checkout, then fast-forwards `main`,
-  merges `main` back into this branch and pushes `main` (only `main`,
-  only after it landed). On a conflict, a failed
+  moves this branch onto `main` and pushes `main` (only `main`,
+  only after it landed). The commit has one parent, so main's history
+  gets one entry per landing, never the branch's own commits. On a conflict, a failed
   check, or the owner's uncommitted edits in a file the branch changes,
   it lands nothing and says why; then run `git merge main` here,
   resolve, verify, commit, and run it again.
@@ -51,12 +53,26 @@ checkout>` with the path in the `MODE:` line.
   so. The report hands over the command; the owner runs it, or replies
   "merge it" / "land it", and only then do you run it.
   `git-guard.py` refuses it unless the owner's latest message says
-  merge or land. Make the branch tip's message describe the work first:
-  the squash takes its message.
+  merge or land. The squash takes the branch tip's message as its own
+  (plus a deduped list of the round's commit titles), so the tip's
+  message describes everything this landing adds over `main`: the
+  feature on a first landing, only the follow-up on a later one
+  ("Perf overlay: ...", never the first landing's text again; owner,
+  2026-10-05, after Van Gunner's main showed one message up to four
+  times). Other commits in a round say what they changed in a few
+  words; never repeat a message already on the branch or on `main`.
 
-After a Commit, the command already merged `main` back into this branch, so
+**Done state.** When you ran the Commit on the owner's OK and it
+printed `LANDED:`, mark this session done (owner, 2026-10-02): rename
+it with `set_session_title` (`session_id` "self") to `Landed: ` plus
+its current title, call `mark_completed` ("self"), and end the turn
+with one line: "Landed as <sha> on `main` and pushed; this worktree is
+finished (archive it, or reply here for a follow-up round)." When the
+owner runs the command themselves, the `LANDED:` line is their signal.
+
+After a Commit, the command already moved this branch onto `main`, so
 a follow-up round just commits on the same branch and ends with the same
-report. If Commit said it could not merge `main` back, start the next
+report. If Commit said it could not move the branch, start the next
 round with `git merge main` here. Archiving the session in the app
 removes the worktree.
 

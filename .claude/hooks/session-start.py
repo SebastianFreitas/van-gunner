@@ -234,11 +234,20 @@ def behind_lines(mode):
     if mode == "worktree":
         n = git("rev-list", "--count", "HEAD..main")
         if n.isdigit() and int(n) > 0:
+            subjects = [s[:90] for s in git("log", "-3", "--format=%h %s",
+                                            "HEAD..main").splitlines() if s]
+            more = f" (+{int(n) - 3} more)" if int(n) > 3 else ""
             lines.append(f"WORKTREE BEHIND MAIN: local main has {n} commit(s) "
                          "this branch lacks (the worktree was cut from "
-                         "origin/main or before they landed). Before any "
-                         "other work, run `git merge main` here and say so in "
-                         "one line; on a conflict, stop and ask the owner.")
+                         "origin/main, or they landed on main after it was "
+                         "cut): " + "; ".join(subjects) + more + ". Before any "
+                         "other work, run `git merge main` here and tell the "
+                         "owner in one line which commits came in and that "
+                         "main itself is untouched (main flows into this "
+                         "branch; this branch reaches main only through "
+                         "the owner's Commit). On a conflict, stop and ask "
+                         "the owner. This catch-up happens only now, at "
+                         "start: never merge main mid-run on your own.")
     n = git("rev-list", "--count", "origin/main..main")
     if n.isdigit() and int(n) > 0:
         lines.append(f"MAIN NOT PUSHED: local main is {n} commit(s) ahead of "

@@ -17,6 +17,8 @@ and never run `gh pr merge`.
 the owner's OK: the owner's latest prompt in the transcript must say
 merge or land (and not "don't merge"). Subagents and unattended
 (`AUTOPLAN=1`) sessions are always refused; the owner lands those runs.
+A `git commit` onto `main` itself (shared mode) follows the same rule: the
+owner's latest prompt must say commit, merge or land.
 
 In the main checkout (shared mode), `git checkout` / `git switch` are also
 refused: the owner's GitHub Desktop and other sessions rely on it staying
@@ -101,6 +103,11 @@ LAND_RE = re.compile(r"\btry\.py\b[^|;&\n]*\s--commit\b")
 LAND_OK_RE = re.compile(r"\b(merge|land)\b|--commit", re.I)
 LAND_NO_RE = re.compile(
     r"\b(don'?t|do not|not yet|never|no|wait|hold)\b[^.\n]{0,25}\b(merge|land)", re.I)
+# a commit straight onto main (shared mode) also waits for the owner's word
+COMMIT_RE = re.compile(r"\bgit\b[^|;&\n]*\scommit(?![-\w])")
+COMMIT_OK_RE = re.compile(r"\b(commit|merge|land)\b", re.I)
+COMMIT_NO_RE = re.compile(
+    r"\b(don'?t|do not|not yet|never|no|wait|hold)\b[^.\n]{0,25}\b(commit|merge|land)", re.I)
 
 
 def last_owner_prompt(transcript_path: str) -> str:
@@ -153,6 +160,24 @@ def landing_refusal(d: dict) -> str:
             "must say merge or land. Commit on the branch, end with the "
             "Commit command in the report, and let the owner run it or reply "
             "\"merge it\"")
+
+
+def main_commit_refusal(d: dict) -> str:
+    """Why this session may not commit straight onto main now, or "" when the
+    owner's latest message says commit, merge or land (owner, 2026-10-02: a
+    main-checkout chat committed onto main while a worktree run was mid-way)."""
+    if os.environ.get("AUTOPLAN") == "1":
+        return "an unattended plan run never commits onto main"
+    tp = d.get("transcript_path") or ""
+    if os.path.basename(os.path.dirname(os.path.normpath(tp))) == "subagents":
+        return "a subagent never commits onto main"
+    said = last_owner_prompt(tp)
+    if COMMIT_OK_RE.search(said) and not COMMIT_NO_RE.search(said):
+        return ""
+    return ("a commit onto main waits for the owner's OK: their latest message "
+            "must say commit, merge or land. Leave the change uncommitted, end "
+            "with the report, and under Commit tell the owner to reply "
+            "\"commit it\"")
 
 
 PATH_RE = r'"([^"]+)"|\'([^\']+)\'|([^\s;&|]+)'
@@ -316,6 +341,18 @@ def main():
             mcwd = cwd
         if git("branch", "--show-current", cwd=mcwd) == "main":
             deny("never merge into main; tools/try.py --commit lands branches")
+
+    m = COMMIT_RE.search(bare)
+    if m:
+        cwd = d.get("cwd") or os.getcwd()
+        ccwd = command_cwd(cmd, cwd, m)
+        if not os.path.isdir(ccwd):
+            ccwd = cwd
+        if git("branch", "--show-current", cwd=ccwd) in ("main", "master"):
+            why = main_commit_refusal(d)
+            if why:
+                sys.stderr.write(f"Blocked by .claude/hooks/git-guard.py: {why}.\n")
+                sys.exit(2)
 
     m = CHECKOUT_RE.search(bare)
     if m:

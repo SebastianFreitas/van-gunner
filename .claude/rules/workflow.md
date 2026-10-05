@@ -212,7 +212,8 @@ went from 44k to 51k and 68k for three specs each, 2026-10-01).
 6. **Commit** by path, as your mode says, with a message that describes
    the work (a squash takes the branch tip's message). In worktree mode
    commit on the branch only: `try.py --commit` waits for the owner's
-   OK (the mode file's Commit). Delete
+   OK (the mode file's Commit). In shared mode the commit onto `main`
+   itself waits for the owner's OK. Delete
    `.claude/specs/` and `.claude/handoff.md`.
 7. **Report**: end the turn with exactly this:
    1. **Name:** the feature in plain words, then the branch (and PR in cloud).
@@ -332,7 +333,8 @@ subagent's hand-back lands in a new turn that the Stop guard fights.
 ## Git and the owner's commands
 
 - Stage by path. Never push (cloud: only your own `claude/` branch),
-  never merge or commit onto `main` except a shared-mode commit, never
+  never merge or commit onto `main` except a shared-mode commit the
+  owner OK'd (their latest message says commit, merge or land), never
   delete branches by hand, never `gh pr merge`. `tools/cleanup.py`
   deletes local session branches and their worktrees once they have
   landed on `main` and sat idle 24 h; it runs at session start and after
