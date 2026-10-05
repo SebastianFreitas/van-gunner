@@ -78,7 +78,10 @@ container has only `python3`.
 - **Pose sheet:** `py -3 tools/pose_sheet.py --out <scratchpad>/sheets [--pose NAME]... [--views front,side,top,player] [--dress gear|rags|none] [--keep]`: one `<pose>.png` grid per named pose (default all), one Godot launch each.
 - **Stipple:** `py -3 tools/stipple.py <png or folder>... [--mark DIR]` counts isolated dark
   pixels (at most 0.4 of their 3x3 median, median at least 30 of 255) and prints `STIPPLE <n>
-  <file>` per picture and `STIPPLE TOTAL`. The meter for the black pixel lines on the
+  <file>` per picture and `STIPPLE TOTAL`. It also prints `OUTLIER light <n> dim <n> <file>`:
+  isolated pixels at least 1.25 times, or at most 0.8 times, their 3x3 median and at least 6
+  of 255 away from it (`--mark` paints them cyan and yellow; `--box X0,Y0,X1,Y1` limits the
+  count). The meter for the black pixel lines on the
   first-person forearms, on the two wrist close-ups (`tools/probe.py --cmd "arms cam orbit 0
   70 0.2 left" --shot ...`, then `right`). `--mark DIR` saves copies with the counted pixels
   in magenta. Compare counts only between shots of the same view. No verify stamp.

@@ -142,22 +142,30 @@ Geometry:
   layer, not a cast shadow and not the wound (`sk_dirt` off: hand back 59
   to 85; `sk_wounds` off: no change), so `dirt_tone` is lifted and the
   dirt mix eased to 0.6: hand back 59 to 75, against 86 with no layers.
-  The skin normal tilt is capped at `MAX_SKIN_TILT`, a guard only: the
-  forearm's black stipple did not move at any cap (on an earlier ad hoc
-  count: 34 at 1.2, 0.8 and 0.5, 14 with the tilt off, 42 after the
-  lighter dirt and the deeper folds). Both tilts (veins, skin) now run
-  through one `tilt_normal` in `arm_surface.gdshader`, which divides the
-  slope by `det` before clamping, returns the plain normal on a NaN and
-  fades out as the pixel footprint collapses (`TILT_FOOT_MIN` 0.02 to
-  `TILT_FOOT_FULL` 0.10): also a guard only (owner, 2026-10-05: details
-  "that look pixelated ... a weird line"). `tools/stipple.py` counts
-  isolated dark pixels on the two back-of-wrist views (`arms cam orbit 0
-  70 0.2 left` and `right`), a new scale: 1680 before the guard, 1686
-  after, 982 with the tilt off, and 927 with the skin flat white, the
-  same with culling off and with seam twins unified in `ArmRefine`. That
-  927 is the HUD text and the sleeve cuff in those views, not holes: the
-  skin mesh is closed. So about 760 pixels are skin stipple, the tilt at
-  its ordinary strength prints about 700 of them, and it is still open.
+  White and dark pixels on the arms (owner, 2026-10-05: "these white
+  pixels"; dashed straight lines and dots along the veins on the left
+  forearm and wrist) had two causes, both in `arm_surface.gdshader`:
+  - Dashed lines were false vein-centre pixels. `vein_field` took the
+    distance as `abs(v) * fw / fwidth(v)`, a rest-space scale over a
+    CUSTOM0 screen derivative, so the ratio jumped on triangle edges. It
+    now uses the noise-space distance `abs(v) / |grad|` from the analytic
+    gradient of `noise21g`: vein-paint outliers (tilts off) wrist/forearm
+    1288/645 down to 140/119, and the vein paint stays as strong.
+  - Dots along the vein borders were the vein tilt's sub-pixel slope. The
+    vein slope is damped by its own per-pixel change (`VEIN_TILT_DAMP`
+    200), which keeps 0.96/0.91 (wrist) and 1.00/0.96 (forearm) of the
+    tilt shading.
+  Light/dim outlier pixels counted on the skin only (views `arms cam
+  orbit 0 70 0.2 left` and `0.4 left`)
+  went from wrist 503/705 and forearm 218/363 to 333/278 and 183/178.
+  The floor with both tilts off is 265/49 and 126/67. What is left is
+  the skin tilt's wrinkle grain in shadowed patches, kept on purpose:
+  damping the skin tilt the same way removes about half its shading
+  (s5 to s10 kept 0.62 to 0.74). `MAX_SKIN_TILT` and `tilt_normal`'s
+  `det` divide, NaN return and footprint fade (`TILT_FOOT_MIN` 0.02 to
+  `TILT_FOOT_FULL` 0.10) stay as guards only. Judge by the skin-masked
+  counts: a whole-image count in these views holds about 2500 HUD-text
+  and sleeve-cuff pixels.
   Wrist (owner, 2026-10-05: the hand looked "glued to the wrist", the
   join "a bit thinner"): the forearm necks to `ArmBulk.WRIST_END_GAIN`
   1.30 (was 1.45), and the hand side starts at that same girth by

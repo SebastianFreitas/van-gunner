@@ -64,6 +64,11 @@ const float MAX_SKIN_TILT = 0.8;
 const float TILT_FOOT_MIN = 0.02;
 const float TILT_FOOT_FULL = 0.10;
 
+// Damps the vein tilt by its own change per pixel (hx, hy over the footprint): a slope that
+// turns faster than a pixel can hold printed dark and bright stipple along every vein border.
+// 200 removes it and keeps over 90 % of the tilt's shading (60 kept 80 %, 20 left the stipple).
+const float VEIN_TILT_DAMP = 200.0;
+
 // Painted crown highlight: a fixed view-space key, up and toward the camera's left, so the
 // ridge's lit flank and shaded flank read even where the arm lamp does not reach.
 const vec3 VEIN_KEY = normalize(vec3(-0.3, 0.8, 0.52));
@@ -179,6 +184,21 @@ float skin_height(vec3 rest, vec3 w, float accept, float dorsal, float hand, flo
 			+ blight_gain * dorsal * h + folds;
 }
 
+// noise21 (grime.gdshaderinc) with its analytic gradient: x the value, yz d(value)/d(p).
+vec3 noise21g(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	float a = hash21(i);
+	float b = hash21(i + vec2(1.0, 0.0));
+	float c = hash21(i + vec2(0.0, 1.0));
+	float d = hash21(i + vec2(1.0, 1.0));
+	vec2 u = f * f * (3.0 - 2.0 * f);
+	vec2 du = 6.0 * f * (1.0 - f);
+	float val = mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+	vec2 g = du * vec2(mix(b - a, d - c, u.y), mix(c - a, d - b, u.x));
+	return vec3(val, g);
+}
+
 // Veins from two side projections of the across coordinates, blended so there is no seam.
 // x is the crest profile, y and z its screen derivatives; fw is the mesh units per pixel.
 vec3 vein_field(vec4 c, float fw, float hand) {
@@ -195,9 +215,15 @@ vec3 vein_field(vec4 c, float fw, float hand) {
 			vec2 qk = (k == 0) ? q : q * 1.9 + vec2(37.1, 11.7);
 			float w = (k == 0) ? vein_width * 0.5 : vein_width * 0.275;
 			float hk = (k == 0) ? 1.0 : 0.6;
-			float v = noise21(qk) * 2.0 - 1.0;
-			// Distance to the zero crossing in mesh units, from the screen derivative.
-			float d = abs(v) * fw / max(fwidth(v), 1e-6);
+			vec3 ng = noise21g(qk);
+			float v = ng.x * 2.0 - 1.0;
+			// Distance to the zero crossing in mesh units from the analytic slope of v. The old
+			// abs(v) * fw / fwidth(v) divided a rest-space scale by a CUSTOM0 screen derivative,
+			// two per-triangle scales whose ratio jumps on triangle edges and printed dotted lines.
+			// The branch layer's noise runs 1.9 times faster.
+			float gm = 2.0 * length(ng.yz * vec2(vein_along_m, vein_around_m))
+					* ((k == 0) ? 1.0 : 1.9);
+			float d = abs(v) / max(gm, 1e-6);
 			float t = d / w;
 			float tt = min(t, 1.0);
 			float prof = (1.0 - tt * tt) * (1.0 - tt * tt);
@@ -262,6 +288,10 @@ void fragment() {
 		vec3 dpdy = dFdy(VERTEX);
 		float hx = vf.y * vein_height;
 		float hy = vf.z * vein_height;
+		float ts = (abs(dFdx(hx)) + abs(dFdy(hx)) + abs(dFdx(hy)) + abs(dFdy(hy)))
+				/ sqrt(max(length(dpdx) * length(dpdy), 1e-20));
+		hx /= 1.0 + VEIN_TILT_DAMP * ts;
+		hy /= 1.0 + VEIN_TILT_DAMP * ts;
 		vec3 n_old = NORMAL;
 		NORMAL = tilt_normal(NORMAL, dpdx, dpdy, hx, hy);
 		float lit = dot(NORMAL, VEIN_KEY) - dot(n_old, VEIN_KEY);
