@@ -1,4 +1,4 @@
-// Skin blights (rare warts, crusted scabs, pit scars) for the arm skin: smooth metaball domes in the rest chart; needs grime.gdshaderinc and the shader's seed_offset and blight_scale.
+// Skin blights (rare warts, crusted scabs, pit scars) for the arm skin: smooth metaball domes in the rest chart; needs grime.gdshaderinc and the shader's seed_offset (the cell scale is a parameter).
 
 vec3 blight_hash(vec3 c) {
 	vec3 q = vec3(dot(c, vec3(127.1, 311.7, 74.7)), dot(c, vec3(269.5, 183.3, 246.1)),
@@ -15,8 +15,8 @@ float blight_dome(vec3 o, float r, float k) {
 
 // Soft-clamped fields in 0..1: x wart, y scab, z pit core, w pit lip. Blobs are summed, never
 // max()ed, because max leaves a crease where two meet.
-vec4 blight_field(vec3 p, float accept, float widen) {
-	vec3 q = p * blight_scale + vec3(seed_offset * 1.7);
+vec4 blight_field(vec3 p, float scale, float accept, float widen) {
+	vec3 q = p * scale + vec3(seed_offset * 1.7);
 	// One low octave only: fbm's high octaves made the edges jagged.
 	q += 0.25 * (vec3(noise21(q.yz * 0.6), noise21(q.zx * 0.6), noise21(q.xy * 0.6)) - 0.5);
 	vec3 cell = floor(q);
@@ -72,13 +72,13 @@ float blight_height(vec4 f) {
 
 // Vertex relief: wider and lower than the shading field so one coarse vertex never pokes up
 // alone, and no pits so the mesh is never dented.
-float blight_relief(vec3 p, float accept) {
-	vec4 f = blight_field(p, accept, 1.5);
+float blight_relief(vec3 p, float scale, float accept) {
+	vec4 f = blight_field(p, scale, accept, 1.5);
 	return 0.5 * (f.x + 0.6 * smoothstep(0.0, 0.45, f.y));
 }
 
 // Shading cues for the blight field; m is the dorsal mask times skin_bump.
-void blight_shade(vec4 f, vec3 p, float m, inout vec3 col, inout float rough, inout float ao) {
+void blight_shade(vec4 f, vec3 p, float scale, float m, inout vec3 col, inout float rough, inout float ao) {
 	// Foot ring: the cavity at the base of a wart or scab.
 	float fb = max(f.x, f.y);
 	float foot = smoothstep(0.03, 0.2, fb) * smoothstep(0.5, 0.25, fb);
@@ -90,7 +90,7 @@ void blight_shade(vec4 f, vec3 p, float m, inout vec3 col, inout float rough, in
 	// Scab: dark crust with cracks and a pale flaking edge.
 	float crust = smoothstep(0.1, 0.4, f.y);
 	col = mix(col, vec3(0.09, 0.035, 0.025), m * crust * 0.9);
-	vec2 cp = p.xz * blight_scale * 5.0 + vec2(p.y * blight_scale * 5.0);
+	vec2 cp = p.xz * scale * 5.0 + vec2(p.y * scale * 5.0);
 	float crack = 1.0 - smoothstep(0.02, 0.06, crack_field(cp));
 	col *= 1.0 - 0.5 * m * crust * crack;
 	col = mix(col, col * 1.6, m * smoothstep(0.1, 0.2, f.y) * smoothstep(0.35, 0.2, f.y) * 0.5);

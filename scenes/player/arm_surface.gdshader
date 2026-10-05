@@ -39,11 +39,16 @@ uniform float skin_bump : hint_range(0.0, 1.0) = 0.0;
 uniform float sag_scale = 0.0;
 // Frequency of the fine wrinkles, in rest-space units.
 uniform float wrinkle_scale = 0.0;
-// Rare big blights on the back of the hand (warts, scabs, pit scars): cell frequency and height gain.
+// Rare big blights on the back of the arm(warts, scabs, pit scars): cell frequency and height gain.
 uniform float blight_scale = 3.2;
 uniform float blight_gain = 20.0;
 // Vertex lift of a blight as a fraction of one blight cell (scale-free).
 uniform float blight_lift = 0.30;
+// Finer blights on the hand only (weighted by the hand weight): a hand is about one arm cell.
+uniform float hand_blight_scale = 18.0;
+uniform float hand_blight_accept = 0.4;
+// Height gain of the hand layer; lower than blight_gain because its slopes are steeper.
+uniform float hand_blight_gain = 6.0;
 // Peak fold slope scale in view metres per unit of height gradient (the rig is 0.18-scaled).
 const float SKIN_BUMP_HEIGHT = 0.0015;
 
@@ -68,6 +73,11 @@ varying vec4 rest_data;
 // Blights; need fbm, noise21 and crack_field from grime and the uniforms above.
 #include "res://scenes/player/arm_skin_blights.gdshaderinc"
 
+// Back-of-limb mask; on the hand it starts lower so the tilted finger tops get blights too.
+float blight_dorsal(float ny, float hand) {
+	return smoothstep(mix(0.05, -0.10, hand), mix(0.55, 0.40, hand), ny);
+}
+
 void vertex() {
 	rest_data = use_rest_pos ? CUSTOM1 : vec4(VERTEX, 0.0);
 	obj_pos = rest_data.xyz;
@@ -75,10 +85,13 @@ void vertex() {
 	vein_data = CUSTOM0;
 	if (skin_bump > 0.0) {
 		// Real relief for the blights: lift along the normal by the rest-chart blight height.
-		float v_dorsal = smoothstep(0.05, 0.55, normalize(obj_normal).y);
+		float v_dorsal = blight_dorsal(normalize(obj_normal).y, rest_data.w);
 		float v_accept = mix(0.12, 0.55, rest_data.w);
-		VERTEX += NORMAL * (blight_lift / blight_scale) * v_dorsal * skin_bump
-				* blight_relief(rest_data.xyz, v_accept);
+		// The hand layer is halved so the coarse finger vertices never spike.
+		VERTEX += NORMAL * blight_lift * v_dorsal * skin_bump
+				* (blight_relief(rest_data.xyz, blight_scale, v_accept) / blight_scale
+				+ 0.5 * rest_data.w * blight_relief(rest_data.xyz, hand_blight_scale,
+				hand_blight_accept) / hand_blight_scale);
 	}
 	if (!IN_SHADOW_PASS) {
 		apply_viewmodel_fov(PROJECTION_MATRIX);
@@ -131,12 +144,16 @@ float knot_at(vec3 rest) {
 	return knot_height(q);
 }
 
-float skin_height(vec3 rest, vec3 w, float accept, float dorsal) {
-	vec4 f = blight_field(rest, accept, 1.0);
+float skin_height(vec3 rest, vec3 w, float accept, float dorsal, float hand) {
+	vec4 f = blight_field(rest, blight_scale, accept, 1.0);
 	vec2 wq = rest.xz * blight_scale * 12.0 + vec2(rest.y * blight_scale * 12.0);
 	float wart_skin = f.x * 0.12 * (noise21(wq) - 0.5); // fine bumpy wart skin, shading only
-	return 0.75 * knot_at(rest) + 0.25 * tri_fbm(rest, w, wrinkle_scale)
-			+ blight_gain * dorsal * (blight_height(f) + wart_skin);
+	float h = blight_height(f) + wart_skin;
+	if (hand > 0.01) {
+		vec4 fh = blight_field(rest, hand_blight_scale, hand_blight_accept, 1.0);
+		h += hand * (hand_blight_gain / blight_gain) * blight_height(fh);
+	}
+	return 0.75 * knot_at(rest) + 0.25 * tri_fbm(rest, w, wrinkle_scale) + blight_gain * dorsal * h;
 }
 
 // Veins from two side projections of the across coordinates, blended so there is no seam.
@@ -214,15 +231,15 @@ void fragment() {
 		float eps = 0.25 / wrinkle_scale;
 		// Blights stay on the back of the hand; the wide ramp avoids cutting a cliff into a blob.
 		float hand = rest_data.w;
-		float dorsal = smoothstep(0.05, 0.55, n.y);
+		float dorsal = blight_dorsal(n.y, hand);
 		float accept = mix(0.12, 0.55, hand);
 		vec3 g = vec3(
-				skin_height(rest + vec3(eps, 0.0, 0.0), w, accept, dorsal)
-						- skin_height(rest - vec3(eps, 0.0, 0.0), w, accept, dorsal),
-				skin_height(rest + vec3(0.0, eps, 0.0), w, accept, dorsal)
-						- skin_height(rest - vec3(0.0, eps, 0.0), w, accept, dorsal),
-				skin_height(rest + vec3(0.0, 0.0, eps), w, accept, dorsal)
-						- skin_height(rest - vec3(0.0, 0.0, eps), w, accept, dorsal)
+				skin_height(rest + vec3(eps, 0.0, 0.0), w, accept, dorsal, hand)
+						- skin_height(rest - vec3(eps, 0.0, 0.0), w, accept, dorsal, hand),
+				skin_height(rest + vec3(0.0, eps, 0.0), w, accept, dorsal, hand)
+						- skin_height(rest - vec3(0.0, eps, 0.0), w, accept, dorsal, hand),
+				skin_height(rest + vec3(0.0, 0.0, eps), w, accept, dorsal, hand)
+						- skin_height(rest - vec3(0.0, 0.0, eps), w, accept, dorsal, hand)
 		) / (2.0 * eps);
 		g -= dot(g, n) * n; // slope along the surface only
 		// Same screen-space mapping as the vein ridge: height change per pixel, then the tilt.
@@ -240,7 +257,12 @@ void fragment() {
 		fold_dark = smoothstep(0.5, 0.25, wrinkle) * 0.6
 				+ smoothstep(0.0, 0.08, kh) * smoothstep(0.3, 0.1, kh) * 0.4;
 		col *= mix(1.0, 0.82, skin_bump * fold_dark);
-		blight_shade(blight_field(rest, accept, 1.0), rest, dorsal * skin_bump, col,
+		vec4 bf = blight_field(rest, blight_scale, accept, 1.0);
+		if (hand > 0.01) {
+			bf = min(bf + hand * blight_field(rest, hand_blight_scale, hand_blight_accept, 1.0),
+					vec4(1.0));
+		}
+		blight_shade(bf, rest, mix(blight_scale, hand_blight_scale, hand), dorsal * skin_bump, col,
 				blight_rough, blight_ao);
 	}
 	// Dirt: fbm-masked grime that collects in the hollows.
