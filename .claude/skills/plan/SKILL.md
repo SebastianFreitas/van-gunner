@@ -60,8 +60,9 @@ the one for the plan's `Stage:` line, never both:
   changes the plan: `.claude/skills/plan/interview.md`.
 - `ready` with a go prompt or a bare `go`: only "Supervising the run" in
   `.claude/skills/plan/run.md` (no state file yet; never the plan).
-- `running`: `.claude/skills/plan/run.md` (phases, the state file, phase
-  questions, Answer, Stage done). A session started by
+- `running`: the section of `.claude/skills/plan/run.md` the `PLAN:`
+  line names ("Supervising the run", "Answer", "Last phase done"), found
+  by grepping its heading, never the whole file. A session started by
   `tools/autoplan.py` reads `.claude/skills/plan/unattended.md` instead.
 
 The planning session is a manager: `plan-writer` subagents do the

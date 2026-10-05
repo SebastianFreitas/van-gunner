@@ -185,8 +185,10 @@ def plan_lines(root):
                         status = state_line[len("Status:"):].strip()
                         head += f" · {status}"
                     if status in ("blocked", "questions"):
-                        second = ("Read .claude/skills/plan/run.md, then "
-                                  f"{state_rel} and {rel}. Status {status}: a "
+                        second = ("Read 'Answer' in .claude/skills/plan/"
+                                  f"run.md, then {state_rel}'s Questions or "
+                                  f"Blocker section (grep the heading; never "
+                                  f"the whole {rel}). Status {status}: a "
                                   "bare 'go' does the skill's Answer (asks the "
                                   "waiting questions), never a phase.")
                     else:
@@ -196,9 +198,11 @@ def plan_lines(root):
                                   "continues it.")
                 else:
                     head += " · no state file"
-                    second = ("Read .claude/skills/plan/run.md, then "
-                              f"{rel} (no state file: take the first "
-                              "runnable row in Progress). A bare 'go' "
+                    second = ("Read 'Supervising the run' and 'Which "
+                              "phase runs next' in .claude/skills/plan/"
+                              f"run.md, then grep {rel}'s Progress rows "
+                              "(no state file: take the first runnable "
+                              "row; never the whole plan). A bare 'go' "
                               "continues it.")
             elif stage == "ready":
                 second = ("Read 'Supervising the run' in "
@@ -207,9 +211,11 @@ def plan_lines(root):
                           "'go' starts the run; a change to the plan reads "
                           ".claude/skills/plan/interview.md instead.")
             else:
-                second = ("Read .claude/skills/plan/interview.md, then "
-                          f"{rel}: Interview, Brief, Decisions, Open items, "
-                          "Progress. A bare 'go' continues it.")
+                second = ("Read 'Who does what' in .claude/skills/plan/"
+                          "interview.md and the Part the plan's Interview "
+                          f"line names; in {rel} grep only the Interview "
+                          "line and Open items (writers read the rest). A "
+                          "bare 'go' continues it.")
             lines = [head, second]
             others = [(n, s) for n, s in active if n != bound]
             if others:

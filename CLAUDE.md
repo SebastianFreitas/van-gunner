@@ -19,7 +19,7 @@ The owner's nicknames (loper, crawler, bars, street card...) live in `docs/gloss
 
 ## Active task
 
-When the user points you at a file in `docs/tasks/`, that file is the task. Re-read it after every `/clear` (the SessionStart hook reminds you), work its steps in order, and tick its checklist as each step's commit lands. The task's last commit deletes the file. A task runs straight through in one window (owner, 2026-09-26: "never stop just go through all phases"): each step is delegated, verified, committed and ticked, then the next starts, stopping only for an owner question or a blocker and handing off only at the context line. A task is a short list of steps the owner points a session at; a plan is phases with an interview behind them (workflow.md "Plans"); a session runs a plan or a task, never both.
+When the user points you at a file in `docs/tasks/`, that file is the task. It follows prepare, clear, run (workflow.md): the prepare window writes one spec per unticked step and the `Run: prepared` handoff, and the run window works them in order without stopping between steps (owner, 2026-09-26: "never stop just go through all phases"), ticking each step's checklist line as its commit lands, stopping only for an owner question or a blocker. After a `/clear` grep the task's unticked lines, never re-read it whole. The task's last commit deletes the file. A task is a short list of steps the owner points a session at; a plan is phases with an interview behind them (workflow.md "Plans"); a session runs a plan or a task, never both.
 
 ## Main session role, van-gunner specifics
 
@@ -41,7 +41,7 @@ When the user points you at a file in `docs/tasks/`, that file is the task. Re-r
 12. `GameBalance.get_act` vs `GameSession.run_act` is an open design question the owner holds: don't unify them. Wave counts in `game_balance.tres` are owner test values.
 13. `SaveSandbox` is the only test hook in game code.
 14. Nothing the facade system places may enter a stop-bay mouth, the reverse-park approach or the raider lane: every placement passes `FacadeKeepOut.allows`, bodies are gated by construction, and the smoke test asserts it (`facade stress 1`, run as five parallel shards of `tools/smoke/facade_stress.tscn`, and `bay mouth clear:` after the garage docks).
-15. Two art styles, one dark look: low-poly 3D skinned with procedural grime shaders in the road's recipe (the road and the van are the references), and flat pixel-art sprites (NPCs, enemies, items, icons); it is always night and light comes only from sources you can point at. A spec for any change someone can see names `.claude/rules/art-style.md`, the area's `art-*.md` file and `art-shots.md` (shot targets) under Read first.
+15. Two art styles, one dark look: low-poly 3D skinned with procedural grime shaders in the road's recipe (the road and the van are the references), and flat pixel-art sprites (NPCs, enemies, items, icons); it is always night and light comes only from sources you can point at. A spec for any change someone can see names `.claude/rules/art-style.md` and the area's `art-*.md` file under Read first, plus `art-shots.md` when the change moves a shot's numbers.
 
 ## Where things are
 

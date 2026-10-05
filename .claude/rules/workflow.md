@@ -107,7 +107,7 @@ early only when something went really wrong.
 
 ### Prepare
 
-This window's line is 100k; two prepare windows reached 140k writing
+This window's line is 120k; two prepare windows reached 140k writing
 specs and reading files themselves (2026-10-01).
 
 1. **Explore** through `Explore` (the files, functions, `file:line`
@@ -128,7 +128,7 @@ specs and reading files themselves (2026-10-01).
 
 A go prompt whose printed handoff starts `Run: prepared`, checkout and
 branch checked first. This window only manages, never reads a spec or a
-diff (about 3k tokens per spec, so 20 fit under its 160k line). Step
+diff (about 3k tokens per spec, so 20 fit under its 175k line). Step
 detail: playbook "Run".
 
 3. **Implement:** one foreground `implementer` per spec, the prompt only
@@ -194,8 +194,8 @@ opens a new chat. Never compact or clear yourself. `context-watch.py`
 prints `CONTEXT WATCH` once when a window crosses 90% of its line, once
 when it passes it, and once per new prompt while it stays there. Lines:
 a prepared run's window, a plan run's supervisor and headless plan
-sessions 160k (the runner kills headless ones at 185k); every other app
-window 100k; Explore, Plan, general-purpose and claude-code-guide 100k,
+sessions 175k (the runner kills headless ones at 200k); every other app
+window 120k; Explore, Plan, general-purpose and claude-code-guide 100k,
 plan-writer 120k, implementer 60k, reviewer and plan-reviewer 80k. A
 subagent at 1.25 times its line is denied further tools: the prompt was
 too wide; next time name file, function and range, or split. Every

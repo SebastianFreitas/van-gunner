@@ -78,6 +78,7 @@ HANDOFF_REL = ".claude/handoff.md"
 HANDOFF_MAX_LINES = 80
 HANDOFF_MAX_BYTES = 6 * 1024
 REPORT_ONLY_AGENTS = {"reviewer", "plan-reviewer"}
+MAIN_NO_READ = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tga", ".exr", ".hdr"}
 REPORTS_REL = ".claude/specs/reports/"
 
 
@@ -263,6 +264,23 @@ def bash_violation(d: dict, tool_input: dict) -> None:
             return
 
 
+def report_only_bash_violation(d: dict, tool_input: dict, agent_type: str) -> None:
+    """A reviewer's Bash may write only its report (or outside the repo):
+    sed -i or a redirect into the tree is the same as a refused Edit."""
+    command = tool_input.get("command") or ""
+    base = d.get("cwd") or os.getcwd()
+    for target in bash_write_targets(command):
+        path = os.path.abspath(os.path.join(base, target))
+        root = find_root(path)
+        if root is None:
+            continue
+        rel = os.path.relpath(path, root).replace("\\", "/")
+        if not rel.startswith(REPORTS_REL):
+            deny(f"{agent_type} writes only its report under {REPORTS_REL} "
+                 f"(or the scratchpad), not {rel}, with Bash or otherwise.")
+            return
+
+
 def bash_handoff_violation(d: dict, tool_input: dict) -> bool:
     command = tool_input.get("command") or ""
     base = d.get("cwd") or os.getcwd()
@@ -286,8 +304,11 @@ def main() -> None:
     if tool_name in ("Bash", "PowerShell"):
         if bash_handoff_violation(d, tool_input):
             return
+        agent_type = (d.get("agent_type") or "").split(":")[-1]
         if not d.get("agent_id"):
             bash_violation(d, tool_input)
+        elif agent_type in REPORT_ONLY_AGENTS:
+            report_only_bash_violation(d, tool_input, agent_type)
         return
     path =tool_input.get("file_path") or tool_input.get("notebook_path")
     if not path:
@@ -296,6 +317,13 @@ def main() -> None:
     if not os.path.isabs(path):
         path = os.path.join(cwd, path)
     path = os.path.abspath(path)
+
+    # Main session never Reads an image, anywhere (scratchpad shots too):
+    # one picture costs more than most specs (workflow.md Token rules).
+    if tool_name == "Read" and not d.get("agent_id") and ext(path) in MAIN_NO_READ:
+        deny("Main session: images are never Read here; pass the path on "
+             "(SendUserFile for the owner, or an agent's prompt).")
+        return
 
     root = find_root(path)
     if root is None:

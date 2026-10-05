@@ -3,7 +3,7 @@ the shared session-start hook.
 
 - NO GODOT line when tools/godot_env.py finds no Godot executable, so the
   session says up front that check and smoke cannot run.
-- After a compaction or /clear (source "compact" or "clear"), a reminder to re-read the task
+- After a compaction or /clear (source "compact" or "clear"), a reminder to grep the task's unticked lines
   files in docs/tasks/.
 
 Plain stdout text, like session-start.py. Nothing to say prints nothing.
@@ -66,7 +66,7 @@ def main():
             os.path.relpath(p, root).replace(os.sep, "/")
             for p in glob.glob(os.path.join(root, "docs", "tasks", "*.md")))
         if names:
-            lines.append("If you are working a task file, re-read it now "
+            lines.append("If you are working a task file, grep its unticked lines "
                          "(CLAUDE.md Active task): " + ", ".join(names))
     if lines:
         print("\n".join(lines))

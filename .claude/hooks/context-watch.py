@@ -6,9 +6,11 @@ and says to finish and hand off past it (rules in .claude/rules/
 workflow.md "Context budget"; handoff format in .claude/skills/handoff).
 The line depends on the window:
 - a headless plan session: AUTOPLAN_LINE from tools/autoplan.py;
-- a prepared run (.claude/handoff.md starts `Run: prepared`; remembered
-  for the window once seen, so deleting the handoff at the commit does
-  not move the line): RUN_LIMIT;
+- a prepared run (a go prompt naming .claude/handoff.md while it starts
+  `Run: prepared`; a handoff that merely exists, e.g. in the prepare
+  window that just wrote it, does not count; remembered for the window,
+  so deleting the handoff at the commit does not move the line):
+  RUN_LIMIT;
 - a plan run's supervisor (a prompt that is the go prompt `go: run plan`
   or `carry on running plan`, or a Bash/PowerShell call that launches
   `py ... autoplan.py <name>`; remembered for the window the same way):
@@ -24,7 +26,8 @@ implementer-wt, reviewer, plan-reviewer, plan-writer):
   Advisory only; a model can ignore it.
 - PreToolUse: past HARD x its line, every further tool call is DENIED with
   an instruction to write the report now. This is the enforcement: a
-  subagent cannot drift past 1.25x its line.
+  subagent cannot drift past 1.25x its line. A Write or Edit under
+  .claude/specs/reports/ stays allowed, so the report can still land.
 - SubagentStop: logs the peak to a per-session ledger; the main session's
   next hook run reports it.
 
@@ -49,8 +52,10 @@ import os
 import re
 import sys
 
-LIMIT = 100_000       # app windows that are not a prepared run
-RUN_LIMIT = 160_000   # a prepared run's window, or a plan run's supervisor
+LIMIT = 120_000       # app windows that are not a prepared run
+RUN_LIMIT = 175_000   # a prepared run's window, or a plan run's supervisor
+# the go prompt that starts a prepared run (workflow.md "The go prompt")
+RUN_PROMPT = re.compile(r"\bgo:.*handoff\.md", re.I | re.S)
 SUPERVISOR_PROMPT = re.compile(r"go: run plan |carry on running plan ")
 # py / py.exe / python / python3 / python3.12 (bare, as a path, quoted or
 # not), an optional -3 / -3.12, then a path ending in autoplan.py (quoted
@@ -175,6 +180,15 @@ def own_transcript(d):
     return cand if os.path.exists(cand) else None
 
 
+def report_write(d):
+    """Past HARD the agent must still be able to write its report: a Write
+    or Edit under .claude/specs/reports/ (agents return only its path)."""
+    if d.get("tool_name") not in ("Write", "Edit"):
+        return False
+    p = ((d.get("tool_input") or {}).get("file_path") or "").replace("\\", "/")
+    return "/.claude/specs/reports/" in p or p.startswith(".claude/specs/reports/")
+
+
 def tier_of(used, limit, soft):
     if used >= limit:
         return 2
@@ -199,7 +213,10 @@ def main_line(d, state):
         text = (d.get("tool_input") or {}).get("command") or ""
     if SUPERVISOR_PROMPT.search(text) or SUPERVISOR_CMD.search(text):
         kind = "supervisor"
-    else:
+    elif d.get("hook_event_name") == "UserPromptSubmit" and RUN_PROMPT.search(text):
+        # only the go prompt makes a run window: a handoff that merely
+        # exists (the prepare window that just wrote it, another
+        # session's checkout) does not
         try:
             hand = os.path.join(d.get("cwd") or os.getcwd(), ".claude", "handoff.md")
             with open(hand, encoding="utf-8", errors="ignore") as f:
@@ -302,14 +319,15 @@ def on_subagent_tool(d, ev):
     used = context_tokens(own)
     if used is None:
         return
-    if ev == "PreToolUse" and used >= limit * HARD:
+    if ev == "PreToolUse" and used >= limit * HARD and not report_write(d):
         print(json.dumps({"hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
             "permissionDecisionReason": (
                 f"CONTEXT WATCH: {used:,} tokens, past your hard line of "
                 f"{int(limit * HARD):,}. No more tool calls. Write your "
-                "report now from what you have (for the implementer: "
+                "report now from what you have (Write to .claude/specs/reports/ "
+                "is still allowed; for the implementer: "
                 "files changed, verification so far, what is left), and "
                 "say you hit the context line so the task must be "
                 "narrowed or split.")}}))

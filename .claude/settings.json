@@ -2,6 +2,7 @@
   "env": {
     "DISABLE_AUTO_COMPACT": "1"
   },
+  "autoCompactEnabled": false,
   "modelSettings": {
     "claude-opus-5-5": {
       "effortLevel": "low"
@@ -15,6 +16,34 @@
   },
   "enableArtifact": false,
   "disableWorkflows": true,
+  "skillOverrides": {
+    "anthropic-skills:consolidate-memory": "user-invocable-only",
+    "anthropic-skills:docs": "user-invocable-only",
+    "anthropic-skills:docx": "user-invocable-only",
+    "anthropic-skills:explain-usage": "user-invocable-only",
+    "anthropic-skills:pdf": "user-invocable-only",
+    "anthropic-skills:pptx": "user-invocable-only",
+    "anthropic-skills:schedule": "user-invocable-only",
+    "anthropic-skills:setup-claude": "user-invocable-only",
+    "anthropic-skills:xlsx": "user-invocable-only",
+    "dataviz": "user-invocable-only",
+    "artifact-design": "user-invocable-only",
+    "artifact-diagramming": "user-invocable-only",
+    "artifact-capabilities": "user-invocable-only",
+    "update-config": "user-invocable-only",
+    "keybindings-help": "user-invocable-only",
+    "code-review": "user-invocable-only",
+    "simplify": "user-invocable-only",
+    "fewer-permission-prompts": "user-invocable-only",
+    "loop": "user-invocable-only",
+    "schedule": "user-invocable-only",
+    "claude-api": "user-invocable-only",
+    "workflow-authoring": "user-invocable-only",
+    "run": "user-invocable-only",
+    "plugin-authoring": "user-invocable-only",
+    "init": "user-invocable-only",
+    "security-review": "user-invocable-only"
+  },
   "permissions": {
     "allow": [
       "Bash(git status*)",
@@ -41,7 +70,11 @@
       "mcp__visualize__read_me",
       "PowerShell",
       "SearchPlugins",
-      "SuggestPluginInstall"
+      "SuggestPluginInstall",
+      "mcp__unity-mcp__*",
+      "CronCreate",
+      "RemoteTrigger",
+      "mcp__scheduled-tasks__*"
     ]
   },
   "hooks": {

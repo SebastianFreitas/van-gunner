@@ -112,7 +112,7 @@ Write and never read back; longer means two specs. Every spec has:
 - **Autoplan:** `py -3 tools/autoplan.py [<name>] [--dry-run]
   [--max-sessions N] [--budget USD] [--effort medium] [--line 160000]
   [--kill 185000] [--force]`. The window that launches it (or whose go
-  prompt runs a plan) is a plan run's supervisor, with a 160k line.
+  prompt runs a plan) is a plan run's supervisor, with a 175k line.
   Started by the app session in the
   background (`run_in_background`) with `--max-sessions 1`, one phase
   per launch, and relaunched by it after each phase (plan skill

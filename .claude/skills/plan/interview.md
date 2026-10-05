@@ -393,7 +393,7 @@ nothing after it:
     Interview paused (context full). Please run `/clear`, then paste this:
 
     ```
-    go: continue the interview for plan <name> from Part <letter>. Checkout <path> on branch <branch>, <mode> mode. Read .claude/plans/<name>.md first.
+    go: continue the interview for plan <name> from Part <letter>. Checkout <path> on branch <branch>, <mode> mode. Read the Interview line of .claude/plans/<name>.md first.
     ```
 
 That prompt then resumes through "`/plan` or `go` while Stage is
