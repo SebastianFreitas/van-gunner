@@ -97,8 +97,15 @@ static func gear_cloth(rng: RandomNumberGenerator) -> ShaderMaterial:
 	return mat
 
 
+## Claw nails: colour comes from the mesh's per-vertex grime gradient (linear), with a dull horn sheen.
 static func claw() -> StandardMaterial3D:
-	return MachineParts.dark(Color(0.13, 0.11, 0.075), 0.8)
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.albedo_color = Color.WHITE
+	mat.roughness = 0.55
+	mat.metallic = 0.0
+	mat.metallic_specular = 0.4
+	return mat
 
 
 static func tape(rng: RandomNumberGenerator) -> StandardMaterial3D:

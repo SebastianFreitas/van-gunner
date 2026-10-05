@@ -32,6 +32,10 @@ const THICK := 0.1
 const ROOT := 0.45
 ## Share of ARC (from the dorsal line) past which the sides start to dive under the skin.
 const SIDE := 0.55
+## Linear nail colours, kept dark and desaturated (art budget): grimy cuticle, soot-olive middle, yellowed bone point.
+const ROOT_COLOR := Color(0.03, 0.026, 0.02)
+const MID_COLOR := Color(0.10, 0.088, 0.055)
+const TIP_COLOR := Color(0.24, 0.22, 0.16)
 
 
 ## `rings` are `ArmFingers.build`'s tip rings ({t, centre, half_w, half_h}, centre x lateral, y
@@ -79,6 +83,7 @@ static func mesh(rings: Array, reach: float, curve_deg: float,
 			var side := lerpf(_side(k, SIDE), 1.0, smoothstep(0.0, 0.35, s))
 			lift.append(lerpf(-BURY, LIFT, side))
 		secs.append(_sec(c, w0 * fw, h0 * f, lift, s, thick))
+	var nail_span := Vector2((secs[0][&"c"] as Vector3).y, p2.y)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var outs: Array[PackedVector3Array] = []
@@ -95,26 +100,26 @@ static func mesh(rings: Array, reach: float, curve_deg: float,
 			var b := outs[i][s + 1]
 			var c := outs[i + 1][s + 1]
 			var d := outs[i + 1][s]
-			_tris(st, 0, [a, d, b, b, d, c])
+			_tris(st, 0, [a, d, b, b, d, c], nail_span)
 			a = ins[i][s]
 			b = ins[i][s + 1]
 			c = ins[i + 1][s + 1]
 			d = ins[i + 1][s]
-			_tris(st, 1, [a, b, d, b, c, d])
+			_tris(st, 1, [a, b, d, b, c, d], nail_span)
 		var oa := outs[i]
 		var ob := outs[i + 1]
 		var ia := ins[i]
 		var ib := ins[i + 1]
 		_tris(st, -1, [oa[ARC_SEGS], ob[ARC_SEGS], ia[ARC_SEGS],
-				ia[ARC_SEGS], ob[ARC_SEGS], ib[ARC_SEGS]])
-		_tris(st, -1, [oa[0], ia[0], ob[0], ia[0], ib[0], ob[0]])
+				ia[ARC_SEGS], ob[ARC_SEGS], ib[ARC_SEGS]], nail_span)
+		_tris(st, -1, [oa[0], ia[0], ob[0], ia[0], ib[0], ob[0]], nail_span)
 	var lo := outs[outs.size() - 1]
 	var li := ins[ins.size() - 1]
 	for s in ARC_SEGS:
-		_tris(st, 0, [lo[s], p2, lo[s + 1]])
-		_tris(st, 1, [li[s], li[s + 1], p2])
-	_tris(st, -1, [lo[ARC_SEGS], p2, li[ARC_SEGS]])
-	_tris(st, -1, [lo[0], li[0], p2])
+		_tris(st, 0, [lo[s], p2, lo[s + 1]], nail_span)
+		_tris(st, 1, [li[s], li[s + 1], p2], nail_span)
+	_tris(st, -1, [lo[ARC_SEGS], p2, li[ARC_SEGS]], nail_span)
+	_tris(st, -1, [lo[0], li[0], p2], nail_span)
 	st.generate_normals()
 	return st.commit()
 
@@ -174,7 +179,20 @@ static func _arc(sec: Dictionary, outer: bool) -> PackedVector3Array:
 
 
 ## Adds the vertices of `verts` (a triangle list) in smooth group `group` (-1 is flat).
-static func _tris(st: SurfaceTool, group: int, verts: Array) -> void:
+static func _tris(st: SurfaceTool, group: int, verts: Array, span: Vector2) -> void:
 	st.set_smooth_group(group)
 	for v: Vector3 in verts:
+		st.set_color(_nail_color(v, span))
 		st.add_vertex(v)
+
+
+## Stained-horn colour at `v`: `span` is (bed start y, tip y); blackened at the root, dull bone at the point, with lengthwise streaks and speckle.
+static func _nail_color(v: Vector3, span: Vector2) -> Color:
+	var t := clampf((v.y - span.x) / maxf(span.y - span.x, 0.0001), 0.0, 1.0)
+	var col := ROOT_COLOR.lerp(MID_COLOR, smoothstep(0.05, 0.45, t))
+	col = col.lerp(TIP_COLOR, smoothstep(0.5, 1.0, t))
+	var streak := fposmod(sin(v.x * 1271.3 + v.z * 3117.9) * 43758.5453, 1.0)
+	var speck := fposmod(sin(v.x * 12.9898 + v.y * 78.233 + v.z * 37.719) * 43758.5453, 1.0)
+	col *= 1.0 - (0.28 * streak + 0.15 * speck) * (1.0 - 0.5 * t)
+	col.a = 1.0
+	return col
