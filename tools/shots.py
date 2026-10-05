@@ -40,19 +40,22 @@ NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 # Tolerance per view is 2x the mean pixel diff measured between two `capture`
 # runs of one unchanged tree on 2026-09-28 (workflow-port phase 7, D11;
 # 05-combat-back, v04 and v16 re-measured 2026-10-01 once the IDLE van pin
-# in smoke_shots.gd made the exterior views deterministic). The
-# floor keeps a fully deterministic view from flagging float jitter; views
-# measured at 0 rely on it. Unknown views (new views, `--van-seeds` views
-# `v..-van-seed...`) fall back to DEFAULT_TOLERANCE. Re-measure with
-# `compare <a> <b> --raw` on two fresh captures and double the result.
+# in smoke_shots.gd made the exterior views deterministic).
+# 04-combat-front, 05-combat-back, 02-idle-back re-measured 2026-10-05 as the
+# largest diff over four captures, after smoke_seeds.gd pinned the smoke's own
+# rolls and MachineMotion held still. The floor keeps a fully deterministic
+# view from flagging float jitter; views measured at 0 rely on it. Unknown
+# views (new views, `--van-seeds` views `v..-van-seed...`) fall back to
+# DEFAULT_TOLERANCE. Re-measure with `compare <a> <b> --raw` on two fresh
+# captures and double the result.
 TOLERANCE_FLOOR = 0.05
 DEFAULT_TOLERANCE = 1.0
 TOLERANCE: dict[str, float] = {
 	"01-idle-front": 0.008,
-	"02-idle-back": 0.160,
+	"02-idle-back": 0.622,
 	"03-idle-outside": 0.0,
 	"04-combat-front": 0.634,
-	"05-combat-back": 0.172,
+	"05-combat-back": 4.272,
 	"06-combat-outside": 19.458,
 	"07-elevator-stop-front": 0.106,
 	"08-elevator-stop-back": 0.218,

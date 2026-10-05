@@ -4,6 +4,9 @@ extends RefCounted
 const _ShopStock := preload("res://scripts/stops/shop_stock.gd")
 const _BASE := 12345
 
+## The player's start spot inside the van, as scenes/van/van.tscn places it.
+const PLAYER_START := Vector3(0.0, 0.05, -2.7)
+
 static var _summons := 0
 static var _rests := 0
 
@@ -38,3 +41,17 @@ static func enter_rest() -> void:
 static func pin_shop_stock(node: Node) -> void:
 	if node.get_script() == _ShopStock:
 		pin("shop stock")
+
+
+## Puts the player back on the start spot, facing the cab and standing still, so a stop
+## screenshot does not depend on where the halt walk-in happened to end.
+static func settle_player(tree: SceneTree) -> void:
+	var van := tree.get_first_node_in_group(&"van_run")
+	if van == null:
+		return
+	var player: FpsPlayer = van.get("player")
+	if player == null:
+		return
+	player.position = PLAYER_START
+	player.rotation.y = 0.0
+	player.velocity = Vector3.ZERO

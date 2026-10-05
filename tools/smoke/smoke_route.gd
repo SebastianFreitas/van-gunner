@@ -66,6 +66,7 @@ func drive_side_stop(travel: TravelController, stop_command: String, label: Stri
 	if label == "rear-park" and not _assert_bay_mouth_clear(travel):
 		return false
 
+	_Seeds.settle_player(driver.get_tree())
 	await driver._shot(label + "-stop")
 	await driver._frames(10)
 	travel.leave_stop()
