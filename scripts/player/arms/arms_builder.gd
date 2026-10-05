@@ -59,6 +59,11 @@ const GRIP_THUMB_AIM := Vector3(-65, -70, -20)
 ## Swept live with `arms thumbturn` and approved by the owner on 2026-10-04.
 const GRIP_THUMB_TURN := Vector3(-50, -10, -5)
 const RIGHT_THUMB_TURN := Vector3.ZERO
+## Degrees, spins the thumb's tip bone about its own length (twists the nail sideways); the rest
+## of the thumb stays put (`arms thumbroll`).
+const RIGHT_THUMB_ROLL := 50.0
+## Live copy of RIGHT_THUMB_ROLL; one value for both grip and pistol.
+static var right_thumb_roll := RIGHT_THUMB_ROLL
 ## Live copies of the gripping hand's tunables: the `arms thumbaim`, `arms thumbcurl`, `arms wrist`
 ## and `arms curl` console commands set them and rebuild, so a pose is tuned by numbers instead of
 ## a screenshot per try. The constants above are their defaults. The `right_*` names read and write
@@ -204,6 +209,10 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	if SHOW_GUN and thumb_i != -1:
 		sk_r.set_bone_pose_rotation(thumb_i, sk_r.get_bone_pose_rotation(thumb_i)
 				* Quaternion.from_euler(right_thumb_aim * (PI / 180.0)))
+		var tip_i := sk_r.find_bone("DEF-thumb.03.R")
+		if right_thumb_roll != 0.0 and tip_i != -1:
+			sk_r.set_bone_pose_rotation(tip_i, sk_r.get_bone_pose_rotation(tip_i)
+					* Quaternion(Vector3.UP, deg_to_rad(right_thumb_roll)))
 	ArmRig.stretch_tips(model_r, ".R", TIP_K)
 	ArmRig.stretch_thumb(model_r, ".R", THUMB_STRETCH)
 	ArmRig.scale_hand(model_r, ".R", HAND_K)
