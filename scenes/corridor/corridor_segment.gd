@@ -39,6 +39,11 @@ func begin_build() -> void:
 	var floor_node := get_node_or_null(^"RoadFloor") as RoadFloor
 	if floor_node != null:
 		floor_node.rebuild_on_ready = false
+	# The branch floors are hidden unless a side street opens, so they build on demand instead.
+	for path: NodePath in [^"SideStreets/Left/RoadFloor", ^"SideStreets/Right/RoadFloor"]:
+		var branch_floor := get_node_or_null(path) as RoadFloor
+		if branch_floor != null:
+			branch_floor.rebuild_on_ready = false
 
 
 ## Builds the road floor once, after configure and apply_side_streets. Does nothing unless
@@ -178,18 +183,13 @@ func _push_sidewalk_wreck() -> void:
 
 func _sync_side_street_branch_trims(left_open: bool, right_open: bool) -> void:
 	# Trim branch sidewalk ends at the corridor mouth so corner returns own it.
+	# A hidden branch (closed, or a stop bay) keeps its floor unbuilt: nothing shows it.
 	var left_road := _side_street_road(_side_street_left)
-	if left_road:
-		if left_open:
-			left_road.set_sidewalk_end_trims(0.0, SIDE_STREET_CORNER_INSET)
-		else:
-			left_road.set_sidewalk_end_trims(0.0, 0.0)
+	if left_road != null and left_open and _side_street_left.visible:
+		left_road.set_sidewalk_end_trims(0.0, SIDE_STREET_CORNER_INSET)
 	var right_road := _side_street_road(_side_street_right)
-	if right_road:
-		if right_open:
-			right_road.set_sidewalk_end_trims(0.0, SIDE_STREET_CORNER_INSET)
-		else:
-			right_road.set_sidewalk_end_trims(0.0, 0.0)
+	if right_road != null and right_open and _side_street_right.visible:
+		right_road.set_sidewalk_end_trims(0.0, SIDE_STREET_CORNER_INSET)
 
 
 func _build_side_street_corner_returns(left_open: bool, right_open: bool) -> void:
