@@ -119,6 +119,29 @@ static var right_curl: Dictionary:
 			_grip_curl = v
 		else:
 			_pistol_curl = v
+## Right index aim per gun style, degrees per joint .01/.02/.03: x extra curl, y twist along the
+## finger, z side swing, all bone-local, on top of the curl (`arms ridx`). Zero changes nothing.
+static var _pistol_ridx_aim: Array = [Vector3.ZERO, Vector3.ZERO, Vector3.ZERO]
+static var _grip_ridx_aim: Array = [Vector3.ZERO, Vector3.ZERO, Vector3.ZERO]
+## Right index knuckle shift per gun style, centimetres, bone-local (`arms ridx shift`).
+static var _pistol_ridx_shift := Vector3.ZERO
+static var _grip_ridx_shift := Vector3.ZERO
+static var right_index_aim: Array:
+	get:
+		return (_grip_ridx_aim if gun_style == &"grip" else _pistol_ridx_aim).duplicate()
+	set(v):
+		if gun_style == &"grip":
+			_grip_ridx_aim = v
+		else:
+			_pistol_ridx_aim = v
+static var right_index_shift: Vector3:
+	get:
+		return _grip_ridx_shift if gun_style == &"grip" else _pistol_ridx_shift
+	set(v):
+		if gun_style == &"grip":
+			_grip_ridx_shift = v
+		else:
+			_pistol_ridx_shift = v
 const LEFT_CURL := {
 	&"f_index": Vector3(25, 30, 20), &"f_middle": Vector3(25, 30, 20),
 	&"f_ring": Vector3(25, 30, 20), &"f_pinky": Vector3(25, 30, 20),
@@ -204,6 +227,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	var curl_r := right_curl
 	curl_r[&"thumb"] = right_thumb_curl
 	ArmRig.curl(model_r, ".R", curl_r)
+	ArmRig.aim_joints(model_r, "DEF-f_index.0%d.R", right_index_aim, right_index_shift)
 	var sk_r := ArmRig.skeleton(model_r)
 	var thumb_i := sk_r.find_bone("DEF-thumb.01.R")
 	if SHOW_GUN and thumb_i != -1:

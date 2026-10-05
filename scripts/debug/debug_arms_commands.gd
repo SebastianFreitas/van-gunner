@@ -31,7 +31,7 @@ const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
 ## Every subcommand `cmd_arms` handles; the one list behind `sub_commands()`, hints and usage.
 const SUBS: PackedStringArray = [
 	"cam", "curl", "dress", "dump", "fit", "fov", "frame", "gear", "gesture", "gun", "hands",
-	"ik", "inspect", "lthumb", "lthumbaim", "lthumbroll", "reload", "shot", "thumbaim",
+	"ik", "inspect", "lthumb", "lthumbaim", "lthumbroll", "reload", "ridx", "shot", "thumbaim",
 	"thumbcurl", "thumbroll", "thumbs", "thumbturn", "touch", "walk", "weave", "wrist",
 	"wristang",
 ]
@@ -176,6 +176,8 @@ func cmd_arms(args: Array) -> String:
 		ArmsBuilder.right_curl = curl
 		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
 		return "arms curl %s %s" % [str(args[1]), str(curl[StringName(str(args[1]))])]
+	if args[0] == "ridx":
+		return _hints().ridx_apply(args, vm)
 	if args[0] == "gun":
 		if args.size() < 2:
 			return "arms gun: " + str(ArmsBuilder.gun_style)

@@ -28,6 +28,8 @@ const INFO := {
 	"wrist": ["<x> <y> <z>", "right wrist offset in the gun"],
 	"curl": ["<f_index|f_middle|f_ring|f_pinky> <a> <b> <c>",
 			"right finger curl; bare lists all"],
+	"ridx": ["[1|2|3 x y z | shift x y z | reset]", "right index per joint, x curl, y twist, "
+			+ "z swing (deg); shift moves the knuckle (cm)"],
 	"gun": ["<grip|pistol>", "grip|pistol"],
 	"lthumb": ["<bx> <by> <bz> <spread> <ax> <ay> <az>", "left thumb rest pose"],
 	"lthumbaim": ["<x> <y> <z>", "left thumb palm-joint euler"],
@@ -130,6 +132,12 @@ func current_args_for(sub: String, first_arg: String) -> String:
 		if not curl.has(finger):
 			return ""
 		return _v3(curl[finger])
+	if sub == "ridx":
+		if first_arg == "shift":
+			return _v3(ArmsBuilder.right_index_shift)
+		if ["1", "2", "3"].has(first_arg):
+			return _v3(ArmsBuilder.right_index_aim[int(first_arg) - 1])
+		return ""
 	return current_args(sub)
 
 
@@ -157,6 +165,56 @@ func curl_show(args: Array) -> String:
 	if curl_fingers().has(str(args[1])):
 		return curl_lines(str(args[1]))
 	return "bad args. " + hint("curl")
+
+
+## `arms ridx` lines: the aim per joint, the knuckle shift and a copy-paste line of the values.
+func ridx_show() -> String:
+	var aims: Array = ArmsBuilder.right_index_aim
+	var lines: Array[String] = []
+	var paste: Array[String] = []
+	for j in 3:
+		lines.append("arms ridx %d %s" % [j + 1, _v3(aims[j])])
+		paste.append("arms ridx %d %s" % [j + 1, _v3(aims[j])])
+	lines.append("arms ridx shift %s" % _v3(ArmsBuilder.right_index_shift))
+	paste.append("arms ridx shift %s" % _v3(ArmsBuilder.right_index_shift))
+	lines.append("copy: " + "; ".join(paste))
+	return "\n".join(lines)
+
+
+## `arms ridx ...`: show, set a joint, set the shift or reset, then rebuild; else the usage line.
+func ridx_apply(args: Array, vm: Node) -> String:
+	if args.size() == 1:
+		return ridx_show()
+	if not vm.has_method(&"rebuild_arms"):
+		return "arms: no viewmodel"
+	var n := args.size()
+	if n == 2 and str(args[1]) == "reset":
+		ArmsBuilder.right_index_aim = [Vector3.ZERO, Vector3.ZERO, Vector3.ZERO]
+		ArmsBuilder.right_index_shift = Vector3.ZERO
+		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
+		return "arms ridx reset"
+	var shift := n == 5 and str(args[1]) == "shift"
+	if n != 5 and not shift:
+		return "bad args. " + hint("ridx")
+	if not shift and not ["1", "2", "3"].has(str(args[1])):
+		return "bad args. " + hint("ridx")
+	if n != 5:
+		return "bad args. " + hint("ridx")
+	for i in range(2, 5):
+		if not str(args[i]).is_valid_float():
+			return "bad args. " + hint("ridx")
+	var v := Vector3(float(str(args[2])), float(str(args[3])), float(str(args[4])))
+	var out := ""
+	if shift:
+		ArmsBuilder.right_index_shift = v
+		out = "arms ridx shift (%s)" % _v3(v)
+	else:
+		var aims: Array = ArmsBuilder.right_index_aim
+		aims[int(str(args[1])) - 1] = v
+		ArmsBuilder.right_index_aim = aims
+		out = "arms ridx %s (%s)" % [str(args[1]), _v3(v)]
+	vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
+	return out
 
 
 func _timer(t: float) -> String:
