@@ -61,7 +61,7 @@ const GRIP_THUMB_TURN := Vector3(-50, -10, -5)
 const RIGHT_THUMB_TURN := Vector3.ZERO
 ## Degrees, spins the thumb's tip bone about its own length (twists the nail sideways); the rest
 ## of the thumb stays put (`arms thumbroll`).
-const RIGHT_THUMB_ROLL := 0.0
+const RIGHT_THUMB_ROLL := 50.0
 ## Live copy of RIGHT_THUMB_ROLL; one value for both grip and pistol.
 static var right_thumb_roll := RIGHT_THUMB_ROLL
 ## Live copies of the gripping hand's tunables: the `arms thumbaim`, `arms thumbcurl`, `arms wrist`

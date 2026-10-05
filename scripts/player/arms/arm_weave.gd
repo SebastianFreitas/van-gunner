@@ -41,7 +41,7 @@ const LEFT_THUMB_SPREAD_AXIS := Vector3(0.50, 0.01, -0.86)
 const LEFT_THUMB_AIM := Vector3(5, 15, -30)
 ## Degrees, spins the thumb's tip bone about its own length (twists the nail sideways); the rest
 ## of the thumb stays put (`arms lthumbroll`).
-const LEFT_THUMB_ROLL := 0.0
+const LEFT_THUMB_ROLL := -50.0
 ## Share of THUMB_SWING the left thumb keeps, so its weave stays inside the open C.
 const LEFT_THUMB_SWING_K := 0.5
 const THUMB_ARC := 7.0 ## degrees of slow opposition swing on the spread, toward the index
