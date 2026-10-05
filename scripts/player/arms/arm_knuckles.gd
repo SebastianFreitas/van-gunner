@@ -2,7 +2,8 @@ extends RefCounted
 ## Sculpts the back of the palm into four knuckle ridges with tendon grooves between them.
 class_name ArmKnuckles
 
-const PEAK := 0.18  ## ridge height at a head, in mean head spacings (~0.3 finger radius)
+# PEAK trimmed 2026-10-05: the owner found the bumps a bit extreme on straight fingers.
+const PEAK := 0.15  ## ridge height at a head, in mean head spacings (~0.25 finger radius)
 const GROOVE := 0.16  ## groove depth midway between heads, same unit
 const BACK_REACH := 0.75  ## fraction of the palm bone the ridge and groove run back to the wrist
 const TENDON := 0.35  ## share of the ridge/groove left at BACK_REACH*0.6 (the tendon line)

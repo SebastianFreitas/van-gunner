@@ -6,12 +6,21 @@ extends RefCounted
 const FOREARM_ELBOW_GAIN := 2.8
 ## Wrist:palm width should be about 0.75-0.8, not 1.0.
 const FOREARM_WRIST_GAIN := 2.1
-## Gain the forearm ramp ends at. Aimed at the first hand ring, not at the hand bone's nominal
-## gain: hand vertices blend several bones, so their ring sits well under the bone's own gain.
+## Girth both sides of the wrist share: the forearm ramp ends at it, hand bones start at it divided
+## by HAND_SCALE. Aimed at the first hand ring, not at the hand bone's nominal gain: hand vertices
+## blend several bones, so their ring sits well under the bone's own gain.
 ## Raised to 1.8 with the hand gains for the monster hands (2026-10-02), then lowered to 1.45 with
 ## the hand gains (1.85 -> 1.45) on 2026-10-03: the palm read as an inflated pillow behind the
-## fingers.
-const WRIST_END_GAIN := 1.45
+## fingers. 1.45 to 1.30 on 2026-10-05 with the hand-side ramp: the hand started at 2.13 against
+## the forearm's 1.45 and read as glued on.
+const WRIST_END_GAIN := 1.30
+## The pose scale ArmRig.scale_hand puts on DEF-hand (palm, thumb and fingers inherit it, the
+## forearm does not). It lives here because the wrist gains divide by it, and ArmsBuilder.HAND_K
+## reads it.
+const HAND_SCALE := 1.47
+## Share of a hand, palm or thumb-root bone over which its gain eases up from the wrist's to its
+## own.
+const HAND_RAMP_END := 0.45
 ## Extra on the palm gain over the knuckle half of each palm bone: the knuckle row is the widest
 ## point of a hand. Only slightly above neutral: the procedural finger tubes' knobs carry most of
 ## the knuckle swell. Lowered on 2026-10-04: at 1.15 the knuckle half of the palm became a
@@ -116,6 +125,9 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 	var palm_len := PackedFloat32Array()
 	palm_len.resize(count)
 	palm_len.fill(0.0)
+	var head_len := PackedFloat32Array()
+	head_len.resize(count)
+	head_len.fill(0.0)
 	# Finger ".01" (and thumb ".02") length to the next segment's head, for the FINGER_RAMP.
 	var seg_len := PackedFloat32Array()
 	seg_len.resize(count)
@@ -160,8 +172,19 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 		for fb in count:
 			if bone_names[fb] == finger_name:
 				palm_len[b] = (inv_poses[fb].origin - inv_poses[b].origin).length()
+				head_len[b] = palm_len[b]
 				knuckle_gain[b] = _bulked(_raw_gain(bone_names[b]) * KNUCKLE_GAIN, bulk)
 				break
+	# The hand bone ends at the middle finger's root, the thumb root at the thumb's next bone.
+	for b in count:
+		var next_name := ""
+		if bone_names[b].begins_with("DEF-hand"):
+			next_name = "DEF-f_middle.01" + bone_names[b].right(2)
+		elif bone_names[b].begins_with("DEF-thumb.01"):
+			next_name = "DEF-thumb.02" + bone_names[b].right(2)
+		var nb := bone_names.find(next_name)
+		if not next_name.is_empty() and nb >= 0:
+			head_len[b] = (inv_poses[nb].origin - inv_poses[b].origin).length()
 	for b in count:
 		var child_name := ""
 		if bone_names[b].begins_with("DEF-f_") and bone_names[b].contains(".01."):
@@ -175,6 +198,7 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 				seg_len[b] = (inv_poses[cb].origin - inv_poses[b].origin).length()
 				break
 	var wrist_end := _bulked(WRIST_END_GAIN, bulk)
+	var wrist_start := wrist_end / HAND_SCALE
 	var wrist_half := _bulked(FOREARM_WRIST_GAIN, bulk)
 	var out := ArrayMesh.new()
 	for s in src.get_surface_count():
@@ -202,7 +226,11 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 				if ramp_len[b] > 0.0:
 					var u := clampf((p.y / ramp_len[b] - WRIST_RAMP_START)
 							/ (1.0 - WRIST_RAMP_START), 0.0, 1.0)
-					g = lerpf(g, wrist_end, u)
+					g = lerpf(g, wrist_end, smoothstep(0.0, 1.0, u))
+				# Hand-side bones start at the forearm's end girth (the pose scale on DEF-hand brings
+				# wrist_start back up to wrist_end) and swell to their own gain inside the palm.
+				if head_len[b] > 0.0:
+					g = lerpf(wrist_start, g, smoothstep(0.0, HAND_RAMP_END, p.y / head_len[b]))
 				if palm_len[b] > 0.0:
 					var kn := clampf((p.y / palm_len[b] - KNUCKLE_RAMP_START)
 							/ (1.0 - KNUCKLE_RAMP_START), 0.0, 1.0)

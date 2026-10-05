@@ -19,8 +19,9 @@ const THUMB_NAIL_FROM := 0.52  ## where the thumb's nail starts (ArmClaw.THUMB_B
 ## Thumb shaft radius as a multiple of the index finger's shaft radius.
 const THUMB_R := 1.35
 ## Old-meat lumpiness: slight per-ring radius wobble, sparse peaked knots (mostly at the joints) and a palm-side sag, all as fractions of the ring radius.
+## KNOT trimmed 2026-10-05: the owner found the bumps a bit extreme on straight fingers.
 const LUMP_RING := 0.03
-const KNOT := 0.30
+const KNOT := 0.22
 const KNOT_SPARSE := 0.88
 const SAG := 0.10
 
@@ -190,7 +191,7 @@ static func _segment(mi: MeshInstance3D, sk: Skeleton3D, fg: Dictionary, j: int,
 		if lumpy and not lip:
 			rad *= 1.0 + LUMP_RING * _noise(fname, j, ni, -1)
 		var c := base.origin + y * p.x * lens[j] + ax[0] * p.z * rad \
-				+ ax[1] * _crook(j, p.x, fg)
+				+ ax[1] * _crook(j, maxf(p.x, 0.0), fg)
 		if lumpy and p.x >= 0.0 and p.x <= 1.0:
 			# Flesh hangs mid-bone, not at the joints.
 			c -= ax[0] * SAG * rad * clampf(sin(PI * p.x), 0.0, 1.0)
@@ -244,13 +245,20 @@ static func _root_profile(k: float, r: float, kn: float) -> Array[Vector3]:
 	return p
 
 
-## Shaft bone rings: head knob `k`, thin shaft `r`, swelling into the next knob `kn`.
+## Shaft bone rings: head knob `k`, thin shaft `r`, swelling into the next knob `kn`. The thumb
+## (`not bony`) starts two rings buried behind t 0, in its root.
 static func _shaft_profile(k: float, r: float, kn: float, bony: bool) -> Array[Vector3]:
-	var p: Array[Vector3] = [
-		Vector3(0.00, k, 0.10 if bony else 0.18), Vector3(0.14, 0.96 * k, 0.06 if bony else 0.12),
-		Vector3(0.30, r, 0.0),
-		Vector3(0.55, 0.95 * r, 0.0),
-	]
+	var p: Array[Vector3] = []
+	if not bony:
+		# No tube runs behind the thumb's second bone, so its head ring was a free rim standing off
+		# the palm: these two rings carry the tube down into the thumb's root, weighted to the
+		# parent bone by `_ring_weights`, like the fingers' `_root_profile`.
+		p.append(Vector3(-0.35, 0.45 * k, 0.0))
+		p.append(Vector3(-0.15, 0.80 * k, 0.08))
+	p.append(Vector3(0.00, k, 0.10 if bony else 0.18))
+	p.append(Vector3(0.14, 0.96 * k, 0.06 if bony else 0.12))
+	p.append(Vector3(0.30, r, 0.0))
+	p.append(Vector3(0.55, 0.95 * r, 0.0))
 	if bony:
 		p.append(Vector3(0.78, lerpf(r, kn, 0.45), 0.04))
 		p.append(Vector3(0.92, 1.02 * kn, 0.10))
@@ -306,8 +314,10 @@ static func _radii(r0: float, girth: float, thumb: bool, ref: bool = false) -> A
 		# A 1.4 knob was as tall as the palm is thick and read as separate balls; neighbours
 		# overlap sideways into one ridge on purpose.
 		k[1] = 1.0 * r[1]
-		k[2] = 1.12 * r[2]
-	k[3] = (1.22 if thumb else 1.10) * r[3]
+		# Knobs trimmed 2026-10-05 (1.12 to 1.07, 1.10 to 1.06): the owner found the bumps a bit
+		# extreme on straight fingers.
+		k[2] = 1.07 * r[2]
+	k[3] = (1.22 if thumb else 1.06) * r[3]
 	return [r, k]
 
 

@@ -76,6 +76,12 @@ container has only `python3`.
   sitting.
 - **Hand shots:** `py -3 tools/hand_shots.py --out <scratchpad>/hands [--pose NAME | --pose "<arms console line>"]... [--views front,side,left,top,elbow,player] [--dress gear|rags|none]`: boots the run at IDLE once, applies the pose, saves `<view>.png` per view (probe `--shot DIR --views`; hidden desktop on Windows, xvfb-run on Linux). `--list` prints the named poses (rest, weave, reload, shot, knock, press, push, pull, slide_open, slide_close, walk).
 - **Pose sheet:** `py -3 tools/pose_sheet.py --out <scratchpad>/sheets [--pose NAME]... [--views front,side,top,player] [--dress gear|rags|none] [--keep]`: one `<pose>.png` grid per named pose (default all), one Godot launch each.
+- **Stipple:** `py -3 tools/stipple.py <png or folder>... [--mark DIR]` counts isolated dark
+  pixels (at most 0.4 of their 3x3 median, median at least 30 of 255) and prints `STIPPLE <n>
+  <file>` per picture and `STIPPLE TOTAL`. The meter for the black pixel lines on the
+  first-person forearms, on the two wrist close-ups (`tools/probe.py --cmd "arms cam orbit 0
+  70 0.2 left" --shot ...`, then `right`). `--mark DIR` saves copies with the counted pixels
+  in magenta. Compare counts only between shots of the same view. No verify stamp.
 - **Shots:** `py -3 tools/shots.py capture <name> [--van-seeds N]` runs
   `smoke.py --shots` into `.godot/shots/<name>/` (per checkout,
   gitignored, kept between sessions; a full windowed smoke on the hidden

@@ -119,12 +119,15 @@ Geometry:
   row of teeth, then as round lumps; wanted an old labourer's muscular hand):
   the knuckle is the palm's own skin. `ArmKnuckles.apply` (run in
   `ArmBulk.inflate` before `ArmMuscle`) lifts the back of the palm into a ridge
-  at each `.01` head (`PEAK` 0.18 mean head spacing, about 0.3 finger radius)
+  at each `.01` head (`PEAK` 0.15 mean head spacing, about 0.25 finger radius)
   and sinks a groove midway between heads (`GROOVE` 0.16), both running back
   three quarters of the palm bone and thinning to a 0.35 tendon line. The
   finger tubes carry no ball: `ArmFingers` root knob 1.0 r on the axis, shaft
-  knobs 1.12 r2 and 1.10 r3, and a squarer bony ring (lateral squash 0.86,
-  diagonals pushed out 1.10, pad 0.80). Thumbs take the same bony ring,
+  knobs 1.07 r2 and 1.06 r3, and a squarer bony ring (lateral squash 0.86,
+  diagonals pushed out 1.10, pad 0.80). The ridge, the two knobs and the
+  ring knots were trimmed on 2026-10-05 (`PEAK` from 0.18, knobs from 1.12
+  and 1.10, `KNOT` 0.30 to 0.22: the owner found the joint bumps "a bit
+  extreme", and minor, so the trim is small). Thumbs take the same bony ring,
   lumps, knots and sag (owner, 2026-10-04) but keep their own radii and
   profiles, so grip and pose are untouched. Both hands share the code.
   Knuckle creases and back-of-hand tendons are shading only (owner's
@@ -140,10 +143,35 @@ Geometry:
   to 85; `sk_wounds` off: no change), so `dirt_tone` is lifted and the
   dirt mix eased to 0.6: hand back 59 to 75, against 86 with no layers.
   The skin normal tilt is capped at `MAX_SKIN_TILT`, a guard only: the
-  forearm's black stipple did not move at any cap (STIPPLE 34 at 1.2, 0.8
-  and 0.5). It drops to 14 with the tilt off, so the tilt at its ordinary
-  strength prints most of it, and it is still open (42 after the lighter
-  dirt and the deeper folds).
+  forearm's black stipple did not move at any cap (on an earlier ad hoc
+  count: 34 at 1.2, 0.8 and 0.5, 14 with the tilt off, 42 after the
+  lighter dirt and the deeper folds). Both tilts (veins, skin) now run
+  through one `tilt_normal` in `arm_surface.gdshader`, which divides the
+  slope by `det` before clamping, returns the plain normal on a NaN and
+  fades out as the pixel footprint collapses (`TILT_FOOT_MIN` 0.02 to
+  `TILT_FOOT_FULL` 0.10): also a guard only (owner, 2026-10-05: details
+  "that look pixelated ... a weird line"). `tools/stipple.py` counts
+  isolated dark pixels on the two back-of-wrist views (`arms cam orbit 0
+  70 0.2 left` and `right`), a new scale: 1680 before the guard, 1686
+  after, 982 with the tilt off, and 927 with the skin flat white, the
+  same with culling off and with seam twins unified in `ArmRefine`. That
+  927 is the HUD text and the sleeve cuff in those views, not holes: the
+  skin mesh is closed. So about 760 pixels are skin stipple, the tilt at
+  its ordinary strength prints about 700 of them, and it is still open.
+  Wrist (owner, 2026-10-05: the hand looked "glued to the wrist", the
+  join "a bit thinner"): the forearm necks to `ArmBulk.WRIST_END_GAIN`
+  1.30 (was 1.45), and the hand side starts at that same girth by
+  construction: `DEF-hand`, the palm bones and the thumb root start at
+  `WRIST_END_GAIN / HAND_SCALE` and swell to full over `HAND_RAMP_END`
+  0.45 of the bone, so no step is left where the 1.47 hand
+  (`ArmBulk.HAND_SCALE`, which `ArmsBuilder.HAND_K` reads) meets the
+  forearm (the step was 1.45 against 2.13).
+  Thumb root (owner, 2026-10-05: "a piece of skin just in the air coming
+  out of the root of the thumb"): the thumb tube's head ring was open and
+  lifted off the palm, so `ArmFingers._shaft_profile` gives the thumb two
+  more rings behind its head that narrow back into the palm (0.80 r at
+  0.15 of a bone behind the head, 0.45 r at 0.35): a buried root, like
+  the fingers'.
   One fixed hand (owner, 2026-10-05): skin tone, scars, wounds and dirt
   hash from ArmsBuilder.HAND_LOOK_SEED, never the van seed. Muscle lumps,
   the shoulder offset and each finger's sideways crook hash from

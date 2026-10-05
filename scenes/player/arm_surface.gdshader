@@ -59,6 +59,10 @@ uniform float hand_blight_gain = 6.0;
 const float SKIN_BUMP_HEIGHT = 0.0015;
 // Largest tilt (tangent of the angle, about 50 degrees) the skin relief may give the normal.
 const float MAX_SKIN_TILT = 0.8;
+// Share of the pixel footprint's full area (length(dpdx) * length(dpdy)) that det must keep for
+// the tilt to apply at all, and for it to apply in full: about 89.4 and 87 degrees off the view.
+const float TILT_FOOT_MIN = 0.02;
+const float TILT_FOOT_FULL = 0.10;
 
 // Painted crown highlight: a fixed view-space key, up and toward the camera's left, so the
 // ridge's lit flank and shaded flank read even where the arm lamp does not reach.
@@ -208,6 +212,31 @@ vec3 vein_field(vec4 c, float fw, float hand) {
 	return sum * clamp(c.w, 0.0, 1.0);
 }
 
+// Tilts n by a height that changes hx, hy per pixel (the surface gradient form; dpdx and dpdy
+// are the view position's change per pixel). The old form normalized abs(det) * n - grad:
+// NaN where the footprint degenerates (det 0), and past the cap wherever det fell under the
+// cap's floor, both of which printed black pixels. Here the slope is divided by det first,
+// clamped, and faded out as the footprint collapses. slope is perpendicular to n, so
+// length(n - slope) >= 1 and the result is never zero.
+vec3 tilt_normal(vec3 n, vec3 dpdx, vec3 dpdy, float hx, float hy) {
+	vec3 r1 = cross(dpdy, n);
+	vec3 r2 = cross(n, dpdx);
+	float det = dot(dpdx, r1);
+	float foot = length(dpdx) * length(dpdy);
+	// Written as !(a > b) so a NaN on either side also returns n.
+	if (!(foot > 0.0) || !(abs(det) > TILT_FOOT_MIN * foot)) {
+		return n;
+	}
+	vec3 slope = sign(det) * (hx * r1 + hy * r2) / abs(det);
+	float len = length(slope);
+	if (!(len > 0.0) || !(len < 1e20)) {
+		return n;
+	}
+	slope *= min(1.0, MAX_SKIN_TILT / len)
+			* smoothstep(TILT_FOOT_MIN, TILT_FOOT_FULL, abs(det) / foot);
+	return normalize(n - slope);
+}
+
 void fragment() {
 	vec3 n = normalize(obj_normal);
 	vec3 w = abs(n);
@@ -233,18 +262,8 @@ void fragment() {
 		vec3 dpdy = dFdy(VERTEX);
 		float hx = vf.y * vein_height;
 		float hy = vf.z * vein_height;
-		vec3 r1 = cross(dpdy, NORMAL);
-		vec3 r2 = cross(NORMAL, dpdx);
-		float det = dot(dpdx, r1);
-		vec3 grad = sign(det) * (hx * r1 + hy * r2);
-		// Same cap as the folds below: a steep ridge edge must not print a black pixel.
-		float tilt = length(grad);
-		float tilt_cap = MAX_SKIN_TILT * max(abs(det), 1e-8);
-		if (tilt > tilt_cap) {
-			grad *= tilt_cap / tilt;
-		}
 		vec3 n_old = NORMAL;
-		NORMAL = normalize(abs(det) * NORMAL - grad);
+		NORMAL = tilt_normal(NORMAL, dpdx, dpdy, hx, hy);
 		float lit = dot(NORMAL, VEIN_KEY) - dot(n_old, VEIN_KEY);
 		// The cord's flanks sink into shade and its crown catches the lamp, so a vein reads
 		// across the cabin and not only when the light rakes it.
@@ -278,17 +297,7 @@ void fragment() {
 		float hy = skin_bump * SKIN_BUMP_HEIGHT * dot(g, dFdy(rest));
 		vec3 sdx = dFdx(VERTEX);
 		vec3 sdy = dFdy(VERTEX);
-		vec3 s1 = cross(sdy, NORMAL);
-		vec3 s2 = cross(NORMAL, sdx);
-		float sdet = dot(sdx, s1);
-		vec3 grad_view = sign(sdet) * (hx * s1 + hy * s2);
-		// A steep edge must not turn the normal away from both lamps and print a black pixel.
-		float tilt = length(grad_view);
-		float tilt_cap = MAX_SKIN_TILT * max(abs(sdet), 1e-8);
-		if (tilt > tilt_cap) {
-			grad_view *= tilt_cap / tilt;
-		}
-		NORMAL = normalize(abs(sdet) * NORMAL - grad_view);
+		NORMAL = tilt_normal(NORMAL, sdx, sdy, hx, hy);
 		float kh = knot_at(rest);
 		float wrinkle = mix(0.5, tri_fbm(rest, w, wrinkle_scale), wrinkle_fade(fw));
 		fold_dark = smoothstep(0.5, 0.25, wrinkle) * 0.6

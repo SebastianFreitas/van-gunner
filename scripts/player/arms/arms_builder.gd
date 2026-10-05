@@ -190,7 +190,7 @@ const CLAW_CURVE := 22.0
 ## Fixed for the same reason. Girth is about three times the witch's gaunt shafts (0.68-0.80):
 ## the index shaft is over a quarter of its length. HAND_K scales the hand and the gun grip.
 const GIRTH := 2.10
-const HAND_K := 1.47
+const HAND_K := ArmBulk.HAND_SCALE
 ## The hands are one fixed design (owner, 2026-10-05): skin tone, scars, wounds and dirt
 ## hash from this, never from the van seed.
 const HAND_LOOK_SEED := 7
