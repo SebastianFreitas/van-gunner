@@ -174,6 +174,24 @@ static func curl(model: Node3D, suffix: String, angles: Dictionary) -> void:
 					deg_to_rad(v[j]) * CURL_SIGN))
 
 
+## Extra bone-local rotation per joint (degrees: x curl, y twist, z swing) on top of the pose
+## `curl` set, and a knuckle shift in centimetres (the rig is in metres) on the first joint.
+static func aim_joints(model: Node3D, bone_fmt: String, aims: Array, shift_cm: Vector3) -> void:
+	var sk := skeleton(model)
+	for j in 3:
+		var i := sk.find_bone(bone_fmt % (j + 1))
+		var a: Vector3 = aims[j]
+		if i == -1:
+			continue
+		if a != Vector3.ZERO:
+			sk.set_bone_pose_rotation(i, sk.get_bone_pose_rotation(i)
+					* Quaternion(Vector3.RIGHT, deg_to_rad(a.x) * CURL_SIGN)
+					* Quaternion(Vector3.UP, deg_to_rad(a.y))
+					* Quaternion(Vector3.BACK, deg_to_rad(a.z)))
+		if j == 0 and shift_cm != Vector3.ZERO:
+			sk.set_bone_pose_position(i, sk.get_bone_rest(i).origin + shift_cm * 0.01)
+
+
 static func stretch_tips(model: Node3D, suffix: String, k: float) -> void:
 	var sk := skeleton(model)
 	for f in FINGERS:

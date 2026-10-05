@@ -3,9 +3,14 @@ extends RefCounted
 
 const _Weave := preload("res://scripts/player/arms/arm_weave.gd")
 const FINGERS: Array[StringName] = [&"f_index", &"f_middle", &"f_ring", &"f_pinky"]
+## Right finger subcommands and the bone name each one aims.
+const RFINGER := {
+	"ridx": &"f_index", "rmid": &"f_middle", "rring": &"f_ring", "rpinky": &"f_pinky",
+	"rall": &"f_index",  # all four; Tab fill reads the index
+}
 ## sub -> [argument shape shown when no value is stored, note].
 const INFO := {
-	"cam": ["<front|side|left|top|elbow|off>", "orbit camera on the arms"],
+	"cam": ["<front|side|rside|left|top|under|trig|rtrig|back|elbow|orbit yaw pitch [dist] [hand]|off>", "orbit camera on the arms"],
 	"reload": ["<0..1|off>", "pin the reload at this progress"],
 	"inspect": ["<sec|play|off>", "pin or play the gun inspect"],
 	"dress": ["<gear|rags|none>", "gear|rags|none"],
@@ -28,6 +33,13 @@ const INFO := {
 	"wrist": ["<x> <y> <z>", "right wrist offset in the gun"],
 	"curl": ["<f_index|f_middle|f_ring|f_pinky> <a> <b> <c>",
 			"right finger curl; bare lists all"],
+	"ridx": ["[1|2|3 x y z | shift x y z | reset]", "right index per joint, x curl, y twist, "
+			+ "z swing (deg); shift moves the knuckle (cm)"],
+	"rmid": ["[1|2|3 x y z | shift x y z | reset]", "right middle per joint, same as ridx"],
+	"rring": ["[1|2|3 x y z | shift x y z | reset]", "right ring per joint, same as ridx"],
+	"rpinky": ["[1|2|3 x y z | shift x y z | reset]", "right pinky per joint, same as ridx"],
+	"rall": ["[1|2|3 x y z | shift x y z | reset]",
+			"all four right fingers at once (not the thumb), same axes as ridx"],
 	"gun": ["<grip|pistol>", "grip|pistol"],
 	"lthumb": ["<bx> <by> <bz> <spread> <ax> <ay> <az>", "left thumb rest pose"],
 	"lthumbaim": ["<x> <y> <z>", "left thumb palm-joint euler"],
@@ -130,6 +142,12 @@ func current_args_for(sub: String, first_arg: String) -> String:
 		if not curl.has(finger):
 			return ""
 		return _v3(curl[finger])
+	if RFINGER.has(sub):
+		if first_arg == "shift":
+			return _v3(ArmsBuilder.finger_shift(RFINGER[sub]))
+		if ["1", "2", "3"].has(first_arg):
+			return _v3(ArmsBuilder.finger_aim(RFINGER[sub])[int(first_arg) - 1])
+		return ""
 	return current_args(sub)
 
 
@@ -157,6 +175,73 @@ func curl_show(args: Array) -> String:
 	if curl_fingers().has(str(args[1])):
 		return curl_lines(str(args[1]))
 	return "bad args. " + hint("curl")
+
+
+## `arms ridx` (or rmid, rring, rpinky, or all four for rall) lines: the aim per joint, the
+## knuckle shift and one copy-paste line of the values.
+func rfinger_show(sub: String) -> String:
+	var lines: Array[String] = []
+	var paste: Array[String] = []
+	for s in _rsubs(sub):
+		var f: StringName = RFINGER[s]
+		var aims: Array = ArmsBuilder.finger_aim(f)
+		for j in 3:
+			lines.append("arms %s %d %s" % [s, j + 1, _v3(aims[j])])
+			paste.append("arms %s %d %s" % [s, j + 1, _v3(aims[j])])
+		lines.append("arms %s shift %s" % [s, _v3(ArmsBuilder.finger_shift(f))])
+		paste.append("arms %s shift %s" % [s, _v3(ArmsBuilder.finger_shift(f))])
+	lines.append("copy: " + "; ".join(paste))
+	return String.chr(10).join(lines)
+
+
+## The finger subs one right-finger sub drives: itself, or all four for `rall`.
+func _rsubs(sub: String) -> Array[String]:
+	if sub == "rall":
+		return ["ridx", "rmid", "rring", "rpinky"]
+	return [sub]
+
+
+## `arms ridx ...` (or rmid, rring, rpinky, rall): show, set a joint, set the shift or reset,
+## then rebuild once; else the usage line.
+func rfinger_apply(args: Array, vm: Node) -> String:
+	var sub := str(args[0])
+	if args.size() == 1:
+		return rfinger_show(sub)
+	if not vm.has_method(&"rebuild_arms"):
+		return "arms: no viewmodel"
+	var n := args.size()
+	if n == 2 and str(args[1]) == "reset":
+		for s in _rsubs(sub):
+			ArmsBuilder.set_finger_aim(RFINGER[s], [ArmsBuilder.RIGHT_FINGER_KNUCKLE_AIM, Vector3.ZERO, Vector3.ZERO])
+			ArmsBuilder.set_finger_shift(RFINGER[s], Vector3.ZERO)
+		vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
+		return "arms %s reset" % sub
+	var shift := n == 5 and str(args[1]) == "shift"
+	if n != 5 and not shift:
+		return "bad args. " + hint(sub)
+	if not shift and not ["1", "2", "3"].has(str(args[1])):
+		return "bad args. " + hint(sub)
+	if n != 5:
+		return "bad args. " + hint(sub)
+	for i in range(2, 5):
+		if not str(args[i]).is_valid_float():
+			return "bad args. " + hint(sub)
+	var v := Vector3(float(str(args[2])), float(str(args[3])), float(str(args[4])))
+	var out := ""
+	for s in _rsubs(sub):
+		var f: StringName = RFINGER[s]
+		if shift:
+			ArmsBuilder.set_finger_shift(f, v)
+		else:
+			var aims: Array = ArmsBuilder.finger_aim(f)
+			aims[int(str(args[1])) - 1] = v
+			ArmsBuilder.set_finger_aim(f, aims)
+	if shift:
+		out = "arms %s shift (%s)" % [sub, _v3(v)]
+	else:
+		out = "arms %s %s (%s)" % [sub, str(args[1]), _v3(v)]
+	vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
+	return out
 
 
 func _timer(t: float) -> String:
