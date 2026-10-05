@@ -63,10 +63,17 @@ is fixed from a source (a D `(from <source>)`) or becomes a question.
   where you stopped, commit, and report. Your tools are refused past
   1.25 times the line.
 
-## Your report (under 400 words, nothing else)
+## Your report
 
-1. **Wrote:** the sections changed, one line each; the plan's size
-   (`wc -c`) and its biggest phase.
+Write the details (sections changed, one line each, sources, review-pass
+findings and how each was settled) to the path your prompt names, else
+`.claude/specs/reports/plan-writer-<name>-<job>.md` (gitignored; never
+commit it). Then reply with only this; everything but the Questions
+(which include the idea job's pieces and the phases job's phase lines)
+fits in about 150 words:
+
+1. **Wrote:** the sections changed in one line; the plan's size
+   (`wc -c`) and its biggest phase; the report's path.
 2. **Questions:** each ready to paste into `AskUserQuestion`: header
    (at most 12 characters), the question in plain words (quote the
    Brief line or name the piece; never a bare D number), 2 to 4 options

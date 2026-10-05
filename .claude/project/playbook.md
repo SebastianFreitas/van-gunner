@@ -10,8 +10,12 @@
 
 ## Spec details
 
-- **Rules:** copy the values, e.g. from `.claude/rules/art-style.md`.
-- **Verification:** the commands from `CLAUDE.md` § Verify.
+- **Read first:** the `.claude/rules/` file whose `paths:` cover the
+  targets ("Rules files" below; "Where things are" maps areas);
+  `art-style.md` plus the area's `art-*.md` file for anything visible,
+  and `art-shots.md` when the change moves a shot's numbers.
+- **Acceptance:** the commands from `CLAUDE.md` § Verify, and for a
+  visible change the `--shots` views and numbers that must change.
 
 ## Commands
 
@@ -95,8 +99,74 @@ container has only `python3`.
   tolerance is 2× the noise measured between two captures of one tree,
   written into the tool (`TOLERANCE`). A visible change: capture `before`
   on the parent commit, `after` on the change, compare; the phase's
-  Verification names the views that must change.
+  Verification names the views that must change and says the rest stay
+  `same`.
 - Never launch the editor or a windowed game yourself, and never run
   anything that waits for input. The exceptions are `tools/smoke.py
   --shots`, `tools/shots.py capture` and `tools/probe.py --shot`, which
   run on a hidden desktop the owner never sees and quit themselves.
+
+## Shots
+
+`py -3 tools/smoke.py --shots <scratchpad>/shots` saves three views at
+IDLE, in combat, at the elevator stop and at the rear-park stop: what the
+player sees, the player turned to the rear doors, and a camera above the
+cab looking back over the van at the street, raiders or stop (UI hidden
+in the last two). On Windows it runs Godot on a separate hidden Win32
+desktop (`tools/hidden_desktop.py`), so no window ever appears on, takes
+focus from, or alt-tabs the owner out of what they are doing (they play
+fullscreen games while sessions verify); Windows desktop only. Never
+launch a windowed Godot any other way. For a before/after comparison use
+`tools/shots.py` (`capture`, `compare`, under Commands).
+
+## Rules files
+
+Each loads only for a session that reads a file its `paths:` cover.
+
+- `art-style.md` (mood, light, albedo, colour, checking), `art-shots.md`
+  (shot targets), `art-3d.md` (procedural 3D, props, stop steel, van
+  look, street art), `art-arms.md` and `art-arms-pose.md` (first-person
+  arms), `art-pixel.md` and `art-loper.md` (sprites).
+- `travel-and-stops.md`, `facades.md`, `street-paving.md`;
+  `van-shell-and-hud.md`, `van-geometry.md`, `van-look.md`,
+  `van-render-layers.md`;
+  `enemies-and-breaching.md`, `combat-and-boons.md`,
+  `run-loop-and-acts.md`, `saves-and-meta.md`, `audio.md`.
+- `tooling.md` (Godot tools, Try/Commit), `tooling-shots.md`
+  (screenshots, shot compare, van audit, arms tools), `tooling-hooks.md`
+  (hooks, autoplan, plan files).
+
+## Where things are
+
+| Concept | Folder or file |
+|---|---|
+| Run state, phases, act deck, saves, vitals | `scripts/core/game_session.gd` + `session_save.gd`, `session_act_deck.gd`, `session_vitals.gd` |
+| Balance numbers | `resources/balance/game_balance.tres` via `scripts/core/game_balance.gd` |
+| Saves, meta progression, sandbox | `scripts/core/save_manager.gd`, `meta_progression.gd`, `save_sandbox.gd` |
+| Street cards, reveal, REST boon | `scripts/acts/`, `resources/acts/cards/`, `scripts/ui/act_reveal_panel.gd` |
+| Raiders, boss, cabin pathing, breach points, waves | `scripts/enemies/` |
+| Road, turns, parking, elevator, statues | `scripts/travel/` |
+| Street facades, districts, set-pieces | `scripts/travel/facades/`, `resources/facades/`, `scenes/corridor/facade_*.gdshader` |
+| Side stops: shop, garage, mechanic, warehouse | `scripts/stops/`, `resources/side_stops/`, `scenes/corridor/` |
+| Van shell, doors, windows, vitals, van root and HUD wiring | `scripts/van/` |
+| Van look (seeded war-rig dressing, machine looks, cables) | `scripts/van/look/` (`van_look.gd` owns the seed; `machine_parts.gd`, `machine_motion.gd`, `machine_damage.gd`; cables `van_cable_runs.gd` + `van_cable_router.gd`) |
+| Gun, projectiles, damage, status effects | `scripts/combat/` |
+| First-person arms and held gun (seeded viewmodel) | `scripts/player/arms/`, `scripts/combat/gun_viewmodel.gd` |
+| Classes | `scripts/classes/`, `resources/classes/` |
+| Player, boons, tools | `scripts/player/`, `scripts/items/`, `resources/items/` |
+| HUD panels, bench, schematic, menus | `scripts/ui/` |
+| Interactables, NPC talk | `scripts/interactions/`, `scripts/dialogue/npc_talk.gd`, `scripts/ui/dialogue_hud.gd` |
+| Loot hopper, death popups | `scripts/core/loot_collector.gd`, `scripts/interactions/loot_machine.gd` |
+| Weld kit (look-at repair) | `scripts/items/effects/repair_window_bars_effect.gd` |
+| Yell at the driver (Shift TURBO or go / C EASY then STOP), halt, mantle back in | `travel_controller.gd` boost/slow/halt, `scripts/van/van_driver_talk.gd`, `van_halt.gd`, `scripts/player/player_mantle.gd`, `scripts/ui/driver_shout_hud.gd` |
+| Pause menu | `scripts/ui/pause_menu.gd` |
+| Debug console (`H`) | `scripts/debug/` (`DebugCommands.run(line)`) |
+| Perf overlay (`F3`, console `perf`), build spans, benchmark | `scripts/debug/perf_stats.gd` (`PerfStats.begin/end/mark`), `scripts/ui/perf_overlay.gd` (autoload `PerfOverlay`), `scripts/debug/debug_perf_commands.gd`, `tools/perf.py`, `tools/perf/` |
+| Audio | `scripts/audio/`, `resources/audio/sound_bank.tres` |
+| Smoke test and screenshots | `tools/smoke/`, `tools/smoke.py` |
+| Scene dump | `tools/scene_dump/`, `tools/scene_dump.py` |
+| Godot discovery, `.godot/` seeding, tool lock, verify stamps | `tools/godot_env.py` |
+| The owner's Try and Commit | `tools/try.py`, `tools/try_commit.py` (shared), `tools/try_project.py` (van-gunner's hooks: Godot launch, map, check, smoke) |
+| Double-click launch of the checkout it sits in (real saves, no editor) | `play.bat` |
+| Claude Code workflow | `.claude/rules/workflow.md` (shared rules), `.claude/playbook.md` + `.claude/project/playbook.md` (specs, delegation, tool commands), `.claude/modes/` + `.claude/project/modes/`, `.claude/hooks/`, `.claude/agents/`, `.claude/skills/`, `.claude/rules/tooling.md` |
+| Cloud session Godot install | `tools/cloud_setup.sh` |

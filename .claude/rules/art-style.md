@@ -3,11 +3,21 @@ paths:
   - "scenes/**/*.tscn"
   - "scenes/**/*.gdshader"
   - "scenes/**/*.gdshaderinc"
+  - "scenes/van/van.tscn"
+  - "scenes/corridor/**"
+  - "scenes/shop/**"
+  - "scenes/mechanic/**"
+  - "scenes/items/**"
+  - "scenes/enemies/**"
   - "resources/facades/**"
   - "resources/items/**"
   - "scripts/travel/facades/**"
   - "scripts/stops/**"
+  - "scripts/van/look/**"
+  - "scripts/player/arms/**"
+  - "tools/gen_enemy_sprites.py"
   - "tools/generate_boon_icons.py"
+  - "tools/shot_stats.py"
 ---
 
 # Art style
@@ -24,6 +34,18 @@ References the owner signed off on: the road
 the van interior (`scenes/van/van_*.gdshader`) for 3D; the shopkeeper
 (`scenes/shop/vendor.png`) for pixel art. When this file and a reference
 disagree, the reference wins and this file gets fixed.
+
+The rest of the art direction is split by topic, each file loaded only
+for the paths it covers; a spec for a visible change names this file and
+the topic file for its area under Read first:
+
+- `art-shots.md`: the `--shots` brightness targets and how to read them.
+- `art-3d.md`: procedural 3D (geometry, surfaces in the road's recipe,
+  props, stop steel, the van's war-rig look, street art).
+- `art-arms.md`: the first-person arms' mesh and skin (the one imported
+  model); `art-arms-pose.md`: their motion, grip, dressing and inspect.
+- `art-pixel.md`: pixel-art sprites, items and icons; `art-loper.md`: the
+  loper (door and window raider) sheet.
 
 ## Mood: dark
 
@@ -66,381 +88,18 @@ target, and don't add another sourceless light on their precedent.
   glow floating in air is a break; add the fixture, keep the energy.
 - **Screen check:** `tools/shot_stats.py <shots dir>` gives each `--shots`
   PNG its mean luminance, its 95th percentile and its clipped-pixel share.
-  A visible change that moves a shot past its target below is a
-  regression.
-
-Calibrated in art-pass step 1 (2026-09-25) from the stop shots, which are
-the "dark enough" line (`09` mean 0.0052, `12` mean 0.0123, p95 0.019).
-Values are linear luminance; clip% is the share of pixels with any channel
-at 250 or more. `*-outside` is the camera above the cab; `*-back` the van
-interior facing the rear doors; `*-front` the player's view with the HUD.
-
-| Shots | Mean max | p95 max | Clip% max |
-|---|---|---|---|
-| `*-outside` (street and stops) | 0.015 | 0.030 | 1.0 |
-| `*-back` (van interior) | 0.011 | 0.025 | 0.05 |
-| `*-front` (HUD on, loose check) | 0.030 | 0.10 | 0.20 |
-
-After the 3D art pass (2026-09-25) every shot is inside its target except
-`06-combat-outside` (mean 0.036, p95 0.178, clip 1.6%; it was 0.099, 0.85
-and 7.4% before). That is accepted: the overhead camera sits at
-second-floor height right beside the big vertical sign and near lit panes,
-so `06` reads emissives close to a high camera, not the street's ambient
-darkness. Judge a change by how far it moves `06`, not by the table.
-
-Reading the numbers:
-
-- Shots are not pixel-deterministic between runs, and facade layouts are
-  seeded per run, so street numbers move with the buildings on screen.
-  Compare against a before run of the same session, and treat about
-  ±0.001 mean and ±0.1 clip% as noise.
-- A change to a large surface reads on near walls, docks and stoops, not in
-  the means: look at the PNGs as well.
-- The smoke shots visit only the street, the elevator stop (shop) and the
-  rear-park stop (garage). For the mechanic, the warehouse, a junction, a
-  statue or an overhead, check with a temporary debug swap (`stop elevator
-  mechanic`, `stop warehouse`) that is never committed.
-
-## Procedural 3D (street, facades, stops, props, van)
-
-Geometry:
-
-- Low-poly: primitives and `SurfaceTool` quads with hard edges. No imported
-  realistic models, no subdivided or sculpted surfaces.
-  One owner exception (2026-10-01): the first-person arms are the CC0
-  low-poly rigged model `assets/models/arms/arms.glb`, posed by `ArmRig`
-  and skinned only with the grime shader as `material_override` (no bitmap).
-  Its claw-nails (`ArmClaw`) are smooth-shaded, 12-segment arcs that hug
-  the fingertip from the tube's own recorded rings (`tip_rings`), sunk 3 %
-  into the skin so they never float, then taper to a point curving 15-30
-  degrees toward the pad (owner, 2026-10-03: the old 6-sided horns floated
-  and looked too low-poly).
-  Knuckles (owner, 2026-10-04, third pass: finger-tube knobs read first as a
-  row of teeth, then as round lumps; wanted an old labourer's muscular hand):
-  the knuckle is the palm's own skin. `ArmKnuckles.apply` (run in
-  `ArmBulk.inflate` before `ArmMuscle`) lifts the back of the palm into a ridge
-  at each `.01` head (`PEAK` 0.15 mean head spacing, about 0.25 finger radius)
-  and sinks a groove midway between heads (`GROOVE` 0.16), both running back
-  three quarters of the palm bone and thinning to a 0.35 tendon line. The
-  finger tubes carry no ball: `ArmFingers` root knob 1.0 r on the axis, shaft
-  knobs 1.07 r2 and 1.06 r3, and a squarer bony ring (lateral squash 0.86,
-  diagonals pushed out 1.10, pad 0.80). The ridge, the two knobs and the
-  ring knots were trimmed on 2026-10-05 (`PEAK` from 0.18, knobs from 1.12
-  and 1.10, `KNOT` 0.30 to 0.22: the owner found the joint bumps "a bit
-  extreme", and minor, so the trim is small). Thumbs take the same bony ring,
-  lumps, knots and sag (owner, 2026-10-04) but keep their own radii and
-  profiles, so grip and pose are untouched. Both hands share the code.
-  Knuckle creases and back-of-hand tendons are shading only (owner's
-  reference: stacked wrinkle folds, tendons fanning from the wrist):
-  `arm_skin_folds.gdshaderinc` adds a signed relief to `skin_height` from
-  rest-space joints and cords that `ArmSkinFolds.apply` sets per arm with
-  no rng draw; it never reaches vertex(), so it cannot cover a claw. Veins
-  read by shade as well as tilt (`vein_shade`, `vein_wrist`, `vein_wrap`).
-  No rig mesh casts a shadow (`ViewmodelFov._walk`, and `ArmSkinMesh.build`
-  at creation): the shadow pass skips the viewmodel lens, so one would land
-  off its mesh. The dark patch on the back of the left hand was the dirt
-  layer, not a cast shadow and not the wound (`sk_dirt` off: hand back 59
-  to 85; `sk_wounds` off: no change), so `dirt_tone` is lifted and the
-  dirt mix eased to 0.6: hand back 59 to 75, against 86 with no layers.
-  White and dark pixels on the arms (owner, 2026-10-05: "these white
-  pixels"; dashed straight lines and dots along the veins on the left
-  forearm and wrist) had two causes, both in `arm_surface.gdshader`:
-  - Dashed lines were false vein-centre pixels. `vein_field` took the
-    distance as `abs(v) * fw / fwidth(v)`, a rest-space scale over a
-    CUSTOM0 screen derivative, so the ratio jumped on triangle edges. It
-    now uses the noise-space distance `abs(v) / |grad|` from the analytic
-    gradient of `noise21g`: vein-paint outliers (tilts off) wrist/forearm
-    1288/645 down to 140/119, and the vein paint stays as strong.
-  - Dots along the vein borders were the vein tilt's sub-pixel slope. The
-    vein slope is damped by its own per-pixel change (`VEIN_TILT_DAMP`
-    200), which keeps 0.96/0.91 (wrist) and 1.00/0.96 (forearm) of the
-    tilt shading.
-  Light/dim outlier pixels counted on the skin only (views `arms cam
-  orbit 0 70 0.2 left` and `0.4 left`)
-  went from wrist 503/705 and forearm 218/363 to 333/278 and 183/178.
-  The floor with both tilts off is 265/49 and 126/67. What is left is
-  the skin tilt's wrinkle grain in shadowed patches, kept on purpose:
-  damping the skin tilt the same way removes about half its shading
-  (s5 to s10 kept 0.62 to 0.74). `MAX_SKIN_TILT` and `tilt_normal`'s
-  `det` divide, NaN return and footprint fade (`TILT_FOOT_MIN` 0.02 to
-  `TILT_FOOT_FULL` 0.10) stay as guards only. Judge by the skin-masked
-  counts: a whole-image count in these views holds about 2500 HUD-text
-  and sleeve-cuff pixels.
-  Wrist (owner, 2026-10-05: the hand looked "glued to the wrist", the
-  join "a bit thinner"): the forearm necks to `ArmBulk.WRIST_END_GAIN`
-  1.30 (was 1.45), and the hand side starts at that same girth by
-  construction: `DEF-hand`, the palm bones and the thumb root start at
-  `WRIST_END_GAIN / HAND_SCALE` and swell to full over `HAND_RAMP_END`
-  0.45 of the bone, so no step is left where the 1.47 hand
-  (`ArmBulk.HAND_SCALE`, which `ArmsBuilder.HAND_K` reads) meets the
-  forearm (the step was 1.45 against 2.13).
-  Thumb root (owner, 2026-10-05: "a piece of skin just in the air coming
-  out of the root of the thumb"): the thumb tube's head ring was open and
-  lifted off the palm, so `ArmFingers._shaft_profile` gives the thumb two
-  more rings behind its head that narrow back into the palm (0.80 r at
-  0.15 of a bone behind the head, 0.45 r at 0.35): a buried root, like
-  the fingers'.
-  One fixed hand (owner, 2026-10-05): skin tone, scars, wounds and dirt
-  hash from ArmsBuilder.HAND_LOOK_SEED, never the van seed. Muscle lumps,
-  the shoulder offset and each finger's sideways crook hash from
-  HAND_SHAPE_SEED 1337, the seed the posture and the claws were tuned
-  under, for every van seed. Never change it or swap the crook for a
-  table: seed 7 with a hand-picked table turned the left hand 1.7 degrees
-  and moved its fingertips sideways up to 0.015, a posture change the
-  owner forbids. The skin shader's `seed_offset` is shape too: it places
-  the wart domes `arm_surface.gdshader` lifts out of the skin along the
-  normals (and shifts the veins and grime mottle), so the builder sets it
-  to the constant `HAND_SKIN_OFFSET` 91.165, seed 1337's draw. On seed 7's
-  2.32 the domes sat on the index, middle and ring fingertips and swelled
-  them over the claws (crop pixels differing from the pre-branch shot:
-  8693 of 40000, 290 with the constant) while the finger mesh, bones and
-  claw boxes were equal: a swallowed claw can be shader lift, so compare
-  the material's uniforms as well as the mesh. Only the thumb claw grows
-  out of a cuticle fold: its tube's dorsal skin swells CUTICLE_H 1.20 just
-  behind the nail root and drops onto the plate. The four fingers have no
-  fold (owner, 2026-10-05: the nails were "swallowed by the finger", only
-  a tip showed; "the nails were kinda fine"): a finger claw rises out of
-  the skin from tip-bone t .36 to .60 (ArmClaw.BED_FROM), so a fold at .48
-  stood above its root. Any skin fold must end behind the claw root and
-  never rise above the claw; check claw top minus skin top, not the look
-  from far away. Only the tattoo text and the cloth still follow the van.
-  Fingers (owner, 2026-10-04: joints read as a line, "each bone a piece
-  instead of a hand"; wanted gnarled, tree-like, saggy old meat): each finger
-  is one gnarled tube with no pinch at the joints (end rings `.78` and `.92`
-  stay near knob radius, `_ring_weights` blends 0.3/0.7). Lumps are sharp
-  knots, never round blobs (owner, 2026-10-04: "very round"): a slight
-  `LUMP_RING` 0.03 wobble plus sparse single-vertex `KNOT` peaks (noise above
-  `KNOT_SPARSE`, crowded toward the joints; hashed by finger, bone, ring and
-  sector, no rng draws) and a palm-side `SAG`. The skin shader's `skin_bump`
-  is cone cell-noise knots (`knot_height`, flat skin between, hard base
-  crease). Keep them rare and uneven, never a grid (owner: "looks like a
-  pattern"): 18% of cells, a radius and height per knot, and an fbm warp in
-  `knot_at`. Mesh `KNOT_SPARSE` 0.88. Plus fine wrinkle fbm in rest space, on skin only, never nails or
-  other materials. Thumbs get the same knots and sag.
-  The hands never rest: `ArmWeave` (`scripts/player/arms/arm_weave.gd`)
-  rolls both hands' fingers index to pinky in hooked witch curls on a 3.6 s
-  period with a slow second harmonic, wrists circling, both hands
-  raised in front, palms down and inward; the free left thumb swings out
-  opposite the index and curls back toward its tip in an open C, as if holding
-  an invisible can (`LEFT_THUMB_*`, console `arms lthumb` tunes it live); it runs
-  through idle, walking, shooting and reloading, and holds still at t 1.1 under `SaveSandbox` so shots
-  compare (`arms weave <s>|off` pins it). With the gun shown the right hand
-  grips it instead (`ArmWeave._update_grip`: squeeze, trigger lift, thumb
-  wave), the thumb wrapping the grip's far side under the slide and pointing
-  forward, a C with the trigger finger (`RIGHT_THUMB_AIM`, `RIGHT_THUMB_CURL`);
-  `arms fit` prints the thumb's clearance from the gun parts and must say
-  `FIT OK`. `arms thumbs` prints per hand the thumb's angle to the index,
-  gap/p, hook, up and fwd against the bars in `debug_arms_thumbs.gd`, then
-  `THUMBS OK` or `THUMBS CHECK`.
-  Arm dressing (`ArmsBuilder.dress_style`, console `arms dress gear|rags|none`):
-  `gear` (default) is one wrecked T-shirt sleeve on each arm (`ArmSleeve`, a
-  skinned tube on the upper arm only, hem torn and open just above the elbow at
-  `DEF-upper_arm.001` t 0.72, hem rings weighted to the upper arm only) plus the
-  skin layers: the van-name tattoo in faded block letters on the LEFT lower
-  forearm (where the player camera sees it), scars, wounds, dirt. Owner
-  (2026-10-02): no rings, straps, bands or other bolt-ons on the arms; "the
-  sleeve is enough". `rags` is the old rag and glove dress. Skin layers paint
-  in LINEAR colours (the skin albedo is a `source_color` uniform) from the
-  rest-pose chart in CUSTOM1/CUSTOM2; cloth tints are `source_color`. Gear is
-  built after the arms join the camera (facing angles need it). `arms gear`
-  checks each sleeve's own-bone (upper-arm) skin through every pose and must say
-  `GEAR OK`.
-  Gun inspect (owner 2026-10-03): hold E 0.4 s looking at nothing usable;
-  `ArmInspect` turns gun and right arm about the grip (left side, rolled to the
-  right side, forearm sweep and roll), then the left hand up (back, palm,
-  forearm inner and outer), 3 s, rigid root offsets on top of the weave; shot,
-  reload and gestures cancel it; identity under SaveSandbox; `arms inspect
-  <sec|play|off>` pins it.
-- No bitmap textures on 3D surfaces (no photos, no painted PNGs, no
-  `NoiseTexture2D`). All surface detail comes from the shader.
-
-Surfaces, in the road's recipe:
-
-- **Patterns are laid out in metres**: world XZ for the ground (as the
-  asphalt does), metre UVs for walls (as `facade_body.gd` emits them), or a
-  `surface_size_m` uniform when the mesh UV is 0..1 per face (as the
-  sidewalk does). The same detail must be the same size on every box.
-- **Layered grime**: a dark base tone, then grit or grain, wear where things
-  rub, stains and oil, cracks, edge dirt where surfaces meet, and sparse
-  litter or damage, each layer from hash, value noise, fbm or the Voronoi
-  `crack_field`, mixed in that order. Noise, fbm and `smoothstep` edges are
-  the style; they are not a problem to remove.
-- **Big shapes read first**: seams, panels, courses, windows and slabs are
-  the structure; grime breaks them up and never hides them.
-- **Chunky, not fine** (owner, 2026-10-01): hard repeating lines on
-  buildings are low-poly scale: bricks 0.60 x 0.20 m with 3 cm mortar,
-  corrugation 0.30 m, roll-up slats 0.40 m, planks 0.35 m, mullions 12 cm,
-  seams and joints 3..4 cm; no hard repeating pitch under 0.20 m, no line
-  under 3 cm; wall grain about 10/m, prop and plank grain about 8/m.
-  Street paving: tiles 0.5 m, setts 0.25 m, granite curb blocks 1 m,
-  joints 3 cm, chamfers 1.2 cm; tiles dark (albedo 0.33), setts 0.25, and
-  the paving's glare fades out over 18-45 m so a far grid never glows.
-  Viewmodel surfaces under 0.4 m from the camera on the 0.18-scaled arms
-  rig are the one exception: grain about 60/m virtual, mottle about 6/m,
-  ribs 2..3 cm, with the same albedo, roughness and metallic budget.
-  The arms draw through their own 50 degree lens (`GunViewmodel.VIEWMODEL_FOV`,
-  `scenes/player/viewmodel_fov.gdshaderinc`): the include must keep the signs
-  of `PROJECTION_MATRIX[0][0]` and `[1][1]` (Godot Vulkan bakes a Y flip in, so
-  [1][1] is negative); a positive focal term drew the arms rotated 180 degrees
-  while `arms frame` (Godot-native `fov_override`) still counted them right.
-  After any lens change, Read one player-view shot.
-  Sidewalk dirt (where the walk is gone) is packed earth with broad tone
-  drift and damp darker spots (`packed`), gravel only in noise patches
-  about a fifth of the ground (coarse 0.22 m cells at 15%, fine 0.07 m at
-  45%), pebble albedo factor 0.6-0.95, faded by `fwidth`.
-- **Lighting model**: `diffuse_burley`, `specular_schlick_ggx`, roughness
-  0.78..0.95 on base surfaces (wet oil and polished tyre lanes may drop to
-  about 0.3 locally), metallic 0..0.3 (oil, cans, bolts). A shader may
-  perturb `NORMAL_MAP` from the same grime values (the road does). No
-  mirror sheen and no metallic above 0.3 on anything.
-- **No shimmer**: a repeating pattern finer than about 0.25 m (brick
-  courses, corrugation, mullions, ribs, grain) fades to its average colour
-  with `fwidth` before it gets smaller than a couple of screen pixels, so
-  walls never moiré at distance.
-- **One noise library**: world shaders
-  `#include "res://scenes/shaders/grime.gdshaderinc"` (`hash21`, `hash22`,
-  `noise21`, `fbm`, `crack_field`, and the sidewalk's `crack_field_h21`)
-  instead of pasting their own copies.
-- **Small props** (under about 1 m, or anything built by `prop_material()`)
-  may use a flat `StandardMaterial3D` colour, inside the albedo budget,
-  roughness 0.7 or more, metallic 0.3 or less. `prop_material()` in
-  `facade_materials.gd` enforces this (non-emissive albedo capped at 0.40
-  linear luminance, hue kept): still write literals inside the budget, since
-  the clamp only hides a wrong value.
-- **Large props** (over about 1 m: awnings, lintels, docks, stoops, pilasters,
-  set-piece bodies) wrap their `prop_material()` in
-  `facade_grime_materials.gd`'s `from_prop()`, which puts the same budgeted
-  colour on `facade_prop_grime.gdshader` (grime in model-space metres, so
-  merged prop meshes with 0..1 UVs per face still get same-size detail).
-  Furniture, bumpers, rails, hangers, diagonals and every emissive part
-  stay flat.
-- **Stop, bay and junction steel** that is large (walls, ceilings, roll-up
-  slats, counter decks, cabinet runs, cross beams) goes on
-  `scenes/corridor/industrial_surface.gdshader`: panels of `panel_size_m`
-  laid out in model-space metres, seams and rivets faded with `fwidth`,
-  rust, streaks, dust and oil, and a `foot_y_m` dirt band on walls. It
-  assumes an unscaled, centred `BoxMesh`: size the mesh, never the node, or
-  the panels stretch. Ceilings and cross beams use the garage's rib recipe
-  (about 3 x 0.5 m panels, roughness 0.9, metallic 0.25); pick a panel size
-  large enough that seams rarely land on a thin trim (the shop booth's steel
-  uses 2.4 m). Small steel (grills, rivets, guides, rails) is flat at
-  metallic 0.3, roughness 0.75.
-
-The van (owner, 2026-09-25, task `docs/tasks/van-war-rig.md`): a scrap war
-rig built from a seed, a new look every run. Doors, windows, breach points,
-machines' positions and the walk space never vary; only the look does,
-drawn from hand-made kits with seeded jitter, one RNG stream per part. The
-interior shaders (`scenes/van/van_*.gdshader`) stay the reference for the
-interior's grime; the outside gets its own exterior shader on the grime
-include. Machines and junk are redneck technology (scavenged parts, welds,
-tape, cables that go somewhere), still low-poly primitives inside the
-budget above.
-
-Machines read as machines (owner play notes, 2026-09-26): 20+ parts of varied
-size, one desaturated accent colour each (generator safety orange, relay rack
-oxide green, bench oxblood and steel, hopper ochre), and a lamp you can point
-at that lights it (an `OmniLight3D` under a caged trouble lamp,
-energy 0.35 to 0.9, range 1.6 to 2.4, no shadow). Cables have logic: each one
-runs from a machine's `PowerPort` to another's along a trunk, with junction
-boxes at joins and clamps or tape along the way; nothing hangs from nowhere,
-and nothing intersects the bowed wall, a machine or the aisle. The game never
-leaves the van, so the exterior is seen only from the debug `ghost` flight
-and is not detailed further.
-
-### Street art (graffiti and posters)
-
-Generated pixel-art images on wall quads are the one bitmap exception on
-the 3D street: they are things stuck to a wall, not a surface. Built in
-code per run (`scripts/travel/facades/street_art/`), packed into one
-per-run atlas, graffiti at 0.024 m/px and posters at 0.016 m/px, filter
-`TEXTURE_FILTER_NEAREST_WITH_MIPMAPS`, alpha scissor 0.5, lit (never
-unshaded), roughness 0.9. Faded: paint at most 0.40 and paper at most
-0.45 linear luminance, so they sit in the wall's light like everything
-else.
-
-Off-style today (3D): nothing known. The 3D art pass (2026-09-25) brought
-the facades, props, set-pieces, stops, junctions, statue and overheads onto
-this file; a new break found later goes here.
-
-## Pixel art (NPCs, raiders, bosses, items, pickups, wares, icons)
-
-Reference: the shopkeeper, `scenes/shop/vendor.png` (23 flat colours, hard
-edges, shading baked in as flat tones). Its pose and palette are the
-target; its grid is not (it is upscaled about 3.2x off any exact grid).
-
-- Drawn at native size, one image pixel = one art pixel. Never upscale a
-  PNG; the size on screen comes from `pixel_size`.
-- One world density: every world `Sprite3D` uses `pixel_size = 0.024`
-  (one art pixel = 2.4 cm). A human is a 64 x 96 canvas (2.3 m, today's
-  raider height). A bigger enemy gets a bigger canvas (the boss about
-  96 x 144), never a node scale or a different `pixel_size`. Items use
-  the smallest canvas that holds them (a shell about 8 px, a medkit about
-  16 px).
-- HUD and boon icons: 32 x 32 art pixels, shown at a whole-number scale.
-- Flat colour only: a limited palette (about 16 to 32 colours per sprite),
-  no anti-aliasing, no soft outlines or glows, no gradients and no
-  dithered ramps. Alpha is 0 or 255, nothing between.
-- Hard shadows: light from the upper left, each material gets a base tone,
-  one shadow tone and at most one highlight tone, split by a hard edge.
-- An outline, if any, is a hard one-art-pixel line.
-- Display: `texture_filter = 0` (nearest), no mipmaps, `alpha_cut = 1`
-  (discard), unshaded (the art carries its own shading), billboard for
-  characters and pickups. Sprites are unshaded on purpose: in a dark world
-  they are what the eye finds first.
-
-**Creepy, not cute** (owner, 2026-10-01, second pass): the raiders are Darkest
-Dungeon dark, never bright or rounded. The door raider is a humanoid gone
-feral, the loper: a 64 x 80 frame (1.54 x 1.92 m, claws on the van floor) on a
-832 x 640 sheet (row 0 the thirteen-frame run; row 1 a five-frame front-on jump take-off (the run's rising half, pushed further), frames J0-J3 keep a claw row on the floor row and J4 is airborne; row 2 a four-frame latch, clip `latch`: reach, impact, pull in, cling; row 3 an eight-frame front-on wall crawl, clip `climb`, diagonal pairs (left fore paw with right hind foot, then the mirror), never flipped; row 4 a six-frame bar rake, clip `rake`, a window loper's swing at the bars (ready, wind-up, strike, impact at frame 3, recoil, recover); row 5 a six-frame on-foot claw swipe, clip `swipe`, inside the van (left paw braced on the floor, legs planted, right paw rears up and strikes down across the body at the viewer, impact at frame 3); row 6 a five-frame climb in over the sill, clip `enter`, played while a window loper is ENTERING (6 fps, holds the last frame); row 7 a six-frame missed jump, clip `tumble` (knocked back in the air, slam on the road, tuck, upside-down roll via the `rot` quarter-turn pose key, push up, rise into the run), played while a loper shot mid-jump is KNOCKED; animation is frame-swapping on one sheet,
-never a node tween: a bounding charge seen from the front at 18 fps, crouch,
-push, paws-rise, lift-off, tip-over, kick, fall, drop, reach, rump-down, land,
-gather; the kick, fall and drop frames are airborne, the kick 4 px off the floor
-and the hindquarters over the skull, a two-lobed rump with a tail-bone stub
-standing above the dropped hump and both hind feet sole-on at the top corners
-with the claws up, while every other frame keeps a claw row on the floor row;
-the hump may rise at most 5 px since its top knob is on row 5, the head drops
-up to 13 px on the kick, and the jaw and strands trail the bob),
-a hyena-ape hunched so the skull hangs forward from a furred ruff below one
-furred mantle (shoulders, neck and spine hump in a single polygon, bone spine
-knobs poking through), in a mangy soot-black coat (sRGB 42,34,28 fur, 25,21,18
-shadow, 64,53,42 highlight, bare skin patches), never balls joined by
-ellipses: tapered limbs with fur sleeves and hip tufts, a furred rump, and hair
-tufts on every edge that trail the bob by a frame and flare on landing; arms
-longer than the legs with the claws on the floor, a torn shoulder and blood
-down the belly. The head is the feral face (owner, 2026-10-03, every run frame,
-`draw_feral_head`): a long angular skull, never round, under a matted hair cap,
-a hard V brow over slanted black sockets with red eyes (sRGB 214,30,22, one
-255,214,120 hot pixel each), a bare nasal pit, and a maw split into the cheeks
-with red gums, tapered hooked fangs (two long upper canines, never even human
-teeth) and a hanging pointed jaw with its fangs up. Corpse grey-green skin
-(sRGB 72,78,68 base, 42,46,40 shadow, 104,110,96 highlight), so the body reads
-as a shape the dark swallows. The one exception is the face, so the player
-finds the head hitbox: pale rim pixels (sRGB 176,172,150, mid 134,132,114) only
-on the face's edges that face the upper-left light (left temple and cheek, the
-jaw's left edge), about 20 pixels; never a pale fill, never on the chin or the
-right side, and no marks under the eyes (they read as blushing).
-Asymmetry (the tilted head, one arm lower, uneven teeth) is what keeps a
-sprite from reading as cute. The loper is also the window raider
-(the first-pass crawler was retired, 2026-10-03). It is drawn by `tools/gen_enemy_sprites.py`
-(19 flat colours, outlined, lit from the upper left) and shown at
-`pixel_size 0.024`, `texture_filter 0`, `alpha_cut 1`; re-run the script
-after changing a colour or a shape, never paint over the PNGs.
-
-Off-style today, to redraw to this rule (not to copy from): the mechanic
-and Wanjna PNGs (painted, 10,000+ colours, soft red outline), the other
-world sprites' `pixel_size` (0.006 NPCs and Wanjna, 0.005 pickups), the
-shopkeeper's linear filtering, the boss's 1.5x node scale, and the boon
-icons (`tools/generate_boon_icons.py` draws anti-aliased 128 px SVG
-strokes with round caps). The pixel-art pass is a later task.
+  A visible change that moves a shot past its target (the table and how
+  to read it are in `art-shots.md`) is a regression.
 
 ## Checking it
 
-- Anything visible gets `tools/smoke.py --shots`; Read the PNGs, run
-  `tools/shot_stats.py` on the folder, and compare with the
-  references and with this file before reporting.
+- Anything visible gets `tools/smoke.py --shots` from the implementer:
+  `tools/shot_stats.py` on the folder, the PNGs read only for what no
+  number measures, compared with the references and this file before
+  reporting. The main session never Reads them.
 - A new sprite: check it with `py -3 -c` and PIL before wiring it in
   (colour count, alpha levels only 0 and 255, size matches its canvas).
-- The implementer never sees this file: copy the rules that apply into
-  the spec's Rules section, with the exact numbers (albedo budget,
-  roughness and metallic ranges, emission rule, `pixel_size`,
-  `texture_filter`, `alpha_cut`).
+- A spec for anything visible names this file and the area's topic file
+  under Read first; the implementer reads them and applies their numbers (albedo budget, roughness
+  and metallic ranges, emission rule, `pixel_size`, `texture_filter`,
+  `alpha_cut`).

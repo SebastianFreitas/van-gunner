@@ -98,8 +98,10 @@ def state_path(name: str) -> Path:
 
 
 def find_claude(explicit: str | None) -> str:
-    """Resolve the claude CLI path: explicit, PATH, or newest installed version
-    (<version>/claude.exe or <version>/<hash>/claude.exe)."""
+    """Resolve the claude CLI path: explicit, PATH, the desktop app's newest
+    version (%APPDATA% or the Store app's Packages folder: <version>/claude.exe
+    or <version>/<hash>/claude.exe), then the native installer's
+    ~/.local/bin or ~/.claude/local. Supervisors never need --claude."""
     if explicit:
         if explicit.lower().endswith((".cmd", ".bat")):
             print("Pass the claude.exe path, not a .cmd shim.")
@@ -161,6 +163,10 @@ def find_claude(explicit: str | None) -> str:
                 best_exe = exe
     if best_exe is not None:
         return str(best_exe)
+    for exe in (Path.home() / ".local" / "bin" / "claude.exe",
+                Path.home() / ".claude" / "local" / "claude.exe"):
+        if exe.is_file():
+            return str(exe)
     print("Claude Code CLI not found. Install it (see https://code.claude.com/docs) or pass --claude PATH.")
     sys.exit(1)
 

@@ -19,7 +19,11 @@
 - `scenes/van/van_shell.tscn` is 46 KB: grep node names and read about
   40 lines around the hit.
 - Never open `*.png`, `*.wav`, `*.ogg`, `*.import`, `.godot/` or
-  `__pycache__/`.
+  `__pycache__/` in the repo. Screenshots you took in the scratchpad
+  are fine: judge them against the spec's Acceptance, by the tools'
+  numbers first (`tools/shots.py compare`, `tools/gap_check.py`), and
+  report each check as pass or fail with its key numbers and one line
+  per picture you read.
 
 ## GDScript
 
@@ -43,6 +47,22 @@
   and pass the owner node, never themselves, to other systems. When a
   helper reads its owner through an untyped variable, `:=` can't infer
   the type: give those locals explicit types.
+- The core keeps its state, signals, exports, virtuals, `await` chains
+  and every method reached from outside; helpers take the core and read
+  its fields. GDScript counts only same-file uses, so the core wraps
+  private fields that only its helpers touch in
+  `@warning_ignore_start("unused_private_class_variable")` …
+  `@warning_ignore_restore(...)`, and a signal only helpers emit gets
+  `@warning_ignore("unused_signal")`. A field nobody reads gets deleted,
+  not silenced.
+- Over 400 on purpose: `scripts/travel/travel_controller.gd` (its state
+  header, the API other scripts call and the `_sequence_id` await chains
+  belong together) and `scripts/enemies/window_raider.gd` (its
+  await-driven assault state machine plus the methods `BikerBoss`
+  inherits).
+- Data lives in `.tres`; new behaviour is a small `Resource` subclass
+  (`ItemEffect`, `ActCardEffect`, `BoonBehavior`), not a branch in an
+  existing system.
 - A Callable does not keep a `RefCounted` alive: `Helper.new(x).build.bind(...)`
   stored for later fails with "call function 'null::build (Callable)' on
   a null instance", because the temporary helper is freed first. Store a
@@ -82,7 +102,9 @@ van scene edits, the scene dump (`py -3 tools/scene_dump.py`). The tools
 find Godot themselves and wait for each other, so two of them never run
 Godot on one folder at once. Report every output line containing
 `SCRIPT ERROR`, `Parse Error`, `ERROR:` or a GDScript warning. Say
-"clean" only when there are none; the exit code alone is not reliable. In
+"clean" only when there are none; the exit code alone is not reliable.
+Right after moving files, the first check can print stale `uid_cache`
+errors; run it again. In
 a cloud session (a Linux container) `py -3` doesn't exist: run the same
 commands with `python3`. If a tool reports "No Godot found" there, say so
 and stop; don't install anything.

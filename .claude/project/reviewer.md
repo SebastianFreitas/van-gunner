@@ -23,4 +23,6 @@ van-gunner is a Godot 4.7 game in GDScript. Besides the shared checks:
    game code (`tools/` is not game code); facade placements pass
    `FacadeKeepOut.allows`.
 
-Never open `*.png`, `*.wav`, `*.ogg`, `*.import` or `.godot/`.
+Never open `*.png`, `*.wav`, `*.ogg`, `*.import` or `.godot/` in the
+repo; screenshots in a scratchpad are fine. You may re-run `py -3
+tools/check.py` or `tools/smoke.py` when a reported result looks wrong.

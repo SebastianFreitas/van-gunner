@@ -42,7 +42,7 @@ stop and you start a new one to finish the job."*
   pieces question; B3 = writer `apply`, then the manager asks what it
   returns. C1 = writer `phases`; C2 = manager asks the phases question;
   C3 = writer `apply`. Ready gate: the manager starts the
-  `plan-reviewer`s; their findings go to a writer `apply`. The review
+  `plan-reviewer`s; their report paths go to a writer `apply`. The review
   passes below are the writer's.
 - **Changes the owner asks for** mid-interview go to a writer `apply`
   as a D; the manager asks again only the pieces or phases it returns
@@ -370,7 +370,7 @@ branch from git, now) as the last thing, nothing after it:
     Plan ready. Please run `/clear`, then paste this:
 
     ```
-    go: run plan <name> one phase at a time. Checkout <path> on branch <branch>, <mode> mode. Read .claude/plans/<name>.md first.
+    go: run plan <name> one phase at a time. Checkout <path> on branch <branch>, <mode> mode. Read the "Supervising the run" part of .claude/skills/plan/run.md first, and .claude/plans/<name>.state.md if it exists; never the plan.
     ```
 
 If `tools/autoplan.py` does not exist in this checkout, the first clause

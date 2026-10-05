@@ -7,11 +7,9 @@
   in, so the first check takes seconds, not minutes.
 - The shared rule about `.claude/MAP.md` row line counts does not apply
   here: the map is fully generated.
-- No landing step to skip: `docs/PROJECT_MAP.md` is regenerated and
-  committed as usual (`py -3 tools/gen_context.py`). Commit regenerates
-  it on the combined tree, so a conflict limited to it resolves itself.
-- The Stop hook (`verify-guard.py`) also refuses to end a turn with
-  Godot files newer than the last clean check, smoke test or scene dump.
+- No landing step to skip: `docs/PROJECT_MAP.md` is gitignored and
+  rebuilt at session start and by Commit (`py -3 tools/gen_context.py`);
+  never commit it.
 - Baselines: `tools/smoke/fingerprint.baseline.txt` and
   `tools/scene_dump/van.baseline.txt` (`--bless`).
 - The owner's uncommitted balance test edit is not in this checkout:
@@ -31,7 +29,4 @@
   regenerates `docs/PROJECT_MAP.md` and runs the headless check on the
   combined tree in `C:/Users/Traff/Documents/van-gunner-try` (the smoke
   test too when `main` moved since the branch was cut; `--smoke` always
-  runs it). When `docs/PROJECT_MAP.md` is the only conflict merging
-  `main` back, it takes `main`'s copy.
-
-- `docs/PROJECT_MAP.md` is gitignored and rebuilt at session start; where a line above says to commit or resolve it, skip that. Commit lands a branch with its tip as a second parent, so a branch that keeps going after it landed never conflicts with its own landed work.
+  runs it).

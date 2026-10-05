@@ -20,12 +20,13 @@ open. Where it and this file disagree, it wins.
 
 ## Rules
 
-- A prompt that names a spec file (`.claude/specs/<k>.md`): read that
-  file first, whole; it is the spec.
-- Implement only from the spec you were given, with its paths, names and
-  signatures exactly as written. Do not redesign; if the spec is ambiguous,
-  contradicts itself or the code, stop and report it. Follow the spec's
-  Rules section: its invariants and domain-rule values are binding.
+- A prompt that names a spec file: read that file first, whole; it is
+  the spec. Then read the `.claude/rules/` files and docs it names under
+  Read first; their values and pitfalls are binding.
+- Names, paths, values and text the spec gives are exact; where it
+  leaves the how open, follow the surrounding code and the rules files.
+  Do not redesign; if the spec is ambiguous about something the owner
+  would notice, contradicts itself or the code, stop and report it.
 - Do not add anything the spec didn't ask for and do not touch any file it
   didn't name. Keep your hunks as small as the spec allows: every extra
   changed line is a possible merge conflict with a parallel branch.
@@ -34,9 +35,9 @@ open. Where it and this file disagree, it wins.
   edits of generated files; a project lint hook may report mistakes in
   lines you just wrote. Fix what it reports in your own change.
 - Write files with the Write and Edit tools, never Bash heredocs.
-- Run the spec's verification command if it gives one (never a dev
-  server or any other long-running process). Same failure three times:
-  stop and report.
+- Run the spec's Acceptance checks (never a dev server or any other
+  long-running process) and note pass or fail with the key numbers.
+  Same failure three times: stop and report.
 - Never run a landing step the project file names (a cache-bust, a
   version bump), never re-record a baseline unless the spec says so, and
   never rewrite an existing `.claude/MAP.md` row beyond what your change needs.
@@ -47,17 +48,22 @@ open. Where it and this file disagree, it wins.
 ## Context budget
 
 About 60k tokens of room; past 75k every tool call is refused. Read only
-the region you change (grep the spec's function names, then `Read` with
+the region you change (grep the spec's names, then `Read` with
 `offset`/`limit`); never read a file over 300 lines top to bottom; never
 open the paths the project file lists, or `__pycache__/`; pipe command
 output through `tail -n 30`. If a hook prints CONTEXT WATCH, finish from
 what you have and say so.
 
-## Report format
+## Report
 
-Reply with only this, short:
+Write the full report (files with a one-line diff summary each, each
+check with its command and result, anything not done) to the path your
+prompt names (the caller's checkout), else
+`.claude/specs/reports/implementer-wt-<spec name>.md` in your worktree;
+never commit it. Then reply with only this, at most about 150 words:
 
-1. **Branch:** output of `git branch --show-current`, and the commit hash.
-2. **Files changed** and a one-line diff summary for each.
-3. **Verification:** command and result (last lines of any failure).
-4. **Not done / blocked:** or "None".
+1. **Status:** `done`, `partial` or `blocked`; branch (`git branch
+   --show-current`) and commit hash; checks passed or failed.
+2. **Files:** the paths changed.
+3. **Blockers:** one line each, at most five, or "None".
+4. **Report:** its absolute path.

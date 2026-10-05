@@ -6,8 +6,10 @@ description: Write .claude/handoff.md so a fresh context can continue this task.
 # Handoff
 
 Write `.claude/handoff.md` (gitignored). In cloud mode it also goes in the
-PR body under `## Handoff`. Under 80 lines, no code, these headings
-in this order:
+PR body under `## Handoff`. At most 80 lines and 6 KB, no code
+(`file-guard.py` refuses a bigger write: the handoff is a pointer, so
+detail goes in the plan or state file, a spec or a report file it
+names). These headings in this order:
 
 - **Goal:** the owner's words.
 - **Done:** commits with hashes.
@@ -27,17 +29,19 @@ in this order:
 first line is `Run: prepared`, and Next lists the spec files in
 `.claude/specs/` in order (which run in parallel), the Verify commands,
 a `Review:` line with the number of distinct target files across the
-specs (over three: due; the commit guard counts the real diff anyway),
-and the screenshots the report needs. It ends
-the turn with the go prompt (`workflow.md` "The go prompt"), not a
-"Context full" report, and stays until the run's commit.
+specs (over three, or over about 150 lines expected: due; the commit
+guard counts the real diff anyway), and the screenshots the report
+needs. It ends the turn with the go prompt (`workflow.md` "The go
+prompt"), not a "Context full" report, and stays until the run's commit.
+A run window that reaches its context line keeps `Run: prepared`, lists
+in Next only the spec files still to send, and its go prompt's what is
+"build the prepared specs", so the fresh window carries on managing.
 
 Then end the turn as your mode file's "Context full" rule says. The
-SessionStart hook prints the file into the next context (also after
-`/clear`), cut at 6,000 characters (less if the mode rules and dirty
-list are long: hook output over 10,000 characters is replaced by a
-2,000-character preview), so keep it short. Delete the file once a fresh
-context has absorbed it.
+SessionStart hook prints the file's first lines (title, `Run:` line,
+Goal) into the next context (also after `/clear`) and tells it to read
+the file, which it reads once. Delete the file once a fresh context has
+absorbed it.
 
 ## Then stop
 
@@ -45,7 +49,7 @@ Auto-compact is off (owner's rule, 2026-09-29): a handoff always ends
 the turn. The turn's last thing is the go prompt (`workflow.md` "The go
 prompt": what to do, checkout, branch, file), never "say `go`". The
 owner runs `/clear` (or opens a new chat) and pastes it; the
-SessionStart hook prints the handoff into the fresh context. It is the
+SessionStart hook points the fresh context at the handoff. It is the
 same folder, branch and PR, so never open a new worktree, branch or PR
 for the same work. Never compact and never call
 `mcp__ccd_session_mgmt__clear_session` on yourself.

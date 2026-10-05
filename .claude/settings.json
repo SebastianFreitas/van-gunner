@@ -4,10 +4,10 @@
   },
   "modelSettings": {
     "claude-opus-5-5": {
-      "effortLevel": "medium"
+      "effortLevel": "low"
     },
     "claude-fable-5-1": {
-      "effortLevel": "medium"
+      "effortLevel": "low"
     }
   },
   "worktree": {
@@ -38,7 +38,10 @@
       "ReportFindings",
       "SuggestSkills",
       "mcp__visualize__show_widget",
-      "mcp__visualize__read_me"
+      "mcp__visualize__read_me",
+      "PowerShell",
+      "SearchPlugins",
+      "SuggestPluginInstall"
     ]
   },
   "hooks": {

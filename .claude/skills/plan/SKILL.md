@@ -56,8 +56,10 @@ the plan itself into the repo. `/plan` is the plan mode.
 This file is the index. The procedure is in two stage files; read only
 the one for the plan's `Stage:` line, never both:
 
-- `planning` or `ready` (and right after `/plan new`):
-  `.claude/skills/plan/interview.md`.
+- `planning` (and right after `/plan new`), or `ready` when the owner
+  changes the plan: `.claude/skills/plan/interview.md`.
+- `ready` with a go prompt or a bare `go`: only "Supervising the run" in
+  `.claude/skills/plan/run.md` (no state file yet; never the plan).
 - `running`: `.claude/skills/plan/run.md` (phases, the state file, phase
   questions, Answer, Stage done). A session started by
   `tools/autoplan.py` reads `.claude/skills/plan/unattended.md` instead.
@@ -68,7 +70,7 @@ return (`interview.md`, "Who does what"). No phase runs in the app
 session: after the ready gate the owner clears, pastes the go prompt
 (`workflow.md` "The go prompt"), and that fresh session runs
 `tools/autoplan.py` one phase at a time in the
-background, reporting each (the first section of `run.md`); the owner
+background, reporting each ("Supervising the run" in `run.md`); the owner
 never opens a terminal or says `go` between phases. A run that stops
 `blocked` or with `questions` is answered in the app, and the run
 restarts; any other problem stops it and goes to the owner.

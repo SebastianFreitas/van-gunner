@@ -6,8 +6,11 @@
    shares, so each session loads one mode's rules instead of all three.
 2. On a fresh start or /clear: the branch, and the paths already
    uncommitted (made by another session, never by this one).
-3. On a fresh start, /clear or compaction: the handoff left by the
-   previous context (.claude/handoff.md), if any.
+3. On a fresh start, /clear or compaction: the head of the handoff left
+   by the previous context (.claude/handoff.md), if any: its first few
+   lines (title, `Run:` line, Goal), its size and an order to read the
+   file. The model reads the whole file anyway, so printing it as well
+   paid for it twice (one 28 KB handoff was printed, then read).
 4. In shared mode on a fresh start or /clear: the uncommitted paths are
    also written to `<session dir>/foreign-paths.json`, which git-guard
    reads to refuse staging them. Paths matching the project's
@@ -24,7 +27,7 @@
    state file's Status while running; the others are listed.
 
 SessionStart also fires after compaction ("compact") and on resume; the
-mode rules and the handoff are printed again then (compaction drops
+mode rules and the handoff head are printed again then (compaction drops
 them), but not the dirty-path list, which by then holds this session's
 own edits.
 
@@ -42,10 +45,9 @@ sys.path.insert(0, HERE)
 from guard_config import load_config, matches_any, quiet_globs, quiet_line  # noqa: E402
 
 LIMIT = 9500          # hook output over 10,000 chars becomes a 2,000-char preview
-HANDOFF_MAX = 6000
+HANDOFF_HEAD_LINES = 4   # non-blank lines of the handoff printed
+HANDOFF_HEAD_CHARS = 600
 DIRTY_MAX = 40
-CUT = ("\n[handoff cut to fit the hook output limit; read "
-       ".claude/handoff.md for the rest]")
 
 
 def git(*args):
@@ -97,6 +99,20 @@ def mode_rules(root, mode):
         if extra:
             text = text + "\n\n" + extra
     return text
+
+
+def handoff_head(body):
+    """The handoff's first few non-blank lines, cut short, and its size."""
+    lines = body.splitlines()
+    head = []
+    for line in lines:
+        if line.strip():
+            head.append(line.rstrip()[:240])
+        if len(head) >= HANDOFF_HEAD_LINES:
+            break
+    text = "\n".join(head)[:HANDOFF_HEAD_CHARS]
+    size = f"{len(lines)} lines, {len(body.encode('utf-8')) // 1024 + 1} KB"
+    return text, size
 
 
 def plan_lines(root):
@@ -174,15 +190,22 @@ def plan_lines(root):
                                   "bare 'go' does the skill's Answer (asks the "
                                   "waiting questions), never a phase.")
                     else:
-                        second = ("Read .claude/skills/plan/run.md, then "
-                                  f"{state_rel} (its Next phase) and {rel}. A "
-                                  "bare 'go' continues it.")
+                        second = ("Read 'Supervising the run' in "
+                                  ".claude/skills/plan/run.md and "
+                                  f"{state_rel}, never the plan. A bare 'go' "
+                                  "continues it.")
                 else:
                     head += " · no state file"
                     second = ("Read .claude/skills/plan/run.md, then "
                               f"{rel} (no state file: take the first "
                               "runnable row in Progress). A bare 'go' "
                               "continues it.")
+            elif stage == "ready":
+                second = ("Read 'Supervising the run' in "
+                          ".claude/skills/plan/run.md, never the plan (no "
+                          "state file yet: the first phase writes it). A bare "
+                          "'go' starts the run; a change to the plan reads "
+                          ".claude/skills/plan/interview.md instead.")
             else:
                 second = ("Read .claude/skills/plan/interview.md, then "
                           f"{rel}: Interview, Brief, Decisions, Open items, "
@@ -325,7 +348,6 @@ def main():
     lines.extend(plan_lines(root))
     lines.append("")
 
-    hand_at = None
     if source in ("startup", "clear"):
         dirty = git("status", "--short")
         if dirty and mode == "shared":
@@ -361,36 +383,30 @@ def main():
         lines.extend(workflow_sync_lines(root))
 
     if source in ("startup", "clear", "compact"):
-        hand =os.path.join(root, ".claude", "handoff.md")
+        hand = os.path.join(root, ".claude", "handoff.md")
         if os.path.exists(hand):
             with open(hand, encoding="utf-8", errors="ignore") as f:
                 body = f.read().strip()
-            raw = body[:HANDOFF_MAX]
-            if len(body) > HANDOFF_MAX:
-                body = raw + CUT
+            top, size = handoff_head(body)
             lines.append("")
             if body.startswith("Run: prepared"):
-                lines.append("PREPARED RUN (.claude/handoff.md): on the "
-                             "owner's go prompt (check its checkout and "
-                             "branch against the MODE line above), run it "
-                             "as .claude/rules/workflow.md 'Run' says: "
-                             "manage only, send each spec file to an "
-                             "implementer, never redo 'Done'; the file "
-                             "stays until the run's commit:")
+                lines.append(f"PREPARED RUN in .claude/handoff.md ({size}): "
+                             "on the owner's go prompt (check its checkout "
+                             "and branch against the MODE line above), read "
+                             "the file once and run it as "
+                             ".claude/rules/workflow.md 'Run' says: manage "
+                             "only, send each spec file to an implementer, "
+                             "never redo 'Done'; the file stays until the "
+                             "run's commit. It starts:")
             else:
-                lines.append("HANDOFF from the previous context "
-                             "(.claude/handoff.md). Restate the plan in two "
-                             "lines, continue from 'Next', never redo 'Done', "
-                             "and delete the file once absorbed:")
-            hand_at = len(lines)
-            lines.append(body)
+                lines.append("HANDOFF from the previous context in "
+                             f".claude/handoff.md ({size}): read the file "
+                             "once, restate the plan in two lines, continue "
+                             "from 'Next', never redo 'Done', and delete the "
+                             "file once absorbed. It starts:")
+            lines.append(top)
 
     out = "\n".join(lines)
-    if len(out) > LIMIT and hand_at is not None:
-        excess = len(out) - LIMIT
-        keep = max(0, len(raw) - excess - len(CUT))
-        lines[hand_at] = raw[:keep] + CUT
-        out = "\n".join(lines)
     if len(out) > LIMIT:
         out = out[:LIMIT]
     print(out)

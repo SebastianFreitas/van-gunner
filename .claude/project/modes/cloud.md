@@ -19,12 +19,9 @@
   instead of blessing.
 - The shared rule about `.claude/MAP.md` row line counts does not apply
   here: the map is fully generated.
-- No landing step to skip: `docs/PROJECT_MAP.md` is regenerated and
-  committed as usual; Commit regenerates it on the combined tree.
-  Baselines: `tools/smoke/fingerprint.baseline.txt` and
+- No landing step to skip: `docs/PROJECT_MAP.md` is gitignored and
+  rebuilt at session start and by Commit; never commit it. Baselines: `tools/smoke/fingerprint.baseline.txt` and
   `tools/scene_dump/van.baseline.txt` (`--bless` only on purpose, say so).
-- No scratch files in the repo: logs and dumps go in the session's
-  scratchpad.
 - **Try:** `py -3 C:/Users/Traff/Documents/van-gunner/tools/try.py <branch>`
   fetches the branch from origin into the try checkout
   (`C:/Users/Traff/Documents/van-gunner-try`), imports and launches the
@@ -36,5 +33,3 @@
   combined tree in the try checkout (the smoke test too when `main` moved;
   `--smoke` always runs it). On a conflict or a failed check it lands
   nothing and says why.
-
-- `docs/PROJECT_MAP.md` is gitignored and rebuilt at session start; where a line above says to commit or resolve it, skip that. Commit lands a branch with its tip as a second parent, so a branch that keeps going after it landed never conflicts with its own landed work.

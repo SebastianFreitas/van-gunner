@@ -30,7 +30,8 @@ start one; when one is live, report where it is (below) and stop.
 
 - **One phase per launch:** Bash with `run_in_background: true`:
   `py -3 <main checkout, absolute, forward slashes>/tools/autoplan.py <name> --max-sessions 1`
-  (no `| tail`). Say in one line which phase runs. Do not poll or sleep:
+  (no `| tail`, no `--claude`: it finds the CLI itself). Say in one
+  line which phase runs. Do not poll or sleep:
   the harness notifies when it exits.
 - **When it exits:** read the run's last 12 lines of output (the
   session row and `stop reason:`), the state file (`Status`, Completed
@@ -73,9 +74,11 @@ start one; when one is live, report where it is (below) and stop.
 
 The owner's rule (2026-09-26): *"we never do 2 continues work, we must
 always separate stuff."* A running plan is a chain of short, isolated
-sessions. Each prompt executes **exactly one phase**, then the session
-halts and the owner clears the context. Never run two phases in one
-turn, never "keep going with Next".
+sessions, each executing **exactly one phase**. A headless `autoplan`
+session then simply ends (step 5); the supervisor launches the next. The
+owner clears the app window once, between the ready gate and the run,
+never between phases. Never run two phases in one turn, never "keep
+going with Next".
 
 1. **Enter.** Read `.claude/plans/<name>.state.md` first. `Status:
    blocked` or `Status: questions` → do "Answer" below instead, never a
@@ -87,9 +90,9 @@ turn, never "keep going with Next".
    other phase.
 2. **Phase questions** come before the first spec (rules below).
 3. **Execute that phase only:** research its topics (digest to
-   `research/<name>-<NN>.md` when it is more than a few anchors), read
-   the `.claude/rules/` files for every area it touches, design, specs,
-   implementer, verify, and the `reviewer` over about 150 lines or more
+   `research/<name>-<NN>.md` when it is more than a few anchors), specs
+   naming the `.claude/rules/` files for every area it touches,
+   implementer (which verifies), and the `reviewer` over about 150 lines or more
    than three files, as `CLAUDE.md` says. Anything the phase reveals
    about a later phase goes into Carry forward or the state file, never
    into this session's work.
@@ -106,9 +109,13 @@ turn, never "keep going with Next".
       Carry forward, and commit those too (same path rules). The state
       file is committed: in cloud mode the next session is a fresh clone
       and reads it from the branch.
-5. **Hard stop.** End the turn with the normal report, then the go
-   prompt (`workflow.md` "The go prompt"; checkout and branch from git,
-   now) as the last thing, nothing after it:
+5. **Hard stop.** Headless (`AUTOPLAN=1`): end with a short phase
+   report for the supervisor (what landed, `Status`, Next phase); no
+   `/clear`, no go prompt. **In-app fallback only** (no
+   `tools/autoplan.py`, or the owner said to run the phase in the app):
+   end the turn with the normal report, then the go prompt (`workflow.md`
+   "The go prompt"; checkout and branch from git, now) as the last
+   thing, nothing after it:
 
        Phase complete. Please run `/clear`, then paste this:
 
@@ -121,9 +128,9 @@ turn, never "keep going with Next".
    Read .claude/plans/<name>.state.md first.`, introduced with "No phase
    can run until the questions are answered." Do not start the next
    phase. Do not ask whether to continue.
-6. **The next prompt** ("Read .claude/plans/<name>.state.md and execute
-   the next phase") starts at step 1 in a fresh context. A bare "go"
-   starts or reports the supervised run instead (above).
+6. **The next prompt** (fallback: "Read .claude/plans/<name>.state.md
+   and execute the next phase") starts at step 1 in a fresh context. A
+   bare "go" starts or reports the supervised run instead (above).
 
 ### Which phase runs next
 
@@ -136,13 +143,14 @@ questions`.
 
 ### Verify in a phase
 
-`CLAUDE.md` § Verify decides which commands a change needs; a phase runs
-every one of them for the areas it touched, once, on its finished
-change. **Pictures** (owner, 2026-10-01: "when we check images we
+`CLAUDE.md` § Verify decides which commands a change needs; the phase's
+implementer runs every one of them for the areas it touched, once, on
+the finished change, and reports the numbers. **Pictures** (owner, 2026-10-01: "when we check images we
 shouldn't repeat it if we get text from it"): a view a tool measures (a
 pixel count, a compare against a baseline) is judged by its number, and
-its picture is not read, including views measured clean. Read a picture
-only for a look no tool measures, or when a number says a view changed
+its picture is not read, including views measured clean. The
+implementer or reviewer (never the phase session) reads a picture only
+for a look no tool measures, or when a number says a view changed
 and the question is how; read each one once, write one line on what it
 shows, and never re-read a picture an earlier phase or session already
 described. A visible phase's Verification names the screenshots or views

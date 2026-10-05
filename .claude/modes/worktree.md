@@ -63,12 +63,7 @@ checkout>` with the path in the `MODE:` line.
   words; never repeat a message already on the branch or on `main`.
 
 **Done state.** When you ran the Commit on the owner's OK and it
-printed `LANDED:`, mark this session done (owner, 2026-10-02): rename
-it with `set_session_title` (`session_id` "self") to `Landed: ` plus
-its current title, call `mark_completed` ("self"), and end the turn
-with one line: "Landed as <sha> on `main` and pushed; this worktree is
-finished (archive it, or reply here for a follow-up round)." When the
-owner runs the command themselves, the `LANDED:` line is their signal.
+printed `LANDED:`, do playbook "Landed" (mark this session done).
 
 After a Commit, the command already moved this branch onto `main`, so
 a follow-up round just commits on the same branch and ends with the same

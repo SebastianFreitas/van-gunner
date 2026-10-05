@@ -11,7 +11,7 @@ front-on latch onto the van wall (reach, impact, cling), row 3 an 8-frame front-
 (diagonal pairs, looping), row 4 a 6-frame front-on bar rake (hold on left, rake right), row 5 a 6-frame front-on on-foot claw swipe (left paw braced, right paw strikes), row 6 a 5-frame front-on enter (pulls in through the window), row 7 a 6-frame front-on tumble (shot out of a jump, slams the road, rolls, gets up). Every frame has the
 feral face (draw_feral_head), riding the pose's head bob and jaw lag.
 
-Art rules (.claude/rules/art-style.md, pixel art): native size, one image
+Art rules (.claude/rules/art-pixel.md, art-loper.md): native size, one image
 pixel = one art pixel at pixel_size 0.024 (2.4 cm); flat colours, no
 anti-aliasing, alpha 0 or 255; hard shadows lit from the upper left (base,
 one shadow, one highlight per material); a hard one-pixel outline.

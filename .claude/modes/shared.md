@@ -48,14 +48,7 @@ for any task longer than a quick fix; this mode is for small changes.
 
 ### Merging by hand
 
-Only when the owner asks you to merge branches. Merge the open branches
-into `main` one at a time with `--no-ff`, oldest first. `.claude/MAP.md`
-rows: keep both sides' rows, then re-count the changed files. The
-project's notes below say how its own conflicts resolve. After the last
-merge run the landing steps once and the project's full check (`CLAUDE.md`
-§ Verify), commit, and end with the report (the owner pushes). Never
-delete branches by hand; `tools/cleanup.py` removes merged ones once
-idle 24 h.
+Only when the owner asks: playbook "Merging by hand".
 
 ### Context full
 
