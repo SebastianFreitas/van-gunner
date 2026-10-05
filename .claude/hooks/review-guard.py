@@ -17,7 +17,7 @@ tool, not by hand) do not count. Over LINES changed lines or FILES files, the co
 unless this session has already run the `reviewer` subagent: the
 context-watch ledger (`<session dir>/context-watch.jsonl`, written on
 SubagentStop) has an entry whose agent_type is `reviewer`. A review in
-an earlier window does not count: a fresh reviewer run is cheap (Sonnet,
+an earlier window does not count: a fresh reviewer run is cheap (medium effort,
 fresh context) and a stale one is worthless.
 
 Map check, before the size check, on `git commit` only (a landing's

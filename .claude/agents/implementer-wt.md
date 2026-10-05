@@ -2,6 +2,7 @@
 name: implementer-wt
 description: The implementer in its own git worktree. Use only for parallel tasks that must edit the same file, in worktree or cloud mode; commit before calling it. It commits on its own branch and reports the branch name for the caller to merge.
 model: sonnet
+effort: medium
 tools: Read, Write, Edit, Glob, Grep, Bash
 omitClaudeMd: true
 maxTurns: 60

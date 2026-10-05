@@ -314,7 +314,7 @@ every piece.
 
 ### Ready gate (all true, or keep going)
 
-- **Fresh-eyes review, capped.** One `plan-reviewer` subagent (Sonnet,
+- **Fresh-eyes review, capped.** One `plan-reviewer` subagent (Opus,
   read-only; never the built-in `Plan` agent, which has no pinned model)
   reads the whole plan file: give it the path and "check: build". It
   answers per phase *what would make this phase impossible to build, or

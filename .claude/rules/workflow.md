@@ -201,7 +201,7 @@ went from 44k to 51k and 68k for three specs each, 2026-10-01).
 4. **Verify**: each spec's command (the implementer ran it), then what
    `CLAUDE.md` § Verify asks for the areas touched, output tailed.
 5. **Review**: over about 150 lines or three files (`.claude/` and
-   `.md` files not counted), the `reviewer` subagent (Sonnet,
+   `.md` files not counted), the `reviewer` subagent (Opus,
    read-only, fresh context) gets the spec paths and the changed paths,
    checks `git diff` against them and reports only gaps that break the
    spec or a flow. A gap gets a new spec file and goes back to step 3.
@@ -248,8 +248,11 @@ because the main context is paid again on every turn.
 - Explore and Plan never load this file or `CLAUDE.md`: name the file,
   function or concept, tell them to grep `.claude/MAP.md` first, and ask
   for `file:line` anchors and a summary, not code bodies.
-- Models: Opus thinks (main, plan runs, `plan-writer`, Plan), Sonnet
-  does (`Explore`, `implementer`, `reviewer`, `plan-reviewer`). When
+- Models: Opus thinks and judges (main, plan runs, `plan-writer`,
+  Plan, `reviewer`, `plan-reviewer`), Sonnet does (`Explore`,
+  `implementer`). The reviewers moved to Opus because Sonnet 5.5 misses
+  more on hard reviews and more of its comments are noise; it matches
+  Opus on spec-driven code at half the cost (owner, 2026-10-05). When
   the owner picks Fable (`claude-fable-5-1`) for a session, Fable takes
   Opus's place and nothing else changes: it manages, writes specs and
   delegates every code change exactly as Opus does (owner, 2026-10-02).

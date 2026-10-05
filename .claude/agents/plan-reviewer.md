@@ -1,7 +1,7 @@
 ---
 name: plan-reviewer
 description: Read-only fresh-eyes review of a plan file in .claude/plans/, for the plan skill's review passes and ready gate (build check, design fit, art style). The caller names the plan path, which check, and for a second round the lines the fixes changed.
-model: sonnet
+model: opus
 effort: medium
 tools: Read, Grep, Glob
 omitClaudeMd: true
