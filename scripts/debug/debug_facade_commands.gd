@@ -310,9 +310,11 @@ func _stress_build(
 ) -> String:
 	_FacadeSetPieces.forced_id = id
 	var tile := _CorridorSegmentScene.instantiate() as Node3D
+	tile.begin_build()
 	stress_host.add_child(tile)
 	tile.configure(seed_value, district_idx, hash([seed_value]), id != &"")
 	tile.apply_side_streets(false, false)
+	tile.end_build()
 	var bay_side := &""
 	if opening_case[0] == OPENING_BAY:
 		bay_side = &"left"

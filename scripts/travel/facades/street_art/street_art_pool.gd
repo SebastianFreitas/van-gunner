@@ -24,6 +24,7 @@ static var _build_ms := 0.0
 static func ensure(run_seed: int) -> void:
 	if _material != null and run_seed == _seed:
 		return
+	var perf_t := PerfStats.begin()
 	var t0 := Time.get_ticks_usec()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash([run_seed, &"street_art"])
@@ -107,6 +108,7 @@ static func ensure(run_seed: int) -> void:
 	_material.specular_mode = BaseMaterial3D.SPECULAR_SCHLICK_GGX
 	_seed = run_seed
 	_build_ms = float(Time.get_ticks_usec() - t0) / 1000.0
+	PerfStats.end(&"street_art", perf_t)
 
 
 ## Entries of one family; call ensure() first.

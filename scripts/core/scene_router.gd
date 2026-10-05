@@ -24,7 +24,9 @@ func preload_van() -> void:
 	## Sync load on the main thread. Threaded load of van.tscn fails cold with a
 	## cryptic parse error at the floor shader sub_resource (Godot worker-thread
 	## script/shader graph issue); sync load is reliable.
+	var perf_t := PerfStats.begin()
 	var packed := ResourceLoader.load(VAN) as PackedScene
+	PerfStats.end(&"van_load", perf_t)
 	if packed == null:
 		push_error("Could not load %s." % VAN)
 		_van_preload_started = false

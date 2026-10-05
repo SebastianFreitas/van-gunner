@@ -10,6 +10,7 @@ const _VanCommands := preload("res://scripts/debug/debug_van_commands.gd")
 const _MetaCommands := preload("res://scripts/debug/debug_meta_commands.gd")
 const _FacadeCommands := preload("res://scripts/debug/debug_facade_commands.gd")
 const _ArmsCommands := preload("res://scripts/debug/debug_arms_commands.gd")
+const _PerfCommands := preload("res://scripts/debug/debug_perf_commands.gd")
 const _Completion := preload("res://scripts/debug/debug_completion.gd")
 
 var _commands: Dictionary = {}
@@ -22,6 +23,7 @@ var _meta: RefCounted
 var _catalog: RefCounted
 var _facade: RefCounted
 var _arms: RefCounted
+var _perf: RefCounted
 var _completion: RefCounted
 
 
@@ -59,6 +61,7 @@ func _register_commands() -> void:
 	_catalog = _DebugCatalog.new(self)
 	_facade = _FacadeCommands.new(self)
 	_arms = _ArmsCommands.new(self)
+	_perf = _PerfCommands.new(self)
 	_completion = _Completion.new(self)
 	_commands = {
 		"help": _cmd_help,
@@ -91,6 +94,7 @@ func _register_commands() -> void:
 		"facade": _facade.cmd_facade,
 		"walk_wreck": _facade.cmd_walk_wreck,
 		"arms": _arms.cmd_arms,
+		"perf": _perf.cmd_perf,
 	}
 
 
@@ -128,7 +132,7 @@ func _usage_text(cmd: String, usage: Dictionary) -> String:
 func _usage_lines() -> Dictionary:
 	return {
 		"help": "help [cmd]  list commands, or show one command's usage",
-		"chill": "chill          freeze van travel and stop new encounters",
+		"chill": "chill          pause encounters; the van keeps moving",
 		"unchill": "unchill        resume normal run flow",
 		"speed": "speed          debug turbo: fast travel, skips intro, compresses timers",
 		"unspeed": "unspeed        turn off debug turbo",
@@ -161,6 +165,8 @@ func _usage_lines() -> Dictionary:
 		"facade": "facade [sub]    street facade debug (try facade help)",
 		"walk_wreck": "walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street",
 		"arms": "arms <sub> [args]  first-person arms debug (current values shown)",
+		"perf": "perf [off|fps|full|log|spans|reset|hitch <ms>]  F3 perf overlay, hitch log, "
+				+ "span totals",
 	}
 
 

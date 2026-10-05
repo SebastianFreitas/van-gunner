@@ -4,17 +4,29 @@ extends RefCounted
 ## generic StandardMaterial3D helper, shared by the core and the detail builders.
 
 
+static var _asphalt: ShaderMaterial
+static var _curb: ShaderMaterial
+static var _gutter: ShaderMaterial
+## Keyed by surface_size_m: the sidewalk shader scales its pattern by the slab size.
+static var _sidewalk_cache: Dictionary = {}
+
+
 static func asphalt_mat(_surface_size_m: Vector2) -> ShaderMaterial:
+	if _asphalt != null:
+		return _asphalt
 	var shader := load("res://scenes/corridor/asphalt_surface.gdshader") as Shader
 	var mat := ShaderMaterial.new()
 	mat.shader = shader
 	mat.set_shader_parameter("washout", 0.32)
 	mat.set_shader_parameter("trash", 1.0)
 	mat.set_shader_parameter("roughness_value", 0.94)
+	_asphalt = mat
 	return mat
 
 
 static func sidewalk_mat(surface_size_m: Vector2) -> ShaderMaterial:
+	if _sidewalk_cache.has(surface_size_m):
+		return _sidewalk_cache[surface_size_m] as ShaderMaterial
 	var shader := load("res://scenes/corridor/sidewalk_surface.gdshader") as Shader
 	var mat := ShaderMaterial.new()
 	mat.shader = shader
@@ -23,23 +35,30 @@ static func sidewalk_mat(surface_size_m: Vector2) -> ShaderMaterial:
 	mat.set_shader_parameter("washout", 0.5)
 	mat.set_shader_parameter("trash", 0.65)
 	mat.set_shader_parameter("roughness_value", 0.92)
+	_sidewalk_cache[surface_size_m] = mat
 	return mat
 
 
 ## Worn concrete kerb with joints, chips, scuffs and faded paint (box long side along z).
 static func curb_mat() -> ShaderMaterial:
+	if _curb != null:
+		return _curb
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://scenes/corridor/curb_surface.gdshader") as Shader
 	mat.set_shader_parameter("mode", 0)
+	_curb = mat
 	return mat
 
 
 ## Gutter sludge, wet patches and leaf litter: the kerb shader in mode 1.
 static func gutter_mat() -> ShaderMaterial:
+	if _gutter != null:
+		return _gutter
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://scenes/corridor/curb_surface.gdshader") as Shader
 	mat.set_shader_parameter("mode", 1)
 	mat.set_shader_parameter("base_color", Color(0.04, 0.042, 0.038, 1.0))
+	_gutter = mat
 	return mat
 
 

@@ -207,6 +207,7 @@ static func rng_for(seed_value: int, part_id: StringName) -> RandomNumberGenerat
 
 
 static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
+	var perf_t := PerfStats.begin()
 	var rng := rng_for(seed_value, &"arms")
 	var skin := ArmMaterials.skin(rng)
 	# One copy per arm so the skin layers' uniforms (tattoo, scars) differ between the arms.
@@ -327,6 +328,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 				van_name, true)
 
 	rig.add_child(gun_root)
+	PerfStats.end(&"arms_build", perf_t)
 	return {
 		"left_root": left,
 		"right_root": right,

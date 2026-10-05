@@ -39,11 +39,13 @@ func rng_for(part_id: StringName) -> RandomNumberGenerator:
 
 
 func rebuild(seed_value: int) -> void:
+	var perf_t := PerfStats.begin()
 	van_seed = seed_value
 	for child in get_children():
 		if child.has_method(&"rebuild_look"):
 			child.rebuild_look(self)
 	look_rebuilt.emit(van_seed)
+	PerfStats.end(&"van_look", perf_t)
 
 
 func reroll(seed_value: int) -> void:
