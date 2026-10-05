@@ -40,6 +40,9 @@ const _FLYER_SUBTEXTS := [
 	"LOW COST",
 ]
 
+const _SaveSandbox := preload("res://scripts/core/save_sandbox.gd")
+const _SANDBOX_FLYER_SEED := 9100
+
 
 func _init(owner: Node3D) -> void:
 	booth = owner
@@ -54,7 +57,12 @@ func build_flyers(
 ) -> void:
 	# Stickers only on solid metal — flanks and header, never in the open window.
 	var rng := RandomNumberGenerator.new()
-	rng.randomize()
+	if _SaveSandbox.enabled:
+		# Same reason the van look holds its seed under the test sandbox: the smoke's
+		# shots compare run against run, and flyers from OS entropy never match.
+		rng.seed = _SANDBOX_FLYER_SEED
+	else:
+		rng.randomize()
 
 	var titles := _FLYER_TEXTS.duplicate()
 	_shuffle_array(titles, rng)
