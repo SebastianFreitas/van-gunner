@@ -1,7 +1,7 @@
 extends RefCounted
 ## Debug console `arms fit`: the right thumb's clearance from the gun parts in palm lengths,
-## plus `arms thumbaim|thumbcurl|wrist x y z`, which set the builder's live tunables, rebuild
-## the arms and print the fit again.
+## plus `arms thumbaim|thumbturn|thumbcurl|wrist x y z`, which set the builder's live tunables,
+## rebuild the arms and print the fit again.
 
 
 ## Gap the thumb's skin must keep from a gun box, in palm lengths: a gripping thumb touches the

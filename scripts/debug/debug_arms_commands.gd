@@ -27,7 +27,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbturn [roll toward down] | arms thumbcurl [a b c] | arms wrist [x y z] | arms curl <f_index|f_middle|f_ring|f_pinky> <a> <b> <c> | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms lthumbaim [x y z] | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off | arms inspect <sec|play|off> | arms wristang [t|axes|scan [t0 t1]]"
+const USAGE := "arms cam <front|side|left|top|elbow|off> | arms reload <0..1|off> | arms weave <seconds|off> | arms shot <seconds|off> | arms fit | arms thumbaim [x y z] | arms thumbturn [roll toward down] | arms thumbroll [deg] (degrees, spins the thumb's tip bone about its own length (twists the nail sideways); the rest of the thumb stays put) | arms thumbcurl [a b c] | arms wrist [x y z] | arms curl <f_index|f_middle|f_ring|f_pinky> <a> <b> <c> | arms gear | arms thumbs | arms ik | arms touch | arms lthumb <bx> <by> <bz> <spread> <ax> <ay> <az> | arms lthumbaim [x y z] | arms lthumbroll [deg] (same, left thumb) | arms hands | arms dump <path> | arms dress <gear|rags|none> | arms gun [grip|pistol] | arms fov [deg] | arms frame | arms gesture <kind> <sec|contact|off> | arms gesture play <kind> | arms walk <cycle 0..1> [amount] | arms walk start|stop <sec> | arms walk off | arms inspect <sec|play|off> | arms wristang [t|axes|scan [t0 t1]]"
 
 var host: Node  # the DebugCommands autoload (tree access and shared finders)
 ## Player body meshes hidden for the current debug camera, restored on the next switch.
@@ -174,6 +174,10 @@ func cmd_arms(args: Array) -> String:
 		return _lthumb(args)
 	if args[0] == "lthumbaim":
 		return _lthumbaim(args)
+	if args[0] == "lthumbroll":
+		return _thumbroll(args, false)
+	if args[0] == "thumbroll":
+		return _thumbroll(args, true)
 	if args[0] == "hands":
 		return _HandsCheck.new().run(vm)
 	if args[0] == "dump":
@@ -226,6 +230,27 @@ func _lthumbaim(args: Array) -> String:
 	_Weave.left_thumb_aim = Vector3(
 			float(str(args[1])), float(str(args[2])), float(str(args[3])))
 	return "lthumbaim set to %s" % _Weave.left_thumb_aim
+
+
+## `arms lthumbroll|thumbroll [deg]`: shows or sets the thumb tip's spin about its own length. The
+## left one is live; the right one lives in the builder, so it rebuilds the arms.
+func _thumbroll(args: Array, right: bool) -> String:
+	var name: String = args[0]
+	if args.size() == 1:
+		return "%s %.1f (degrees, spins the thumb's tip bone about its own length (twists the nail sideways); the rest of the thumb stays put)" % [
+				name, ArmsBuilder.right_thumb_roll if right else _Weave.left_thumb_roll]
+	if args.size() != 2 or not str(args[1]).is_valid_float():
+		return USAGE
+	var deg := float(str(args[1]))
+	if not right:
+		_Weave.left_thumb_roll = deg
+		return "lthumbroll set to %.1f" % deg
+	ArmsBuilder.right_thumb_roll = deg
+	var vm := _viewmodel()
+	if vm == null or not vm.has_method(&"rebuild_arms"):
+		return "arms: no viewmodel"
+	vm.call(&"rebuild_arms", int(vm.get("_arms_seed")))
+	return "thumbroll set to %.1f" % deg
 
 
 ## `arms gesture <kind> <seconds|contact>`, `off` and `play <kind>`: pins or plays a left-hand gesture.
