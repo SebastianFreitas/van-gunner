@@ -10,6 +10,7 @@ const _VanCommands := preload("res://scripts/debug/debug_van_commands.gd")
 const _MetaCommands := preload("res://scripts/debug/debug_meta_commands.gd")
 const _FacadeCommands := preload("res://scripts/debug/debug_facade_commands.gd")
 const _ArmsCommands := preload("res://scripts/debug/debug_arms_commands.gd")
+const _Completion := preload("res://scripts/debug/debug_completion.gd")
 
 var _commands: Dictionary = {}
 
@@ -21,6 +22,7 @@ var _meta: RefCounted
 var _catalog: RefCounted
 var _facade: RefCounted
 var _arms: RefCounted
+var _completion: RefCounted
 
 
 func _ready() -> void:
@@ -29,86 +31,9 @@ func _ready() -> void:
 	_register_commands()
 
 
+## Tab completion state for the console; see debug_completion.gd for the returned keys.
 func get_completion_context(text: String, caret_col: int) -> Dictionary:
-	var safe_caret := clampi(caret_col, 0, text.length())
-	var before := text.substr(0, safe_caret)
-	var token_start := before.rfind(" ") + 1
-	if token_start < 0:
-		token_start = 0
-	var partial := before.substr(token_start)
-	var parts := before.strip_edges(false).split(" ", false)
-	var matches: Array[String] = []
-
-	if parts.is_empty() or (parts.size() == 1 and not before.ends_with(" ")):
-		matches = _filter_prefix(_command_names(), partial)
-	elif parts.size() == 1 and before.ends_with(" "):
-		match parts[0]:
-			"give", "spawn":
-				matches = _filter_prefix(ItemRegistry.list_ids(), "")
-			"summon":
-				matches = _filter_prefix(["enemy", "loper"], "")
-			"reardoor":
-				matches = _filter_prefix(["open", "close", "toggle"], "")
-			"sidedoor":
-				matches = _filter_prefix(["open", "close", "toggle"], "")
-			"van":
-				matches = _filter_prefix(["seed", "reroll"], "")
-			"list":
-				matches = _filter_prefix(
-					["boons", "items", "commands", "classes", "cards", "stops", "sounds", "tree"], ""
-				)
-			"sound":
-				matches = _filter_prefix(_DebugCatalog.sound_id_strings(), "")
-			"card":
-				matches = _filter_prefix(_DebugCatalog.card_id_strings(), "")
-			"stop":
-				matches = _filter_prefix(_DebugCatalog.stop_force_tokens(), "")
-			"class":
-				matches = _filter_prefix(_DebugCatalog.class_id_strings(), "")
-			"facade":
-				matches = _filter_prefix(_facade.sub_commands(), "")
-			"arms":
-				matches = _filter_prefix(["cam", "reload", "inspect", "dress", "gear", "fov", "frame"], "")
-			_:
-				matches = []
-	elif parts[0] == "give" or parts[0] == "spawn":
-		matches = _filter_prefix(ItemRegistry.list_ids(), partial)
-	elif parts[0] == "class":
-		matches = _filter_prefix(_DebugCatalog.class_id_strings(), partial)
-	elif parts[0] == "card":
-		matches = _filter_prefix(_DebugCatalog.card_id_strings(), partial)
-	elif parts[0] == "stop":
-		if parts.size() >= 2 and SideStopRegistry.arrival_from_label(str(parts[1])) >= 0:
-			matches = _filter_prefix(_DebugCatalog.stop_id_strings(), partial)
-		else:
-			matches = _filter_prefix(_DebugCatalog.stop_force_tokens(), partial)
-	elif parts[0] == "summon":
-		matches = _filter_prefix(["enemy", "loper"], partial)
-	elif parts[0] == "reardoor":
-		matches = _filter_prefix(["open", "close", "toggle"], partial)
-	elif parts[0] == "sidedoor":
-		matches = _filter_prefix(["open", "close", "toggle"], partial)
-	elif parts[0] == "van":
-		matches = _filter_prefix(["seed", "reroll"], partial)
-	elif parts[0] == "list":
-		matches = _filter_prefix(
-			["boons", "items", "commands", "weapons", "cards", "stops", "sounds", "tree"], partial
-		)
-	elif parts[0] == "sound":
-		matches = _filter_prefix(_DebugCatalog.sound_id_strings(), partial)
-	elif parts[0] == "facade":
-		matches = _filter_prefix(_facade.sub_commands(), partial)
-	elif parts[0] == "arms":
-		matches = _filter_prefix(["cam", "reload", "inspect", "dress", "gear", "fov", "frame"], partial)
-	else:
-		matches = []
-
-	return {
-		"token_start": token_start,
-		"partial": partial,
-		"matches": matches,
-		"add_space": _should_add_space_after(parts, before.ends_with(" ")),
-	}
+	return _completion.context(text, caret_col)
 
 
 func run(line: String) -> String:
@@ -134,6 +59,7 @@ func _register_commands() -> void:
 	_catalog = _DebugCatalog.new(self)
 	_facade = _FacadeCommands.new(self)
 	_arms = _ArmsCommands.new(self)
+	_completion = _Completion.new(self)
 	_commands = {
 		"help": _cmd_help,
 		"chill": _run_flow.cmd_chill,
@@ -168,63 +94,74 @@ func _register_commands() -> void:
 	}
 
 
-func _cmd_help(_args: Array) -> String:
-	var names: Array[String] = []
+func _cmd_help(args: Array) -> String:
+	var usage := _usage_lines()
+	if not args.is_empty():
+		var wanted := str(args[0]).to_lower()
+		if not _commands.has(wanted):
+			return "unknown command %s; try help" % wanted
+		return _usage_text(wanted, usage)
+	var lines: Array[String] = ["Commands: %s" % ", ".join(_command_names())]
 	for key in _commands.keys():
-		names.append(String(key))
-	names.sort()
-	return (
-		"Commands: %s\n"
-		+ "  chill          freeze van travel and stop new encounters\n"
-		+ "  unchill        resume normal run flow\n"
-		+ "  speed          debug turbo — fast travel, skips intro, compresses timers\n"
-		+ "  unspeed        turn off debug turbo\n"
-		+ "  summon enemy   spawn a raider that assaults an open breach slot\n"
-		+ "  summon loper   spawn a window loper that climbs the van wall\n"
-		+ "  give <item_id> add item to player (e.g. give frag_grenade)\n"
-		+ "  spawn <item_id> drop a pickup near the player\n"
-		+ "  coins <n>      add coins\n"
-		+ "  heal [amount]  heal the player\n"
-		+ "  list boons [q]  browse boon ids (optional filter)\n"
-		+ "  list items [q]  browse all item ids\n"
-		+ "  list cards [q]  browse street card ids\n"
-		+ "  list stops [q]  browse side-stop ids (shop, garage, mechanic, warehouse, …)\n"
-		+ "  stop <id>       next fork offers that stop on every road\n"
-		+ "  stop <arrival> <content>  compose e.g. stop elevator shop\n"
-		+ "  card [id]       print / force-activate active street card(s)\n"
-		+ "  boss            skip to act-end boss pick (current six streets)\n"
-		+ "  phase          print current run phase\n"
-		+ "  reardoor [open|close|toggle]  swing the van rear doors\n"
-		+ "  sidedoor [open|close|toggle]  slide the van side doors\n"
-		+ "  ghost [on|off]  fly through the van walls to look at it from outside\n"
-		+ "  torch [on|off]  head lamp on your camera (inspection light, rides with ghost)\n"
-		+ "  floodlight [on|off]  work lights at the van's four corners (whole exterior lit)\n"
-		+ "  gaplight [on|out|off]  paints everything that is not van magenta (on: seen from the cabin, out: seen from the street)\n"
-		+ "  bars <0|1|2|break|fix>  window bars: damage stage, break them, or restore them (looks only, HP untouched)\n"
-		+ "  van seed        print the van look seed\n"
-		+ "  van reroll [s]  rebuild the van look from a new (or given) seed\n"
-		+ "  class [id]      print the class, or equip one in any phase (e.g. class sniper)\n"
-		+ "  list classes [q] browse class ids\n"
-		+ "  list sounds [q] browse SoundCue ids\n"
-		+ "  list tree [q]   browse skill-tree node ids\n"
-		+ "  sound <cue>     play a cue (audition without a run)\n"
-		+ "  parts [n]       add Rare Parts (meta schematic currency)\n"
-		+ "  tree_reset      wipe the schematic back to origin (keeps parts)\n"
-		+ "  facade [sub]    street facade debug (try facade help)\n"
-		+ "  arms cam <view>  frame the first-person arms (front|side|left|top|elbow|off)\n"
-		+ "  arms reload <t>  freeze the reload pose at 0..1 (off to release)\n"
-		+ "  arms fit         print the right thumb's clearance to the gun parts\n"
-		+ "  arms dress <style>  worn gear style (gear|rags|none), rebuilds the arms\n"
-		+ "  arms gear        count skin vertices poking through the sleeves over weave, kick, reload\n"
-		+ "  arms fov [deg]  viewmodel FOV (50 default, 0 = world camera)\n"
-		+ "  arms frame  screen share of arms+gun at the player camera\n"
-		+ "  arms thumbs      print each thumb's angle to the index finger and its size next to it\n"
-		+ "  arms wristang    left wrist flex/twist/deviation in degrees (t, axes, flex, dev, scan)\n"
-		+ "  arms ik          sweep the arm IK (elbow, clamps, twist) and bar the thumb nail; prints IK OK/CHECK\n"
-		+ "  arms touch       fingertips inside fingers or gun parts, index tip to trigger; prints TOUCH OK/CHECK\n"
-		+ "  walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street\n"
-		+ "  Tab            autocomplete command or item id"
-	) % ", ".join(names)
+		lines.append(_usage_text(String(key), usage))
+	lines.append("  Tab            autocomplete, then fill current values (arms)")
+	return "\n".join(lines)
+
+
+## One command's usage line (the first line of its text), or "".
+func usage_line(cmd: String) -> String:
+	var text: String = _usage_lines().get(cmd, "")
+	return text.split("\n")[0].strip_edges()
+
+
+func _usage_text(cmd: String, usage: Dictionary) -> String:
+	assert(usage.has(cmd), "debug command %s has no usage line" % cmd)
+	if not usage.has(cmd):
+		return "  %s  (no description)" % cmd
+	var text: String = usage[cmd]
+	if cmd == "arms":
+		text = _arms.usage()
+	return "  " + text.replace("\n", "\n  ")
+
+
+## Command name -> one-line usage (several lines when it has sub-forms).
+func _usage_lines() -> Dictionary:
+	return {
+		"help": "help [cmd]  list commands, or show one command's usage",
+		"chill": "chill          freeze van travel and stop new encounters",
+		"unchill": "unchill        resume normal run flow",
+		"speed": "speed          debug turbo: fast travel, skips intro, compresses timers",
+		"unspeed": "unspeed        turn off debug turbo",
+		"summon": "summon <enemy|loper>  raider assaults a breach slot, or a loper climbs the wall",
+		"give": "give <item_id> add item to player (e.g. give frag_grenade)",
+		"spawn": "spawn <item_id> drop a pickup near the player",
+		"coins": "coins <n>      add coins",
+		"heal": "heal [amount]  heal the player",
+		"phase": "phase          print current run phase",
+		"list": "list <kind> [q]  browse ids: boons, items, commands, classes, cards, stops, "
+				+ "sounds, tree (optional filter)",
+		"card": "card [id]       print / force-activate active street card(s)",
+		"stop": "stop <id>       next fork offers that stop on every road\n"
+				+ "stop <arrival> <content>  compose e.g. stop elevator shop",
+		"boss": "boss            skip to act-end boss pick (current six streets)",
+		"reardoor": "reardoor [open|close|toggle]  swing the van rear doors",
+		"sidedoor": "sidedoor [open|close|toggle]  slide the van side doors",
+		"ghost": "ghost [on|off]  fly through the van walls to look at it from outside",
+		"torch": "torch [on|off]  head lamp on your camera (inspection light, rides with ghost)",
+		"floodlight": "floodlight [on|off]  work lights at the van's four corners",
+		"gaplight": "gaplight [on|out|off]  paints everything that is not van magenta "
+				+ "(on: seen from the cabin, out: seen from the street)",
+		"bars": "bars <0|1|2|break|fix>  window bars: damage stage, break, or restore (looks only)",
+		"van": "van seed        print the van look seed\n"
+				+ "van reroll [s]  rebuild the van look from a new (or given) seed",
+		"class": "class [id]      print the class, or equip one in any phase (e.g. class sniper)",
+		"sound": "sound <cue>     play a cue (audition without a run)",
+		"parts": "parts [n]       add Rare Parts (meta schematic currency)",
+		"tree_reset": "tree_reset      wipe the schematic back to origin (keeps parts)",
+		"facade": "facade [sub]    street facade debug (try facade help)",
+		"walk_wreck": "walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street",
+		"arms": "arms <sub> [args]  first-person arms debug (current values shown)",
+	}
 
 
 func _find_player() -> Node3D:
@@ -245,23 +182,3 @@ func _command_names() -> Array[String]:
 		names.append(String(key))
 	names.sort()
 	return names
-
-
-func _filter_prefix(options: Array, partial: String) -> Array[String]:
-	var needle := partial.to_lower()
-	var matches: Array[String] = []
-	for option in options:
-		var value := String(option)
-		if needle.is_empty() or value.to_lower().begins_with(needle):
-			matches.append(value)
-	return matches
-
-
-func _should_add_space_after(parts: Array, _ends_with_space: bool) -> bool:
-	if parts.is_empty():
-		return true
-	if parts.size() == 1:
-		return true
-	if parts[0] == "list" and parts.size() == 2:
-		return true
-	return false

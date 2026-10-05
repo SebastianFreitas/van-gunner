@@ -53,6 +53,8 @@ var ghost := false
 var _ghost_saved_mask := 0
 ## The step and climb helper (player_mantle.gd), made at the end of _ready.
 var _mantle: RefCounted
+## Cached debug console (found by group, duck typed) so polled keys can be ignored while typing.
+var _console: Node
 
 
 func _ready() -> void:
@@ -206,6 +208,13 @@ func _ui_wants_free_cursor() -> bool:
 	return false
 
 
+func _console_typing() -> bool:
+	if _console == null or not is_instance_valid(_console):
+		_console = get_tree().get_first_node_in_group(&"debug_console")
+	return _console != null and _console.has_method(&"is_typing") \
+			and bool(_console.call(&"is_typing"))
+
+
 func _try_dialogue_choice(index: int) -> bool:
 	var hud := _dialogue_hud()
 	if hud == null or not hud.has_method(&"try_choose"):
@@ -240,7 +249,8 @@ func set_ghost(on: bool) -> void:
 func _process(delta: float) -> void:
 	if _inspect_hold < 0.0:
 		return
-	if not Input.is_action_pressed(&"interact") or _current_interactable != null:
+	if _console_typing() or not Input.is_action_pressed(&"interact") \
+			or _current_interactable != null:
 		_inspect_hold = -1.0
 		return
 	_inspect_hold += delta
@@ -259,15 +269,17 @@ func _process(delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	var typing := _console_typing()
 	if ghost:
-		var ghost_input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+		var ghost_input := Vector2.ZERO if typing else Input.get_vector(
+				"move_left", "move_right", "move_forward", "move_back")
 		var forward := -camera.global_basis.z
 		var right := camera.global_basis.x
 		var dir := right * ghost_input.x - forward * ghost_input.y
 		if dir.length_squared() > 0.001:
 			dir = dir.normalized()
 		velocity = dir * move_speed * 2.5
-		if Input.is_action_pressed("jump"):
+		if not typing and Input.is_action_pressed("jump"):
 			velocity += Vector3.UP * move_speed * 2.5
 		move_and_slide()
 		return
@@ -283,7 +295,7 @@ func _physics_process(delta: float) -> void:
 		_mantle.note_floor()
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
-		if (_mantle_buffer > 0.0 or Input.is_action_pressed("jump")) \
+		if (_mantle_buffer > 0.0 or (not typing and Input.is_action_pressed("jump"))) \
 				and _can_jump() and try_mantle():
 			_mantle_buffer = 0.0
 			_jump_queued = false
@@ -301,7 +313,8 @@ func _physics_process(delta: float) -> void:
 		_mantle_buffer = 0.0
 	_jump_queued = false
 
-	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input := Vector2.ZERO if typing else Input.get_vector(
+			"move_left", "move_right", "move_forward", "move_back")
 	var view_basis_in_reference := reference_basis.inverse() * global_basis.orthonormalized()
 	var local_direction := view_basis_in_reference * Vector3(input.x, 0.0, input.y)
 	var wish_direction := Vector3.ZERO
@@ -331,7 +344,8 @@ func _physics_process(delta: float) -> void:
 	_local_horizontal_velocity.x = resulting_local_velocity.x
 	_local_horizontal_velocity.z = resulting_local_velocity.z
 	_mantle.update_head(delta)
-	if Input.is_action_pressed("shoot") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if not typing and Input.is_action_pressed("shoot") \
+			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		weapon.try_fire()
 	_update_interaction()
 
