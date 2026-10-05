@@ -39,8 +39,8 @@ const LEFT_THUMB_SPREAD_AXIS := Vector3(0.50, 0.01, -0.86)
 ## Extra euler (degrees, x y z) on the left thumb's palm joint DEF-thumb.01.L, after its
 ## flex and spread, so the whole thumb can be turned from the console (`arms lthumbaim`).
 const LEFT_THUMB_AIM := Vector3(5, 15, -30)
-## Degrees of twist about the left thumb's own length (base to tip), applied after the aim,
-## so the nail side turns up or down (`arms lthumbroll`).
+## Degrees, spins the thumb's tip bone about its own length (twists the nail sideways); the rest
+## of the thumb stays put (`arms lthumbroll`).
 const LEFT_THUMB_ROLL := 0.0
 ## Share of THUMB_SWING the left thumb keeps, so its weave stays inside the open C.
 const LEFT_THUMB_SWING_K := 0.5
@@ -169,11 +169,6 @@ func _add_hand(model: Node3D, suffix: String, wrist_base: Vector3, phase: float)
 				continue
 			joints.append({&"bone": i, &"rest": sk.get_bone_rest(i).basis.get_rotation_quaternion(),
 					&"finger": f, &"j": j})
-			if f == 4 and j == 0:
-				# The thumb's length in .01's frame: where its child .02 sits.
-				var child := sk.find_bone("DEF-thumb.02" + suffix)
-				if child != -1:
-					joints[-1][&"axis"] = sk.get_bone_rest(child).origin.normalized()
 	var wrist_name := "DEF-hand" + suffix
 	var wrist := sk.find_bone(wrist_name)
 	var wrist_pose := Quaternion.IDENTITY
@@ -247,8 +242,8 @@ func update(t: float, beat_scale := 1.0) -> void:
 						+ THUMB_ARC * sin(a * 0.5 + 0.9) * k) * THUMB_SPREAD_SIGN * lerpf(1.0, 1.25, f)))
 				if hand_side == 1 and left_thumb_aim != Vector3.ZERO:
 					rot = rot * Quaternion.from_euler(left_thumb_aim * (PI / 180.0))
-				if hand_side == 1 and left_thumb_roll != 0.0 and joint.has(&"axis"):
-					rot = rot * Quaternion(joint[&"axis"], deg_to_rad(left_thumb_roll))
+			if j == 2 and finger == 4 and hand_side == 1 and left_thumb_roll != 0.0:
+				rot = rot * Quaternion(Vector3.UP, deg_to_rad(left_thumb_roll))
 			if j == 0 and finger < 4:
 				var side := 1.0 if finger % 2 == 0 else -1.0
 				var fan := (float(finger) - 1.5) * SPLAY * SPLAY_SIGN * side_sign \
