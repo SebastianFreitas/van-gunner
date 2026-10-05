@@ -22,6 +22,7 @@ const BASE: Array[Vector3] = [
 ]
 const SWING := Vector3(6.0, 9.0, 5.0)  ## degrees of weave around BASE per joint
 const THUMB_BASE := Vector3(4.0, 10.0, 18.0)  ## degrees flex of thumb .01/.02/.03: tip bent
+const LEFT_SWING_K := 0.35  ## share of the finger swing the free hand keeps; ArmCreep's poses carry its motion
 const THUMB_SWING := Vector3(3.0, 6.0, 9.0)
 const THUMB_SPREAD := 42.0  ## degrees the thumb .01 bone is held splayed from the index
 const THUMB_FAN := 1.5 * SPLAY  ## the index fans this far toward the thumb; the thumb follows
@@ -219,8 +220,9 @@ func update(t: float, beat_scale := 1.0) -> void:
 			if finger < 4:
 				a = w + phase - finger * ROLL_LAG
 				var wave := _wave(a)
-				deg = lerpf(BASE[finger][j] + SWING[j] * wave * k,
-						OPEN_CURL[j] + SWING[j] * wave * 0.3 * k, f)
+				var swing_f: float = SWING[j] * (LEFT_SWING_K if hand_side == 1 else 1.0)
+				deg = lerpf(BASE[finger][j] + swing_f * wave * k,
+						OPEN_CURL[j] + swing_f * wave * 0.3 * k, f)
 			else:
 				a = w * 0.5 + phase + PI
 				var wave := _wave(a)
