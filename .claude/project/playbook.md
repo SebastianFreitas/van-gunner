@@ -16,6 +16,15 @@
   and `art-shots.md` when the change moves a shot's numbers.
 - **Acceptance:** the commands from `CLAUDE.md` § Verify, and for a
   visible change the `--shots` views and numbers that must change.
+- **Build-time budget:** a change that adds or grows generated content
+  (a look rebuild, a tile, a pass list) states its `PerfStats` span and
+  a ceiling in its Acceptance, measured with `tools/perf.py --compare`
+  against a capture from before the change: a build that runs while the
+  game is playing stays under 3 ms a frame (the tile build queue's step),
+  and a one-off build at run start or on a reroll under 100 ms. Over it:
+  split the work into frame steps or cache it, never raise the ceiling
+  silently (2026-10-07: the salvage interior's `van_look` rebuild reached
+  2.7 to 3.4 s per seed and no plan line had asked for a number).
 
 ## Commands
 
