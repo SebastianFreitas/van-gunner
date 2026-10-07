@@ -10,8 +10,8 @@ const _Plates := preload("res://scripts/van/look/van_rear_door_plates.gd")
 
 const LEAF_INNER_Z := -0.12
 
-const CORNER_X_MIN := 1.4
-const CORNER_X_MAX := 2.2
+const CORNER_X_MIN := VanInteriorSize.BULKHEAD_HALF - 0.96
+const CORNER_X_MAX := VanInteriorSize.BULKHEAD_HALF - 0.16
 const CORNER_Y_MAX := 1.0
 const CORNER_PLATE_Z := 0.03
 
@@ -93,9 +93,9 @@ func _plate_keep_out() -> Array[AABB]:
 		AABB(Vector3(0.05, -1.185, -0.092), Vector3(0.35, 0.07, 0.032)),
 		AABB(Vector3(0.03, 1.23, -0.15), Vector3(0.10, 0.10, 0.07)),
 		AABB(Vector3(0.03, -1.20, -0.15), Vector3(0.10, 0.10, 0.07)),
-		AABB(Vector3(2.13, -1.50, -0.123), Vector3(0.06, 0.50, 0.123)),
-		AABB(Vector3(2.165, -1.01, -0.135), Vector3(0.155, 0.11, 0.015)),
-		AABB(Vector3(2.18, -0.94, -0.09), Vector3(0.18, 0.24, 0.02)),
+		AABB(Vector3(_Hardware.ROD_X - 0.03, -1.50, -0.123), Vector3(0.06, 0.50, 0.123)),
+		AABB(Vector3(_Hardware.ROD_X + 0.005, -1.01, -0.135), Vector3(0.155, 0.11, 0.015)),
+		AABB(Vector3(_Hardware.ROD_X + 0.02, -0.94, -0.09), Vector3(0.18, 0.24, 0.02)),
 	]
 	var grown: Array[AABB] = []
 	for box: AABB in raw:
@@ -109,7 +109,7 @@ func _add_rust_patch(hinge: Node3D, mirror: float, rng: RandomNumberGenerator, m
 		index: int) -> void:
 	var patch_mesh := BoxMesh.new()
 	patch_mesh.size = Vector3(rng.randf_range(0.3, 0.5), rng.randf_range(0.3, 0.5), 0.012)
-	var patch_x := mirror * rng.randf_range(0.3, 1.6)
+	var patch_x := mirror * rng.randf_range(0.3, 2.6)
 	var patch_y := rng.randf_range(-1.4, -0.3)
 	_spawn(hinge, patch_mesh, mat,
 			Vector3(patch_x, patch_y, LEAF_INNER_Z - 0.02 - 0.03 * index))

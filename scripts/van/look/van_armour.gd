@@ -5,7 +5,7 @@ extends Node3D
 const HULL_PATH := ^"../Hull"
 const SIDE_WALLS_PATH := ^"../../Interior/Shell/SideWalls"
 ## Skin x used when no side wall is set.
-const FACE_X := 2.64
+const FACE_X := VanInteriorSize.BOTTOM_HALF + 0.22
 ## How far the side door leaf slides open along z. Keep in step with `slide_distance` in
 ## side_doors.gd (neither script has a class_name to read it from).
 const DOOR_SLIDE_M := 2.45
@@ -16,14 +16,14 @@ const TRIM_LIFT := 0.01
 ## Belt line band (y 2.595..2.645) padded 2 cm, and the top of the drip rail band (3.01) less
 ## 2 cm. Keep in step with the rails in van_hull_lines.gd.
 const BELT_BAND_Y := Vector2(2.575, 2.665)
-const DRIP_BAND_Y := 2.99
+const DRIP_BAND_Y := VanInteriorSize.WALL_HEIGHT - 0.09
 const _Pieces := preload("res://scripts/van/look/van_armour_pieces.gd")
 
 ## Slots armour may fill, kept clear of the side windows, the side door's slide path and the
 ## belt line / drip rail (2 cm each).
 const SLOTS: Array[Dictionary] = [
 	{"id": &"pillar", "z": Vector2(0.9, 1.55), "y": Vector2(1.1, 2.575)},
-	{"id": &"top", "z": Vector2(0.16, VanInteriorSize.REAR_Z - 0.15), "y": Vector2(2.665, 2.99)},
+	{"id": &"top", "z": Vector2(0.16, VanInteriorSize.REAR_Z - 0.15), "y": Vector2(2.665, DRIP_BAND_Y)},
 	{"id": &"tail", "z": Vector2(VanInteriorSize.REAR_Z - 0.58, VanInteriorSize.REAR_Z - 0.08), "y": Vector2(1.1, 2.575)},
 ]
 

@@ -203,6 +203,9 @@ func _build() -> void:
 	_built = true
 
 	var mat := wall_material if wall_material else _default_wall_material()
+	# The shared material's baked size is stale after a resize; the shader reads this one.
+	if mat is ShaderMaterial:
+		(mat as ShaderMaterial).set_shader_parameter("wall_size_m", Vector2(span_z, wall_height))
 	var jamb_mat := door_jamb_material if door_jamb_material else mat
 	_add_side(&"LeftWall", -1.0, mat)
 	_add_side(&"RightWall", 1.0, mat)

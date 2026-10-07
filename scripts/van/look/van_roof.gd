@@ -11,9 +11,9 @@ const RACK_CLEAR_M := 0.12 ## D26: rack height over the crown; the rear zone's c
 const REAR_ZONE_M := 1.5 ## D25/D26: length of the rear roof zone, from the body's rear end.
 const FIT_EPS := 0.005
 
-const RACK_Y := 3.66 ## Top of the rack rails; junk (later) sits on it.
-const RACK_HALF_X := 1.96
-const RACK_LEG_TOP_Y := RACK_Y - 0.01 ## Legs end inside the rail, clear of its and the slats' planes.
+const RACK_ABOVE_CROWN_M := 0.09 ## Rack rail top over the roof crown (old 3.66 on the old 3.57 crown).
+const RACK_HALF_X := VanInteriorSize.CEILING_SPAN_X * 0.5 - 0.08 ## Old 1.96 on the old 4.08 vault.
+const RACK_LEG_TOP_OFFSET := -0.01 ## Legs end inside the rail, clear of its and the slats' planes.
 const RACK_LEG_THICK := 0.035 ## Thinner than the 0.06 rail so the leg's sides sit 1.25 cm inside.
 const RACK_Z_MIN := -4.3
 const RACK_Z_MAX := VanInteriorSize.REAR_Z - 0.4
@@ -28,6 +28,7 @@ const SPOT_LENS_GLOW := 1.2 ## Lens emission; a warm glow, not a white disc.
 var spotlight: SpotLight3D
 var rack_material: StandardMaterial3D
 var crown_y := 3.57 ## Outer roof crown height, from VanBodyProfile.
+var rack_y := 3.66 ## Top of the rack rails: crown_y + RACK_ABOVE_CROWN_M; junk sits on it.
 var rear_zone_z := 3.2 ## Roof z past which D25/D26 apply.
 
 var _profile: VanBodyProfile
@@ -42,6 +43,7 @@ func rebuild_look(look: VanLook) -> void:
 
 	_profile = VanBodyProfile.from_interior(get_node_or_null(INTERIOR_PATH))
 	crown_y = _profile.outer_roof_y_at(0.0)
+	rack_y = crown_y + RACK_ABOVE_CROWN_M
 	rear_zone_z = VanInteriorSize.REAR_Z - REAR_ZONE_M
 
 	rack_material = StandardMaterial3D.new()
@@ -115,21 +117,21 @@ func _drop_misfits() -> void:
 
 func _build_rack(mat: Material) -> void:
 	begin_group(&"rack")
-	add_bar("RackRailL", Vector3(-RACK_HALF_X, RACK_Y, RACK_Z_MIN), Vector3(-RACK_HALF_X, RACK_Y, RACK_Z_MAX),
+	add_bar("RackRailL", Vector3(-RACK_HALF_X, rack_y, RACK_Z_MIN), Vector3(-RACK_HALF_X, rack_y, RACK_Z_MAX),
 			0.06, mat)
-	add_bar("RackRailR", Vector3(RACK_HALF_X, RACK_Y, RACK_Z_MIN), Vector3(RACK_HALF_X, RACK_Y, RACK_Z_MAX),
+	add_bar("RackRailR", Vector3(RACK_HALF_X, rack_y, RACK_Z_MIN), Vector3(RACK_HALF_X, rack_y, RACK_Z_MAX),
 			0.06, mat)
 	# End bars 2 cm inside the rails' top and bottom faces: closer faces flicker (D12).
-	add_bar("RackEndF", Vector3(-RACK_HALF_X, RACK_Y, RACK_Z_MIN), Vector3(RACK_HALF_X, RACK_Y, RACK_Z_MIN),
+	add_bar("RackEndF", Vector3(-RACK_HALF_X, rack_y, RACK_Z_MIN), Vector3(RACK_HALF_X, rack_y, RACK_Z_MIN),
 			0.02, mat)
-	add_bar("RackEndB", Vector3(-RACK_HALF_X, RACK_Y, RACK_Z_MAX), Vector3(RACK_HALF_X, RACK_Y, RACK_Z_MAX),
+	add_bar("RackEndB", Vector3(-RACK_HALF_X, rack_y, RACK_Z_MAX), Vector3(RACK_HALF_X, rack_y, RACK_Z_MAX),
 			0.02, mat)
 
 	var span := RACK_Z_MAX - RACK_Z_MIN
 	for i: int in range(5):
 		var z: float = RACK_Z_MIN + span * float(i + 1) / 6.0
 		# Centred on the rail's top face so no slat plane lies within 1 cm of a rail plane.
-		var slat_y := RACK_Y + 0.03
+		var slat_y := rack_y + 0.03
 		add_bar("RackSlat%d" % i, Vector3(-RACK_HALF_X, slat_y, z), Vector3(RACK_HALF_X, slat_y, z),
 				0.045, mat)
 
@@ -139,7 +141,7 @@ func _build_rack(mat: Material) -> void:
 		var x := side * RACK_HALF_X
 		for z: float in leg_zs:
 			add_bar("RackLeg%d" % leg_idx, Vector3(x, _profile.outer_roof_y_at(x) - 0.04, z),
-					Vector3(x, RACK_LEG_TOP_Y, z), RACK_LEG_THICK, mat)
+					Vector3(x, rack_y + RACK_LEG_TOP_OFFSET, z), RACK_LEG_THICK, mat)
 			leg_idx += 1
 	end_group()
 
@@ -155,7 +157,7 @@ func _build_antennas(mat: Material, rng: RandomNumberGenerator) -> void:
 		begin_group(StringName("antenna%d" % i))
 		var slot := slots[i]
 		# The base box sits 2 cm into the rail's top; the whip starts on the base's top face.
-		var base_pos := Vector3(slot.x, RACK_Y + 0.05, slot.y)
+		var base_pos := Vector3(slot.x, rack_y + 0.05, slot.y)
 		var base := base_pos + Vector3(0.0, 0.04, 0.0)
 		var h := rng.randf_range(1.2, 2.2)
 		var tilt_rad := deg_to_rad(rng.randf_range(5.0, 15.0))
@@ -183,8 +185,8 @@ func _build_dish(mat: Material, rng: RandomNumberGenerator) -> void:
 		return
 
 	begin_group(&"dish")
-	var post_top := Vector3(-RACK_HALF_X, RACK_Y + 0.45, 3.4)
-	add_bar("DishPost", Vector3(-RACK_HALF_X, RACK_Y, 3.4), post_top, 0.05, mat)
+	var post_top := Vector3(-RACK_HALF_X, rack_y + 0.45, VanInteriorSize.REAR_Z - 1.3)
+	add_bar("DishPost", Vector3(-RACK_HALF_X, rack_y, VanInteriorSize.REAR_Z - 1.3), post_top, 0.05, mat)
 
 	var dish_mesh := CylinderMesh.new()
 	dish_mesh.top_radius = 0.45
@@ -202,10 +204,10 @@ func _build_spotlight(hull_mat: Material, rng: RandomNumberGenerator) -> void:
 	housing_mesh.top_radius = 0.17
 	housing_mesh.bottom_radius = 0.17
 	housing_mesh.height = 0.32
-	var housing := _add_mesh("SpotHousing", housing_mesh, hull_mat, Vector3(0.0, RACK_Y + 0.28, SPOT_Z))
+	var housing := _add_mesh("SpotHousing", housing_mesh, hull_mat, Vector3(0.0, rack_y + 0.28, SPOT_Z))
 	housing.rotation_degrees = Vector3(90.0, 0.0, 0.0)
 
-	add_bar("SpotMount", Vector3(0.0, RACK_Y, SPOT_Z), Vector3(0.0, RACK_Y + 0.14, SPOT_Z), 0.05, hull_mat)
+	add_bar("SpotMount", Vector3(0.0, rack_y, SPOT_Z), Vector3(0.0, rack_y + 0.14, SPOT_Z), 0.05, hull_mat)
 
 	var lens_mat := StandardMaterial3D.new()
 	lens_mat.albedo_color = Color(0.30, 0.26, 0.19)
@@ -218,24 +220,24 @@ func _build_spotlight(hull_mat: Material, rng: RandomNumberGenerator) -> void:
 	lens_mesh.top_radius = 0.14
 	lens_mesh.bottom_radius = 0.14
 	lens_mesh.height = 0.02
-	var lens := _add_mesh("SpotLens", lens_mesh, lens_mat, Vector3(0.0, RACK_Y + 0.28, SPOT_Z - 0.17))
+	var lens := _add_mesh("SpotLens", lens_mesh, lens_mat, Vector3(0.0, rack_y + 0.28, SPOT_Z - 0.17))
 	lens.rotation_degrees = Vector3(90.0, 0.0, 0.0)
 
 	var visor_mesh := BoxMesh.new()
 	visor_mesh.size = Vector3(0.40, 0.025, 0.22)
-	var visor := _add_mesh("SpotVisor", visor_mesh, hull_mat, Vector3(0.0, RACK_Y + 0.28 + 0.175, SPOT_Z - 0.26))
+	var visor := _add_mesh("SpotVisor", visor_mesh, hull_mat, Vector3(0.0, rack_y + 0.28 + 0.175, SPOT_Z - 0.26))
 	visor.rotation_degrees = Vector3(-8.0, 0.0, 0.0)
 
 	var cheek_mesh := BoxMesh.new()
 	cheek_mesh.size = Vector3(0.025, 0.14, 0.20)
-	_add_mesh("SpotVisorCheekL", cheek_mesh, hull_mat, Vector3(-0.19, RACK_Y + 0.28 + 0.10, SPOT_Z - 0.26))
-	_add_mesh("SpotVisorCheekR", cheek_mesh, hull_mat, Vector3(0.19, RACK_Y + 0.28 + 0.10, SPOT_Z - 0.26))
+	_add_mesh("SpotVisorCheekL", cheek_mesh, hull_mat, Vector3(-0.19, rack_y + 0.28 + 0.10, SPOT_Z - 0.26))
+	_add_mesh("SpotVisorCheekR", cheek_mesh, hull_mat, Vector3(0.19, rack_y + 0.28 + 0.10, SPOT_Z - 0.26))
 	end_group()
 
 	var yaw := rng.randf_range(-20.0, 20.0)
 	var light := SpotLight3D.new()
 	light.name = "RoofSpot"
-	light.position = Vector3(0.0, RACK_Y + 0.28, SPOT_Z - 0.2)
+	light.position = Vector3(0.0, rack_y + 0.28, SPOT_Z - 0.2)
 	light.rotation_degrees = Vector3(SPOT_PITCH, yaw, 0.0)
 	light.light_energy = SPOT_ENERGY
 	light.spot_range = SPOT_RANGE

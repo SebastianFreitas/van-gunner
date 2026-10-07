@@ -3,7 +3,7 @@ extends Node3D
 
 const INTERIOR_PATH := ^"../../Interior"
 
-const LAMP_Y := 2.93
+const LAMP_Y := VanInteriorSize.WALL_HEIGHT - 0.15
 const SIDE_LAMP_COUNT := 5
 ## First side lamp z; the last sits 0.5 m ahead of the rear end (the old spread of 4.2 in a 4.7 box).
 const SIDE_LAMP_Z_FIRST := -4.2
@@ -117,7 +117,7 @@ func _build_side_lamps(profile: VanBodyProfile, lens_mat: Material, housing_mat:
 
 func _build_rear_lamps(profile: VanBodyProfile, red_lens_mat: Material, amber_lens_mat: Material,
 		housing_mat: Material) -> void:
-	var rear := VanInteriorSize.REAR_Z + 0.08
+	var rear := VanInteriorSize.REAR_Z + 0.02
 	var rim_z := VanHull.ROOF_Z_MAX
 	var roof_w := profile.inner_x_at(profile.wall_height()) + VanHull.SIDE_SKIN_OUTER_M
 	var max_x := 0.0
@@ -131,7 +131,7 @@ func _build_rear_lamps(profile: VanBodyProfile, red_lens_mat: Material, amber_le
 	for side_idx in 2:
 		var side := -1.0 if side_idx == 0 else 1.0
 		var side_letter := "L" if side_idx == 0 else "R"
-		var x := side * 2.15
+		var x := side * (VanInteriorSize.BOTTOM_HALF - 0.27)
 
 		var housing_mesh := BoxMesh.new()
 		housing_mesh.size = Vector3(0.22, 0.30, 0.05)
@@ -194,6 +194,8 @@ func _add_mesh(mesh_name: String, mesh: Mesh, mat: Material, pos: Vector3,
 	mi.material_override = mat
 	mi.position = pos
 	mi.layers = 1
+	if hinge != null:
+		mi.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_attach(mi, hinge)
 	return mi

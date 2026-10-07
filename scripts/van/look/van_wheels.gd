@@ -19,8 +19,11 @@ const ROAD_Y := ARCH_ROAD_Y - BODY_LIFT
 ## The hull's underside (VanHullPatches' sill and belly bottom): the rear arches' flares and wells
 ## end on it and the mud flaps hang from it.
 const HULL_BOTTOM_Y := -0.25
+## Front (cab) wheel x, unchanged.
 const WHEEL_X := 3.06
 const TYRE_WIDTH := 0.5
+## Rear wheel x: the tyre's inner cap sits 0.22 outside the widened body's floor-level skin.
+const REAR_WHEEL_X := VanInteriorSize.BOTTOM_HALF + 0.22 + TYRE_WIDTH * 0.5
 
 const FRONT_AXLE_Z := -7.25
 ## Front wheels sit this much further out than the rear, so the tyre's inner cap clears the cab
@@ -83,10 +86,10 @@ func rebuild_look(look: VanLook) -> void:
 		idx += 1
 		for z: float in rear_axles:
 			_build_wheel("Wheel%s%d" % [side_label, idx],
-					Vector3(side * WHEEL_X, ROAD_Y + REAR_RADIUS, z), REAR_RADIUS,
+					Vector3(side * REAR_WHEEL_X, ROAD_Y + REAR_RADIUS, z), REAR_RADIUS,
 					_wheel_meshes(mesh_cache, REAR_RADIUS, side), hull_mat, rubber, steel)
 			idx += 1
-		_build_mud_flap("MudFlap%s" % side_label, side * WHEEL_X,
+		_build_mud_flap("MudFlap%s" % side_label, side * REAR_WHEEL_X,
 				last_rear_z + REAR_RADIUS + 0.12, rubber)
 
 	_Chassis.new(self).build(hull_mat, rubber, rear_axles, exhaust_side, spare_mask)

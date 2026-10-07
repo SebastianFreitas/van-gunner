@@ -6,6 +6,8 @@ const DOOR_SHADER := preload("res://scenes/van/van_rear_door.gdshader")
 const DOOR_THICKNESS := 0.16
 const CENTER_GAP := 0.012
 const Y_MIN := 0.02
+## Window centre distance from the hinge (van_shell.tscn WindowFrame x); the leaf is 3.35 wide.
+const WINDOW_X := 1.81
 ## Window cut polygon (XY offsets from window center) — matches CSG WindowCut.
 static var WINDOW_HOLE: PackedVector2Array = PackedVector2Array([
 	Vector2(-0.79, -0.775), Vector2(-0.92, -0.7), Vector2(-0.99, -0.575),
@@ -36,19 +38,19 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 
 static func _build_left_leaf_mesh(
 		left: Node3D, walls: VanSideWall, ceiling: VanCeiling) -> ArrayMesh:
-	var hinge_x := absf(left.position.x) if left else 2.39
+	var hinge_x := absf(left.position.x) if left else VanInteriorSize.BOTTOM_HALF - 0.03
 	var hinge_y := left.position.y if left else 1.55
 	var wall_sign := -1.0
 	var x_inner := wall_sign * CENTER_GAP
 	var origin := Vector3(wall_sign * hinge_x, hinge_y, 0.0)
 	# World-space window center from the original CSG layout (left leaf).
-	var hole_center := Vector2(wall_sign * 1.075, 1.775)
+	var hole_center := Vector2(wall_sign * (hinge_x - WINDOW_X), 1.775)
 	return VanHullMesh.build_vaulted_xy_slab(
 		walls, ceiling,
 		x_inner, wall_sign, Y_MIN, DOOR_THICKNESS, origin,
 		0.03, 0.025, 16, 32,
 		WINDOW_HOLE, hole_center,
-		3.05, 0.38, 2.42,
+		VanInteriorSize.CEILING_EDGE_SHELL, 0.38, VanInteriorSize.BOTTOM_HALF,
 		true, INF, true
 	)
 
@@ -78,8 +80,8 @@ static func _apply_leaf(hinge: Node3D, mesh: ArrayMesh, mat: Material, mirror_x:
 
 
 static func _door_body_material(left: Node3D, ceiling: VanCeiling) -> ShaderMaterial:
-	var hinge_x := absf(left.position.x) if left else 2.39
-	var y_peak := VanHullMesh.vault_y(ceiling, 0.0, 3.05, 0.38)
+	var hinge_x := absf(left.position.x) if left else VanInteriorSize.BOTTOM_HALF - 0.03
+	var y_peak := VanHullMesh.vault_y(ceiling, 0.0, VanInteriorSize.CEILING_EDGE_SHELL, 0.38)
 	var mat := ShaderMaterial.new()
 	mat.shader = DOOR_SHADER
 	mat.set_shader_parameter("leaf_width_m", hinge_x - CENTER_GAP)
@@ -97,7 +99,8 @@ static func _add_astragal(left: Node3D, ceiling: VanCeiling) -> void:
 	var hinge_y := left.position.y
 	var y_bot := Y_MIN + ASTRAGAL_END_GAP
 	# 0.025 is the slab's y_inset; the leaf top follows the vault.
-	var y_top := VanHullMesh.vault_y(ceiling, ASTRAGAL_HALF_W, 3.05, 0.38) - 0.025 \
+	var y_top := VanHullMesh.vault_y(ceiling, ASTRAGAL_HALF_W,
+			VanInteriorSize.CEILING_EDGE_SHELL, 0.38) - 0.025 \
 			- ASTRAGAL_END_GAP
 	var strip := MeshInstance3D.new()
 	strip.name = "Astragal"

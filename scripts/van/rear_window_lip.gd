@@ -3,8 +3,7 @@ extends RefCounted
 
 const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
 
-## Window centre in rig space, as `rear_door_leaf_build.gd` cuts the hole (left leaf).
-const HOLE_CENTER_RIG_X := -1.075
+## Window centre height in rig space, as `rear_door_leaf_build.gd` cuts the hole (left leaf).
 const HOLE_CENTER_RIG_Y := 1.775
 ## How far the lip covers the skin past the hole edge.
 const OVER_SKIN := 0.05
@@ -27,7 +26,7 @@ static func build(left_hinge: Node3D, hinge: Node3D, mirror_x: bool) -> void:
 	var old := hinge.get_node_or_null("WindowLip")
 	if old != null:
 		old.free()
-	var center := Vector2(HOLE_CENTER_RIG_X + absf(left_hinge.position.x),
+	var center := Vector2(_LeafBuild.WINDOW_X,
 			HOLE_CENTER_RIG_Y - left_hinge.position.y)
 	var max_x := absf(left_hinge.position.x) - _LeafBuild.CENTER_GAP - INNER_EDGE_CLEAR
 	var outer := _ring(OVER_SKIN)

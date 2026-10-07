@@ -16,8 +16,8 @@ const K_PC := "pc_rig_load"
 const K_BENCH := "welding_bench_load"
 const K_HOPPER := "scrap_hopper_load"
 
-const TRUNK_HALF_X := 2.2
-const TRUNK_Y := 2.95
+const TRUNK_HALF_X := VanInteriorSize.TOP_HALF + 0.2
+const TRUNK_Y := VanInteriorSize.WALL_HEIGHT - 1.05
 const TRUNK_Z_MIN := -4.4
 const TRUNK_Z_MAX := VanInteriorSize.REAR_Z - 0.18
 const TRUNK_STEPS := 9
@@ -312,7 +312,7 @@ func _build_lamp_drops() -> void:
 		var sx := 1.0 if light.position.x >= 0.0 else -1.0
 		var trunk_pts := _trunk_r if sx > 0.0 else _trunk_l
 		var anchor := _trunk_at(trunk_pts, light.position.z)
-		var target := Vector3(light.position.x, minf(light.position.y + 0.05, 2.95), light.position.z)
+		var target := Vector3(light.position.x, minf(light.position.y + 0.05, TRUNK_Y), light.position.z)
 		MachineParts.cable_bundle(self, PackedVector3Array([anchor, target]), _insul[0], 0.015, 3)
 		_junction(sx, light.position.z)
 

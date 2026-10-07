@@ -1,6 +1,8 @@
 extends RefCounted
 ## Seeded scrap plates (welded or bolted, some dented or torn) on the cabin face of one rear leaf.
 
+const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
+
 ## Leaf cabin face in hinge-local z; plates stand at z < this, like the hardware.
 const FACE_Z := -0.08
 const PLATE_T := 0.016
@@ -12,11 +14,12 @@ const BEAD_W := 0.018
 const BEAD_H := 0.012
 const BOLT_H := 0.008
 const MARGIN := 0.03
-const SEAM_X := 2.34
+const SEAM_X := VanInteriorSize.BOTTOM_HALF - 0.08
 const HINGE_X := 0.04
-const WINDOW := Rect2(0.22, -0.65, 2.19, 1.75)
-const LOWER_ZONE := Rect2(0.40, -1.48, 1.65, 0.78)
-const UPPER_ZONE := Rect2(0.40, 1.14, 1.70, 0.22)
+const _WINDOW_HALF_W := 1.095
+const WINDOW := Rect2(_LeafBuild.WINDOW_X - _WINDOW_HALF_W, -0.65, 2.19, 1.75)
+const LOWER_ZONE := Rect2(0.40, -1.48, SEAM_X - 0.29 - 0.40, 0.78)
+const UPPER_ZONE := Rect2(0.40, 1.14, SEAM_X - 0.24 - 0.40, 0.22)
 const PALETTE: Array[Color] = [
 	Color(0.10, 0.11, 0.095), Color(0.085, 0.07, 0.055),
 	Color(0.12, 0.06, 0.045), Color(0.22, 0.22, 0.21),

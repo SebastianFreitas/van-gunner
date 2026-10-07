@@ -14,12 +14,14 @@ const SINK := 0.005
 const STRAP_SINK := 0.02
 ## Strap and knuckle start inboard of the hinge edge so nothing shows past the wall line.
 const STRAP_X0 := 0.05
-const ROD_X := 2.16
+## Hinge x (the leaf node sits there) minus the rod and handle offsets.
+const HINGE_X := VanInteriorSize.BOTTOM_HALF - 0.03
+const ROD_X := HINGE_X - 0.23
 const ROD_Z := -0.108
 const ROD_TOP_Y := -1.0
 const ROD_BOTTOM_Y := -1.5
 const TIP_LEN := 0.04
-const HANDLE_X := 2.28
+const HANDLE_X := HINGE_X - 0.11
 const HANDLE_Y := -0.82
 
 
@@ -109,7 +111,7 @@ static func _locking_rod(parent: Node3D, mirror: float, steel: Material, dark: M
 			Vector3(0.0, 0.0, mirror * deg_to_rad(20.0)), out)
 
 
-## Backing plate behind the handle mount. Centred 1 cm toward the hinge so it stops at x 2.36.
+## Backing plate behind the handle mount. Centred 1 cm toward the hinge so it stops at x 3.33.
 static func _handle_plate(parent: Node3D, mirror: float, steel: Material,
 		out: Array[Node3D]) -> void:
 	var cx := HANDLE_X - 0.01

@@ -8,7 +8,7 @@ extends RefCounted
 static func vault_y(ceiling: VanCeiling, x: float, edge_height: float, peak_rise: float) -> float:
 	if ceiling != null:
 		return ceiling.vault_y_at(x)
-	var half := 2.04
+	var half := VanInteriorSize.CEILING_SPAN_X * 0.5
 	var t := clampf(absf(x) / half, 0.0, 1.0)
 	return edge_height + peak_rise * (1.0 - t * t)
 
@@ -36,9 +36,9 @@ static func build_vaulted_xy_slab(
 	seg_y: int = 32,
 	hole_poly: PackedVector2Array = PackedVector2Array(),
 	hole_center: Vector2 = Vector2.ZERO,
-	edge_height_fallback: float = 3.05,
+	edge_height_fallback: float = VanInteriorSize.CEILING_EDGE_SHELL,
 	peak_rise_fallback: float = 0.38,
-	bottom_half_fallback: float = 2.42,
+	bottom_half_fallback: float = VanInteriorSize.BOTTOM_HALF,
 	interior_is_neg_z: bool = true,
 	x_outer_fixed: float = INF,
 	flat_shaded: bool = false

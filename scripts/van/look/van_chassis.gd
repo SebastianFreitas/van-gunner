@@ -3,18 +3,18 @@ extends RefCounted
 ## toolbox, short exhaust, chained spares, rear rails and bumper.
 
 ## Outer face of the sill/skin.
-const SKIN_X := 2.56
-## Reference x of the tank, toolbox and spare add-ons (still the pre-widening skin; see report).
-const ADDON_X := 2.56
+const SKIN_X := VanInteriorSize.BOTTOM_HALF
+## Reference x of the tank, toolbox and spare add-ons (the same skin).
+const ADDON_X := VanInteriorSize.BOTTOM_HALF
 const FLARE_GAP := 0.08
 const FLARE_OUT := 0.09
 const LIP_H := 0.07
 ## Flare band and lip thickness (D12).
 const FLARE_T := 0.02
 const ARC_SEGMENTS := 14
-## Outer face of VanHullPatches' sill (wall_x_at(0) 2.42 + SIDE_SKIN_OUTER_M 0.22 + 0.06); the
+## Outer face of VanHullPatches' sill (wall_x_at(0) = BOTTOM_HALF + SIDE_SKIN_OUTER_M 0.22 + 0.06); the
 ## exhaust keeps 2 cm off it.
-const SILL_OUT_X := 2.70
+const SILL_OUT_X := VanInteriorSize.BOTTOM_HALF + 0.28
 ## Start of the add-on slot: just behind the open side door's rear edge (z 0.135), so the door's
 ## slide path stays clear.
 const SLOT_Z0 := 0.16
@@ -67,7 +67,7 @@ func build(hull_mat: Material, rubber: Material, rear_axles: Array[float], exhau
 				var z_mid := (z + rear_axles[j - 1]) * 0.5
 				flare_lo = z_mid + TANDEM_GAP
 				well_lo = z_mid
-			var rear_centre := Vector3(side * VanWheels.WHEEL_X, VanWheels.ROAD_Y + VanWheels.REAR_RADIUS, z)
+			var rear_centre := Vector3(side * VanWheels.REAR_WHEEL_X, VanWheels.ROAD_Y + VanWheels.REAR_RADIUS, z)
 			_build_flare("Flare%s%d" % [label, idx], rear_centre, VanWheels.REAR_RADIUS, hull_mat,
 					flare_lo, flare_hi)
 			_build_well("Well%s%d" % [label, idx], rear_centre, VanWheels.REAR_RADIUS, dark,
@@ -101,7 +101,7 @@ func _build_flare(flare_name: String, centre: Vector3, radius: float, mat: Mater
 	var side := signf(centre.x)
 	var r := radius + FLARE_GAP
 	var x_in := side * (SKIN_X + 0.06)
-	var x_out := side * (VanWheels.WHEEL_X + VanWheels.TYRE_WIDTH * 0.5 + FLARE_OUT)
+	var x_out := side * (VanWheels.REAR_WHEEL_X + VanWheels.TYRE_WIDTH * 0.5 + FLARE_OUT)
 	# L profile as (x, rho) pairs, plus each edge's outward direction: 0 = +rho, 1 = +x, 2 = -rho,
 	# 3 = -x, wrapping P0..P5.
 	var profile: Array[Vector2] = [

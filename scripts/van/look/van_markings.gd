@@ -12,7 +12,13 @@ const PAINTS: Array[Color] = [
 	Color(0.46, 0.44, 0.38), Color(0.34, 0.10, 0.08), Color(0.42, 0.36, 0.14),
 ]
 
-const SIDE_X := 2.6
+## Decal centre x: the old 4 cm inside the floor-level skin (BOTTOM_HALF + 0.22), so the 0.5 m
+## projection box straddles the bowed skin at name height.
+const SIDE_X := VanInteriorSize.BOTTOM_HALF + 0.18
+## Tally decal height, 0.30 below the wall top like the old 2.78 under 3.08, and its x: 0.25 off
+## the skin there (the wall has tapered in by then).
+const TALLY_Y := VanInteriorSize.WALL_HEIGHT - 0.30
+const TALLY_X := SIDE_X - 0.16
 
 ## The rolled name, for later UI.
 var van_name := ""
@@ -51,7 +57,7 @@ func rebuild_look(look: VanLook) -> void:
 	var tally_img := _Font.render_tallies(tally_count, rng, 6)
 	var tally_height := 0.28
 	var tally_width: float = tally_height * tally_img.get_width() / tally_img.get_height()
-	var tally_center := Vector3(-SIDE_X, 2.78, -2.0 + tally_width * 0.5)
+	var tally_center := Vector3(-TALLY_X, TALLY_Y, -2.0 + tally_width * 0.5)
 	_add_decal("Tallies", tally_img, paint, -1.0, tally_center, tally_width, tally_height)
 
 

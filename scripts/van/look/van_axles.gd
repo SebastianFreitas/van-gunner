@@ -33,7 +33,7 @@ func build(rear_axles: Array[float]) -> void:
 	var rear_hub_y := VanWheels.ROAD_Y + VanWheels.REAR_RADIUS
 	for i: int in range(rear_axles.size()):
 		var z: float = rear_axles[i]
-		_beam("AxleRear%d" % i, z, rear_hub_y, VanWheels.WHEEL_X)
+		_beam("AxleRear%d" % i, z, rear_hub_y, VanWheels.REAR_WHEEL_X)
 		var cover := 1.0 if i == rear_axles.size() - 1 else 0.0
 		_diff("DiffRear%d" % i, z, rear_hub_y, cover)
 

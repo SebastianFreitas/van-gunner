@@ -6,7 +6,7 @@ uniform vec3 rib_color : source_color = vec3(0.055, 0.052, 0.048);
 uniform vec3 wear_color : source_color = vec3(0.18, 0.165, 0.14);
 uniform vec3 stain_color : source_color = vec3(0.035, 0.028, 0.02);
 uniform vec3 rust_color : source_color = vec3(0.22, 0.09, 0.04);
-uniform vec2 floor_size_m = vec2(4.8, 9.6);
+uniform vec2 floor_size_m = vec2(6.72, 11.48);  // VanInteriorSize.FLOOR_WIDTH x FLOOR_LENGTH; scripts set it
 uniform float rib_spacing_m : hint_range(0.04, 0.25) = 0.085;
 uniform float panel_spacing_m : hint_range(0.6, 3.0) = 1.55;
 uniform float roughness_value : hint_range(0.0, 1.0) = 0.88;
@@ -58,8 +58,8 @@ void fragment() {
 	float wear = aisle * smoothstep(0.28, 0.78, walk_noise);
 
 	// Edge grime near walls.
-	float edge_x = smoothstep(1.7, 2.35, abs(pos.x));
-	float edge_z = smoothstep(4.0, 4.75, abs(pos.y));
+	float edge_x = smoothstep(floor_size_m.x * 0.5 - 0.7, floor_size_m.x * 0.5 - 0.05, abs(pos.x));
+	float edge_z = smoothstep(floor_size_m.y * 0.5 - 0.8, floor_size_m.y * 0.5 - 0.05, abs(pos.y));
 	float edge_dirt = max(edge_x, edge_z * 0.65);
 
 	// Oil / grease blotches.

@@ -40,7 +40,7 @@ func wall_height() -> float:
 func half_length() -> float:
 	if walls != null:
 		return walls.span_z * 0.5
-	return 4.7
+	return VanInteriorSize.LENGTH * 0.5
 
 
 ## Inner half-width of the liner at height `y`.

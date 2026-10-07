@@ -26,7 +26,7 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 	var inv := Transform3D(Basis.IDENTITY, -right.position)
 	var ast := SurfaceTool.new()
 	ast.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var top := VanHullMesh.vault_y(ceiling, 0.05, 3.05, 0.38)
+	var top := VanHullMesh.vault_y(ceiling, 0.05, VanInteriorSize.CEILING_EDGE_SHELL, 0.38)
 	_box(ast, Vector3(-0.05, -0.05, 6.735), Vector3(0.05, top + 0.045, 6.747), inv)
 	_box(ast, Vector3(0.035, 0.10, 6.65), Vector3(0.05, top - 0.10, 6.735), inv)
 	ast.generate_tangents()
@@ -59,12 +59,12 @@ static func _top_strip(st: SurfaceTool, walls: VanSideWall, ceiling: VanCeiling,
 	var xe := 0.0
 	var ye := 3.0
 	for i in 4:
-		xe = VanHullMesh.wall_half(walls, ye, 2.42) + 0.04
-		ye = VanHullMesh.vault_y(ceiling, xe, 3.05, 0.38) + 0.045
+		xe = VanHullMesh.wall_half(walls, ye, VanInteriorSize.BOTTOM_HALF) + 0.04
+		ye = VanHullMesh.vault_y(ceiling, xe, VanInteriorSize.CEILING_EDGE_SHELL, 0.38) + 0.045
 	var prev := PackedVector3Array()
 	for k in 17:
 		var x := lerpf(xe, 0.025, k / 16.0)
-		var v := VanHullMesh.vault_y(ceiling, x, 3.05, 0.38)
+		var v := VanHullMesh.vault_y(ceiling, x, VanInteriorSize.CEILING_EDGE_SHELL, 0.38)
 		var cur := _six(-x, v + 0.045, v - 0.075, v - 0.06)
 		if k == 0:
 			prev = _four(-x, v + 0.045, v - 0.075)

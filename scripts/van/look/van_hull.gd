@@ -255,7 +255,7 @@ func _rear_join_y(walls: VanSideWall, ceiling: VanCeiling) -> float:
 ## Vault edge above height `y` on the opening's side edge; positive while the side is still free.
 func _rear_gap(walls: VanSideWall, ceiling: VanCeiling, y: float) -> float:
 	var x: float = walls.wall_x_at(y) - 0.01
-	return VanHullMesh.vault_y(ceiling, x, 3.05, 0.38) - 0.005 - y
+	return VanHullMesh.vault_y(ceiling, x, VanInteriorSize.CEILING_EDGE_SHELL, 0.38) - 0.005 - y
 
 
 ## A point on the rear ring's side edge: outer skin face when `outer`, else the opening's edge.
@@ -268,7 +268,7 @@ func _rear_side_point(walls: VanSideWall, side: float, y: float, outer: bool, z:
 
 ## A point on the opening's top edge (vault - 0.005).
 func _rear_top_point(ceiling: VanCeiling, x: float, z: float) -> Vector3:
-	return Vector3(x, VanHullMesh.vault_y(ceiling, x, 3.05, 0.38) - 0.005, z)
+	return Vector3(x, VanHullMesh.vault_y(ceiling, x, VanInteriorSize.CEILING_EDGE_SHELL, 0.38) - 0.005, z)
 
 
 ## Two triangles for the quad in0-in1 (inner edge) and out0-out1 (outer edge).

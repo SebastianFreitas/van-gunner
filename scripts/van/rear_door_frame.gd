@@ -68,22 +68,23 @@ static func _outline(walls: VanSideWall, ceiling: VanCeiling, d: float,
 	var cy := 3.0
 	var cx := 0.0
 	for i in 4:
-		cx = VanHullMesh.wall_half(walls, cy, 2.04) + d
-		cy = VanHullMesh.vault_y(ceiling, cx, 3.05, 0.38) + d
+		cx = VanHullMesh.wall_half(walls, cy, VanInteriorSize.TOP_HALF) + d
+		cy = VanHullMesh.vault_y(ceiling, cx, VanInteriorSize.CEILING_EDGE_SHELL, 0.38) + d
 	var pts := PackedVector2Array()
 	for i in SIDE_POINTS:
 		var y := lerpf(y_bottom, cy, float(i) / float(SIDE_POINTS - 1))
-		var x := -(VanHullMesh.wall_half(walls, y, 2.04) + d)
+		var x := -(VanHullMesh.wall_half(walls, y, VanInteriorSize.TOP_HALF) + d)
 		if i == SIDE_POINTS - 1:
 			x = -cx
 			y = cy
 		pts.append(Vector2(x, y))
 	for j in range(1, TOP_STEPS):
 		var x := lerpf(-cx, cx, float(j) / float(TOP_STEPS))
-		pts.append(Vector2(x, VanHullMesh.vault_y(ceiling, x, 3.05, 0.38) + d))
+		pts.append(Vector2(x, VanHullMesh.vault_y(
+				ceiling, x, VanInteriorSize.CEILING_EDGE_SHELL, 0.38) + d))
 	for i in SIDE_POINTS:
 		var y := lerpf(cy, y_bottom, float(i) / float(SIDE_POINTS - 1))
-		var x := VanHullMesh.wall_half(walls, y, 2.04) + d
+		var x := VanHullMesh.wall_half(walls, y, VanInteriorSize.TOP_HALF) + d
 		if i == 0:
 			x = cx
 			y = cy
