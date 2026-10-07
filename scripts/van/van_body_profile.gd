@@ -3,14 +3,17 @@ extends RefCounted
 ## One cross-section for the whole van body: the inner liner outline (floor, bowed sides, roof
 ## vault) and an outer skin offset from it, so inside and outside pieces sample the same curve.
 
+## Panel-van wall: vertical to the belt line, then a straight lean to the roof corner.
+const BELT_FRACTION := 0.45  ## belt line height as a share of the wall height
+const BELT_BLEND := 0.3  ## meters of smooth blend across the belt-line knee
+const CORNER_RADIUS := 0.5  ## roof corner rounding (the van is about x2 a real one)
 const WALL_THICKNESS := 0.12  ## horizontal offset from the inner liner to the outer skin
 const ROOF_THICKNESS := 0.14  ## vertical offset from the inner vault to the outer roof
 const FALLBACK_WALL_HEIGHT := VanInteriorSize.WALL_HEIGHT
 const FALLBACK_BOTTOM_HALF := VanInteriorSize.BOTTOM_HALF
 const FALLBACK_TOP_HALF := VanInteriorSize.TOP_HALF
-const FALLBACK_BOW := VanInteriorSize.BOW
 const FALLBACK_VAULT_EDGE := VanInteriorSize.CEILING_EDGE_SHELL
-const FALLBACK_VAULT_RISE := 0.38
+const FALLBACK_VAULT_RISE := 0.10
 const FALLBACK_VAULT_HALF := VanInteriorSize.CEILING_SPAN_X * 0.5
 
 var walls: VanSideWall
@@ -47,14 +50,46 @@ func half_length() -> float:
 func inner_x_at(y: float) -> float:
 	if walls != null:
 		return walls.wall_x_at(y)
-	var t := clampf(y / FALLBACK_WALL_HEIGHT, 0.0, 1.0)
-	var taper := lerpf(FALLBACK_BOTTOM_HALF, FALLBACK_TOP_HALF, t * t)
-	return taper + FALLBACK_BOW * sin(PI * t)
+	return wall_half_at(y, FALLBACK_WALL_HEIGHT, FALLBACK_BOTTOM_HALF, FALLBACK_TOP_HALF)
 
 
-## Outer half-width of the skin at height `y`.
+## The one wall outline: vertical to the belt line (blended over BELT_BLEND), straight lean to
+## `top_half` at height `h`, then a CORNER_RADIUS arc turning into the flat roof.
+static func wall_half_at(y: float, h: float, bottom_half: float, top_half: float) -> float:
+	var belt := h * BELT_FRACTION
+	var slope := (bottom_half - top_half) / maxf(h - belt, 0.001)
+	var yc := clampf(y, 0.0, h)
+	var half_blend := BELT_BLEND * 0.5
+	var x: float
+	if yc <= belt - half_blend:
+		x = bottom_half
+	elif yc < belt + half_blend:
+		var u := yc - (belt - half_blend)
+		x = bottom_half - slope * u * u / (2.0 * BELT_BLEND)
+	else:
+		x = bottom_half - slope * (yc - belt)
+	# Corner arc, tangent to the lean line and to the horizontal roof line at y = h.
+	var lean := atan(slope)
+	var tangent_len := CORNER_RADIUS * tan((PI * 0.5 - lean) * 0.5)
+	var cx := top_half - tangent_len
+	var cy := h - CORNER_RADIUS
+	if yc > cy + CORNER_RADIUS * sin(lean):
+		var dy := yc - cy
+		x = cx + sqrt(maxf(CORNER_RADIUS * CORNER_RADIUS - dy * dy, 0.0))
+	return x
+
+
+## Outer half-width of the skin at height `y`. The skin has its own corner arc that ends at the
+## outer roof (h + ROOF_THICKNESS), so the roof corner is one rounded edge with no step.
 func outer_x_at(y: float) -> float:
-	return inner_x_at(y) + WALL_THICKNESS
+	var bottom := FALLBACK_BOTTOM_HALF
+	var top := FALLBACK_TOP_HALF
+	if walls != null:
+		bottom = walls.bottom_half_width
+		top = walls.top_half_width
+	return wall_half_at(
+		y, wall_height() + ROOF_THICKNESS, bottom + WALL_THICKNESS, top + WALL_THICKNESS
+	)
 
 
 ## Inner vault height at lateral `x`, clamped so it never dips below the wall top (no notch).
@@ -71,14 +106,14 @@ func roof_y_at(x: float) -> float:
 ## Outer roof height at lateral `x`, stretched to the wider outer wall width.
 func outer_roof_y_at(x: float) -> float:
 	var h := wall_height()
-	var stretch := inner_x_at(h) / outer_x_at(h)
+	var stretch := inner_x_at(h) / outer_x_at(h + ROOF_THICKNESS)
 	return roof_y_at(x * stretch) + ROOF_THICKNESS
 
 
 ## Closed CCW outline of the cross-section in the XY plane (no repeated closing point).
 func section_points(steps: int, outer: bool = false) -> PackedVector2Array:
 	var n := maxi(steps, 4)
-	var h := wall_height()
+	var h := wall_height() + (ROOF_THICKNESS if outer else 0.0)
 	var pts := PackedVector2Array()
 	var xs := func(y: float) -> float: return outer_x_at(y) if outer else inner_x_at(y)
 	var ry := func(x: float) -> float: return outer_roof_y_at(x) if outer else roof_y_at(x)

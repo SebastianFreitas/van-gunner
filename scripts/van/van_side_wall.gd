@@ -1,8 +1,8 @@
 class_name VanSideWall
 extends Node3D
 
-## Curved cargo-van side liners: wider at the floor, bowed out at the waist,
-## tapering in toward the roof — with punched openings for windows / side doors.
+## Cargo-van side liners: straight up to the belt line, then leaning in toward the roof,
+## with punched openings for windows / side doors.
 
 const _Shell := preload("res://scripts/van/van_side_wall_shell.gd")
 const _Panel := preload("res://scripts/van/van_side_wall_panel.gd")
@@ -16,8 +16,6 @@ const _RoofEdgeSeal := preload("res://scripts/van/roof_edge_seal.gd")
 @export var center_z := VanInteriorSize.CENTER_Z
 @export var bottom_half_width := VanInteriorSize.BOTTOM_HALF
 @export var top_half_width := VanInteriorSize.TOP_HALF
-## Extra outward bulge at mid-height (meters). Makes the body read as curved, not a flat lean.
-@export var bow_out := VanInteriorSize.BOW
 @export var thickness := 0.16
 @export var y_segments := 56
 @export var z_segments := 112
@@ -356,12 +354,7 @@ func _solid_z_ranges_mid() -> Array:
 
 
 func _profile_x(y: float) -> float:
-	var t := clampf(y / maxf(wall_height, 0.001), 0.0, 1.0)
-	# Ease taper toward the roof so the upper third reads clearly narrower.
-	var taper_t := t * t
-	var taper := lerpf(bottom_half_width, top_half_width, taper_t)
-	var bow := bow_out * sin(PI * t)
-	return taper + bow
+	return VanBodyProfile.wall_half_at(y, wall_height, bottom_half_width, top_half_width)
 
 
 func _default_wall_material() -> ShaderMaterial:

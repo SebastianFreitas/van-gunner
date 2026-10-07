@@ -5,8 +5,8 @@ extends RefCounted
 ## Side wall half width at the floor (meters).
 const BOTTOM_HALF := 3.39
 ## Side wall half width at the roof line.
-const TOP_HALF := 2.80
-## Extra outward bulge of the side wall at mid-height.
+const TOP_HALF := 2.96
+## Unused by the side wall now (it is straight); the raider wall still reads it.
 const BOW := 0.25
 ## Side wall height above the floor.
 const WALL_HEIGHT := 4.00

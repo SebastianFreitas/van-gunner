@@ -17,7 +17,7 @@ enum OpeningSide { LEFT, RIGHT }
 @export var frame_thickness := 0.08
 @export var kick_height := 0.55
 @export var edge_height := VanInteriorSize.BULKHEAD_EDGE
-@export var peak_rise := 0.38
+@export var peak_rise := 0.10
 @export var mesh_spacing := 0.22
 @export var mesh_bar_size := 0.028
 @export var mesh_bar_depth := 0.04

@@ -10,7 +10,7 @@ const _Cove := preload("res://scripts/van/van_ceiling_cove.gd")
 ## Z centre of the vault (the front end stays at the cab).
 @export var center_z := VanInteriorSize.CENTER_Z
 @export var edge_height := VanInteriorSize.CEILING_EDGE
-@export var peak_rise := 0.38
+@export var peak_rise := 0.10
 @export var x_segments := 20
 @export var z_segments := 40
 @export var bay_spacing := 1.35
