@@ -8,7 +8,6 @@ extends Node
 ## With --smoke-shots=<dir> (tools/smoke.py --shots) it also saves screenshots at fixed checkpoints.
 
 const _WATCHDOG_SECONDS := 270.0
-const _VanKit := preload("res://tools/smoke/smoke_van_kit.gd")
 const _Fingerprint :=preload("res://tools/smoke/smoke_fingerprint.gd")
 const _Halt := preload("res://tools/smoke/smoke_halt.gd")
 const _LoperClimb := preload("res://tools/smoke/smoke_loper_climb.gd")
@@ -90,7 +89,6 @@ func _run() -> void:
 		await _shots.van_views("idle")
 		await _shots.van_views_lit("idle")
 		await _shots.van_views_closeups()
-		await SmokeShotsCabin.run(_shots)
 		await _shots.van_views_gaps()
 		await _shots.arm_views()
 		await get_tree().process_frame
@@ -99,8 +97,10 @@ func _run() -> void:
 		if frame_line.begins_with("FRAME ERR"):
 			_fail(frame_line)
 		_shots.unpin_van(pinned)
+
 	var van := get_tree().get_first_node_in_group(&"van_run")
 	var gun_stats: GunStatsController = get_tree().get_first_node_in_group(&"gun_stats")
+
 	if not await _class_panel_pass(van, gun_stats, lines):
 		return
 	if not await _boons_pass(van, gun_stats, lines):
@@ -114,10 +114,11 @@ func _run() -> void:
 	_route = _Route.new(self)
 	if not await _route.fork_pass():
 		return
+
 	await _save_round_trip_pass()
+
 	_check_user_mtimes_unchanged(mtimes)
 	_Fingerprint.write_fingerprint(lines)
-	_VanKit.write_golden()
 	_log("done")
 	get_tree().quit(0)
 

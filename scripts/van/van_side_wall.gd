@@ -20,7 +20,6 @@ const _RoofEdgeSeal := preload("res://scripts/van/roof_edge_seal.gd")
 @export var y_segments := 56
 @export var z_segments := 112
 @export var wall_material: Material
-@export var liner_material: Material
 @export var rebuild_on_ready := true
 
 ## Window cut AABB (CSG WindowCut) — used for rails / broad checks.
@@ -52,12 +51,9 @@ var WINDOW_CUT_POLY: PackedVector2Array = PackedVector2Array([
 @export var door_jamb_material: Material
 
 var _built := false
-## Children `_build` added, so a rebuild leaves nodes other scripts own (door stops).
-var _built_nodes: Array[Node] = []
 
 var _shell: _Shell
 var _panel: _Panel
-var _cuts: VanSideWallCuts
 
 
 func _ready() -> void:
@@ -66,10 +62,8 @@ func _ready() -> void:
 
 
 func rebuild() -> void:
-	for child in _built_nodes:
-		remove_child(child)
+	for child in get_children():
 		child.queue_free()
-	_built_nodes.clear()
 	_built = false
 	_build()
 
@@ -194,21 +188,6 @@ func _panel_helper() -> _Panel:
 	return _panel
 
 
-## The window hole queries; the kit fit hands the rolled holes in (empty = the fixed cut).
-func cuts() -> VanSideWallCuts:
-	if _cuts == null:
-		_cuts = VanSideWallCuts.new(self)
-	return _cuts
-
-
-func set_window_cuts(windows: Array) -> void:
-	cuts().set_holes(windows)
-
-
-func cut_poly_for(wall_sign: float, cz: float) -> PackedVector2Array:
-	return cuts().cut_poly_for(wall_sign, cz)
-
-
 ## The defaults build the wall itself; the hull skin builds an outer layer with them.
 func build_side_panel_mesh(
 	wall_sign: float, x_from: float = 0.0, x_to: float = -1.0, inner_face: bool = true
@@ -220,21 +199,17 @@ func _build() -> void:
 	if _built:
 		return
 	_built = true
-	var before := get_children()
+
 	var mat := wall_material if wall_material else _default_wall_material()
 	var jamb_mat := door_jamb_material if door_jamb_material else mat
-	var liner_mat := liner_material if liner_material else mat
-	_add_side(&"LeftWall", -1.0, liner_mat)
-	_add_side(&"RightWall", 1.0, liner_mat)
+	_add_side(&"LeftWall", -1.0, mat)
+	_add_side(&"RightWall", 1.0, mat)
 	_Jambs.new(self).add_door_jambs(-1.0, jamb_mat)
 	_Jambs.new(self).add_door_jambs(1.0, jamb_mat)
 	_add_door_slide_tracks(jamb_mat)
 	_RoofEdgeSeal.build(self, self)
 	_add_cargo_rails(mat)
 	_add_floor_seal_strips(jamb_mat)
-	for child in get_children():
-		if not before.has(child):
-			_built_nodes.append(child)
 
 
 func _add_side(side_name: StringName, wall_sign: float, mat: Material) -> void:
@@ -314,29 +289,25 @@ func _add_floor_seal_strips(mat: Material) -> void:
 
 func _add_cargo_rails(mat: Material) -> void:
 	# Lower tie rail sits under the windows — run full length except the door bay.
-	var low := _solid_z_ranges_below_windows()
-	_add_rail_segments(mat, 0.72, [low, low], "CargoRail")
+	_add_rail_segments(mat, 0.72, _solid_z_ranges_below_windows(), "CargoRail")
 	# Mid belt rail only on solid spans between openings.
-	_add_rail_segments(mat, 1.52, [_solid_z_ranges_mid(-1.0), _solid_z_ranges_mid(1.0)], "BeltRail")
+	_add_rail_segments(mat, 1.52, _solid_z_ranges_mid(), "BeltRail")
 
 
-## ranges holds the left wall's spans, then the right wall's (each wall has its own holes).
 func _add_rail_segments(mat: Material, rail_y: float, ranges: Array, prefix: String) -> void:
 	var x := _profile_x(rail_y)
 	var lean := lean_angle_at(rail_y)
-	var idx := [0, 0]
-	for n in range(maxi(ranges[0].size(), ranges[1].size())):
-		for k in 2:
-			if n >= ranges[k].size():
-				continue
-			var span: Array = ranges[k][n]
-			var length: float = span[1] - span[0]
-			if length < 0.35:
-				continue
-			var z_mid: float = (span[0] + span[1]) * 0.5
-			var wall_sign := -1.0 if k == 0 else 1.0
+	var idx := 0
+	for span in ranges:
+		var z0: float = span[0]
+		var z1: float = span[1]
+		var length: float = z1 - z0
+		if length < 0.35:
+			continue
+		var z_mid := (z0 + z1) * 0.5
+		for wall_sign in [-1.0, 1.0]:
 			var rail := MeshInstance3D.new()
-			rail.name = "%s_%s_%d" % [prefix, "L" if wall_sign < 0.0 else "R", idx[k]]
+			rail.name = "%s_%s_%d" % [prefix, "L" if wall_sign < 0.0 else "R", idx]
 			var box := BoxMesh.new()
 			box.size = Vector3(0.06, 0.06, length)
 			rail.mesh = box
@@ -347,7 +318,7 @@ func _add_rail_segments(mat: Material, rail_y: float, ranges: Array, prefix: Str
 			rail.layers = VanLighting.LAYER_VAN_INTERIOR
 			rail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 			add_child(rail)
-			idx[k] += 1
+		idx += 1
 
 
 func _solid_z_ranges_below_windows() -> Array:
@@ -358,8 +329,25 @@ func _solid_z_ranges_below_windows() -> Array:
 	return [[-half + 0.1, door0 - 0.04], [door1 + 0.04, half - 0.1]]
 
 
-func _solid_z_ranges_mid(wall_sign: float) -> Array:
-	return cuts().solid_ranges_mid(wall_sign)
+func _solid_z_ranges_mid() -> Array:
+	var half := span_z * 0.5
+	var cuts: Array = []
+	for cz in window_centers_z:
+		cuts.append([cz - window_half_length, cz + window_half_length])
+	cuts.append([door_center_z - door_half_length, door_center_z + door_half_length])
+	cuts.sort_custom(func(a, b): return a[0] < b[0])
+
+	var ranges: Array = []
+	var cursor := -half + 0.1
+	for cut in cuts:
+		var c0: float = cut[0]
+		var c1: float = cut[1]
+		if c0 > cursor + 0.3:
+			ranges.append([cursor, c0 - 0.03])
+		cursor = maxf(cursor, c1 + 0.03)
+	if cursor < half - 0.4:
+		ranges.append([cursor, half - 0.1])
+	return ranges
 
 
 func _profile_x(y: float) -> float:

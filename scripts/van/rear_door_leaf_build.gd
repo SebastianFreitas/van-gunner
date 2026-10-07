@@ -21,54 +21,33 @@ const ASTRAGAL_LIFT := 0.036
 const ASTRAGAL_END_GAP := 0.0
 
 
-## The window hole grown by `grow` (x hinge side, y top, z bottom, metres): `poly` is offsets
-## from `center`, which is the shift from today's hole centre in window-local metres (+x toward
-## the seam). The seam edge stays put and each chamfer moves rigidly with its corner.
-static func grown_hole(grow: Vector3) -> Dictionary:
-	var poly := PackedVector2Array()
-	for p in WINDOW_HOLE:
-		var x := p.x - grow.x if p.x < 0.0 else p.x
-		var y := p.y + grow.y if p.y > 0.0 else p.y - grow.z
-		poly.append(Vector2(x, y))
-	var center := Vector2(-grow.x * 0.5, (grow.y - grow.z) * 0.5)
-	for i in poly.size():
-		poly[i] -= center
-	return {&"poly": poly, &"center": center}
-
-
-## Re-runnable: each leaf's old `CurvedBody` and `WindowLip` are removed first. A hole is the
-## `grown_hole` dictionary; the default is today's.
-static func build(doors: Node3D, left: Node3D, right: Node3D,
-		left_hole: Dictionary = {}, right_hole: Dictionary = {}) -> void:
+static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 	var walls := doors.get_parent().get_node_or_null("SideWalls") as VanSideWall
 	var ceiling := doors.get_parent().get_node_or_null("Ceiling") as VanCeiling
-	if left_hole.is_empty():
-		left_hole = grown_hole(Vector3.ZERO)
-	if right_hole.is_empty():
-		right_hole = grown_hole(Vector3.ZERO)
+	# One canonical left leaf — mirror for the right so bow/normals match.
+	var mesh := _build_left_leaf_mesh(left, walls, ceiling)
 	var mat := _door_body_material(left, ceiling)
-	# Both leaves are built as the left one (the right mirrored) so bow/normals match.
-	_apply_leaf(left, _build_left_leaf_mesh(left, walls, ceiling, left_hole), mat, false)
-	_apply_leaf(right, _build_left_leaf_mesh(left, walls, ceiling, right_hole), mat, true)
-	_WindowLip.build(left, left, false, left_hole)
-	_WindowLip.build(left, right, true, right_hole)
+	_apply_leaf(left, mesh, mat, false)
+	_apply_leaf(right, mesh, mat, true)
+	_WindowLip.build(left, left, false)
+	_WindowLip.build(left, right, true)
 	_add_astragal(left, ceiling)
 
 
 static func _build_left_leaf_mesh(
-		left: Node3D, walls: VanSideWall, ceiling: VanCeiling, hole: Dictionary) -> ArrayMesh:
+		left: Node3D, walls: VanSideWall, ceiling: VanCeiling) -> ArrayMesh:
 	var hinge_x := absf(left.position.x) if left else 2.39
 	var hinge_y := left.position.y if left else 1.55
 	var wall_sign := -1.0
 	var x_inner := wall_sign * CENTER_GAP
 	var origin := Vector3(wall_sign * hinge_x, hinge_y, 0.0)
 	# World-space window center from the original CSG layout (left leaf).
-	var hole_center := Vector2(wall_sign * 1.075, 1.775) + (hole[&"center"] as Vector2)
+	var hole_center := Vector2(wall_sign * 1.075, 1.775)
 	return VanHullMesh.build_vaulted_xy_slab(
 		walls, ceiling,
 		x_inner, wall_sign, Y_MIN, DOOR_THICKNESS, origin,
 		0.03, 0.025, 16, 32,
-		hole[&"poly"] as PackedVector2Array, hole_center,
+		WINDOW_HOLE, hole_center,
 		3.05, 0.38, 2.42,
 		true, INF, true
 	)
@@ -94,8 +73,6 @@ static func _apply_leaf(hinge: Node3D, mesh: ArrayMesh, mat: Material, mirror_x:
 		# Flips geometry + normals together (avoids the right-leaf winding bug).
 		body.scale = Vector3(-1.0, 1.0, 1.0)
 	body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	body.layers = VanLighting.LAYER_STREET_AND_INTERIOR
-	body.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	hinge.add_child(body)
 	hinge.move_child(body, 0)
 

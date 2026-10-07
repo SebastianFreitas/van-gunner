@@ -46,6 +46,7 @@ const BREAKABLE_INSET := 0.04
 ## capped so it doesn't poke past the hull skin.
 const EXTERIOR_PANE_PROUD_M := 0.055
 
+const _Exterior := preload("res://scripts/van/side_window_exterior.gd")
 const _Fixtures := preload("res://scripts/van/side_window_fixtures.gd")
 
 ## Matches original CSG sash (half extents).
@@ -90,8 +91,6 @@ var _grip_closed: Dictionary = {}
 var _mount_closed: Dictionary = {}
 var _open: Dictionary = {}
 var _tweens: Dictionary = {}
-## Vector2i(wall sign, window index) -> rolled glazing; filled by the kit fit.
-var _glazing: Dictionary = {}
 
 
 func _ready() -> void:
@@ -120,32 +119,135 @@ func _fit_to_side_walls() -> void:
 	var walls := get_parent().get_node_or_null("SideWalls") as VanSideWall
 	if walls == null:
 		return
-	var fit := SideWindowFit.new(self)
-	var wins: Array = [
-		[$LeftRear, -1.0, 0], [$LeftFront, -1.0, 1], [$RightRear, 1.0, 0], [$RightFront, 1.0, 1],
-	]
-	for w in wins:
-		var cz: float = walls.window_centers_z[w[2] as int]
-		var hole := walls.cut_poly_for(w[1] as float, cz)
-		var glazing: StringName = _glazing.get(Vector2i(int(w[1] as float), w[2] as int), &"")
-		fit.fit(w[0] as Node3D, w[1] as float, cz, walls, hole, glazing)
+	_fit_window_root($LeftRear, -1.0, walls.window_centers_z[0], walls)
+	_fit_window_root($LeftFront, -1.0, walls.window_centers_z[1], walls)
+	_fit_window_root($RightRear, 1.0, walls.window_centers_z[0], walls)
+	_fit_window_root($RightFront, 1.0, walls.window_centers_z[1], walls)
 
 
-## Rolled glazing, Vector2i(wall sign, window index) -> &"glass" or &"plexi".
-func set_glazing(by_window: Dictionary) -> void:
-	_glazing = by_window
+func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: VanSideWall) -> void:
+	if root == null:
+		return
+
+	var mid_y := walls.window_center_y
+	var y_hinge := mid_y + SASH_HALF_H
+	var x_ref := walls.wall_x_at(y_hinge)
+	root.rotation = Vector3.ZERO
+	root.position = Vector3(wall_sign * x_ref, y_hinge, z_center)
+
+	var hinge := root.get_node_or_null("Hinge") as Node3D
+	if hinge == null:
+		return
+	hinge.position = Vector3.ZERO
+	hinge.rotation = Vector3.ZERO
+
+	var frame_mat := _steal_material(hinge, "WindowFrame/Outer")
+	var glass_mat := _steal_material(hinge, "WindowGlass")
+
+	_hide_node(root, "WallPanel")
+	_hide_node(hinge, "WindowFrame")
+	_free_node(hinge, "WindowGlass")
+	_free_node(root, "CurvedBezel")
+	_free_node(hinge, "CurvedFrame")
+	_free_node(root, "WindowStop")
+
+	# No separate bezel — VanSideWall punches the rounded WindowCut so the liner
+	# itself is the surround (same as the rear door leaf around its pane).
+
+	var glass_x := wall_sign * (glass_outward_bump - GLASS_INSET)
+	var breakable_inset := BREAKABLE_INSET - glass_outward_bump
+
+	var frame := MeshInstance3D.new()
+	frame.name = "CurvedFrame"
+	frame.mesh = walls.build_curved_frame_ring_mesh(
+		wall_sign, FRAME_OUTER_POLY, GLASS_POLY,
+		x_ref, y_hinge, z_center, mid_y, FRAME_THICKNESS, 0.0, VanSideWall.WINDOW_EDGE_SUBDIV
+	)
+	frame.material_override = frame_mat
+	frame.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	frame.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+	frame.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
+	hinge.add_child(frame)
+	_Fixtures.add_stop(root, walls, wall_sign, x_ref, y_hinge, z_center, mid_y, frame_mat)
+
+	# Single-sided (facing the cabin): drop the duplicate backface triangles.
+	if glass_mat is BaseMaterial3D:
+		glass_mat = (glass_mat as BaseMaterial3D).duplicate() as BaseMaterial3D
+		(glass_mat as BaseMaterial3D).cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	var glass := MeshInstance3D.new()
+	glass.name = "WindowGlass"
+	glass.mesh = walls.build_curved_pane_from_poly(
+		wall_sign, PANE_POLY, x_ref, y_hinge, z_center, mid_y, glass_x, VanSideWall.WINDOW_EDGE_SUBDIV, false
+	)
+	glass.material_override = glass_mat
+	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	glass.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+	glass.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
+	hinge.add_child(glass)
+
+	_Exterior.add_exterior_pane(
+		glass, walls, wall_sign, PANE_POLY, x_ref, y_hinge, z_center, mid_y, wall_sign * EXTERIOR_PANE_PROUD_M
+	)
+
+	var breakable := hinge.get_node_or_null("BreakableGlass")
+	if breakable and breakable.has_method("bind_glass_visual"):
+		breakable.bind_glass_visual(glass)
+
+	var iron_cross := hinge.get_node_or_null("IronCross") as IronCross
+	_place_on_curve(iron_cross, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, IRON_INSET - glass_outward_bump)
+	if iron_cross:
+		iron_cross.set_street_lit(true)
+		iron_cross.follow_side_wall_curve(walls, mid_y)
+	_place_on_curve(breakable as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, breakable_inset)
+	_place_on_curve(hinge.get_node_or_null("Interact") as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.0)
+
+	var handle := hinge.get_node_or_null("Handle") as Node3D
+	if handle:
+		_place_on_curve(handle, walls, wall_sign, x_ref, y_hinge, mid_y - 0.52, -0.95, 0.08)
+
+	# Move the pivot outboard of every part so the tipping sash never rises through the wall;
+	# children shift the other way, so the closed pose is unchanged.
+	var pivot := Vector3(wall_sign * HINGE_OUT_M, 0.0, 0.0)
+	hinge.position = pivot
+	for child in hinge.get_children():
+		if child is Node3D:
+			(child as Node3D).position -= pivot
+	_Fixtures.add_hinges(root, hinge, walls, wall_sign, x_ref, y_hinge, HINGE_OUT_M)
 
 
-## Re-runs the fit for all four windows after the side walls rebuild. Open sashes keep their
-## angle, shattered panes stay shattered, front hinge hardware follows its door.
-func refit() -> void:
-	_fit_to_side_walls()
-	for id in ALL_WINDOWS:
-		if is_window_open(id) and _hinges.has(id):
-			(_hinges[id] as Node3D).rotation.z = _open_rotation_z(id)
-	var doors := get_tree().get_first_node_in_group(&"side_doors")
-	for side in [&"left", &"right"]:
-		set_front_hinges_visible(side, doors == null or not doors.is_door_open(side))
+func _place_on_curve(
+	node: Node3D, walls: VanSideWall, wall_sign: float, x_ref: float, y_ref: float,
+	world_y: float, local_z: float, into_cabin: float
+) -> void:
+	if node == null:
+		return
+	var node_basis := node.transform.basis
+	var local_x := walls.local_x_on_wall(wall_sign, world_y, x_ref) - wall_sign * into_cabin
+	node.transform = Transform3D(node_basis, Vector3(local_x, world_y - y_ref, local_z))
+
+
+func _hide_node(parent: Node, path: String) -> void:
+	var node := parent.get_node_or_null(path) as Node3D
+	if node:
+		node.visible = false
+
+
+func _free_node(parent: Node, path: String) -> void:
+	var node := parent.get_node_or_null(path)
+	if node:
+		node.free()
+
+
+func _steal_material(parent: Node, path: String) -> Material:
+	var node := parent.get_node_or_null(path)
+	if node == null:
+		return null
+	if node is GeometryInstance3D and (node as GeometryInstance3D).material_override:
+		return (node as GeometryInstance3D).material_override
+	if node.get("material") != null:
+		return node.get("material") as Material
+	return null
 
 
 func is_window_open(window_id: StringName) -> bool:

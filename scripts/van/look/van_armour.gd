@@ -182,17 +182,13 @@ func _clear_of_openings(z0: float, z1: float, y0: float, y1: float) -> bool:
 	if (z1 + margin > door_z0 and z0 - margin < door_z1
 			and y1 + margin > _walls.door_y_min and y0 - margin < _walls.door_y_max):
 		return false
-	# Either wall's hole may differ in the kit, so the box must clear both.
-	for cz: float in _walls.window_centers_z:
-		for wall_sign in [-1.0, 1.0]:
-			var box := Rect2()
-			for p in _walls.cut_poly_for(wall_sign, cz):
-				box = Rect2(p, Vector2.ZERO) if box == Rect2() else box.expand(p)
-			var wy0 := _walls.window_center_y + box.position.y - pad
-			var wy1 := _walls.window_center_y + box.end.y + pad
-			var wz0 := cz + box.position.x - pad
-			var wz1 := cz + box.end.x + pad
-			if y1 > wy0 and y0 < wy1 and z1 > wz0 and z0 < wz1:
+	var wy0 := _walls.window_center_y - _walls.window_half_height - pad
+	var wy1 := _walls.window_center_y + _walls.window_half_height + pad
+	if y1 > wy0 and y0 < wy1:
+		for cz: float in _walls.window_centers_z:
+			var wz0 := cz - _walls.window_half_length - pad
+			var wz1 := cz + _walls.window_half_length + pad
+			if z1 > wz0 and z0 < wz1:
 				return false
 	return true
 

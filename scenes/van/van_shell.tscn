@@ -14,7 +14,6 @@
 [ext_resource type="PackedScene" path="res://scenes/van/van_side_wall.tscn" id="30"]
 [ext_resource type="Shader" uid="uid://ct0ys8gil2dhm" path="res://scenes/van/van_ceiling.gdshader" id="32"]
 [ext_resource type="ShaderMaterial" uid="uid://ywmwwtaxixb4" path="res://scenes/van/van_wall_material.tres" id="46"]
-[ext_resource type="ShaderMaterial" path="res://scenes/van/van_backstop_wall_material.tres" id="backstop_liner"]
 
 [sub_resource type="ShaderMaterial" id="FloorMaterial"]
 render_priority = 0
@@ -41,7 +40,7 @@ size = Vector3(4.8, 0.25, 9.6)
 [sub_resource type="ShaderMaterial" id="CeilingMaterial"]
 render_priority = 0
 shader = ExtResource("32")
-shader_parameter/base_color = Color(0.13, 0.12, 0.11, 1)
+shader_parameter/base_color = Color(0.34, 0.32, 0.29, 1)
 shader_parameter/seam_color = Color(0.13, 0.12, 0.105, 1)
 shader_parameter/foam_color = Color(0.42, 0.4, 0.355, 1)
 shader_parameter/stain_color = Color(0.2, 0.16, 0.11, 1)
@@ -140,7 +139,6 @@ floor_material = SubResource("FloorMaterial")
 
 [node name="SideWalls" parent="." unique_id=1665520798 instance=ExtResource("30")]
 wall_material = ExtResource("46")
-liner_material = ExtResource("backstop_liner")
 door_jamb_material = SubResource("SideDoorTrimMaterial")
 
 [node name="FloorCollision" type="CollisionShape3D" parent="." unique_id=901514165]

@@ -50,14 +50,12 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-FAILURE = re.compile(r"SCRIPT ERROR|Parse Error|ERROR:|VAN KIT RULE BREAK:")
+FAILURE = re.compile(r"SCRIPT ERROR|Parse Error|ERROR:")
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 TIMEOUT_SECONDS = 300
 
 FINGERPRINT = ROOT / "tools" / "smoke" / "fingerprint.txt"
 BASELINE = ROOT / "tools" / "smoke" / "fingerprint.baseline.txt"
-KIT_GOLDEN = ROOT / "tools" / "smoke" / "van_kit_golden.txt"
-KIT_CURRENT = ROOT / "tools" / "smoke" / "van_kit_golden.current.txt"
 
 
 STRESS_SHARDS = 5
@@ -205,8 +203,6 @@ def main() -> int:
 
     if FINGERPRINT.exists():
         FINGERPRINT.unlink()
-    if KIT_CURRENT.exists():
-        KIT_CURRENT.unlink()
 
     shots: pathlib.Path | None = None
     if opts.shots:
@@ -270,18 +266,14 @@ def main() -> int:
     if shots is None and opts.plant_flicker:
         report_dir.mkdir(parents=True, exist_ok=True)
         audit.append(Job(
-            "audit", van_audit.build_args(
-                report_dir / "report.txt", plant_flicker=True,
-            ), 155.0,
+            "audit", van_audit.build_args(report_dir / "report.txt", plant_flicker=True), 155.0,
         ))
     elif shots is None:
         report_dir.mkdir(parents=True, exist_ok=True)
         for name in van_audit.PASSES:
             audit.append(Job(
                 f"audit {name}",
-                van_audit.build_args(
-                    report_dir / f"report_{name}.txt", passes=[name],
-                ),
+                van_audit.build_args(report_dir / f"report_{name}.txt", passes=[name]),
                 EST_AUDIT.get(name, 30.0),
             ))
 
@@ -307,29 +299,9 @@ def main() -> int:
         return 1
     audit_ok = shots is not None or _audit_ok(audit)
 
-    if not KIT_CURRENT.exists():
-        print("SMOKE FAILED: the game run wrote no kit golden")
-        return 1
-    if not opts.bless and shots is None:
-        if not KIT_GOLDEN.exists():
-            print("SMOKE FAILED: no kit golden; run `py -3 tools/smoke.py --bless` first")
-            return 1
-        kit_now = KIT_CURRENT.read_text(encoding="utf-8").replace("\r\n", "\n")
-        kit_old = KIT_GOLDEN.read_text(encoding="utf-8").replace("\r\n", "\n")
-        if kit_now != kit_old:
-            sys.stdout.writelines(difflib.unified_diff(
-                kit_old.splitlines(keepends=True), kit_now.splitlines(keepends=True),
-                fromfile="van_kit_golden.txt", tofile="van_kit_golden.current.txt",
-            ))
-            print("SMOKE FAILED: kit golden differs")
-            return 1
-
     if opts.bless:
         BASELINE.write_bytes(FINGERPRINT.read_bytes())
         print("BASELINE WRITTEN")
-        if not KIT_GOLDEN.exists() or KIT_GOLDEN.read_bytes() != KIT_CURRENT.read_bytes():
-            KIT_GOLDEN.write_bytes(KIT_CURRENT.read_bytes())
-            print("KIT GOLDEN WRITTEN")
         if not audit_ok:
             return 1
         stamp_clean(ROOT, "smoke", started)
