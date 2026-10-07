@@ -253,6 +253,20 @@ Then the ready gate as usual. A light-path plan aims at 10 KB.
    leaves open that shape the whole result (direction, scope, what it
    is), plus the option-map areas. Details that only matter inside one
    piece wait for Part B, where they have context.
+   - **Pass test.** When the Brief says how the result is judged (what a
+     viewer must be able to say, "if X it is not done", a number to
+     hit), copy those words verbatim into the plan's `## Pass test`.
+     When the plan changes looks and the Brief gives none, the writer
+     drafts one from the Brief (two or three things a viewer must be
+     able to say) and it is asked. The Pass test is what "done" means:
+     every phase serves it, and the run stops when it fails (`run.md`).
+   - **Rules that narrow the Brief are asked.** When a project rule,
+     cap or budget (art rules, palette limits, perf, baselines) would
+     limit what the Pass test needs, ask which wins, saying what each
+     answer looks like. Never fold such a rule in silently (owner,
+     2026-10-07: van-interior-salvage's paint caps from the art rules
+     kept every donor van the same dark wall, so its Pass test could
+     not pass, and that was found only in phase 11 of 12).
 5. **Ask the list** by the question rules. Contradictions with an earlier
    D are asked as their own question, never resolved silently. Write
    `Interview: A done · <count> asked` and go to Part B in the same turn.
@@ -294,7 +308,29 @@ every piece.
    unattended session sees only that section, Constraints and Carry
    forward. At most 2.5 KB.
    Verification names the check that actually sees the change (see
-   "Verify in a phase" in `run.md`; read only that section). Fill
+   "Verify in a phase" in `run.md`; read only that section) and **who
+   runs each check**: the implementer (commands, numbers), the
+   `reviewer`, or the `look-judge` (pictures judged against words). The
+   phase session never reads a picture, so a check only it could do is
+   no check (van-interior-salvage: "judge the cabin views by the Brief"
+   in every phase, judged by nobody until phase 11).
+   - **Look proof phase** (owner, 2026-10-07, required): a full-path
+     plan whose Pass test is about looks has, as phase 1 or 2 (after
+     only what it needs to render), a cheap phase that builds the
+     crudest version of the look: its paints, light, scale and a few
+     stand-in pieces, temporary code allowed. Its Verification is the
+     Pass test judged by the `look-judge` on the views and seeds the
+     Pass test names; every later phase Needs it. It exists to find out
+     in an hour, not after ten phases, that the plan's numbers cannot
+     pass.
+   - **Look checks** (phases that change what the Pass test judges, at
+     least the look proof, one mid-way and the last before any swap or
+     deletion): Verification ends with the `look-judge` on the named
+     shots, and the pictures go to the owner too. A FAIL after the
+     phase's tuning fallback stops the run (`run.md`).
+   - **A phase that deletes or replaces the old version** (a swap, a
+     removal) Needs the last look check, and runs only after it passed.
+   Fill
    Scope, Constraints, the Progress table,
    including each phase's **Needs**: the earlier phases whose output it
    builds on (`-` for none), so a deferred phase holds back only what
@@ -340,6 +376,10 @@ every piece.
   has its working, check and fallback ("Numbers and math"); every `→
   phase decides` names what to measure and the rule, or is one the owner
   agreed to leave.
+- **Pass test:** filled when the Brief judges the result or the plan
+  changes looks; a look plan has its look proof phase, its look checks
+  name the `look-judge`, and a swap or deletion phase Needs the last
+  look check. Every Verification check names who runs it.
 - Every piece has a Walk-through line; every phase has a `Reviewed:`
   line, rests on at least one decision or Brief line, has its Needs
   filled, and is `todo` in the Progress table. Constraints and Scope are

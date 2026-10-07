@@ -21,7 +21,7 @@ The line depends on the window:
   from 42k to 140k with one Explore call each (review of 2026-10-01).
 
 Subagents (Explore, Plan, general-purpose, claude-code-guide, implementer,
-implementer-wt, reviewer, plan-reviewer, plan-writer):
+implementer-wt, reviewer, plan-reviewer, look-judge, plan-writer):
 - PreToolUse: warns at SOFT x its line, says to stop reading past it.
   Advisory only; a model can ignore it.
 - PreToolUse: past HARD x its line, every further tool call is DENIED with
@@ -77,7 +77,7 @@ HARD = 1.25           # subagents: deny all tools from this multiple of the line
 SUB_LIMITS = {"Explore": 100_000, "Plan": 100_000,
               "general-purpose": 100_000, "claude-code-guide": 100_000,
               "implementer": 60_000, "implementer-wt": 60_000, "reviewer": 80_000,
-              "plan-reviewer": 80_000, "plan-writer": 120_000}
+              "plan-reviewer": 80_000, "look-judge": 80_000, "plan-writer": 120_000}
 
 
 def usage_total(u):

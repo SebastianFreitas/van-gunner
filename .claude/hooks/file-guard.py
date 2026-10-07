@@ -23,10 +23,11 @@ repo is allowed.
   skill, "at most 80 lines"), and nothing enforced it (one ran to 28 KB and
   every fresh window paid for it). Detail goes in the plan or state file,
   a spec or a report file the handoff names. Main session and subagents.
-- A Write or Edit from a reviewer or plan-reviewer subagent (agent_type)
-  outside .claude/specs/reports/: they got Write for their report file
-  only, and nothing but prompt text kept them out of source (review
-  2026-10-05). A file outside any repo (scratchpad) stays allowed.
+- A Write or Edit from a reviewer, plan-reviewer or look-judge subagent
+  (agent_type) outside .claude/specs/reports/: they got Write for their
+  report file only, and nothing but prompt text kept them out of source
+  (review 2026-10-05). A file outside any repo (scratchpad) stays allowed.
+  A look-judge may Read images anywhere: judging pictures is its job.
 - A Bash or PowerShell write to .claude/handoff.md: it skipped the cap
   above; write the handoff with Write or Edit. Main session and subagents.
 - Bash and PowerShell writes to a source or generated file (redirects, tee,
@@ -77,7 +78,11 @@ MAX_READ_BYTES = 50 * 1024 * 1024
 HANDOFF_REL = ".claude/handoff.md"
 HANDOFF_MAX_LINES = 80
 HANDOFF_MAX_BYTES = 6 * 1024
-REPORT_ONLY_AGENTS = {"reviewer", "plan-reviewer"}
+REPORT_ONLY_AGENTS = {"reviewer", "plan-reviewer", "look-judge"}
+# Agents whose job is reading pictures: images are allowed to them anywhere,
+# .godot/ shots included (phase 11 of van-interior-salvage copied shots to
+# %TEMP% only to get past the binary rule, 2026-10-07).
+IMAGE_READERS = {"look-judge"}
 MAIN_NO_READ = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tga", ".exr", ".hdr"}
 REPORTS_REL = ".claude/specs/reports/"
 
@@ -323,6 +328,9 @@ def main() -> None:
     if tool_name == "Read" and not d.get("agent_id") and ext(path) in MAIN_NO_READ:
         deny("Main session: images are never Read here; pass the path on "
              "(SendUserFile for the owner, or an agent's prompt).")
+        return
+    if tool_name == "Read" and d.get("agent_id") and ext(path) in MAIN_NO_READ \
+            and (d.get("agent_type") or "").split(":")[-1] in IMAGE_READERS:
         return
 
     root = find_root(path)

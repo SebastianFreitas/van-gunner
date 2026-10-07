@@ -29,7 +29,9 @@ start one; when one is live, report where it is (below) and stop.
 ### Supervising the run (the app session)
 
 - **One phase per launch:** Bash with `run_in_background: true`:
-  `py -3 <main checkout, absolute, forward slashes>/tools/autoplan.py <name> --max-sessions 1`
+  `py -3 <the go prompt's checkout, absolute, forward slashes>/tools/autoplan.py <name> --max-sessions 1`
+  (the runner finds plans only in its own checkout: a plan written on
+  an app worktree's branch runs from that worktree, 2026-10-06)
   (no `| tail`, no `--claude`: it finds the CLI itself). Say in one
   line which phase runs. Do not poll or sleep:
   the harness notifies when it exits.
@@ -40,7 +42,8 @@ start one; when one is live, report where it is (below) and stop.
   `stop reason: max sessions reached · last session: phase-done` (or
   `partial`, or `plan-done` after the last phase); a usage limit is
   exit 3 with `stop reason: usage limit`. Report the phase in at most three
-  lines: what it built in plain words, the pictures' paths, every
+  lines: what it built in plain words, the pictures (SendUserFile) and
+  the `look-judge` verdict when the phase had one, every
   `D<n> (auto)` as a Look at the owner can reverse. Then by `Status`:
   - `phase-done` or `partial` → launch the next one at once, same turn,
     no question to the owner. The same phase ending `partial` twice in a
@@ -53,7 +56,12 @@ start one; when one is live, report where it is (below) and stop.
   - **anything else stops everything:** any other `stop reason:` (a
     session killed at the kill line, errored twice, no progress, a
     failed safety commit, not logged in), a crash with no summary, the
-    same phase `partial` twice. Launch nothing; tell the owner what happened
+    same phase `partial` twice, and a phase report or state file that
+    says the Pass test or a look check failed, whatever its `Status`
+    says. Never reason that the next phase "does not depend on it"
+    (van-interior-salvage, 2026-10-07: phase 11's look failed on every
+    seed, phase 12 deleted the old interior anyway and the plan closed
+    as done). Launch nothing; tell the owner what happened
     in plain words (the phase, what landed, the log's last lines) and
     what you would do about it. The owner decides.
 - **Never** read a log whole, a picture, a diff, the plan's phase
@@ -69,7 +77,11 @@ start one; when one is live, report where it is (below) and stop.
   and its context size (from `usage`).
 - **Closed app:** the run dies with the session. The state file holds
   where it was: `go` in any new session starts it again (`--force` if a
-  stale lock is reported). The terminal command stays a fallback the
+  stale lock is reported). A crash or power cut can leave uncommitted
+  edits, and the runner refuses a dirty tree: commit them by path on the
+  plan branch as `WIP: phase <n> after a crash, unverified` (a reviewer
+  first if review-guard asks), relaunch with `--force`, and say so in
+  one line; the phase session verifies and finishes them. The terminal command stays a fallback the
   owner may use, never a step you hand them.
 
 The owner's rule (2026-09-26): *"we never do 2 continues work, we must
@@ -153,7 +165,13 @@ implementer or reviewer (never the phase session) reads a picture only
 for a look no tool measures, or when a number says a view changed
 and the question is how; read each one once, write one line on what it
 shows, and never re-read a picture an earlier phase or session already
-described. A visible phase's Verification names the screenshots or views
+described. **The Pass test and look checks** go to the `look-judge`
+(prompt: plan path, phase, each shot's path with its view and seed, the
+report path, earlier verdicts and owner replies), never to the
+implementer, which looks for defects, not for the Brief. A FAIL gets the
+phase's tuning fallback once, then the judge again; still FAIL:
+`Status: blocked`, Blocker `Pass test failed: <the judge's reasons>`,
+whatever `Questions:` says. The owner decides what changes. A visible phase's Verification names the screenshots or views
 that must change and says the rest stay the same. A baseline is
 re-recorded (bless, update snapshots) only when the phase's Deliverable
 says so.

@@ -65,7 +65,7 @@ The detail behind `workflow.md` "Run" steps 3 to 6.
 ## Models
 
 Opus thinks and judges (main, plan runs, `plan-writer`, Plan,
-`reviewer`, `plan-reviewer`), Sonnet does (`Explore`, `implementer`).
+`reviewer`, `plan-reviewer`, `look-judge`), Sonnet does (`Explore`, `implementer`).
 The reviewers moved to Opus because Sonnet 5.5 misses more on hard
 reviews and more of its comments are noise; it matches Opus on
 spec-driven code at half the cost (owner, 2026-10-05). When the owner

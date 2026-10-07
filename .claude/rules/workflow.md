@@ -196,7 +196,7 @@ when it passes it, and once per new prompt while it stays there. Lines:
 a prepared run's window, a plan run's supervisor and headless plan
 sessions 175k (the runner kills headless ones at 200k); every other app
 window 120k; Explore, Plan, general-purpose and claude-code-guide 100k,
-plan-writer 120k, implementer 60k, reviewer and plan-reviewer 80k. A
+plan-writer 120k, implementer 60k, reviewer, plan-reviewer and look-judge 80k. A
 subagent at 1.25 times its line is denied further tools: the prompt was
 too wide; next time name file, function and range, or split. Every
 subagent runs in the foreground (playbook Delegation).

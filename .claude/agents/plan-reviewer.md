@@ -33,7 +33,15 @@ phase impossible to build, or make it build the wrong thing?* That is:
 - a phase that needs an earlier phase's output its Needs does not name;
 - a number the phase builds with that has no working (its inputs and
   where they come from), no check, or no fallback, or whose arithmetic
-  is wrong (redo it; grep each input).
+  is wrong (redo it; grep each input);
+- a Verification check nobody can run: a picture to be judged with no
+  `look-judge` named (the phase session never reads pictures), or a
+  check with no command;
+- against the `## Pass test` (when the plan has one): a constraint,
+  cap or decision that makes it impossible or unlikely to pass (say
+  why in look terms: contrast, size, light, room on the wall); a look
+  plan with no early look proof phase; a swap or deletion phase that
+  does not Need the last look check.
 
 Wording that could be read two ways but builds the same thing either
 way is **no finding**. Neither is a choice the plan leaves to the phase

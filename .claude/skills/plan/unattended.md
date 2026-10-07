@@ -40,6 +40,10 @@ the runner's kill line above it. The phase has to fit between the
   compare against a baseline) is judged by its number. Never read a
   picture yourself: the implementer or reviewer does, as `run.md`
   "Verify in a phase" says.
+- **Look checks** go to the `look-judge` (foreground, `run.md` "Verify
+  in a phase"); SendUserFile does not exist here, so write the shot
+  paths and the verdict in the state file's Completed phase for the
+  supervisor to send. The run never waits for the owner's reply.
 - **The plan's numbers are built as written:** measure once, and apply
   the fallback written next to a number only when its check fails
   (`D<n> (auto)`). Do not re-derive them.
@@ -90,10 +94,13 @@ question as `run.md` "Phase questions" says (summarised here):
   recommended one first, and what was finished without it.
 - **Stop the run** (the code contradicts the plan, two D's conflict, a
   failing check you can't fix, a step that would lose work or spend
-  money): session end 4.
+  money, the Pass test or a look check still FAIL after its fallback):
+  session end 4.
 - **`Questions: auto` in the plan header:** nothing defers; take the
   recommended option as `D<n> (auto, owner-delegated)`. Only "stop the
-  run" still stops.
+  run" still stops. A choice that would make the Pass test harder to
+  pass (a piece that can't go where the Brief wants it, a cap the look
+  runs into) is never auto: it is a stop.
 
 The owner answers deferred questions and blockers later with `go` in an
 app session on this worktree, then restarts the runner.
