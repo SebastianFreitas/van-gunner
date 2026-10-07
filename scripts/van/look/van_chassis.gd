@@ -3,9 +3,9 @@ extends RefCounted
 ## toolbox, short exhaust, chained spares, rear rails and bumper.
 
 ## Outer face of the sill/skin.
-const SKIN_X := VanInteriorSize.BOTTOM_HALF
+const SKIN_X := VanInteriorSize.BOTTOM_HALF + VanBodyProfile.WALL_THICKNESS
 ## Reference x of the tank, toolbox and spare add-ons (the same skin).
-const ADDON_X := VanInteriorSize.BOTTOM_HALF
+const ADDON_X := SKIN_X
 const FLARE_GAP := 0.08
 const FLARE_OUT := 0.09
 const LIP_H := 0.07
@@ -14,12 +14,14 @@ const FLARE_T := 0.02
 const ARC_SEGMENTS := 14
 ## Outer face of VanHullPatches' sill (wall_x_at(0) = BOTTOM_HALF + SIDE_SKIN_OUTER_M 0.22 + 0.06); the
 ## exhaust keeps 2 cm off it.
-const SILL_OUT_X := VanInteriorSize.BOTTOM_HALF + 0.28
+const SILL_OUT_X := SKIN_X + 0.06
 ## Start of the add-on slot: just behind the open side door's rear edge (z 0.135), so the door's
 ## slide path stays clear.
 const SLOT_Z0 := 0.16
 ## Gap between packed add-ons (D12).
 const ADDON_GAP := 0.02
+## Wheel-arch plate offset outside the skin's outer face.
+const PLATE_OUT := 0.02
 ## The tank and toolbox hang under the floor deck (underside y -0.27, road y -0.9), not in the widened cabin.
 const TANK_DY := -0.70
 const BOX_DY := -0.88
@@ -100,7 +102,7 @@ func _build_flare(flare_name: String, centre: Vector3, radius: float, mat: Mater
 		z_lo: float = -INF, z_hi: float = INF) -> void:
 	var side := signf(centre.x)
 	var r := radius + FLARE_GAP
-	var x_in := side * (SKIN_X + 0.06)
+	var x_in := side * SKIN_X
 	var x_out := side * (VanWheels.REAR_WHEEL_X + VanWheels.TYRE_WIDTH * 0.5 + FLARE_OUT)
 	# L profile as (x, rho) pairs, plus each edge's outward direction: 0 = +rho, 1 = +x, 2 = -rho,
 	# 3 = -x, wrapping P0..P5.
@@ -186,7 +188,7 @@ func _build_well(well_name: String, centre: Vector3, radius: float, mat: Materia
 		z_lo: float = -INF, z_hi: float = INF) -> void:
 	var side := signf(centre.x)
 	var r := radius + FLARE_GAP
-	var x := side * (SKIN_X + 0.005)
+	var x := side * (SKIN_X + PLATE_OUT)
 	# The plate is the arch's circle clipped under the hull's underside; a hub below that line is
 	# moved up onto it so the fan still covers the segment.
 	var hub := _clamp_z(Vector3(x, maxf(centre.y, VanWheels.HULL_BOTTOM_Y), centre.z), z_lo, z_hi)

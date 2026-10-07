@@ -87,7 +87,7 @@ func fit_door_leaf(leaf: Node3D, wall_sign: float, walls: VanSideWall) -> void:
 	outer.mesh = walls.build_curved_shell_mesh(
 		wall_sign, y_min + 0.02, y_max - 0.02, z0 + 0.02, z1 - 0.02,
 		x_ref, mid_y, z_ref, OUTER_SKIN,
-		wall_sign * DOOR_THICKNESS, 24, 14,
+		wall_sign * (DOOR_THICKNESS + skin_drift(walls, mid_y)), 24, 14,
 		INF, -INF, INF, -INF,
 		PackedVector2Array(),
 		PackedVector2Array()
@@ -124,7 +124,7 @@ func fit_door_leaf(leaf: Node3D, wall_sign: float, walls: VanSideWall) -> void:
 	recessed.name = "RecessedPanel"
 	recessed.mesh = walls.build_curved_pane_from_poly(
 		wall_sign, panel_inner, x_ref, mid_y, z_ref, mid_y + PANEL_CENTER_Y,
-		-wall_sign * TRIM_LIFT, 6, false
+		-wall_sign * 2.0 * TRIM_LIFT, 6, false
 	)
 	recessed.material_override = body_mat
 	recessed.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
@@ -172,6 +172,12 @@ func place_on_curve(
 	var node_basis := node.transform.basis
 	var local_x := walls.local_x_on_wall(wall_sign, world_y, x_ref) - wall_sign * into_cabin
 	node.transform = Transform3D(node_basis, Vector3(local_x, world_y - y_ref, local_z))
+
+
+## How far the hull skin's outer face at `y` sits outboard of the straight wall + skin thickness
+## offset, so outer layers follow the skin outline instead of the liner.
+func skin_drift(walls: VanSideWall, y: float) -> float:
+	return VanHull.skin_outer_x_at(walls, y) - VanHull.SIDE_SKIN_OUTER_M - walls.wall_x_at(y)
 
 
 func hide_node(parent: Node, path: String) -> void:
@@ -322,7 +328,7 @@ func add_latch_plate(
 	plate.mesh = walls.build_curved_shell_mesh(
 		wall_sign, plate_y0, plate_y1, plate_z0, plate_z1,
 		x_ref, mid_y, z_ref, 0.012,
-		wall_sign * (DOOR_THICKNESS + OUTER_SKIN + TRIM_LIFT), 6, 8,
+		wall_sign * (DOOR_THICKNESS + OUTER_SKIN + TRIM_LIFT + skin_drift(walls, (plate_y0 + plate_y1) * 0.5)), 6, 8,
 		INF, -INF, INF, -INF,
 		PackedVector2Array(),
 		PackedVector2Array()

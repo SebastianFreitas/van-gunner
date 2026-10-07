@@ -316,7 +316,7 @@ func _add_rail_segments(mat: Material, rail_y: float, ranges: Array, prefix: Str
 			rail.mesh = box
 			rail.material_override = mat
 			# 1.5 cm into the wall, 4.5 cm proud: embedded so the faces never z-fight.
-			rail.position = Vector3(wall_sign * (x - wall_sign * 0.015), rail_y, z_mid)
+			rail.position = Vector3(wall_sign * (x - 0.015), rail_y, z_mid)
 			rail.rotation.z = wall_sign * lean
 			rail.layers = VanLighting.LAYER_VAN_INTERIOR
 			rail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON

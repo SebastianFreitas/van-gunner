@@ -140,7 +140,7 @@ func _build() -> void:
 	_add_box(
 		"BottomRail",
 		Vector3(bottom_width, frame_thickness, _VanBulkheadMesh.HEADER_DEPTH),
-		Vector3((bottom_inner + bottom_outer) * 0.5, kick_height + frame_thickness * 0.5, 0.0),
+		Vector3((bottom_inner + bottom_outer) * 0.5, kick_height + frame_thickness * 0.5 - 0.04, 0.0),
 		steel
 	)
 

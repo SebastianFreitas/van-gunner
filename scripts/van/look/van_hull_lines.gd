@@ -14,6 +14,8 @@ const DOOR_LEAF_HALF_Z := 1.105
 const POST_HALF_Z := 0.06
 ## The D12 edge-to-edge gap between a rail end and a corner post.
 const POST_GAP := 0.02
+## How far below the roof outline a corner post stops, so its top never lies in the roof skin's plane.
+const POST_TOP_DROP := 0.05
 
 var _hull: Node3D
 var _profile: VanBodyProfile
@@ -42,7 +44,7 @@ func build(profile: VanBodyProfile, walls: VanSideWall, mat: ShaderMaterial) -> 
 
 ## X of the trim's inner face at height `y`: the side skin's outer face plus TRIM_LIFT.
 func _skin_x(y: float) -> float:
-	return _profile.inner_x_at(y) + VanHull.SIDE_SKIN_OUTER_M + TRIM_LIFT
+	return _profile.outer_x_at(y) + TRIM_LIFT
 
 
 ## The rub rail, belt line and drip rail for one side, clear of that side's openings. The rub rail
@@ -140,8 +142,11 @@ func _build_corner_post(node_name: String, side_sign: float, z: float) -> void:
 	var steps := 12
 	var rows: Array[Array] = []
 	for i in range(steps + 1):
-		var y := lerpf(0.0, _profile.wall_height(), float(i) / float(steps))
-		var x_in := side_sign * _skin_x(y)
+		# Up into the roof corner arc, stopping POST_TOP_DROP short of the outer outline's end.
+		var y := lerpf(0.0, _profile.wall_height() + VanBodyProfile.ROOF_THICKNESS - POST_TOP_DROP,
+				float(i) / float(steps))
+		# The inner face is sunk 2 cm behind the skin so the post's cap edges hide inside it.
+		var x_in := side_sign * (_skin_x(y) - TRIM_LIFT - 0.02)
 		var x_out := side_sign * (_skin_x(y) + 0.06)
 		rows.append([
 			Vector3(x_in, y, z0), Vector3(x_in, y, z1),
@@ -171,6 +176,14 @@ func _build_corner_post(node_name: String, side_sign: float, z: float) -> void:
 		else:
 			_tri_uv(st, a_out0, b_out0, a_out1, Vector2(0, t0), Vector2(0, t1), Vector2(1, t0))
 			_tri_uv(st, a_out1, b_out0, b_out1, Vector2(1, t0), Vector2(0, t1), Vector2(1, t1))
+
+		# Inner face (normal toward the van), sunk behind the skin, so the post is a closed solid.
+		if side_sign > 0.0:
+			_tri_uv(st, a_in0, b_in0, a_in1, Vector2(0, t0), Vector2(0, t1), Vector2(1, t0))
+			_tri_uv(st, a_in1, b_in0, b_in1, Vector2(1, t0), Vector2(0, t1), Vector2(1, t1))
+		else:
+			_tri_uv(st, a_in0, a_in1, b_in0, Vector2(0, t0), Vector2(1, t0), Vector2(0, t1))
+			_tri_uv(st, a_in1, b_in1, b_in0, Vector2(1, t0), Vector2(1, t1), Vector2(0, t1))
 
 		# z0 end cap (normal -Z); winding flips with sign, as the rear posts do.
 		if side_sign < 0.0:

@@ -19,12 +19,9 @@ const _HullFront := preload("res://scripts/van/look/van_hull_front.gd")
 ## phase 5). Roof, rear, sills, belly and hull lines meet `SIDE_SKIN_OUTER_M` instead.
 const SKIN_OFFSET_M := 0.06
 
-## How far the roof crown rises above its edge at x = 0.
-const ROOF_RISE_M := 0.38
-
 ## How far the side skin's outer face stands off the liner: the side wall's 0.16 plus 0.06.
 ## `side_windows.gd` `HINGE_OUT_M` is sized against it.
-const SIDE_SKIN_OUTER_M := 0.22
+const SIDE_SKIN_OUTER_M := VanBodyProfile.WALL_THICKNESS
 
 ## Rear end of the roof skin along z; the roof edge seal spans the same range.
 const ROOF_Z_MAX := VanInteriorSize.REAR_Z + 0.08
@@ -62,7 +59,7 @@ func rebuild_look(look: VanLook) -> void:
 	material.set_shader_parameter(&"dirt_band_m", 0.9)
 
 	_build_sides(walls)
-	_build_roof(walls)
+	_build_roof()
 	_build_rear(walls)
 	_HullFront.new(self).build(walls)
 	_HullPatches.new(self).build(walls, VanWheels.rear_arch_spans(look))
@@ -83,84 +80,91 @@ func _build_sides(walls: VanSideWall) -> void:
 	# edge to edge and no surface has two owners.
 	for wall_sign: float in [-1.0, 1.0]:
 		var mesh := walls.build_side_panel_mesh(wall_sign, walls.thickness, SIDE_SKIN_OUTER_M, false)
-		_add_mesh("SideSkinL" if wall_sign < 0.0 else "SideSkinR", mesh, Vector3.ZERO)
+		_add_mesh("SideSkinL" if wall_sign < 0.0 else "SideSkinR",
+				_fit_skin_to_profile(mesh), Vector3.ZERO)
 
 
-func _build_roof(walls: VanSideWall) -> void:
-	var w: float = walls.wall_x_at(walls.wall_height) + SIDE_SKIN_OUTER_M
+## Moves the skin's outer-layer vertices onto the profile's outer outline. The wall grid offsets the
+## liner by a flat 0.22, but the outer outline has its own corner arc up to the roof, so without
+## this the skin top (x 2.77) sat 0.34 m inside the roof's lower edge (x 3.11) and left it open.
+func _fit_skin_to_profile(mesh: ArrayMesh) -> ArrayMesh:
+	var arrays := mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	for i in range(verts.size()):
+		var v := verts[i]
+		var side := signf(v.x)
+		# The liner face is 0.16 off the profile and the skin 0.22; only the skin moves.
+		if absf(v.x) - _profile.inner_x_at(v.y) > 0.19:
+			verts[i] = Vector3(side * _profile.outer_x_at(v.y), v.y, v.z)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	var fitted := ArrayMesh.new()
+	fitted.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return fitted
+
+
+func _build_roof() -> void:
 	var z_min := VanInteriorSize.FRONT_Z
 	var z_max := ROOF_Z_MAX
-	var x_segments := 20
 	var z_segments := 24
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
-	var verts: Array = []
-	for ix in range(x_segments + 1):
-		var x := lerpf(-w, w, float(ix) / float(x_segments))
-		var y := _roof_y(x, w, walls)
-		var col: Array = []
-		for iz in range(z_segments + 1):
-			var z := lerpf(z_min, z_max, float(iz) / float(z_segments))
-			col.append(Vector3(x, y, z))
-		verts.append(col)
-
-	# Grid runs (x, z); winding chosen so cross(edge_x, edge_z) points +Y (up and out of the vault).
-	for ix in range(x_segments):
-		for iz in range(z_segments):
-			var v00: Vector3 = verts[ix][iz]
-			var v10: Vector3 = verts[ix + 1][iz]
-			var v01: Vector3 = verts[ix][iz + 1]
-			var v11: Vector3 = verts[ix + 1][iz + 1]
-			st.add_vertex(v00)
-			st.add_vertex(v10)
-			st.add_vertex(v01)
-			st.add_vertex(v10)
-			st.add_vertex(v11)
-			st.add_vertex(v01)
-
-	# Down-turned lip along both long edges (x = +-w), facing outward, from the roof edge down to
-	# the side skin's top edge, so it continues the skin's outer face with no overlap.
-	for edge_sign: float in [-1.0, 1.0]:
-		var x_edge := edge_sign * w
-		var y_top := _roof_y(x_edge, w, walls)
-		var y_bot := walls.wall_height
+	# The roof runs along the shared upper outline (side skin top, corner arc, crown), so the roof,
+	# the rear face and the side skin meet on one edge.
+	var outline := _upper_outline()
+	for j in range(outline.size() - 1):
+		var p0 := outline[j]
+		var p1 := outline[j + 1]
+		var d := p1 - p0
+		if d.length() < 0.0001:
+			continue
+		var facing := Vector3(d.y, -d.x, 0.0)
 		for iz in range(z_segments):
 			var z0 := lerpf(z_min, z_max, float(iz) / float(z_segments))
 			var z1 := lerpf(z_min, z_max, float(iz + 1) / float(z_segments))
-			var top0 := Vector3(x_edge, y_top, z0)
-			var top1 := Vector3(x_edge, y_top, z1)
-			var bot0 := Vector3(x_edge, y_bot, z0)
-			var bot1 := Vector3(x_edge, y_bot, z1)
-			if edge_sign > 0.0:
-				st.add_vertex(top0)
-				st.add_vertex(top1)
-				st.add_vertex(bot0)
-				st.add_vertex(top1)
-				st.add_vertex(bot1)
-				st.add_vertex(bot0)
-			else:
-				st.add_vertex(top0)
-				st.add_vertex(bot0)
-				st.add_vertex(top1)
-				st.add_vertex(top1)
-				st.add_vertex(bot0)
-				st.add_vertex(bot1)
+			var v00 := Vector3(p0.x, p0.y, z0)
+			var v10 := Vector3(p1.x, p1.y, z0)
+			var v01 := Vector3(p0.x, p0.y, z1)
+			var v11 := Vector3(p1.x, p1.y, z1)
+			_rear_tri(st, v00, v10, v01, facing)
+			_rear_tri(st, v10, v11, v01, facing)
 
 	st.generate_normals()
 	# No tangents: the exterior shader projects in model space and these meshes carry no UVs.
 	_add_mesh("RoofSkin", st.commit())
 
 
-## Outer roof height at lateral `x`, for a roof of half width `half_w` over walls `wall_height` tall.
-static func roof_y_at(x: float, half_w: float, wall_height: float) -> float:
-	var t := x / half_w
-	return wall_height + SKIN_OFFSET_M + ROOF_RISE_M * (1.0 - t * t)
+## Outer roof height at lateral `x`: the profile's outer roof (markers on the crown use it; the
+## skin follows the same profile). The other arguments are kept for the callers' signature.
+static func roof_y_at(x: float, _half_w: float, _wall_height: float) -> float:
+	return VanBodyProfile.new().outer_roof_y_at(x)
 
 
-func _roof_y(x: float, w: float, walls: VanSideWall) -> float:
-	return roof_y_at(x, w, walls.wall_height)
+## Skin outer x at height `y` for the given side walls: where hull attachments sit on the skin.
+static func skin_outer_x_at(walls: VanSideWall, y: float) -> float:
+	return VanBodyProfile.new(walls).outer_x_at(y)
+
+
+## The skin above the wall top as a CCW XY polyline from the right wall top (x = +w) up the
+## corner arc, across the crown and down to the left wall top. It is the profile's outer outline.
+func _upper_outline() -> PackedVector2Array:
+	var h := _profile.wall_height()
+	var h_out := h + VanBodyProfile.ROOF_THICKNESS
+	var edge := _profile.outer_x_at(h_out)
+	var side_steps := 8
+	var crown_steps := 16
+	var right := PackedVector2Array()
+	for i in range(side_steps + 1):
+		var y := lerpf(h, h_out, float(i) / float(side_steps))
+		right.append(Vector2(_profile.outer_x_at(y), y))
+	var pts := PackedVector2Array(right)
+	for i in range(crown_steps + 1):
+		var x := edge * (1.0 - 2.0 * float(i) / float(crown_steps))
+		pts.append(Vector2(x, _profile.outer_roof_y_at(x)))
+	for i in range(side_steps, -1, -1):
+		pts.append(Vector2(-right[i].x, right[i].y))
+	return pts
 
 
 ## The rear face is a closed ring around the door opening. The opening is the rear door leaves'
@@ -170,11 +174,10 @@ func _roof_y(x: float, w: float, walls: VanSideWall) -> float:
 ## (D4).
 func _build_rear(walls: VanSideWall) -> void:
 	var z := ROOF_Z_MAX
-	var w: float = walls.wall_x_at(walls.wall_height) + SIDE_SKIN_OUTER_M
 	var y_join := VanInteriorSize.REAR_DOOR_TOP - 0.02
 	var x_join := VanInteriorSize.REAR_DOOR_HALF - 0.04
 	var x_bottom := x_join
-	var x_bottom_out: float = walls.wall_x_at(0.0) + SIDE_SKIN_OUTER_M
+	var x_bottom_out := _profile.outer_x_at(0.0)
 	var steps := 8
 
 	var st := SurfaceTool.new()
@@ -200,10 +203,6 @@ func _build_rear(walls: VanSideWall) -> void:
 					Vector3(side * x_join, lerpf(0.0, y_join, f1), z),
 					_rear_side_point(walls, side, lerpf(-0.25, walls.wall_height, f0), z),
 					_rear_side_point(walls, side, lerpf(-0.25, walls.wall_height, f1), z))
-		# Wedge between the side strip's end and the top strip's end at this corner.
-		var join := Vector3(side * x_join, y_join, z)
-		var wall_top := Vector3(side * w, walls.wall_height, z)
-		_rear_tri(st, join, wall_top, Vector3(side * w, _roof_y(side * w, w, walls), z))
 
 	# The floor deck ends 2 cm behind the ring's plane, so a plate 2 cm past its end hides it.
 	var z_deck := VanInteriorSize.CENTER_Z + VanInteriorSize.FLOOR_LENGTH * 0.5 + 0.02
@@ -213,18 +212,17 @@ func _build_rear(walls: VanSideWall) -> void:
 		_rear_quad(st, Vector3(xi, 0.02, z_deck), Vector3(xo, 0.02, z_deck),
 				Vector3(xi, -0.28, z_deck), Vector3(xo, -0.28, z_deck))
 
-	# Top, the opening's flat top edge to the outer roof curve, same x fractions across.
-	var top_steps := 16
+	# Top, the opening's flat top edge to the upper outline (arc and crown), same fractions across.
+	var outline := _upper_outline()
+	var top_steps := outline.size() - 1
 	for i in range(top_steps):
 		var f0 := float(i) / float(top_steps)
 		var f1 := float(i + 1) / float(top_steps)
-		var xo0 := lerpf(-w, w, f0)
-		var xo1 := lerpf(-w, w, f1)
 		_rear_quad(st,
-				Vector3(lerpf(-x_join, x_join, f0), y_join, z),
-				Vector3(lerpf(-x_join, x_join, f1), y_join, z),
-				Vector3(xo0, _roof_y(xo0, w, walls), z),
-				Vector3(xo1, _roof_y(xo1, w, walls), z))
+				Vector3(lerpf(x_join, -x_join, f0), y_join, z),
+				Vector3(lerpf(x_join, -x_join, f1), y_join, z),
+				Vector3(outline[i].x, outline[i].y, z),
+				Vector3(outline[i + 1].x, outline[i + 1].y, z))
 
 	# Reveal along the sides and top, from the ring's inner edge back to the liner's end.
 	var z_back: float = VanInteriorSize.REAR_Z
@@ -245,8 +243,7 @@ func _build_rear(walls: VanSideWall) -> void:
 
 ## A point on the rear ring's outer edge: the outer skin face at height `y`.
 func _rear_side_point(walls: VanSideWall, side: float, y: float, z: float) -> Vector3:
-	return Vector3(side * (walls.wall_x_at(clampf(y, 0.0, walls.wall_height))
-			+ SIDE_SKIN_OUTER_M), y, z)
+	return Vector3(side * _profile.outer_x_at(clampf(y, 0.0, walls.wall_height)), y, z)
 
 
 ## Two triangles for the quad in0-in1 (inner edge) and out0-out1 (outer edge).

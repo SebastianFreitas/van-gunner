@@ -265,6 +265,8 @@ func _build_wall_patch(rng: RandomNumberGenerator, idx: int, patch_mat: Material
 		var prect := Rect2(z - (r + 0.015), y - (r + 0.015), 2.0 * (r + 0.015), 2.0 * (r + 0.015))
 		if not _fit.clear_of_plates(side, prect):
 			continue
+		if side > 0.0 and prect.grow(RIB_CLEAR).intersects(_Fit.GENERATOR_ZONE):
+			continue
 		found = true
 		break
 	if not found:

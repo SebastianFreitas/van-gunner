@@ -5,12 +5,12 @@ extends RefCounted
 ## the closed leaf shrunk 3 cm, must stay clear of the seal) and back onto the leaf.
 const FLANGE_LAP := 0.045
 const FLANGE_BACK := 0.06
-## Plate depths inboard of the wall's cabin face (negative = street side): 2 cm clear of the
+## Plate depths inboard of the outer skin face less its thickness (negative = street side): 2 cm clear of the
 ## edge seal's outer face at -0.195 (D4).
 const FLANGE_D_IN := -0.215
 const FLANGE_D_OUT := -0.23
 ## Web tying the plate to the leaf: sunk into the body and into the plate, so no face is shared.
-const WEB_D_IN := -0.13
+const WEB_D_IN := -0.115
 const WEB_D_OUT := -0.22
 ## Top flange lap over the jamb lip above the leaf (over 2.5 cm grows the leaf into the audit's
 ## opening box past the lip).
@@ -46,7 +46,8 @@ func add_front_flange(
 ) -> void:
 	var walls := _walls
 	var p := func(d: float, y: float, z: float) -> Vector3:
-		return Vector3(wall_sign * (walls.wall_x_at(y) - d - x_ref), y - mid_y, z - z_ref)
+		return Vector3(wall_sign * (VanHull.skin_outer_x_at(walls, y) - VanHull.SIDE_SKIN_OUTER_M - d
+				- x_ref), y - mid_y, z - z_ref)
 	var ya := y_min + 0.03
 	var yb := y_max - 0.03
 	var st := SurfaceTool.new()
@@ -81,7 +82,8 @@ func add_top_flange(
 ) -> void:
 	var walls := _walls
 	var p := func(d: float, y: float, z: float) -> Vector3:
-		return Vector3(wall_sign * (walls.wall_x_at(y) - d - x_ref), y - mid_y, z - z_ref)
+		return Vector3(wall_sign * (VanHull.skin_outer_x_at(walls, y) - VanHull.SIDE_SKIN_OUTER_M - d
+				- x_ref), y - mid_y, z - z_ref)
 	var ya := y_max - TOP_PLATE_DROP
 	var yb := walls.door_y_max - walls.door_jamb_inset + TOP_LAP
 	var st := SurfaceTool.new()

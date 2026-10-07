@@ -20,34 +20,8 @@ func _init(hull: VanHull) -> void:
 ## because the bolted-on truck cab (x +-1.95, roof 3.05) no longer covers the slab.
 func build(walls: VanSideWall) -> void:
 	var z := VanInteriorSize.FRONT_Z
-	var w: float = walls.wall_x_at(walls.wall_height) + VanHull.SIDE_SKIN_OUTER_M
-	var xc: float = _hull._profile.outer_x_at(walls.wall_height)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-
-	var top_steps := 16
-	for i in range(top_steps):
-		var f0 := float(i) / float(top_steps)
-		var f1 := float(i + 1) / float(top_steps)
-		var xi0 := lerpf(-xc, xc, f0)
-		var xi1 := lerpf(-xc, xc, f1)
-		var xo0 := lerpf(-w, w, f0)
-		var xo1 := lerpf(-w, w, f1)
-		var in0 := Vector3(xi0, _hull._profile.outer_roof_y_at(xi0), z)
-		var in1 := Vector3(xi1, _hull._profile.outer_roof_y_at(xi1), z)
-		var out0 := Vector3(xo0, _hull._roof_y(xo0, w, walls), z)
-		var out1 := Vector3(xo1, _hull._roof_y(xo1, w, walls), z)
-		_hull._rear_tri(st, in0, in1, out0, Vector3.FORWARD)
-		_hull._rear_tri(st, in1, out1, out0, Vector3.FORWARD)
-
-	# Corners: from the wall top's cab point and skin edge up to the strip's ends.
-	for side: float in [-1.0, 1.0]:
-		var cab_wall := Vector3(side * xc, walls.wall_height, z)
-		var cab_top := Vector3(side * xc, _hull._profile.outer_roof_y_at(side * xc), z)
-		var skin_wall := Vector3(side * w, walls.wall_height, z)
-		var skin_top := Vector3(side * w, _hull._roof_y(side * w, w, walls), z)
-		_hull._rear_tri(st, cab_wall, skin_wall, cab_top, Vector3.FORWARD)
-		_hull._rear_tri(st, skin_wall, skin_top, cab_top, Vector3.FORWARD)
 
 	# The fill: stands in front of the interior front wall's slab (so it never shows) and closes
 	# its sides and top back to the returns, since the bolted-on cab is smaller than the box.
@@ -70,13 +44,10 @@ func build(walls: VanSideWall) -> void:
 	for i in range(1, rows + 1):
 		var y := h * float(i) / float(rows)
 		pts.append(Vector2(_hull._profile.outer_x_at(y) + g, y))
-	if _hull._profile.outer_roof_y_at(xc) > h + 0.001:
-		pts.append(Vector2(xc + g, _hull._profile.outer_roof_y_at(xc) + g))
-	for i in range(top_steps - 1, 0, -1):
-		var x := lerpf(-xc, xc, float(i) / float(top_steps))
-		pts.append(Vector2(x, _hull._profile.outer_roof_y_at(x) + g))
-	if _hull._profile.outer_roof_y_at(-xc) > h + 0.001:
-		pts.append(Vector2(-(xc + g), _hull._profile.outer_roof_y_at(-xc) + g))
+	# Up the roof corner arc, across the crown and down the other arc: the roof's front edge.
+	var outline := _hull._upper_outline()
+	for k in range(1, outline.size() - 1):
+		pts.append(Vector2(outline[k].x + signf(outline[k].x) * g, outline[k].y + g))
 	for i in range(rows, 0, -1):
 		var y := h * float(i) / float(rows)
 		pts.append(Vector2(-(_hull._profile.outer_x_at(y) + g), y))
@@ -112,6 +83,23 @@ func build(walls: VanSideWall) -> void:
 		_hull._rear_tri(st, pf, qf, qb, out)
 		_hull._rear_tri(st, pf, qb, pb, out)
 
+	# Cap over the roof's front edge: RoofSkin ends at z, g behind the fill's band, so a thin strip
+	# at z joins the roof edge along the whole upper outline to the band's outer edge.
+	var cap_in := PackedVector2Array()
+	var cap_out := PackedVector2Array()
+	for k in range(outline.size()):
+		var o := outline[k]
+		var ends := k == 0 or k == outline.size() - 1
+		cap_in.append(o)
+		cap_out.append(Vector2(o.x + signf(o.x) * g, o.y + (0.0 if ends else g)))
+	for k in range(outline.size() - 1):
+		var ia := Vector3(cap_in[k].x, cap_in[k].y, z)
+		var ib := Vector3(cap_in[k + 1].x, cap_in[k + 1].y, z)
+		var oa := Vector3(cap_out[k].x, cap_out[k].y, z)
+		var ob := Vector3(cap_out[k + 1].x, cap_out[k + 1].y, z)
+		_hull._rear_tri(st, ia, ib, oa, Vector3.FORWARD)
+		_hull._rear_tri(st, ib, ob, oa, Vector3.FORWARD)
+
 	# Cap over each side skin's front end, from the band out to the skin's outer face, in the skin's
 	# own end plane: a ray slanting past the front corner otherwise slips between band and skin
 	# (a cap 1 cm before the end let shallow rays through on the right).
@@ -121,8 +109,8 @@ func build(walls: VanSideWall) -> void:
 			var yb := h * float(i + 1) / float(rows)
 			var ia: float = _hull._profile.outer_x_at(ya)
 			var ib: float = _hull._profile.outer_x_at(yb)
-			var oa: float = walls.wall_x_at(ya) + VanHull.SIDE_SKIN_OUTER_M + 0.012
-			var ob: float = walls.wall_x_at(yb) + VanHull.SIDE_SKIN_OUTER_M + 0.012
+			var oa: float = ia + 0.012
+			var ob: float = ib + 0.012
 			var zc := z
 			_hull._rear_tri(st, Vector3(side * ia, ya, zc), Vector3(side * oa, ya, zc),
 					Vector3(side * ib, yb, zc), Vector3.FORWARD)

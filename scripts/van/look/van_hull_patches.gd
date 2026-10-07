@@ -56,10 +56,10 @@ func _build_rear_corner(walls: VanSideWall, s: float) -> void:
 	for iy in range(y_steps):
 		var y0 := lerpf(SILL_TOP_Y, walls.wall_height, float(iy) / float(y_steps))
 		var y1 := lerpf(SILL_TOP_Y, walls.wall_height, float(iy + 1) / float(y_steps))
-		var x0 := s * (walls.wall_x_at(clampf(y0, 0.0, walls.wall_height))
-			+ VanHull.SIDE_SKIN_OUTER_M + CORNER_OUT_M)
-		var x1 := s * (walls.wall_x_at(clampf(y1, 0.0, walls.wall_height))
-			+ VanHull.SIDE_SKIN_OUTER_M + CORNER_OUT_M)
+		var x0 := s * (VanHull.skin_outer_x_at(walls, clampf(y0, 0.0, walls.wall_height))
+			+ CORNER_OUT_M)
+		var x1 := s * (VanHull.skin_outer_x_at(walls, clampf(y1, 0.0, walls.wall_height))
+			+ CORNER_OUT_M)
 		var p00 := Vector3(x0, y0, z0)
 		var p01 := Vector3(x0, y0, CORNER_Z1)
 		var p10 := Vector3(x1, y1, z0)
@@ -86,7 +86,7 @@ func _build_rear_corner(walls: VanSideWall, s: float) -> void:
 ## Rocker sill, an extruded closed chamfer-top/outer-face/bottom/inner-face ring running the length
 ## of the body at the skin's floor position, replacing the old plain box.
 func _build_sill(walls: VanSideWall, s: float, arch_spans: Array[Vector2]) -> void:
-	var xs: float = walls.wall_x_at(0.0) + VanHull.SIDE_SKIN_OUTER_M
+	var xs: float = VanHull.skin_outer_x_at(walls, 0.0)
 	# Outer-to-inner ring: chamfer top, outer face, bottom.
 	var section: Array[Vector2] = [
 		Vector2(xs - 0.02, SILL_TOP_Y),
@@ -172,7 +172,7 @@ func _add_sill_cap(
 ## the floor deck's side (`deck_half_x`) to its sill's bottom face (which ends at xs - 0.04). The
 ## deck already closes the bottom between them, so a full plate would lie coplanar on it.
 func _build_belly(walls: VanSideWall, deck_half_x: float) -> void:
-	var x_edge: float = walls.wall_x_at(0.0) + VanHull.SIDE_SKIN_OUTER_M - 0.04
+	var x_edge: float = VanHull.skin_outer_x_at(walls, 0.0) - 0.04
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)

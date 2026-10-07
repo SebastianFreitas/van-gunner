@@ -144,7 +144,7 @@ func _fill_slot(pieces: RefCounted, slot: Dictionary, side: float, rng: RandomNu
 func _skin_x(y: float) -> float:
 	if _walls == null:
 		return FACE_X
-	return _walls.wall_x_at(y) + VanHull.SIDE_SKIN_OUTER_M
+	return VanHull.skin_outer_x_at(_walls, y)
 
 
 ## Inner-face x of a plate spanning y0..y1, at its bottom (x) and top (y). A straight line

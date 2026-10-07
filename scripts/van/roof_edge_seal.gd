@@ -34,7 +34,7 @@ static func build(walls: VanSideWall, parent: Node3D) -> void:
 
 static func _add_side(walls: VanSideWall, parent: Node3D, sign_x: float, node_name: StringName,
 		mat: Material) -> void:
-	var w := walls.wall_x_at(walls.wall_height) + VanHull.SIDE_SKIN_OUTER_M
+	var w := VanHull.skin_outer_x_at(walls, walls.wall_height)
 	var rim_y := walls.wall_height + VanHull.SKIN_OFFSET_M
 	var z0 := VanInteriorSize.FRONT_Z
 	var z1 := VanHull.ROOF_Z_MAX

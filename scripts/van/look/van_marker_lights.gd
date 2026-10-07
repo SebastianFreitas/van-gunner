@@ -69,7 +69,7 @@ func rebuild_look(_look: VanLook) -> void:
 
 
 func _build_side_lamps(profile: VanBodyProfile, lens_mat: Material, housing_mat: Material) -> void:
-	var sx := profile.inner_x_at(LAMP_Y) + VanHull.SIDE_SKIN_OUTER_M
+	var sx := profile.outer_x_at(LAMP_Y)
 	var walls := get_node_or_null(SIDE_WALLS_PATH) as VanSideWall
 	for sign_idx in 2:
 		var side := -1.0 if sign_idx == 0 else 1.0
@@ -107,7 +107,7 @@ func _build_rear_lamps(profile: VanBodyProfile, red_lens_mat: Material, amber_le
 		housing_mat: Material) -> void:
 	var rear := VanInteriorSize.REAR_Z + 0.02
 	var rim_z := VanHull.ROOF_Z_MAX
-	var roof_w := profile.inner_x_at(profile.wall_height()) + VanHull.SIDE_SKIN_OUTER_M
+	var roof_w := profile.outer_x_at(profile.wall_height())
 	var max_x := 0.0
 	for lamp_x in ID_LAMP_X:
 		max_x = maxf(max_x, absf(lamp_x))

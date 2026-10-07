@@ -279,16 +279,20 @@ def main() -> int:
 
     wall_start = time.time()
     with project_lock(ROOT):
-        if not has_import_cache(ROOT):
-            # The game never imports: without the cache every texture and class lookup
-            # fails and the run hangs until the timeout, so a longer timeout would not
-            # help (a fresh worktree whose main checkout has no cache, or the main
-            # checkout before any editor run).
+        # The game never imports: without the cache every texture and class lookup
+        # fails and the run hangs until the timeout, so a longer timeout would not
+        # help (a fresh worktree whose main checkout has no cache, or the main
+        # checkout before any editor run). A seeded cache is also stale for classes
+        # the branch added (global_script_class_cache.cfg), so the scan always runs;
+        # warm it costs only seconds.
+        if has_import_cache(ROOT):
+            print("   refreshing the import and class cache")
+        else:
             print("   no import cache in .godot/: running the import scan first")
-            import_hits, _ = check.run_pass(exe, ["--import"], "import scan")
-            if import_hits:
-                print(f"SMOKE FAILED: import scan printed {len(import_hits)} failure line(s)")
-                return 1
+        import_hits, _ = check.run_pass(exe, ["--import"], "import scan")
+        if import_hits:
+            print(f"SMOKE FAILED: import scan printed {len(import_hits)} failure line(s)")
+            return 1
         run_jobs([game] + stress + audit, max_jobs, ROOT, TIMEOUT_SECONDS)
     started = game.start
     wall = f"   wall {time.time() - wall_start:.0f} s (jobs {max_jobs})"

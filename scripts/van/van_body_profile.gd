@@ -7,7 +7,7 @@ extends RefCounted
 const BELT_FRACTION := 0.45  ## belt line height as a share of the wall height
 const BELT_BLEND := 0.3  ## meters of smooth blend across the belt-line knee
 const CORNER_RADIUS := 0.5  ## roof corner rounding (the van is about x2 a real one)
-const WALL_THICKNESS := 0.12  ## horizontal offset from the inner liner to the outer skin
+const WALL_THICKNESS := 0.22  ## horizontal offset from the inner liner to the outer skin
 const ROOF_THICKNESS := 0.14  ## vertical offset from the inner vault to the outer roof
 const FALLBACK_WALL_HEIGHT := VanInteriorSize.WALL_HEIGHT
 const FALLBACK_BOTTOM_HALF := VanInteriorSize.BOTTOM_HALF
