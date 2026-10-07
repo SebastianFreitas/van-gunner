@@ -19,12 +19,12 @@ const K_HOPPER := "scrap_hopper_load"
 const TRUNK_HALF_X := 2.2
 const TRUNK_Y := 2.95
 const TRUNK_Z_MIN := -4.4
-const TRUNK_Z_MAX := 4.4
-const TRUNK_STEPS := 7
+const TRUNK_Z_MAX := VanInteriorSize.REAR_Z - 0.18
+const TRUNK_STEPS := 9
 const FEED_DROP := 0.14
 const FRONT_Z := -4.35
-const GAP_Z_MIN := 0.85
-const GAP_Z_MAX := 1.61
+const GAP_Z_MIN := 0.775
+const GAP_Z_MAX := 3.117
 const CLAMP_STEP := 0.6
 const TAPE_STEP := 0.9
 ## Least arc distance between a splice band centre and a clamp or marker centre (half lengths + 2 cm).
@@ -343,7 +343,7 @@ func _build_junk(rng: RandomNumberGenerator) -> void:
 
 	var bottle_mat := MachineParts.dark(Color(0.32, 0.11, 0.07), 0.8)
 	var idx := 0
-	for z: float in [-1.95, -1.7]:
+	for z: float in [2.0, 2.25]:
 		var gx := _router.wall_x(0.62) - 0.2
 		var bottle_mesh := CylinderMesh.new()
 		bottle_mesh.top_radius = 0.11

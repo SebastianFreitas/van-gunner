@@ -7,8 +7,8 @@ const WALL_PATH := ^"../../Interior/Shell/SideWalls"
 const CEILING_PATH := ^"../../Interior/Shell/Ceiling"
 
 const RIB_Z0:= -4.05
-const RIB_STEP := 1.35
-const RIB_COUNT := 7
+const RIB_STEP := 1.45
+const RIB_COUNT := 8
 const CEIL_SEGMENTS := 8
 const CEIL_X_HALF := 2.3
 
@@ -16,11 +16,11 @@ const WALL_Y_TOP := 2.95
 const WALL_Y_BOT := 0.1
 const WALL_SEGMENTS := 6
 
-const DOOR_Z_MIN := -4.655
-const DOOR_Z_MAX := -2.185
-const WINDOW_SPANS: Array[Vector2] = [Vector2(-1.60, 0.85), Vector2(1.61, 4.06)]
+const DOOR_Z_MIN := -4.399
+const DOOR_Z_MAX := -1.929
+const WINDOW_SPANS: Array[Vector2] = [Vector2(-1.675, 0.775), Vector2(3.117, 5.567)]
 const Z_MIN := -4.5
-const Z_MAX := 4.55
+const Z_MAX := VanInteriorSize.REAR_Z - 0.03
 
 const PLATE_COUNT := 8
 const PLATE_TRIES := 20
@@ -185,7 +185,7 @@ func _place_plate(rng: RandomNumberGenerator, side: float, idx: int, placed: Arr
 		var h := rng.randf_range(0.25, 0.5)
 		var y := rng.randf_range(0.2 + h * 0.5, 1.0 - h * 0.5)
 		var z := rng.randf_range(Z_MIN, Z_MAX)
-		if _in_span(z, DOOR_Z_MIN, DOOR_Z_MAX):
+		if z + w * 0.5 > DOOR_Z_MIN and z - w * 0.5 < DOOR_Z_MAX:
 			continue
 		if z - w * 0.5 < Z_MIN or z + w * 0.5 > Z_MAX - 0.1:
 			continue

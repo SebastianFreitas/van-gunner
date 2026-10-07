@@ -102,12 +102,17 @@ func check_leaks_outside(tris: RefCounted, runner: Node, opening_boxes: Dictiona
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1337
 
+	# Ring radius clears the box's horizontal half-diagonal, so no camera sits inside the van.
+	var ring_radius: float = maxf(7.0, Vector2(box.size.x, box.size.z).length() * 0.5 + 0.5)
+
 	var agg: Dictionary = {}
 	var exempt_agg: Dictionary = {}
 	for h in [0.8, 2.0, 4.5]:
 		for az_i in range(24):
 			var angle: float = TAU * float(az_i) / 24.0
-			var origin := Vector3(centre.x + cos(angle) * 7.0, h, centre.z + sin(angle) * 7.0)
+			var origin := Vector3(
+				centre.x + cos(angle) * ring_radius, h, centre.z + sin(angle) * ring_radius
+			)
 			for _r in range(400):
 				var target := Vector3(
 					box.position.x + rng.randf() * box.size.x,
@@ -128,7 +133,10 @@ func check_leaks_outside(tris: RefCounted, runner: Node, opening_boxes: Dictiona
 				var target_agg: Dictionary = agg
 				var inside := false
 				if rule.has("box"):
-					inside = (rule.box as AABB).has_point(hit.pos)
+					var p: Vector3 = hit.pos
+					inside = (rule.box as AABB).has_point(p) or (
+						rule.get("mirror", false) and (rule.box as AABB).has_point(Vector3(-p.x, p.y, p.z))
+					)
 				elif rule.has("entry"):
 					inside = _enters_through(origin, hit.pos, rule.entry)
 				else:

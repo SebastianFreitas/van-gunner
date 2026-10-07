@@ -33,6 +33,8 @@ func build_side_mesh(
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
 	var half_z: float = wall.span_z * 0.5
+	var z_lo: float = wall.center_z - half_z
+	var z_hi: float = wall.center_z + half_z
 	var verts: Array = []
 	var uvs: Array = []
 	var solid: Array = []
@@ -46,7 +48,7 @@ func build_side_mesh(
 		var x_inner: float = wall_sign * (wall._profile_x(y) + _x_from)
 		for iz in range(wall.z_segments + 1):
 			var tz := float(iz) / float(wall.z_segments)
-			var z := lerpf(-half_z, half_z, tz)
+			var z := lerpf(z_lo, z_hi, tz)
 			row_v.append(Vector3(x_inner, y, z))
 			row_uv.append(Vector2(tz, ty))
 			row_solid.append(not is_open(y, z))
@@ -62,7 +64,7 @@ func build_side_mesh(
 		var x_inner: float = wall_sign * (wall._profile_x(y) + _x_from)
 		var x_outer: float = x_inner + wall_sign * (_x_to - _x_from)
 		for iz in range(wall.z_segments + 1):
-			var z := lerpf(-half_z, half_z, float(iz) / float(wall.z_segments))
+			var z := lerpf(z_lo, z_hi, float(iz) / float(wall.z_segments))
 			row.append(Vector3(x_outer, y, z))
 		outer.append(row)
 
@@ -75,8 +77,8 @@ func build_side_mesh(
 		for iz in range(wall.z_segments):
 			var y0: float = float(iy) / float(wall.y_segments) * wall.wall_height
 			var y1: float = float(iy + 1) / float(wall.y_segments) * wall.wall_height
-			var z0 := lerpf(-half_z, half_z, float(iz) / float(wall.z_segments))
-			var z1 := lerpf(-half_z, half_z, float(iz + 1) / float(wall.z_segments))
+			var z0 := lerpf(z_lo, z_hi, float(iz) / float(wall.z_segments))
+			var z1 := lerpf(z_lo, z_hi, float(iz + 1) / float(wall.z_segments))
 			# Door bay: punch by cell center. Windows: only punch cells fully inside
 			# the rounded cut so wall metal stays under the frame lip (rear-door look).
 			if is_door_bay_open((y0 + y1) * 0.5, (z0 + z1) * 0.5):
@@ -103,8 +105,8 @@ func build_side_mesh(
 		for iz in range(wall.z_segments):
 			var y0: float = float(iy) / float(wall.y_segments) * wall.wall_height
 			var y1: float = float(iy + 1) / float(wall.y_segments) * wall.wall_height
-			var z0 := lerpf(-half_z, half_z, float(iz) / float(wall.z_segments))
-			var z1 := lerpf(-half_z, half_z, float(iz + 1) / float(wall.z_segments))
+			var z0 := lerpf(z_lo, z_hi, float(iz) / float(wall.z_segments))
+			var z1 := lerpf(z_lo, z_hi, float(iz + 1) / float(wall.z_segments))
 			if is_door_bay_open((y0 + y1) * 0.5, (z0 + z1) * 0.5):
 				continue
 			if cell_fully_in_window_cut(y0, y1, z0, z1):
@@ -178,8 +180,8 @@ func add_reveal_edge(
 	var o_a := Vector3(wall_sign * (wall._profile_x(a.x) + _x_to), a.x, a.y)
 	var i_b := Vector3(wall_sign * reveal_inner_profile_x(b.x), b.x, b.y)
 	var o_b := Vector3(wall_sign * (wall._profile_x(b.x) + _x_to), b.x, b.y)
-	var uva := Vector2((a.y + half_span) / wall.span_z, a.x / wall.wall_height)
-	var uvb := Vector2((b.y + half_span) / wall.span_z, b.x / wall.wall_height)
+	var uva := Vector2((a.y + half_span - wall.center_z) / wall.span_z, a.x / wall.wall_height)
+	var uvb := Vector2((b.y + half_span - wall.center_z) / wall.span_z, b.x / wall.wall_height)
 	add_reveal_quad(st, i_a, o_a, i_b, o_b, uva, uvb, inward_2d)
 
 

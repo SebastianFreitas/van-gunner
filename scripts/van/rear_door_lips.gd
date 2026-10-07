@@ -27,8 +27,8 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 	var ast := SurfaceTool.new()
 	ast.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var top := VanHullMesh.vault_y(ceiling, 0.05, 3.05, 0.38)
-	_box(ast, Vector3(-0.05, -0.05, 4.855), Vector3(0.05, top + 0.045, 4.867), inv)
-	_box(ast, Vector3(0.035, 0.10, 4.77), Vector3(0.05, top - 0.10, 4.855), inv)
+	_box(ast, Vector3(-0.05, -0.05, 6.735), Vector3(0.05, top + 0.045, 6.747), inv)
+	_box(ast, Vector3(0.035, 0.10, 6.65), Vector3(0.05, top - 0.10, 6.735), inv)
 	ast.generate_tangents()
 	_add_mesh(right, "AstragalOuter", ast.commit(), mat)
 
@@ -71,7 +71,7 @@ static func _top_strip(st: SurfaceTool, walls: VanSideWall, ceiling: VanCeiling,
 			_quad(st, prev[0], prev[1], prev[2], prev[3], Vector3(-1.0, 0.0, 0.0), inv)
 		elif k == 1:
 			_span(st, prev, _four(-x, v + 0.045, v - 0.075), inv)
-			var step := Vector3(-x, cur[0].y, 4.82)
+			var step := Vector3(-x, cur[0].y, 6.70)
 			_quad(st, cur[0], step, cur[4], cur[5], Vector3(-1.0, 0.0, 0.0), inv)
 			prev = cur
 		else:
@@ -83,15 +83,15 @@ static func _top_strip(st: SurfaceTool, walls: VanSideWall, ceiling: VanCeiling,
 ## Six-point section at a station: inner and outer edge of the plate, lip return, buried base.
 static func _six(x: float, y_outer: float, y_inner: float, y_mid: float) -> PackedVector3Array:
 	return PackedVector3Array([
-		Vector3(x, y_inner, 4.77), Vector3(x, y_inner, 4.835), Vector3(x, y_outer, 4.835),
-		Vector3(x, y_outer, 4.82), Vector3(x, y_mid, 4.82), Vector3(x, y_mid, 4.77)])
+		Vector3(x, y_inner, 6.65), Vector3(x, y_inner, 6.715), Vector3(x, y_outer, 6.715),
+		Vector3(x, y_outer, 6.70), Vector3(x, y_mid, 6.70), Vector3(x, y_mid, 6.65)])
 
 
 ## Four-point plate-only section.
 static func _four(x: float, y_outer: float, y_inner: float) -> PackedVector3Array:
 	return PackedVector3Array([
-		Vector3(x, y_inner, 4.82), Vector3(x, y_inner, 4.835), Vector3(x, y_outer, 4.835),
-		Vector3(x, y_outer, 4.82)])
+		Vector3(x, y_inner, 6.70), Vector3(x, y_inner, 6.715), Vector3(x, y_outer, 6.715),
+		Vector3(x, y_outer, 6.70)])
 
 
 ## One quad per section edge between stations a and b.

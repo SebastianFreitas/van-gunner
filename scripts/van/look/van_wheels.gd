@@ -19,7 +19,7 @@ const ROAD_Y := ARCH_ROAD_Y - BODY_LIFT
 ## The hull's underside (VanHullPatches' sill and belly bottom): the rear arches' flares and wells
 ## end on it and the mud flaps hang from it.
 const HULL_BOTTOM_Y := -0.25
-const WHEEL_X := 2.84
+const WHEEL_X := 3.06
 const TYRE_WIDTH := 0.5
 
 const FRONT_AXLE_Z := -7.25
@@ -29,8 +29,8 @@ const FRONT_WHEEL_OUT := 0.04
 const FRONT_RADIUS := 0.8
 const REAR_RADIUS := 0.8
 
-const REAR_AXLES_4: Array[float] = [3.2]
-const REAR_AXLES_6: Array[float] = [1.95, 3.75]
+const REAR_AXLES_4: Array[float] = [4.78]
+const REAR_AXLES_6: Array[float] = [3.28, 5.44]
 
 ## Chance a look builds the tandem rear axles.
 const SIX_WHEEL_CHANCE := 0.4

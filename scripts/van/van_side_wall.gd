@@ -10,12 +10,14 @@ const _Jambs := preload("res://scripts/van/van_side_wall_jambs.gd")
 ## Steel strip closing the band under the roof lip along each long edge.
 const _RoofEdgeSeal := preload("res://scripts/van/roof_edge_seal.gd")
 
-@export var wall_height := 3.08
-@export var span_z := 9.4
-@export var bottom_half_width := 2.42
-@export var top_half_width := 2.00
+@export var wall_height := VanInteriorSize.WALL_HEIGHT
+@export var span_z := VanInteriorSize.LENGTH
+## Z centre of the wall (the front end stays at the cab, so the wall is not centred on 0).
+@export var center_z := VanInteriorSize.CENTER_Z
+@export var bottom_half_width := VanInteriorSize.BOTTOM_HALF
+@export var top_half_width := VanInteriorSize.TOP_HALF
 ## Extra outward bulge at mid-height (meters). Makes the body read as curved, not a flat lean.
-@export var bow_out := 0.18
+@export var bow_out := VanInteriorSize.BOW
 @export var thickness := 0.16
 @export var y_segments := 56
 @export var z_segments := 112
@@ -26,7 +28,7 @@ const _RoofEdgeSeal := preload("res://scripts/van/roof_edge_seal.gd")
 @export var window_half_height := 0.707
 @export var window_half_length := 1.222
 @export var window_center_y := 1.775
-@export var window_centers_z: PackedFloat32Array = PackedFloat32Array([2.835, -0.375])
+@export var window_centers_z: PackedFloat32Array = PackedFloat32Array([4.342, -0.45])
 
 ## D8: one ring sampling for every piece that follows the window opening, so their edges
 ## coincide instead of stepping.
@@ -43,7 +45,7 @@ var WINDOW_CUT_POLY: PackedVector2Array = PackedVector2Array([
 
 ## Side-door openings (match SideDoors layout).
 @export var door_half_length := 1.235
-@export var door_center_z := -3.42
+@export var door_center_z := -3.164
 @export var door_y_min := 0.02
 @export var door_y_max := 3.05
 ## Inset of the door-jamb ring inner edge from the wall opening (meters).
@@ -260,7 +262,7 @@ func _add_door_slide_tracks(mat: Material) -> void:
 func _add_floor_seal_strips(mat: Material) -> void:
 	# Dark rubber/finish bead where the liner meets the deck — covers the small
 	# floor-wall gap and reads like real van corner isolation trim.
-	const FLOOR_HALF_WIDTH := 2.4  # van_floor span_x * 0.5
+	const FLOOR_HALF_WIDTH := VanInteriorSize.FLOOR_WIDTH * 0.5
 	# Bottom 3 cm under the deck, inner face 1.5 cm inside the posts' and hinge bodies' faces and
 	# ends 10 cm short of the van ends, so no face pair sits within 1 cm (audit flicker).
 	var seal_y := 0.01
@@ -269,8 +271,8 @@ func _add_floor_seal_strips(mat: Material) -> void:
 	var seal_depth := maxf(wall_x - FLOOR_HALF_WIDTH + 0.045, 0.055)
 	var seal_center_x := (wall_x + FLOOR_HALF_WIDTH) * 0.5 - 0.0075
 	var half := span_z * 0.5
-	var z0 := -half + 0.1
-	var z1 := half - 0.1
+	var z0 := center_z - half + 0.1
+	var z1 := center_z + half - 0.1
 	var length := z1 - z0
 	var z_mid := (z0 + z1) * 0.5
 	for wall_sign in [-1.0, 1.0]:
@@ -326,7 +328,7 @@ func _solid_z_ranges_below_windows() -> Array:
 	var half := span_z * 0.5
 	var door0 := door_center_z - door_half_length
 	var door1 := door_center_z + door_half_length
-	return [[-half + 0.1, door0 - 0.04], [door1 + 0.04, half - 0.1]]
+	return [[center_z - half + 0.1, door0 - 0.04], [door1 + 0.04, center_z + half - 0.1]]
 
 
 func _solid_z_ranges_mid() -> Array:
@@ -338,15 +340,15 @@ func _solid_z_ranges_mid() -> Array:
 	cuts.sort_custom(func(a, b): return a[0] < b[0])
 
 	var ranges: Array = []
-	var cursor := -half + 0.1
+	var cursor := center_z - half + 0.1
 	for cut in cuts:
 		var c0: float = cut[0]
 		var c1: float = cut[1]
 		if c0 > cursor + 0.3:
 			ranges.append([cursor, c0 - 0.03])
 		cursor = maxf(cursor, c1 + 0.03)
-	if cursor < half - 0.4:
-		ranges.append([cursor, half - 0.1])
+	if cursor < center_z + half - 0.4:
+		ranges.append([cursor, center_z + half - 0.1])
 	return ranges
 
 

@@ -12,11 +12,11 @@ const REAR_ZONE_M := 1.5 ## D25/D26: length of the rear roof zone, from the body
 const FIT_EPS := 0.005
 
 const RACK_Y := 3.66 ## Top of the rack rails; junk (later) sits on it.
-const RACK_HALF_X := 1.9
+const RACK_HALF_X := 1.96
 const RACK_LEG_TOP_Y := RACK_Y - 0.01 ## Legs end inside the rail, clear of its and the slats' planes.
 const RACK_LEG_THICK := 0.035 ## Thinner than the 0.06 rail so the leg's sides sit 1.25 cm inside.
 const RACK_Z_MIN := -4.3
-const RACK_Z_MAX := 4.3
+const RACK_Z_MAX := VanInteriorSize.REAR_Z - 0.4
 
 const SPOT_Z := -4.0 ## The spotlight's cell at the rack's front; junk must leave z < -3.4 free.
 const SPOT_ENERGY := 2.2
@@ -42,7 +42,7 @@ func rebuild_look(look: VanLook) -> void:
 
 	_profile = VanBodyProfile.from_interior(get_node_or_null(INTERIOR_PATH))
 	crown_y = _profile.outer_roof_y_at(0.0)
-	rear_zone_z = _profile.half_length() - REAR_ZONE_M
+	rear_zone_z = VanInteriorSize.REAR_Z - REAR_ZONE_M
 
 	rack_material = StandardMaterial3D.new()
 	rack_material.albedo_color = Color(0.10, 0.095, 0.09)

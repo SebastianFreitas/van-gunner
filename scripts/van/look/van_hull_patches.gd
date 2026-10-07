@@ -7,12 +7,15 @@ var _hull: VanHull
 
 
 ## The corner strip runs from the side skin's end (span_z / 2) to the rear face at this z.
-const CORNER_Z1 := 4.78
+const CORNER_Z1 := VanInteriorSize.REAR_Z + 0.12
+## How far the strip reaches forward over the side skin's end, and how far outward of it it sits.
+const CORNER_OVERLAP_Z := 0.06
+const CORNER_OUT_M := 0.012
 
 ## Sill extent, matching the old box's span along z. SILL_Z1 also matches the floor deck's rear
 ## end (4.80), so the belly strips end edge to edge with it.
 const SILL_Z0 := -4.72
-const SILL_Z1 := 4.80
+const SILL_Z1 := VanInteriorSize.REAR_Z + 0.10
 ## The sill chamfer's inner top, where the rear corner strip starts.
 const SILL_TOP_Y := 0.04
 ## Sill pieces between arch breaks shorter than this are skipped.
@@ -41,7 +44,9 @@ func build(walls: VanSideWall, arch_spans: Array[Vector2]) -> void:
 ## starts at the sill's inner top (SILL_TOP_Y), so it is not buried inside the sill below the skin.
 func _build_rear_corner(walls: VanSideWall, s: float) -> void:
 	var y_steps := 12
-	var z0 := walls.span_z * 0.5
+	# Starts CORNER_OVERLAP_Z before the skin's end, 1.2 cm outward of it, so no ray slips through
+	# the seam between them (and no coplanar flicker).
+	var z0 := VanInteriorSize.REAR_Z - CORNER_OVERLAP_Z
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -51,8 +56,10 @@ func _build_rear_corner(walls: VanSideWall, s: float) -> void:
 	for iy in range(y_steps):
 		var y0 := lerpf(SILL_TOP_Y, walls.wall_height, float(iy) / float(y_steps))
 		var y1 := lerpf(SILL_TOP_Y, walls.wall_height, float(iy + 1) / float(y_steps))
-		var x0 := s * (walls.wall_x_at(clampf(y0, 0.0, walls.wall_height)) + VanHull.SIDE_SKIN_OUTER_M)
-		var x1 := s * (walls.wall_x_at(clampf(y1, 0.0, walls.wall_height)) + VanHull.SIDE_SKIN_OUTER_M)
+		var x0 := s * (walls.wall_x_at(clampf(y0, 0.0, walls.wall_height))
+			+ VanHull.SIDE_SKIN_OUTER_M + CORNER_OUT_M)
+		var x1 := s * (walls.wall_x_at(clampf(y1, 0.0, walls.wall_height))
+			+ VanHull.SIDE_SKIN_OUTER_M + CORNER_OUT_M)
 		var p00 := Vector3(x0, y0, z0)
 		var p01 := Vector3(x0, y0, CORNER_Z1)
 		var p10 := Vector3(x1, y1, z0)

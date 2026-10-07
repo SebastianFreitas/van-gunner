@@ -5,13 +5,13 @@ extends RefCounted
 
 const WALL_THICKNESS := 0.12  ## horizontal offset from the inner liner to the outer skin
 const ROOF_THICKNESS := 0.14  ## vertical offset from the inner vault to the outer roof
-const FALLBACK_WALL_HEIGHT := 3.08
-const FALLBACK_BOTTOM_HALF := 2.42
-const FALLBACK_TOP_HALF := 2.00
-const FALLBACK_BOW := 0.18
-const FALLBACK_VAULT_EDGE := 3.05
+const FALLBACK_WALL_HEIGHT := VanInteriorSize.WALL_HEIGHT
+const FALLBACK_BOTTOM_HALF := VanInteriorSize.BOTTOM_HALF
+const FALLBACK_TOP_HALF := VanInteriorSize.TOP_HALF
+const FALLBACK_BOW := VanInteriorSize.BOW
+const FALLBACK_VAULT_EDGE := VanInteriorSize.CEILING_EDGE_SHELL
 const FALLBACK_VAULT_RISE := 0.38
-const FALLBACK_VAULT_HALF := 2.04
+const FALLBACK_VAULT_HALF := VanInteriorSize.CEILING_SPAN_X * 0.5
 
 var walls: VanSideWall
 var ceiling: VanCeiling

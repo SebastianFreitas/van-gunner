@@ -23,8 +23,8 @@ const _DebugFacadeRender := preload("res://scripts/debug/debug_facade_render_com
 
 ## Rig-local point the van cameras look at: the van body's middle.
 const _VAN_TARGET := Vector3(0.0, 1.5, 0.0)
-## Rig-local camera spots; van-local -Z is the cab, the body spans x +/-2.6, y 0..3.4,
-## z -4.7..4.7.
+## Rig-local camera spots; van-local -Z is the cab, the back compartment spans x +/-3.4,
+## y 0..4.0, z -4.7..6.58 (VanInteriorSize).
 const _VAN_SIDE_FRONT := Vector3(7.0, 3.0, -10.0)
 const _VAN_SIDE_REAR := Vector3(7.0, 3.0, 10.0)
 const _VAN_LOW_FRONT := Vector3(0.0, 1.0, -13.0)
@@ -37,19 +37,19 @@ const _VAN_LIT_SPOTS: Array[Array] = [
 	["van-lit-quarter-driver", Vector3(-7.0, 2.5, -10.0), _VAN_TARGET],
 	["van-lit-quarter-passenger", Vector3(7.0, 2.5, -10.0), _VAN_TARGET],
 	["van-lit-front", Vector3(0.0, 1.2, -12.0), Vector3(0.0, 1.2, 0.0)],
-	["van-lit-rear", Vector3(0.0, 1.5, 12.0), Vector3(0.0, 1.5, 0.0)],
-	["van-lit-window", Vector3(6.0, 1.9, -1.5), Vector3(2.6, 1.9, -1.5)],
+	["van-lit-rear", Vector3(0.0, 1.5, 13.9), Vector3(0.0, 1.5, 0.0)],
+	["van-lit-window", Vector3(7.0, 1.9, -1.5), Vector3(3.6, 1.9, -1.5)],
 	["van-lit-roof", Vector3(0.0, 12.0, 0.5), Vector3(0.0, 3.0, 0.0)],
 ]
-## Interior audit spots, room 4.84 m wide, 3.08 m tall, z -4.7..4.7, floor at y=0.
+## Interior audit spots, room 6.78 m wide, 4.00 m tall, z -4.7..6.58, floor at y=0.
 const _VAN_FRONT_WALL := Vector3(0.0, 1.65, 2.0)
 const _VAN_FRONT_WALL_TARGET := Vector3(0.0, 1.5, -4.7)
-const _VAN_DRIVER_WALL := Vector3(1.2, 1.65, -1.0)
-const _VAN_DRIVER_WALL_TARGET := Vector3(-2.4, 1.5, -2.3)
-const _VAN_PASSENGER_WALL := Vector3(-1.2, 1.65, -1.0)
-const _VAN_PASSENGER_WALL_TARGET := Vector3(2.4, 1.5, -2.3)
+const _VAN_DRIVER_WALL := Vector3(1.68, 1.65, -1.0)
+const _VAN_DRIVER_WALL_TARGET := Vector3(-3.36, 1.5, -2.3)
+const _VAN_PASSENGER_WALL := Vector3(-1.68, 1.65, -1.0)
+const _VAN_PASSENGER_WALL_TARGET := Vector3(3.36, 1.5, -2.3)
 const _VAN_CEILING_FRONT := Vector3(0.0, 1.4, 1.0)
-const _VAN_CEILING_FRONT_TARGET := Vector3(0.0, 3.0, -4.7)
+const _VAN_CEILING_FRONT_TARGET := Vector3(0.0, 3.93, -4.7)
 ## Where the van stands on the street for the IDLE shots: the van drives at IDLE and the
 ## driver waits on wall-clock timers, so without a fixed spot every exterior view lands a few
 ## ticks further down the street each run. 12 m is behind anywhere the van can be after the

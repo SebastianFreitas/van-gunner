@@ -33,6 +33,10 @@ func add_door_jambs(wall_sign: float, mat: Material) -> void:
 		stripped = _clip_front_strip(
 			stripped, wall_sign, -_wall.door_half_length + overlap
 		)
+	# The rear's cabin face stops on the hole's grid line, edge to edge with the panel face.
+	stripped = _clip_front_strip(
+		stripped, wall_sign, -(_wall.door_half_length + _rear_overlap()), -1.0
+	)
 	mi.mesh = stripped
 	# Mesh is built around local origin — parent must sit on the wall (same as SideDoors leaves).
 	mi.position = Vector3(wall_sign * x_ref, mid_y, _wall.door_center_z)
@@ -42,11 +46,14 @@ func add_door_jambs(wall_sign: float, mat: Material) -> void:
 	_wall.add_child(mi)
 
 
+## The rear edge reaches 5 cm past the wall hole's grid line: the hole snaps past the bay's rear
+## edge, and that slot was open to the street behind the reveal.
 func _outer_poly() -> PackedVector2Array:
 	var hz := _wall.door_half_length
+	var hz_rear := hz + _rear_overlap() + 0.05
 	var hy := (_wall.door_y_max - _wall.door_y_min) * 0.5
 	return PackedVector2Array([
-		Vector2(-hz, -hy), Vector2(hz, -hy), Vector2(hz, hy), Vector2(-hz, hy),
+		Vector2(-hz, -hy), Vector2(hz_rear, -hy), Vector2(hz_rear, hy), Vector2(-hz, hy),
 	])
 
 
@@ -67,13 +74,25 @@ func _front_overlap() -> float:
 	var half_z := _wall.span_z * 0.5
 	var edge := _wall.door_center_z - _wall.door_half_length
 	var segs := float(_wall.z_segments)
-	var iz := ceilf((edge + half_z) / _wall.span_z * segs - 1e-4)
-	return lerpf(-half_z, half_z, iz / segs) - edge
+	var iz := ceilf((edge + half_z - _wall.center_z) / _wall.span_z * segs - 1e-4)
+	return lerpf(_wall.center_z - half_z, _wall.center_z + half_z, iz / segs) - edge
 
 
-## Clips the cabin-face triangles (normal toward the cabin) to local z >= min_z, so the jamb's
-## cabin face meets the wall panel's cabin face edge to edge instead of lying over it.
-static func _clip_front_strip(mesh: ArrayMesh, wall_sign: float, min_z: float) -> ArrayMesh:
+## How far the wall hole's grid line lies past the bay's rear edge (cells whose centre is in the
+## bay are punched, same rule as VanSideWallPanel.is_door_bay_open).
+func _rear_overlap() -> float:
+	var half_z := _wall.span_z * 0.5
+	var edge := _wall.door_center_z + _wall.door_half_length
+	var segs := float(_wall.z_segments)
+	var iz := floorf((edge + half_z - _wall.center_z) / _wall.span_z * segs + 0.5)
+	return lerpf(_wall.center_z - half_z, _wall.center_z + half_z, iz / segs) - edge
+
+
+## Clips the cabin-face triangles (normal toward the cabin) to local z >= min_z (dir 1) or
+## z <= -min_z (dir -1), so the jamb's cabin face meets the wall panel's cabin face edge to edge
+## instead of lying over it.
+static func _clip_front_strip(mesh: ArrayMesh, wall_sign: float, min_z: float,
+		dir: float = 1.0) -> ArrayMesh:
 	if mesh.get_surface_count() == 0:
 		return mesh
 	var arrays := mesh.surface_get_arrays(0)
@@ -101,7 +120,7 @@ static func _clip_front_strip(mesh: ArrayMesh, wall_sign: float, min_z: float) -
 				Vector4(tans[k * 4], tans[k * 4 + 1], tans[k * 4 + 2], tans[k * 4 + 3])])
 		var cabin_face: bool = (poly[0][1] as Vector3).x * -wall_sign > 0.9
 		if cabin_face:
-			poly = _clip_poly(poly, min_z)
+			poly = _clip_poly(poly, min_z, dir)
 		for i in range(1, poly.size() - 1):
 			for c in [poly[0], poly[i], poly[i + 1]]:
 				out_v.append(c[0])
@@ -121,14 +140,15 @@ static func _clip_front_strip(mesh: ArrayMesh, wall_sign: float, min_z: float) -
 	return out
 
 
-## Sutherland-Hodgman against the plane z = min_z, keeping z >= min_z (winding preserved).
-static func _clip_poly(poly: Array, min_z: float) -> Array:
+## Sutherland-Hodgman against the plane dir * z = min_z, keeping dir * z >= min_z (winding
+## preserved).
+static func _clip_poly(poly: Array, min_z: float, dir: float = 1.0) -> Array:
 	var res: Array = []
 	for i in range(poly.size()):
 		var a: Array = poly[i]
 		var b: Array = poly[(i + 1) % poly.size()]
-		var za: float = (a[0] as Vector3).z - min_z
-		var zb: float = (b[0] as Vector3).z - min_z
+		var za: float = dir * (a[0] as Vector3).z - min_z
+		var zb: float = dir * (b[0] as Vector3).z - min_z
 		if za >= 0.0:
 			res.append(a)
 		if (za >= 0.0) != (zb >= 0.0):

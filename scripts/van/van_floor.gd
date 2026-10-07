@@ -6,9 +6,11 @@ extends Node3D
 ## Height of flat floor decals above the deck: clears the geometry audit's 1 cm coplanar tolerance (D42).
 const DECAL_LIFT := 0.012
 
-@export var span_x := 4.8
-@export var span_z := 9.6
-@export var deck_thickness := 0.25
+@export var span_x := VanInteriorSize.FLOOR_WIDTH
+@export var span_z := VanInteriorSize.FLOOR_LENGTH
+## Z centre of the deck (the front end stays at the cab).
+@export var center_z := VanInteriorSize.CENTER_Z
+@export var deck_thickness := 0.27
 @export var floor_material: Material
 @export var rebuild_on_ready := true
 
@@ -40,7 +42,7 @@ func _build() -> void:
 	deck.material_override = deck_mat
 	deck.layers = VanLighting.LAYER_VAN_INTERIOR
 	deck.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	deck.position = Vector3(0.0, -deck_thickness * 0.5, 0.0)
+	deck.position = Vector3(0.0, -deck_thickness * 0.5, center_z)
 	add_child(deck)
 
 	_build_threshold_strips()
@@ -136,7 +138,7 @@ func _build_threshold_strips() -> void:
 	_add_box(
 		"RearThreshold",
 		Vector3(2.2, 0.03, 0.08),
-		Vector3(0.0, 0.015, 4.56),
+		Vector3(0.0, 0.015, center_z + span_z * 0.5 - 0.07),
 		metal
 	)
 	# Cab doorway sill
@@ -157,10 +159,10 @@ func _build_rear_entry_ramp() -> void:
 	const OUTSIDE_FLOOR_Y := -0.2
 
 	var angle := atan(RAMP_RISE / RAMP_RUN)
-	var rear_z := span_z * 0.5
+	var rear_z := center_z + span_z * 0.5
 	var inner_z := rear_z - 0.25
 	var outer_z := inner_z + RAMP_RUN
-	var center_z := (inner_z + outer_z) * 0.5
+	var ramp_z := (inner_z + outer_z) * 0.5
 	var center_y := OUTSIDE_FLOOR_Y + RAMP_RISE * 0.5
 
 	var metal := _metal_mat(Color(0.1, 0.105, 0.1, 1.0), 0.7, 0.5)
@@ -171,7 +173,7 @@ func _build_rear_entry_ramp() -> void:
 	mesh.name = &"RearEntryRamp"
 	mesh.mesh = box
 	mesh.material_override = metal
-	mesh.position = Vector3(0.0, center_y, center_z)
+	mesh.position = Vector3(0.0, center_y, ramp_z)
 	mesh.rotation.x = angle
 	mesh.layers = VanLighting.LAYER_VAN_INTERIOR
 	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
@@ -187,7 +189,7 @@ func _build_rear_entry_ramp() -> void:
 		var shape := BoxShape3D.new()
 		shape.size = Vector3(RAMP_WIDTH, 0.08, RAMP_RUN)
 		col.shape = shape
-		col.position = Vector3(0.0, center_y, center_z)
+		col.position = Vector3(0.0, center_y, ramp_z)
 		col.rotation.x = angle
 		shell.add_child.call_deferred(col)
 
@@ -202,7 +204,7 @@ func _build_entrance_mats() -> void:
 	_add_flat(
 		"RearEntryMat",
 		Vector2(1.55, 0.95),
-		Vector3(0.0, DECAL_LIFT, 3.95),
+		Vector3(0.0, DECAL_LIFT, center_z + span_z * 0.5 - 0.85),
 		0.0,
 		rear_mat
 	)

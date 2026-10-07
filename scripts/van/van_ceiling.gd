@@ -5,9 +5,11 @@ extends Node3D
 
 const _Cove := preload("res://scripts/van/van_ceiling_cove.gd")
 
-@export var span_x := 4.72
-@export var span_z := 9.4
-@export var edge_height := 3.02
+@export var span_x := VanInteriorSize.CEILING_SPAN_X_DEFAULT
+@export var span_z := VanInteriorSize.LENGTH
+## Z centre of the vault (the front end stays at the cab).
+@export var center_z := VanInteriorSize.CENTER_Z
+@export var edge_height := VanInteriorSize.CEILING_EDGE
 @export var peak_rise := 0.38
 @export var x_segments := 20
 @export var z_segments := 40
@@ -65,7 +67,7 @@ func _build_vault_mesh() -> ArrayMesh:
 	for iz in range(z_segments + 1):
 		var row: Array = []
 		var uv_row: Array = []
-		var z := lerpf(-half_z, half_z, float(iz) / float(z_segments))
+		var z := lerpf(center_z - half_z, center_z + half_z, float(iz) / float(z_segments))
 		var v := float(iz) / float(z_segments)
 		for ix in range(x_segments + 1):
 			var x := lerpf(-half_x, half_x, float(ix) / float(x_segments))

@@ -23,8 +23,8 @@ const _Pieces := preload("res://scripts/van/look/van_armour_pieces.gd")
 ## belt line / drip rail (2 cm each).
 const SLOTS: Array[Dictionary] = [
 	{"id": &"pillar", "z": Vector2(0.9, 1.55), "y": Vector2(1.1, 2.575)},
-	{"id": &"top", "z": Vector2(0.16, 4.55), "y": Vector2(2.665, 2.99)},
-	{"id": &"tail", "z": Vector2(4.12, 4.62), "y": Vector2(1.1, 2.575)},
+	{"id": &"top", "z": Vector2(0.16, VanInteriorSize.REAR_Z - 0.15), "y": Vector2(2.665, 2.99)},
+	{"id": &"tail", "z": Vector2(VanInteriorSize.REAR_Z - 0.58, VanInteriorSize.REAR_Z - 0.08), "y": Vector2(1.1, 2.575)},
 ]
 
 ## The hull material duplicated with plate_mode = true, plate_size_m = Vector2(1.0, 0.6); null if the hull has no shader material.

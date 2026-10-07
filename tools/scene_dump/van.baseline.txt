@@ -140,8 +140,9 @@ NODE TravelPath/VanFollow/VanRig/Interior/PlayerContainment StaticBody3D script=
   physics_material_override=null
   constant_linear_velocity=Vector3(0, 0, 0)
   constant_angular_velocity=Vector3(0, 0, 0)
-  half_width=3.04
-  half_length=5.4799999999999995
+  half_width=4.01
+  half_length=6.42
+  center_z=0.94
   wall_height=3.1
   wall_thickness=0.12
 NODE TravelPath/VanFollow/VanRig/Interior/Shell StaticBody3D
@@ -189,9 +190,10 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/Floor Node3D script=res://script
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  span_x=4.8
-  span_z=9.6
-  deck_thickness=0.25
+  span_x=6.72
+  span_z=11.48
+  center_z=0.94
+  deck_thickness=0.27
   floor_material=ShaderMaterial#1{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, shader=Shader(res://scenes/van/van_floor.gdshader), shader_parameter/base_color=Color(0.11, 0.105, 0.095, 1), shader_parameter/rib_color=Color(0.055, 0.052, 0.048, 1), shader_parameter/wear_color=Color(0.18, 0.165, 0.14, 1), shader_parameter/stain_color=Color(0.035, 0.028, 0.02, 1), shader_parameter/rust_color=Color(0.22, 0.09, 0.04, 1), shader_parameter/floor_size_m=Vector2(4.8, 9.6), shader_parameter/rib_spacing_m=0.085, shader_parameter/panel_spacing_m=1.55, shader_parameter/roughness_value=0.88, shader_parameter/metallic_value=0.22}
   rebuild_on_ready=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWalls Node3D script=res://scripts/van/van_side_wall.gd
@@ -209,11 +211,12 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWalls Node3D script=res://sc
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  wall_height=3.08
-  span_z=9.4
-  bottom_half_width=2.42
-  top_half_width=2.0
-  bow_out=0.18
+  wall_height=4.0
+  span_z=11.28
+  center_z=0.94
+  bottom_half_width=3.39
+  top_half_width=2.8
+  bow_out=0.25
   thickness=0.16
   y_segments=56
   z_segments=112
@@ -222,9 +225,9 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWalls Node3D script=res://sc
   window_half_height=0.707
   window_half_length=1.222
   window_center_y=1.775
-  window_centers_z=PackedFloat32Array(2.835, -0.375)
+  window_centers_z=PackedFloat32Array(4.342, -0.45)
   door_half_length=1.235
-  door_center_z=-3.42
+  door_center_z=-3.164
   door_y_min=0.02
   door_y_max=3.05
   door_jamb_inset=0.11
@@ -238,13 +241,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/FloorCollision CollisionShape3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.125, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.125, 0.94)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#4{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(4.8, 0.25, 9.6)}
+  shape=BoxShape3D#4{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(6.72, 0.25, 11.52)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/Ceiling Node3D script=res://scripts/van/van_ceiling.gd
@@ -262,9 +265,10 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/Ceiling Node3D script=res://scri
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  span_x=4.08
-  span_z=9.4
-  edge_height=3.05
+  span_x=5.71
+  span_z=11.28
+  center_z=0.94
+  edge_height=3.97
   peak_rise=0.38
   x_segments=20
   z_segments=40
@@ -280,7 +284,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/LeftLowerRail MeshInstance3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.9938522, -0.11071483, 0, 0.11071483, 0.9938522, 0, 0, 0, 1, -2.4996457, 0.525, 1.2)
+  transform=Transform3D(0.9901824, -0.139781, 0, 0.139781, 0.9901824, 0, 0, 0, 1, -3.4800234, 0.525, 2.328)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -304,7 +308,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/LeftLowerRail MeshInstance3D
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#6{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.18, 1.05, 6.9), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#6{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.18, 1.05, 8.384), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -317,13 +321,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/LeftLowerCollision CollisionShap
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.9938522, -0.11071483, 0, 0.11071483, 0.9938522, 0, 0, 0, 1, -2.4996457, 0.525, 1.2)
+  transform=Transform3D(0.9901824, -0.139781, 0, 0.139781, 0.9901824, 0, 0, 0, 1, -3.4800234, 0.525, 2.328)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#7{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.18, 1.05, 6.9)}
+  shape=BoxShape3D#7{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.18, 1.05, 8.384)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/LeftUpperRail MeshInstance3D
@@ -335,7 +339,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/LeftUpperRail MeshInstance3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.91836256, 0.39574006, 0, -0.39574006, 0.91836256, 0, 0, 0, 1, -2.1022267, 2.85, 1.2)
+  transform=Transform3D(0.9275336, 0.3737399, 0, -0.3737399, 0.9275336, 0, 0, 0, 1, -3.1394005, 3.25, 2.328)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -359,7 +363,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/LeftUpperRail MeshInstance3D
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#8{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.18, 0.55, 6.9), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#8{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.18, 1.5, 8.384), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -372,13 +376,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/LeftUpperCollision CollisionShap
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.91836256, 0.39574006, 0, -0.39574006, 0.91836256, 0, 0, 0, 1, -2.1022267, 2.85, 1.2)
+  transform=Transform3D(0.9275336, 0.3737399, 0, -0.3737399, 0.9275336, 0, 0, 0, 1, -3.1394005, 3.25, 2.328)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#9{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.18, 0.55, 6.9)}
+  shape=BoxShape3D#9{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.18, 1.5, 8.384)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RightLowerRail MeshInstance3D
@@ -390,7 +394,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RightLowerRail MeshInstance3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.9938522, 0.11071483, 0, -0.11071483, 0.9938522, 0, 0, 0, 1, 2.4996457, 0.525, 1.2)
+  transform=Transform3D(0.9901824, 0.139781, 0, -0.139781, 0.9901824, 0, 0, 0, 1, 3.4800234, 0.525, 2.328)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -427,7 +431,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RightLowerCollision CollisionSha
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.9938522, 0.11071483, 0, -0.11071483, 0.9938522, 0, 0, 0, 1, 2.4996457, 0.525, 1.2)
+  transform=Transform3D(0.9901824, 0.139781, 0, -0.139781, 0.9901824, 0, 0, 0, 1, 3.4800234, 0.525, 2.328)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -445,7 +449,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RightUpperRail MeshInstance3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.91836256, -0.39574006, 0, 0.39574006, 0.91836256, 0, 0, 0, 1, 2.1022267, 2.85, 1.2)
+  transform=Transform3D(0.9275336, -0.3737399, 0, 0.3737399, 0.9275336, 0, 0, 0, 1, 3.1394005, 3.25, 2.328)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -482,7 +486,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RightUpperCollision CollisionSha
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.91836256, -0.39574006, 0, 0.39574006, 0.91836256, 0, 0, 0, 1, 2.1022267, 2.85, 1.2)
+  transform=Transform3D(0.9275336, -0.3737399, 0, 0.3737399, 0.9275336, 0, 0, 0, 1, 3.1394005, 3.25, 2.328)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -530,7 +534,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/LeftRear MeshInstanc
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.4970145, 1.525, 4.42)
+  transform=Transform3D(0.9892962, 0.1459212, 0, -0.1459212, 0.9892962, 0, 0, 0, 1, -3.4925, 2, 6.244)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -554,7 +558,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/LeftRear MeshInstanc
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#10{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.18, 3.05, 0.5), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#10{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.18, 4, 0.5), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -567,7 +571,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/LeftMiddle MeshInsta
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.4970145, 1.525, 1.25)
+  transform=Transform3D(0.9892962, 0.1459212, 0, -0.1459212, 0.9892962, 0, 0, 0, 1, -3.4925, 2, 2.44)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -604,7 +608,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/LeftFront MeshInstan
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.4970145, 1.525, -2)
+  transform=Transform3D(0.9892962, 0.1459212, 0, -0.1459212, 0.9892962, 0, 0, 0, 1, -3.4925, 2, -1.8)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -641,7 +645,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/RightRear MeshInstan
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.4970145, 1.525, 4.42)
+  transform=Transform3D(0.9892962, -0.1459212, 0, 0.1459212, 0.9892962, 0, 0, 0, 1, 3.4925, 2, 6.244)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -678,7 +682,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/RightMiddle MeshInst
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.4970145, 1.525, 1.25)
+  transform=Transform3D(0.9892962, -0.1459212, 0, 0.1459212, 0.9892962, 0, 0, 0, 1, 3.4925, 2, 2.44)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -715,7 +719,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/RightFront MeshInsta
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.4970145, 1.525, -2)
+  transform=Transform3D(0.9892962, -0.1459212, 0, 0.1459212, 0.9892962, 0, 0, 0, 1, 3.4925, 2, -1.8)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -752,13 +756,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/LeftRearCollision Co
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.4970145, 1.525, 4.42)
+  transform=Transform3D(0.9892962, 0.1459212, 0, -0.1459212, 0.9892962, 0, 0, 0, 1, -3.4925, 2, 6.244)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#11{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.18, 3.05, 0.5)}
+  shape=BoxShape3D#11{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.18, 4, 0.5)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/LeftMiddleCollision CollisionShape3D
@@ -770,7 +774,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/LeftMiddleCollision 
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.4970145, 1.525, 1.25)
+  transform=Transform3D(0.9892962, 0.1459212, 0, -0.1459212, 0.9892962, 0, 0, 0, 1, -3.4925, 2, 2.44)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -788,13 +792,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/LeftFrontCollision C
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.4970145, 1.525, -2)
+  transform=Transform3D(0.9892962, 0.1459212, 0, -0.1459212, 0.9892962, 0, 0, 0, 1, -3.4925, 2, -1.8)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#11
+  shape=BoxShape3D#12{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.18, 4, 0.2)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/RightRearCollision CollisionShape3D
@@ -806,7 +810,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/RightRearCollision C
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.4970145, 1.525, 4.42)
+  transform=Transform3D(0.9892962, -0.1459212, 0, 0.1459212, 0.9892962, 0, 0, 0, 1, 3.4925, 2, 6.244)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -824,7 +828,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/RightMiddleCollision
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.4970145, 1.525, 1.25)
+  transform=Transform3D(0.9892962, -0.1459212, 0, 0.1459212, 0.9892962, 0, 0, 0, 1, 3.4925, 2, 2.44)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -842,13 +846,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SidePillars/RightFrontCollision 
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.4970145, 1.525, -2)
+  transform=Transform3D(0.9892962, -0.1459212, 0, 0.1459212, 0.9892962, 0, 0, 0, 1, 3.4925, 2, -1.8)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#11
+  shape=BoxShape3D#12
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows Node3D script=res://scripts/van/side_windows.gd
@@ -883,7 +887,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear Node3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.9804375, 0.19683053, 0, -0.19683053, 0.9804375, 0, 0, 0, 1, -2.4553633, 1.775, 2.835)
+  transform=Transform3D(0.9953866, 0.0959455, 0, -0.0959455, 0.9953866, 0, 0, 0, 1, -3.5199273, 1.775, 4.342)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -1123,7 +1127,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Windo
   mode=0
   depth=0.05
   smooth_faces=false
-  material=StandardMaterial3D#12{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.04, 0.045, 0.05, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.55, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.55, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material=StandardMaterial3D#13{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.04, 0.045, 0.05, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.55, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.55, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/WindowFrame/InnerCut CSGPolygon3D
   unique_name_in_owner=false
   process_mode=0
@@ -1217,7 +1221,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Windo
   mode=0
   depth=0.04
   smooth_faces=false
-  material=StandardMaterial3D#13{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=1, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.22, 0.32, 0.36, 0.42), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.35, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.08, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=true, rim=0.35, rim_tint=0.4, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material=StandardMaterial3D#14{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=1, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.22, 0.32, 0.36, 0.42), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.35, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.08, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=true, rim=0.35, rim_tint=0.4, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/IronCross Node3D script=res://scripts/van/iron_cross.gd
   unique_name_in_owner=false
   process_mode=0
@@ -1300,7 +1304,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Break
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#14{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.22, 1.28, 2.28)}
+  shape=BoxShape3D#15{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.22, 1.28, 2.28)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Handle CSGCombiner3D
@@ -1431,7 +1435,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Handl
   collision_priority=1.0
   flip_faces=false
   size=Vector3(0.035, 0.07, 0.035)
-  material=StandardMaterial3D#15{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.55, 0.58, 0.56, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.9, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.25, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material=StandardMaterial3D#16{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.55, 0.58, 0.56, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.9, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.25, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact StaticBody3D script=res://scripts/van/side_window_interact.gd
   unique_name_in_owner=false
   process_mode=0
@@ -1480,7 +1484,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Inter
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#16{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.2, 0.14, 2.4)}
+  shape=BoxShape3D#17{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.2, 0.14, 2.4)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact/Top CollisionShape3D
@@ -1498,7 +1502,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Inter
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#17{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.2, 0.14, 2.4)}
+  shape=BoxShape3D#18{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.2, 0.14, 2.4)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact/LeftRail CollisionShape3D
@@ -1516,7 +1520,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Inter
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#18{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.2, 1.08, 0.14)}
+  shape=BoxShape3D#19{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.2, 1.08, 0.14)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact/RightRail CollisionShape3D
@@ -1534,7 +1538,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Inter
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#18
+  shape=BoxShape3D#19
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront Node3D
@@ -1546,7 +1550,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront Node3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.9804375, 0.19683053, 0, -0.19683053, 0.9804375, 0, 0, 0, 1, -2.4553633, 1.775, -0.375)
+  transform=Transform3D(0.9953866, 0.0959455, 0, -0.0959455, 0.9953866, 0, 0, 0, 1, -3.5199273, 1.775, -0.45)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -1786,7 +1790,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Wind
   mode=0
   depth=0.05
   smooth_faces=false
-  material=StandardMaterial3D#12
+  material=StandardMaterial3D#13
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/WindowFrame/InnerCut CSGPolygon3D
   unique_name_in_owner=false
   process_mode=0
@@ -1880,7 +1884,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Wind
   mode=0
   depth=0.04
   smooth_faces=false
-  material=StandardMaterial3D#13
+  material=StandardMaterial3D#14
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/IronCross Node3D script=res://scripts/van/iron_cross.gd
   unique_name_in_owner=false
   process_mode=0
@@ -1963,7 +1967,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Brea
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#14
+  shape=BoxShape3D#15
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Handle CSGCombiner3D
@@ -2094,7 +2098,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Hand
   collision_priority=1.0
   flip_faces=false
   size=Vector3(0.035, 0.07, 0.035)
-  material=StandardMaterial3D#15
+  material=StandardMaterial3D#16
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact StaticBody3D script=res://scripts/van/side_window_interact.gd
   unique_name_in_owner=false
   process_mode=0
@@ -2143,7 +2147,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Inte
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#16
+  shape=BoxShape3D#17
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/Top CollisionShape3D
@@ -2161,7 +2165,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Inte
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#17
+  shape=BoxShape3D#18
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/LeftRail CollisionShape3D
@@ -2179,7 +2183,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Inte
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#18
+  shape=BoxShape3D#19
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/RightRail CollisionShape3D
@@ -2197,7 +2201,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Inte
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#18
+  shape=BoxShape3D#19
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear Node3D
@@ -2209,7 +2213,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear Node3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.9804375, -0.19683053, 0, 0.19683053, 0.9804375, 0, 0, 0, 1, 2.4553633, 1.775, 2.835)
+  transform=Transform3D(0.9953866, -0.0959455, 0, 0.0959455, 0.9953866, 0, 0, 0, 1, 3.5199273, 1.775, 4.342)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -2449,7 +2453,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Wind
   mode=0
   depth=0.05
   smooth_faces=false
-  material=StandardMaterial3D#12
+  material=StandardMaterial3D#13
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/WindowFrame/InnerCut CSGPolygon3D
   unique_name_in_owner=false
   process_mode=0
@@ -2543,7 +2547,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Wind
   mode=0
   depth=0.04
   smooth_faces=false
-  material=StandardMaterial3D#13
+  material=StandardMaterial3D#14
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/IronCross Node3D script=res://scripts/van/iron_cross.gd
   unique_name_in_owner=false
   process_mode=0
@@ -2626,7 +2630,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Brea
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#14
+  shape=BoxShape3D#15
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Handle CSGCombiner3D
@@ -2757,7 +2761,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Hand
   collision_priority=1.0
   flip_faces=false
   size=Vector3(0.035, 0.07, 0.035)
-  material=StandardMaterial3D#15
+  material=StandardMaterial3D#16
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact StaticBody3D script=res://scripts/van/side_window_interact.gd
   unique_name_in_owner=false
   process_mode=0
@@ -2806,7 +2810,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Inte
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#16
+  shape=BoxShape3D#17
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact/Top CollisionShape3D
@@ -2824,7 +2828,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Inte
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#17
+  shape=BoxShape3D#18
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact/LeftRail CollisionShape3D
@@ -2842,7 +2846,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Inte
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#18
+  shape=BoxShape3D#19
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact/RightRail CollisionShape3D
@@ -2860,7 +2864,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Inte
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#18
+  shape=BoxShape3D#19
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront Node3D
@@ -2872,7 +2876,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront Node3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.9804375, -0.19683053, 0, 0.19683053, 0.9804375, 0, 0, 0, 1, 2.4553633, 1.775, -0.375)
+  transform=Transform3D(0.9953866, -0.0959455, 0, 0.0959455, 0.9953866, 0, 0, 0, 1, 3.5199273, 1.775, -0.45)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -3112,7 +3116,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Win
   mode=0
   depth=0.05
   smooth_faces=false
-  material=StandardMaterial3D#12
+  material=StandardMaterial3D#13
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/WindowFrame/InnerCut CSGPolygon3D
   unique_name_in_owner=false
   process_mode=0
@@ -3206,7 +3210,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Win
   mode=0
   depth=0.04
   smooth_faces=false
-  material=StandardMaterial3D#13
+  material=StandardMaterial3D#14
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/IronCross Node3D script=res://scripts/van/iron_cross.gd
   unique_name_in_owner=false
   process_mode=0
@@ -3289,7 +3293,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Bre
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#14
+  shape=BoxShape3D#15
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Handle CSGCombiner3D
@@ -3420,7 +3424,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Han
   collision_priority=1.0
   flip_faces=false
   size=Vector3(0.035, 0.07, 0.035)
-  material=StandardMaterial3D#15
+  material=StandardMaterial3D#16
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact StaticBody3D script=res://scripts/van/side_window_interact.gd
   unique_name_in_owner=false
   process_mode=0
@@ -3469,7 +3473,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Int
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#16
+  shape=BoxShape3D#17
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact/Top CollisionShape3D
@@ -3487,7 +3491,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Int
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#17
+  shape=BoxShape3D#18
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact/LeftRail CollisionShape3D
@@ -3505,7 +3509,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Int
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#18
+  shape=BoxShape3D#19
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact/RightRail CollisionShape3D
@@ -3523,7 +3527,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Int
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#18
+  shape=BoxShape3D#19
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors Node3D script=res://scripts/van/side_doors.gd
@@ -3547,7 +3551,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors Node3D script=res://sc
   recess_duration=0.22
   slide_duration=1.15
   passage_slide_ratio=0.72
-  recess_distance=-0.3
+  recess_distance=-0.45
   slide_distance=2.45
   mount_retract_distance=0.028
   grip_retract_distance=0.06
@@ -3560,7 +3564,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left Node3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, 0.13108568, 0, -0.13108568, 0.99137104, 0, 0, 0, 1, -2.4970145, 1.525, -3.485)
+  transform=Transform3D(0.9991643, 0.0408739, 0, -0.0408739, 0.9991643, 0, 0, 0, 1, -3.5370462, 1.525, -3.164)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -3955,7 +3959,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Handle/Grip CSGBo
   collision_priority=1.0
   flip_faces=false
   size=Vector3(0.06, 0.26, 0.06)
-  material=StandardMaterial3D#15
+  material=StandardMaterial3D#16
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Blocker StaticBody3D
   unique_name_in_owner=false
   process_mode=0
@@ -4001,7 +4005,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Blocker/Shape Col
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#19{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.18, 3.05, 2.53)}
+  shape=BoxShape3D#20{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.18, 3.05, 2.53)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact StaticBody3D script=res://scripts/van/side_door_interact.gd
@@ -4052,7 +4056,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact/Hit Coll
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#19
+  shape=BoxShape3D#20
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right Node3D
@@ -4064,7 +4068,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right Node3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.99137104, -0.13108568, 0, 0.13108568, 0.99137104, 0, 0, 0, 1, 2.4970145, 1.525, -3.485)
+  transform=Transform3D(0.9991643, -0.0408739, 0, 0.0408739, 0.9991643, 0, 0, 0, 1, 3.5370462, 1.525, -3.164)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -4459,7 +4463,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Handle/Grip CSGB
   collision_priority=1.0
   flip_faces=false
   size=Vector3(0.06, 0.26, 0.06)
-  material=StandardMaterial3D#15
+  material=StandardMaterial3D#16
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Blocker StaticBody3D
   unique_name_in_owner=false
   process_mode=0
@@ -4505,7 +4509,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Blocker/Shape Co
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#19
+  shape=BoxShape3D#20
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Interact StaticBody3D script=res://scripts/van/side_door_interact.gd
@@ -4556,7 +4560,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Interact/Hit Col
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#19
+  shape=BoxShape3D#20
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall Node3D script=res://scripts/van/rear_doors.gd
@@ -4590,7 +4594,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge Node3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.39, 1.55, 4.71)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.39, 1.55, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -4680,7 +4684,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Panel/Body CS
   collision_priority=1.0
   flip_faces=false
   size=Vector3(2.38, 3.1, 0.16)
-  material=StandardMaterial3D#20{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.2, 0.22, 0.21, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.7, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.45, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material=StandardMaterial3D#21{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.2, 0.22, 0.21, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.7, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.45, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Panel/WindowCut CSGPolygon3D
   unique_name_in_owner=false
   process_mode=0
@@ -4815,7 +4819,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/WindowFrame/O
   mode=0
   depth=0.05
   smooth_faces=false
-  material=StandardMaterial3D#12
+  material=StandardMaterial3D#13
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/WindowFrame/InnerCut CSGPolygon3D
   unique_name_in_owner=false
   process_mode=0
@@ -4881,7 +4885,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/WindowGlass M
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#13
+  material_override=StandardMaterial3D#14
   material_overlay=null
   transparency=0.0
   cast_shadow=0
@@ -4896,7 +4900,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/WindowGlass M
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#21{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(1.88, 1.45, 0.016), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#22{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(1.88, 1.45, 0.016), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -4982,7 +4986,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/BreakableGlas
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#22{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.88, 1.44, 0.22)}
+  shape=BoxShape3D#23{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.88, 1.44, 0.22)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Handle CSGCombiner3D
@@ -5113,7 +5117,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Handle/Grip C
   collision_priority=1.0
   flip_faces=false
   size=Vector3(0.06, 0.26, 0.06)
-  material=StandardMaterial3D#15
+  material=StandardMaterial3D#16
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact StaticBody3D script=res://scripts/van/rear_door_interact.gd
   unique_name_in_owner=false
   process_mode=0
@@ -5162,7 +5166,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Bott
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#23{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(2.38, 1.07, 0.16)}
+  shape=BoxShape3D#24{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(2.38, 1.07, 0.16)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Top CollisionShape3D
@@ -5180,7 +5184,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Top 
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#24{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(2.38, 0.62, 0.16)}
+  shape=BoxShape3D#25{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(2.38, 0.62, 0.16)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/LeftRail CollisionShape3D
@@ -5198,7 +5202,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Left
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#25{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.25, 1.44, 0.16)}
+  shape=BoxShape3D#26{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.25, 1.44, 0.16)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/RightRail CollisionShape3D
@@ -5216,7 +5220,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Righ
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#25
+  shape=BoxShape3D#26
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge Node3D
@@ -5228,7 +5232,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge Node3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.39, 1.55, 4.71)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.39, 1.55, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -5318,7 +5322,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Panel/Body C
   collision_priority=1.0
   flip_faces=false
   size=Vector3(2.38, 3.1, 0.16)
-  material=StandardMaterial3D#20
+  material=StandardMaterial3D#21
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Panel/WindowCut CSGPolygon3D
   unique_name_in_owner=false
   process_mode=0
@@ -5453,7 +5457,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/WindowFrame/
   mode=0
   depth=0.05
   smooth_faces=false
-  material=StandardMaterial3D#12
+  material=StandardMaterial3D#13
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/WindowFrame/InnerCut CSGPolygon3D
   unique_name_in_owner=false
   process_mode=0
@@ -5519,7 +5523,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/WindowGlass 
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#13
+  material_override=StandardMaterial3D#14
   material_overlay=null
   transparency=0.0
   cast_shadow=0
@@ -5534,7 +5538,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/WindowGlass 
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#21
+  mesh=BoxMesh#22
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -5620,7 +5624,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/BreakableGla
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#22
+  shape=BoxShape3D#23
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Handle CSGCombiner3D
@@ -5751,7 +5755,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Handle/Grip 
   collision_priority=1.0
   flip_faces=false
   size=Vector3(0.06, 0.26, 0.06)
-  material=StandardMaterial3D#15
+  material=StandardMaterial3D#16
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact StaticBody3D script=res://scripts/van/rear_door_interact.gd
   unique_name_in_owner=false
   process_mode=0
@@ -5800,7 +5804,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Bot
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#23
+  shape=BoxShape3D#24
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Top CollisionShape3D
@@ -5818,7 +5822,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Top
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#24
+  shape=BoxShape3D#25
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/LeftRail CollisionShape3D
@@ -5836,7 +5840,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Lef
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#25
+  shape=BoxShape3D#26
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/RightRail CollisionShape3D
@@ -5854,7 +5858,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Rig
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#25
+  shape=BoxShape3D#26
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker StaticBody3D
@@ -5896,13 +5900,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftBottom Coll
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.19, 0.535, 4.71)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.19, 0.535, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#26{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(2.38, 1.07, 0.32)}
+  shape=BoxShape3D#27{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(2.38, 1.07, 0.32)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftTop CollisionShape3D
@@ -5914,13 +5918,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftTop Collisi
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.19, 2.79, 4.71)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.19, 2.79, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#27{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(2.38, 0.62, 0.32)}
+  shape=BoxShape3D#28{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(2.38, 0.62, 0.32)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftLeftRail CollisionShape3D
@@ -5932,13 +5936,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftLeftRail Co
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.255, 1.775, 4.71)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.255, 1.775, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#28{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.25, 1.44, 0.32)}
+  shape=BoxShape3D#29{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.25, 1.44, 0.32)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftRightRail CollisionShape3D
@@ -5950,13 +5954,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftRightRail C
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.125, 1.775, 4.71)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.125, 1.775, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#28
+  shape=BoxShape3D#29
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightBottom CollisionShape3D
@@ -5968,13 +5972,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightBottom Col
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 0.535, 4.71)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 0.535, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#26
+  shape=BoxShape3D#27
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightTop CollisionShape3D
@@ -5986,13 +5990,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightTop Collis
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 2.79, 4.71)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.19, 2.79, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#27
+  shape=BoxShape3D#28
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightLeftRail CollisionShape3D
@@ -6004,13 +6008,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightLeftRail C
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, 1.775, 4.71)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, 1.775, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#28
+  shape=BoxShape3D#29
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightRightRail CollisionShape3D
@@ -6022,13 +6026,175 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightRightRail 
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.255, 1.775, 4.71)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.255, 1.775, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#28
+  shape=BoxShape3D#29
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftFill0 CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.98, 0.5, 6.59)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D#30{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.2, 1, 0.32)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftFill1 CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.985, 1.5, 6.59)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D#31{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.211, 1, 0.32)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftFill2 CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.961, 2.5, 6.59)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D#32{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.163, 1, 0.32)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftFill3 CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.832, 3.5, 6.59)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D#33{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.905, 1, 0.32)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightFill0 CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.98, 0.5, 6.59)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D#34{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.2, 1, 0.32)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightFill1 CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.985, 1.5, 6.59)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D#35{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.211, 1, 0.32)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightFill2 CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.961, 2.5, 6.59)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D#36{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.163, 1, 0.32)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightFill3 CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.832, 3.5, 6.59)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D#37{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.905, 1, 0.32)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/TopFill CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.675, 6.59)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D#38{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(4.9, 1.15, 0.32)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/FrontWall StaticBody3D script=res://scripts/van/van_front_wall.gd
@@ -6126,7 +6292,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/CabDoor/Mesh MeshInstance3D
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#29{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(1.55, 2.6334717, 0.22), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#39{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(1.55, 2.6334717, 0.22), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -6145,7 +6311,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/CabDoor/Collision CollisionShape3D
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#30{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.55, 2.637622, 0.22)}
+  shape=BoxShape3D#40{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.55, 2.637622, 0.22)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Bulkhead StaticBody3D script=res://scripts/van/van_bulkhead.gd
@@ -6179,13 +6345,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Bulkhead StaticBody3D script=res://scr
   constant_linear_velocity=Vector3(0, 0, 0)
   constant_angular_velocity=Vector3(0, 0, 0)
   opening_side=0
-  van_half_width=2.36
+  van_half_width=3.3
   opening_width=1.55
   panel_thickness=0.12
   frame_depth=0.16
   frame_thickness=0.08
   kick_height=0.55
-  edge_height=3.02
+  edge_height=3.93
   peak_rise=0.38
   mesh_spacing=0.22
   mesh_bar_size=0.028
@@ -6217,7 +6383,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable StaticBody3D scrip
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.629281, 0.425, 0.066610575)
+  transform=Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 2.6, 0.425, 0.066610575)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -6258,7 +6424,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable/Mesh MeshInstance3
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#31{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.18, 0.13, 0.085, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.0, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.85, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(4.24, 4.24, 4.24), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material_override=StandardMaterial3D#41{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.18, 0.13, 0.085, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.0, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.85, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(4.24, 4.24, 4.24), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
   material_overlay=null
   transparency=0.0
   cast_shadow=1
@@ -6273,7 +6439,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable/Mesh MeshInstance3
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#32{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(1.65, 0.85, 1.15), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#42{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(1.65, 0.85, 1.15), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -6292,7 +6458,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable/Collision Collisio
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#33{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.65, 0.85, 1.15)}
+  shape=BoxShape3D#43{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.65, 0.85, 1.15)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable/VanVital Node3D script=res://scripts/van/van_vital.gd
@@ -6352,7 +6518,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootAnchor Marker3D
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8885281, 0.43830076, -1.8)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.244, 0.43830076, -1.8)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -6368,7 +6534,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine StaticBody3D script=
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.32, 1.438, 1.35)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 1.438, 1.35)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -6409,7 +6575,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Body MeshInstance3D
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#34{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.18, 0.17, 0.16, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.45, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.55, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material_override=StandardMaterial3D#44{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.18, 0.17, 0.16, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.45, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.55, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
   material_overlay=null
   transparency=0.0
   cast_shadow=1
@@ -6424,7 +6590,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Body MeshInstance3D
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#35{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.8, 1.3, 0.45), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#45{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.8, 1.3, 0.45), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -6443,7 +6609,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Collision CollisionS
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#36{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.8, 2.74, 0.45)}
+  shape=BoxShape3D#46{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.8, 2.74, 0.45)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Button MeshInstance3D
@@ -6464,7 +6630,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Button MeshInstance3
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#37{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.72, 0.12, 0.1, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.0, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.4, roughness_texture=null, roughness_texture_channel=0, emission_enabled=true, emission=Color(0.45, 0.05, 0.04, 1), emission_energy_multiplier=0.6, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material_override=StandardMaterial3D#47{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.72, 0.12, 0.1, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.0, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.4, roughness_texture=null, roughness_texture_channel=0, emission_enabled=true, emission=Color(0.45, 0.05, 0.04, 1), emission_energy_multiplier=0.6, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
   material_overlay=null
   transparency=0.0
   cast_shadow=1
@@ -6479,7 +6645,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Button MeshInstance3
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=CylinderMesh#38{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, top_radius=0.14, bottom_radius=0.16, height=0.08, radial_segments=64, rings=4, cap_top=true, cap_bottom=true}
+  mesh=CylinderMesh#48{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, top_radius=0.14, bottom_radius=0.16, height=0.08, radial_segments=64, rings=4, cap_top=true, cap_bottom=true}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -6501,7 +6667,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/WindowPane MeshInsta
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#39{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.04, 0.05, 0.06, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.15, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.2, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material_override=StandardMaterial3D#49{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.04, 0.05, 0.06, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.15, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.2, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
   material_overlay=null
   transparency=0.0
   cast_shadow=1
@@ -6516,7 +6682,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/WindowPane MeshInsta
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#40{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.36, 0.8, 0.03), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#50{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.36, 0.8, 0.03), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -6608,7 +6774,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/FuseBox StaticBody3D script=res:
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 2.2095766, 0.48705465, 1.2149754)
+  transform=Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 3.2, 0.48705465, 1.2149754)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -6649,7 +6815,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/FuseBox/Mesh MeshInstance3D
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#41{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.22, 0.2, 0.18, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.4, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.55, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material_override=StandardMaterial3D#51{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.22, 0.2, 0.18, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.4, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.55, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
   material_overlay=null
   transparency=0.0
   cast_shadow=1
@@ -6664,7 +6830,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/FuseBox/Mesh MeshInstance3D
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#42{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.42, 0.72, 0.28), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#52{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.42, 0.72, 0.28), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -6683,7 +6849,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/FuseBox/Collision CollisionShape
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#43{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.42, 0.72, 0.28)}
+  shape=BoxShape3D#53{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.42, 0.72, 0.28)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Props/FuseBox/VanVital Node3D script=res://scripts/van/van_vital.gd
@@ -6784,7 +6950,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CabRelay/Mesh MeshInstance3D
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#41
+  material_override=StandardMaterial3D#51
   material_overlay=null
   transparency=0.0
   cast_shadow=1
@@ -6799,7 +6965,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CabRelay/Mesh MeshInstance3D
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#42
+  mesh=BoxMesh#52
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -6818,7 +6984,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CabRelay/Collision CollisionShap
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#43
+  shape=BoxShape3D#53
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Props/CabRelay/VanVital Node3D script=res://scripts/van/van_vital.gd
@@ -6919,7 +7085,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard/Board MeshInstance3
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#44{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.16, 0.14, 0.12, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.25, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.6, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material_override=StandardMaterial3D#54{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.16, 0.14, 0.12, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.25, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.6, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
   material_overlay=null
   transparency=0.0
   cast_shadow=1
@@ -6934,7 +7100,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard/Board MeshInstance3
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#45{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.08, 0.72, 0.52), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#55{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.08, 0.72, 0.52), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -6956,7 +7122,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard/Inset MeshInstance3
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#46{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.08, 0.1, 0.1, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.0, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.35, roughness_texture=null, roughness_texture_channel=0, emission_enabled=true, emission=Color(0.18, 0.22, 0.16, 1), emission_energy_multiplier=0.35, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material_override=StandardMaterial3D#56{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.08, 0.1, 0.1, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.0, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.35, roughness_texture=null, roughness_texture_channel=0, emission_enabled=true, emission=Color(0.18, 0.22, 0.16, 1), emission_energy_multiplier=0.35, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
   material_overlay=null
   transparency=0.0
   cast_shadow=1
@@ -6971,7 +7137,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard/Inset MeshInstance3
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#47{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.04, 0.48, 0.36), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#57{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.04, 0.48, 0.36), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -6990,7 +7156,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard/Collision Collision
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#48{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.12, 0.72, 0.52)}
+  shape=BoxShape3D#58{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.12, 0.72, 0.52)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard/PcRig Node3D script=res://scripts/van/look/van_pc_rig.gd
@@ -7058,7 +7224,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard/Board MeshInstance3D
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#49{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.16, 0.14, 0.12, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.25, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.6, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material_override=StandardMaterial3D#59{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.16, 0.14, 0.12, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.25, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.6, roughness_texture=null, roughness_texture_channel=0, emission_enabled=false, emission=Color(0, 0, 0, 1), emission_energy_multiplier=1.0, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
   material_overlay=null
   transparency=0.0
   cast_shadow=1
@@ -7073,7 +7239,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard/Board MeshInstance3D
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#50{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.08, 0.72, 0.52), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#60{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.08, 0.72, 0.52), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -7095,7 +7261,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard/Inset MeshInstance3D
   layers=1
   sorting_offset=0.0
   sorting_use_aabb_center=true
-  material_override=StandardMaterial3D#51{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.08, 0.09, 0.11, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.0, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.35, roughness_texture=null, roughness_texture_channel=0, emission_enabled=true, emission=Color(0.16, 0.2, 0.26, 1), emission_energy_multiplier=0.35, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
+  material_override=StandardMaterial3D#61{resource_local_to_scene=false, resource_name="", render_priority=0, next_pass=null, transparency=0, blend_mode=0, cull_mode=0, depth_draw_mode=0, no_depth_test=false, depth_test=0, shading_mode=1, diffuse_mode=0, specular_mode=0, disable_ambient_light=false, disable_fog=false, disable_specular_occlusion=false, vertex_color_use_as_albedo=false, vertex_color_is_srgb=false, albedo_color=Color(0.08, 0.09, 0.11, 1), albedo_texture=null, albedo_texture_force_srgb=false, albedo_texture_msdf=false, metallic=0.0, metallic_specular=0.5, metallic_texture=null, metallic_texture_channel=0, roughness=0.35, roughness_texture=null, roughness_texture_channel=0, emission_enabled=true, emission=Color(0.16, 0.2, 0.26, 1), emission_energy_multiplier=0.35, emission_operator=0, emission_on_uv2=false, emission_texture=null, normal_enabled=false, normal_scale=1.0, normal_texture=null, bent_normal_enabled=false, bent_normal_texture=null, rim_enabled=false, rim=1.0, rim_tint=0.5, rim_texture=null, clearcoat_enabled=false, clearcoat=1.0, clearcoat_roughness=0.5, clearcoat_texture=null, anisotropy_enabled=false, anisotropy=0.0, anisotropy_flowmap=null, ao_enabled=false, ao_light_affect=0.0, ao_texture=null, ao_on_uv2=false, ao_texture_channel=0, heightmap_enabled=false, heightmap_scale=5.0, heightmap_deep_parallax=false, heightmap_flip_tangent=false, heightmap_flip_binormal=false, heightmap_texture=null, heightmap_flip_texture=false, subsurf_scatter_enabled=false, subsurf_scatter_strength=0.0, subsurf_scatter_skin_mode=false, subsurf_scatter_texture=null, subsurf_scatter_transmittance_enabled=false, subsurf_scatter_transmittance_color=Color(1, 1, 1, 1), subsurf_scatter_transmittance_texture=null, subsurf_scatter_transmittance_depth=0.1, subsurf_scatter_transmittance_boost=0.0, backlight_enabled=false, backlight=Color(0, 0, 0, 1), backlight_texture=null, refraction_enabled=false, refraction_scale=0.05, refraction_texture=null, refraction_texture_channel=0, detail_enabled=false, detail_mask=null, detail_blend_mode=0, detail_uv_layer=0, detail_albedo=null, detail_normal=null, uv1_scale=Vector3(1, 1, 1), uv1_offset=Vector3(0, 0, 0), uv1_triplanar=false, uv1_triplanar_sharpness=1.0, uv1_world_triplanar=false, uv2_scale=Vector3(1, 1, 1), uv2_offset=Vector3(0, 0, 0), uv2_triplanar=false, uv2_triplanar_sharpness=1.0, uv2_world_triplanar=false, texture_filter=3, texture_repeat=true, disable_receive_shadows=false, shadow_to_opacity=false, billboard_mode=0, billboard_keep_scale=false, grow=false, grow_amount=0.0, fixed_size=false, use_point_size=false, point_size=1.0, use_particle_trails=false, use_z_clip_scale=false, z_clip_scale=1.0, use_fov_override=false, fov_override=75.0, proximity_fade_enabled=false, proximity_fade_distance=1.0, msdf_pixel_range=4.0, msdf_outline_size=0.0, distance_fade_mode=0, distance_fade_min_distance=0.0, distance_fade_max_distance=10.0, stencil_mode=0, stencil_flags=0, stencil_compare=0, stencil_reference=1, stencil_color=Color(0, 0, 0, 1), stencil_outline_thickness=0.01}
   material_overlay=null
   transparency=0.0
   cast_shadow=1
@@ -7110,7 +7276,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard/Inset MeshInstance3D
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=BoxMesh#52{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.04, 0.48, 0.36), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
+  mesh=BoxMesh#62{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, size=Vector3(0.04, 0.48, 0.36), subdivide_width=0, subdivide_height=0, subdivide_depth=0}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -7129,7 +7295,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard/Collision CollisionSh
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#53{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.12, 0.72, 0.52)}
+  shape=BoxShape3D#63{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.12, 0.72, 0.52)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/RoomZones Node3D
@@ -7206,7 +7372,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/RoomZones/CenterRoom/Collision Collisi
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#54{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(4.4, 2.6, 1)}
+  shape=BoxShape3D#64{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(4.4, 2.6, 1)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/RoomZones/BackRoom Area3D script=res://scripts/van/room_zone.gd
@@ -7268,7 +7434,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/RoomZones/BackRoom/Collision Collision
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D#54
+  shape=BoxShape3D#64
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/EnemyContainer Node3D
@@ -7334,7 +7500,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/CabinNav Node3D script=res://scr
   visible=true
   visibility_parent=NodePath("")
   bulkhead_z=1.0
-  rear_face_z=4.5
+  rear_face_z=6.38
   melee_slot_count=3
   melee_range=1.2
   wait_timeout=1.0
@@ -7481,7 +7647,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearLeft/Outsid
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.05, 1.62, 5.2)
+  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.05, 1.62, 7.08)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7497,7 +7663,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearLeft/Entry 
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.05, 1.62, 3.9)
+  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.05, 1.62, 5.78)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7535,7 +7701,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRight/Outsi
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.05, 1.62, 5.2)
+  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.05, 1.62, 7.08)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7551,7 +7717,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRight/Entry
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.05, 1.62, 3.9)
+  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.05, 1.62, 5.78)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7589,7 +7755,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearLeftWindow/
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.2, 1.78, 5.2)
+  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.2, 1.78, 7.08)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7605,7 +7771,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearLeftWindow/
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.2, 1.78, 3.9)
+  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, -1.2, 1.78, 5.78)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7643,7 +7809,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRightWindow
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.2, 1.78, 5.2)
+  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.2, 1.78, 7.08)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7659,7 +7825,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RearRightWindow
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.2, 1.78, 3.9)
+  transform=Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 1.2, 1.78, 5.78)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7697,7 +7863,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/LeftRearWindow/
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -2.65, 1.62, 2.835)
+  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -3.65, 1.62, 4.342)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7713,7 +7879,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/LeftRearWindow/
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.7, 1.62, 2.835)
+  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -2.72, 1.62, 4.342)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7751,7 +7917,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/LeftFrontWindow
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -2.65, 1.62, -0.375)
+  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -3.65, 1.62, -0.45)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7767,7 +7933,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/LeftFrontWindow
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.7, 1.62, -0.375)
+  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -2.72, 1.62, -0.45)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7805,7 +7971,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RightRearWindow
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.65, 1.62, 2.835)
+  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 3.65, 1.62, 4.342)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7821,7 +7987,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RightRearWindow
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.7, 1.62, 2.835)
+  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.72, 1.62, 4.342)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7859,7 +8025,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RightFrontWindo
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.65, 1.62, -0.375)
+  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 3.65, 1.62, -0.45)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7875,7 +8041,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/RightFrontWindo
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.7, 1.62, -0.375)
+  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.72, 1.62, -0.45)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7913,7 +8079,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/SideDoorLeft/Ou
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -3.16, 1.62, -3.485)
+  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -4.2, 1.62, -3.164)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7929,7 +8095,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/SideDoorLeft/En
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.7, 1.62, -3.485)
+  transform=Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -2.72, 1.62, -3.164)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7967,7 +8133,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/SideDoorRight/O
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 3.16, 1.62, -3.485)
+  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4.2, 1.62, -3.164)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -7983,7 +8149,7 @@ NODE TravelPath/VanFollow/VanRig/EnemyContainer/BreachController/SideDoorRight/E
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 1.7, 1.62, -3.485)
+  transform=Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.72, 1.62, -3.164)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -8055,7 +8221,7 @@ NODE TravelPath/VanFollow/VanRig/Player/CollisionShape3D CollisionShape3D
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=CapsuleShape3D#55{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, radius=0.42, height=2.2}
+  shape=CapsuleShape3D#65{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, radius=0.42, height=2.2}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Player/BodyMesh MeshInstance3D
@@ -8091,7 +8257,7 @@ NODE TravelPath/VanFollow/VanRig/Player/BodyMesh MeshInstance3D
   visibility_range_end=0.0
   visibility_range_end_margin=0.0
   visibility_range_fade_mode=0
-  mesh=CapsuleMesh#56{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, radius=0.42, height=2.2, radial_segments=64, rings=8}
+  mesh=CapsuleMesh#66{resource_local_to_scene=false, resource_name="", lightmap_size_hint=Vector2i(0, 0), material=null, custom_aabb=AABB(0, 0, 0, 0, 0, 0), flip_faces=false, add_uv2=false, uv2_padding=2.0, radius=0.42, height=2.2, radial_segments=64, rings=8}
   skin=null
   skeleton=NodePath("")
   surface_material_override/0=null
@@ -8105,7 +8271,7 @@ NODE TravelPath/VanFollow/VanRig/Player/GunStats Node script=res://scripts/comba
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  base_stats=Resource#57{resource_local_to_scene=false, resource_name="", fire_rate=1.0, damage_per_shot=1.0, bullet_speed=100.0, bullet_weight=0.35, bullet_size=0.045, reload_speed=3.0, mag_size=12, aim_range=80.0, explosion_radius=1.8, max_bounces=1, bounce_speed_retention=0.6, bounce_damage_retention=0.8, pellets_per_shot=1, pellet_spread_degrees=0.0}
+  base_stats=Resource#67{resource_local_to_scene=false, resource_name="", fire_rate=1.0, damage_per_shot=1.0, bullet_speed=100.0, bullet_weight=0.35, bullet_size=0.045, reload_speed=3.0, mag_size=12, aim_range=80.0, explosion_radius=1.8, max_bounces=1, bounce_speed_retention=0.6, bounce_damage_retention=0.8, pellets_per_shot=1, pellet_spread_degrees=0.0}
 NODE TravelPath/VanFollow/VanRig/Player/Usables Node script=res://scripts/player/usables_controller.gd
   unique_name_in_owner=false
   process_mode=0
@@ -14120,7 +14286,7 @@ NODE HUD/BenchScreen/Margin/Layout/Body/LeftPanel PanelContainer
   accessibility_flow_to_nodes=[]
   theme=null
   theme_type_variation=&""
-  theme_override_styles/panel=StyleBoxFlat#58{resource_local_to_scene=false, resource_name="", content_margin_left=-1.0, content_margin_top=-1.0, content_margin_right=-1.0, content_margin_bottom=-1.0, bg_color=Color(0.07, 0.085, 0.09, 0.95), draw_center=true, skew=Vector2(0, 0), border_width_left=2, border_width_top=2, border_width_right=2, border_width_bottom=2, border_color=Color(0.29, 0.32, 0.31, 1), border_blend=false, corner_radius_top_left=8, corner_radius_top_right=8, corner_radius_bottom_right=8, corner_radius_bottom_left=8, corner_detail=8, expand_margin_left=0.0, expand_margin_top=0.0, expand_margin_right=0.0, expand_margin_bottom=0.0, shadow_color=Color(0, 0, 0, 0.6), shadow_size=0, shadow_offset=Vector2(0, 0), anti_aliasing=true, anti_aliasing_size=1.0}
+  theme_override_styles/panel=StyleBoxFlat#68{resource_local_to_scene=false, resource_name="", content_margin_left=-1.0, content_margin_top=-1.0, content_margin_right=-1.0, content_margin_bottom=-1.0, bg_color=Color(0.07, 0.085, 0.09, 0.95), draw_center=true, skew=Vector2(0, 0), border_width_left=2, border_width_top=2, border_width_right=2, border_width_bottom=2, border_color=Color(0.29, 0.32, 0.31, 1), border_blend=false, corner_radius_top_left=8, corner_radius_top_right=8, corner_radius_bottom_right=8, corner_radius_bottom_left=8, corner_detail=8, expand_margin_left=0.0, expand_margin_top=0.0, expand_margin_right=0.0, expand_margin_bottom=0.0, shadow_color=Color(0, 0, 0, 0.6), shadow_size=0, shadow_offset=Vector2(0, 0), anti_aliasing=true, anti_aliasing_size=1.0}
   accessibility_region=false
 NODE HUD/BenchScreen/Margin/Layout/Body/LeftPanel/LeftMargin MarginContainer
   unique_name_in_owner=false
@@ -14557,7 +14723,7 @@ NODE HUD/BenchScreen/Margin/Layout/Body/RightPanel PanelContainer
   accessibility_flow_to_nodes=[]
   theme=null
   theme_type_variation=&""
-  theme_override_styles/panel=StyleBoxFlat#58
+  theme_override_styles/panel=StyleBoxFlat#68
   accessibility_region=false
 NODE HUD/BenchScreen/Margin/Layout/Body/RightPanel/RightMargin MarginContainer
   unique_name_in_owner=false
@@ -14867,7 +15033,7 @@ NODE HUD/BenchScreen/Tooltip PanelContainer
   accessibility_flow_to_nodes=[]
   theme=null
   theme_type_variation=&""
-  theme_override_styles/panel=StyleBoxFlat#59{resource_local_to_scene=false, resource_name="", content_margin_left=12.0, content_margin_top=10.0, content_margin_right=12.0, content_margin_bottom=10.0, bg_color=Color(0.05, 0.06, 0.065, 0.98), draw_center=true, skew=Vector2(0, 0), border_width_left=2, border_width_top=2, border_width_right=2, border_width_bottom=2, border_color=Color(0.91, 0.78, 0.48, 0.95), border_blend=false, corner_radius_top_left=6, corner_radius_top_right=6, corner_radius_bottom_right=6, corner_radius_bottom_left=6, corner_detail=8, expand_margin_left=0.0, expand_margin_top=0.0, expand_margin_right=0.0, expand_margin_bottom=0.0, shadow_color=Color(0, 0, 0, 0.6), shadow_size=0, shadow_offset=Vector2(0, 0), anti_aliasing=true, anti_aliasing_size=1.0}
+  theme_override_styles/panel=StyleBoxFlat#69{resource_local_to_scene=false, resource_name="", content_margin_left=12.0, content_margin_top=10.0, content_margin_right=12.0, content_margin_bottom=10.0, bg_color=Color(0.05, 0.06, 0.065, 0.98), draw_center=true, skew=Vector2(0, 0), border_width_left=2, border_width_top=2, border_width_right=2, border_width_bottom=2, border_color=Color(0.91, 0.78, 0.48, 0.95), border_blend=false, corner_radius_top_left=6, corner_radius_top_right=6, corner_radius_bottom_right=6, corner_radius_bottom_left=6, corner_detail=8, expand_margin_left=0.0, expand_margin_top=0.0, expand_margin_right=0.0, expand_margin_bottom=0.0, shadow_color=Color(0, 0, 0, 0.6), shadow_size=0, shadow_offset=Vector2(0, 0), anti_aliasing=true, anti_aliasing_size=1.0}
   accessibility_region=false
 NODE HUD/BenchScreen/Tooltip/Box VBoxContainer
   unique_name_in_owner=false
@@ -15772,9 +15938,9 @@ NODE HUD/SkillTreeHud/Margin/Layout/Header/FitButton Button
   accessibility_flow_to_nodes=[]
   theme=null
   theme_type_variation=&""
-  theme_override_styles/normal=StyleBoxFlat#60{resource_local_to_scene=false, resource_name="", content_margin_left=12.0, content_margin_top=4.0, content_margin_right=12.0, content_margin_bottom=4.0, bg_color=Color(0.12, 0.14, 0.13, 1), draw_center=true, skew=Vector2(0, 0), border_width_left=2, border_width_top=2, border_width_right=2, border_width_bottom=2, border_color=Color(0.91, 0.78, 0.48, 0.85), border_blend=false, corner_radius_top_left=4, corner_radius_top_right=4, corner_radius_bottom_right=4, corner_radius_bottom_left=4, corner_detail=8, expand_margin_left=0.0, expand_margin_top=0.0, expand_margin_right=0.0, expand_margin_bottom=0.0, shadow_color=Color(0, 0, 0, 0.6), shadow_size=0, shadow_offset=Vector2(0, 0), anti_aliasing=true, anti_aliasing_size=1.0}
-  theme_override_styles/pressed=StyleBoxFlat#60
-  theme_override_styles/hover=StyleBoxFlat#60
+  theme_override_styles/normal=StyleBoxFlat#70{resource_local_to_scene=false, resource_name="", content_margin_left=12.0, content_margin_top=4.0, content_margin_right=12.0, content_margin_bottom=4.0, bg_color=Color(0.12, 0.14, 0.13, 1), draw_center=true, skew=Vector2(0, 0), border_width_left=2, border_width_top=2, border_width_right=2, border_width_bottom=2, border_color=Color(0.91, 0.78, 0.48, 0.85), border_blend=false, corner_radius_top_left=4, corner_radius_top_right=4, corner_radius_bottom_right=4, corner_radius_bottom_left=4, corner_detail=8, expand_margin_left=0.0, expand_margin_top=0.0, expand_margin_right=0.0, expand_margin_bottom=0.0, shadow_color=Color(0, 0, 0, 0.6), shadow_size=0, shadow_offset=Vector2(0, 0), anti_aliasing=true, anti_aliasing_size=1.0}
+  theme_override_styles/pressed=StyleBoxFlat#70
+  theme_override_styles/hover=StyleBoxFlat#70
   theme_override_colors/font_color=Color(0.91, 0.78, 0.48, 1)
   theme_override_font_sizes/font_size=14
   disabled=false
@@ -16236,7 +16402,7 @@ NODE HUD/SkillTreeHud/Margin/Layout/TreePanel PanelContainer
   accessibility_flow_to_nodes=[]
   theme=null
   theme_type_variation=&""
-  theme_override_styles/panel=StyleBoxFlat#61{resource_local_to_scene=false, resource_name="", content_margin_left=-1.0, content_margin_top=-1.0, content_margin_right=-1.0, content_margin_bottom=-1.0, bg_color=Color(0.07, 0.085, 0.09, 0.92), draw_center=true, skew=Vector2(0, 0), border_width_left=2, border_width_top=2, border_width_right=2, border_width_bottom=2, border_color=Color(0.29, 0.32, 0.31, 1), border_blend=false, corner_radius_top_left=8, corner_radius_top_right=8, corner_radius_bottom_right=8, corner_radius_bottom_left=8, corner_detail=8, expand_margin_left=0.0, expand_margin_top=0.0, expand_margin_right=0.0, expand_margin_bottom=0.0, shadow_color=Color(0, 0, 0, 0.6), shadow_size=0, shadow_offset=Vector2(0, 0), anti_aliasing=true, anti_aliasing_size=1.0}
+  theme_override_styles/panel=StyleBoxFlat#71{resource_local_to_scene=false, resource_name="", content_margin_left=-1.0, content_margin_top=-1.0, content_margin_right=-1.0, content_margin_bottom=-1.0, bg_color=Color(0.07, 0.085, 0.09, 0.92), draw_center=true, skew=Vector2(0, 0), border_width_left=2, border_width_top=2, border_width_right=2, border_width_bottom=2, border_color=Color(0.29, 0.32, 0.31, 1), border_blend=false, corner_radius_top_left=8, corner_radius_top_right=8, corner_radius_bottom_right=8, corner_radius_bottom_left=8, corner_detail=8, expand_margin_left=0.0, expand_margin_top=0.0, expand_margin_right=0.0, expand_margin_bottom=0.0, shadow_color=Color(0, 0, 0, 0.6), shadow_size=0, shadow_offset=Vector2(0, 0), anti_aliasing=true, anti_aliasing_size=1.0}
   accessibility_region=false
 NODE HUD/SkillTreeHud/Margin/Layout/TreePanel/TreeCanvas Control
   unique_name_in_owner=true
@@ -16472,7 +16638,7 @@ NODE HUD/SkillTreeHud/Tooltip PanelContainer
   accessibility_flow_to_nodes=[]
   theme=null
   theme_type_variation=&""
-  theme_override_styles/panel=StyleBoxFlat#62{resource_local_to_scene=false, resource_name="", content_margin_left=12.0, content_margin_top=10.0, content_margin_right=12.0, content_margin_bottom=10.0, bg_color=Color(0.05, 0.06, 0.065, 0.98), draw_center=true, skew=Vector2(0, 0), border_width_left=2, border_width_top=2, border_width_right=2, border_width_bottom=2, border_color=Color(0.91, 0.78, 0.48, 0.95), border_blend=false, corner_radius_top_left=6, corner_radius_top_right=6, corner_radius_bottom_right=6, corner_radius_bottom_left=6, corner_detail=8, expand_margin_left=0.0, expand_margin_top=0.0, expand_margin_right=0.0, expand_margin_bottom=0.0, shadow_color=Color(0, 0, 0, 0.6), shadow_size=0, shadow_offset=Vector2(0, 0), anti_aliasing=true, anti_aliasing_size=1.0}
+  theme_override_styles/panel=StyleBoxFlat#72{resource_local_to_scene=false, resource_name="", content_margin_left=12.0, content_margin_top=10.0, content_margin_right=12.0, content_margin_bottom=10.0, bg_color=Color(0.05, 0.06, 0.065, 0.98), draw_center=true, skew=Vector2(0, 0), border_width_left=2, border_width_top=2, border_width_right=2, border_width_bottom=2, border_color=Color(0.91, 0.78, 0.48, 0.95), border_blend=false, corner_radius_top_left=6, corner_radius_top_right=6, corner_radius_bottom_right=6, corner_radius_bottom_left=6, corner_detail=8, expand_margin_left=0.0, expand_margin_top=0.0, expand_margin_right=0.0, expand_margin_bottom=0.0, shadow_color=Color(0, 0, 0, 0.6), shadow_size=0, shadow_offset=Vector2(0, 0), anti_aliasing=true, anti_aliasing_size=1.0}
   accessibility_region=false
 NODE HUD/SkillTreeHud/Tooltip/TooltipLayout VBoxContainer
   unique_name_in_owner=false

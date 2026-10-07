@@ -4,7 +4,9 @@ extends Node3D
 const INTERIOR_PATH := ^"../../Interior"
 
 const LAMP_Y := 2.93
-const SIDE_LAMP_Z: Array[float] = [-4.2, -2.1, 0.0, 2.1, 4.2]
+const SIDE_LAMP_COUNT := 5
+## First side lamp z; the last sits 0.5 m ahead of the rear end (the old spread of 4.2 in a 4.7 box).
+const SIDE_LAMP_Z_FIRST := -4.2
 const SIDE_WALLS_PATH := ^"../../Interior/Shell/SideWalls"
 
 ## How far the side door leaf slides open along z. Keep in step with `slide_distance` in
@@ -84,8 +86,9 @@ func _build_side_lamps(profile: VanBodyProfile, lens_mat: Material, housing_mat:
 	for sign_idx in 2:
 		var side := -1.0 if sign_idx == 0 else 1.0
 		var side_letter := "L" if sign_idx == 0 else "R"
-		for i in SIDE_LAMP_Z.size():
-			var z := SIDE_LAMP_Z[i]
+		for i in SIDE_LAMP_COUNT:
+			var z := lerpf(SIDE_LAMP_Z_FIRST, VanInteriorSize.REAR_Z - 0.5,
+					float(i) / float(SIDE_LAMP_COUNT - 1))
 			if walls != null:
 				var door_z0 := walls.door_center_z - walls.door_half_length
 				var door_z1 := walls.door_center_z + DOOR_SLIDE_M + DOOR_LEAF_HALF_Z
@@ -114,7 +117,7 @@ func _build_side_lamps(profile: VanBodyProfile, lens_mat: Material, housing_mat:
 
 func _build_rear_lamps(profile: VanBodyProfile, red_lens_mat: Material, amber_lens_mat: Material,
 		housing_mat: Material) -> void:
-	var rear := profile.half_length() + 0.08
+	var rear := VanInteriorSize.REAR_Z + 0.08
 	var rim_z := VanHull.ROOF_Z_MAX
 	var roof_w := profile.inner_x_at(profile.wall_height()) + VanHull.SIDE_SKIN_OUTER_M
 	var max_x := 0.0
@@ -132,12 +135,12 @@ func _build_rear_lamps(profile: VanBodyProfile, red_lens_mat: Material, amber_le
 
 		var housing_mesh := BoxMesh.new()
 		housing_mesh.size = Vector3(0.22, 0.30, 0.05)
-		_add_mesh("Tail%s" % side_letter, housing_mesh, housing_mat, Vector3(x, 0.75, rear + 0.025),
+		_add_mesh("Tail%s" % side_letter, housing_mesh, housing_mat, Vector3(x, 0.75, rear + 0.075),
 				_hinge_for(side))
 
 		var lens_mesh := BoxMesh.new()
 		lens_mesh.size = Vector3(0.18, 0.26, 0.02)
-		_add_mesh("TailLens%s" % side_letter, lens_mesh, red_lens_mat, Vector3(x, 0.75, rear + 0.06),
+		_add_mesh("TailLens%s" % side_letter, lens_mesh, red_lens_mat, Vector3(x, 0.75, rear + 0.11),
 				_hinge_for(side))
 
 		var glow := OmniLight3D.new()

@@ -8,15 +8,18 @@ const LAYER := 16  # physics layer 5
 
 @export var half_width := INTERIOR_HALF_WIDTH + 0.8
 @export var half_length := INTERIOR_HALF_LENGTH + 0.8
+## Z centre of the box (the back compartment is longer behind the cab, so the box is offset).
+@export var center_z := INTERIOR_CENTER_Z
 @export var wall_height := 3.1
 @export var wall_thickness := 0.12
 
 ## Side door bay length (leaf blocker 2.53 m) plus 0.1 m margin each way.
 const BAY_HALF_LENGTH := 2.53 * 0.5 + 0.1
 ## Cabin half width; the export half_width is this plus the 0.8 m margin.
-const INTERIOR_HALF_WIDTH := 2.24
+const INTERIOR_HALF_WIDTH := VanInteriorSize.BOTTOM_HALF - 0.18
 ## Cabin half length; the export half_length is this plus the 0.8 m margin.
-const INTERIOR_HALF_LENGTH := 4.68
+const INTERIOR_HALF_LENGTH := VanInteriorSize.LENGTH * 0.5 - 0.02
+const INTERIOR_CENTER_Z := VanInteriorSize.CENTER_Z
 ## Below this local y the feet are on the road (deck 0.05, road -0.9).
 const DECK_MIN_LOCAL_Y := -0.35
 
@@ -35,12 +38,12 @@ func _build() -> void:
 	_build_side_panels.call_deferred()
 	_add_panel(
 		&"Rear",
-		Vector3(0.0, center_y, half_length),
+		Vector3(0.0, center_y, center_z + half_length),
 		Vector3(half_width * 2.0, wall_height, wall_thickness)
 	)
 	_add_panel(
 		&"Front",
-		Vector3(0.0, center_y, -half_length),
+		Vector3(0.0, center_y, center_z - half_length),
 		Vector3(half_width * 2.0, wall_height, wall_thickness)
 	)
 
@@ -64,16 +67,18 @@ func _add_side(side: StringName, x: float, bay_z: float) -> void:
 	if is_nan(bay_z):
 		_add_panel(
 			side,
-			Vector3(x, center_y, 0.0),
+			Vector3(x, center_y, center_z),
 			Vector3(wall_thickness, wall_height, half_length * 2.0)
 		)
 		return
-	var z0 := clampf(bay_z - BAY_HALF_LENGTH, -half_length, half_length)
-	var z1 := clampf(bay_z + BAY_HALF_LENGTH, -half_length, half_length)
+	var z_min := center_z - half_length
+	var z_max := center_z + half_length
+	var z0 := clampf(bay_z - BAY_HALF_LENGTH, z_min, z_max)
+	var z1 := clampf(bay_z + BAY_HALF_LENGTH, z_min, z_max)
 	var spans := [
-		[String(side) + "Front", -half_length, z0],
+		[String(side) + "Front", z_min, z0],
 		[String(side) + "Door", z0, z1],
-		[String(side) + "Rear", z1, half_length],
+		[String(side) + "Rear", z1, z_max],
 	]
 	for span: Array in spans:
 		var a := span[1] as float
@@ -103,7 +108,7 @@ func is_rear_exit_allowed() -> bool:
 func horizontal_clearance(world_pos: Vector3) -> float:
 	var local := to_local(world_pos)
 	var dx := maxf(absf(local.x) - half_width, 0.0)
-	var dz := maxf(absf(local.z) - half_length, 0.0)
+	var dz := maxf(absf(local.z - center_z) - half_length, 0.0)
 	return Vector2(dx, dz).length()
 
 
@@ -112,7 +117,8 @@ func horizontal_clearance(world_pos: Vector3) -> float:
 func is_inside_interior(world_pos: Vector3) -> bool:
 	var local := to_local(world_pos)
 	return local.y > DECK_MIN_LOCAL_Y \
-			and absf(local.x) <= INTERIOR_HALF_WIDTH and absf(local.z) <= INTERIOR_HALF_LENGTH
+			and absf(local.x) <= INTERIOR_HALF_WIDTH \
+			and absf(local.z - INTERIOR_CENTER_Z) <= INTERIOR_HALF_LENGTH
 
 
 func set_rear_exit_allowed(allowed: bool) -> void:

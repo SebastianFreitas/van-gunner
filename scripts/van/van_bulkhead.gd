@@ -10,13 +10,13 @@ const _VanBulkheadMesh := preload("res://scripts/van/van_bulkhead_mesh.gd")
 enum OpeningSide { LEFT, RIGHT }
 
 @export var opening_side: OpeningSide = OpeningSide.LEFT
-@export var van_half_width := 2.36
+@export var van_half_width := VanInteriorSize.BULKHEAD_HALF
 @export var opening_width := 1.55
 @export var panel_thickness := 0.12
 @export var frame_depth := 0.16
 @export var frame_thickness := 0.08
 @export var kick_height := 0.55
-@export var edge_height := 3.02
+@export var edge_height := VanInteriorSize.BULKHEAD_EDGE
 @export var peak_rise := 0.38
 @export var mesh_spacing := 0.22
 @export var mesh_bar_size := 0.028

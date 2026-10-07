@@ -73,6 +73,44 @@ func add_door_stops(wall_sign: float, mat: Material) -> void:
 	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	node.layers = VanLighting.LAYER_VAN_INTERIOR
 	_walls.add_child(node)
+	_add_front_edge_seal(wall_sign, mat, y0, y1)
+
+
+## Street-side strip over the bay's front edge: the 4 cm between the reveal and the closed leaf
+## is open to the street past the jamb lip, so it fills that gap out past the hull skin. It stops
+## 2 cm short of the leaf's edge, so the leaf can slide out and back past it.
+func _add_front_edge_seal(wall_sign: float, mat: Material, y0: float, y1: float) -> void:
+	var node_name := "DoorEdgeSeal_L" if wall_sign < 0.0 else "DoorEdgeSeal_R"
+	var old := _walls.get_node_or_null(node_name)
+	if old != null:
+		old.free()
+	var za := _walls.door_center_z - _walls.door_half_length - 0.02
+	var zb := _walls.door_center_z - _walls.door_half_length + JAMB_CLEAR - 0.02
+	var d_in := -(_walls.thickness - 0.024 - 0.03)
+	var d_out := -(_walls.thickness + 0.035)
+	var street := Vector3(wall_sign, 0.0, 0.0)
+	var cabin := Vector3(-wall_sign, 0.0, 0.0)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var steps := 8
+	for k in steps:
+		var ya := y0 + (y1 - y0) * float(k) / float(steps)
+		var yb := y0 + (y1 - y0) * float(k + 1) / float(steps)
+		_face_d(st, wall_sign, d_out, ya, yb, za, zb, street)
+		_face_d(st, wall_sign, d_in, ya, yb, za, zb, cabin)
+		_face_z(st, wall_sign, za, d_out, d_in, ya, yb, Vector3(0.0, 0.0, -1.0))
+		_face_z(st, wall_sign, zb, d_out, d_in, ya, yb, Vector3(0.0, 0.0, 1.0))
+	_face_y(st, wall_sign, y1, d_out, d_in, za, zb, Vector3.UP)
+	_face_y(st, wall_sign, y0, d_out, d_in, za, zb, Vector3.DOWN)
+	st.generate_tangents()
+	var node := MeshInstance3D.new()
+	node.name = node_name
+	node.mesh = st.commit()
+	if mat != null:
+		node.material_override = mat
+	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	node.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+	_walls.add_child(node)
 
 
 func _build_plate(st: SurfaceTool, s: float, rows: Array[float], cols: Array[float],

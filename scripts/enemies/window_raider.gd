@@ -460,8 +460,8 @@ func _jump_to_wall(breach: BreachPoint) -> void:
 	var marker := _local_of(breach.outside_marker)
 	var grip: Vector3 = _wall.grip_point(marker)
 	if _on_wall:
-		var grip_rear: bool = grip.z > 4.5
-		var here_rear: bool = position.z > 4.5
+		var grip_rear: bool = grip.z > _wall.REAR_FACE_Z
+		var here_rear: bool = position.z > _wall.REAR_FACE_Z
 		var other_face: bool = grip_rear != here_rear
 		if not grip_rear and not here_rear:
 			other_face = signf(grip.x) != signf(position.x)
@@ -558,7 +558,7 @@ func _drop_off_wall() -> void:
 	_on_wall = false
 	assault_phase = AssaultPhase.JUMPING
 	var x := position.x * 1.3 if absf(position.x) > 1.5 else position.x
-	var z := position.z + (1.0 if position.z > 4.5 else 0.0)
+	var z := position.z + (1.0 if position.z > _wall.REAR_FACE_Z else 0.0)
 	var land := Vector3(x, _wall.ROAD_ORIGIN_Y, z)
 	_anim.latch_jump = false
 	await _wall_move(land, true)

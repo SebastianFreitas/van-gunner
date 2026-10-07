@@ -13,17 +13,19 @@ const BODY_DEPTH := 0.35
 ## Hull skin outside the wall profile (VanHull.SIDE_SKIN_OUTER_M).
 const SKIN_OUT := 0.22
 # Wall profile, mirroring the VanSideWall exports.
-const WALL_HEIGHT := 3.08
-const BOTTOM_HALF := 2.42
-const TOP_HALF := 2.0
-const BOW_OUT := 0.18
-## Rear doors' outer face (4.71 + 0.22).
-const REAR_SKIN_Z := 4.93
+const WALL_HEIGHT := VanInteriorSize.WALL_HEIGHT
+const BOTTOM_HALF := VanInteriorSize.BOTTOM_HALF
+const TOP_HALF := VanInteriorSize.TOP_HALF
+const BOW_OUT := VanInteriorSize.BOW
+## Rear doors' outer face (6.59 + 0.22).
+const REAR_SKIN_Z := 6.81
+## Markers behind this z are on the rear face (side windows end at z 4.34).
+const REAR_FACE_Z := 6.38
 ## Road points just outside OUTSIDE_KEEP_OUT.
-const LAUNCH_SIDE_X := 6.0
-const LAUNCH_REAR_Z := 8.0
+const LAUNCH_SIDE_X := 6.75
+const LAUNCH_REAR_Z := 9.88
 ## Behind the grown rear-leaf keep-out, where a run-up turns the corner.
-const CORNER_Z := 8.6
+const CORNER_Z := 10.48
 const JUMP_TIME := 0.8
 const JUMP_APEX := 1.1
 ## Knocked out of a jump: gravity, sideways drift off the van, then the ground tumble slide.
@@ -37,10 +39,10 @@ const CLIMB_SPEED := 1.0
 const ATTACK_RISE := 0.5
 ## Waiting spots on the walls; x holds only the side sign, the real x comes from side_point.
 const CLING_SPOTS: Array[Vector3] = [
-	Vector3(-1, CLING_Y, 4.2),
-	Vector3(-1, CLING_Y, 1.23),
-	Vector3(1, CLING_Y, 4.2),
-	Vector3(1, CLING_Y, 1.23),
+	Vector3(-1, CLING_Y, 5.7),
+	Vector3(-1, CLING_Y, 2.42),
+	Vector3(1, CLING_Y, 5.7),
+	Vector3(1, CLING_Y, 2.42),
 ]
 
 ## Spot index -> raider instance id.
@@ -71,7 +73,7 @@ static func skin_x_at(y: float) -> float:
 
 
 static func is_rear(marker_local: Vector3) -> bool:
-	return marker_local.z > 4.5
+	return marker_local.z > REAR_FACE_Z
 
 
 ## x uses the sprite centre, 0.66 m below the origin.
@@ -86,7 +88,7 @@ static func grip_point(marker_local: Vector3) -> Vector3:
 
 
 static func launch_point(grip: Vector3) -> Vector3:
-	if grip.z > 4.5:
+	if grip.z > REAR_FACE_Z:
 		return Vector3(grip.x, ROAD_ORIGIN_Y, LAUNCH_REAR_Z)
 	return Vector3(signf(grip.x) * LAUNCH_SIDE_X, ROAD_ORIGIN_Y, grip.z)
 
@@ -94,9 +96,9 @@ static func launch_point(grip: Vector3) -> Vector3:
 ## Waypoints from `from` to a launch point. A raider behind the van running straight to a side
 ## launch point is pinned by the open rear-leaf keep-out, so it rounds the corner first.
 static func approach_path(from: Vector3, launch: Vector3) -> Array[Vector3]:
-	if launch.z > 4.5:
+	if launch.z > REAR_FACE_Z:
 		return [launch]
-	if from.z > 3.5 and absf(from.x) < LAUNCH_SIDE_X - 0.05:
+	if from.z > REAR_FACE_Z - 1.0 and absf(from.x) < LAUNCH_SIDE_X - 0.05:
 		return [Vector3(signf(launch.x) * LAUNCH_SIDE_X, launch.y, maxf(from.z, CORNER_Z)), launch]
 	return [launch]
 

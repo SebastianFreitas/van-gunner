@@ -18,7 +18,7 @@ enum Room { BACK, CABIN }
 ## Bulkhead face in EnemyContainer space. Rear cargo is past this plus a small slop.
 @export var bulkhead_z := 1.0
 ## Outside markers with z above this are the rear face (no hull-around path).
-@export var rear_face_z := 4.5
+@export var rear_face_z := 6.38
 @export var melee_slot_count := 3
 @export var melee_range := 1.2
 @export var wait_timeout := 1.0

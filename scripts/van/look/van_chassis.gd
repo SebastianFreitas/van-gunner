@@ -4,8 +4,10 @@ extends RefCounted
 
 ## Outer face of the sill/skin.
 const SKIN_X := 2.56
+## Reference x of the tank, toolbox and spare add-ons (still the pre-widening skin; see report).
+const ADDON_X := 2.56
 const FLARE_GAP := 0.08
-const FLARE_OUT := 0.06
+const FLARE_OUT := 0.09
 const LIP_H := 0.07
 ## Flare band and lip thickness (D12).
 const FLARE_T := 0.02
@@ -18,6 +20,9 @@ const SILL_OUT_X := 2.70
 const SLOT_Z0 := 0.16
 ## Gap between packed add-ons (D12).
 const ADDON_GAP := 0.02
+## The tank and toolbox hang under the floor deck (underside y -0.27, road y -0.9), not in the widened cabin.
+const TANK_DY := -0.70
+const BOX_DY := -0.88
 const TANK_LEN := 1.2
 ## The lid's length, the box's longest part.
 const TOOLBOX_LEN := 0.92
@@ -248,7 +253,7 @@ func _build_tank(side: float, mat: Material, zc: float) -> void:
 	tank_mesh.bottom_radius = 0.25
 	tank_mesh.height = TANK_LEN
 	tank_mesh.radial_segments = 16
-	var tank := _wheels._add_mesh("FuelTank", tank_mesh, mat, Vector3(side * (SKIN_X + 0.27), 0.12, zc))
+	var tank := _wheels._add_mesh("FuelTank", tank_mesh, mat, Vector3(side * (ADDON_X + 0.27), 0.12 + TANK_DY, zc))
 	tank.rotation_degrees.x = 90.0
 
 	for i: int in range(2):
@@ -258,28 +263,28 @@ func _build_tank(side: float, mat: Material, zc: float) -> void:
 		strap_mesh.bottom_radius = 0.265
 		strap_mesh.height = 0.05
 		var strap := _wheels._add_mesh("TankStrap%d" % i, strap_mesh, mat,
-				Vector3(side * (SKIN_X + 0.27), 0.12, zc + offset))
+				Vector3(side * (ADDON_X + 0.27), 0.12 + TANK_DY, zc + offset))
 		strap.rotation_degrees.x = 90.0
 
 	var cap_mesh := CylinderMesh.new()
 	cap_mesh.top_radius = 0.06
 	cap_mesh.bottom_radius = 0.06
 	cap_mesh.height = 0.06
-	_wheels._add_mesh("TankCap", cap_mesh, mat, Vector3(side * (SKIN_X + 0.27), 0.40, zc + 0.45))
+	_wheels._add_mesh("TankCap", cap_mesh, mat, Vector3(side * (ADDON_X + 0.27), 0.40 + TANK_DY, zc + 0.45))
 
 	for i: int in range(2):
 		var offset: float = 0.4 if i == 0 else -0.4
 		_wheels._add_mesh("TankBracket%d" % i, _wheels._box(Vector3(0.3, 0.06, 0.08)), mat,
-				Vector3(side * (SKIN_X + 0.15), -0.1, zc + offset))
+				Vector3(side * (ADDON_X + 0.15), -0.1 + TANK_DY, zc + offset))
 
 
 func _build_toolbox(side: float, mat: Material, zc: float) -> void:
 	_wheels._add_mesh("ToolBox", _wheels._box(Vector3(0.32, 0.46, 0.9)), mat,
-			Vector3(side * (SKIN_X + 0.17), 0.30, zc))
+			Vector3(side * (ADDON_X + 0.17), 0.30 + BOX_DY, zc))
 	_wheels._add_mesh("ToolBoxLid", _wheels._box(Vector3(0.34, 0.04, 0.92)), mat,
-			Vector3(side * (SKIN_X + 0.17), 0.55, zc))
+			Vector3(side * (ADDON_X + 0.17), 0.55 + BOX_DY, zc))
 	_wheels._add_mesh("ToolBoxLatch", _wheels._box(Vector3(0.03, 0.08, 0.12)), mat,
-			Vector3(side * (SKIN_X + 0.345), 0.44, zc))
+			Vector3(side * (ADDON_X + 0.345), 0.44 + BOX_DY, zc))
 
 
 func _build_exhaust(side: float, mat: Material) -> void:
@@ -310,7 +315,7 @@ func _build_spare(side: float, label: String, rubber: Material, mat: Material, z
 	tyre_mesh.height = 0.26
 	tyre_mesh.radial_segments = 20
 	var tyre := _wheels._add_mesh("Spare%s" % label, tyre_mesh, rubber,
-			Vector3(side * (SKIN_X + 0.15), 0.55, zc))
+			Vector3(side * (ADDON_X + 0.15), 0.55, zc))
 	tyre.rotation_degrees.z = 90.0
 
 	var hub_mesh := CylinderMesh.new()
@@ -318,11 +323,11 @@ func _build_spare(side: float, label: String, rubber: Material, mat: Material, z
 	hub_mesh.bottom_radius = 0.2
 	hub_mesh.height = 0.08
 	var hub := _wheels._add_mesh("SpareHub%s" % label, hub_mesh, mat,
-			Vector3(side * (SKIN_X + 0.30), 0.55, zc))
+			Vector3(side * (ADDON_X + 0.30), 0.55, zc))
 	hub.rotation_degrees.z = 90.0
 
 	_wheels._add_mesh("SpareMount%s" % label, _wheels._box(Vector3(0.04, 0.5, 0.5)), mat,
-			Vector3(side * (SKIN_X + 0.02), 0.55, zc))
+			Vector3(side * (ADDON_X + 0.02), 0.55, zc))
 
 	# Two short segments per diagonal, ending inside the hub: the segments never cross, so no two
 	# chain faces overlap.
@@ -330,19 +335,24 @@ func _build_spare(side: float, label: String, rubber: Material, mat: Material, z
 		var angle := 45.0 if k < 2 else -45.0
 		var d := 0.29 if k % 2 == 0 else -0.29
 		var chain := _wheels._add_mesh("SpareChain%s%d" % [label, k], _wheels._box(Vector3(0.02, 0.04, 0.20)),
-				mat, Vector3(side * (SKIN_X + 0.31), 0.55, zc)
+				mat, Vector3(side * (ADDON_X + 0.31), 0.55, zc)
 				+ Basis(Vector3.RIGHT, deg_to_rad(angle)) * Vector3(0.0, 0.0, d))
 		chain.rotation_degrees.x = angle
 
 
 func _build_rear_bumper(mat: Material) -> void:
+	# Offsets are from the hull's rear end (REAR_Z), where the old 4.70 body ended; the caps sit
+	# 7 cm inside the wall's bottom half width.
+	var bumper_z := VanInteriorSize.REAR_Z + 0.22
+	var cap_x := VanInteriorSize.BOTTOM_HALF - 0.07
 	for side: float in [-1.0, 1.0]:
 		var letter := "L" if side < 0.0 else "R"
 		_wheels._add_mesh("FrameRail%s" % letter, _wheels._box(Vector3(0.16, 0.14, 0.92)), mat,
-				Vector3(side * 1.05, -0.12, 4.36)) # ends 2 cm before the bumper (vanfix D12)
+				Vector3(side * 1.05, -0.12, bumper_z - 0.56)) # ends 2 cm before the bumper (vanfix D12)
 		_wheels._add_mesh("BumperHanger%s" % letter, _wheels._box(Vector3(0.06, 0.14, 0.18)), mat,
-				Vector3(side * 1.02, -0.10, 4.79))
+				Vector3(side * 1.02, -0.10, bumper_z - 0.13))
 		_wheels._add_mesh("BumperCap%s" % letter, _wheels._box(Vector3(0.06, 0.2, 0.2)), mat,
-				Vector3(side * 2.33, -0.10, 4.92))
+				Vector3(side * cap_x, -0.10, bumper_z))
 
-	_wheels._add_mesh("RearBumper", _wheels._box(Vector3(4.6, 0.18, 0.16)), mat, Vector3(0.0, -0.10, 4.92))
+	_wheels._add_mesh("RearBumper", _wheels._box(Vector3(cap_x * 2.0 - 0.06, 0.18, 0.16)), mat,
+			Vector3(0.0, -0.10, bumper_z))

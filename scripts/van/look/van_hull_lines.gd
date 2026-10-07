@@ -34,11 +34,10 @@ func build(profile: VanBodyProfile, walls: VanSideWall, mat: ShaderMaterial) -> 
 	for wall_sign: float in [-1.0, 1.0]:
 		_build_body_lines(wall_sign)
 
-	var half_len := profile.half_length()
-	_build_corner_post("CornerPostFL", -1.0, -half_len + POST_HALF_Z)
-	_build_corner_post("CornerPostFR", 1.0, -half_len + POST_HALF_Z)
-	_build_corner_post("CornerPostRL", -1.0, half_len - POST_HALF_Z)
-	_build_corner_post("CornerPostRR", 1.0, half_len - POST_HALF_Z)
+	_build_corner_post("CornerPostFL", -1.0, VanInteriorSize.FRONT_Z + POST_HALF_Z)
+	_build_corner_post("CornerPostFR", 1.0, VanInteriorSize.FRONT_Z + POST_HALF_Z)
+	_build_corner_post("CornerPostRL", -1.0, VanInteriorSize.REAR_Z - POST_HALF_Z)
+	_build_corner_post("CornerPostRR", 1.0, VanInteriorSize.REAR_Z - POST_HALF_Z)
 
 
 ## X of the trim's inner face at height `y`: the side skin's outer face plus TRIM_LIFT.
@@ -50,8 +49,8 @@ func _skin_x(y: float) -> float:
 ## and belt line also break over the side door's slide path (D19); the door carries no rail.
 func _build_body_lines(side_sign: float) -> void:
 	var suffix := "L" if side_sign < 0.0 else "R"
-	var z_min := -_profile.half_length() + 2.0 * POST_HALF_Z + POST_GAP
-	var z_max := _profile.half_length() - 2.0 * POST_HALF_Z - POST_GAP
+	var z_min := VanInteriorSize.FRONT_Z + 2.0 * POST_HALF_Z + POST_GAP
+	var z_max := VanInteriorSize.REAR_Z - 2.0 * POST_HALF_Z - POST_GAP
 
 	var rub_ranges := _clear_ranges(z_min, z_max, 0.95, true)
 	for i in range(rub_ranges.size()):

@@ -177,11 +177,13 @@ static func gap_views(rig: Node3D) -> Array[Dictionary]:
 	for side in sides:
 		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
 		var d1: Vector3 = (boxes[side] as AABB).end
-		for row in [["front", d1.z - 0.6], ["rear", 2.35]]:
+		var rear_row := ceiling.center_z + ceiling.span_z * 0.25
+		var edge := ceiling.edge_height
+		for row in [["front", d1.z - 0.6], ["rear", rear_row]]:
 			var z: float = row[1]
 			result.append(_gap_view("gap-ceiling-%s-%s" % [side, row[0]],
-				Vector3(s * 2.25, 1.0, z), Vector3(s * profile.inner_x_at(3.05), 3.05, z),
-				"on", none))
+				Vector3(s * (profile.inner_x_at(1.0) - 0.2), 1.0, z),
+				Vector3(s * profile.inner_x_at(edge), edge, z), "on", none))
 	for side in sides:
 		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
 		var box: AABB = boxes[side]

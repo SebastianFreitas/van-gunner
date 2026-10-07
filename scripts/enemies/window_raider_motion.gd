@@ -15,14 +15,14 @@ const CLEARANCE := 0.85
 ## Rect2 y = van z): the body from the front bumper to the rear bumper, both rear-door
 ## leaves' swing (open 110 degrees), the rear and front wheels.
 const OUTSIDE_KEEP_OUT: Array[Rect2] = [
-	Rect2(-2.75, -8.6, 5.5, 13.6), Rect2(-3.3, 4.6, 1.0, 2.4),
-	Rect2(2.3, 4.6, 1.0, 2.4), Rect2(-3.15, 1.1, 6.3, 3.5), Rect2(-3.2, -8.1, 6.4, 1.7),
+	Rect2(-3.72, -8.6, 7.44, 15.48), Rect2(-3.3, 6.48, 1.0, 2.4),
+	Rect2(2.3, 6.48, 1.0, 2.4), Rect2(-3.4, 2.45, 6.8, 3.8), Rect2(-3.45, -8.1, 6.9, 1.7),
 ]
-## The cabin interior shrunk by CLEARANCE: walls at x +/-2.42, cab wall z -4.7, rear
-## doors' inner face z 4.63.
-const INTERIOR_HALF_X := 1.57
+## The cabin interior shrunk by CLEARANCE: walls at x +/-3.39, cab wall z -4.7, rear
+## doors' inner face z 6.51.
+const INTERIOR_HALF_X := VanInteriorSize.BOTTOM_HALF - CLEARANCE
 const INTERIOR_MIN_Z := -3.85
-const INTERIOR_MAX_Z := 3.78
+const INTERIOR_MAX_Z := 5.66
 
 var raider: Node3D  # the WindowRaider; reads/writes its fields when called
 

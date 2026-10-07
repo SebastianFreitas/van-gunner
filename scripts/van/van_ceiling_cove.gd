@@ -127,6 +127,6 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, out: Vector3,
 func _vert(st: SurfaceTool, p: Vector3, out: Vector3, walls: VanSideWall,
 		inv: Transform3D) -> void:
 	st.set_normal((inv.basis * out).normalized())
-	st.set_uv(Vector2((p.z + walls.span_z * 0.5) / walls.span_z,
+	st.set_uv(Vector2((p.z + walls.span_z * 0.5 - walls.center_z) / walls.span_z,
 		clampf(p.y / walls.wall_height, 0.0, 1.0)))
 	st.add_vertex(inv * p)

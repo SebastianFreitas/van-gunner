@@ -27,6 +27,9 @@ const BELT_HALF_H := 0.025
 const LOWER_CREASE_Y := -0.85
 const LOWER_CREASE_HALF_H := 0.02
 const PERIMETER_FRAME_INSET := 0.06
+
+## Builds the leaf's front-edge flange over the bay's edge seal.
+const _Flange := preload("res://scripts/van/side_door_flange.gd")
 const FRAME_THICKNESS := 0.045
 
 ## D7: trim sits 1 cm proud of the face it rests on, so no two surfaces share a plane.
@@ -63,6 +66,8 @@ func fit_door_leaf(leaf: Node3D, wall_sign: float, walls: VanSideWall) -> void:
 	free_node(leaf, "BeltStrip")
 	free_node(leaf, "LowerCrease")
 	free_node(leaf, "LatchPlate")
+	free_node(leaf, "FrontFlange")
+	free_node(leaf, "TopFlange")
 
 	var body := MeshInstance3D.new()
 	body.name = "CurvedBody"
@@ -140,6 +145,10 @@ func fit_door_leaf(leaf: Node3D, wall_sign: float, walls: VanSideWall) -> void:
 	)
 
 	add_latch_plate(leaf, walls, wall_sign, x_ref, mid_y, z_ref, (y_max - y_min) * 0.5, trim_mat)
+	_Flange.new(walls).add_front_flange(
+		leaf, wall_sign, x_ref, mid_y, z_ref, z_ref - DOOR_HALF_Z, y_min, y_max, trim_mat
+	)
+	_Flange.new(walls).add_top_flange(leaf, wall_sign, x_ref, mid_y, z_ref, z0, z1, y_max, trim_mat)
 
 	var handle := leaf.get_node_or_null("Handle") as Node3D
 	place_on_curve(handle, walls, wall_sign, x_ref, mid_y, 1.375, 0.81, 0.12)

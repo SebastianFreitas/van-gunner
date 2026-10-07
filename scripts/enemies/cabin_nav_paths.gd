@@ -130,7 +130,7 @@ func wait_pos(id: StringName) -> Vector3:
 		nav.WAIT_RIGHT:
 			return marker_pos(nav.rear_corner_right)
 		_:
-			return Vector3(0.0, nav.raider_height, 8.0)
+			return Vector3(0.0, nav.raider_height, 9.88)
 
 
 func melee_points(player: Node3D) -> Array[Vector3]:

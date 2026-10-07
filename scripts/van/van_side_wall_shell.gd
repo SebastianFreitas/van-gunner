@@ -63,7 +63,7 @@ func build_curved_shell_mesh(
 			var z := lerpf(z_min, z_max, tz)
 			row_i.append(Vector3(x_inner, y - y_ref, z - z_ref))
 			row_o.append(Vector3(x_outer, y - y_ref, z - z_ref))
-			row_uv.append(Vector2((z + half_span) / wall.span_z, y / wall.wall_height))
+			row_uv.append(Vector2((z + half_span - wall.center_z) / wall.span_z, y / wall.wall_height))
 			row_s.append(_shell_point_solid(
 				y, z, z_ref, poly_cy,
 				has_outer_poly, outer_poly, has_hole_poly, hole_poly,
@@ -129,7 +129,7 @@ func build_curved_pane_from_poly(
 			var z := z_ref + p.x
 			var x_local: float = wall_sign * (wall._profile_x(y) - x_ref) + x_shift
 			ring.append(Vector3(x_local, y - y_ref, z - z_ref))
-			ring_uv.append(Vector2((z + half_span) / wall.span_z, y / wall.wall_height))
+			ring_uv.append(Vector2((z + half_span - wall.center_z) / wall.span_z, y / wall.wall_height))
 
 	# Centroid in poly space → curved surface (convex rounded rect).
 	var c2 := Vector2.ZERO
@@ -139,7 +139,7 @@ func build_curved_pane_from_poly(
 	var cy := poly_center_y + c2.y
 	var cz := z_ref + c2.x
 	var c := Vector3(wall_sign * (wall._profile_x(cy) - x_ref) + x_shift, cy - y_ref, cz - z_ref)
-	var cuv := Vector2((cz + half_span) / wall.span_z, cy / wall.wall_height)
+	var cuv := Vector2((cz + half_span - wall.center_z) / wall.span_z, cy / wall.wall_height)
 
 	for i in range(ring.size()):
 		var j := (i + 1) % ring.size()
@@ -204,8 +204,8 @@ func build_curved_frame_ring_mesh(
 		ii.append(Vector3(face_x, iy - y_ref, iz - z_ref))
 		oo.append(Vector3(face_x + wall_sign * shell_thickness, oy - y_ref, oz - z_ref))
 		io.append(Vector3(face_x + wall_sign * shell_thickness, iy - y_ref, iz - z_ref))
-		ouv.append(Vector2((oz + half_span) / wall.span_z, oy / wall.wall_height))
-		iuv.append(Vector2((iz + half_span) / wall.span_z, iy / wall.wall_height))
+		ouv.append(Vector2((oz + half_span - wall.center_z) / wall.span_z, oy / wall.wall_height))
+		iuv.append(Vector2((iz + half_span - wall.center_z) / wall.span_z, iy / wall.wall_height))
 
 	for k in range(count):
 		var n := (k + 1) % count

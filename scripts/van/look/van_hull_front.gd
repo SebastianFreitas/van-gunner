@@ -19,7 +19,7 @@ func _init(hull: VanHull) -> void:
 ## outside the wall's outline, with a band along its sides and top back to the returns at `z`,
 ## because the bolted-on truck cab (x +-1.95, roof 3.05) no longer covers the slab.
 func build(walls: VanSideWall) -> void:
-	var z := -walls.span_z * 0.5
+	var z := VanInteriorSize.FRONT_Z
 	var w: float = walls.wall_x_at(walls.wall_height) + VanHull.SIDE_SKIN_OUTER_M
 	var xc: float = _hull._profile.outer_x_at(walls.wall_height)
 	var st := SurfaceTool.new()
@@ -63,7 +63,7 @@ func build(walls: VanSideWall) -> void:
 	if floor_node != null:
 		x0 = maxf(x0, floor_node.span_x * 0.5)
 		# The deck runs past the side walls' front returns, so the fill stands before it too.
-		zf = minf(zf, -floor_node.span_z * 0.5 - g)
+		zf = minf(zf, floor_node.center_z - floor_node.span_z * 0.5 - g)
 	var pts := PackedVector2Array()
 	pts.append(Vector2(x0 + g, VanCab.BASE_Y))
 	pts.append(Vector2(x0 + g, 0.0))
@@ -111,6 +111,23 @@ func build(walls: VanSideWall) -> void:
 		var pb := Vector3(p.x, p.y, zb)
 		_hull._rear_tri(st, pf, qf, qb, out)
 		_hull._rear_tri(st, pf, qb, pb, out)
+
+	# Cap over each side skin's front end, from the band out to the skin's outer face, in the skin's
+	# own end plane: a ray slanting past the front corner otherwise slips between band and skin
+	# (a cap 1 cm before the end let shallow rays through on the right).
+	for side: float in [-1.0, 1.0]:
+		for i in range(rows):
+			var ya := h * float(i) / float(rows)
+			var yb := h * float(i + 1) / float(rows)
+			var ia: float = _hull._profile.outer_x_at(ya)
+			var ib: float = _hull._profile.outer_x_at(yb)
+			var oa: float = walls.wall_x_at(ya) + VanHull.SIDE_SKIN_OUTER_M + 0.012
+			var ob: float = walls.wall_x_at(yb) + VanHull.SIDE_SKIN_OUTER_M + 0.012
+			var zc := z
+			_hull._rear_tri(st, Vector3(side * ia, ya, zc), Vector3(side * oa, ya, zc),
+					Vector3(side * ib, yb, zc), Vector3.FORWARD)
+			_hull._rear_tri(st, Vector3(side * oa, ya, zc), Vector3(side * ob, yb, zc),
+					Vector3(side * ib, yb, zc), Vector3.FORWARD)
 
 	st.generate_normals()
 	# No tangents: the exterior shader projects in model space and these meshes carry no UVs.

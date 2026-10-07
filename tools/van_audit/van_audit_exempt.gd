@@ -21,10 +21,14 @@ const OPENING: Dictionary = {
 ## (rule_for returns the first match).
 ## Globs are String.match() patterns against the node path as printed in the report.
 ## The rear sill: deck end and step ramp under the rear doors, rig-local (D57).
-const REAR_SILL := AABB(Vector3(-2.5, -0.4, 4.5), Vector3(5.0, 0.5, 0.9))
-## The right side door leaf's rear slit, rig-local: the door opening's rear 30 cm at the stop
-## (vangapfix D77, closed by vangapfix2 phase 2).
-const RIGHT_DOOR_REAR_SLIT := AABB(Vector3(2.2, 0.0, -2.5), Vector3(0.5, 3.1, 0.4))
+const REAR_SILL := AABB(Vector3(-2.5, -0.4, 5.9), Vector3(5.0, 0.5, 1.4))
+const REAR_LAMPS := AABB(Vector3(-2.6, 0.4, 6.6), Vector3(5.2, 0.7, 0.4))
+## The rear wheel arch's open under-side, rig-local: the deck's side edge seen past the tyre.
+## Right side only; the rule's "mirror" also tests the hit with x negated (the left arch).
+const REAR_ARCH := AABB(Vector3(2.9, -0.5, 2.6), Vector3(0.8, 0.7, 3.8))
+## The right DoorEdgeSeal, rig-local, 1 cm round it (door front edge, wall_x + 0.106..0.195).
+## Right side only; its rule's "mirror" covers the left seal.
+const DOOR_EDGE_SEAL := AABB(Vector3(3.31, 0.01, -4.43), Vector3(0.44, 3.05, 0.16))
 const RULES: Array[Dictionary] = [
 	{
 		"section": "FLICKER", "a": "Interior/Bulkhead/KickPlate_*",
@@ -105,16 +109,26 @@ const RULES: Array[Dictionary] = [
 			+ "; re-earned (vangapfix D21); not see-through (vangapfix2)",
 	},
 	{
+		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/DoorEdgeSeal_*", "b": "", "d": "D54",
+		"box": DOOR_EDGE_SEAL, "mirror": true,
+		"reason": "the strip over the bay's front edge sits behind the skin; seen through the "
+			+ "leaf's front clearance gap, which it exists to close",
+	},
+	{
 		"section": "LEAK_OUT", "a": "Interior/FrontWall/Slab", "b": "", "d": "D54",
 		"reason": "the front wall slab's side edge, seen through the side door's front "
 			+ "clearance gap",
 	},
 	{
-		"section": "LEAK_OUT", "a": "Interior/Shell/SideWalls/DoorStop_R", "b": "", "d": "D77",
-		"box": RIGHT_DOOR_REAR_SLIT,
-		"reason": "the stop seen through the right leaf's rear slit; the cab rebuild moved the "
-			+ "leak sampler's rays onto it; temporary, vangapfix2 phase 2 closes the slit "
-			+ "and deletes this row",
+		"section": "LEAK_OUT", "a": "Interior/Shell/RearWall/*Hinge/Tail*", "b": "", "d": "D57",
+		"box": REAR_LAMPS,
+		"reason": "the tail lamps are exterior lights on the rear leaves, meant to be seen "
+			+ "from outside",
+	},
+	{
+		"section": "LEAK_OUT", "a": "Interior/Shell/Floor/Deck", "b": "", "d": "D29",
+		"box": REAR_ARCH, "mirror": true,
+		"reason": "the deck's side edge seen through the open wheel arch past the tyre",
 	},
 	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/Floor/RearEntryRamp", "b": "", "d": "D57",

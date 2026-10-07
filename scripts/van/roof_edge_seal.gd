@@ -36,7 +36,7 @@ static func _add_side(walls: VanSideWall, parent: Node3D, sign_x: float, node_na
 		mat: Material) -> void:
 	var w := walls.wall_x_at(walls.wall_height) + VanHull.SIDE_SKIN_OUTER_M
 	var rim_y := walls.wall_height + VanHull.SKIN_OFFSET_M
-	var z0 := -walls.span_z * 0.5
+	var z0 := VanInteriorSize.FRONT_Z
 	var z1 := VanHull.ROOF_Z_MAX
 	var section: Array[Vector2] = [
 		Vector2(w - SINK_M, walls.wall_height - DROP_M),

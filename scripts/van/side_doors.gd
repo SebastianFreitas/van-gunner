@@ -23,8 +23,8 @@ const _SideDoorStops := preload("res://scripts/van/side_door_stops.gd")
 @export var slide_duration := 1.15
 ## Fraction of the slide before the opening counts as passable.
 @export_range(0.05, 1.0) var passage_slide_ratio := 0.72
-## The door steps out 0.30 m so its cabin-side frames clear the hull skin (liner + 0.22) (D38).
-@export var recess_distance := -0.30
+## The door steps out 0.45 m so its cabin-side frames clear the hull skin (liner + 0.22) (D38).
+@export var recess_distance := -0.45
 @export var slide_distance := 2.45
 ## Mount pull into the door — leave a visible head proud of the panel.
 @export var mount_retract_distance := 0.028

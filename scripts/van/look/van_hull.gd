@@ -27,7 +27,7 @@ const ROOF_RISE_M := 0.38
 const SIDE_SKIN_OUTER_M := 0.22
 
 ## Rear end of the roof skin along z; the roof edge seal spans the same range.
-const ROOF_Z_MAX := 4.78
+const ROOF_Z_MAX := VanInteriorSize.REAR_Z + 0.08
 
 ## The fill stands this far in front of the interior front wall's cab-side face and this far
 ## outside its outline, so the slab never shows and no face lies within the audit's 2 cm.
@@ -88,7 +88,7 @@ func _build_sides(walls: VanSideWall) -> void:
 
 func _build_roof(walls: VanSideWall) -> void:
 	var w: float = walls.wall_x_at(walls.wall_height) + SIDE_SKIN_OUTER_M
-	var z_min := -walls.span_z * 0.5
+	var z_min := VanInteriorSize.FRONT_Z
 	var z_max := ROOF_Z_MAX
 	var x_segments := 20
 	var z_segments := 24
@@ -166,9 +166,9 @@ func _roof_y(x: float, w: float, walls: VanSideWall) -> float:
 ## The rear face is a closed ring around the door opening. The opening follows the rear door
 ## leaves' outline (bottom Y_MIN, liner - 0.03 at the sides, vault - 0.025 on top) 2 cm out (D12),
 ## so the skin never lies behind a leaf and z-fights it. The opening is lined by a reveal from the
-## skin back to the liner's end at z 4.70, so its rim is closed (D4).
+## skin back to the liner's end at the back compartment end, so its rim is closed (D4).
 func _build_rear(walls: VanSideWall) -> void:
-	var z := 4.78
+	var z := ROOF_Z_MAX
 	var w: float = walls.wall_x_at(walls.wall_height) + SIDE_SKIN_OUTER_M
 	var ceiling := _profile.ceiling
 	var y_join := _rear_join_y(walls, ceiling)
@@ -219,7 +219,7 @@ func _build_rear(walls: VanSideWall) -> void:
 				Vector3(xo1, _roof_y(xo1, w, walls), z))
 
 	# Reveal along the sides and top, from the ring's inner edge back to the liner's end.
-	var z_back: float = walls.span_z * 0.5
+	var z_back: float = VanInteriorSize.REAR_Z
 	for side: float in [-1.0, 1.0]:
 		for i in range(steps):
 			_rear_reveal_quad(st,
