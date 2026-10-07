@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="VanDonor" format=3]
+
+[ext_resource type="Script" path="res://scripts/van/donors/van_donor.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"transit_red"
+label = "dusty-red Transit"
+paint = Color(0.18, 0.13, 0.115, 1)
+primer = Color(0.12, 0.09, 0.085, 1)
+fade = 0.25
+wall_style = 2
+corrugation_pitch_m = 0.0
+rib_profile = 2
+rib_pitch_m = 0.6
+fastener_era = 0

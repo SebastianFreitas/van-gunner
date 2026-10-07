@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="VanDonor" format=3]
+
+[ext_resource type="Script" path="res://scripts/van/donors/van_donor.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"flat_blue"
+label = "faded-blue flat-sheet van"
+paint = Color(0.092, 0.11, 0.14, 1)
+primer = Color(0.12, 0.09, 0.085, 1)
+fade = 0.5
+wall_style = 3
+corrugation_pitch_m = 0.0
+rib_profile = 1
+rib_pitch_m = 0.8
+fastener_era = 1

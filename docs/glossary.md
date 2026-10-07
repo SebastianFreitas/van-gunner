@@ -9,7 +9,7 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - window bars / bars / chains: IronCross, scripts/van/iron_cross.gd (+ _build/_geo; chains and padlock in iron_cross_build.gd)
 - broken bars: BrokenIronCross, scripts/van/broken_iron_cross.gd (after a window breach)
 - bar kit: item resources/items/window_bar_kit.tres, effect scripts/items/effects/repair_window_bars_effect.gd
-- rear door look: scripts/van/look/van_rear_door_hardware.gd, scenes/van/van_rear_door.gdshader
+- rear door look: scenes/van/van_rear_door.gdshader (the kit is the interior; no look-only hardware)
 - street card: ActCardDefinition, scripts/acts/act_card_*.gd, resources/acts/cards/*.tres (BLESSING or DANGER, 6 per act)
 - act deck / act: ActDeckController, scripts/acts/act_deck_controller.gd, session_act_deck.gd, GameSession.run_act
 - statue / act statue: roadside act reveal stop, scenes/corridor/act_statue.tscn, ACT_REVEAL phase, begin_act_statue_stop in act_deck_controller.gd

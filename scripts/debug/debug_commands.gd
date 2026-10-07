@@ -157,7 +157,8 @@ func _usage_lines() -> Dictionary:
 				+ "(on: seen from the cabin, out: seen from the street)",
 		"bars": "bars <0|1|2|break|fix>  window bars: damage stage, break, or restore (looks only)",
 		"van": "van seed        print the van look seed\n"
-				+ "van reroll [s]  rebuild the van look from a new (or given) seed",
+				+ "van reroll [s]  rebuild the van look from a new (or given) seed\n"
+				+ "van kit  list the salvage kit pieces",
 		"class": "class [id]      print the class, or equip one in any phase (e.g. class sniper)",
 		"sound": "sound <cue>     play a cue (audition without a run)",
 		"parts": "parts [n]       add Rare Parts (meta schematic currency)",

@@ -46,8 +46,8 @@ func ceiling_y(x: float) -> float:
 
 ## Moves an upper-wall point inside the side door bay onto the ceiling; other points pass through.
 func lift(p: Vector3, inset: float) -> Vector3:
-	var z_min := VanInnerShell.DOOR_Z_MIN - HOP_PAD - 1e-4
-	var z_max := VanInnerShell.DOOR_Z_MAX + HOP_PAD + 1e-4
+	var z_min := VanKitFootprint.DOOR_Z_MIN - HOP_PAD - 1e-4
+	var z_max := VanKitFootprint.DOOR_Z_MAX + HOP_PAD + 1e-4
 	if p.z < z_min or p.z > z_max or p.y <= HOP_MIN_Y or absf(p.x) <= HOP_X - inset:
 		return p
 	var hx := HOP_X - inset
@@ -56,8 +56,8 @@ func lift(p: Vector3, inset: float) -> Vector3:
 
 ## Lifts every upper-wall stretch that crosses a side door bay onto the ceiling (D40).
 func hop_bays(points: PackedVector3Array, inset: float) -> PackedVector3Array:
-	var lo := VanInnerShell.DOOR_Z_MIN - HOP_PAD
-	var hi := VanInnerShell.DOOR_Z_MAX + HOP_PAD
+	var lo := VanKitFootprint.DOOR_Z_MIN - HOP_PAD
+	var hi := VanKitFootprint.DOOR_Z_MAX + HOP_PAD
 	var planes: Array[float] = [lo - HOP_RAMP, lo, hi, hi + HOP_RAMP]
 	var out := PackedVector3Array()
 	for i: int in range(points.size()):

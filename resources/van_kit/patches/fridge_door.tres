@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="VanPatchDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/van/kit/van_patch_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"fridge_door"
+order = 2
+since_gen = 1
+weight = 2.0
+size_min = Vector2(0.5, 1)
+size_max = Vector2(0.5, 1)
+depth_min = 0.05
+depth_max = 0.05
+fastener = 2
+source = &"fridge_door"
+field = Color(0.24, 0.235, 0.21, 1)

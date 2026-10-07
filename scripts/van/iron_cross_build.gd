@@ -53,7 +53,9 @@ func build(geo: IronCrossGeo, rng: RandomNumberGenerator, stage: int) -> void:
 	geo.add_rod(_o, "VerticalBar", bv[0], bv[1], 6, rib, rebar)
 	geo.add_rod(_o, "HorizontalBar", bh[0], bh[1], 6, rib, rebar)
 	if sleeve != 2:
-		_sleeve(sleeve == 0, bv[2] if sleeve == 0 else bh[2], pipe_r)
+		# The sleeve stands 1.4 cm off its bar so their faces never read as coplanar.
+		var sleeve_r := maxf(pipe_r, (rv if sleeve == 0 else rh) + 0.014)
+		_sleeve(sleeve == 0, bv[2] if sleeve == 0 else bh[2], sleeve_r)
 	_crossing(rv, rh, zv, zh, flip)
 	var lost: Array = _const(&"STAGE_WELDS_LOST")
 	_place_end_welds(lost[stage] as int)

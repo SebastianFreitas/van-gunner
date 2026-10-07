@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="VanWindowAssetDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/van/kit/van_window_asset_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"torch_cut_plate"
+order = 2
+since_gen = 1
+weight = 1.0
+size_min = Vector2(0.4, 0.3)
+size_max = Vector2(0.8, 0.5)
+depth_min = 0.03
+depth_max = 0.06
+fastener = 3
+shape = 1
+corner_radius_m = 0.0
+join = 2
+bolt_pitch_m = 0.25
+bar_section = &"flat_bar"
+rear_fit_rule = &"fit_leaf_hole"
+plate_thickness_m = 0.005
+edge_rough_m = 0.02
+bead_width_m = 0.02

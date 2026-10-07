@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="VanPatchDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/van/kit/van_patch_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"road_sign"
+order = 0
+since_gen = 1
+weight = 2.0
+size_min = Vector2(0.7, 0.7)
+size_max = Vector2(1, 1)
+depth_min = 0.03
+depth_max = 0.03
+fastener = 2
+source = &"road_sign"
+field = Color(0.08, 0.1, 0.145, 1)
+trim = Color(0.3, 0.3, 0.28, 1)
+symbol_shapes = Array[StringName]([&"rectangle", &"disc", &"triangle"])

@@ -201,4 +201,14 @@ func cmd_van(args: Array) -> String:
 			s = hash(str(args[1]))
 		look.reroll(s)
 		return "Van rerolled: seed %d." % s
-	return "Usage: van [seed|reroll [seed]]"
+	if args[0] == "kit":
+		var out := "kit"
+		var found := false
+		for n in look.find_children("*", "Node", true, false):
+			if n.has_meta(&"kit_origin"):
+				found = true
+				var meta: Dictionary = n.get_meta(&"kit_origin")
+				out += "\n%s %s %s" % [meta.get(&"origin_kind", ""), meta.get(&"origin_id", ""),
+					meta.get(&"reason", "")]
+		return out if found else out + "\nno kit pieces"
+	return "Usage: van [seed|reroll [seed]|kit]"

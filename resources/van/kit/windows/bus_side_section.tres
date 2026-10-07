@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="VanWindowAssetDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/van/kit/van_window_asset_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bus_side_section"
+order = 1
+since_gen = 1
+weight = 1.0
+size_min = Vector2(0.5, 0.35)
+size_max = Vector2(1.0, 0.6)
+depth_min = 0.04
+depth_max = 0.08
+fastener = 1
+shape = 0
+corner_radius_m = 0.12
+join = 1
+bolt_pitch_m = 0.2
+bar_section = &"flat_bar"
+rear_fit_rule = &"fit_leaf_hole"
+paint = Color(0.2, 0.185, 0.15, 1)

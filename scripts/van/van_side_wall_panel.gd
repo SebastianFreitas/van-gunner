@@ -6,6 +6,7 @@ extends RefCounted
 const _Shell := preload("res://scripts/van/van_side_wall_shell.gd")
 
 var wall: Node3D  # the VanSideWall; reads its exports and profile when called
+var cuts: VanSideWallCuts  ## The wall's window hole queries (the wall owns the rolled holes).
 var _x_from := 0.0  ## Offset off the liner of the mesh's inner face for the current build.
 var _x_to := 0.0  ## Offset off the liner of the mesh's outer face for the current build.
 var _inner_face := true  ## Whether the current build emits the cabin-side face.
@@ -16,6 +17,7 @@ const REVEAL_LIP_M := 0.004
 
 func _init(owner: Node3D) -> void:
 	wall = owner
+	cuts = owner.cuts()
 
 
 ## Which parts of the panel a build emits: grid faces, opening returns/reveals, or both.
@@ -49,7 +51,7 @@ func build_side_mesh(
 			var z := lerpf(-half_z, half_z, tz)
 			row_v.append(Vector3(x_inner, y, z))
 			row_uv.append(Vector2(tz, ty))
-			row_solid.append(not is_open(y, z))
+			row_solid.append(not is_open(wall_sign, y, z))
 		verts.append(row_v)
 		uvs.append(row_uv)
 		solid.append(row_solid)
@@ -81,7 +83,7 @@ func build_side_mesh(
 			# the rounded cut so wall metal stays under the frame lip (rear-door look).
 			if is_door_bay_open((y0 + y1) * 0.5, (z0 + z1) * 0.5):
 				continue
-			if cell_fully_in_window_cut(y0, y1, z0, z1):
+			if cuts.cell_fully_in_window_cut(wall_sign, y0, y1, z0, z1):
 				continue
 			var v00: Vector3 = verts[iy][iz]
 			var v10: Vector3 = verts[iy][iz + 1]
@@ -107,7 +109,7 @@ func build_side_mesh(
 			var z1 := lerpf(-half_z, half_z, float(iz + 1) / float(wall.z_segments))
 			if is_door_bay_open((y0 + y1) * 0.5, (z0 + z1) * 0.5):
 				continue
-			if cell_fully_in_window_cut(y0, y1, z0, z1):
+			if cuts.cell_fully_in_window_cut(wall_sign, y0, y1, z0, z1):
 				continue
 			var v00: Vector3 = outer[iy][iz]
 			var v10: Vector3 = outer[iy][iz + 1]
@@ -138,14 +140,15 @@ func build_side_mesh(
 ## Cross-section faces on each window cut perimeter — visible when the sash is open.
 func add_window_opening_reveals(st: SurfaceTool, wall_sign: float) -> void:
 	const EDGE_SUBDIV := 16
-	var n_poly: int = wall.WINDOW_CUT_POLY.size()
-	if n_poly < 3:
-		return
 	for cz in wall.window_centers_z:
+		var poly: PackedVector2Array = wall.cut_poly_for(wall_sign, cz)
+		var n_poly := poly.size()
+		if n_poly < 3:
+			continue
 		for i in range(n_poly):
-			var a: Vector2 = wall.WINDOW_CUT_POLY[i]
-			var b: Vector2 = wall.WINDOW_CUT_POLY[(i + 1) % n_poly]
-			var inward_2d: Vector2 = wall._shell_helper().poly_edge_inward(a, b, wall.WINDOW_CUT_POLY)
+			var a: Vector2 = poly[i]
+			var b: Vector2 = poly[(i + 1) % n_poly]
+			var inward_2d: Vector2 = wall._shell_helper().poly_edge_inward(a, b, poly)
 			for s in range(EDGE_SUBDIV):
 				var la := a.lerp(b, float(s) / float(EDGE_SUBDIV))
 				var lb := a.lerp(b, float(s + 1) / float(EDGE_SUBDIV))
@@ -286,32 +289,14 @@ func add_return_quad(
 		_Shell.add_tri(st, i_b, uv_b, o_b, uv_b, o_a, uv_a)
 
 
-func is_open(y: float, z: float) -> bool:
-	return is_door_bay_open(y, z) or in_window_cut(y, z)
+func is_open(wall_sign: float, y: float, z: float) -> bool:
+	return is_door_bay_open(y, z) or cuts.in_window_cut(wall_sign, y, z)
 
 
 func is_door_bay_open(y: float, z: float) -> bool:
 	return (
 		y >= wall.door_y_min and y <= wall.door_y_max
 		and absf(z - wall.door_center_z) <= wall.door_half_length
-	)
-
-
-func in_window_cut(y: float, z: float) -> bool:
-	for cz in wall.window_centers_z:
-		if wall.point_in_poly(Vector2(z - cz, y - wall.window_center_y), wall.WINDOW_CUT_POLY):
-			return true
-	return false
-
-
-## Only punch a wall cell when every corner is inside the rounded cut — keeps
-## liner metal under the frame lip the way the rear door panel surrounds its pane.
-func cell_fully_in_window_cut(y0: float, y1: float, z0: float, z1: float) -> bool:
-	return (
-		in_window_cut(y0, z0)
-		and in_window_cut(y0, z1)
-		and in_window_cut(y1, z0)
-		and in_window_cut(y1, z1)
 	)
 
 
@@ -330,7 +315,7 @@ func project_window_cut_fringe(wall_sign: float, verts: Array, outer: Array, sol
 			if is_door_bay_open(y, z):
 				continue
 			# nearest returns Vector2(world_y, world_z)
-			var p := nearest_on_window_cut(y, z)
+			var p := cuts.nearest_on_window_cut(wall_sign, y, z)
 			var wy := p.x
 			var wz := p.y
 			var x: float = wall_sign * (wall._profile_x(wy) + _x_from)
@@ -351,26 +336,3 @@ func has_solid_neighbor(solid: Array, iy: int, iz: int) -> bool:
 			if solid[ny][nz]:
 				return true
 	return false
-
-
-func nearest_on_window_cut(y: float, z: float) -> Vector2:
-	## Returns Vector2(world_y, world_z) on the nearest WindowCut edge.
-	var best := Vector2(y, z)
-	var best_d := INF
-	for cz in wall.window_centers_z:
-		var local := Vector2(z - cz, y - wall.window_center_y)
-		var n: int = wall.WINDOW_CUT_POLY.size()
-		for i in range(n):
-			var a: Vector2 = wall.WINDOW_CUT_POLY[i]
-			var b: Vector2 = wall.WINDOW_CUT_POLY[(i + 1) % n]
-			var ab := b - a
-			var t := 0.0
-			var denom := ab.dot(ab)
-			if denom > 0.0000001:
-				t = clampf((local - a).dot(ab) / denom, 0.0, 1.0)
-			var q := a.lerp(b, t)
-			var d := local.distance_squared_to(q)
-			if d < best_d:
-				best_d = d
-				best = Vector2(wall.window_center_y + q.y, cz + q.x)
-	return best

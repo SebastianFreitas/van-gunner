@@ -33,14 +33,20 @@ static func seed_for_run(run_seed: int) -> int:
 
 ## One RandomNumberGenerator stream per part so adding a part never reshuffles others.
 func rng_for(part_id: StringName) -> RandomNumberGenerator:
+	return rng_for_seed(van_seed, part_id)
+
+
+## The same stream from a bare seed, for pure rolls that have no VanLook node.
+static func rng_for_seed(seed_value: int, part_id: StringName) -> RandomNumberGenerator:
 	var rng := RandomNumberGenerator.new()
-	rng.seed = hash([van_seed, part_id])
+	rng.seed = hash([seed_value, part_id])
 	return rng
 
 
 func rebuild(seed_value: int) -> void:
 	var perf_t := PerfStats.begin()
 	van_seed = seed_value
+	VanKitFit.apply(self)
 	for child in get_children():
 		if child.has_method(&"rebuild_look"):
 			child.rebuild_look(self)

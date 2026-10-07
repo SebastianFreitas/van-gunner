@@ -11,6 +11,8 @@ const KNUCKLE_GAP := 0.004
 const RAIL_SINK := 0.02
 const RAIL_PROUD := 0.015
 const RAIL_Y0 := -0.012
+## Least gap kept between the plate's bottom face and the window hole's top edge.
+const RAIL_HOLE_CLEAR := 0.02
 const RAIL_Y1 := 0.07
 const RAIL_HALF_Z := 0.85
 const BOLT_RADIUS := 0.009
@@ -36,11 +38,13 @@ static var _bolt: StandardMaterial3D = null
 
 ## The static stop ring on the window root (moved verbatim from SideWindows._fit_window_root).
 static func add_stop(root: Node3D, walls: VanSideWall, wall_sign: float, x_ref: float,
-		y_hinge: float, z_center: float, mid_y: float, material: Material) -> void:
+		y_hinge: float, z_center: float, mid_y: float, material: Material,
+		outer_poly: PackedVector2Array = STOP_OUTER_POLY,
+		inner_poly: PackedVector2Array = STOP_INNER_POLY) -> void:
 	var stop := MeshInstance3D.new()
 	stop.name = "WindowStop"
 	stop.mesh = walls.build_curved_frame_ring_mesh(
-		wall_sign, STOP_OUTER_POLY, STOP_INNER_POLY, x_ref, y_hinge, z_center, mid_y, STOP_THICKNESS,
+		wall_sign, outer_poly, inner_poly, x_ref, y_hinge, z_center, mid_y, STOP_THICKNESS,
 		-wall_sign * (STOP_LIFT + STOP_THICKNESS), VanSideWall.WINDOW_EDGE_SUBDIV
 	)
 	stop.material_override = material
@@ -52,14 +56,31 @@ static func add_stop(root: Node3D, walls: VanSideWall, wall_sign: float, x_ref: 
 
 ## The fixed hinge rail on `root` and the two strap hinges on `hinge`; call after the pivot shift.
 static func add_hinges(root: Node3D, hinge: Node3D, walls: VanSideWall, wall_sign: float,
-		x_ref: float, y_hinge: float, pivot_o: float) -> void:
+		x_ref: float, y_hinge: float, pivot_o: float,
+		hole: PackedVector2Array = PackedVector2Array(), hole_y0: float = 0.0) -> void:
 	# The skin panel offsets its faces along x, so no tilt correction.
 	var skin_o := VanHull.SIDE_SKIN_OUTER_M
 	var rail := Node3D.new()
 	rail.name = "HingeRail"
 	root.add_child(rail)
+	# A rolled hole's top reveal must not meet the plate's bottom face: lift the plate by the
+	# shortfall to RAIL_HOLE_CLEAR. `hole` is in window-centre-local metres, `hole_y0` the
+	# root's offset above that centre.
+	var lift := 0.0
+	var hole_top := -INF
+	for i in hole.size():
+		var a := hole[i]
+		var b := hole[(i + 1) % hole.size()]
+		# Vertices inside the plate's z span, and where each edge crosses its two ends.
+		if absf(a.x) <= RAIL_HALF_Z:
+			hole_top = maxf(hole_top, a.y - hole_y0)
+		for zc in [-RAIL_HALF_Z, RAIL_HALF_Z]:
+			if (a.x - zc) * (b.x - zc) < 0.0:
+				hole_top = maxf(hole_top, lerpf(a.y, b.y, (zc - a.x) / (b.x - a.x)) - hole_y0)
+	if hole_top > -INF:
+		lift = maxf(0.0, hole_top + RAIL_HOLE_CLEAR - RAIL_Y0)
 	_box(rail, "RailPlate", wall_sign, skin_o - RAIL_SINK, skin_o + RAIL_PROUD,
-		RAIL_Y0, RAIL_Y1, -RAIL_HALF_Z, RAIL_HALF_Z, Vector3.ZERO, _steel_material())
+		RAIL_Y0 + lift, RAIL_Y1 + lift, -RAIL_HALF_Z, RAIL_HALF_Z, Vector3.ZERO, _steel_material())
 	var standoff_z: Array[float] = []
 	for z_s in STRAP_Z:
 		for side in [-1.0, 1.0]:

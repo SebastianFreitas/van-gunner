@@ -53,18 +53,18 @@ func _build_body_lines(side_sign: float) -> void:
 	var z_min := -_profile.half_length() + 2.0 * POST_HALF_Z + POST_GAP
 	var z_max := _profile.half_length() - 2.0 * POST_HALF_Z - POST_GAP
 
-	var rub_ranges := _clear_ranges(z_min, z_max, 0.95, true)
+	var rub_ranges := _clear_ranges(z_min, z_max, 0.95, side_sign, true)
 	for i in range(rub_ranges.size()):
 		var r: Vector2 = rub_ranges[i]
 		_build_strip("RubRail%s%d" % [suffix, i], 0.95, r.x, r.y, 0.09, 0.05, side_sign)
 
-	var belt_ranges := _clear_ranges(z_min, z_max, 2.62, true)
+	var belt_ranges := _clear_ranges(z_min, z_max, 2.62, side_sign, true)
 	for i in range(belt_ranges.size()):
 		var r: Vector2 = belt_ranges[i]
 		_build_strip("BeltLine%s%d" % [suffix, i], 2.62, r.x, r.y, 0.05, 0.03, side_sign)
 
 	var drip_y := _profile.wall_height() - 0.04
-	var drip_ranges := _clear_ranges(z_min, z_max, drip_y)
+	var drip_ranges := _clear_ranges(z_min, z_max, drip_y, side_sign)
 	var single := drip_ranges.size() == 1
 	for i in range(drip_ranges.size()):
 		var r: Vector2 = drip_ranges[i]
@@ -76,15 +76,19 @@ func _build_body_lines(side_sign: float) -> void:
 ## (each padded by 6 cm). With `over_door_path` the door's block extends to the far end of the
 ## slid-open leaf. Pieces shorter than 0.15 m are dropped.
 func _clear_ranges(
-	z_min: float, z_max: float, y: float, over_door_path: bool = false
+	z_min: float, z_max: float, y: float, side_sign: float, over_door_path: bool = false
 ) -> Array[Vector2]:
 	var pad := 0.06
 	var blocks: Array[Vector2] = []
 	for cz: float in _walls.window_centers_z:
-		var wy0 := _walls.window_center_y - _walls.window_half_height - pad
-		var wy1 := _walls.window_center_y + _walls.window_half_height + pad
+		# The hole's own outline (the kit rolls it per wall), not the fixed half sizes.
+		var box := Rect2()
+		for p: Vector2 in _walls.cut_poly_for(side_sign, cz):
+			box = Rect2(p, Vector2.ZERO) if box == Rect2() else box.expand(p)
+		var wy0 := _walls.window_center_y + box.position.y - pad
+		var wy1 := _walls.window_center_y + box.end.y + pad
 		if y >= wy0 and y <= wy1:
-			blocks.append(Vector2(cz - _walls.window_half_length - pad, cz + _walls.window_half_length + pad))
+			blocks.append(Vector2(cz + box.position.x - pad, cz + box.end.x + pad))
 	if y >= _walls.door_y_min - pad and y <= _walls.door_y_max + pad:
 		var door_end := _walls.door_center_z + _walls.door_half_length
 		if over_door_path:

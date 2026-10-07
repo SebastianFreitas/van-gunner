@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="VanPatchDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/van/kit/van_patch_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"chequer_plate"
+order = 4
+since_gen = 1
+weight = 1.0
+size_min = Vector2(0.5, 0.5)
+size_max = Vector2(1.0, 1.0)
+depth_min = 0.03
+depth_max = 0.04
+fastener = 2
+source = &"chequer_plate"
+field = Color(0.19, 0.19, 0.185, 1)

@@ -304,3 +304,8 @@ func _animate_door(side: StringName, opening: bool) -> void:
 		tween.tween_property(hinge, "rotation:y", target_y, open_duration)
 		tween.tween_property(mount, "position", mount_closed, mount_retract_duration)
 		tween.tween_property(grip, "position", grip_closed, grip_retract_duration)
+
+
+## Kit refit: `holes` maps &"left"/&"right" to {hole_grow, glazing}; both are always rolled.
+func refit_windows(holes: Dictionary) -> void:
+	RearWindowFit.fit(self, holes)
