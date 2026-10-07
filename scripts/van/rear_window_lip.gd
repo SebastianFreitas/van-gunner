@@ -2,6 +2,7 @@ extends RefCounted
 ## Rear window lip: dark lip riding on each rear leaf, closing the slot between the vaulted skin and the window's cabin frame.
 
 const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
+const _Skin := preload("res://scripts/van/rear_door_skin.gd")
 
 ## Window centre height in rig space, as `rear_door_leaf_build.gd` cuts the hole (left leaf).
 const HOLE_CENTER_RIG_Y := 1.775
@@ -10,13 +11,13 @@ const OVER_SKIN := 0.05
 ## How far the lip reaches into the glass: to the cabin frame's inner cut.
 const INTO_GLASS := 0.07
 ## Back face sunk into the skin so no slit opens under the lip.
-const SINK := 0.02
+const SINK := 0.005
 ## Street face proud of the skin, more than 1 cm so the two never share a depth plane.
 const PROUD := 0.015
 ## Outer edge kept this far inside the leaf's centre edge.
 const INNER_EDGE_CLEAR := 0.01
 ## Sleeve ring sits this far outside the hole edge so it never shares a plane with the slab's own returns.
-const SLEEVE_OFFSET := 0.01
+const SLEEVE_OFFSET := 0.015
 
 
 ## Adds the dark window lip to one rear leaf (left-hinge-local, mirrored for the right).
@@ -38,8 +39,8 @@ static func build(left_hinge: Node3D, hinge: Node3D, mirror_x: bool) -> void:
 		inner[i] += center
 		var s := sleeve[i] + center
 		sleeve[i] = Vector2(minf(s.x, max_x), s.y)
-	var z_front := _LeafBuild.DOOR_THICKNESS * 0.5 + PROUD
-	var z_back := _LeafBuild.DOOR_THICKNESS * 0.5 - SINK
+	var z_front := _LeafBuild.DOOR_THICKNESS * 0.5 - _Skin.STREET_SETBACK + PROUD
+	var z_back := _LeafBuild.DOOR_THICKNESS * 0.5 - _Skin.STREET_SETBACK - SINK
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var count := outer.size()

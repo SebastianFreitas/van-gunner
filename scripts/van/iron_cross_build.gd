@@ -2,6 +2,10 @@ extends RefCounted
 ## Builds IronCross's scrap +: two bent rebar bars, a pipe sleeve, blobby welds, a seeded centre.
 
 const IronCrossGeo := preload("res://scripts/van/iron_cross_geo.gd")
+const IronCrossGusset := preload("res://scripts/van/iron_cross_gusset.gd")
+
+## Rear-door (skin) bars are chunkier scavenged stock than the side windows'.
+const SKIN_BAR_SCALE := 1.4
 
 ## A bar end's hammered-thin radius, so it fits the 2 cm gap behind the ring edge.
 const HOOK_RADIUS := 0.008
@@ -43,6 +47,10 @@ func build(geo: IronCrossGeo, rng: RandomNumberGenerator, stage: int) -> void:
 	var i := rng.randi_range(0, 2)
 	var rv := radii[i] as float
 	var rh := radii[(i + 1 + rng.randi_range(0, 1)) % 3] as float
+	if _skin:
+		rv *= SKIN_BAR_SCALE
+		rh *= SKIN_BAR_SCALE
+		pipe_r = maxf(pipe_r, maxf(rv, rh) + 0.012)
 	var roll := rng.randf()
 	var sleeve := 0 if roll < 0.4 else (1 if roll < 0.8 else 2)
 	var flip := rng.randf() < 0.5
@@ -57,6 +65,8 @@ func build(geo: IronCrossGeo, rng: RandomNumberGenerator, stage: int) -> void:
 	_crossing(rv, rh, zv, zh, flip)
 	var lost: Array = _const(&"STAGE_WELDS_LOST")
 	_place_end_welds(lost[stage] as int)
+	if _skin:
+		IronCrossGusset.new(_o, geo, rng).build(_back_z, _skin_z, rebar, _mat(&"weld_material"))
 
 
 func _const(key: StringName) -> Variant:

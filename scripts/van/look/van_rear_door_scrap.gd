@@ -1,0 +1,211 @@
+extends RefCounted
+## Redneck welded junk for the rear doors (spec 3): per leaf a heavy top hinge, a door-check strap,
+## seam clamps, a header latch box and patch plates, plus a seam rod and a welded pull-handle frame
+## on the left leaf; on the portal the pillar half of the top hinge, the check-strap bracket, the
+## header striker and the floor striker. Oversized mismatched bolts, lumpy weld beads on every joint.
+
+const _Hardware := preload("res://scripts/van/look/van_rear_door_hardware.gd")
+const _WALL_MATERIAL := "res://scenes/van/van_wall_material.tres"
+## Every front face stands 2 cm proud of its surface, every back is buried 4.5 cm so it clears the
+## leaf's inner sheet (audit plane tolerance 0.01).
+const T := 0.02
+const BURY := 0.045
+const BEAD_R := 0.016
+## Portal cabin face in hinge-local z; the pillars and header stand here.
+const PILLAR_Z := -0.15
+const LEAF_EDGE := 2.69
+
+
+## Builds the scrap for one leaf under `parent` (`mirror` -1 for the right leaf), its body-mounted
+## half under the portal, and returns every node it added.
+static func build(parent: Node3D, mirror: float, rng: RandomNumberGenerator,
+		_steel: Material, _dark: Material) -> Array[Node3D]:
+	var out: Array[Node3D] = []
+	var steel := _grime(Color(0.22, 0.21, 0.19))
+	var dark := _grime(Color(0.12, 0.115, 0.1))
+	var skew := 1.0 if rng.randf() < 0.5 else -1.0
+	# Heavy top hinge above the 1.28 strap: fat strap and knuckle on the leaf, mismatched bolts.
+	_plate(parent, mirror, 0.19, 1.44, 0.28, 0.12, skew * 2.0, steel, "TopHingeStrap", out)
+	_add(parent, "TopHingeKnuckle", _cyl(0.05, 0.05, 0.13), steel,
+			Vector3(mirror * 0.04, 1.44, _Hardware.FACE_Z - 0.05), Vector3.ZERO, out)
+	_bolts(parent, mirror, [0.17, 0.29], 1.44, rng, dark, out)
+	_bead(parent, mirror, 0.19, 1.375, 0.28, 0.0, dark, out)
+	_bead(parent, mirror, 0.33, 1.44, 0.12, 90.0, dark, out)
+	_body_half(parent, mirror, rng, steel, dark, out)
+	# Side hinge welds: a lumpy bead across each existing strap's tip.
+	for y: float in [1.28, -1.15]:
+		_bead(parent, mirror, 0.40 + rng.randf_range(-0.02, 0.02), y, 0.07, 90.0, dark, out)
+	# Door-check strap: flat bar on a skew with an angle-iron stop welded crooked at its far end.
+	_plate(parent, mirror, 0.75, -0.85, 0.62, 0.04, skew * -11.0, steel, "CheckStrap", out)
+	# The arm rides the leaf and swings with it; only a short stub stays on the pillar.
+	_plate(parent, mirror, 0.22, -0.85, 0.40, 0.045, mirror * -3.0, steel, "CheckArm", out,
+			_Hardware.FACE_Z - 0.025)
+	_add(parent, "CheckPin", _cyl(0.035, 0.035, 0.05), dark,
+			Vector3(mirror * 0.47, -0.85 - 0.03 * skew, _Hardware.FACE_Z - 0.04),
+			Vector3(PI * 0.5, 0.0, 0.0), out)
+	_plate(parent, mirror, 1.10, -0.95, 0.10, 0.12, 4.0, steel, "CheckAngleA", out)
+	_plate(parent, mirror, 1.14, -0.91, 0.04, 0.12, -3.0, dark, "CheckAngleB", out)
+	_bead(parent, mirror, 1.10, -1.01, 0.10, 0.0, dark, out)
+	# Seam clamps: flat bars bolted over the centre seam, right edge on the seam and clear of the
+	# locking rod (its right edge is at x 2.4825) at every roll.
+	for y: float in [-1.30, -0.20, 0.55, 1.20]:
+		var w := rng.randf_range(0.10, 0.14)
+		_plate(parent, mirror, LEAF_EDGE - w * 0.5, y, w, 0.08, rng.randf_range(-4.0, 4.0),
+				steel, "SeamClamp", out)
+		_bolts(parent, mirror, [LEAF_EDGE - w * 0.5], y, rng, dark, out)
+		_bead(parent, mirror, LEAF_EDGE - w, y, 0.08, 90.0, dark, out)
+	if mirror > 0.0:
+		_left_only(parent, rng, steel, dark, out)
+	# Header latch box with a hasp tab.
+	_plate(parent, mirror, 2.45, 1.38, 0.22, 0.14, skew * -2.0, steel, "LatchBox", out)
+	_plate(parent, mirror, 2.30, 1.38, 0.10, 0.05, 9.0, dark, "LatchHasp", out)
+	_bolts(parent, mirror, [2.36, 2.54], 1.38, rng, dark, out)
+	_bead(parent, mirror, 2.45, 1.30, 0.22, 0.0, dark, out)
+	# Patch plates over old holes, one welded round, one only bolted.
+	_plate(parent, mirror, 0.30, 0.30, 0.18, 0.22, skew * 7.0, dark, "PatchPlateA", out)
+	_bolts(parent, mirror, [0.24, 0.36], 0.38, rng, steel, out)
+	_bead(parent, mirror, 0.30, 0.185, 0.18, 0.0, dark, out)
+	return out
+
+
+## Left leaf only: a vertical seam rod welded over the astragal and a welded frame round the pull.
+static func _left_only(parent: Node3D, rng: RandomNumberGenerator, steel: Material,
+		dark: Material, out: Array[Node3D]) -> void:
+	_add(parent, "SeamRod", _cyl(0.024, 0.024, 2.7), steel,
+			Vector3(LEAF_EDGE - 0.036, 0.0, _Hardware.FACE_Z - 0.06), Vector3.ZERO, out)
+	var cx := _Hardware.HANDLE_X - 0.02
+	var cy := _Hardware.HANDLE_Y
+	# Narrow enough that its right edge stays 3 cm clear of the leaf's end face.
+	# Three sides only: the right side would share the handle plate's and astragal's planes. Stands
+	# 2.5 cm proud of the handle plate's face.
+	var fz := _Hardware.FACE_Z - 0.025
+	_plate(parent, 1.0, cx, cy + 0.14, 0.20, 0.035, 0.0, dark, "PullFrameTop", out, fz)
+	_plate(parent, 1.0, cx, cy - 0.14, 0.20, 0.035, 0.0, dark, "PullFrameBottom", out, fz)
+	_plate(parent, 1.0, cx - 0.0825, cy, 0.035, 0.28, 0.0, dark, "PullFrameLeft", out, fz)
+	_bolts(parent, 1.0, [cx - 0.0825, cx + 0.04], cy + 0.14, rng, steel, out, fz)
+	_bead(parent, 1.0, cx, cy + 0.16, 0.20, 0.0, steel, out, fz)
+
+
+## Body-mounted half: pillar top-hinge plate and knuckle, check-strap bracket and arm, header
+## striker, floor striker. Parts live under the portal in hinge-local coordinates.
+static func _body_half(hinge: Node3D, mirror: float, rng: RandomNumberGenerator,
+		steel: Material, dark: Material, out: Array[Node3D]) -> void:
+	var body := hinge.get_parent() as Node3D
+	var host := body.get_node_or_null("Portal") as Node3D
+	var anchor := Node3D.new()
+	anchor.name = "ScrapBody" + ("L" if mirror > 0.0 else "R")
+	anchor.position = hinge.position
+	(host if host != null else body).add_child(anchor)
+	out.append(anchor)
+	var fz := PILLAR_Z
+	# Pillar half of the top hinge: plate, welded pin knuckle on the axis.
+	_plate(anchor, mirror, -0.17, 1.44, 0.28, 0.16, rng.randf_range(-2.0, 2.0), steel,
+			"PillarHingePlate", out, fz)
+	_add(anchor, "PillarKnuckle", _cyl(0.055, 0.055, 0.07), steel,
+			Vector3(0.0, 1.535, fz - 0.03), Vector3.ZERO, out)
+	_bolts(anchor, mirror, [-0.10, -0.24], 1.44, rng, dark, out, fz)
+	_bead(anchor, mirror, -0.17, 1.35, 0.28, 0.0, dark, out, fz)
+	_bead(anchor, mirror, -0.31, 1.44, 0.16, 90.0, dark, out, fz)
+	# Check strap: bracket on the pillar, arm reaching over to the leaf's strap.
+	_plate(anchor, mirror, -0.20, -0.85, 0.16, 0.16, 0.0, steel, "CheckBracket", out, fz)
+	_plate(anchor, mirror, -0.06, -0.85, 0.12, 0.045, mirror * -3.0, steel, "CheckArmStub", out,
+			fz - 0.025)
+	_bolts(anchor, mirror, [-0.24, -0.16], -0.85, rng, dark, out, fz)
+	_bead(anchor, mirror, -0.20, -0.93, 0.16, 0.0, dark, out, fz)
+	# Header striker at the seam: plate with a bent-rod keeper welded under it.
+	_plate(anchor, mirror, 2.45, 1.68, 0.24, 0.14, rng.randf_range(-3.0, 3.0), steel,
+			"HeaderStriker", out, fz)
+	_add(anchor, "HeaderKeeper", _cyl(0.024, 0.024, 0.14), dark,
+			Vector3(mirror * 2.45, 1.595, fz - 0.05), Vector3(0.0, 0.0, PI * 0.5), out)
+	for dx: float in [-0.07, 0.07]:
+		_add(anchor, "HeaderKeeperLeg", _cyl(0.02, 0.02, 0.07), dark,
+				Vector3(mirror * (2.45 + dx), 1.63, fz - 0.05), Vector3.ZERO, out)
+	_bolts(anchor, mirror, [2.36, 2.54], 1.68, rng, dark, out, fz)
+	_bead(anchor, mirror, 2.45, 1.755, 0.24, 0.0, dark, out, fz)
+	# Floor striker: 6 cm slab on the cabin side of the leaf's bottom edge (z -0.275..-0.105), its top
+	# 2 cm above the sill strip, its bottom sunk 1 cm into the floor (top at y 0).
+	var rod_x := _Hardware.ROD_X
+	_add(anchor, "FloorStriker", _box(Vector3(0.28, 0.06, 0.17)), steel,
+			Vector3(mirror * rod_x, -1.53, -0.19), Vector3.ZERO, out)
+	_add(anchor, "FloorStrikerSlot", _box(Vector3(0.07, 0.004, 0.07)), dark,
+			Vector3(mirror * rod_x, -1.498, -0.17), Vector3.ZERO, out)
+	for dx: float in [-0.09, 0.09]:
+		var bolt := _cyl(0.035, 0.035, 0.02)
+		bolt.radial_segments = 6
+		_add(anchor, "FloorStrikerBolt", bolt, dark,
+				Vector3(mirror * (rod_x + dx), -1.49, -0.22), Vector3.ZERO, out)
+	_add(anchor, "FloorStrikerBead", _cyl(BEAD_R, BEAD_R * 1.3, 0.28), dark,
+			Vector3(mirror * rod_x, -1.50, -0.25), Vector3(0.0, 0.0, PI * 0.5), out)
+
+
+## The van wall's grime shader, resized to small hardware so its panel seams read at part scale.
+static func _grime(color: Color) -> Material:
+	var mat := (load(_WALL_MATERIAL) as ShaderMaterial).duplicate() as ShaderMaterial
+	mat.set_shader_parameter(&"base_color", color)
+	mat.set_shader_parameter(&"wall_size_m", Vector2(0.8, 0.8))
+	mat.set_shader_parameter(&"kick_height_m", 0.15)
+	return mat
+
+
+static func _box(size: Vector3) -> BoxMesh:
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	return mesh
+
+
+static func _add(parent: Node3D, node_name: String, mesh: Mesh, mat: Material, pos: Vector3,
+		rot: Vector3, out: Array[Node3D]) -> void:
+	var inst := MeshInstance3D.new()
+	inst.name = node_name
+	inst.mesh = mesh
+	inst.material_override = mat
+	inst.layers = 2
+	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	inst.position = pos
+	inst.rotation = rot
+	parent.add_child(inst)
+	out.append(inst)
+
+
+static func _cyl(top: float, bottom: float, height: float) -> CylinderMesh:
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = top
+	mesh.bottom_radius = bottom
+	mesh.height = height
+	mesh.radial_segments = 8
+	mesh.rings = 1
+	return mesh
+
+
+## Flat piece centred at (cx, cy), rotated `deg` about z, front 2 cm proud of `face_z`, back buried.
+static func _plate(parent: Node3D, mirror: float, cx: float, cy: float, w: float, h: float,
+		deg: float, mat: Material, node_name: String, out: Array[Node3D],
+		face_z: float = _Hardware.FACE_Z) -> void:
+	var depth := T + BURY
+	_add(parent, node_name, _box(Vector3(w, h, depth)), mat,
+			Vector3(mirror * cx, cy, face_z - T + depth * 0.5),
+			Vector3(0.0, 0.0, mirror * deg_to_rad(deg)), out)
+
+
+## Oversized hex bolt heads of mixed size, each standing 1.5 cm clear of the plate it holds.
+static func _bolts(parent: Node3D, mirror: float, xs: Array, y: float,
+		rng: RandomNumberGenerator, mat: Material, out: Array[Node3D],
+		face_z: float = _Hardware.FACE_Z) -> void:
+	for x: float in xs:
+		var r := rng.randf_range(0.025, 0.045)
+		var h := 0.035
+		var z := face_z - T - h * 0.5 + 0.004
+		var jitter := Vector2(rng.randf_range(-0.012, 0.012), rng.randf_range(-0.012, 0.012))
+		var inst_pos := Vector3(mirror * x + jitter.x, y + jitter.y, z)
+		var mesh := _cyl(r, r, h)
+		mesh.radial_segments = 6
+		_add(parent, "ScrapBolt", mesh, mat, inst_pos, Vector3(PI * 0.5, 0.0, 0.0), out)
+
+
+## Lumpy weld bead lying on a plate edge: a fat cylinder along x (`deg` 0) or y (90) whose centre
+## sits on the plate's front plane.
+static func _bead(parent: Node3D, mirror: float, cx: float, cy: float, length: float, deg: float,
+		mat: Material, out: Array[Node3D], face_z: float = _Hardware.FACE_Z) -> void:
+	var rot := Vector3(0.0, 0.0, deg_to_rad(90.0 - deg))
+	_add(parent, "WeldBead", _cyl(BEAD_R, BEAD_R * 1.3, length), mat,
+			Vector3(mirror * cx, cy, face_z - T), rot, out)

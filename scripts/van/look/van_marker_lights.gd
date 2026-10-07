@@ -15,8 +15,6 @@ const DOOR_SLIDE_M := 2.45
 ## Half length of the side door leaf. Keep in step with `DOOR_HALF_Z` in side_door_leaf.gd.
 const DOOR_LEAF_HALF_Z := 1.105
 
-const REAR_DOORS_GROUP := &"rear_doors"
-
 const AMBER := Color(1.0, 0.55, 0.15)
 const RED := Color(0.9, 0.08, 0.05)
 
@@ -41,17 +39,7 @@ const ID_LAMP_SINK_M := 0.02
 ## How far the ID housing's rear face stands proud of the roof's rear rim.
 const ID_LAMP_OVERHANG_M := 0.02
 
-## Tail lamp parts parented to the rear door hinges; they are not children of this node, so
-## rebuild_look frees them by reference.
-var _hinged: Array[Node] = []
-
-
 func rebuild_look(_look: VanLook) -> void:
-	for node in _hinged:
-		if is_instance_valid(node):
-			node.get_parent().remove_child(node)
-			node.queue_free()
-	_hinged.clear()
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -135,13 +123,11 @@ func _build_rear_lamps(profile: VanBodyProfile, red_lens_mat: Material, amber_le
 
 		var housing_mesh := BoxMesh.new()
 		housing_mesh.size = Vector3(0.22, 0.30, 0.05)
-		_add_mesh("Tail%s" % side_letter, housing_mesh, housing_mat, Vector3(x, 0.75, rear + 0.075),
-				_hinge_for(side))
+		_add_mesh("Tail%s" % side_letter, housing_mesh, housing_mat, Vector3(x, 0.75, rear + 0.075))
 
 		var lens_mesh := BoxMesh.new()
 		lens_mesh.size = Vector3(0.18, 0.26, 0.02)
-		_add_mesh("TailLens%s" % side_letter, lens_mesh, red_lens_mat, Vector3(x, 0.75, rear + 0.11),
-				_hinge_for(side))
+		_add_mesh("TailLens%s" % side_letter, lens_mesh, red_lens_mat, Vector3(x, 0.75, rear + 0.11))
 
 		var glow := OmniLight3D.new()
 		glow.name = "TailGlow%s" % side_letter
@@ -151,7 +137,7 @@ func _build_rear_lamps(profile: VanBodyProfile, red_lens_mat: Material, amber_le
 		glow.omni_range = TAIL_LIGHT_RANGE
 		glow.shadow_enabled = false
 		glow.light_cull_mask = 1
-		_attach(glow, _hinge_for(side))
+		add_child(glow)
 
 	for i in ID_LAMP_X.size():
 		var x := ID_LAMP_X[i]
@@ -164,38 +150,13 @@ func _build_rear_lamps(profile: VanBodyProfile, red_lens_mat: Material, amber_le
 		_add_mesh("IdLens%d" % i, lens_mesh, amber_lens_mat, Vector3(x, id_y, id_z + 0.035))
 
 
-## The rear door hinge a tail lamp on this side rides on (the lamps sit on the leaves' street
-## face), or null outside the tree or without rear doors, where the lamp stays on this node.
-func _hinge_for(side: float) -> Node3D:
-	if not is_inside_tree():
-		return null
-	var doors := get_tree().get_first_node_in_group(REAR_DOORS_GROUP)
-	if doors == null:
-		return null
-	return doors.get_node_or_null("LeftHinge" if side < 0.0 else "RightHinge") as Node3D
-
-
-## Adds `node` (already placed at its rig-space `position`) under `hinge`, keeping the same
-## closed-door world pose, or under this node when `hinge` is null.
-func _attach(node: Node3D, hinge: Node3D) -> void:
-	if hinge == null:
-		add_child(node)
-		return
-	node.transform = hinge.global_transform.affine_inverse() * global_transform * node.transform
-	hinge.add_child(node)
-	_hinged.append(node)
-
-
-func _add_mesh(mesh_name: String, mesh: Mesh, mat: Material, pos: Vector3,
-		hinge: Node3D = null) -> MeshInstance3D:
+func _add_mesh(mesh_name: String, mesh: Mesh, mat: Material, pos: Vector3) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.name = mesh_name
 	mi.mesh = mesh
 	mi.material_override = mat
 	mi.position = pos
 	mi.layers = 1
-	if hinge != null:
-		mi.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_attach(mi, hinge)
+	add_child(mi)
 	return mi

@@ -15,7 +15,7 @@ const STRAP_SINK := 0.02
 ## Strap and knuckle start inboard of the hinge edge so nothing shows past the wall line.
 const STRAP_X0 := 0.05
 ## Hinge x (the leaf node sits there) minus the rod and handle offsets.
-const HINGE_X := VanInteriorSize.BOTTOM_HALF - 0.03
+const HINGE_X := VanInteriorSize.REAR_DOOR_HALF
 const ROD_X := HINGE_X - 0.23
 const ROD_Z := -0.108
 const ROD_TOP_Y := -1.0
@@ -115,9 +115,12 @@ static func _locking_rod(parent: Node3D, mirror: float, steel: Material, dark: M
 static func _handle_plate(parent: Node3D, mirror: float, steel: Material,
 		out: Array[Node3D]) -> void:
 	var cx := HANDLE_X - 0.01
-	var front_z := FACE_Z - 0.01
-	_add(parent, _box(Vector3(0.18, 0.24, PLATE_T + SINK)), steel,
-			Vector3(mirror * cx, HANDLE_Y, front_z + (PLATE_T + SINK) * 0.5), Vector3.ZERO, out)
+	var front_z := FACE_Z - 0.015
+	# The back is buried 2.5 cm more than the front's sink so it clears the leaf's inner sheet back.
+	var depth := PLATE_T + SINK + 0.025
+	_add(parent, _box(Vector3(0.18, 0.24, depth)), steel,
+			Vector3(mirror * cx, HANDLE_Y, front_z + depth * 0.5), Vector3.ZERO, out)
+	out[out.size() - 1].name = "HandlePlate"
 	# The mount hides the plate except a 3 cm strip on its hinge side, so the bolts line up there.
 	for dy: float in [-0.09, -0.03, 0.03, 0.09]:
 		_bolt(parent, mirror * (cx - 0.075), HANDLE_Y + dy, front_z, steel, out)

@@ -764,11 +764,11 @@ polygon = PackedVector2Array(-0.79, -0.775, -0.92, -0.7, -0.99, -0.575, -0.99, 0
 depth = 0.28
 
 [node name="WindowFrame" type="CSGCombiner3D" parent="RearWall/LeftHinge" unique_id=1295352795]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.225, 0.02)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.225, -0.015)
 
 [node name="Outer" type="CSGPolygon3D" parent="RearWall/LeftHinge/WindowFrame" unique_id=54160015]
 polygon = PackedVector2Array(-0.86, -0.845, -1, -0.76, -1.04, -0.62, -1.04, 0.62, -1, 0.76, -0.86, 0.845, 0.86, 0.845, 1, 0.76, 1.04, 0.62, 1.04, -0.62, 1, -0.76, 0.86, -0.845)
-depth = 0.05
+depth = 0.04
 material = SubResource("RearWindowFrameMaterial")
 
 [node name="InnerCut" type="CSGPolygon3D" parent="RearWall/LeftHinge/WindowFrame" unique_id=425399093]
@@ -803,14 +803,14 @@ script = ExtResource("18")
 shape = SubResource("RearWindowGlassShape")
 
 [node name="Handle" type="CSGCombiner3D" parent="RearWall/LeftHinge" unique_id=1847293100]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.25, -0.82, -0.08)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.25, -0.82, -0.12)
 
 [node name="Mount" type="CSGBox3D" parent="RearWall/LeftHinge/Handle" unique_id=1847293101]
 size = Vector3(0.14, 0.36, 0.05)
 material = SubResource("SideDoorTrimMaterial")
 
 [node name="Grip" type="CSGBox3D" parent="RearWall/LeftHinge/Handle" unique_id=1847293102]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.06)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.07)
 size = Vector3(0.06, 0.26, 0.06)
 material = SubResource("SideDoorHandleMaterial")
 
@@ -853,11 +853,11 @@ polygon = PackedVector2Array(-0.79, -0.775, -0.92, -0.7, -0.99, -0.575, -0.99, 0
 depth = 0.28
 
 [node name="WindowFrame" type="CSGCombiner3D" parent="RearWall/RightHinge" unique_id=1825940300]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.225, 0.02)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.225, -0.015)
 
 [node name="Outer" type="CSGPolygon3D" parent="RearWall/RightHinge/WindowFrame" unique_id=278585995]
 polygon = PackedVector2Array(-0.86, -0.845, -1, -0.76, -1.04, -0.62, -1.04, 0.62, -1, 0.76, -0.86, 0.845, 0.86, 0.845, 1, 0.76, 1.04, 0.62, 1.04, -0.62, 1, -0.76, 0.86, -0.845)
-depth = 0.05
+depth = 0.04
 material = SubResource("RearWindowFrameMaterial")
 
 [node name="InnerCut" type="CSGPolygon3D" parent="RearWall/RightHinge/WindowFrame" unique_id=371909920]
@@ -892,14 +892,14 @@ script = ExtResource("18")
 shape = SubResource("RearWindowGlassShape")
 
 [node name="Handle" type="CSGCombiner3D" parent="RearWall/RightHinge" unique_id=1847293200]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.25, -0.82, -0.08)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.25, -0.82, -0.12)
 
 [node name="Mount" type="CSGBox3D" parent="RearWall/RightHinge/Handle" unique_id=1847293201]
 size = Vector3(0.14, 0.36, 0.05)
 material = SubResource("SideDoorTrimMaterial")
 
 [node name="Grip" type="CSGBox3D" parent="RearWall/RightHinge/Handle" unique_id=1847293202]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.06)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.07)
 size = Vector3(0.06, 0.26, 0.06)
 material = SubResource("SideDoorHandleMaterial")
 

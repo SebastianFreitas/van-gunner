@@ -5,6 +5,7 @@ extends Node3D
 ## so it swings with them.
 
 const _Hardware := preload("res://scripts/van/look/van_rear_door_hardware.gd")
+const _Scrap := preload("res://scripts/van/look/van_rear_door_scrap.gd")
 
 const _Plates := preload("res://scripts/van/look/van_rear_door_plates.gd")
 
@@ -74,6 +75,8 @@ func _build_leaf(hinge: Node3D, mirror: float, rng: RandomNumberGenerator,
 		plate_mat: Material, hardware_rng: RandomNumberGenerator, steel_mat: Material,
 		dark_mat: Material, plates_rng: RandomNumberGenerator) -> void:
 	for node: Node3D in _Hardware.build(hinge, mirror, hardware_rng, steel_mat, dark_mat):
+		_spawned.append(node)
+	for node: Node3D in _Scrap.build(hinge, mirror, hardware_rng, steel_mat, dark_mat):
 		_spawned.append(node)
 
 	for node: Node3D in _Plates.build(hinge, mirror, plates_rng, _plate_keep_out()):

@@ -163,17 +163,17 @@ func _roof_y(x: float, w: float, walls: VanSideWall) -> float:
 	return roof_y_at(x, w, walls.wall_height)
 
 
-## The rear face is a closed ring around the door opening. The opening follows the rear door
-## leaves' outline (bottom Y_MIN, liner - 0.03 at the sides, vault - 0.025 on top) 2 cm out (D12),
-## so the skin never lies behind a leaf and z-fights it. The opening is lined by a reveal from the
-## skin back to the liner's end at the back compartment end, so its rim is closed (D4).
+## The rear face is a closed ring around the door opening. The opening is the rear door leaves'
+## rectangle (hinge x, REAR_DOOR_TOP) 2 cm out (D12), so the skin never lies behind a leaf and
+## z-fights it, and covers the portal's pillars and header from outside. The opening is lined by a
+## reveal from the skin back to the liner's end at the back compartment end, so its rim is closed
+## (D4).
 func _build_rear(walls: VanSideWall) -> void:
 	var z := ROOF_Z_MAX
 	var w: float = walls.wall_x_at(walls.wall_height) + SIDE_SKIN_OUTER_M
-	var ceiling := _profile.ceiling
-	var y_join := _rear_join_y(walls, ceiling)
-	var x_join: float = walls.wall_x_at(y_join) - 0.01
-	var x_bottom: float = walls.wall_x_at(0.0) - 0.01
+	var y_join := VanInteriorSize.REAR_DOOR_TOP - 0.02
+	var x_join := VanInteriorSize.REAR_DOOR_HALF - 0.04
+	var x_bottom := x_join
 	var x_bottom_out: float = walls.wall_x_at(0.0) + SIDE_SKIN_OUTER_M
 	var steps := 8
 
@@ -196,16 +196,24 @@ func _build_rear(walls: VanSideWall) -> void:
 			var f0 := float(i) / float(steps)
 			var f1 := float(i + 1) / float(steps)
 			_rear_quad(st,
-					_rear_side_point(walls, side, lerpf(0.0, y_join, f0), false, z),
-					_rear_side_point(walls, side, lerpf(0.0, y_join, f1), false, z),
-					_rear_side_point(walls, side, lerpf(-0.25, walls.wall_height, f0), true, z),
-					_rear_side_point(walls, side, lerpf(-0.25, walls.wall_height, f1), true, z))
+					Vector3(side * x_join, lerpf(0.0, y_join, f0), z),
+					Vector3(side * x_join, lerpf(0.0, y_join, f1), z),
+					_rear_side_point(walls, side, lerpf(-0.25, walls.wall_height, f0), z),
+					_rear_side_point(walls, side, lerpf(-0.25, walls.wall_height, f1), z))
 		# Wedge between the side strip's end and the top strip's end at this corner.
 		var join := Vector3(side * x_join, y_join, z)
 		var wall_top := Vector3(side * w, walls.wall_height, z)
 		_rear_tri(st, join, wall_top, Vector3(side * w, _roof_y(side * w, w, walls), z))
 
-	# Top, inner vault arc to outer roof curve, same x fractions across.
+	# The floor deck ends 2 cm behind the ring's plane, so a plate 2 cm past its end hides it.
+	var z_deck := VanInteriorSize.CENTER_Z + VanInteriorSize.FLOOR_LENGTH * 0.5 + 0.02
+	for side: float in [-1.0, 1.0]:
+		var xi := side * (x_join - 0.04)
+		var xo := side * (VanInteriorSize.FLOOR_WIDTH * 0.5 + 0.04)
+		_rear_quad(st, Vector3(xi, 0.02, z_deck), Vector3(xo, 0.02, z_deck),
+				Vector3(xi, -0.28, z_deck), Vector3(xo, -0.28, z_deck))
+
+	# Top, the opening's flat top edge to the outer roof curve, same x fractions across.
 	var top_steps := 16
 	for i in range(top_steps):
 		var f0 := float(i) / float(top_steps)
@@ -213,8 +221,8 @@ func _build_rear(walls: VanSideWall) -> void:
 		var xo0 := lerpf(-w, w, f0)
 		var xo1 := lerpf(-w, w, f1)
 		_rear_quad(st,
-				_rear_top_point(ceiling, lerpf(-x_join, x_join, f0), z),
-				_rear_top_point(ceiling, lerpf(-x_join, x_join, f1), z),
+				Vector3(lerpf(-x_join, x_join, f0), y_join, z),
+				Vector3(lerpf(-x_join, x_join, f1), y_join, z),
 				Vector3(xo0, _roof_y(xo0, w, walls), z),
 				Vector3(xo1, _roof_y(xo1, w, walls), z))
 
@@ -223,52 +231,22 @@ func _build_rear(walls: VanSideWall) -> void:
 	for side: float in [-1.0, 1.0]:
 		for i in range(steps):
 			_rear_reveal_quad(st,
-					_rear_side_point(walls, side, lerpf(0.0, y_join, float(i) / steps), false, z),
-					_rear_side_point(walls, side, lerpf(0.0, y_join, float(i + 1) / steps),
-							false, z), z_back)
+					Vector3(side * x_join, lerpf(0.0, y_join, float(i) / steps), z),
+					Vector3(side * x_join, lerpf(0.0, y_join, float(i + 1) / steps), z), z_back)
 	for i in range(top_steps):
 		_rear_reveal_quad(st,
-				_rear_top_point(ceiling, lerpf(-x_join, x_join, float(i) / top_steps), z),
-				_rear_top_point(ceiling, lerpf(-x_join, x_join, float(i + 1) / top_steps), z),
-				z_back)
+				Vector3(lerpf(-x_join, x_join, float(i) / top_steps), y_join, z),
+				Vector3(lerpf(-x_join, x_join, float(i + 1) / top_steps), y_join, z), z_back)
 
 	st.generate_normals()
 	# No tangents: the exterior shader projects in model space and these meshes carry no UVs.
 	_add_mesh("RearSkin", st.commit())
 
 
-## Height where the opening's side edge (liner - 0.01) meets its top edge (vault - 0.005).
-func _rear_join_y(walls: VanSideWall, ceiling: VanCeiling) -> float:
-	var lo := 0.0
-	var hi: float = walls.wall_height
-	if _rear_gap(walls, ceiling, hi) > 0.0:
-		return hi
-	for _i in range(24):
-		var mid := 0.5 * (lo + hi)
-		if _rear_gap(walls, ceiling, mid) > 0.0:
-			lo = mid
-		else:
-			hi = mid
-	return 0.5 * (lo + hi)
-
-
-## Vault edge above height `y` on the opening's side edge; positive while the side is still free.
-func _rear_gap(walls: VanSideWall, ceiling: VanCeiling, y: float) -> float:
-	var x: float = walls.wall_x_at(y) - 0.01
-	return VanHullMesh.vault_y(ceiling, x, VanInteriorSize.CEILING_EDGE_SHELL, 0.38) - 0.005 - y
-
-
-## A point on the rear ring's side edge: outer skin face when `outer`, else the opening's edge.
-func _rear_side_point(walls: VanSideWall, side: float, y: float, outer: bool, z: float) -> Vector3:
-	if outer:
-		return Vector3(side * (walls.wall_x_at(clampf(y, 0.0, walls.wall_height))
-				+ SIDE_SKIN_OUTER_M), y, z)
-	return Vector3(side * (walls.wall_x_at(y) - 0.01), y, z)
-
-
-## A point on the opening's top edge (vault - 0.005).
-func _rear_top_point(ceiling: VanCeiling, x: float, z: float) -> Vector3:
-	return Vector3(x, VanHullMesh.vault_y(ceiling, x, VanInteriorSize.CEILING_EDGE_SHELL, 0.38) - 0.005, z)
+## A point on the rear ring's outer edge: the outer skin face at height `y`.
+func _rear_side_point(walls: VanSideWall, side: float, y: float, z: float) -> Vector3:
+	return Vector3(side * (walls.wall_x_at(clampf(y, 0.0, walls.wall_height))
+			+ SIDE_SKIN_OUTER_M), y, z)
 
 
 ## Two triangles for the quad in0-in1 (inner edge) and out0-out1 (outer edge).
