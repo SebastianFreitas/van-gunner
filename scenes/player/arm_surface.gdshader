@@ -172,7 +172,7 @@ float skin_height(vec3 rest, vec3 w, float accept, float dorsal, float hand, flo
 	vec4 f = blight_field(rest, blight_scale, accept, 1.0);
 	vec2 wq = rest.xz * blight_scale * 12.0 + vec2(rest.y * blight_scale * 12.0);
 	float wart_skin = f.x * 0.12 * (noise21(wq) - 0.5); // fine bumpy wart skin, shading only
-	float h = blight_height(f) + wart_skin;
+	float h = (blight_height(f) + wart_skin) * mix(1.0, 0.5, hand); // calmer domes on the hand
 	if (hand > 0.01) {
 		vec4 fh = blight_field(rest, hand_blight_scale, hand_blight_accept, 1.0);
 		h += hand * (hand_blight_gain / blight_gain) * blight_height(fh);

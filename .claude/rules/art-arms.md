@@ -101,6 +101,7 @@ lifted off the palm, so `ArmFingers._shaft_profile` gives the thumb two
 more rings behind its head that narrow back into the palm (0.80 r at
 0.15 of a bone behind the head, 0.45 r at 0.35): a buried root, like
 the fingers'.
+Thumb-root hump (owner, 2026-10-08, left hand, thumb straight): it was the coarse blight dome field (`blight_height`, gain 20, accept 0.55 on the hand) in `skin_height`, not mesh, knots or folds (blight off removed it; knots/folds off changed nothing); the hand's coarse term is now halved (`mix(1.0, 0.5, hand)`), so never raise coarse blight gain on the hand without a straight-thumb shot.
 One fixed hand (owner, 2026-10-05): skin tone, scars, wounds and dirt
 hash from ArmsBuilder.HAND_LOOK_SEED, never the van seed. Muscle lumps,
 the shoulder offset and each finger's sideways crook hash from
