@@ -2,6 +2,7 @@ extends RefCounted
 ## Van audit pass "contract": the van's doors, colliders and blockers must agree with
 ## VanOpenings. One function per rule; each finding reads `<rule> <node> expected <a> got <b>`.
 
+const _Surround := preload("res://scripts/van/rear_door_surround.gd")
 ## Colliders and Blockers must cover the opening's in-plane extent within this.
 const COLLIDER_TOL := 0.03
 ## A collider or Blocker centre may sit this far from the opening's wall plane (the opening's
@@ -10,6 +11,9 @@ const PLANE_TOL := 0.15
 ## A Blocker may reach into the cabin past the liner by at most this: today's worst (rear,
 ## 0.17 m) plus 0.05.
 const BLOCKER_REACH_MAX := 0.22
+## The rear Blocker also carries the door surround's collision, so it may reach the frame's
+## depth further; the 0.22 still covers the leaves and hinges.
+const REAR_BLOCKER_REACH_MAX := BLOCKER_REACH_MAX + _Surround.DEPTH
 ## A leaf subtree must cover at least this share of its opening's in-plane area: today's
 ## worst (side doors, 0.854) minus 0.05.
 const COVER_MIN_FRACTION := 0.804
@@ -172,8 +176,8 @@ func _check_reach_rear(path: String) -> void:
 		return
 	var box := _shape_box(blocker)
 	var reach := VanInteriorSize.REAR_Z - box.position.z
-	if reach > BLOCKER_REACH_MAX:
-		_report_value("BLOCKER_REACH", path, BLOCKER_REACH_MAX, reach)
+	if reach > REAR_BLOCKER_REACH_MAX:
+		_report_value("BLOCKER_REACH", path, REAR_BLOCKER_REACH_MAX, reach)
 
 
 ## Widest half-width of the skin over the wall's height.

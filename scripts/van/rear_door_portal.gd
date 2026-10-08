@@ -4,30 +4,22 @@ extends RefCounted
 
 const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
 const _Flange := preload("res://scripts/van/rear_door_flange.gd")
-const WALL_MATERIAL := "res://scenes/van/van_wall_material.tres"
+const _Surround := preload("res://scripts/van/rear_door_surround.gd")
+const _Ramp := preload("res://scripts/van/rear_door_ramp.gd")
+const WALL_MATERIAL := "res://scenes/van/van_rust_steel_material.tres"
 const RAIL_W := 0.25
 const HANDLE_INSET := 0.11
 ## Past the liner on every side, so the steel never leaves a gap against the walls or the vault.
 const SIDE_PAD := 0.03
-## Header holes: x centre as a share of the half width, half width, half height, and the
-## squareness exponent (2 is an oval, 4 a rounded slot).
-const HEADER_HOLES: Array[Vector4] = [
-	Vector4(-0.62, 0.26, 0.17, 2.0), Vector4(0.3, 0.16, 0.17, 4.0),
-	Vector4(0.68, 0.22, 0.17, 2.0),
-]
 ## Pillar holes (right pillar, mirrored for the left): x centre as an offset from the door
-## edge, y centre, half width, half height. Blind, cut from the cabin side.
+## edge, y centre, half width, half height. Blind: cut from the deep ring's face down to the plate.
 const PILLAR_HOLES: Array[Vector4] = [
-	Vector4(0.3, 0.45, 0.13, 0.13), Vector4(0.3, 1.95, 0.12, 0.22), Vector4(0.3, 2.65, 0.12, 0.12),
+	Vector4(0.455, 0.45, 0.07, 0.13), Vector4(0.455, 1.95, 0.07, 0.22), Vector4(0.455, 2.65, 0.07, 0.12),
 ]
 ## Squareness exponent per pillar hole (2 oval, 4 rounded slot).
 const PILLAR_SQUARE: Array[float] = [2.0, 4.0, 2.0]
 ## Extra width of a hole's column, so the solid strips beside it stay clear of the rim.
 const COLUMN_MARGIN := 0.03
-## Pillar pocket: y range, and its inset from the door edge and the wall.
-const POCKET_Y0 := 1.0
-const POCKET_Y1 := 1.6
-const POCKET_INSET := 0.12
 const BEAD_R := 0.035
 
 
@@ -57,69 +49,93 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 	# The back compartment's own outline (wall lean, rounded roof corner, crown), padded.
 	var section: PackedVector2Array = Geometry2D.offset_polygon(
 			profile.section_points(48), SIDE_PAD)[0]
-	_header(portal, mat, section, half, top, z0, z1)
-	_Flange.build(portal, mat, half, top, y_a, z0)
-	# Pillars: one continuous section each, a recessed pocket stamped in the cabin-side half.
-	var pocket_x1 := profile.inner_x_at(POCKET_Y1) + SIDE_PAD - POCKET_INSET
+	_header(portal, mat, section, top, z, z1)
+	# The ramp replaces the flange band (its lip would poke out of the slope).
+	var z_in := lz + _LeafBuild.CABIN_Z
+	_Ramp.build(portal, mat, half, top, y_a, z_in, z0)
+	_Ramp.frame_blocker(doors, profile, z_in, z0)
+	var zones := _Surround.zones(section, half, top, y_a)
+	var z_deep := z0 - _Surround.DEPTH
+	for p: PackedVector2Array in zones["collar"]:
+		_prism(portal, mat, p, z0, z, "Collar")
+	# Ledge ends stop 6 cm inside the wall plane: the cargo and belt rails' end faces share its z.
+	var wall_x := profile.inner_x_at(0.72) - 0.06
+	for p: PackedVector2Array in zones["ledge"]:
+		for c in Geometry2D.intersect_polygons(p, _rect(-wall_x, wall_x, -9.0, 9.0)):
+			_prism(portal, mat, c, z0 - _Surround.LEDGE_DEPTH, z, "Ledge")
+	# Pillars: a plate behind the deep ring's pressed pocket and its blind stamped holes.
 	for s: float in [-1.0, 1.0]:
 		var pillar: PackedVector2Array = Geometry2D.intersect_polygons(
 				section, _rect(half + 0.02, 9.0, y_a, top))[0]
-		var cuts: Array[PackedVector2Array] = [
-			_rect(-9.0, 9.0, y_a, POCKET_Y0), _rect(-9.0, 9.0, POCKET_Y1, top),
-			_rect(-9.0, half + POCKET_INSET, POCKET_Y0, POCKET_Y1),
-			_rect(pocket_x1, 9.0, POCKET_Y0, POCKET_Y1),
-		]
-		for r in cuts:
-			for p in Geometry2D.intersect_polygons(pillar, r):
-				_punch(portal, mat, p, 0, s, z0, z)
-		_prism(portal, mat, _flip(pillar, s), z, z1)
+		_prism(portal, mat, _flip(pillar, s), z, z1, _side("Pillar", s))
+		for p: PackedVector2Array in zones["deep"]:
+			_punch(portal, mat, p, 0, s, z_deep, z, _side("DeepRing", s))
+		for p: PackedVector2Array in zones["pocket"]:
+			_prism(portal, mat, _flip(p, s), z_deep + _Surround.POCKET_DEPTH, z,
+						_side("Pocket", s))
+		_brackets(portal, mat, s, half, z_in, z_deep)
 		for plate in _Flange.corner_plates(half, top, y_a):
-			_prism(portal, mat, _flip(plate, s), lz + _Flange.PLATE_Z0, lz + _Flange.PLATE_Z1)
+			_prism(portal, mat, _flip(plate, s), lz + _Flange.PLATE_Z0, lz + _Flange.PLATE_Z1,
+					_side("CornerPlate", s))
 		# Rounds the opening's street side too, so an open leaf shows no square corner. Stops 3 cm
 		# short of the street face so it stays 2 cm clear of the closed leaf's skin.
 		for fill in _Flange.opening_fills(half, top, y_a):
-			_prism(portal, mat, _flip(fill, s), z0 + 0.05, z1 - 0.07)
-		_bead(portal, mat, Vector3(s * (half + BEAD_R), (top + y_a) * 0.5, z0), top - y_a, false)
-	_bead(portal, mat, Vector3(0, top + 0.01 + BEAD_R, z0), half * 2.0 + BEAD_R * 2.0, true)
-	# Centre latch box on the cabin side of the header.
-	_box(portal, mat, Vector3(0, top + 0.42, z0 - 0.04), Vector3(0.44, 0.36, 0.08))
-	_box(portal, mat, Vector3(0, top + 0.42, z0 - 0.09), Vector3(0.12, 0.2, 0.03))
+			_prism(portal, mat, _flip(fill, s), z0 + 0.05, z1 - 0.07, _side("OpeningFill", s))
+		_bead(portal, mat, Vector3(s * (half + BEAD_R), (top + y_a) * 0.5, z0), top - y_a, false, _side("BeadSide", s))
+	_bead(portal, mat, Vector3(0, top + 0.015 + BEAD_R, z0), half * 2.0 + BEAD_R * 2.0, true, "BeadTop")
+	# Centre latch box on the slope over the header, tilted to it, its back 2 mm into the steel.
+	var lf := _Ramp.frame(Vector2(0.0, top + 0.165), Vector2(0.0, 1.0),
+			_Ramp.z_at(0.165, z_in, z_deep), z_in, z_deep)
+	_box_on(portal, mat, lf, Vector3(0.36, 0.22, 0.08), Vector3(0.0, 0.0, -0.038), "LatchBoxBig")
+	_box_on(portal, mat, lf, Vector3(0.2, 0.12, 0.03), Vector3(0.015, 0.0, -0.091), "LatchBoxSmall")
 
 
-## The header: the outline above the opening, cut by oval and slot holes, top following the vault.
-static func _header(portal: Node3D, mat: Material, section: PackedVector2Array, half: float,
-		top: float, z0: float, z1: float) -> void:
-	var y0 := top + 0.01
-	var header: PackedVector2Array = Geometry2D.intersect_polygons(
-			section, _rect(-9.0, 9.0, y0, 9.0))[0]
-	var cy := top + 0.42
-	var prev := -9.0
-	for h in HEADER_HOLES:
-		var cx := h.x * half
-		var xa := cx - h.y - COLUMN_MARGIN
-		var xb := cx + h.y + COLUMN_MARGIN
-		for p in Geometry2D.intersect_polygons(header, _rect(prev, xa, y0, 9.0)):
-			_prism(portal, mat, p, z0, z1)
-		var oval := _ellipse(cx, cy, h.y, h.z, h.w)
-		# Blind: a 2 cm floor on the street side, so the holes never open onto the street.
-		_prism(portal, mat, oval, z1 - 0.02, z1)
-		for p in Geometry2D.clip_polygons(_rect(xa, xb, y0, cy), oval):
-			_prism(portal, mat, p, z0, z1)
-		for u in Geometry2D.intersect_polygons(header, _rect(xa, xb, cy, 9.0)):
-			for p in Geometry2D.clip_polygons(u, oval):
-				_prism(portal, mat, p, z0, z1)
-		prev = xb
-	for p in Geometry2D.intersect_polygons(header, _rect(prev, 9.0, y0, 9.0)):
-		_prism(portal, mat, p, z0, z1)
+## Welded check-strap mount low on a pillar: a patch plate, a bent arm and two bolt heads, all
+## slightly off square, bolted flat to the ramp's slope (parts lie in its tilted frame).
+static func _brackets(portal: Node3D, mat: Material, s: float, half: float, z_in: float,
+		z_deep: float) -> void:
+	var d := 0.165
+	var f := _Ramp.frame(Vector2(s * (half + d), 0.78), Vector2(s, 0.0),
+			_Ramp.z_at(d, z_in, z_deep), z_in, z_deep)
+	_box_on(portal, mat, f, Vector3(0.22, 0.14, 0.03), Vector3(0.0, 0.0, -0.01),
+			_side("BracketPlate", s), Vector3(0.0, 0.0, 4.0 * s))
+	_box_on(portal, mat, f, Vector3(0.05, 0.05, 0.14), Vector3(-0.02, 0.02 * s, -0.085),
+			_side("BracketArm", s), Vector3(0.0, 14.0, 0.0))
+	_box_on(portal, mat, f, Vector3(0.04, 0.04, 0.025), Vector3(-0.08, 0.0, -0.035),
+			_side("BracketBoltA", s), Vector3(0.0, 0.0, 8.0))
+	_box_on(portal, mat, f, Vector3(0.04, 0.04, 0.025), Vector3(0.08, -0.01 * s, -0.035),
+			_side("BracketBoltB", s), Vector3(0.0, 0.0, 20.0))
+
+
+## A box in a ramp frame `f`: `off` is local (down the slope, across, out of the steel at -z) and
+## `rot` extra local euler degrees.
+static func _box_on(parent: Node3D, mat: Material, f: Transform3D, size: Vector3, off: Vector3,
+		label: String, rot := Vector3.ZERO) -> void:
+	var m := MeshInstance3D.new()
+	m.name = label
+	var b := BoxMesh.new()
+	b.size = size
+	m.mesh = b
+	m.material_override = mat
+	m.transform = Transform3D(f.basis * Basis.from_euler(rot * (PI / 180.0)), f * off)
+	parent.add_child(m, true)
+
+
+## The header: the plain steel outline above the opening, top following the vault.
+static func _header(portal: Node3D, mat: Material, section: PackedVector2Array, top: float,
+		z0: float, z1: float) -> void:
+	var y0 := top + _Surround.HEADER_GAP
+	for p in Geometry2D.intersect_polygons(section, _rect(-9.0, 9.0, y0, 9.0)):
+		_prism(portal, mat, p, z0, z1, "HeaderPlate")
 
 
 ## Extrudes `region` (right pillar coordinates) minus the pillar holes from `i` on, mirrored by `s`.
 ## Each hole splits the region into side strips and a column, as the header does, so no piece
 ## ever has a hole inside it.
 static func _punch(portal: Node3D, mat: Material, region: PackedVector2Array, i: int, s: float,
-		za: float, zb: float) -> void:
+		za: float, zb: float, label: String) -> void:
 	if i >= PILLAR_HOLES.size():
-		_prism(portal, mat, _flip(region, s), za, zb)
+		_prism(portal, mat, _flip(region, s), za, zb, label)
 		return
 	var h := PILLAR_HOLES[i]
 	var cx := VanInteriorSize.REAR_DOOR_HALF + h.x
@@ -134,11 +150,16 @@ static func _punch(portal: Node3D, mat: Material, region: PackedVector2Array, i:
 	for u in Geometry2D.intersect_polygons(region, _rect(xa, xb, h.y, 9.0)):
 		pieces.append_array(Geometry2D.clip_polygons(u, oval))
 	for p in pieces:
-		_punch(portal, mat, p, i + 1, s, za, zb)
+		_punch(portal, mat, p, i + 1, s, za, zb, label)
 
 
 static func _rect(x0: float, x1: float, y0: float, y1: float) -> PackedVector2Array:
 	return PackedVector2Array([Vector2(x0, y0), Vector2(x1, y0), Vector2(x1, y1), Vector2(x0, y1)])
+
+
+## Part name with the side it sits on.
+static func _side(base: String, s: float) -> String:
+	return base + ("_R" if s > 0.0 else "_L")
 
 
 ## Mirrors a polygon to the left pillar when `s` is negative.
@@ -165,7 +186,7 @@ static func _ellipse(cx: float, cy: float, hw: float, hh: float, n: float) -> Pa
 
 ## Extrudes a 2D outline along z from `za` to `zb`, wound clockwise from outside.
 static func _prism(parent: Node3D, mat: Material, poly: PackedVector2Array, za: float,
-		zb: float) -> void:
+		zb: float, label: String) -> void:
 	var idx := Geometry2D.triangulate_polygon(poly)
 	if idx.is_empty():
 		return
@@ -199,9 +220,10 @@ static func _prism(parent: Node3D, mat: Material, poly: PackedVector2Array, za: 
 		_tri(st, a0, b0, b1, out)
 		_tri(st, a0, b1, a1, out)
 	var m := MeshInstance3D.new()
+	m.name = label
 	m.mesh = st.commit()
 	m.material_override = mat
-	parent.add_child(m)
+	parent.add_child(m, true)
 
 
 ## One flat triangle; swapped when needed so it is clockwise seen from `out` (Godot's front).
@@ -217,8 +239,9 @@ static func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, out: Vecto
 
 ## A rolled edge: a round bead, vertical or (when `horizontal`) along x.
 static func _bead(parent: Node3D, mat: Material, pos: Vector3, length: float,
-		horizontal: bool) -> void:
+		horizontal: bool, label: String) -> void:
 	var m := MeshInstance3D.new()
+	m.name = label
 	var c := CylinderMesh.new()
 	c.top_radius = BEAD_R
 	c.bottom_radius = BEAD_R
@@ -230,17 +253,7 @@ static func _bead(parent: Node3D, mat: Material, pos: Vector3, length: float,
 	m.position = pos
 	if horizontal:
 		m.rotation_degrees.z = 90.0
-	parent.add_child(m)
-
-
-static func _box(parent: Node3D, mat: Material, pos: Vector3, size: Vector3) -> void:
-	var m := MeshInstance3D.new()
-	var b := BoxMesh.new()
-	b.size = size
-	m.mesh = b
-	m.material_override = mat
-	m.position = pos
-	parent.add_child(m)
+	parent.add_child(m, true)
 
 
 ## Hinge x, window parts and leaf collision from the interior size; `s` is the hinge side.
