@@ -249,6 +249,21 @@ func _create_leaf_collision_body(hinge: Node3D) -> StaticBody3D:
 	body.collision_mask = 0
 	body.transform = interact.transform
 	hinge.add_child(body)
+	# The leaf's outer outline in Interact-local XY (union of the boxes), rounded like the skin
+	# and mirrored for the right leaf so the big corner stays at the hinge side.
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for child in interact.get_children():
+		var cs := child as CollisionShape3D
+		if cs and cs.shape is BoxShape3D:
+			var half := (cs.shape as BoxShape3D).size * 0.5
+			lo = lo.min(Vector2(cs.position.x - half.x, cs.position.y - half.y))
+			hi = hi.max(Vector2(cs.position.x + half.x, cs.position.y + half.y))
+	var outline := _LEAF_BUILD._Skin.leaf_outline(Rect2(lo, hi - lo))
+	if interact.position.x < 0.0:
+		for i in outline.size():
+			outline[i].x = lo.x + hi.x - outline[i].x
+		outline.reverse()
 	for child in interact.get_children():
 		if child is CollisionShape3D:
 			var shape := (child as CollisionShape3D).duplicate() as CollisionShape3D
@@ -256,7 +271,23 @@ func _create_leaf_collision_body(hinge: Node3D) -> StaticBody3D:
 				# Cover the whole slab: cabin face to the old street plane.
 				var box := shape.shape.duplicate() as BoxShape3D
 				box.size.z = _LEAF_BUILD.DOOR_THICKNESS
-				shape.shape = box
+				# Cut the box to the leaf outline: only boxes at a corner change.
+				var local := PackedVector2Array()
+				for p in outline:
+					local.append(p - Vector2(shape.position.x, shape.position.y))
+				var rect := Rect2(-box.size.x * 0.5, -box.size.y * 0.5, box.size.x, box.size.y)
+				var cut := Geometry2D.intersect_polygons(
+						_LEAF_BUILD._Skin._box(rect), local)
+				if cut.size() == 1:
+					var pts := PackedVector3Array()
+					for p in cut[0]:
+						pts.append(Vector3(p.x, p.y, -box.size.z * 0.5))
+						pts.append(Vector3(p.x, p.y, box.size.z * 0.5))
+					var convex := ConvexPolygonShape3D.new()
+					convex.points = pts
+					shape.shape = convex
+				else:
+					shape.shape = box
 				shape.position.z = (_LEAF_BUILD.CABIN_Z + _LEAF_BUILD.STREET_HALF) * 0.5
 			body.add_child(shape)
 	return body

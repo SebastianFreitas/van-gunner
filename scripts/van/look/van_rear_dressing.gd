@@ -110,6 +110,9 @@ func _plate_keep_out() -> Array[AABB]:
 		AABB(Vector3(_Hardware.ROD_X - 0.075, -0.60, -0.30), Vector3(0.15, 1.55, 0.13)),
 		AABB(Vector3(_Hardware.ROD_X + 0.005, -1.01, -0.27), Vector3(0.155, 0.11, 0.10)),
 		AABB(Vector3(_Hardware.ROD_X + 0.02, -0.94, -0.205), Vector3(0.18, 0.24, 0.11)),
+		# The leaf's big access hole and the small holes and ribs above it (rear_door_skeleton.gd).
+		AABB(Vector3(0.45, -1.45, -0.30), Vector3(1.57, 0.38, 0.25)),
+		AABB(Vector3(1.28, -1.0, -0.30), Vector3(1.27, 0.38, 0.25)),
 	]
 	var grown: Array[AABB] = []
 	for box: AABB in raw:

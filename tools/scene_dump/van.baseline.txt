@@ -4916,7 +4916,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/IronCross Nod
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1.81, 0.225, -0.17)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.225, 0.04)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -5555,7 +5555,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/IronCross No
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -1.81, 0.225, -0.17)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.225, 0.04)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false

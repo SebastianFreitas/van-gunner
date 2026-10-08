@@ -14,7 +14,8 @@ Calibrated in art-pass step 1 (2026-09-25) from the stop shots, which are
 the "dark enough" line (`09` mean 0.0052, `12` mean 0.0123, p95 0.019).
 Values are linear luminance; clip% is the share of pixels with any channel
 at 250 or more. `*-outside` is the camera above the cab; `*-back` the van
-interior facing the rear doors; `*-front` the player's view with the HUD.
+interior facing the cab end, not the rear doors (owner, 2026-10-08: the rear
+doors from inside are `g02-gap-rear-in-whole`); `*-front` the player's view with the HUD.
 
 | Shots | Mean max | p95 max | Clip% max |
 |---|---|---|---|

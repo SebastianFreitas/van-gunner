@@ -8,6 +8,11 @@ const _SKELETON_PATH := "res://scripts/van/rear_door_skeleton.gd"
 const PLATE_T := 0.02
 ## The street face stands back from the leaf's nominal plane so seals and the hull skin never share it.
 const STREET_SETBACK := 0.04
+## Outer corner radii: the top corner on the hinge side rolls like the portal's, the rest barely.
+const CORNER_TOP := preload("res://scripts/van/rear_door_flange.gd").RADIUS_TOP
+const CORNER := 0.05
+## Height of the rolled window lip over the street face.
+const WINDOW_LIP_H := 0.03
 
 
 ## Builds the left leaf. `window` is the window outline around `window_c`.
@@ -20,14 +25,44 @@ static func build(x_max: float, y_lo: float, y_hi: float, z_cab: float, z_street
 	var win := PackedVector2Array()
 	for p in window:
 		win.append(p + window_c)
-	for poly in _pieces(rect, [win]):
+	var outline := leaf_outline(rect)
+	for poly in _clip(_pieces(rect, [win]), outline):
 		_poly(st, poly, z_street, Vector3.BACK)
 		_poly(st, poly, z_plate_back, Vector3.FORWARD)
-	_walls(st, _box(rect), z_cab, z_street, false)
+	_walls(st, outline, z_cab, z_street, false)
 	# The window hole is a tunnel through the whole slab.
 	_walls(st, win, z_cab, z_street, true)
-	load(_SKELETON_PATH).build(st, rect, win, z_cab, z_plate_back)
+	var skeleton := load(_SKELETON_PATH)
+	skeleton.build(st, rect, win, z_cab, z_plate_back)
+	# The street edge of the window is rolled like the skeleton's holes: a pressed lip standing
+	# proud of the plate (under the dark WindowLip, whose face is 1.5 cm proud).
+	skeleton._flange(st, win, z_street, z_street, z_street + WINDOW_LIP_H)
 	return st.commit()
+
+
+## The leaf's outline, counter-clockwise: rounded corners, the larger one top-left (hinge side).
+static func leaf_outline(r: Rect2) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	var corners := [[r.position, CORNER, PI], [Vector2(r.end.x, r.position.y), CORNER, PI * 1.5],
+			[r.end, CORNER, 0.0], [Vector2(r.position.x, r.end.y), CORNER_TOP, PI * 0.5]]
+	for c in corners:
+		var at: Vector2 = c[0]
+		var rad: float = c[1]
+		var sx := 1.0 if at.x == r.position.x else -1.0
+		var sy := 1.0 if at.y == r.position.y else -1.0
+		var mid := at + Vector2(sx * rad, sy * rad)
+		for i in 6:
+			var a: float = float(c[2]) + PI * 0.5 * float(i) / 5.0
+			pts.append(mid + Vector2(cos(a), sin(a)) * rad)
+	return pts
+
+
+## Each polygon of `polys` cut to `outline` (the rounded leaf shape).
+static func _clip(polys: Array, outline: PackedVector2Array) -> Array:
+	var out: Array = []
+	for p in polys:
+		out.append_array(Geometry2D.intersect_polygons(p, outline))
+	return out
 
 
 static func _box(r: Rect2) -> PackedVector2Array:

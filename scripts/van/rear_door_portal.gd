@@ -3,19 +3,25 @@ extends RefCounted
 ## builds the pressed-steel pillars and header around the smaller door opening.
 
 const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
+const _Flange := preload("res://scripts/van/rear_door_flange.gd")
 const WALL_MATERIAL := "res://scenes/van/van_wall_material.tres"
 const RAIL_W := 0.25
 const HANDLE_INSET := 0.11
-const LIP := 0.05
-const LIP_T := 0.04
 ## Past the liner on every side, so the steel never leaves a gap against the walls or the vault.
 const SIDE_PAD := 0.03
 ## Header holes: x centre as a share of the half width, half width, half height, and the
 ## squareness exponent (2 is an oval, 4 a rounded slot).
 const HEADER_HOLES: Array[Vector4] = [
-	Vector4(-0.62, 0.26, 0.17, 2.0), Vector4(-0.3, 0.16, 0.17, 4.0),
-	Vector4(0.3, 0.16, 0.17, 4.0), Vector4(0.62, 0.26, 0.17, 2.0),
+	Vector4(-0.62, 0.26, 0.17, 2.0), Vector4(0.3, 0.16, 0.17, 4.0),
+	Vector4(0.68, 0.22, 0.17, 2.0),
 ]
+## Pillar holes (right pillar, mirrored for the left): x centre as an offset from the door
+## edge, y centre, half width, half height. Blind, cut from the cabin side.
+const PILLAR_HOLES: Array[Vector4] = [
+	Vector4(0.3, 0.45, 0.13, 0.13), Vector4(0.3, 1.95, 0.12, 0.22), Vector4(0.3, 2.65, 0.12, 0.12),
+]
+## Squareness exponent per pillar hole (2 oval, 4 rounded slot).
+const PILLAR_SQUARE: Array[float] = [2.0, 4.0, 2.0]
 ## Extra width of a hole's column, so the solid strips beside it stay clear of the rim.
 const COLUMN_MARGIN := 0.03
 ## Pillar pocket: y range, and its inset from the door edge and the wall.
@@ -48,12 +54,11 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 	var z0 := z - pd * 0.5
 	var z1 := z + pd * 0.5
 	var y_a := _LeafBuild.Y_MIN
-	# Cabin-side lips stand 2 cm clear of the leaf's real cabin face.
-	var lip_z := lz + _LeafBuild.CABIN_Z - 0.02 - LIP_T * 0.5
 	# The back compartment's own outline (wall lean, rounded roof corner, crown), padded.
 	var section: PackedVector2Array = Geometry2D.offset_polygon(
 			profile.section_points(48), SIDE_PAD)[0]
 	_header(portal, mat, section, half, top, z0, z1)
+	_Flange.build(portal, mat, half, top, y_a, z0)
 	# Pillars: one continuous section each, a recessed pocket stamped in the cabin-side half.
 	var pocket_x1 := profile.inner_x_at(POCKET_Y1) + SIDE_PAD - POCKET_INSET
 	for s: float in [-1.0, 1.0]:
@@ -66,14 +71,15 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 		]
 		for r in cuts:
 			for p in Geometry2D.intersect_polygons(pillar, r):
-				_prism(portal, mat, _flip(p, s), z0, z)
+				_punch(portal, mat, p, 0, s, z0, z)
 		_prism(portal, mat, _flip(pillar, s), z, z1)
-		# Cabin-side lips: a 5 cm rolled edge over each leaf, 2 cm clear of it.
-		_box(portal, mat, Vector3(s * (half - LIP * 0.4), top * 0.5, lip_z),
-				Vector3(LIP * 1.2, top - y_a, LIP_T))
+		for plate in _Flange.corner_plates(half, top, y_a):
+			_prism(portal, mat, _flip(plate, s), lz + _Flange.PLATE_Z0, lz + _Flange.PLATE_Z1)
+		# Rounds the opening's street side too, so an open leaf shows no square corner. Stops 3 cm
+		# short of the street face so it stays 2 cm clear of the closed leaf's skin.
+		for fill in _Flange.opening_fills(half, top, y_a):
+			_prism(portal, mat, _flip(fill, s), z0 + 0.05, z1 - 0.07)
 		_bead(portal, mat, Vector3(s * (half + BEAD_R), (top + y_a) * 0.5, z0), top - y_a, false)
-	_box(portal, mat, Vector3(0, top + LIP * 0.2, lip_z),
-			Vector3(half * 2.0, LIP * 1.2, LIP_T))
 	_bead(portal, mat, Vector3(0, top + 0.01 + BEAD_R, z0), half * 2.0 + BEAD_R * 2.0, true)
 	# Centre latch box on the cabin side of the header.
 	_box(portal, mat, Vector3(0, top + 0.42, z0 - 0.04), Vector3(0.44, 0.36, 0.08))
@@ -105,6 +111,30 @@ static func _header(portal: Node3D, mat: Material, section: PackedVector2Array, 
 		prev = xb
 	for p in Geometry2D.intersect_polygons(header, _rect(prev, 9.0, y0, 9.0)):
 		_prism(portal, mat, p, z0, z1)
+
+
+## Extrudes `region` (right pillar coordinates) minus the pillar holes from `i` on, mirrored by `s`.
+## Each hole splits the region into side strips and a column, as the header does, so no piece
+## ever has a hole inside it.
+static func _punch(portal: Node3D, mat: Material, region: PackedVector2Array, i: int, s: float,
+		za: float, zb: float) -> void:
+	if i >= PILLAR_HOLES.size():
+		_prism(portal, mat, _flip(region, s), za, zb)
+		return
+	var h := PILLAR_HOLES[i]
+	var cx := VanInteriorSize.REAR_DOOR_HALF + h.x
+	var xa := cx - h.z - COLUMN_MARGIN
+	var xb := cx + h.z + COLUMN_MARGIN
+	var oval := _ellipse(cx, h.y, h.z, h.w, PILLAR_SQUARE[i])
+	var pieces: Array[PackedVector2Array] = []
+	pieces.append_array(Geometry2D.intersect_polygons(region, _rect(-9.0, xa, -9.0, 9.0)))
+	pieces.append_array(Geometry2D.intersect_polygons(region, _rect(xb, 9.0, -9.0, 9.0)))
+	for u in Geometry2D.intersect_polygons(region, _rect(xa, xb, -9.0, h.y)):
+		pieces.append_array(Geometry2D.clip_polygons(u, oval))
+	for u in Geometry2D.intersect_polygons(region, _rect(xa, xb, h.y, 9.0)):
+		pieces.append_array(Geometry2D.clip_polygons(u, oval))
+	for p in pieces:
+		_punch(portal, mat, p, i + 1, s, za, zb)
 
 
 static func _rect(x0: float, x1: float, y0: float, y1: float) -> PackedVector2Array:

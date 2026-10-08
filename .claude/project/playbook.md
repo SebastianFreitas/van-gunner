@@ -119,7 +119,8 @@ container has only `python3`.
 
 `py -3 tools/smoke.py --shots <scratchpad>/shots` saves three views at
 IDLE, in combat, at the elevator stop and at the rear-park stop: what the
-player sees, the player turned to the rear doors, and a camera above the
+player sees, the player turned round (`*-back`: it faces the cab end; the
+rear doors from inside are `g02-gap-rear-in-whole`), and a camera above the
 cab looking back over the van at the street, raiders or stop (UI hidden
 in the last two). On Windows it runs Godot on a separate hidden Win32
 desktop (`tools/hidden_desktop.py`), so no window ever appears on, takes

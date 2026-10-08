@@ -25,12 +25,13 @@ static func build(parent: Node3D, mirror: float, rng: RandomNumberGenerator,
 	var dark := _grime(Color(0.12, 0.115, 0.1))
 	var skew := 1.0 if rng.randf() < 0.5 else -1.0
 	# Heavy top hinge above the 1.28 strap: fat strap and knuckle on the leaf, mismatched bolts.
-	_plate(parent, mirror, 0.19, 1.44, 0.28, 0.12, skew * 2.0, steel, "TopHingeStrap", out)
+	# Lowered and slid in so it stays on the leaf's rounded top corner.
+	_plate(parent, mirror, 0.21, 1.40, 0.28, 0.12, skew * 2.0, steel, "TopHingeStrap", out)
 	_add(parent, "TopHingeKnuckle", _cyl(0.07, 0.07, 0.2), steel,
-			Vector3(mirror * 0.04, 1.44, _Hardware.FACE_Z - 0.10), Vector3.ZERO, out)
-	_bolts(parent, mirror, [0.17, 0.29], 1.44, rng, dark, out)
-	_bead(parent, mirror, 0.19, 1.375, 0.28, 0.0, dark, out)
-	_bead(parent, mirror, 0.33, 1.44, 0.12, 90.0, dark, out)
+			Vector3(mirror * 0.04, 1.40, _Hardware.FACE_Z - 0.10), Vector3.ZERO, out)
+	_bolts(parent, mirror, [0.19, 0.31], 1.40, rng, dark, out)
+	_bead(parent, mirror, 0.21, 1.335, 0.28, 0.0, dark, out)
+	_bead(parent, mirror, 0.35, 1.40, 0.12, 90.0, dark, out)
 	_body_half(parent, mirror, rng, steel, dark, out)
 	# Side hinge welds: a lumpy bead across each existing strap's tip.
 	for y: float in [1.28, -1.15]:

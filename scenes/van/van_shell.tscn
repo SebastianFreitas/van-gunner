@@ -784,7 +784,7 @@ cast_shadow = 0
 mesh = SubResource("RearWindowGlassMesh")
 
 [node name="IronCross" parent="RearWall/LeftHinge" unique_id=2045646296 instance=ExtResource("22")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1.81, 0.225, -0.17)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.225, 0.04)
 mount_z = 0.05
 standoff = 0.05
 end_style = 1
@@ -874,7 +874,7 @@ cast_shadow = 0
 mesh = SubResource("RearWindowGlassMesh")
 
 [node name="IronCross" parent="RearWall/RightHinge" unique_id=628526038 instance=ExtResource("22")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -1.81, 0.225, -0.17)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.225, 0.04)
 mount_z = 0.05
 standoff = 0.05
 end_style = 1
