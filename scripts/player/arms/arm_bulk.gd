@@ -204,6 +204,7 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 	for s in src.get_surface_count():
 		var arrays := src.surface_get_arrays(s)
 		arrays = ArmRefine.refine(arrays)
+		ArmWeightSmooth.apply(arrays, bone_names, inv_poses, side)
 		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 		var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
 		var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
@@ -231,6 +232,10 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 				# wrist_start back up to wrist_end) and swell to their own gain inside the palm.
 				if head_len[b] > 0.0:
 					g = lerpf(wrist_start, g, smoothstep(0.0, HAND_RAMP_END, p.y / head_len[b]))
+				# The thumb root's 1.5 eases to the thumb tube's 1.0 over its far half: the straight
+				# thumb showed the 1.5 to 1.0 step at the joint as a hump.
+				if head_len[b] > 0.0 and bone_names[b].begins_with("DEF-thumb.01"):
+					g = lerpf(g, 1.0, smoothstep(0.4, 1.0, p.y / head_len[b]))
 				if palm_len[b] > 0.0:
 					var kn := clampf((p.y / palm_len[b] - KNUCKLE_RAMP_START)
 							/ (1.0 - KNUCKLE_RAMP_START), 0.0, 1.0)

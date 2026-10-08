@@ -172,7 +172,7 @@ float skin_height(vec3 rest, vec3 w, float accept, float dorsal, float hand, flo
 	vec4 f = blight_field(rest, blight_scale, accept, 1.0);
 	vec2 wq = rest.xz * blight_scale * 12.0 + vec2(rest.y * blight_scale * 12.0);
 	float wart_skin = f.x * 0.12 * (noise21(wq) - 0.5); // fine bumpy wart skin, shading only
-	float h = (blight_height(f) + wart_skin) * mix(1.0, 0.5, hand); // calmer domes on the hand
+	float h = (blight_height(f) + wart_skin);
 	if (hand > 0.01) {
 		vec4 fh = blight_field(rest, hand_blight_scale, hand_blight_accept, 1.0);
 		h += hand * (hand_blight_gain / blight_gain) * blight_height(fh);
@@ -327,7 +327,12 @@ void fragment() {
 		float hy = skin_bump * SKIN_BUMP_HEIGHT * dot(g, dFdy(rest));
 		vec3 sdx = dFdx(VERTEX);
 		vec3 sdy = dFdy(VERTEX);
+		// The blight tilt on the hand is the dark knob at the thumb root (side view): the tilt
+		// goes black on the shaded flank, so the hand keeps only 40 percent of it.
+		vec3 n_flat = NORMAL;
 		NORMAL = tilt_normal(NORMAL, sdx, sdy, hx, hy);
+		NORMAL = normalize(mix(NORMAL, n_flat,
+				hand * 0.6));
 		float kh = knot_at(rest);
 		float wrinkle = mix(0.5, tri_fbm(rest, w, wrinkle_scale), wrinkle_fade(fw));
 		fold_dark = smoothstep(0.5, 0.25, wrinkle) * 0.6
