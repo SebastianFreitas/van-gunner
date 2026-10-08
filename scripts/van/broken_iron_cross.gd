@@ -20,6 +20,8 @@ const IronCrossBuild := preload("res://scripts/van/iron_cross_build.gd")
 @export var skin_reach := Vector2(1.12, 0.90)
 ## Local z of the surface the ends stand on: the side frame ring's front.
 @export var mount_z := 0.03
+## Rear-door bars: height of the welded posts that lift the skin runs off the face (0 = none).
+@export var standoff := 0.0
 @export var curve_segments := 14
 @export var rebuild_on_ready := true
 
@@ -117,11 +119,13 @@ func _add_end(sfx: String, vert: bool, side: float, r: float, z_bar: float) -> D
 	var kink_at := _rng.randi_range(1, n)
 	var kink := 0.012 * (1.0 if _rng.randf() < 0.5 else -1.0)
 	var seg := length / float(n)
+	# Local -z is the cabin on a side window but the street on the turned rear doors.
+	var bend := signf(transform.basis.z.z)
 	var a := src[0].y
 	var z := src[0].z
 	for i in range(1, n + 1):
 		var phi := theta * float(i) / float(n)
-		var dz := -sin(phi) * seg
+		var dz := -sin(phi) * seg * bend
 		if curls and float(i) > float(n) * 2.0 / 3.0:
 			dz = -dz
 		a -= cos(phi) * seg
@@ -139,6 +143,11 @@ func _add_end(sfx: String, vert: bool, side: float, r: float, z_bar: float) -> D
 	_geo.add_rod(self, "Stub" + sfx, pts, rads, 6, IronCross.RIB_STEP, IronCross.rebar_material())
 
 	var weld := IronCross.weld_material()
+	if end_style == 1 and standoff > 0.0:
+		var h := skin_z + r
+		for pa: float in [(ep["touch"] as float) + 0.015, (f + 0.02 + reach) * 0.5]:
+			_geo.add_blob(self, "StandOff%s%d" % [sfx, int(pa * 1000.0)], _map(vert, side, pa, 0.0, h * 0.5),
+					Vector3(0.045, 0.045, h), _rng, weld)
 	for k in 3:
 		var wa := (ep["touch"] as float) + _rng.randf_range(-0.015, 0.015)
 		var at := _map(vert, side, wa, 0.0, ep["weld_z"] as float)

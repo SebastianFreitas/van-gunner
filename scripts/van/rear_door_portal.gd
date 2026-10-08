@@ -40,7 +40,7 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 	var half := VanInteriorSize.REAR_DOOR_HALF
 	var top := VanInteriorSize.REAR_DOOR_TOP
 	var lz := left.position.z
-	var d := _LeafBuild.DOOR_THICKNESS
+	var d := _LeafBuild.STREET_HALF * 2.0
 	# Shifted cabin-side so the steel's street face stays 1+ cm behind the skin ring (6.66).
 	var z := lz - 0.05
 	# 2 cm deeper each side than a leaf, so the steel never shares a face plane with it.
@@ -48,6 +48,8 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 	var z0 := z - pd * 0.5
 	var z1 := z + pd * 0.5
 	var y_a := _LeafBuild.Y_MIN
+	# Cabin-side lips stand 2 cm clear of the leaf's real cabin face.
+	var lip_z := lz + _LeafBuild.CABIN_Z - 0.02 - LIP_T * 0.5
 	# The back compartment's own outline (wall lean, rounded roof corner, crown), padded.
 	var section: PackedVector2Array = Geometry2D.offset_polygon(
 			profile.section_points(48), SIDE_PAD)[0]
@@ -67,10 +69,10 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 				_prism(portal, mat, _flip(p, s), z0, z)
 		_prism(portal, mat, _flip(pillar, s), z, z1)
 		# Cabin-side lips: a 5 cm rolled edge over each leaf, 2 cm clear of it.
-		_box(portal, mat, Vector3(s * (half - LIP * 0.4), top * 0.5, lz - d * 0.5 - LIP_T),
+		_box(portal, mat, Vector3(s * (half - LIP * 0.4), top * 0.5, lip_z),
 				Vector3(LIP * 1.2, top - y_a, LIP_T))
 		_bead(portal, mat, Vector3(s * (half + BEAD_R), (top + y_a) * 0.5, z0), top - y_a, false)
-	_box(portal, mat, Vector3(0, top + LIP * 0.2, lz - d * 0.5 - LIP_T),
+	_box(portal, mat, Vector3(0, top + LIP * 0.2, lip_z),
 			Vector3(half * 2.0, LIP * 1.2, LIP_T))
 	_bead(portal, mat, Vector3(0, top + 0.01 + BEAD_R, z0), half * 2.0 + BEAD_R * 2.0, true)
 	# Centre latch box on the cabin side of the header.
@@ -236,17 +238,16 @@ static func _window_collision(hinge: Node3D, panel: Node3D, s: float) -> void:
 	var glass := hinge.get_node("BreakableGlass") as Node3D
 	var pts := PackedVector3Array()
 	for p in hole:
-		for z: float in [-0.11, 0.11]:
+		for z: float in [_LeafBuild.CABIN_Z, 0.11]:
 			pts.append(Vector3(-s * p.x, p.y, z))
 	var glass_shape := ConvexPolygonShape3D.new()
 	glass_shape.points = pts
 	(glass.get_node("Collision") as CollisionShape3D).shape = glass_shape
 	# The cut corner is the triangle between the bounding box corner and the chamfer's ends.
 	var corner := PackedVector3Array()
-	var half_t := _LeafBuild.DOOR_THICKNESS * 0.5
 	for p: Vector2 in [hole[hole.size() - 1], hole[hole.size() - 2], Vector2(hole[hole.size() - 2].x,
 			hole[hole.size() - 1].y)]:
-		for z: float in [-half_t, half_t]:
+		for z: float in [_LeafBuild.CABIN_Z, _LeafBuild.STREET_HALF]:
 			corner.append(Vector3(-s * p.x, p.y, z))
 	var shape := ConvexPolygonShape3D.new()
 	shape.points = corner

@@ -1,108 +1,38 @@
 extends RefCounted
-## Rear door leaf as two pressed-steel skins: a flat outer plate on the street side and a cabin
-## inner sheet with a raised frame, ribs, a pressing and rolled-lip holes (blind, the plate shows
-## behind them). Hinge-local XY, +x toward the centre seam, z -half_t cabin to +half_t street.
+## Rear door leaf: a flat outer plate on the street side and, on the cabin side, an exposed welded
+## skeleton (rear_door_skeleton.gd). Hinge-local XY, +x toward the centre seam, z cabin to street.
 
-const SHEET_T := 0.004
+## Loaded at build time: the skeleton preloads this script for its mesh helpers.
+const _SKELETON_PATH := "res://scripts/van/rear_door_skeleton.gd"
+
 const PLATE_T := 0.02
-## The street face stands back from the leaf mid-thickness so seals and the hull skin never share its plane.
+## The street face stands back from the leaf's nominal plane so seals and the hull skin never share it.
 const STREET_SETBACK := 0.04
-const LIP_W := 0.03
-const FRAME_W := 0.07
-const RIB_W := 0.05
-## Window centre in leaf-local x; the y comes from the caller.
-const SLOT := Rect2(0.55, 1.18, 1.6, 0.14)
-## Bottom panel hole, stepped on its seam side (image 1), then the scattered small holes (image 2).
-const PANEL_HOLE: Array[Vector2] = [
-	Vector2(0.40, -1.38), Vector2(1.85, -1.38), Vector2(1.90, -1.33), Vector2(1.90, -1.12),
-	Vector2(1.68, -1.12), Vector2(1.68, -0.92), Vector2(1.46, -0.92), Vector2(1.46, -0.72),
-	Vector2(0.45, -0.72), Vector2(0.35, -0.82), Vector2(0.35, -1.28),
-]
-## Pressed triangle by the seam, under the window's chamfer.
-const TRIANGLE: Array[Vector2] = [Vector2(2.58, -0.30), Vector2(2.58, -0.90), Vector2(2.05, -0.90)]
-## Small holes: centre, half size (round when equal), lip width.
-const SMALL: Array[Vector3] = [
-	Vector3(0.45, 1.415, 0.035), Vector3(1.0, 1.415, 0.035), Vector3(2.30, -1.12, 0.04),
-	Vector3(2.30, -1.28, 0.04),
-]
-const SMALL_OVALS: Array[Rect2] = [Rect2(1.55, 1.395, 0.5, 0.04), Rect2(2.42, -1.38, 0.05, 0.3)]
 
 
 ## Builds the left leaf. `window` is the window outline around `window_c`.
-static func build(x_max: float, y_lo: float, y_hi: float, half_t: float,
+static func build(x_max: float, y_lo: float, y_hi: float, z_cab: float, z_street: float,
 		window: PackedVector2Array, window_c: Vector2) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var z_cab := -half_t
-	var z_sheet := -half_t + SHEET_T
-	var z_sheet_back := -half_t + 2.0 * SHEET_T
-	var z_street := half_t - STREET_SETBACK
 	var z_plate_back := z_street - PLATE_T
 	var rect := Rect2(0.0, y_lo, x_max, y_hi - y_lo)
 	var win := PackedVector2Array()
 	for p in window:
 		win.append(p + window_c)
-	# [outline, lip width, through both skins]
-	var holes: Array = [[win, LIP_W, true], [_slot(), LIP_W, false],
-			[PackedVector2Array(PANEL_HOLE), LIP_W, false]]
-	for s in SMALL:
-		holes.append([_oval(Vector2(s.x, s.y), s.z, s.z), 0.02, false])
-	for r in SMALL_OVALS:
-		holes.append([_oval(r.get_center(), r.size.x * 0.5, r.size.y * 0.5), 0.02, false])
-	var outlines: Array = []
-	for h in holes:
-		outlines.append(h[0])
-
-	# Outer plate (window hole only) and inner sheet (every hole).
 	for poly in _pieces(rect, [win]):
 		_poly(st, poly, z_street, Vector3.BACK)
 		_poly(st, poly, z_plate_back, Vector3.FORWARD)
-	for poly in _pieces(rect, outlines):
-		_poly(st, poly, z_sheet, Vector3.FORWARD)
-	var corners := PackedVector2Array([rect.position, Vector2(rect.end.x, rect.position.y),
-			rect.end, Vector2(rect.position.x, rect.end.y)])
-	_walls(st, corners, z_plate_back, z_street, false)
-
-	for h in holes:
-		var outline: PackedVector2Array = h[0]
-		var ring := _ring(outline, h[1])
-		var count := outline.size()
-		for k in count:
-			var n := (k + 1) % count
-			_quad_xy(st, outline[k], outline[n], ring[n], ring[k], z_cab, Vector3.FORWARD)
-		_walls(st, ring, z_cab, z_sheet, false)
-		_walls(st, outline, z_cab, z_street if h[2] else z_sheet_back, true)
-
-	# Perimeter frame reaches the plate, so the cavity is closed at the leaf edge.
-	var f := FRAME_W
-	for box in [Rect2(0.0, y_lo, f, y_hi - y_lo), Rect2(x_max - f, y_lo, f, y_hi - y_lo),
-			Rect2(f, y_lo, x_max - 2.0 * f, f), Rect2(f, y_hi - f, x_max - 2.0 * f, f)]:
-		_prism(st, _box(box), z_cab, z_plate_back)
-	# Ribs between the hole groups: hinge stile, two horizontal.
-	for rib in [Rect2(0.10, y_lo + f, RIB_W, y_hi - y_lo - 2.0 * f),
-			Rect2(f, 1.07, x_max - 2.0 * f, RIB_W), Rect2(f, -0.655, 1.9, 0.04)]:
-		_prism(st, _box(rib), z_cab, z_sheet)
-	_prism(st, PackedVector2Array(TRIANGLE), z_cab, z_sheet)
+	_walls(st, _box(rect), z_cab, z_street, false)
+	# The window hole is a tunnel through the whole slab.
+	_walls(st, win, z_cab, z_street, true)
+	load(_SKELETON_PATH).build(st, rect, win, z_cab, z_plate_back)
 	return st.commit()
 
 
 static func _box(r: Rect2) -> PackedVector2Array:
 	return PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end,
 			Vector2(r.position.x, r.end.y)])
-
-
-static func _slot() -> PackedVector2Array:
-	var c := SLOT.get_center()
-	var hw := SLOT.size.x * 0.5
-	var hh := SLOT.size.y * 0.5
-	var pts := PackedVector2Array()
-	for i in 7:
-		var a := -PI * 0.5 + PI * float(i) / 6.0
-		pts.append(c + Vector2(hw - hh + cos(a) * hh, sin(a) * hh))
-	for i in 7:
-		var a := PI * 0.5 + PI * float(i) / 6.0
-		pts.append(c + Vector2(-hw + hh + cos(a) * hh, sin(a) * hh))
-	return pts
 
 
 ## Octagon-ish round/oval with half sizes `hw`, `hh` (a stadium when they differ much).

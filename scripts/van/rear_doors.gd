@@ -15,6 +15,7 @@ signal glass_shattered(side: StringName)
 
 const SIDE_LEFT := &"left"
 const SIDE_RIGHT := &"right"
+const _LEAF_BUILD := preload("res://scripts/van/rear_door_leaf_build.gd")
 
 ## Local Z just outside the closed door plane (rear is +Z).
 const OUTSIDE_HOLD_LOCAL := Vector3(0.0, 1.62, 5.2)
@@ -250,7 +251,14 @@ func _create_leaf_collision_body(hinge: Node3D) -> StaticBody3D:
 	hinge.add_child(body)
 	for child in interact.get_children():
 		if child is CollisionShape3D:
-			body.add_child((child as CollisionShape3D).duplicate())
+			var shape := (child as CollisionShape3D).duplicate() as CollisionShape3D
+			if shape.shape is BoxShape3D:
+				# Cover the whole slab: cabin face to the old street plane.
+				var box := shape.shape.duplicate() as BoxShape3D
+				box.size.z = _LEAF_BUILD.DOOR_THICKNESS
+				shape.shape = box
+				shape.position.z = (_LEAF_BUILD.CABIN_Z + _LEAF_BUILD.STREET_HALF) * 0.5
+			body.add_child(shape)
 	return body
 
 

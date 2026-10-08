@@ -4,7 +4,11 @@ extends RefCounted
 const _WindowLip := preload("res://scripts/van/rear_window_lip.gd")
 const _Skin := preload("res://scripts/van/rear_door_skin.gd")
 const DOOR_SHADER := preload("res://scenes/van/van_rear_door.gdshader")
-const DOOR_THICKNESS := 0.16
+## Leaf slab depth from the cabin face (CABIN_Z) to the nominal street plane (STREET_HALF).
+const DOOR_THICKNESS := 0.25
+## The street side of the slab, where the old 0.16 leaf ended; the extra depth grows cabin-ward.
+const STREET_HALF := 0.08
+const CABIN_Z := STREET_HALF - DOOR_THICKNESS
 const CENTER_GAP := 0.012
 const Y_MIN := 0.02
 ## Window centre distance from the hinge.
@@ -42,8 +46,8 @@ static func _build_left_leaf_mesh(left: Node3D) -> ArrayMesh:
 	var hinge_y := left.position.y if left else 1.55
 	# Hinge-local: x 0 at the hinge to the seam, y from the floor gap to the opening top.
 	return _Skin.build(hinge_x - CENTER_GAP, Y_MIN - hinge_y,
-			VanInteriorSize.REAR_DOOR_TOP - hinge_y, DOOR_THICKNESS * 0.5,
-			WINDOW_HOLE, Vector2(WINDOW_X, 1.775 - hinge_y))
+			VanInteriorSize.REAR_DOOR_TOP - hinge_y, CABIN_Z,
+			STREET_HALF - _Skin.STREET_SETBACK, WINDOW_HOLE, Vector2(WINDOW_X, 1.775 - hinge_y))
 
 
 static func _apply_leaf(hinge: Node3D, mesh: ArrayMesh, mat: Material, mirror_x: bool) -> void:
@@ -97,7 +101,7 @@ static func _add_astragal(left: Node3D) -> void:
 	strip.position = Vector3(
 		hinge_x,
 		(y_bot + y_top) * 0.5 - hinge_y,
-		-DOOR_THICKNESS * 0.5 - ASTRAGAL_LIFT - ASTRAGAL_T * 0.5
+		CABIN_Z - ASTRAGAL_LIFT - ASTRAGAL_T * 0.5
 	)
 	var mount := left.get_node_or_null("Handle/Mount")
 	if mount:

@@ -30,7 +30,9 @@ func _init(owner_cross: Node3D, geo: IronCrossGeo, rng: RandomNumberGenerator) -
 
 ## `bar_back_z` is the z the main bars start from; the braces' middle runs there, clear of the glass.
 func build(bar_back_z: float, skin_z: float, rebar: Material, weld: Material) -> void:
-	var mirror := -1.0 if _o.position.x < 0.0 else 1.0
+	# The 180 degree turn about Y flips local x, so undo it to keep the chamfer brace on the seam side.
+	var mirror := (-1.0 if _o.position.x < 0.0 else 1.0) * signf(_o.transform.basis.x.x)
+	var posts := (_o.get(&"standoff") as float) > 0.0
 	var zg := bar_back_z + RADIUS
 	var z0 := skin_z + RADIUS
 	for n in BRACES.size():
@@ -62,3 +64,6 @@ func build(bar_back_z: float, skin_z: float, rebar: Material, weld: Material) ->
 				var wp := at + off
 				_geo.add_blob(_o, "BraceWeld%d_%d_%d" % [n, end, k],
 						Vector3(wp.x, wp.y, skin_z + 0.004), Vector3(0.05, 0.05, 0.03), _rng, weld)
+			if posts:
+				_geo.add_blob(_o, "BracePost%d_%d" % [n, end], Vector3(at.x, at.y, z0 * 0.5),
+						Vector3(0.045, 0.045, z0), _rng, weld)

@@ -20,6 +20,8 @@ const IronCrossBuild := preload("res://scripts/van/iron_cross_build.gd")
 @export var skin_reach := Vector2(1.12, 0.90)
 ## Local z of the surface the ends stand on: the side frame ring's front.
 @export var mount_z := 0.03
+## Rear-door bars: height of the welded posts that lift the skin runs off the face (0 = none).
+@export var standoff := 0.0
 @export var curve_segments := 14
 @export var rebuild_on_ready := true
 
@@ -111,6 +113,7 @@ func break_bars() -> void:
 	broken.set(&"skin_z", skin_z)
 	broken.set(&"skin_reach", skin_reach)
 	broken.set(&"mount_z", mount_z)
+	broken.set(&"standoff", standoff)
 	broken.set(&"curve_segments", curve_segments)
 	broken.break_seed = 0
 	broken.rebuild_on_ready = false

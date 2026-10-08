@@ -25,8 +25,8 @@ static func build(doors: Node3D, left_hinge: Node3D) -> void:
 	var old := doors.get_node_or_null("Frame")
 	if old != null:
 		old.free()
-	var z_street := left_hinge.position.z - (_LeafBuild.DOOR_THICKNESS * 0.5
-			+ _LeafBuild.ASTRAGAL_LIFT + _LeafBuild.ASTRAGAL_T + LEAF_CLEAR)
+	var z_street := left_hinge.position.z + _LeafBuild.CABIN_Z - (
+			_LeafBuild.ASTRAGAL_LIFT + _LeafBuild.ASTRAGAL_T + LEAF_CLEAR)
 	var z_cabin := z_street - PLATE_T
 	var outer := _outline(walls, ceiling, OUTER_SINK, -OUTER_SINK)
 	var inner := _outline(walls, ceiling, -INNER_REACH, INNER_REACH)

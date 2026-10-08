@@ -39,8 +39,8 @@ static func build(left_hinge: Node3D, hinge: Node3D, mirror_x: bool) -> void:
 		inner[i] += center
 		var s := sleeve[i] + center
 		sleeve[i] = Vector2(minf(s.x, max_x), s.y)
-	var z_front := _LeafBuild.DOOR_THICKNESS * 0.5 - _Skin.STREET_SETBACK + PROUD
-	var z_back := _LeafBuild.DOOR_THICKNESS * 0.5 - _Skin.STREET_SETBACK - SINK
+	var z_front := _LeafBuild.STREET_HALF - _Skin.STREET_SETBACK + PROUD
+	var z_back := _LeafBuild.STREET_HALF - _Skin.STREET_SETBACK - SINK
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var count := outer.size()
@@ -67,7 +67,7 @@ static func build(left_hinge: Node3D, hinge: Node3D, mirror_x: bool) -> void:
 				Vector3(on.x, on.y, z_front), Vector3(ok.x, ok.y, z_front),
 				_perp(ok, on, outer_mid - inner_mid))
 	# The slab leaves its outer hole edge open, so rays inside the hole reach the cavity between its faces.
-	var z_cabin := -_LeafBuild.DOOR_THICKNESS * 0.5
+	var z_cabin := _LeafBuild.CABIN_Z
 	for k in count:
 		var n := (k + 1) % count
 		var sk := sleeve[k]

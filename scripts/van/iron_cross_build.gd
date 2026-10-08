@@ -21,6 +21,9 @@ var _skin_z := 0.0
 var _skin_reach := Vector2.ZERO
 var _back_z := 0.0
 var _end_welds: Array = []
+## Welded stand-off posts under the skin ends: [centre, size] in cross space.
+var _posts: Array = []
+var _standoff := 0.0
 
 
 ## `owner_cross` is the IronCross; its exports and constants are read through it, so this file
@@ -40,6 +43,8 @@ func build(geo: IronCrossGeo, rng: RandomNumberGenerator, stage: int) -> void:
 	_geo = geo
 	_rng = rng
 	_end_welds.clear()
+	_posts.clear()
+	_standoff = _o.get(&"standoff") as float
 	var radii: Array = _const(&"REBAR_RADII")
 	var rib := _const(&"RIB_STEP") as float
 	var pipe_r := _const(&"PIPE_RADIUS") as float
@@ -65,6 +70,7 @@ func build(geo: IronCrossGeo, rng: RandomNumberGenerator, stage: int) -> void:
 	_crossing(rv, rh, zv, zh, flip)
 	var lost: Array = _const(&"STAGE_WELDS_LOST")
 	_place_end_welds(lost[stage] as int)
+	_place_posts()
 	if _skin:
 		IronCrossGusset.new(_o, geo, rng).build(_back_z, _skin_z, rebar, _mat(&"weld_material"))
 
@@ -128,6 +134,11 @@ func _end(vert: bool, r: float, last: Vector3, side: float) -> Array:
 	for k in 3:
 		var a := side * ((ep["touch"] as float) + _rng.randf_range(-0.015, 0.015))
 		_end_welds.append([_pt(vert, a, u, ep["weld_z"] as float), Vector3(2.4 * r, 2.4 * r, 1.6 * r)])
+	if _skin and _standoff > 0.0:
+		# One post under the end welds, one mid-way along the run on the skin (mount_z = skin_z).
+		var h := _skin_z + r
+		for a: float in [(ep["touch"] as float) + 0.015, (f + 0.02 + reach) * 0.5]:
+			_posts.append([_pt(vert, side * a, u, h * 0.5), Vector3(0.045, 0.045, h)])
 	return out
 
 
@@ -347,6 +358,14 @@ func _place_end_welds(lost: int) -> void:
 	for n in range(lost, order.size()):
 		var spec: Array = _end_welds[order[n]]
 		_geo.add_blob(_o, "EndWeld%d" % order[n], spec[0] as Vector3, spec[1] as Vector3, _rng, weld)
+
+
+## Square steel posts from the face (z = 0) up to the bar ends, so the skin runs stand off it.
+func _place_posts() -> void:
+	var weld := _mat(&"weld_material")
+	for k in _posts.size():
+		var spec: Array = _posts[k]
+		_geo.add_blob(_o, "StandOff%d" % k, spec[0] as Vector3, spec[1] as Vector3, _rng, weld)
 
 
 func _fill(n: int, value: float) -> PackedFloat32Array:

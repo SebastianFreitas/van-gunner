@@ -4,15 +4,15 @@ extends RefCounted
 const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
 
 ## Leaf cabin face in hinge-local z; plates stand at z < this, like the hardware.
-const FACE_Z := -0.08
-const PLATE_T := 0.016
-## The right leaf reads a shallow back as same-facing as its body face, so plates sink deeper.
+const FACE_Z := _LeafBuild.CABIN_Z
+const PLATE_T := 0.035
+## Backs of random plates (-0.155), scrap (-0.14) and straps (-0.065) stay 1.5 cm or more apart.
 const SINK := 0.02
-## Plate front faces stand 1.4 cm proud of the leaf, backs 2 mm inside it.
-const PROUD := 0.014
-const BEAD_W := 0.018
-const BEAD_H := 0.012
-const BOLT_H := 0.008
+## Plate front faces stand 4 cm proud of the beams, backs buried in them.
+const PROUD := 0.04
+const BEAD_W := 0.035
+const BEAD_H := 0.03
+const BOLT_H := 0.025
 const MARGIN := 0.03
 const SEAM_X := VanInteriorSize.REAR_DOOR_HALF - 0.05
 const HINGE_X := 0.04
@@ -82,6 +82,7 @@ static func _build_plate(parent: Node3D, mirror: float, rng: RandomNumberGenerat
 		center: Vector2, size: Vector2, angle: float, color: Color, roughness: float,
 		metallic: float, out: Array[Node3D]) -> void:
 	var pivot := Node3D.new()
+	pivot.name = "ScrapPlate%d" % out.size()
 	pivot.position = Vector3(mirror * center.x, center.y, 0.0)
 	pivot.rotation = Vector3(0.0, 0.0, mirror * angle)
 	parent.add_child(pivot)
@@ -90,7 +91,7 @@ static func _build_plate(parent: Node3D, mirror: float, rng: RandomNumberGenerat
 	var mat := MachineParts.dark(color, roughness)
 	mat.metallic = metallic
 	var front_z := FACE_Z - PROUD
-	_add(pivot, _box(Vector3(size.x, size.y, PLATE_T + SINK)), mat,
+	_add(pivot, "Plate%d" % out.size(), _box(Vector3(size.x, size.y, PLATE_T + SINK)), mat,
 			Vector3(0.0, 0.0, front_z + (PLATE_T + SINK) * 0.5), Vector3.ZERO, out)
 
 	var welded := rng.randf() < 0.5
@@ -103,14 +104,14 @@ static func _build_plate(parent: Node3D, mirror: float, rng: RandomNumberGenerat
 		for sx: float in [-1.0, 1.0]:
 			for sy: float in [-1.0, 1.0]:
 				var bolt := CylinderMesh.new()
-				bolt.top_radius = 0.013
-				bolt.bottom_radius = 0.013
+				bolt.top_radius = 0.03
+				bolt.bottom_radius = 0.03
 				bolt.height = BOLT_H
 				bolt.radial_segments = 6
 				bolt.rings = 1
-				_add(pivot, bolt, bolt_mat, Vector3(sx * (size.x * 0.5 - 0.03),
-						sy * (size.y * 0.5 - 0.03), front_z - BOLT_H * 0.5 + 0.002),
-						Vector3(PI * 0.5, 0.0, 0.0), out)
+				_add(pivot, "PlateBolt%d" % out.size(), bolt, bolt_mat,
+						Vector3(sx * (size.x * 0.5 - 0.05), sy * (size.y * 0.5 - 0.05),
+						front_z - BOLT_H * 0.5 + 0.002), Vector3(PI * 0.5, 0.0, 0.0), out)
 	if not damaged:
 		return
 	var dark_mat := MachineParts.dark(color.darkened(0.45), 0.9)
@@ -122,13 +123,13 @@ static func _build_plate(parent: Node3D, mirror: float, rng: RandomNumberGenerat
 		cyl.height = 0.008
 		cyl.radial_segments = 8
 		cyl.rings = 1
-		_add(pivot, cyl, dark_mat, Vector3(0.0, 0.0, front_z),
+		_add(pivot, "PlateDent%d" % out.size(), cyl, dark_mat, Vector3(0.0, 0.0, front_z),
 				Vector3(PI * 0.5, 0.0, 0.0), out)
 	else:
 		# Stands 2.5 cm proud so it clears the beads and bolts by more than 1 cm.
 		var sx := 1.0 if rng.randf() < 0.5 else -1.0
 		var sy := 1.0 if rng.randf() < 0.5 else -1.0
-		_add(pivot, _box(Vector3(0.07, 0.07, 0.03)), dark_mat,
+		_add(pivot, "PlateNut%d" % out.size(), _box(Vector3(0.07, 0.07, 0.03)), dark_mat,
 				Vector3(sx * size.x * 0.5, sy * size.y * 0.5, front_z - 0.01),
 				Vector3(0.0, 0.0, deg_to_rad(45.0)), out)
 
@@ -159,12 +160,13 @@ static func _beads(pivot: Node3D, rng: RandomNumberGenerator, size: Vector2, fro
 			if not horizontal:
 				bead_size = Vector3(BEAD_W, length, BEAD_H + 0.004)
 				pos = Vector3(across, along, pos.z)
-			_add(pivot, _box(bead_size), mat, pos, Vector3.ZERO, out)
+			_add(pivot, "PlateBead%d" % out.size(), _box(bead_size), mat, pos, Vector3.ZERO, out)
 
 
-static func _add(parent: Node3D, mesh: Mesh, mat: Material, pos: Vector3, rot: Vector3,
-		out: Array[Node3D]) -> void:
+static func _add(parent: Node3D, node_name: String, mesh: Mesh, mat: Material, pos: Vector3,
+		rot: Vector3, out: Array[Node3D]) -> void:
 	var inst := MeshInstance3D.new()
+	inst.name = node_name
 	inst.mesh = mesh
 	inst.material_override = mat
 	inst.layers = 2

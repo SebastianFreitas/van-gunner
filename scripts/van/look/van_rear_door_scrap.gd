@@ -6,11 +6,11 @@ extends RefCounted
 
 const _Hardware := preload("res://scripts/van/look/van_rear_door_hardware.gd")
 const _WALL_MATERIAL := "res://scenes/van/van_wall_material.tres"
-## Every front face stands 2 cm proud of its surface, every back is buried 4.5 cm so it clears the
+## Every front face stands 6 cm proud of its surface, every back sits at BACK_Z (inside the beams, clear of the skeleton planes at -0.12 and -0.09) so it clears the
 ## leaf's inner sheet (audit plane tolerance 0.01).
-const T := 0.02
-const BURY := 0.045
-const BEAD_R := 0.016
+const T := 0.06
+const BACK_Z := -0.14
+const BEAD_R := 0.025
 ## Portal cabin face in hinge-local z; the pillars and header stand here.
 const PILLAR_Z := -0.15
 const LEAF_EDGE := 2.69
@@ -26,8 +26,8 @@ static func build(parent: Node3D, mirror: float, rng: RandomNumberGenerator,
 	var skew := 1.0 if rng.randf() < 0.5 else -1.0
 	# Heavy top hinge above the 1.28 strap: fat strap and knuckle on the leaf, mismatched bolts.
 	_plate(parent, mirror, 0.19, 1.44, 0.28, 0.12, skew * 2.0, steel, "TopHingeStrap", out)
-	_add(parent, "TopHingeKnuckle", _cyl(0.05, 0.05, 0.13), steel,
-			Vector3(mirror * 0.04, 1.44, _Hardware.FACE_Z - 0.05), Vector3.ZERO, out)
+	_add(parent, "TopHingeKnuckle", _cyl(0.07, 0.07, 0.2), steel,
+			Vector3(mirror * 0.04, 1.44, _Hardware.FACE_Z - 0.10), Vector3.ZERO, out)
 	_bolts(parent, mirror, [0.17, 0.29], 1.44, rng, dark, out)
 	_bead(parent, mirror, 0.19, 1.375, 0.28, 0.0, dark, out)
 	_bead(parent, mirror, 0.33, 1.44, 0.12, 90.0, dark, out)
@@ -39,9 +39,9 @@ static func build(parent: Node3D, mirror: float, rng: RandomNumberGenerator,
 	_plate(parent, mirror, 0.75, -0.85, 0.62, 0.04, skew * -11.0, steel, "CheckStrap", out)
 	# The arm rides the leaf and swings with it; only a short stub stays on the pillar.
 	_plate(parent, mirror, 0.22, -0.85, 0.40, 0.045, mirror * -3.0, steel, "CheckArm", out,
-			_Hardware.FACE_Z - 0.025)
-	_add(parent, "CheckPin", _cyl(0.035, 0.035, 0.05), dark,
-			Vector3(mirror * 0.47, -0.85 - 0.03 * skew, _Hardware.FACE_Z - 0.04),
+			_Hardware.FACE_Z - 0.03)
+	_add(parent, "CheckPin", _cyl(0.05, 0.05, 0.12), dark,
+			Vector3(mirror * 0.47, -0.85 - 0.03 * skew, _Hardware.FACE_Z - 0.12),
 			Vector3(PI * 0.5, 0.0, 0.0), out)
 	_plate(parent, mirror, 1.10, -0.95, 0.10, 0.12, 4.0, steel, "CheckAngleA", out)
 	_plate(parent, mirror, 1.14, -0.91, 0.04, 0.12, -3.0, dark, "CheckAngleB", out)
@@ -71,17 +71,17 @@ static func build(parent: Node3D, mirror: float, rng: RandomNumberGenerator,
 ## Left leaf only: a vertical seam rod welded over the astragal and a welded frame round the pull.
 static func _left_only(parent: Node3D, rng: RandomNumberGenerator, steel: Material,
 		dark: Material, out: Array[Node3D]) -> void:
-	_add(parent, "SeamRod", _cyl(0.024, 0.024, 2.7), steel,
-			Vector3(LEAF_EDGE - 0.036, 0.0, _Hardware.FACE_Z - 0.06), Vector3.ZERO, out)
+	_add(parent, "SeamRod", _cyl(0.035, 0.035, 2.7), steel,
+			Vector3(LEAF_EDGE - 0.036, 0.0, _Hardware.FACE_Z - 0.04), Vector3.ZERO, out)
 	var cx := _Hardware.HANDLE_X - 0.02
 	var cy := _Hardware.HANDLE_Y
 	# Narrow enough that its right edge stays 3 cm clear of the leaf's end face.
 	# Three sides only: the right side would share the handle plate's and astragal's planes. Stands
 	# 2.5 cm proud of the handle plate's face.
-	var fz := _Hardware.FACE_Z - 0.025
-	_plate(parent, 1.0, cx, cy + 0.14, 0.20, 0.035, 0.0, dark, "PullFrameTop", out, fz)
-	_plate(parent, 1.0, cx, cy - 0.14, 0.20, 0.035, 0.0, dark, "PullFrameBottom", out, fz)
-	_plate(parent, 1.0, cx - 0.0825, cy, 0.035, 0.28, 0.0, dark, "PullFrameLeft", out, fz)
+	var fz := _Hardware.FACE_Z - 0.03
+	_plate(parent, 1.0, cx, cy + 0.14, 0.20, 0.05, 0.0, dark, "PullFrameTop", out, fz)
+	_plate(parent, 1.0, cx, cy - 0.14, 0.20, 0.05, 0.0, dark, "PullFrameBottom", out, fz)
+	_plate(parent, 1.0, cx - 0.0825, cy, 0.05, 0.28, 0.0, dark, "PullFrameLeft", out, fz - 0.015)
 	_bolts(parent, 1.0, [cx - 0.0825, cx + 0.04], cy + 0.14, rng, steel, out, fz)
 	_bead(parent, 1.0, cx, cy + 0.16, 0.20, 0.0, steel, out, fz)
 
@@ -156,7 +156,7 @@ static func _box(size: Vector3) -> BoxMesh:
 static func _add(parent: Node3D, node_name: String, mesh: Mesh, mat: Material, pos: Vector3,
 		rot: Vector3, out: Array[Node3D]) -> void:
 	var inst := MeshInstance3D.new()
-	inst.name = node_name
+	inst.name = "%s%d" % [node_name, out.size()]
 	inst.mesh = mesh
 	inst.material_override = mat
 	inst.layers = 2
@@ -181,19 +181,19 @@ static func _cyl(top: float, bottom: float, height: float) -> CylinderMesh:
 static func _plate(parent: Node3D, mirror: float, cx: float, cy: float, w: float, h: float,
 		deg: float, mat: Material, node_name: String, out: Array[Node3D],
 		face_z: float = _Hardware.FACE_Z) -> void:
-	var depth := T + BURY
+	var depth := BACK_Z - (face_z - T)
 	_add(parent, node_name, _box(Vector3(w, h, depth)), mat,
 			Vector3(mirror * cx, cy, face_z - T + depth * 0.5),
 			Vector3(0.0, 0.0, mirror * deg_to_rad(deg)), out)
 
 
-## Oversized hex bolt heads of mixed size, each standing 1.5 cm clear of the plate it holds.
+## Oversized hex bolt heads of mixed size, each standing 4 cm clear of the plate it holds.
 static func _bolts(parent: Node3D, mirror: float, xs: Array, y: float,
 		rng: RandomNumberGenerator, mat: Material, out: Array[Node3D],
 		face_z: float = _Hardware.FACE_Z) -> void:
 	for x: float in xs:
-		var r := rng.randf_range(0.025, 0.045)
-		var h := 0.035
+		var r := rng.randf_range(0.03, 0.05)
+		var h := 0.045
 		var z := face_z - T - h * 0.5 + 0.004
 		var jitter := Vector2(rng.randf_range(-0.012, 0.012), rng.randf_range(-0.012, 0.012))
 		var inst_pos := Vector3(mirror * x + jitter.x, y + jitter.y, z)
