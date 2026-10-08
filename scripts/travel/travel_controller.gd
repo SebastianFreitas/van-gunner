@@ -136,7 +136,7 @@ var _stops: _TravelStops
 @onready var corridor_root: Node3D = $"../../ExteriorCorridor"
 @onready var travel_path: Path3D = $"../../TravelPath"
 @onready var van_follow: PathFollow3D = $"../../TravelPath/VanFollow"
-@onready var van_rig: Node3D = $"../../TravelPath/VanFollow/VanRig"
+@onready var van_rig: Node3D = VanAnchors.rig(get_tree())
 
 
 func _ready() -> void:

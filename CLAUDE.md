@@ -42,6 +42,7 @@ When the user points you at a file in `docs/tasks/`, that file is the task. It f
 13. `SaveSandbox` is the only test hook in game code.
 14. Nothing the facade system places may enter a stop-bay mouth, the reverse-park approach or the raider lane: every placement passes `FacadeKeepOut.allows`, bodies are gated by construction, and the smoke test asserts it (`facade stress 1`, run as five parallel shards of `tools/smoke/facade_stress.tscn`, and `bay mouth clear:` after the garage docks).
 15. Two art styles, one dark look: low-poly 3D skinned with procedural grime shaders in the road's recipe (the road and the van are the references), and flat pixel-art sprites (NPCs, enemies, items, icons); it is always night and light comes only from sources you can point at. A spec for any change someone can see names `.claude/rules/art-style.md` and the area's `art-*.md` file under Read first, plus `art-shots.md` when the change moves a shot's numbers.
+16. Van sizes live only in `VanInteriorSize` (the box, rear door size and rear window x), `VanBodyProfile` (cross-section, wall and roof thickness) and `VanOpenings` (side, cab and rear window hole sizes), and the van contract audit pass must stay clean (`.claude/rules/van-geometry.md`, "Remodelling the van").
 
 ## Where things are
 

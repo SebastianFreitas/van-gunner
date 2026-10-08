@@ -24,6 +24,9 @@ const IronCrossBuild := preload("res://scripts/van/iron_cross_build.gd")
 @export var standoff := 0.0
 @export var curve_segments := 14
 @export var rebuild_on_ready := true
+## VanOpenings id of the window these bars cover (the id its BreachPoint carries); joins the
+## `opening_bars` group so the breach point finds the bars without a node path.
+@export var opening_id: StringName = &""
 
 ## Back of the vertical bar's plane: 2 cm outside the exterior pane (0.055).
 const BAR_BACK_Z := 0.075
@@ -59,6 +62,7 @@ var _curve_mid_y := 0.0
 
 
 func _ready() -> void:
+	add_to_group(&"opening_bars")
 	if rebuild_on_ready:
 		rebuild()
 

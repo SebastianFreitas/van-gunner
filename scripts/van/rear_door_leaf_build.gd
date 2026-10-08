@@ -21,8 +21,12 @@ const WINDOW_ROUND_STEPS := 6
 ## bounding size as before, so the bars still cover it.
 static var WINDOW_HOLE: PackedVector2Array = _rounded_window()
 ## The window's sharp corners before rounding (the last two are the cut diagonal's ends).
-const WINDOW_CORNERS: Array[Vector2] = [Vector2(-0.99, -0.775), Vector2(-0.99, 0.775),
-		Vector2(0.99, 0.775), Vector2(0.99, -0.30), Vector2(0.55, -0.775)]
+const WINDOW_CORNERS: Array[Vector2] = [
+		Vector2(-VanOpenings.REAR_WINDOW_HALF_X, -VanOpenings.REAR_WINDOW_HALF_Y),
+		Vector2(-VanOpenings.REAR_WINDOW_HALF_X, VanOpenings.REAR_WINDOW_HALF_Y),
+		Vector2(VanOpenings.REAR_WINDOW_HALF_X, VanOpenings.REAR_WINDOW_HALF_Y),
+		Vector2(VanOpenings.REAR_WINDOW_HALF_X, -0.30),
+		Vector2(0.55, -VanOpenings.REAR_WINDOW_HALF_Y)]
 ## Astragal: a trim strip on the left leaf's cabin face covering the 2.4 cm centre seam, 10 cm wide
 ## (vangapfix D24). The lift keeps its street face 1.1 cm clear of the handle mounts (D28).
 const ASTRAGAL_HALF_W := 0.05
@@ -63,7 +67,7 @@ static func _build_left_leaf_mesh(left: Node3D) -> ArrayMesh:
 	# Hinge-local: x 0 at the hinge to the seam, y from the floor gap to the opening top.
 	return _Skin.build(hinge_x - CENTER_GAP, Y_MIN - hinge_y,
 			VanInteriorSize.REAR_DOOR_TOP - hinge_y, CABIN_Z,
-			STREET_HALF - _Skin.STREET_SETBACK, WINDOW_HOLE, Vector2(WINDOW_X, 1.775 - hinge_y))
+			STREET_HALF - _Skin.STREET_SETBACK, WINDOW_HOLE, Vector2(WINDOW_X, VanOpenings.REAR_WINDOW_Y - hinge_y))
 
 
 static func _apply_leaf(hinge: Node3D, mesh: ArrayMesh, mat: Material, mirror_x: bool) -> void:

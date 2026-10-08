@@ -9,9 +9,12 @@ const _VanBulkheadMesh := preload("res://scripts/van/van_bulkhead_mesh.gd")
 
 enum OpeningSide { LEFT, RIGHT }
 
+## Default doorway width; CabinNav places its passage waypoint from it.
+const OPENING_WIDTH := 1.55
+
 @export var opening_side: OpeningSide = OpeningSide.LEFT
 @export var van_half_width := VanInteriorSize.BULKHEAD_HALF
-@export var opening_width := 1.55
+@export var opening_width := OPENING_WIDTH
 @export var panel_thickness := 0.12
 @export var frame_depth := 0.16
 @export var frame_thickness := 0.08

@@ -6,7 +6,6 @@ extends Node3D
 const Router := preload("res://scripts/van/look/van_cable_router.gd")
 
 const LIGHTING_PATH := ^"../../Lighting"
-const WALLS_PATH := ^"../../Interior/Shell/SideWalls"
 const PROPS_PATH := ^"../../Interior/Props"
 const PORT_GROUP := &"machine_power_ports"
 const K_GEN := "generator_source"
@@ -23,8 +22,8 @@ const TRUNK_Z_MAX := VanInteriorSize.REAR_Z - 0.18
 const TRUNK_STEPS := 9
 const FEED_DROP := 0.14
 const FRONT_Z := -4.35
-const GAP_Z_MIN := 0.775
-const GAP_Z_MAX := 3.117
+const GAP_Z_MIN := VanOpenings.SIDE_WINDOW_Z_FRONT + VanOpenings.SIDE_WINDOW_HALF_Z
+const GAP_Z_MAX := VanOpenings.SIDE_WINDOW_Z_REAR - VanOpenings.SIDE_WINDOW_HALF_Z
 const CLAMP_STEP := 0.6
 const TAPE_STEP := 0.9
 ## Least arc distance between a splice band centre and a clamp or marker centre (half lengths + 2 cm).
@@ -55,7 +54,7 @@ func rebuild_look(look: VanLook) -> void:
 	_clamp_count = 0
 	_fixtures.clear()
 
-	_router = Router.new(get_node_or_null(WALLS_PATH) as VanSideWall)
+	_router = Router.new(VanAnchors.side_walls(get_tree()))
 	_steel = MachineParts.dark(Color(0.18, 0.18, 0.17), 0.8)
 	_tie = MachineParts.dark(Color(0.3, 0.3, 0.28), 0.85)
 	_tape = MachineParts.dark(Color(0.33, 0.32, 0.29), 0.9)

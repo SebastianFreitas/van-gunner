@@ -67,8 +67,8 @@ static func check_openings(tris: RefCounted, runner: Node, roots: Dictionary, cl
 			var exempted := false
 			for prefix: String in exempt:
 				if tris.path_of(t).contains(prefix):
+					AuditExempt.used[AuditExempt.opening_key(label, prefix)] = true
 					exempted = true
-					break
 			if exempted:
 				continue
 			var key: String = "%s|%s" % [label, tris.path_of(t)]

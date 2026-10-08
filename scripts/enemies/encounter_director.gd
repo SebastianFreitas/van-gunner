@@ -9,13 +9,9 @@ const _EncounterSpawner := preload("res://scripts/enemies/encounter_spawner.gd")
 @export var combat_duration := 18.0
 @export var rest_duration := 20.0
 
-@onready var enemy_container: Node3D = $"../../TravelPath/VanFollow/VanRig/EnemyContainer"
-@onready var rear_spawn: Marker3D = (
-	$"../../TravelPath/VanFollow/VanRig/EnemyContainer/RearSpawnMarker"
-)
-@onready var breach_controller: BreachController = (
-	$"../../TravelPath/VanFollow/VanRig/EnemyContainer/BreachController"
-)
+@onready var enemy_container := _find_in_group(&"enemy_container") as Node3D
+@onready var rear_spawn := _find_in_group(&"rear_spawn_marker") as Marker3D
+@onready var breach_controller := _find_in_group(&"breach_controller") as BreachController
 
 var _sequence_id := 0
 var _running := false
@@ -24,6 +20,13 @@ var _spawner: RefCounted
 
 func _init() -> void:
 	_spawner = _EncounterSpawner.new(self)
+
+
+func _find_in_group(group: StringName) -> Node:
+	var found := get_tree().get_first_node_in_group(group)
+	if found == null:
+		push_error("EncounterDirector: no node in group '%s'" % group)
+	return found
 
 
 func _ready() -> void:

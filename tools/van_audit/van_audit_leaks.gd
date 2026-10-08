@@ -142,6 +142,7 @@ func check_leaks_outside(tris: RefCounted, runner: Node, opening_boxes: Dictiona
 				else:
 					inside = _in_opening(hit.pos, opening_boxes)
 				if not rule.is_empty() and inside:
+					AuditExempt.mark(rule)
 					target_agg = exempt_agg
 				var back_nodes: Array = hit.get("back_nodes", [])
 				var past: String = String(back_nodes[-1]) if not back_nodes.is_empty() else "none"

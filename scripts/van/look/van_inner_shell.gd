@@ -3,8 +3,6 @@ extends Node3D
 ## Seeded welded ribs over the ceiling bays and down the walls, bolted scrap plates on the lower
 ## walls and welded patches over bullet holes, dressing the inside of the van shell.
 
-const WALL_PATH := ^"../../Interior/Shell/SideWalls"
-const CEILING_PATH := ^"../../Interior/Shell/Ceiling"
 
 const RIB_Z0:= -4.05
 const RIB_STEP := 1.45
@@ -16,9 +14,15 @@ const WALL_Y_TOP := 2.95
 const WALL_Y_BOT := 0.1
 const WALL_SEGMENTS := 6
 
-const DOOR_Z_MIN := -4.399
-const DOOR_Z_MAX := -1.929
-const WINDOW_SPANS: Array[Vector2] = [Vector2(-1.675, 0.775), Vector2(3.117, 5.567)]
+const DOOR_Z_MIN := VanOpenings.SIDE_DOOR_Z - VanOpenings.SIDE_DOOR_HALF
+const DOOR_Z_MAX := VanOpenings.SIDE_DOOR_Z + VanOpenings.SIDE_DOOR_HALF
+const WINDOW_SPANS: Array[Vector2] = [
+		Vector2(
+			VanOpenings.SIDE_WINDOW_Z_FRONT - VanOpenings.SIDE_WINDOW_HALF_Z,
+			VanOpenings.SIDE_WINDOW_Z_FRONT + VanOpenings.SIDE_WINDOW_HALF_Z),
+		Vector2(
+			VanOpenings.SIDE_WINDOW_Z_REAR - VanOpenings.SIDE_WINDOW_HALF_Z,
+			VanOpenings.SIDE_WINDOW_Z_REAR + VanOpenings.SIDE_WINDOW_HALF_Z)]
 const Z_MIN := -4.5
 const Z_MAX := VanInteriorSize.REAR_Z - 0.03
 
@@ -64,8 +68,8 @@ func rebuild_look(look: VanLook) -> void:
 		child.queue_free()
 	_placed_plates = {}
 
-	_wall = get_node_or_null(WALL_PATH) as VanSideWall
-	_ceiling = get_node_or_null(CEILING_PATH)
+	_wall = VanAnchors.side_walls(get_tree())
+	_ceiling = VanAnchors.ceiling(get_tree())
 	_weld_bead_mesh = BoxMesh.new()
 	# 2 cm proud of the rib's 0.03 faces either way it runs, buried in its 0.07 depth
 	_weld_bead_mesh.size = Vector3(0.07, 0.07, 0.03)

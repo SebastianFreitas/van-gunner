@@ -2,9 +2,6 @@ extends RefCounted
 
 ## Smoke step: the C-C halt, exit, climb-in and Shift resume round trip.
 
-## The rear end moved back by this much when the back compartment grew (it was z 4.70).
-const REAR_SHIFT := VanInteriorSize.REAR_Z - 4.70
-
 var driver: Node
 
 
@@ -48,20 +45,22 @@ func halt_round_trip() -> bool:
 			# The leaf slides +Z when open, so take z from the closed position.
 			var door_z: float = player.get_parent().to_local(
 					doors.to_global(doors.get("_left_closed_pos"))).z
-			player.position = Vector3(-1.4, 0.1, door_z)
+			player.position = Vector3(-(VanInteriorSize.BOTTOM_HALF - 1.99), 0.1, door_z)
 			await driver.get_tree().physics_frame
 			# 2.4 m out passes the containment wall at x -3.04 (-x is the left side).
 			ok = not player.test_move(player.global_transform, Vector3(-2.4, 0.0, 0.0))
 			# From the road outside the left bay, facing +x into the van.
-			ok = ok and await _walk_in(player, Vector3(-4.0, -0.9, door_z), -PI * 0.5, "side")
+			var road_x := VanInteriorSize.BOTTOM_HALF
 			ok = ok and await _walk_in(
-					player, Vector3(-7.0, -0.9, door_z), -PI * 0.5, "side", true)
+					player, Vector3(-(road_x + 0.61), -0.9, door_z), -PI * 0.5, "side")
+			ok = ok and await _walk_in(
+					player, Vector3(-(road_x + 3.61), -0.9, door_z), -PI * 0.5, "side", true)
 			doors.close_door(&"left")
 			player.position = inside_pos
 			await driver.get_tree().physics_frame
 	if ok:
 		step = 4
-		player.position = Vector3(0.0, -0.85, 6.5 + REAR_SHIFT)
+		player.position = Vector3(0.0, -0.85, VanInteriorSize.REAR_Z + 1.8)
 		await driver.get_tree().physics_frame
 		await driver.get_tree().physics_frame
 		ok = not van.request_driver_boost() and travel.is_halted()
@@ -73,14 +72,15 @@ func halt_round_trip() -> bool:
 		for _i in 75:
 			await driver.get_tree().physics_frame
 		# On the road behind the open rear, facing -z into the van.
-		player.position = Vector3(0.0, -0.9, 5.9 + REAR_SHIFT)
+		player.position = Vector3(0.0, -0.9, VanInteriorSize.REAR_Z + 1.2)
 		player.rotation.y = 0.0
 		await driver.get_tree().physics_frame
 		await driver.get_tree().physics_frame
 		# Outside, against the van, is not inside.
 		ok = not van.request_driver_boost()
-		ok = ok and await _walk_in(player, Vector3(0.0, -0.9, 7.0 + REAR_SHIFT), 0.0, "rear")
-		ok = ok and await _walk_in(player, Vector3(0.0, -0.9, 8.0 + REAR_SHIFT), 0.0, "rear", true)
+		var rear_z := VanInteriorSize.REAR_Z
+		ok = ok and await _walk_in(player, Vector3(0.0, -0.9, rear_z + 2.3), 0.0, "rear")
+		ok = ok and await _walk_in(player, Vector3(0.0, -0.9, rear_z + 3.3), 0.0, "rear", true)
 		if not ok:
 			driver._fail("halt round trip step 5: no climb in at the rear")
 			return false
@@ -127,7 +127,7 @@ func _walk_in(player: FpsPlayer, from: Vector3, yaw: float, label: String,
 			if reveal != null and reveal.visible:
 				reveal.call(&"dismiss")
 			# Tap while still more than 1 m from the opening (rear ramp end, side door bay).
-			if (label == "rear" and player.position.z < 6.8 + REAR_SHIFT) \
+			if (label == "rear" and player.position.z < VanInteriorSize.REAR_Z + 2.1) \
 					or (label != "rear" and player.position.x > -3.92):
 				break
 			continue

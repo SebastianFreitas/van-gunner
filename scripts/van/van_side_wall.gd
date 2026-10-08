@@ -23,10 +23,10 @@ const _RoofEdgeSeal := preload("res://scripts/van/roof_edge_seal.gd")
 @export var rebuild_on_ready := true
 
 ## Window cut AABB (CSG WindowCut) — used for rails / broad checks.
-@export var window_half_height := 0.707
-@export var window_half_length := 1.222
-@export var window_center_y := 1.775
-@export var window_centers_z: PackedFloat32Array = PackedFloat32Array([4.342, -0.45])
+const window_half_height := VanOpenings.SIDE_WINDOW_HALF_Y
+const window_half_length := VanOpenings.SIDE_WINDOW_HALF_Z
+const window_center_y := VanOpenings.SIDE_WINDOW_Y
+var window_centers_z: PackedFloat32Array = VanOpenings.side_window_centers_z()
 
 ## D8: one ring sampling for every piece that follows the window opening, so their edges
 ## coincide instead of stepping.
@@ -42,10 +42,10 @@ var WINDOW_CUT_POLY: PackedVector2Array = PackedVector2Array([
 ])
 
 ## Side-door openings (match SideDoors layout).
-@export var door_half_length := 1.235
-@export var door_center_z := -3.164
-@export var door_y_min := 0.02
-@export var door_y_max := 3.05
+const door_half_length := VanOpenings.SIDE_DOOR_HALF
+const door_center_z := VanOpenings.SIDE_DOOR_Z
+const door_y_min := VanOpenings.SIDE_DOOR_Y_MIN
+const door_y_max := VanOpenings.SIDE_DOOR_HEIGHT
 ## Inset of the door-jamb ring inner edge from the wall opening (meters).
 @export var door_jamb_inset := 0.11
 @export var door_jamb_material: Material

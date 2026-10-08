@@ -2,7 +2,7 @@ extends Node
 ## Headless van audit entry scene: collects every visible triangle of the van, checks
 ## it and writes a report. Mirrors tools/probe: the entry scene spawns a worker under
 ## the root because SceneRouter.go_to_van() frees the current scene.
-## `--audit-passes=a,b` runs only those of closed, half, open, win_half, win_open, tail
+## `--audit-passes=a,b` runs only those of closed, half, open, win_half, win_open, tail, contract
 ## (default all), so tools/smoke.py can shard the run.
 
 const AuditMesh := preload("res://tools/van_audit/van_audit_mesh.gd")
@@ -12,8 +12,9 @@ const AuditGaps := preload("res://tools/van_audit/van_audit_gaps.gd")
 const AuditLeaks := preload("res://tools/van_audit/van_audit_leaks.gd")
 const AuditFlicker := preload("res://tools/van_audit/van_audit_flicker.gd")
 const AuditProbe := preload("res://tools/van_audit/van_audit_probe.gd")
-const RIG_PATH := ^"TravelPath/VanFollow/VanRig"
-const ALL_PASSES: PackedStringArray = ["closed", "half", "open", "win_half", "win_open", "tail"]
+const AuditContract := preload("res://tools/van_audit/van_audit_contract.gd")
+const AuditExempt := preload("res://tools/van_audit/van_audit_exempt.gd")
+const ALL_PASSES: PackedStringArray = ["closed", "half", "open", "win_half", "win_open", "tail", "contract"]
 
 var rig: Node3D
 var tris: RefCounted
@@ -21,6 +22,7 @@ var lines: PackedStringArray
 var counts: Dictionary = {}
 
 var _done := false
+var _full_run := false  ## every pass ran: an unused exempt rule is stale
 
 
 func _ready() -> void:
@@ -51,14 +53,15 @@ func _run() -> void:
 			return
 		await get_tree().process_frame
 
-	rig = get_tree().current_scene.get_node(RIG_PATH) as Node3D
+	rig = VanAnchors.rig(get_tree())
 	if rig == null:
-		_fail("could not find van rig at %s" % String(RIG_PATH))
+		_fail("could not find van rig (group van_rig)")
 		return
 
 	var passes := _parse_passes()
 	if _done:
 		return
+	_full_run = passes.size() == ALL_PASSES.size()
 	var seed_arg := _user_arg("--van-seed=")
 	if seed_arg != "":
 		var look := get_tree().get_first_node_in_group(VanLook.GROUP) as VanLook
@@ -100,6 +103,9 @@ func _run() -> void:
 	if passes.has("closed"):
 		AuditFlicker.check_flicker(tris, self, "closed", {})
 		AuditOverlap.check_clip(tris, self, "closed", roots)
+
+	if passes.has("contract"):
+		AuditContract.new(rig).check(tris, self)
 
 	var door_roots: Dictionary = {}
 	var front_roots: Dictionary = {}
@@ -317,6 +323,7 @@ func _closed_boxes(roots: Dictionary) -> Dictionary:
 
 
 func write_report() -> void:
+	AuditExempt.report_stale(self, _full_run)
 	var out_path := _out_path()
 	DirAccess.make_dir_recursive_absolute(out_path.get_base_dir())
 

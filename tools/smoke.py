@@ -3,7 +3,7 @@
 
 Runs several Godot jobs in parallel (tools/smoke_jobs.py, at most `--jobs N`, default
 min(cpu count, 6); `--serial` is `--jobs 1`; about 100 s wall on 4 cores, 260 s serial):
-the game run, five facade stress shards and six van audit shards, longest first. The
+the game run, five facade stress shards and seven van audit shards, longest first. The
 game run plays a full van run headlessly (class pick, boons,
 bench, combat, rest offer) with the save sandbox on, so it never touches a
 real save on disk. Fails on any output line containing SCRIPT ERROR, Parse
@@ -135,6 +135,8 @@ def _audit_ok(jobs: list[Job]) -> bool:
     """Judges the audit shards (errors only), then the summed counts strictly."""
     ok = True
     totals: dict[str, int] = {}
+    used: set[str] = set()
+    keys: list[str] = []
     for job in jobs:
         print(f"   {job.name}:")
         if _job_failed(job, job.name):
@@ -142,12 +144,22 @@ def _audit_ok(jobs: list[Job]) -> bool:
             continue
         code, text = van_audit.judge(job.output, job.returncode, False)
         for line in text.splitlines():
-            if not line.startswith(("AUDIT SUMMARY", "VAN AUDIT CLEAN", "VAN AUDIT FINDINGS")):
+            if line.startswith("AUDIT EXEMPT USED "):
+                used.update(line.removeprefix("AUDIT EXEMPT USED ").split("|"))
+            elif line.startswith("AUDIT EXEMPT KEYS "):
+                keys = line.removeprefix("AUDIT EXEMPT KEYS ").split("|")
+            elif not line.startswith(("AUDIT SUMMARY", "VAN AUDIT CLEAN", "VAN AUDIT FINDINGS")):
                 print("   " + line)
         if code != 0:
             ok = False
         for key, value in van_audit.summary_counts(job.output).items():
             totals[key] = totals.get(key, 0) + value
+    # A rule is stale when no shard used it; each shard runs only some of the passes.
+    stale = [key for key in keys if key not in used]
+    for key in stale:
+        print(f"VAN AUDIT STALE EXEMPT: {key}")
+    if stale:
+        totals["STALE_EXEMPT"] = len(stale)
     summary = " ".join(f"{key}={value}" for key, value in totals.items())
     print("AUDIT SUMMARY " + summary)
     if any(totals.values()):

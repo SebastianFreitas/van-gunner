@@ -7,7 +7,6 @@ const LAMP_Y := VanInteriorSize.WALL_HEIGHT - 0.15
 const SIDE_LAMP_COUNT := 5
 ## First side lamp z; the last sits 0.5 m ahead of the rear end (the old spread of 4.2 in a 4.7 box).
 const SIDE_LAMP_Z_FIRST := -4.2
-const SIDE_WALLS_PATH := ^"../../Interior/Shell/SideWalls"
 
 ## How far the side door leaf slides open along z. Keep in step with `slide_distance` in
 ## side_doors.gd (neither script has a class_name to read it from).
@@ -70,7 +69,7 @@ func rebuild_look(_look: VanLook) -> void:
 
 func _build_side_lamps(profile: VanBodyProfile, lens_mat: Material, housing_mat: Material) -> void:
 	var sx := profile.outer_x_at(LAMP_Y)
-	var walls := get_node_or_null(SIDE_WALLS_PATH) as VanSideWall
+	var walls := VanAnchors.side_walls(get_tree())
 	for sign_idx in 2:
 		var side := -1.0 if sign_idx == 0 else 1.0
 		var side_letter := "L" if sign_idx == 0 else "R"

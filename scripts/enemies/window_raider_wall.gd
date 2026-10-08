@@ -2,6 +2,8 @@ extends RefCounted
 
 ## Wall-grip maths for the window loper: launch, grip and cling points on the van skin and the per-frame jump/climb move.
 
+const _Motion := preload("res://scripts/enemies/window_raider_motion.gd")
+
 ## Loper origin when its feet stand on the road.
 const ROAD_ORIGIN_Y := VanWheels.ROAD_Y + 1.62
 ## Origin height when it first latches on the wall (claws about 0.7 m under the floor).
@@ -17,15 +19,19 @@ const WALL_HEIGHT := VanInteriorSize.WALL_HEIGHT
 const BOTTOM_HALF := VanInteriorSize.BOTTOM_HALF
 const TOP_HALF := VanInteriorSize.TOP_HALF
 const BOW_OUT := VanInteriorSize.BOW
-## Rear doors' outer face (6.59 + 0.22).
-const REAR_SKIN_Z := 6.81
+## Rear doors' outer face (VanInteriorSize.REAR_Z + the skin).
+const REAR_SKIN_Z := VanInteriorSize.REAR_Z + VanOpenings.SKIN
 ## Markers behind this z are on the rear face (side windows end at z 4.34).
-const REAR_FACE_Z := 6.38
-## Road points just outside OUTSIDE_KEEP_OUT.
-const LAUNCH_SIDE_X := 6.75
-const LAUNCH_REAR_Z := 9.88
+const REAR_FACE_Z := VanInteriorSize.REAR_Z - 0.2
+## Road points just outside the grown keep-out: how far past it the side run starts and the
+## rear one, and how much further back the corner turn sits.
+const LAUNCH_SIDE_GAP := 2.18
+const LAUNCH_REAR_GAP := 0.15
+const CORNER_GAP := 0.6
+const LAUNCH_SIDE_X := _Motion.BODY_HALF_X + _Motion.CLEARANCE + LAUNCH_SIDE_GAP
+const LAUNCH_REAR_Z := _Motion.LEAF_END_Z + _Motion.CLEARANCE + LAUNCH_REAR_GAP
 ## Behind the grown rear-leaf keep-out, where a run-up turns the corner.
-const CORNER_Z := 10.48
+const CORNER_Z := LAUNCH_REAR_Z + CORNER_GAP
 const JUMP_TIME := 0.8
 const JUMP_APEX := 1.1
 ## Knocked out of a jump: gravity, sideways drift off the van, then the ground tumble slide.

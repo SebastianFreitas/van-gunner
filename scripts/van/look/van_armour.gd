@@ -3,7 +3,6 @@ extends Node3D
 ## The van's seeded outer armour: plates, rebar and spikes on the real hull skin, placed from slots clear of every opening and merged per material.
 
 const HULL_PATH := ^"../Hull"
-const SIDE_WALLS_PATH := ^"../../Interior/Shell/SideWalls"
 ## Skin x used when no side wall is set.
 const FACE_X := VanInteriorSize.BOTTOM_HALF + 0.22
 ## How far the side door leaf slides open along z. Keep in step with `slide_distance` in
@@ -41,7 +40,7 @@ func rebuild_look(look: VanLook) -> void:
 		child.queue_free()
 
 	var hull := get_node_or_null(HULL_PATH) as VanHull
-	_walls = get_node_or_null(SIDE_WALLS_PATH) as VanSideWall
+	_walls = VanAnchors.side_walls(get_tree())
 	var hull_mat: Material = null
 	if hull != null:
 		hull_mat = hull.material

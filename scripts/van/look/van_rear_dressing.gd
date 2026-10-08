@@ -135,7 +135,7 @@ func _add_rust_patch(hinge: Node3D, mirror: float, rng: RandomNumberGenerator, m
 				+ (_Skeleton.CROSS.x + _Skeleton.CROSS.y) * 0.5
 	var center := Vector2(mirror * patch_x, beam_y)
 	var rect := Rect2(center - size * 0.5, size).grow(RUST_MARGIN)
-	var bars_y := 1.775 - hinge.position.y
+	var bars_y := VanOpenings.REAR_WINDOW_Y - hinge.position.y
 	var bars := Rect2(mirror * _LeafBuild.WINDOW_X - 1.12, bars_y - 0.9, 2.24, 1.8)
 	if rect.intersects(bars.grow(RUST_MARGIN)):
 		return

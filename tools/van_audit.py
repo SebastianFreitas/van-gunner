@@ -64,7 +64,7 @@ def main() -> int:
     )
 
 
-PASSES = ("closed", "half", "open", "win_half", "win_open", "tail")
+PASSES = ("closed", "half", "open", "win_half", "win_open", "tail", "contract")
 
 
 def build_args(

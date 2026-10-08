@@ -116,7 +116,7 @@ func cmd_torch(args: Array) -> String:
 
 func cmd_floodlight(args: Array) -> String:
 	var van := host.get_tree().get_first_node_in_group(&"van_run")
-	var rig := van.get_node_or_null(^"TravelPath/VanFollow/VanRig") if van != null else null
+	var rig := VanAnchors.rig(host.get_tree()) if van != null else null
 	if rig == null:
 		return "no van rig"
 	var flood := rig.get_node_or_null(^"DebugFloodlights") as Node3D
@@ -140,7 +140,7 @@ func cmd_floodlight(args: Array) -> String:
 
 func cmd_gaplight(args: Array) -> String:
 	var van := host.get_tree().get_first_node_in_group(&"van_run")
-	var rig := van.get_node_or_null(^"TravelPath/VanFollow/VanRig") if van != null else null
+	var rig := VanAnchors.rig(host.get_tree()) if van != null else null
 	if rig == null:
 		return "no van rig"
 	return _gap_light.run(rig as Node3D, args)

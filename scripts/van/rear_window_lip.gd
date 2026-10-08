@@ -5,7 +5,7 @@ const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
 const _Skin := preload("res://scripts/van/rear_door_skin.gd")
 
 ## Window centre height in rig space, as `rear_door_leaf_build.gd` cuts the hole (left leaf).
-const HOLE_CENTER_RIG_Y := 1.775
+const HOLE_CENTER_RIG_Y := VanOpenings.REAR_WINDOW_Y
 ## How far the lip covers the skin past the hole edge.
 const OVER_SKIN := 0.05
 ## How far the lip reaches into the glass: to the cabin frame's inner cut.

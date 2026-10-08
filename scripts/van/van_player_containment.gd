@@ -10,11 +10,12 @@ const LAYER := 16  # physics layer 5
 @export var half_length := INTERIOR_HALF_LENGTH + 0.8
 ## Z centre of the box (the back compartment is longer behind the cab, so the box is offset).
 @export var center_z := INTERIOR_CENTER_Z
-@export var wall_height := 3.1
+## The real wall height, so the box covers the full liner.
+@export var wall_height := VanInteriorSize.WALL_HEIGHT
 @export var wall_thickness := 0.12
 
-## Side door bay length (leaf blocker 2.53 m) plus 0.1 m margin each way.
-const BAY_HALF_LENGTH := 2.53 * 0.5 + 0.1
+## Side door bay length (the leaf blocker) plus 0.1 m margin each way.
+const BAY_HALF_LENGTH := VanOpenings.SIDE_DOOR_LEAF_LEN * 0.5 + 0.1
 ## Cabin half width; the export half_width is this plus the 0.8 m margin.
 const INTERIOR_HALF_WIDTH := VanInteriorSize.BOTTOM_HALF - 0.18
 ## Cabin half length; the export half_length is this plus the 0.8 m margin.

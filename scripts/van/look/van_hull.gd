@@ -30,8 +30,6 @@ const ROOF_Z_MAX := VanInteriorSize.REAR_Z + 0.08
 ## outside its outline, so the slab never shows and no face lies within the audit's 2 cm.
 const FRONT_FILL_GAP_M := 0.025
 
-const SIDE_WALLS_PATH := ^"../../Interior/Shell/SideWalls"
-
 ## The shared exterior material; later parts (armour, cab) reuse it.
 var material: ShaderMaterial
 
@@ -44,12 +42,12 @@ func rebuild_look(look: VanLook) -> void:
 		remove_child(child)
 		child.queue_free()
 
-	var walls := get_node_or_null(SIDE_WALLS_PATH) as VanSideWall
+	var walls := VanAnchors.side_walls(get_tree())
 	if walls == null:
-		push_warning("VanHull: no SideWalls at %s" % SIDE_WALLS_PATH)
+		push_warning("VanHull: no SideWalls in group side_walls")
 		return
 
-	_profile = VanBodyProfile.new(walls, walls.get_parent().get_node_or_null(^"Ceiling") as VanCeiling)
+	_profile = VanBodyProfile.new(walls, VanAnchors.ceiling(get_tree()))
 
 	material = ShaderMaterial.new()
 	material.shader = EXTERIOR_SHADER

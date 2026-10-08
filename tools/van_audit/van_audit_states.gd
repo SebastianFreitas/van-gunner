@@ -27,8 +27,8 @@ var _win_hinge_closed_z: Dictionary = {}  # label -> float
 
 
 func _init(rig: Node3D) -> void:
-	_doors = rig.get_node(^"Interior/Shell/SideDoors") as Node3D
-	_windows = rig.get_node(^"Interior/Shell/SideWindows") as Node3D
+	_doors = VanAnchors.side_doors(rig.get_tree())
+	_windows = VanAnchors.side_windows(rig.get_tree())
 
 	for side in [&"left", &"right"]:
 		var leaf_name: String = "Left" if side == &"left" else "Right"
@@ -77,7 +77,7 @@ func pose_front(fraction: float) -> void:
 
 
 func _pose_door(side: StringName, fraction: float) -> void:
-	_windows.set_front_hinges_visible(side, fraction <= 0.0)  # Mirrors play: hidden while its door is open.
+	_windows.set_front_hinges_visible(side, fraction <= 0.0)  # Mirrors play: hinges hide while its door is open (bars stay).
 	var leaf: Node3D = _door_leaf[side]
 	var grip: Node3D = _door_grip[side]
 	var mount: Node3D = _door_mount[side]

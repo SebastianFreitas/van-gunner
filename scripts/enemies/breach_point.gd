@@ -16,11 +16,14 @@ enum Kind { REAR_DOOR, SIDE_DOOR, WINDOW, SIDE_DOOR_WINDOW }
 ## Lower = preferred. Rear doors should stay ahead of windows.
 @export var priority := 1
 @export var door_side: StringName = &""
-## Window / side-door-window: IronCross swapped to BrokenIronCross when breached.
-@export var bars_path: NodePath = NodePath()
+## VanOpenings opening this point sits on; _ready derives the Outside and Entry markers from it
+## (see breach_point_markers.gd for the ids).
+@export var opening_id: StringName = &""
 
 ## Rear leaf vs its pane sit ~0.15m apart. XZ under this = the same hole.
 const _SAME_OPENING_XZ := 0.75
+
+const _BreachPointMarkers := preload("res://scripts/enemies/breach_point_markers.gd")
 
 @onready var outside_marker: Marker3D = $Outside
 @onready var entry_marker: Marker3D = $Entry
@@ -34,6 +37,10 @@ var _bars_stage := 0
 
 
 func _ready() -> void:
+	var placed := _BreachPointMarkers.transforms(opening_id)
+	if placed.size() == 2:
+		outside_marker.transform = placed[0]
+		entry_marker.transform = placed[1]
 	if _is_door_kind():
 		max_health = GameBalance.REAR_DOOR_BREACH_HP
 	else:
@@ -42,6 +49,19 @@ func _ready() -> void:
 	if point_id == &"":
 		point_id = StringName(name)
 	add_to_group(&"breach_points")
+
+
+## The window's IronCross (swapped to BrokenIronCross when breached): the `opening_bars` group
+## member whose opening_id matches. Null, with an error naming the id, when none or two match.
+func find_bars() -> Node:
+	var found: Array[Node] = []
+	for n in get_tree().get_nodes_in_group(&"opening_bars"):
+		if n.get(&"opening_id") == opening_id:
+			found.append(n)
+	if found.size() != 1:
+		push_error("BreachPoint %s: %d bars with opening id '%s'" % [name, found.size(), opening_id])
+		return null
+	return found[0]
 
 
 func get_outside_position() -> Vector3:
@@ -158,9 +178,7 @@ func _update_bars_stage() -> void:
 	if stage == _bars_stage:
 		return
 	_bars_stage = stage
-	if bars_path.is_empty():
-		return
-	var bars := get_node_or_null(bars_path)
+	var bars := find_bars()
 	if bars and bars.has_method(&"set_damage_stage"):
 		bars.call(&"set_damage_stage", stage)
 
@@ -196,9 +214,7 @@ func _restore_after_repair() -> void:
 
 
 func _repair_bars_visual() -> void:
-	if bars_path.is_empty():
-		return
-	var bars := get_node_or_null(bars_path)
+	var bars := find_bars()
 	if bars == null:
 		return
 	if bars.has_method("repair_bars"):
@@ -265,9 +281,7 @@ func _breach_adjacent_open_window() -> void:
 
 
 func _break_bars() -> void:
-	if bars_path.is_empty():
-		return
-	var bars := get_node_or_null(bars_path)
+	var bars := find_bars()
 	if bars == null:
 		return
 	if bars.has_method("break_bars"):
@@ -282,9 +296,7 @@ func _shatter_window_glass_if_needed() -> void:
 	if kind != Kind.WINDOW and kind != Kind.SIDE_DOOR_WINDOW:
 		return
 	_glass_cleared = true
-	if bars_path.is_empty():
-		return
-	var bars := get_node_or_null(bars_path)
+	var bars := find_bars()
 	if bars == null:
 		return
 	var host := bars.get_parent()
@@ -372,10 +384,9 @@ func _rear_doors() -> Node:
 
 func _side_doors() -> Node:
 	var doors := get_tree().get_first_node_in_group(&"side_doors")
-	if doors:
-		return doors
-	# BreachPoint → BreachController → EnemyContainer → VanRig → Interior/Shell/SideDoors
-	return get_node_or_null("../../../Interior/Shell/SideDoors")
+	if doors == null:
+		push_error("BreachPoint: no node in group 'side_doors'")
+	return doors
 
 
 func _side_windows() -> Node:

@@ -48,6 +48,7 @@ const EXTERIOR_PANE_PROUD_M := 0.055
 
 const _Exterior := preload("res://scripts/van/side_window_exterior.gd")
 const _Fixtures := preload("res://scripts/van/side_window_fixtures.gd")
+const _Bars := preload("res://scripts/van/side_window_bars.gd")
 
 ## Matches original CSG sash (half extents).
 const SASH_HALF_H := 0.74
@@ -195,10 +196,7 @@ func _fit_window_root(root: Node3D, wall_sign: float, z_center: float, walls: Va
 		breakable.bind_glass_visual(glass)
 
 	var iron_cross := hinge.get_node_or_null("IronCross") as IronCross
-	_place_on_curve(iron_cross, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, IRON_INSET - glass_outward_bump)
-	if iron_cross:
-		iron_cross.set_street_lit(true)
-		iron_cross.follow_side_wall_curve(walls, mid_y)
+	_Bars.place(iron_cross, walls, wall_sign, x_ref, y_hinge, mid_y, glass_outward_bump, IRON_INSET)
 	_place_on_curve(breakable as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, breakable_inset)
 	_place_on_curve(hinge.get_node_or_null("Interact") as Node3D, walls, wall_sign, x_ref, y_hinge, mid_y, 0.0, 0.0)
 
@@ -352,7 +350,8 @@ func is_blocked_by_door(window_id: StringName) -> bool:
 ## Shows or hides the outside hinge hardware of `side`'s front window (`&"left"`/`&"right"`):
 ## hidden while that side's sliding door is open, since the open leaf parks over it.
 func set_front_hinges_visible(side: StringName, on: bool) -> void:
-	_Fixtures.set_hinges_visible(get_node_or_null("LeftFront" if side == &"left" else "RightFront"), on)
+	var root := get_node_or_null("LeftFront" if side == &"left" else "RightFront")
+	_Fixtures.set_hinges_visible(root, on)
 
 
 func _into_sash_axis(window_id: StringName) -> Vector3:

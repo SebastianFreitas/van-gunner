@@ -208,6 +208,7 @@ func check_edges(tris: RefCounted, runner: Node) -> void:
 		if rule.is_empty():
 			runner.add_finding("EDGE", text)
 		else:
+			AuditExempt.mark(rule)
 			runner.add_finding("EDGE_EXEMPT", text + " rule=%s" % rule.d)
 	print("AUDIT edges (%d ms)" % (Time.get_ticks_msec() - started))
 

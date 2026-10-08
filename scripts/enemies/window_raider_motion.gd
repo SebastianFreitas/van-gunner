@@ -11,18 +11,62 @@ const HOP_RUN := 1.3
 ## Half the loper's 1.54 m card plus 8 cm: the card faces the camera, so it can swing
 ## this far toward any wall.
 const CLEARANCE := 0.85
+## Gap between the outer skin and the keep-out edge at the sides, and at the rear bumper.
+const SIDE_MARGIN := 0.11
+const REAR_MARGIN := 0.08
+## Cab and front bumper length ahead of the back compartment's cab end.
+const FRONT_OVERHANG := 3.9
+## Rear-door leaf swing (open 110 degrees): starts this far in front of the compartment's
+## rear end, runs this far behind it, and spans this far across x from just inside the hinge.
+const LEAF_IN := 0.18
+const LEAF_OUT := 2.3
+const LEAF_X_IN := 0.4
+const LEAF_X_OUT := 0.6
+## Wheel rects: tyre-radius slack beyond the axle z, and the x slack beyond the wheel centre.
+const WHEEL_Z_MARGIN := 0.02
+const WHEEL_X_MARGIN := 0.34
+const FRONT_WHEEL_Z_MARGIN := 0.05
+const FRONT_WHEEL_X_MARGIN := 0.35
+## Rear end of the body keep-out and of the leaf swing (van z).
+const BODY_HALF_X := VanInteriorSize.BOTTOM_HALF + VanOpenings.SKIN + SIDE_MARGIN
+const BODY_REAR_Z := VanInteriorSize.REAR_Z + VanOpenings.SKIN + REAR_MARGIN
+const LEAF_END_Z := VanInteriorSize.REAR_Z + LEAF_OUT
 ## Van parts the loper's card may not swing into, as xz rects (Rect2 x = van x,
 ## Rect2 y = van z): the body from the front bumper to the rear bumper, both rear-door
 ## leaves' swing (open 110 degrees), the rear and front wheels.
 const OUTSIDE_KEEP_OUT: Array[Rect2] = [
-	Rect2(-3.72, -8.6, 7.44, 15.48), Rect2(-3.3, 6.40, 1.0, 2.48),
-	Rect2(2.3, 6.40, 1.0, 2.48), Rect2(-3.4, 2.45, 6.8, 3.8), Rect2(-3.45, -8.1, 6.9, 1.7),
+	Rect2(
+		-BODY_HALF_X, VanInteriorSize.FRONT_Z - FRONT_OVERHANG,
+		BODY_HALF_X * 2.0, BODY_REAR_Z - VanInteriorSize.FRONT_Z + FRONT_OVERHANG
+	),
+	Rect2(
+		-VanInteriorSize.REAR_DOOR_HALF - LEAF_X_OUT, VanInteriorSize.REAR_Z - LEAF_IN,
+		LEAF_X_IN + LEAF_X_OUT, LEAF_IN + LEAF_OUT
+	),
+	Rect2(
+		VanInteriorSize.REAR_DOOR_HALF - LEAF_X_IN, VanInteriorSize.REAR_Z - LEAF_IN,
+		LEAF_X_IN + LEAF_X_OUT, LEAF_IN + LEAF_OUT
+	),
+	Rect2(
+		-VanWheels.WHEEL_X - WHEEL_X_MARGIN,
+		VanWheels.REAR_AXLES_6[0] - VanWheels.REAR_RADIUS - WHEEL_Z_MARGIN,
+		(VanWheels.WHEEL_X + WHEEL_X_MARGIN) * 2.0,
+		VanWheels.REAR_AXLES_6[1] - VanWheels.REAR_AXLES_6[0]
+		+ VanWheels.REAR_RADIUS * 2.0 + WHEEL_Z_MARGIN * 2.0
+	),
+	Rect2(
+		-VanWheels.WHEEL_X - VanWheels.FRONT_WHEEL_OUT - FRONT_WHEEL_X_MARGIN,
+		VanWheels.FRONT_AXLE_Z - VanWheels.FRONT_RADIUS - FRONT_WHEEL_Z_MARGIN,
+		(VanWheels.WHEEL_X + VanWheels.FRONT_WHEEL_OUT + FRONT_WHEEL_X_MARGIN) * 2.0,
+		(VanWheels.FRONT_RADIUS + FRONT_WHEEL_Z_MARGIN) * 2.0
+	),
 ]
-## The cabin interior shrunk by CLEARANCE: walls at x +/-3.39, cab wall z -4.7, rear
-## doors' cabin face z 6.42.
+## The cabin interior shrunk by CLEARANCE; the rear stops a little short of the rear
+## doors' cabin face.
+const REAR_DOOR_INSET := 0.07
 const INTERIOR_HALF_X := VanInteriorSize.BOTTOM_HALF - CLEARANCE
-const INTERIOR_MIN_Z := -3.85
-const INTERIOR_MAX_Z := 5.66
+const INTERIOR_MIN_Z := VanInteriorSize.FRONT_Z + CLEARANCE
+const INTERIOR_MAX_Z := VanInteriorSize.REAR_Z - CLEARANCE - REAR_DOOR_INSET
 
 var raider: Node3D  # the WindowRaider; reads/writes its fields when called
 

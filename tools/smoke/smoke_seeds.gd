@@ -5,7 +5,7 @@ const _ShopStock := preload("res://scripts/stops/shop_stock.gd")
 const _BASE := 12345
 
 ## The player's start spot inside the van, as scenes/van/van.tscn places it.
-const PLAYER_START := Vector3(0.0, 0.05, -2.7)
+const PLAYER_START := Vector3(0.0, 0.05, VanInteriorSize.FRONT_Z + 2.0)
 
 static var _summons := 0
 static var _rests := 0

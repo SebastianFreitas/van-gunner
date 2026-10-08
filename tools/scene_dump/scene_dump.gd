@@ -6,9 +6,11 @@ const _SKIP_PROPS: Array[StringName] = [
 ]
 const _MAX_LEAF := 160
 
-## Instance id -> sharing index, assigned in first-encounter order so a shared
-## resource prints once with its contents and every later reference as `#k`.
+## Instance id -> owner label (`node/path:prop`), assigned in first-encounter order
+## (children sorted by name) so a shared resource prints once with its contents and
+## every later reference as `Class@label`. Labels use paths, never encounter indexes.
 var _res_ids: Dictionary = {}
+var _float_re := RegEx.create_from_string("-?\\d+\\.\\d+(?:e[-+]?\\d+)?")
 ## The instantiated scene root, used to render every NODEREF and CONN target
 ## as a path relative to it.
 var _inst: Node
@@ -37,8 +39,9 @@ func _ready() -> void:
 		var node: Node = stack.pop_back()
 		_dump_node(_inst, node, lines)
 		var children := node.get_children()
-		for i in range(children.size() - 1, -1, -1):
-			stack.push_back(children[i])
+		children.sort_custom(func(a: Node, b: Node) -> bool: return String(a.name) > String(b.name))
+		for child in children:
+			stack.push_back(child)
 
 	var out := ProjectSettings.globalize_path(out_path)
 	var file := FileAccess.open(out, FileAccess.WRITE)
@@ -72,7 +75,8 @@ func _dump_node(root: Node, node: Node, lines: PackedStringArray) -> void:
 		var prop_name: String = prop["name"]
 		if _SKIP_PROPS.has(prop_name):
 			continue
-		lines.append("  %s=%s" % [prop_name, _fmt_value(node.get(prop_name))])
+		var label := "%s:%s" % [str(root.get_path_to(node)), prop_name]
+		lines.append("  %s=%s" % [prop_name, _fmt_value(node.get(prop_name), label)])
 
 	var conn_lines: PackedStringArray = []
 	for sig_info in node.get_signal_list():
@@ -97,30 +101,43 @@ func _dump_node(root: Node, node: Node, lines: PackedStringArray) -> void:
 		lines.append(conn_line)
 
 
-func _fmt_value(value: Variant) -> String:
+func _fmt_value(value: Variant, label: String) -> String:
 	if value is Resource:
-		return _fmt_resource(value)
+		return _fmt_resource(value, label)
 	if value is Node:
 		return "NODEREF %s" % str(_inst.get_path_to(value))
 	if value is Object:
 		return "<%s>" % value.get_class()
 	if value is Array:
 		var parts: PackedStringArray = []
-		for element in value:
-			parts.append(_fmt_value(element))
+		for i in value.size():
+			parts.append(_fmt_value(value[i], "%s[%d]" % [label, i]))
 		return "[" + ", ".join(parts) + "]"
 	if value is Dictionary:
 		var parts: PackedStringArray = []
 		for key in value.keys():
-			parts.append("%s: %s" % [_fmt_value(key), _fmt_value(value[key])])
+			parts.append("%s: %s" % [
+				_fmt_value(key, label + "{key}"), _fmt_value(value[key], "%s{%s}" % [label, key])
+			])
 		return "{" + ", ".join(parts) + "}"
-	var text := var_to_str(value)
+	var text := _round_floats(var_to_str(value))
 	if text.length() > _MAX_LEAF:
 		return "<%s len=%d md5=%s>" % [type_string(typeof(value)), text.length(), text.md5_text()]
 	return text
 
 
-func _fmt_resource(res: Resource) -> String:
+## Rounds every decimal number in `text` to 3 places so float noise doesn't diff.
+func _round_floats(text: String) -> String:
+	var out := ""
+	var at := 0
+	for m in _float_re.search_all(text):
+		out += text.substr(at, m.get_start() - at)
+		out += str(snappedf(m.get_string().to_float(), 0.001) + 0.0)
+		at = m.get_end()
+	return out + text.substr(at)
+
+
+func _fmt_resource(res: Resource, label: String) -> String:
 	if res == null:
 		return "null"
 	var cls := res.get_class()
@@ -131,9 +148,8 @@ func _fmt_resource(res: Resource) -> String:
 
 	var id := res.get_instance_id()
 	if _res_ids.has(id):
-		return "%s#%d" % [cls, _res_ids[id]]
-	var k: int = _res_ids.size()
-	_res_ids[id] = k
+		return "%s@%s" % [cls, _res_ids[id]]
+	_res_ids[id] = label
 
 	var parts: PackedStringArray = []
 	for prop in res.get_property_list():
@@ -143,5 +159,6 @@ func _fmt_resource(res: Resource) -> String:
 		var prop_name: String = prop["name"]
 		if _SKIP_PROPS.has(prop_name):
 			continue
-		parts.append("%s=%s" % [prop_name, _fmt_value(res.get(prop_name))])
-	return "%s#%d{%s}" % [cls, k, ", ".join(parts)]
+		var sub := "%s.%s" % [label, prop_name]
+		parts.append("%s=%s" % [prop_name, _fmt_value(res.get(prop_name), sub)])
+	return "%s@%s{%s}" % [cls, label, ", ".join(parts)]

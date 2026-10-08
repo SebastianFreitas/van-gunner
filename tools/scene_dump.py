@@ -10,7 +10,8 @@ is missing.
 
 Without `--bless`, the dump is diffed against the committed
 tools/scene_dump/van.baseline.txt; with `--bless`, the baseline is
-overwritten after a clean run. This exists so a later text-edit split of
+overwritten after a clean run. A failing compare prints a node summary (added,
+removed, renamed, value changes) before the raw diff, capped at 40 lines. This exists so a later text-edit split of
 van.tscn into sub-scenes can prove the instantiated tree is unchanged.
 """
 import difflib
@@ -32,6 +33,66 @@ TIMEOUT_SECONDS = 120
 
 DUMP = ROOT / "tools" / "scene_dump" / "van.txt"
 BASELINE = ROOT / "tools" / "scene_dump" / "van.baseline.txt"
+
+
+def parse_dump(text: str) -> dict[str, tuple[str, list[str]]]:
+    """Maps node path -> (header after the path, body lines)."""
+    nodes: dict[str, tuple[str, list[str]]] = {}
+    path = ""
+    for line in text.splitlines():
+        if line.startswith("NODE "):
+            path, _, rest = line[5:].partition(" ")
+            nodes[path] = (rest, [])
+        elif path:
+            nodes[path][1].append(line)
+    return nodes
+
+
+def summarize(baseline: str, current: str) -> list[str]:
+    """Short readable summary of what changed between two dumps."""
+    old, new = parse_dump(baseline), parse_dump(current)
+    # A shared resource's owner label moves when its first owner is renamed; that
+    # is not a value change, so the comparison ignores the text after `Class@`.
+    label = re.compile(r"@[^{,\s\]}]*")
+    old = {p: (h, [label.sub("@", b) for b in body]) for p, (h, body) in old.items()}
+    new = {p: (h, [label.sub("@", b) for b in body]) for p, (h, body) in new.items()}
+    removed = sorted(set(old) - set(new))
+    added = sorted(set(new) - set(old))
+
+    def shape(path: str, nodes: dict) -> tuple:
+        header, body = nodes[path]
+        return header, [b.replace(path + ":", "@:").replace(path + ".", "@.") for b in body]
+
+    renamed: list[tuple[str, str]] = []
+    for r in list(removed):
+        parent = r.rpartition("/")[0]
+        for a in added:
+            if a.rpartition("/")[0] == parent and shape(a, new) == shape(r, old):
+                renamed.append((r, a))
+                removed.remove(r)
+                added.remove(a)
+                break
+
+    def under_rename(path: str, side: int) -> bool:
+        return any(path.startswith(pair[side] + "/") for pair in renamed)
+
+    removed = [p for p in removed if not under_rename(p, 0)]
+    added = [p for p in added if not under_rename(p, 1)]
+    out = [f"-- scene dump summary: {len(added)} added, {len(removed)} removed, "
+           f"{len(renamed)} renamed"]
+    out += [f"   + added   {p}" for p in added]
+    out += [f"   - removed {p}" for p in removed]
+    out += [f"   > renamed {r} -> {a.rpartition('/')[2]}" for r, a in renamed]
+    changed = [p for p in old if p in new and old[p] != new[p]]
+    out.append(f"   {len(changed)} node(s) with value changes")
+    for p in changed:
+        keys = lambda body: {b.strip().partition("=")[0]: b for b in body}
+        ko, kn = keys(old[p][1]), keys(new[p][1])
+        props = sorted(k for k in set(ko) | set(kn) if ko.get(k) != kn.get(k))
+        if old[p][0] != new[p][0]:
+            props.insert(0, "(header)")
+        out.append(f"   ~ {p}: {', '.join(props)}")
+    return out
 
 
 def main() -> int:
@@ -106,7 +167,11 @@ def main() -> int:
             fromfile="van.baseline.txt",
             tofile="van.txt",
         )
-        sys.stdout.writelines(list(diff)[:80])
+        print("\n".join(summarize(baseline, current)))
+        shown = list(diff)
+        sys.stdout.writelines(shown[:40])
+        if len(shown) > 40:
+            print(f"... {len(shown) - 40} more diff line(s) not shown")
         print("SCENE DUMP FAILED: dump differs from baseline")
         return 1
 

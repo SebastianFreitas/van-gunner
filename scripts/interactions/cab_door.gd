@@ -13,8 +13,8 @@ const STILE_W := 0.14
 const RAIL_H := 0.14
 const BAR_W := 0.03
 const BAR_COUNT := 3
-const DOORWAY_HALF_W := 0.775
-const DOORWAY_TOP := 2.30
+const DOORWAY_HALF_W := VanOpenings.CAB_DOOR_HALF
+const DOORWAY_TOP := VanOpenings.CAB_DOOR_HEIGHT
 const WALL_DEPTH := 0.2
 const BUILT_PARTS: Array[StringName] = [
 	&"StileLeft", &"StileRight", &"TopRail", &"Glass", &"Bar0", &"Bar1", &"Bar2", &"KickPlate", &"Handle",

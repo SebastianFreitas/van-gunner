@@ -46,8 +46,8 @@ func run(rig: Node3D, args: Array) -> String:
 
 func _paint_glass(rig: Node3D) -> void:
 	var parents: Array[Node] = [
-		rig.get_node_or_null(^"Interior/Shell/SideWindows"),
-		rig.get_node_or_null(^"Interior/Shell/RearWall"),
+		VanAnchors.side_windows(rig.get_tree()),
+		VanAnchors.rear_doors(rig.get_tree()),
 	]
 	for parent in parents:
 		if parent == null:
@@ -111,17 +111,22 @@ func _build_outside(rig: Node3D) -> MeshInstance3D:
 func _build_inside(rig: Node3D) -> Node3D:
 	var inside := Node3D.new()
 	inside.name = &"Inside"
-	var walls := rig.get_node_or_null(^"Interior/Shell/SideWalls") as VanSideWall
-	var ceiling := rig.get_node_or_null(^"Interior/Shell/Ceiling") as VanCeiling
+	var walls := VanAnchors.side_walls(rig.get_tree())
+	var ceiling := VanAnchors.ceiling(rig.get_tree())
 	if walls == null or ceiling == null:
 		return inside
-	var hinge := rig.get_node_or_null(^"Interior/Shell/RearWall/LeftHinge") as Node3D
+	var hinge := _rear_hinge(rig)
 	var zr := hinge.position.z - 0.08 if hinge != null else 4.63
 	# Rear slab just in front of the rear wall, and the body from the front wall back to it.
 	_add_slab_pair(inside, &"RearSlab", walls, ceiling, 0.0, 0.0, 0.0, zr - 0.12, zr - 0.10)
 	_add_slab_pair(inside, &"Body", walls, ceiling, 0.01, 0.10, 0.06,
 		VanFrontWall.FACE_Z + 0.01, zr - 0.12)
 	return inside
+
+
+func _rear_hinge(rig: Node3D) -> Node3D:
+	var rear := VanAnchors.rear_doors(rig.get_tree())
+	return rear.get_node_or_null(^"LeftHinge") as Node3D if rear != null else null
 
 
 func _add_slab_pair(parent: Node3D, base: StringName, walls: VanSideWall, ceiling: VanCeiling,

@@ -3,10 +3,10 @@ extends StaticBody3D
 ## The cargo room's cab-end wall as one slab cut from VanBodyProfile's section, with a doorway
 ## notch that the CabDoor leaf fills, so its edges meet the bowed walls and roof vault exactly.
 
-const FACE_Z := -4.55  ## interior face (the old panels' front face; machines are placed against it)
-const BACK_Z := -4.75  ## cab-side face
-const DOOR_HALF_W := 0.775
-const DOOR_TOP_Y := 2.30
+const FACE_Z := VanOpenings.CAB_WALL_FACE_Z  ## interior face (the old panels' front face; machines are placed against it)
+const BACK_Z := VanOpenings.CAB_WALL_BACK_Z  ## cab-side face
+const DOOR_HALF_W := VanOpenings.CAB_DOOR_HALF
+const DOOR_TOP_Y := VanOpenings.CAB_DOOR_HEIGHT
 const SECTION_STEPS := 24
 const CASING_W := 0.08
 const CASING_DEPTH := 0.025

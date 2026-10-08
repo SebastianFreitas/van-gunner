@@ -15,10 +15,19 @@ const _CabinNavPaths := preload("res://scripts/enemies/cabin_nav_paths.gd")
 
 enum Room { BACK, CABIN }
 
+## How far the passage waypoint sits in from the bulkhead doorway's inner edge.
+const PASSAGE_INSET := 0.26
+## Staging points: metres behind and in front of the bulkhead face.
+const BACK_STAGING_DZ := 1.55
+const CABIN_STAGING_DZ := 2.55
+## Rear corner waypoints: out from the skin and behind the rear face.
+const CORNER_OUT := 0.56
+const CORNER_OUT_Z := 0.8
+
 ## Bulkhead face in EnemyContainer space. Rear cargo is past this plus a small slop.
-@export var bulkhead_z := 1.0
+@export var bulkhead_z := VanOpenings.BULKHEAD_Z
 ## Outside markers with z above this are the rear face (no hull-around path).
-@export var rear_face_z := 6.38
+@export var rear_face_z := VanInteriorSize.REAR_Z - 0.2
 @export var melee_slot_count := 3
 @export var melee_range := 1.2
 @export var wait_timeout := 1.0
@@ -41,8 +50,21 @@ func _init() -> void:
 
 
 func _ready() -> void:
+	_place_markers()
 	add_to_group(&"cabin_nav")
 	call_deferred("_rebuild")
+
+
+## Waypoint markers come from the liner bounds and the bulkhead, so a remodel moves them.
+func _place_markers() -> void:
+	var y := raider_height
+	var corner_x := VanInteriorSize.BOTTOM_HALF + VanOpenings.SKIN + CORNER_OUT
+	passage_marker.position = Vector3(
+			-(VanInteriorSize.BOTTOM_HALF - VanBulkhead.OPENING_WIDTH) + PASSAGE_INSET, y, bulkhead_z)
+	back_staging.position = Vector3(0.0, y, bulkhead_z + BACK_STAGING_DZ)
+	cabin_staging.position = Vector3(0.0, y, bulkhead_z - CABIN_STAGING_DZ)
+	rear_corner_left.position = Vector3(-corner_x, y, VanInteriorSize.REAR_Z + CORNER_OUT_Z)
+	rear_corner_right.position = Vector3(corner_x, y, VanInteriorSize.REAR_Z + CORNER_OUT_Z)
 
 
 func path_to(from_local: Vector3, target_local: Vector3) -> Array[Vector3]:

@@ -23,33 +23,41 @@ const _DebugFacadeRender := preload("res://scripts/debug/debug_facade_render_com
 
 ## Rig-local point the van cameras look at: the van body's middle.
 const _VAN_TARGET := Vector3(0.0, 1.5, 0.0)
-## Rig-local camera spots; van-local -Z is the cab, the back compartment spans x +/-3.4,
-## y 0..4.0, z -4.7..6.58 (VanInteriorSize).
-const _VAN_SIDE_FRONT := Vector3(7.0, 3.0, -10.0)
-const _VAN_SIDE_REAR := Vector3(7.0, 3.0, 10.0)
-const _VAN_LOW_FRONT := Vector3(0.0, 1.0, -13.0)
+## Rig-local camera spots, all measured from the shell's edges (VanInteriorSize) so a longer or
+## narrower van moves them with it; van-local -Z is the cab. The offsets are the metres each
+## spot sits outside the front wall (_OUT_FRONT), rear wall (_OUT_REAR) or side wall (_OUT_SIDE).
+const _OUT_SIDE := 3.61
+const _SIDE_X := VanInteriorSize.BOTTOM_HALF + _OUT_SIDE
+const _FRONT_Z := VanInteriorSize.FRONT_Z
+const _REAR_Z := VanInteriorSize.REAR_Z
+const _VAN_SIDE_FRONT := Vector3(_SIDE_X, 3.0, _FRONT_Z - 5.3)
+const _VAN_SIDE_REAR := Vector3(_SIDE_X, 3.0, _REAR_Z + 3.42)
+const _VAN_LOW_FRONT := Vector3(0.0, 1.0, _FRONT_Z - 8.3)
 ## Lit audit spots (debug floodlight on): three-quarters, straight on, a window close-up
 ## and the roof, so every face of the exterior is legible.
 const _VAN_LIT_SPOTS: Array[Array] = [
-	["van-lit-side-front", Vector3(7.0, 3.0, -10.0), _VAN_TARGET],
-	["van-lit-side-rear", Vector3(7.0, 3.0, 10.0), _VAN_TARGET],
-	["van-lit-outside", Vector3(0.0, 9.0, -8.0), _VAN_TARGET],
-	["van-lit-quarter-driver", Vector3(-7.0, 2.5, -10.0), _VAN_TARGET],
-	["van-lit-quarter-passenger", Vector3(7.0, 2.5, -10.0), _VAN_TARGET],
-	["van-lit-front", Vector3(0.0, 1.2, -12.0), Vector3(0.0, 1.2, 0.0)],
-	["van-lit-rear", Vector3(0.0, 1.5, 13.9), Vector3(0.0, 1.5, 0.0)],
-	["van-lit-window", Vector3(7.0, 1.9, -1.5), Vector3(3.6, 1.9, -1.5)],
+	["van-lit-side-front", _VAN_SIDE_FRONT, _VAN_TARGET],
+	["van-lit-side-rear", _VAN_SIDE_REAR, _VAN_TARGET],
+	["van-lit-outside", Vector3(0.0, 9.0, _FRONT_Z - 3.3), _VAN_TARGET],
+	["van-lit-quarter-driver", Vector3(-_SIDE_X, 2.5, _FRONT_Z - 5.3), _VAN_TARGET],
+	["van-lit-quarter-passenger", Vector3(_SIDE_X, 2.5, _FRONT_Z - 5.3), _VAN_TARGET],
+	["van-lit-front", Vector3(0.0, 1.2, _FRONT_Z - 7.3), Vector3(0.0, 1.2, 0.0)],
+	["van-lit-rear", Vector3(0.0, 1.5, _REAR_Z + 7.32), Vector3(0.0, 1.5, 0.0)],
+	["van-lit-window", Vector3(_SIDE_X, 1.9, -1.5),
+			Vector3(VanInteriorSize.BOTTOM_HALF + 0.21, 1.9, -1.5)],
 	["van-lit-roof", Vector3(0.0, 12.0, 0.5), Vector3(0.0, 3.0, 0.0)],
 ]
-## Interior audit spots, room 6.78 m wide, 4.00 m tall, z -4.7..6.58, floor at y=0.
-const _VAN_FRONT_WALL := Vector3(0.0, 1.65, 2.0)
-const _VAN_FRONT_WALL_TARGET := Vector3(0.0, 1.5, -4.7)
-const _VAN_DRIVER_WALL := Vector3(1.68, 1.65, -1.0)
-const _VAN_DRIVER_WALL_TARGET := Vector3(-3.36, 1.5, -2.3)
-const _VAN_PASSENGER_WALL := Vector3(-1.68, 1.65, -1.0)
-const _VAN_PASSENGER_WALL_TARGET := Vector3(3.36, 1.5, -2.3)
-const _VAN_CEILING_FRONT := Vector3(0.0, 1.4, 1.0)
-const _VAN_CEILING_FRONT_TARGET := Vector3(0.0, 3.93, -4.7)
+## Interior audit spots: half the floor width (BOTTOM_HALF less the 3 cm wall lining) across
+## from the wall they face, front wall at FRONT_Z, ceiling edge at CEILING_EDGE.
+const _VAN_WALL_X := VanInteriorSize.BOTTOM_HALF - 0.03
+const _VAN_FRONT_WALL := Vector3(0.0, 1.65, _FRONT_Z + 6.7)
+const _VAN_FRONT_WALL_TARGET := Vector3(0.0, 1.5, _FRONT_Z)
+const _VAN_DRIVER_WALL := Vector3(_VAN_WALL_X * 0.5, 1.65, _FRONT_Z + 3.7)
+const _VAN_DRIVER_WALL_TARGET := Vector3(-_VAN_WALL_X, 1.5, _FRONT_Z + 2.4)
+const _VAN_PASSENGER_WALL := Vector3(-_VAN_WALL_X * 0.5, 1.65, _FRONT_Z + 3.7)
+const _VAN_PASSENGER_WALL_TARGET := Vector3(_VAN_WALL_X, 1.5, _FRONT_Z + 2.4)
+const _VAN_CEILING_FRONT := Vector3(0.0, 1.4, _FRONT_Z + 5.7)
+const _VAN_CEILING_FRONT_TARGET := Vector3(0.0, VanInteriorSize.CEILING_EDGE, _FRONT_Z)
 ## Where the van stands on the street for the IDLE shots: the van drives at IDLE and the
 ## driver waits on wall-clock timers, so without a fixed spot every exterior view lands a few
 ## ticks further down the street each run. 12 m is behind anywhere the van can be after the
@@ -140,17 +148,14 @@ func _outside_camera() -> Camera3D:
 		return null
 	var cam := Camera3D.new()
 	rig.add_child(cam)
-	cam.position = Vector3(0.0, 9.0, -8.0)
+	cam.position = Vector3(0.0, 9.0, _FRONT_Z - 3.3)
 	cam.rotation = Vector3(deg_to_rad(-25.0), PI, 0.0)
 	return cam
 
 
 ## The van's visual rig, or null if there is no van in the tree.
 func _rig() -> Node3D:
-	var van := get_tree().get_first_node_in_group(&"van_run")
-	if van == null:
-		return null
-	return van.get_node_or_null(^"TravelPath/VanFollow/VanRig") as Node3D
+	return VanAnchors.rig(get_tree())
 
 
 ## Exterior views of the van itself, from outside the rig looking in; UI hidden

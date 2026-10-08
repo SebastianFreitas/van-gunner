@@ -6,7 +6,7 @@ extends RefCounted
 ## the side door stop strips reach 5 cm over each leaf on purpose (vangapfix D13).
 const _WIN_FRAME: Array = ["Interior/Shell/SideWalls/", "VanLook/Hull/SideSkin", "/WindowStop", "/HingeRail/"]
 const OPENING: Dictionary = {
-	&"door_left": ["Interior/Props/RequestBoard/PcRig", "Interior/Shell/SideWalls/DoorStop_"],
+	&"door_left": ["Interior/Shell/SideWalls/DoorStop_"],
 	&"door_right": ["Interior/Shell/SideWalls/DoorStop_"],
 	&"win_left_front": _WIN_FRAME,
 	&"win_left_rear": _WIN_FRAME,
@@ -20,15 +20,19 @@ const OPENING: Dictionary = {
 ## path from the camera to its hit passes through one of them. It matches any node, so it goes LAST
 ## (rule_for returns the first match).
 ## Globs are String.match() patterns against the node path as printed in the report.
+## A rule nothing used in a full audit prints VAN AUDIT STALE EXEMPT and fails the smoke; the
+## rear sill, tail lamp and wheel arch boxes went that way (spec 14) and are gone.
+## The box below follows VanInteriorSize and VanOpenings, so a remodel moves it.
 ## The rear sill: deck end and step ramp under the rear doors, rig-local (D57).
-const REAR_SILL := AABB(Vector3(-2.5, -0.4, 5.9), Vector3(5.0, 0.5, 1.4))
-const REAR_LAMPS := AABB(Vector3(-2.6, 0.4, 6.6), Vector3(5.2, 0.7, 0.4))
-## The rear wheel arch's open under-side, rig-local: the deck's side edge seen past the tyre.
-## Right side only; the rule's "mirror" also tests the hit with x negated (the left arch).
-const REAR_ARCH := AABB(Vector3(2.9, -0.5, 2.6), Vector3(0.8, 0.7, 3.8))
+const REAR_SILL := AABB(
+	Vector3(-(VanInteriorSize.REAR_DOOR_HALF - 0.2), -0.4, VanInteriorSize.REAR_Z - 0.68),
+	Vector3(2.0 * (VanInteriorSize.REAR_DOOR_HALF - 0.2), 0.5, 1.4))
 ## The right DoorEdgeSeal, rig-local, 1 cm round it (door front edge, wall_x + 0.106..0.195).
 ## Right side only; its rule's "mirror" covers the left seal.
-const DOOR_EDGE_SEAL := AABB(Vector3(3.31, 0.01, -4.43), Vector3(0.44, 3.05, 0.16))
+const DOOR_EDGE_SEAL := AABB(
+	Vector3(VanInteriorSize.BOTTOM_HALF - 0.08, VanOpenings.SIDE_DOOR_Y_MIN - 0.01,
+		VanOpenings.SIDE_DOOR_Z - VanOpenings.SIDE_DOOR_HALF - 0.031),
+	Vector3(2.0 * VanOpenings.SKIN, VanOpenings.SIDE_DOOR_HEIGHT, 0.16))
 const RULES: Array[Dictionary] = [
 	{
 		"section": "FLICKER", "a": "Interior/Bulkhead/KickPlate_*",
@@ -64,10 +68,6 @@ const RULES: Array[Dictionary] = [
 	{
 		"section": "EDGE", "a": "VanLook/Hull/RearSkin", "b": "", "d": "D59",
 		"reason": "the rear skin's bottom seam sits below the sill, closed by the rear corners",
-	},
-	{
-		"section": "EDGE", "a": "VanLook/Hull/CornerPostF*", "b": "", "d": "D59",
-		"reason": "the front corner posts' top end caps meet the roof edge; no ray sees through",
 	},
 	{
 		"section": "EDGE", "a": "VanLook/Hull/BellySkin", "b": "", "d": "D59",
@@ -115,28 +115,57 @@ const RULES: Array[Dictionary] = [
 			+ "leaf's front clearance gap, which it exists to close",
 	},
 	{
-		"section": "LEAK_OUT", "a": "Interior/FrontWall/Slab", "b": "", "d": "D54",
-		"reason": "the front wall slab's side edge, seen through the side door's front "
-			+ "clearance gap",
-	},
-	{
-		"section": "LEAK_OUT", "a": "Interior/Shell/RearWall/*Hinge/Tail*", "b": "", "d": "D57",
-		"box": REAR_LAMPS,
-		"reason": "the tail lamps are exterior lights on the rear leaves, meant to be seen "
-			+ "from outside",
-	},
-	{
-		"section": "LEAK_OUT", "a": "Interior/Shell/Floor/Deck", "b": "", "d": "D29",
-		"box": REAR_ARCH, "mirror": true,
-		"reason": "the deck's side edge seen through the open wheel arch past the tyre",
-	},
-	{
 		"section": "LEAK_OUT", "a": "Interior/Shell/Floor/RearEntryRamp", "b": "", "d": "D57",
 		"box": REAR_SILL,
 		"reason": "the rear step ramp sits outside under the rear doors by design"
 			+ "; re-earned (vangapfix D21); not see-through (vangapfix2)",
 	},
 ]
+
+
+## Rules that exempted something in this process: key -> true. A shard prints them and the
+## full audit (or smoke, summing the shards) reports every rule missing from the union.
+static var used: Dictionary = {}
+
+
+## Stable name of a rule for the stale report.
+static func key_of(rule: Dictionary) -> String:
+	# Stripped: smoke reads the list from a line whose trailing space the judge cuts, so an
+	# empty "b" would make the last-listed rule look unused.
+	return ("%s %s %s" % [rule.section, rule.a, rule.get("b", "")]).strip_edges()
+
+
+static func mark(rule: Dictionary) -> void:
+	used[key_of(rule)] = true
+
+
+static func opening_key(label: StringName, prefix: String) -> String:
+	return "OPENING %s %s" % [label, prefix]
+
+
+## Every rule and opening prefix, in the order they are declared.
+static func all_keys() -> PackedStringArray:
+	var keys := PackedStringArray()
+	for rule: Dictionary in RULES:
+		keys.append(key_of(rule))
+	for label: StringName in OPENING.keys():
+		for prefix: String in OPENING[label]:
+			keys.append(opening_key(label, prefix))
+	return keys
+
+
+## A full run reports the rules nothing used; a shard prints its used and all keys so
+## tools/smoke.py can judge the union (a shard runs only some of the passes that use a rule).
+static func report_stale(runner: Node, full_run: bool) -> void:
+	var keys := all_keys()
+	if not full_run:
+		print("AUDIT EXEMPT USED " + "|".join(PackedStringArray(used.keys())))
+		print("AUDIT EXEMPT KEYS " + "|".join(keys))
+		return
+	for key in keys:
+		if not used.has(key):
+			print("VAN AUDIT STALE EXEMPT: " + key)
+			runner.add_finding("STALE_EXEMPT", key)
 
 
 static func rule_for(section: String, a: String, b: String) -> Dictionary:

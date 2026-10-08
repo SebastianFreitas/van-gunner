@@ -64,6 +64,7 @@ static func check_flicker(tris: RefCounted, runner: Node, state: String, only_mo
 		]
 		var rule: Dictionary = AuditExempt.rule_for("FLICKER", row.a, row.b)
 		if not rule.is_empty():
+			AuditExempt.mark(rule)
 			runner.add_finding("FLICKER_EXEMPT", text + " rule=%s" % rule.d)
 		elif float(row.area) < MIN_VISIBLE_AREA:
 			runner.add_finding("FLICKER_MINOR", text)
