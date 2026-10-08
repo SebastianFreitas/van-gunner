@@ -35,17 +35,17 @@ static func build(parent: Node3D, mirror: float, rng: RandomNumberGenerator,
 	var steel := _grime(Color(0.22, 0.21, 0.19))
 	var dark := _grime(Color(0.12, 0.115, 0.1))
 	var skew := 1.0 if rng.randf() < 0.5 else -1.0
-	# Heavy top hinge above the 1.28 strap: fat strap and knuckle on the leaf, mismatched bolts.
+	# Heavy top hinge above the 1.79 strap: fat strap and knuckle on the leaf, mismatched bolts.
 	# Lowered and slid in so it stays on the leaf's rounded top corner.
-	_plate(parent, mirror, 0.21, 1.40, 0.28, 0.12, skew * 2.0, steel, "TopHingeStrap", out)
+	_plate(parent, mirror, 0.21, 1.90, 0.28, 0.12, skew * 2.0, steel, "TopHingeStrap", out)
 	_add(parent, "TopHingeKnuckle", _cyl(0.07, 0.07, 0.2), steel,
-			Vector3(mirror * 0.04, 1.40, _Hardware.FACE_Z - 0.10), Vector3.ZERO, out)
-	_bolts(parent, mirror, [0.19, 0.31], 1.40, rng, dark, out)
-	_bead(parent, mirror, 0.21, 1.335, 0.28, 0.0, dark, out)
-	_bead(parent, mirror, 0.35, 1.40, 0.12, 90.0, dark, out)
+			Vector3(mirror * 0.04, 1.90, _Hardware.FACE_Z - 0.10), Vector3.ZERO, out)
+	_bolts(parent, mirror, [0.19, 0.31], 1.90, rng, dark, out)
+	_bead(parent, mirror, 0.21, 1.835, 0.28, 0.0, dark, out)
+	_bead(parent, mirror, 0.35, 1.90, 0.12, 90.0, dark, out)
 	_body_half(parent, mirror, rng, dark, out)
 	# Side hinge welds: a lumpy bead across each existing strap's tip.
-	for y: float in [1.28, -1.15]:
+	for y: float in [1.79, -1.15]:
 		_bead(parent, mirror, 0.40 + rng.randf_range(-0.02, 0.02), y, 0.07, 90.0, dark, out)
 	# Door-check strap: flat bar on a skew with an angle-iron stop welded crooked at its far end.
 	_plate(parent, mirror, 0.75, -0.85, 0.62, 0.04, skew * -11.0, steel, "CheckStrap", out)
@@ -134,9 +134,9 @@ static func _body_half(hinge: Node3D, mirror: float, rng: RandomNumberGenerator,
 ## height, so tilted to follow it) with a welded knuckle 3 mm outside the leaf's knuckle.
 static func _ring_hinge(anchor: Node3D, mirror: float, rng: RandomNumberGenerator,
 		steel: Material, dark: Material, out: Array[Node3D]) -> void:
-	# The top hinge and one half for each leaf strap (1.28 and -1.15), so every strap meets a plate.
-	_ring_plate(anchor, mirror, 1.40, 0.14, rng, steel, dark, out)
-	_ring_plate(anchor, mirror, 1.28, 0.09, rng, steel, dark, out)
+	# The top hinge and one half for each leaf strap (1.79 and -1.15), so every strap meets a plate.
+	_ring_plate(anchor, mirror, 1.90, 0.14, rng, steel, dark, out)
+	_ring_plate(anchor, mirror, 1.78, 0.09, rng, steel, dark, out)
 	_ring_plate(anchor, mirror, -1.15, 0.20, rng, steel, dark, out)
 
 
@@ -158,8 +158,8 @@ static func _ring_plate(anchor: Node3D, mirror: float, hy: float, ph: float,
 		xy = Vector2(so * d, hy)
 	var f := _Ramp.frame(xy, away, KNUCKLE_Z, z_in, z_deep)
 	_add_on(anchor, "PillarHingePlate", _box(Vector3(PLATE_DEPTH, ph, PLATE_T)), steel, f, out)
-	_add(anchor, "PillarKnuckle", _cyl(0.04, 0.04, ph + 0.024), steel,
-			Vector3(so * 0.073, hy, KNUCKLE_Z), Vector3.ZERO, out)
+	_add(anchor, "PillarKnuckle", _cyl(0.045, 0.045, ph + 0.024), steel,
+			Vector3(so * (d - 0.0045), hy, KNUCKLE_Z), Vector3.ZERO, out)
 	var turn := Basis(f.basis.x, -f.basis.z, f.basis.y)
 	for k: float in [-1.0, 1.0]:
 		var rb := rng.randf_range(0.028, 0.034)

@@ -34,7 +34,7 @@ const HANDLE_Y := -0.82
 static func build(parent: Node3D, mirror: float, rng: RandomNumberGenerator,
 		steel: Material, dark: Material) -> Array[Node3D]:
 	var out: Array[Node3D] = []
-	_strap_hinge(parent, mirror, 1.28, 3, rng, steel, dark, out)
+	_strap_hinge(parent, mirror, 1.79, 3, rng, steel, dark, out)
 	_strap_hinge(parent, mirror, -1.17, rng.randi_range(2, 3), rng, steel, dark, out)
 	_locking_rod(parent, mirror, steel, dark, out)
 	_handle_plate(parent, mirror, steel, out)

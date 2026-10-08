@@ -3,6 +3,7 @@ extends RefCounted
 
 const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
 const _Skin := preload("res://scripts/van/rear_door_skin.gd")
+const _Press := preload("res://scripts/van/rear_door_press.gd")
 
 ## Window centre height in rig space, as `rear_door_leaf_build.gd` cuts the hole (left leaf).
 const HOLE_CENTER_RIG_Y := VanOpenings.REAR_WINDOW_Y
@@ -60,14 +61,10 @@ static func build(left_hinge: Node3D, hinge: Node3D, mirror_x: bool) -> void:
 				Vector3(sn.x, sn.y, z_back), Vector3(sk.x, sk.y, z_back), Vector3.FORWARD)
 		_quad(st, Vector3(sk.x, sk.y, z_back), Vector3(sn.x, sn.y, z_back),
 				Vector3(inn.x, inn.y, z_back), Vector3(ik.x, ik.y, z_back), Vector3.FORWARD)
-		_quad(st, Vector3(ik.x, ik.y, z_back), Vector3(inn.x, inn.y, z_back),
-				Vector3(inn.x, inn.y, z_front), Vector3(ik.x, ik.y, z_front),
-				_perp(ik, inn, inner_mid - outer_mid))
-		_quad(st, Vector3(ok.x, ok.y, z_back), Vector3(on.x, on.y, z_back),
-				Vector3(on.x, on.y, z_front), Vector3(ok.x, ok.y, z_front),
-				_perp(ok, on, outer_mid - inner_mid))
+		_wall(st, inner, k, n, z_back, z_front, inner_mid - outer_mid)
+		_wall(st, outer, k, n, z_back, z_front, outer_mid - inner_mid)
 	# The slab leaves its outer hole edge open, so rays inside the hole reach the cavity between its faces.
-	var z_cabin := _LeafBuild.CABIN_Z
+	var z_cabin := _LeafBuild.CABIN_Z + _Press.DEPTH
 	for k in count:
 		var n := (k + 1) % count
 		var sk := sleeve[k]
@@ -118,6 +115,35 @@ static func _quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector
 		out: Vector3) -> void:
 	_tri(st, a, b, c, out)
 	_tri(st, a, c, d, out)
+
+
+## One quad of a lip wall between ring points `k` and `n`, with each vertex normal averaged with
+## its neighbouring edge so the rounded corners shade smooth; flat runs keep their face normal.
+static func _wall(st: SurfaceTool, ring: PackedVector2Array, k: int, n: int, z0: float,
+		z1: float, away: Vector2) -> void:
+	var count := ring.size()
+	var face := _perp(ring[k], ring[n], away)
+	var nk := _vertex_normal(face, _perp(ring[(k + count - 1) % count], ring[k], away))
+	var nn := _vertex_normal(face, _perp(ring[n], ring[(n + 1) % count], away))
+	var pos: Array[Vector3] = [Vector3(ring[k].x, ring[k].y, z0), Vector3(ring[n].x, ring[n].y, z0),
+			Vector3(ring[n].x, ring[n].y, z1), Vector3(ring[k].x, ring[k].y, z1)]
+	var nrm: Array[Vector3] = [nk, nn, nn, nk]
+	for tri: Array in [[0, 1, 2], [0, 2, 3]]:
+		var order: Array = tri
+		if (pos[tri[2]] - pos[tri[0]]).cross(pos[tri[1]] - pos[tri[0]]).dot(face) < 0.0:
+			order = [tri[0], tri[2], tri[1]]
+		for idx: int in order:
+			st.set_normal(nrm[idx])
+			st.set_uv(Vector2(pos[idx].x, pos[idx].y))
+			st.add_vertex(pos[idx])
+
+
+## Normal at a ring point: the mean of this edge's and its neighbour's normals unless they bend
+## past ~35 degrees, where the edge keeps its own.
+static func _vertex_normal(own: Vector3, other: Vector3) -> Vector3:
+	if own.dot(other) < 0.82:
+		return own
+	return (own + other).normalized()
 
 
 ## Godot front faces are clockwise seen from outside, so flip any triangle that isn't.

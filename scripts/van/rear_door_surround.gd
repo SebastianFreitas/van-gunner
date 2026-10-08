@@ -5,25 +5,25 @@ extends RefCounted
 
 const _Flange := preload("res://scripts/van/rear_door_flange.gd")
 ## How far the deep ring stands out from the portal's cabin face (the one frame depth).
-const DEPTH := 0.5
+const DEPTH := 0.3
 ## How far the wall ledge stands out around the deep ring.
 const LEDGE_DEPTH := 0.2
 ## Width of the deep ring beyond the flange band's outer edge.
-const RING_W := 0.46
+const RING_W := 0.16
 ## Collar: from this far outside the opening edge to the flange band's outer edge.
 const COLLAR_FROM := 0.03
 ## Pillar pocket: y range, x range as offsets from the door edge, and how deep it is stamped.
 const POCKET_Y0 := 1.0
 const POCKET_Y1 := 1.6
-const POCKET_X0 := 0.385
-const POCKET_X1 := 0.525
+const POCKET_X0 := 0.185
+const POCKET_X1 := 0.235
 const POCKET_DEPTH := 0.12
 ## The ramp's inner edge stands this far outside the door opening, level with the leaves' cabin face.
 const RAMP_IN := 0.015
 ## Where the ramp reaches the deep face, as an offset from the opening.
-const RAMP_OUT := 0.315
+const RAMP_OUT := 0.13
 ## Bevel on every crease (trim along each side) and its arc segments.
-const BEVEL := 0.05
+const BEVEL := 0.03
 const BEVEL_STEPS := 4
 ## The header (and so the collar below it) starts this far above the opening's top.
 const HEADER_GAP := 0.01

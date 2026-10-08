@@ -29,7 +29,7 @@ const CAB_WALL_FACE_Z := VanInteriorSize.FRONT_Z + 0.15
 
 ## Rear window: centre height, half size (x, y) and the z span of the leaf's hole (the leaf
 ## reaches from 0.17 cabin side of the 6.59 hinge to 0.04 under its street face at 0.08).
-const REAR_WINDOW_Y := 1.775
+const REAR_WINDOW_Y := 2.4
 const REAR_WINDOW_HALF_X := 0.99
 const REAR_WINDOW_HALF_Y := 0.775
 const REAR_WINDOW_Z_MIN := 6.42

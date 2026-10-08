@@ -30,7 +30,7 @@ const CEILING_EDGE_SHELL := 3.97
 ## Rear door opening inside the portal: hinge x (half width), top y, and the window centre's
 ## distance from the hinge. The portal's pillars and header fill the rest of the rear wall.
 const REAR_DOOR_HALF := 2.7
-const REAR_DOOR_TOP := 3.1
+const REAR_DOOR_TOP := 3.6
 const REAR_WINDOW_X := REAR_DOOR_HALF - 1.48
 ## Bulkhead half width and edge height.
 const BULKHEAD_HALF := 3.30

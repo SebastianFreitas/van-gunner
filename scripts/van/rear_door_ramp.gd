@@ -113,7 +113,8 @@ static func frame_blocker(doors: Node3D, profile: VanBodyProfile, z_in: float, z
 	var half := VanInteriorSize.REAR_DOOR_HALF
 	var top := VanInteriorSize.REAR_DOOR_TOP
 	var ring := _Flange.WALL_OFFSET + _Surround.RING_W
-	var band := _Flange.WALL_OFFSET
+	# The slope (now narrower than the flange band) starts right outside the opening.
+	var band := _Surround.RAMP_IN
 	var out_d := _Surround.RAMP_OUT
 	var blocker := doors.get_node("Blocker")
 	for old in blocker.get_children():

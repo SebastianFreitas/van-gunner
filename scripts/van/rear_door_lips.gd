@@ -6,7 +6,7 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 	if doors == null or left == null or right == null:
 		return
 	for old in [left.get_node_or_null("OuterLip"), right.get_node_or_null("OuterLip"),
-			right.get_node_or_null("AstragalOuter")]:
+			right.get_node_or_null("AstragalOuter"), left.get_node_or_null("AstragalOuter")]:
 		if old != null:
 			old.free()
 	var mat := _material(left)
@@ -26,8 +26,20 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 	var top := VanInteriorSize.REAR_DOOR_TOP
 	_box(ast, Vector3(-0.05, -0.05, 6.735), Vector3(0.05, top + 0.045, 6.747), inv)
 	_box(ast, Vector3(0.035, 0.10, 6.65), Vector3(0.05, top - 0.10, 6.735), inv)
+	# Each leaf carries its own half of the fill for the seam's rounded bottom and top notches,
+	# inside the leaf thickness, so the sill behind them is never seen from the street and the
+	# fill swings with its leaf.
+	_box(ast, Vector3(0.0, -0.03, 6.54), Vector3(0.20, 0.20, 6.67), inv)
+	_box(ast, Vector3(0.0, top - 0.20, 6.54), Vector3(0.20, top + 0.02, 6.67), inv)
 	ast.generate_tangents()
 	_add_mesh(right, "AstragalOuter", ast.commit(), mat)
+	var left_inv := Transform3D(Basis.IDENTITY, -left.position)
+	var half := SurfaceTool.new()
+	half.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_box(half, Vector3(-0.20, -0.03, 6.54), Vector3(0.0, 0.20, 6.67), left_inv)
+	_box(half, Vector3(-0.20, top - 0.20, 6.54), Vector3(0.0, top + 0.02, 6.67), left_inv)
+	half.generate_tangents()
+	_add_mesh(left, "AstragalOuter", half.commit(), mat)
 
 
 static func _add_mesh(hinge: Node3D, node_name: String, mesh: Mesh,

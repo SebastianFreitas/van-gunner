@@ -102,17 +102,17 @@ func _build_leaf(hinge: Node3D, mirror: float, rng: RandomNumberGenerator,
 func _plate_keep_out() -> Array[AABB]:
 	var raw: Array[AABB] = [
 		AABB(Vector3(0.0, -1.6, -0.30), Vector3(0.21, 3.2, 0.24)),
-		AABB(Vector3(0.05, 1.225, -0.23), Vector3(0.35, 0.11, 0.11)),
+		AABB(Vector3(0.05, 1.735, -0.23), Vector3(0.35, 0.11, 0.11)),
 		AABB(Vector3(0.05, -1.225, -0.23), Vector3(0.35, 0.11, 0.11)),
-		AABB(Vector3(0.03, 1.23, -0.30), Vector3(0.10, 0.10, 0.10)),
+		AABB(Vector3(0.03, 1.74, -0.30), Vector3(0.10, 0.10, 0.10)),
 		AABB(Vector3(0.03, -1.22, -0.30), Vector3(0.10, 0.10, 0.10)),
 		AABB(Vector3(_Hardware.ROD_X - 0.075, -1.50, -0.30), Vector3(0.15, 0.50, 0.13)),
 		AABB(Vector3(_Hardware.ROD_X - 0.075, -0.60, -0.30), Vector3(0.15, 1.55, 0.13)),
 		AABB(Vector3(_Hardware.ROD_X + 0.005, -1.01, -0.27), Vector3(0.155, 0.11, 0.10)),
 		AABB(Vector3(_Hardware.ROD_X + 0.02, -0.94, -0.205), Vector3(0.18, 0.24, 0.11)),
-		# The leaf's big access hole and the small holes and ribs above it (rear_door_skeleton.gd).
-		AABB(Vector3(0.45, -1.45, -0.30), Vector3(1.57, 0.38, 0.25)),
-		AABB(Vector3(1.28, -1.0, -0.30), Vector3(1.27, 0.38, 0.25)),
+		# The pressed strip under the header and the tall bottom opening (rear_door_skeleton.gd).
+		AABB(Vector3(0.45, 1.70, -0.30), Vector3(1.9, 0.30, 0.25)),
+		AABB(Vector3(0.20, -1.43, -0.30), Vector3(2.15, 1.35, 0.25)),
 	]
 	var grown: Array[AABB] = []
 	for box: AABB in raw:
@@ -120,7 +120,7 @@ func _plate_keep_out() -> Array[AABB]:
 	return grown
 
 
-## Thin plate lying on the bottom beam or the lower cross-member: front 3 mm proud of the beam
+## Thin plate lying on the bottom beam or the beam under the window: front 3 mm proud of the beam
 ## face, back buried in the beam. Skipped (the draws are still spent) when it would touch the
 ## window bars' margin, any hardware, scrap or plate already on the leaf, or an earlier patch.
 func _add_rust_patch(hinge: Node3D, mirror: float, rng: RandomNumberGenerator, mat: Material,
@@ -129,10 +129,10 @@ func _add_rust_patch(hinge: Node3D, mirror: float, rng: RandomNumberGenerator, m
 	var x_lo := 0.25 + size.x * 0.5
 	var x_hi := VanInteriorSize.REAR_DOOR_HALF - 0.25 - size.x * 0.5
 	var patch_x := rng.randf_range(x_lo, x_hi)
-	var beam_y := -hinge.position.y + _LeafBuild.Y_MIN + _Skeleton.BEAM_W * 0.5
+	var beam_y := -hinge.position.y + _LeafBuild.Y_MIN + _Skeleton.BOTTOM_BEAM * 0.5
 	if rng.randf() < 0.5:
-		beam_y = -hinge.position.y + _LeafBuild.Y_MIN + _Skeleton.BEAM_W \
-				+ (_Skeleton.CROSS.x + _Skeleton.CROSS.y) * 0.5
+		beam_y = -hinge.position.y + VanOpenings.REAR_WINDOW_Y - VanOpenings.REAR_WINDOW_HALF_Y \
+				- _Skeleton.WIN_SLOPE - _Skeleton.MID_BEAM * 0.5
 	var center := Vector2(mirror * patch_x, beam_y)
 	var rect := Rect2(center - size * 0.5, size).grow(RUST_MARGIN)
 	var bars_y := VanOpenings.REAR_WINDOW_Y - hinge.position.y

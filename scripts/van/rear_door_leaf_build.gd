@@ -13,9 +13,9 @@ const CENTER_GAP := 0.012
 const Y_MIN := 0.02
 ## Window centre distance from the hinge.
 const WINDOW_X := VanInteriorSize.REAR_WINDOW_X
-## Window corner cut-back (about the round radius) and curve points per corner.
-const WINDOW_ROUND := 0.09
-const WINDOW_ROUND_STEPS := 6
+## Window corner radius (true circular arcs) and curve points per quarter turn.
+const WINDOW_ROUND := 0.28
+const WINDOW_ROUND_STEPS := 12
 ## Window outline (XY offsets from window center): a rounded rectangle whose lower corner toward
 ## the centre seam is cut off along a long diagonal with rounded ends (reference image 1). Same
 ## bounding size as before, so the bars still cover it.
@@ -38,7 +38,7 @@ const ASTRAGAL_END_GAP := 0.0
 static func build(_doors: Node3D, left: Node3D, right: Node3D) -> void:
 	# One canonical left leaf — mirror for the right so bow/normals match.
 	var mesh := _build_left_leaf_mesh(left)
-	var mat := _door_body_material()
+	var mat := _door_body_material(left)
 	_apply_leaf(left, mesh, mat, false)
 	_apply_leaf(right, mesh, mat, true)
 	_WindowLip.build(left, left, false)
@@ -46,18 +46,25 @@ static func build(_doors: Node3D, left: Node3D, right: Node3D) -> void:
 	_add_astragal(left)
 
 
-## The window's sharp corners, each cut back WINDOW_ROUND along both edges and joined by a
-## quadratic curve (corner as control point), so every corner reads as a soft round.
+## The window's sharp corners, each filleted with a true circular arc of radius WINDOW_ROUND
+## tangent to both edges (tangent length r / tan(half the corner angle)).
 static func _rounded_window() -> PackedVector2Array:
 	var corners := WINDOW_CORNERS
 	var pts := PackedVector2Array()
 	for i in corners.size():
 		var c: Vector2 = corners[i]
-		var a: Vector2 = c + (corners[(i + corners.size() - 1) % corners.size()] - c).normalized() * WINDOW_ROUND
-		var b: Vector2 = c + (corners[(i + 1) % corners.size()] - c).normalized() * WINDOW_ROUND
-		for k in WINDOW_ROUND_STEPS + 1:
-			var t := float(k) / float(WINDOW_ROUND_STEPS)
-			pts.append(a.lerp(c, t).lerp(c.lerp(b, t), t))
+		var u: Vector2 = (corners[(i + corners.size() - 1) % corners.size()] - c).normalized()
+		var v: Vector2 = (corners[(i + 1) % corners.size()] - c).normalized()
+		var half_angle := absf(u.angle_to(v)) * 0.5
+		var centre := c + (u + v).normalized() * (WINDOW_ROUND / sin(half_angle))
+		var t1 := c + u * (WINDOW_ROUND / tan(half_angle))
+		var t2 := c + v * (WINDOW_ROUND / tan(half_angle))
+		var a1 := (t1 - centre).angle()
+		var sweep := angle_difference(a1, (t2 - centre).angle())
+		var steps := maxi(3, ceili(float(WINDOW_ROUND_STEPS) * absf(sweep) / (PI * 0.5)))
+		for k in steps + 1:
+			var a := a1 + sweep * float(k) / float(steps)
+			pts.append(centre + Vector2(cos(a), sin(a)) * WINDOW_ROUND)
 	return pts
 
 
@@ -94,11 +101,11 @@ static func _apply_leaf(hinge: Node3D, mesh: ArrayMesh, mat: Material, mirror_x:
 	hinge.move_child(body, 0)
 
 
-static func _door_body_material() -> ShaderMaterial:
+static func _door_body_material(left: Node3D) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = DOOR_SHADER
 	mat.set_shader_parameter("leaf_width_m", VanInteriorSize.REAR_DOOR_HALF - CENTER_GAP)
-	mat.set_shader_parameter("leaf_height_m", VanInteriorSize.REAR_DOOR_TOP - Y_MIN)
+	mat.set_shader_parameter("leaf_bottom_y", Y_MIN - (left.position.y if left else 1.55))
 	return mat
 
 

@@ -14,13 +14,12 @@ const SIDE_PAD := 0.03
 ## Pillar holes (right pillar, mirrored for the left): x centre as an offset from the door
 ## edge, y centre, half width, half height. Blind: cut from the deep ring's face down to the plate.
 const PILLAR_HOLES: Array[Vector4] = [
-	Vector4(0.455, 0.45, 0.07, 0.13), Vector4(0.455, 1.95, 0.07, 0.22), Vector4(0.455, 2.65, 0.07, 0.12),
+	Vector4(0.21, 0.45, 0.025, 0.13), Vector4(0.21, 1.95, 0.025, 0.22), Vector4(0.21, 2.65, 0.025, 0.12),
 ]
 ## Squareness exponent per pillar hole (2 oval, 4 rounded slot).
 const PILLAR_SQUARE: Array[float] = [2.0, 4.0, 2.0]
 ## Extra width of a hole's column, so the solid strips beside it stay clear of the rim.
-const COLUMN_MARGIN := 0.03
-const BEAD_R := 0.035
+const COLUMN_MARGIN := 0.01
 
 
 static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
@@ -81,12 +80,10 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 		# short of the street face so it stays 2 cm clear of the closed leaf's skin.
 		for fill in _Flange.opening_fills(half, top, y_a):
 			_prism(portal, mat, _flip(fill, s), z0 + 0.05, z1 - 0.07, _side("OpeningFill", s))
-		_bead(portal, mat, Vector3(s * (half + BEAD_R), (top + y_a) * 0.5, z0), top - y_a, false, _side("BeadSide", s))
-	_bead(portal, mat, Vector3(0, top + 0.015 + BEAD_R, z0), half * 2.0 + BEAD_R * 2.0, true, "BeadTop")
 	# Centre latch box on the slope over the header, tilted to it, its back 2 mm into the steel.
-	var lf := _Ramp.frame(Vector2(0.0, top + 0.165), Vector2(0.0, 1.0),
-			_Ramp.z_at(0.165, z_in, z_deep), z_in, z_deep)
-	_box_on(portal, mat, lf, Vector3(0.36, 0.22, 0.08), Vector3(0.0, 0.0, -0.038), "LatchBoxBig")
+	var lf := _Ramp.frame(Vector2(0.0, top + 0.07), Vector2(0.0, 1.0),
+			_Ramp.z_at(0.07, z_in, z_deep), z_in, z_deep)
+	_box_on(portal, mat, lf, Vector3(0.22, 0.22, 0.08), Vector3(0.0, 0.0, -0.038), "LatchBoxBig")
 	_box_on(portal, mat, lf, Vector3(0.2, 0.12, 0.03), Vector3(0.015, 0.0, -0.091), "LatchBoxSmall")
 
 
@@ -94,7 +91,7 @@ static func build(doors: Node3D, left: Node3D, right: Node3D) -> void:
 ## slightly off square, bolted flat to the ramp's slope (parts lie in its tilted frame).
 static func _brackets(portal: Node3D, mat: Material, s: float, half: float, z_in: float,
 		z_deep: float) -> void:
-	var d := 0.165
+	var d := 0.07
 	var f := _Ramp.frame(Vector2(s * (half + d), 0.78), Vector2(s, 0.0),
 			_Ramp.z_at(d, z_in, z_deep), z_in, z_deep)
 	_box_on(portal, mat, f, Vector3(0.22, 0.14, 0.03), Vector3(0.0, 0.0, -0.01),
@@ -223,6 +220,10 @@ static func _prism(parent: Node3D, mat: Material, poly: PackedVector2Array, za: 
 	m.name = label
 	m.mesh = st.commit()
 	m.material_override = mat
+	if label.begins_with("OpeningFill"):
+		# Seen from the street and from the cabin when a leaf is open: both light sets, like the leaves.
+		m.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+		m.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	parent.add_child(m, true)
 
 
@@ -235,25 +236,6 @@ static func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, out: Vecto
 		st.set_normal(out)
 		st.set_uv(Vector2(p.x / VanInteriorSize.LENGTH + 0.5, p.y / VanInteriorSize.WALL_HEIGHT))
 		st.add_vertex(p)
-
-
-## A rolled edge: a round bead, vertical or (when `horizontal`) along x.
-static func _bead(parent: Node3D, mat: Material, pos: Vector3, length: float,
-		horizontal: bool, label: String) -> void:
-	var m := MeshInstance3D.new()
-	m.name = label
-	var c := CylinderMesh.new()
-	c.top_radius = BEAD_R
-	c.bottom_radius = BEAD_R
-	c.height = length
-	c.radial_segments = 8
-	c.rings = 1
-	m.mesh = c
-	m.material_override = mat
-	m.position = pos
-	if horizontal:
-		m.rotation_degrees.z = 90.0
-	parent.add_child(m, true)
 
 
 ## Hinge x, window parts and leaf collision from the interior size; `s` is the hinge side.
@@ -302,6 +284,52 @@ static func _window_collision(hinge: Node3D, panel: Node3D, s: float) -> void:
 	node.shape = shape
 	node.position = Vector3(glass.position.x - panel.position.x, glass.position.y, 0.0)
 	panel.add_child(node)
+	_window_notches(panel, node.position, s)
+
+
+## Steel in each rounded window corner (between the arc and the sharp corner): convex prisms
+## fanned from the corner over about 30 degrees of arc, so the collision follows the rounded hole.
+static func _window_notches(panel: Node3D, at: Vector3, s: float) -> void:
+	for old in panel.get_children():
+		if old.name.begins_with("WindowNotch"):
+			old.free()
+	var corners := _LeafBuild.WINDOW_CORNERS
+	var hole := _LeafBuild.WINDOW_HOLE
+	var first := 0
+	var index := 0
+	for i in corners.size():
+		var c: Vector2 = corners[i]
+		var u: Vector2 = (corners[(i + corners.size() - 1) % corners.size()] - c).normalized()
+		var v: Vector2 = (corners[(i + 1) % corners.size()] - c).normalized()
+		var half_angle := absf(u.angle_to(v)) * 0.5
+		var steps := maxi(3, ceili(float(_LeafBuild.WINDOW_ROUND_STEPS)
+				* _arc_sweep(c, u, v, half_angle) / (PI * 0.5)))
+		var chunk := 4
+		var k := 0
+		while k < steps:
+			var last := mini(k + chunk, steps)
+			var pts := PackedVector3Array()
+			for p: Vector2 in [c] + Array(hole.slice(first + k, first + last + 1)):
+				for z: float in [_LeafBuild.CABIN_Z, _LeafBuild.STREET_HALF]:
+					pts.append(Vector3(-s * p.x, p.y, z))
+			var shape := ConvexPolygonShape3D.new()
+			shape.points = pts
+			var piece := CollisionShape3D.new()
+			piece.name = "WindowNotch%d" % index
+			piece.shape = shape
+			piece.position = at
+			panel.add_child(piece)
+			index += 1
+			k = last
+		first += steps + 1
+
+
+## Sweep of the fillet arc at a corner with unit edge directions u and v.
+static func _arc_sweep(c: Vector2, u: Vector2, v: Vector2, half_angle: float) -> float:
+	var centre := c + (u + v).normalized() * (_LeafBuild.WINDOW_ROUND / sin(half_angle))
+	var t1 := c + u * (_LeafBuild.WINDOW_ROUND / tan(half_angle))
+	var t2 := c + v * (_LeafBuild.WINDOW_ROUND / tan(half_angle))
+	return absf(angle_difference((t1 - centre).angle(), (t2 - centre).angle()))
 
 
 ## The fixed blocker follows the same numbers: leaf halves, pillar fills and the header fill.

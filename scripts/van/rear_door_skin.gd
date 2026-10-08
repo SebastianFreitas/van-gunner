@@ -8,11 +8,19 @@ const _SKELETON_PATH := "res://scripts/van/rear_door_skeleton.gd"
 const PLATE_T := 0.02
 ## The street face stands back from the leaf's nominal plane so seals and the hull skin never share it.
 const STREET_SETBACK := 0.04
-## Outer corner radii: the top corner on the hinge side rolls like the portal's, the rest 9 cm.
+## Outer corner radii: the top corner on the hinge side rolls like the portal's, the rest 18 cm.
 const CORNER_TOP := preload("res://scripts/van/rear_door_flange.gd").RADIUS_TOP
-const CORNER := 0.09
+const CORNER := 0.18
 ## Height of the rolled window lip over the street face.
 const WINDOW_LIP_H := 0.03
+## Face tags the leaf shader reads from vertex COLOR.r (tag / 8): it never guesses a face from its
+## normal or depth, so sloped relief keeps its meaning.
+const TAG_STREET := 0
+const TAG_CABIN := 1
+const TAG_EDGE := 2
+const TAG_CREST := 3
+const TAG_VALLEY := 4
+const TAG_CAVITY := 5
 
 
 ## Builds the left leaf. `window` is the window outline around `window_c`.
@@ -27,17 +35,26 @@ static func build(x_max: float, y_lo: float, y_hi: float, z_cab: float, z_street
 		win.append(p + window_c)
 	var outline := leaf_outline(rect)
 	for poly in _clip(_pieces(rect, [win]), outline):
+		tag(st, TAG_STREET)
 		_poly(st, poly, z_street, Vector3.BACK)
+		tag(st, TAG_CAVITY)
 		_poly(st, poly, z_plate_back, Vector3.FORWARD)
+	tag(st, TAG_EDGE)
 	_walls(st, outline, z_cab, z_street, false)
-	# The window hole is a tunnel through the whole slab.
-	_walls(st, win, z_cab, z_street, true)
 	var skeleton := load(_SKELETON_PATH)
+	# The window hole is a tunnel through the slab, from the recessed panel level.
+	_walls(st, win, z_cab + skeleton.PANEL_DROP, z_street, true)
 	skeleton.build(st, rect, win, z_cab, z_plate_back)
 	# The street edge of the window is rolled like the skeleton's holes: a pressed lip standing
 	# proud of the plate (under the dark WindowLip, whose face is 1.5 cm proud).
 	skeleton._flange(st, win, z_street, z_street, z_street + WINDOW_LIP_H)
+	preload("res://scripts/van/rear_door_swage.gd").build(st, rect, win, z_street)
 	return st.commit()
+
+
+## Marks every vertex added after this call with face tag `t` (SurfaceTool keeps the colour).
+static func tag(st: SurfaceTool, t: int) -> void:
+	st.set_color(Color(float(t) / 8.0, 0.0, 0.0, 1.0))
 
 
 ## The leaf's outline, counter-clockwise: rounded corners, the larger one top-left (hinge side).

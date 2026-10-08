@@ -12550,13 +12550,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftBottom Coll
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.685, 0.535, 6.59)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.685, 0.84, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftBottom:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(3.35, 1.07, 0.34)}
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftBottom:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(3.35, 1.68, 0.34)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftFill0 CollisionShape3D
@@ -12640,7 +12640,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftLeftRail Co
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.225, 1.775, 6.58)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.225, 2.4, 6.58)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -12658,7 +12658,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftRightRail C
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.125, 1.775, 6.58)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.125, 2.4, 6.58)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -12676,13 +12676,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftTop Collisi
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.685, 2.79, 6.59)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.685, 3.36, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftTop:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(3.35, 0.62, 0.34)}
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/LeftTop:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(3.35, 0.48, 0.34)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightBottom CollisionShape3D
@@ -12694,7 +12694,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightBottom Col
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.685, 0.535, 6.58)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.685, 0.84, 6.58)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -12784,7 +12784,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightLeftRail C
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, 1.775, 6.58)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, 2.4, 6.58)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -12802,7 +12802,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightRightRail 
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.225, 1.775, 6.58)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.225, 2.4, 6.58)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -12820,7 +12820,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/RightTop Collis
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.685, 2.79, 6.58)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.685, 3.36, 6.58)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -12838,13 +12838,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/TopFill Collisi
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.675, 6.59)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.925, 6.59)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/TopFill:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(4.9, 1.15, 0.32)}
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/Blocker/TopFill:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(4.9, 0.65, 0.32)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge Node3D
@@ -12871,7 +12871,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/BreakableGlas
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.225, -0.06)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.85, -0.06)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13095,13 +13095,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Bott
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.015, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.71, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Bottom:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(3.35, 1.07, 0.16)}
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Bottom:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(3.35, 1.68, 0.16)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/LeftRail CollisionShape3D
@@ -13113,7 +13113,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Left
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.54, 0.225, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.54, 0.85, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13131,7 +13131,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Righ
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.56, 0.225, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.56, 0.85, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13149,13 +13149,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Top 
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.24, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.81, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Top:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(3.35, 0.62, 0.16)}
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Top:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(3.35, 0.48, 0.16)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/IronCross Node3D script=res://scripts/van/iron_cross.gd
@@ -13167,7 +13167,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/IronCross Nod
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.225, 0.04)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.85, 0.04)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13176,7 +13176,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/IronCross Nod
   end_style=1
   frame_half=Vector2(1.04, 0.825)
   clear_half=Vector2(0.97, 0.75)
-  skin_z=0.05
+  skin_z=0.065
   skin_reach=Vector2(1.12, 0.9)
   mount_z=0.05
   standoff=0.05
@@ -13277,7 +13277,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Panel/WindowC
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, 0.225, 0.14)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, 0.85, 0.14)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13324,7 +13324,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/WindowFrame C
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.225, -0.015)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.85, -0.015)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13459,7 +13459,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/WindowGlass M
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.225, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.81, 0.85, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13511,7 +13511,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/BreakableGla
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.225, -0.06)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.85, -0.06)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13735,7 +13735,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Bot
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.015, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.71, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13753,7 +13753,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Lef
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56, 0.225, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56, 0.85, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13771,7 +13771,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Rig
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.54, 0.225, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.54, 0.85, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13789,7 +13789,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Top
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.24, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.81, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13807,7 +13807,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/IronCross No
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.225, 0.04)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.85, 0.04)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13816,7 +13816,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/IronCross No
   end_style=1
   frame_half=Vector2(1.04, 0.825)
   clear_half=Vector2(0.97, 0.75)
-  skin_z=0.05
+  skin_z=0.065
   skin_reach=Vector2(1.12, 0.9)
   mount_z=0.05
   standoff=0.05
@@ -13917,7 +13917,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Panel/Window
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.125, 0.225, 0.14)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.125, 0.85, 0.14)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -13964,7 +13964,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/WindowFrame 
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.225, -0.015)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.85, -0.015)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -14099,7 +14099,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/WindowGlass 
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.225, 0)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.81, 0.85, 0)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false

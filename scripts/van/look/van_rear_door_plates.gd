@@ -17,9 +17,11 @@ const MARGIN := 0.03
 const SEAM_X := VanInteriorSize.REAR_DOOR_HALF - 0.05
 const HINGE_X := 0.04
 const _WINDOW_HALF_W := 1.095
-const WINDOW := Rect2(_LeafBuild.WINDOW_X - _WINDOW_HALF_W, -0.65, 2.19, 1.75)
+## Window centre in hinge-local y (the hinges sit 1.55 m above the world origin of the leaf).
+const _WINDOW_Y := VanOpenings.REAR_WINDOW_Y - 1.55
+const WINDOW := Rect2(_LeafBuild.WINDOW_X - _WINDOW_HALF_W, _WINDOW_Y - 0.875, 2.19, 1.75)
 const LOWER_ZONE := Rect2(0.40, -1.48, SEAM_X - 0.29 - 0.40, 0.78)
-const UPPER_ZONE := Rect2(0.40, 1.14, SEAM_X - 0.24 - 0.40, 0.22)
+const UPPER_ZONE := Rect2(0.40, _WINDOW_Y + 0.915, SEAM_X - 0.24 - 0.40, 0.22)
 const PALETTE: Array[Color] = [
 	Color(0.10, 0.11, 0.095), Color(0.085, 0.07, 0.055),
 	Color(0.12, 0.06, 0.045), Color(0.22, 0.22, 0.21),
