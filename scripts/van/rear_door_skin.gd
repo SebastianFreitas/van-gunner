@@ -8,9 +8,9 @@ const _SKELETON_PATH := "res://scripts/van/rear_door_skeleton.gd"
 const PLATE_T := 0.02
 ## The street face stands back from the leaf's nominal plane so seals and the hull skin never share it.
 const STREET_SETBACK := 0.04
-## Outer corner radii: the top corner on the hinge side rolls like the portal's, the rest barely.
+## Outer corner radii: the top corner on the hinge side rolls like the portal's, the rest 9 cm.
 const CORNER_TOP := preload("res://scripts/van/rear_door_flange.gd").RADIUS_TOP
-const CORNER := 0.05
+const CORNER := 0.09
 ## Height of the rolled window lip over the street face.
 const WINDOW_LIP_H := 0.03
 
@@ -51,8 +51,8 @@ static func leaf_outline(r: Rect2) -> PackedVector2Array:
 		var sx := 1.0 if at.x == r.position.x else -1.0
 		var sy := 1.0 if at.y == r.position.y else -1.0
 		var mid := at + Vector2(sx * rad, sy * rad)
-		for i in 6:
-			var a: float = float(c[2]) + PI * 0.5 * float(i) / 5.0
+		for i in 12:
+			var a: float = float(c[2]) + PI * 0.5 * float(i) / 11.0
 			pts.append(mid + Vector2(cos(a), sin(a)) * rad)
 	return pts
 

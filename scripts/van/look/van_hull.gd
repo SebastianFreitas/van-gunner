@@ -175,6 +175,8 @@ func _upper_outline() -> PackedVector2Array:
 func _build_rear(walls: VanSideWall) -> void:
 	var z := ROOF_Z_MAX
 	var y_join := VanInteriorSize.REAR_DOOR_TOP - 0.02
+	var r_open: float = preload("res://scripts/van/rear_door_flange.gd").RADIUS_TOP
+	var y_side := y_join - r_open
 	var x_join := VanInteriorSize.REAR_DOOR_HALF - 0.04
 	var x_bottom := x_join
 	var x_bottom_out := _profile.outer_x_at(0.0)
@@ -199,8 +201,8 @@ func _build_rear(walls: VanSideWall) -> void:
 			var f0 := float(i) / float(steps)
 			var f1 := float(i + 1) / float(steps)
 			_rear_quad(st,
-					Vector3(side * x_join, lerpf(0.0, y_join, f0), z),
-					Vector3(side * x_join, lerpf(0.0, y_join, f1), z),
+					Vector3(side * x_join, lerpf(0.0, y_side, f0), z),
+					Vector3(side * x_join, lerpf(0.0, y_side, f1), z),
 					_rear_side_point(walls, side, lerpf(-0.25, walls.wall_height, f0), z),
 					_rear_side_point(walls, side, lerpf(-0.25, walls.wall_height, f1), z))
 
@@ -212,33 +214,51 @@ func _build_rear(walls: VanSideWall) -> void:
 		_rear_quad(st, Vector3(xi, 0.02, z_deck), Vector3(xo, 0.02, z_deck),
 				Vector3(xi, -0.28, z_deck), Vector3(xo, -0.28, z_deck))
 
-	# Top, the opening's flat top edge to the upper outline (arc and crown), same fractions across.
+	# Top: the opening's rounded top (arcs concentric with the leaves' big corners, then the flat)
+	# to the upper outline, same fractions along both.
 	var outline := _upper_outline()
-	var top_steps := outline.size() - 1
+	var open := _rear_open_top(x_join, y_side, r_open)
+	var top_steps := open.size() - 1
 	for i in range(top_steps):
-		var f0 := float(i) / float(top_steps)
-		var f1 := float(i + 1) / float(top_steps)
-		_rear_quad(st,
-				Vector3(lerpf(x_join, -x_join, f0), y_join, z),
-				Vector3(lerpf(x_join, -x_join, f1), y_join, z),
-				Vector3(outline[i].x, outline[i].y, z),
-				Vector3(outline[i + 1].x, outline[i + 1].y, z))
+		var o0 := _outline_at(outline, float(i) / top_steps)
+		var o1 := _outline_at(outline, float(i + 1) / top_steps)
+		_rear_quad(st, Vector3(open[i].x, open[i].y, z), Vector3(open[i + 1].x, open[i + 1].y, z),
+				Vector3(o0.x, o0.y, z), Vector3(o1.x, o1.y, z))
 
 	# Reveal along the sides and top, from the ring's inner edge back to the liner's end.
 	var z_back: float = VanInteriorSize.REAR_Z
 	for side: float in [-1.0, 1.0]:
 		for i in range(steps):
 			_rear_reveal_quad(st,
-					Vector3(side * x_join, lerpf(0.0, y_join, float(i) / steps), z),
-					Vector3(side * x_join, lerpf(0.0, y_join, float(i + 1) / steps), z), z_back)
+					Vector3(side * x_join, lerpf(0.0, y_side, float(i) / steps), z),
+					Vector3(side * x_join, lerpf(0.0, y_side, float(i + 1) / steps), z), z_back)
 	for i in range(top_steps):
-		_rear_reveal_quad(st,
-				Vector3(lerpf(-x_join, x_join, float(i) / top_steps), y_join, z),
-				Vector3(lerpf(-x_join, x_join, float(i + 1) / top_steps), y_join, z), z_back)
+		_rear_reveal_quad(st, Vector3(open[i].x, open[i].y, z),
+				Vector3(open[i + 1].x, open[i + 1].y, z), z_back)
 
 	st.generate_normals()
 	# No tangents: the exterior shader projects in model space and these meshes carry no UVs.
 	_add_mesh("RearSkin", st.commit())
+
+
+## The opening's top edge from the +x side to the -x side: a quarter arc of radius `r` out of
+## each side line (ending at `y_side`), joined by the flat top.
+func _rear_open_top(x_join: float, y_side: float, r: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for k in range(13):
+		var a := PI * 0.5 * float(k) / 12.0
+		pts.append(Vector2(x_join - r + r * cos(a), y_side + r * sin(a)))
+	for k in range(13):
+		var a2 := PI * 0.5 + PI * 0.5 * float(k) / 12.0
+		pts.append(Vector2(-x_join + r + r * cos(a2), y_side + r * sin(a2)))
+	return pts
+
+
+## The point at fraction `f` along `outline`'s vertex list (linear between vertices).
+func _outline_at(outline: PackedVector2Array, f: float) -> Vector2:
+	var x := f * float(outline.size() - 1)
+	var i := mini(int(x), outline.size() - 2)
+	return outline[i].lerp(outline[i + 1], x - float(i))
 
 
 ## A point on the rear ring's outer edge: the outer skin face at height `y`.

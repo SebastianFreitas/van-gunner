@@ -4,7 +4,7 @@ extends RefCounted
 ## behind the leaves round the opening off.
 
 ## Opening corner radii: the top clearly round, the bottom only slightly.
-const RADIUS_TOP := 0.3
+const RADIUS_TOP := 0.375
 const RADIUS_BOTTOM := 0.12
 ## The band runs from this far outside the opening edge (lip) to this far (wall side).
 const LIP_OFFSET := 0.04
@@ -23,7 +23,7 @@ const ARC_LIFT := 0.012
 const PLATE_DROP := 0.05
 const ROLL_R := 0.025
 const ROLL_SIDES := 6
-const ARC_STEPS := 8
+const ARC_STEPS := 12
 ## Corner plate depth offsets from the leaf's hinge plane, clear of the leaf and of the lips.
 const PLATE_Z0 := -0.29
 const PLATE_Z1 := -0.245

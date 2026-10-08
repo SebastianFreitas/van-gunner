@@ -13,15 +13,16 @@ const CENTER_GAP := 0.012
 const Y_MIN := 0.02
 ## Window centre distance from the hinge.
 const WINDOW_X := VanInteriorSize.REAR_WINDOW_X
+## Window corner cut-back (about the round radius) and curve points per corner.
+const WINDOW_ROUND := 0.09
+const WINDOW_ROUND_STEPS := 6
 ## Window outline (XY offsets from window center): a rounded rectangle whose lower corner toward
-## the centre seam is cut off at an angle (reference image 1). Same bounding size as before, so the
-## bars still cover it.
-static var WINDOW_HOLE: PackedVector2Array = PackedVector2Array([
-	Vector2(-0.79, -0.775), Vector2(-0.92, -0.7), Vector2(-0.99, -0.575),
-	Vector2(-0.99, 0.575), Vector2(-0.92, 0.7), Vector2(-0.79, 0.775),
-	Vector2(0.79, 0.775), Vector2(0.92, 0.7), Vector2(0.99, 0.575),
-	Vector2(0.99, -0.30), Vector2(0.55, -0.775),
-])
+## the centre seam is cut off along a long diagonal with rounded ends (reference image 1). Same
+## bounding size as before, so the bars still cover it.
+static var WINDOW_HOLE: PackedVector2Array = _rounded_window()
+## The window's sharp corners before rounding (the last two are the cut diagonal's ends).
+const WINDOW_CORNERS: Array[Vector2] = [Vector2(-0.99, -0.775), Vector2(-0.99, 0.775),
+		Vector2(0.99, 0.775), Vector2(0.99, -0.30), Vector2(0.55, -0.775)]
 ## Astragal: a trim strip on the left leaf's cabin face covering the 2.4 cm centre seam, 10 cm wide
 ## (vangapfix D24). The lift keeps its street face 1.1 cm clear of the handle mounts (D28).
 const ASTRAGAL_HALF_W := 0.05
@@ -39,6 +40,21 @@ static func build(_doors: Node3D, left: Node3D, right: Node3D) -> void:
 	_WindowLip.build(left, left, false)
 	_WindowLip.build(left, right, true)
 	_add_astragal(left)
+
+
+## The window's sharp corners, each cut back WINDOW_ROUND along both edges and joined by a
+## quadratic curve (corner as control point), so every corner reads as a soft round.
+static func _rounded_window() -> PackedVector2Array:
+	var corners := WINDOW_CORNERS
+	var pts := PackedVector2Array()
+	for i in corners.size():
+		var c: Vector2 = corners[i]
+		var a: Vector2 = c + (corners[(i + corners.size() - 1) % corners.size()] - c).normalized() * WINDOW_ROUND
+		var b: Vector2 = c + (corners[(i + 1) % corners.size()] - c).normalized() * WINDOW_ROUND
+		for k in WINDOW_ROUND_STEPS + 1:
+			var t := float(k) / float(WINDOW_ROUND_STEPS)
+			pts.append(a.lerp(c, t).lerp(c.lerp(b, t), t))
+	return pts
 
 
 static func _build_left_leaf_mesh(left: Node3D) -> ArrayMesh:

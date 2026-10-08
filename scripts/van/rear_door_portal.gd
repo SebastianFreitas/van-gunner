@@ -273,10 +273,10 @@ static func _window_collision(hinge: Node3D, panel: Node3D, s: float) -> void:
 	var glass_shape := ConvexPolygonShape3D.new()
 	glass_shape.points = pts
 	(glass.get_node("Collision") as CollisionShape3D).shape = glass_shape
-	# The cut corner is the triangle between the bounding box corner and the chamfer's ends.
+	# The cut corner is the triangle between the bounding box corner and the chamfer's sharp ends.
+	var cut := _LeafBuild.WINDOW_CORNERS
 	var corner := PackedVector3Array()
-	for p: Vector2 in [hole[hole.size() - 1], hole[hole.size() - 2], Vector2(hole[hole.size() - 2].x,
-			hole[hole.size() - 1].y)]:
+	for p: Vector2 in [cut[3], cut[4], Vector2(cut[3].x, cut[4].y)]:
 		for z: float in [_LeafBuild.CABIN_Z, _LeafBuild.STREET_HALF]:
 			corner.append(Vector3(-s * p.x, p.y, z))
 	var shape := ConvexPolygonShape3D.new()
