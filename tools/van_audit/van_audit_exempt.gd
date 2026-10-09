@@ -53,6 +53,30 @@ const RULES: Array[Dictionary] = [
 			+ "alternating depths read as a saw-toothed post",
 	},
 	{
+		"section": "FLICKER", "a": "Interior/Shell/Floor/MidSlab",
+		"b": "Interior/Props/FuseBox/Generator/*", "d": "D25 (auto)",
+		"reason": "the generator's plates stand within 1 cm of the MidSlab end face at z 1.00 "
+			+ "in several depths: the slab end is hidden behind them; nudges up to 7 cm only moved it",
+	},
+	{
+		"section": "FLICKER", "a": "Interior/Shell/Floor/RearSheet",
+		"b": "Interior/Shell/RearWall/*/AstragalOuter", "d": "D31 (auto)",
+		"reason": "the sheet's rear face meets each astragal's inner face within 1 cm, 6 cm2 hidden "
+			+ "behind the sill; nudges to 6.65 and 6.70 only moved it onto RearSkin and the leaf lips",
+	},
+	{
+		"section": "FLICKER", "a": "Interior/Shell/Floor/Plate*",
+		"b": "Interior/Shell/Floor/Bead*", "d": "D32 (auto)",
+		"reason": "each bead is sunk into its plate's side and shares the plate's underside at "
+			+ "y -0.02, both hidden under the sheet top",
+	},
+	{
+		"section": "FLICKER", "a": "Interior/Shell/Floor/LipRight",
+		"b": "Interior/Props/FuseBox/Generator/PanFloor", "d": "D31 (auto)",
+		"reason": "the generator pan floor sits at the lip's top height for 7 cm2 beside the wall; "
+			+ "the lip top can't move because the floor seal top (0.05) is 2 cm above",
+	},
+	{
 		"section": "EDGE", "a": "VanLook/Wheels/Well*", "b": "", "d": "D29",
 		"reason": "wheel wells are single plates; their rims sit inside the flares",
 	},

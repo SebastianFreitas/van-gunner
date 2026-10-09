@@ -33,20 +33,6 @@ const _REAR_Z := VanInteriorSize.REAR_Z
 const _VAN_SIDE_FRONT := Vector3(_SIDE_X, 3.0, _FRONT_Z - 5.3)
 const _VAN_SIDE_REAR := Vector3(_SIDE_X, 3.0, _REAR_Z + 3.42)
 const _VAN_LOW_FRONT := Vector3(0.0, 1.0, _FRONT_Z - 8.3)
-## Lit audit spots (debug floodlight on): three-quarters, straight on, a window close-up
-## and the roof, so every face of the exterior is legible.
-const _VAN_LIT_SPOTS: Array[Array] = [
-	["van-lit-side-front", _VAN_SIDE_FRONT, _VAN_TARGET],
-	["van-lit-side-rear", _VAN_SIDE_REAR, _VAN_TARGET],
-	["van-lit-outside", Vector3(0.0, 9.0, _FRONT_Z - 3.3), _VAN_TARGET],
-	["van-lit-quarter-driver", Vector3(-_SIDE_X, 2.5, _FRONT_Z - 5.3), _VAN_TARGET],
-	["van-lit-quarter-passenger", Vector3(_SIDE_X, 2.5, _FRONT_Z - 5.3), _VAN_TARGET],
-	["van-lit-front", Vector3(0.0, 1.2, _FRONT_Z - 7.3), Vector3(0.0, 1.2, 0.0)],
-	["van-lit-rear", Vector3(0.0, 1.5, _REAR_Z + 7.32), Vector3(0.0, 1.5, 0.0)],
-	["van-lit-window", Vector3(_SIDE_X, 1.9, -1.5),
-			Vector3(VanInteriorSize.BOTTOM_HALF + 0.21, 1.9, -1.5)],
-	["van-lit-roof", Vector3(0.0, 12.0, 0.5), Vector3(0.0, 3.0, 0.0)],
-]
 ## Interior audit spots: half the floor width (BOTTOM_HALF less the 3 cm wall lining) across
 ## from the wall they face, front wall at FRONT_Z, ceiling edge at CEILING_EDGE.
 const _VAN_WALL_X := VanInteriorSize.BOTTOM_HALF - 0.03
@@ -169,18 +155,14 @@ func van_views(shot_name: String) -> void:
 	await _save_van_view(rig, _VAN_SIDE_FRONT, shot_name + "-van-side-front")
 	await _save_van_view(rig, _VAN_SIDE_REAR, shot_name + "-van-side-rear")
 	await _save_van_view(rig, _VAN_LOW_FRONT, shot_name + "-van-low-front")
-	await _save_van_view(
-		rig, _VAN_FRONT_WALL, shot_name + "-front-wall", _VAN_FRONT_WALL_TARGET
-	)
-	await _save_van_view(
-		rig, _VAN_DRIVER_WALL, shot_name + "-driver-wall", _VAN_DRIVER_WALL_TARGET
-	)
-	await _save_van_view(
-		rig, _VAN_PASSENGER_WALL, shot_name + "-passenger-wall", _VAN_PASSENGER_WALL_TARGET
-	)
-	await _save_van_view(
-		rig, _VAN_CEILING_FRONT, shot_name + "-ceiling-front", _VAN_CEILING_FRONT_TARGET
-	)
+	await _save_van_view(rig, _VAN_FRONT_WALL, shot_name + "-front-wall",
+			_VAN_FRONT_WALL_TARGET)
+	await _save_van_view(rig, _VAN_DRIVER_WALL, shot_name + "-driver-wall",
+			_VAN_DRIVER_WALL_TARGET)
+	await _save_van_view(rig, _VAN_PASSENGER_WALL, shot_name + "-passenger-wall",
+			_VAN_PASSENGER_WALL_TARGET)
+	await _save_van_view(rig, _VAN_CEILING_FRONT, shot_name + "-ceiling-front",
+			_VAN_CEILING_FRONT_TARGET)
 	if van_seeds > 0:
 		var look := get_tree().get_first_node_in_group(VanLook.GROUP) as VanLook
 		if look != null:
@@ -192,6 +174,8 @@ func van_views(shot_name: String) -> void:
 					rig, _VAN_SIDE_FRONT, "%s-van-seed-%d" % [shot_name, seed_value]
 				)
 			look.rebuild(original)
+	for view in _CloseupViews.floor_views(rig):
+		await _save_van_view(rig, view["from"], view["label"], view["target"], "f")
 	if previous != null:
 		previous.make_current()
 	for layer in hidden:
@@ -207,7 +191,7 @@ func van_views_lit(shot_name: String) -> void:
 	var hidden := _hide_ui()
 	var previous := get_viewport().get_camera_3d()
 	print("SMOKE: " + DebugCommands.run("floodlight on"))
-	for spot in _VAN_LIT_SPOTS:
+	for spot in _CloseupViews.lit_spots():
 		await _save_van_view(rig, spot[1], "%s-%s" % [shot_name, spot[0]], spot[2])
 	print("SMOKE: " + DebugCommands.run("floodlight off"))
 	if previous != null:

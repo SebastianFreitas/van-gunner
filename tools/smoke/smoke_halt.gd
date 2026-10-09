@@ -90,6 +90,7 @@ func halt_round_trip() -> bool:
 				and not player.test_move(player.global_transform, Vector3.ZERO)
 		if ok:
 			driver._log("halt mantle: rise ok")
+			ok = await _walk_floor(player)
 	if ok:
 		ok = van.request_driver_boost() and not travel.is_halted() and travel.travel_speed > 0.0 \
 				and not containment.is_rear_exit_allowed()
@@ -98,6 +99,62 @@ func halt_round_trip() -> bool:
 		return false
 	driver._log("halt round trip ok")
 	return true
+
+
+## Walks the halted van's floor with real input: rear floor, up the doorway stairs onto the mid
+## slab, down into the step well, and back. Feet y is position.y; no leg may mantle.
+func _walk_floor(player: FpsPlayer) -> bool:
+	var tree := driver.get_tree()
+	var mantles := [0]
+	var on_mantle := func() -> void: mantles[0] += 1
+	player.mantle_started.connect(on_mantle)
+	player.position = Vector3(-2.6, -0.9, 3.0)
+	player.velocity = Vector3.ZERO
+	await tree.physics_frame
+	await tree.physics_frame
+	var legs := [["stairs up", Vector2(-2.6, 0.3)], ["well", Vector2(-2.9, -3.0)],
+			["slab back", Vector2(-2.6, 0.3)], ["stairs down", Vector2(-2.6, 3.0)]]
+	var slab_max := -10.0
+	var well_y := 10.0
+	var ok := true
+	for leg: Array in legs:
+		var label: String = leg[0]
+		var target: Vector2 = leg[1]
+		var arrived := false
+		Input.action_press(&"move_forward")
+		for _i in 360:
+			var d := target - Vector2(player.position.x, player.position.z)
+			if d.length() < 0.2:
+				arrived = true
+				break
+			player.rotation.y = atan2(-d.x, -d.y)
+			await tree.physics_frame
+			if label == "stairs up" or label == "slab back":
+				slab_max = maxf(slab_max, player.position.y)
+		Input.action_release(&"move_forward")
+		for _i in 15:
+			await tree.physics_frame
+		var feet := player.position.y
+		if label == "well":
+			well_y = feet
+		if not arrived:
+			driver._fail("walk floor %s: timeout at %s" % [label, player.position])
+			ok = false
+		elif label == "stairs up" and feet < 0.28 or label == "well" and feet > 0.02 \
+				or label == "stairs down" and feet > 0.02:
+			driver._fail("walk floor %s: feet y %.3f at %s" % [label, feet, player.position])
+			ok = false
+		if not ok:
+			break
+	player.mantle_started.disconnect(on_mantle)
+	if ok and mantles[0] != 0:
+		driver._fail("walk floor: %d mantles" % mantles[0])
+		ok = false
+	if ok and slab_max < 0.28:
+		driver._fail("walk floor: slab max y %.3f" % slab_max)
+		ok = false
+	driver._log("walk floor: slab max y %.3f, well y %.3f, mantles %d" % [slab_max, well_y, mantles[0]])
+	return ok
 
 
 ## Puts the player outside at `from` (VanRig-local) facing `yaw`, walks forward with real input,

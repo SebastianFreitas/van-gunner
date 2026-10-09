@@ -44,7 +44,7 @@ static func _side(side: float, z: float, out_margin: float) -> Array[Transform3D
 	var outer_x := side * (VanInteriorSize.BOTTOM_HALF + VanOpenings.SKIN + out_margin)
 	var inner_x := side * (VanInteriorSize.BOTTOM_HALF - SIDE_IN)
 	return [Transform3D(basis, Vector3(outer_x, MARKER_Y, z)),
-			Transform3D(basis, Vector3(inner_x, MARKER_Y, z))]
+			Transform3D(basis, Vector3(inner_x, MARKER_Y + VanFloorHeight.at(inner_x, z), z))]
 
 
 static func _rear(x: float, y: float, out_z: float, in_z: float) -> Array[Transform3D]:

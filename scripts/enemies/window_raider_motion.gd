@@ -93,6 +93,14 @@ func keep_feet_on_road() -> void:
 		raider.position = _push_out(raider.position)
 
 
+## Inside the cabin the nav flattens y, so stand the raider on the raised floor every step.
+func keep_feet_on_floor() -> void:
+	var phase: int = raider.assault_phase
+	if phase == WindowRaider.AssaultPhase.ATTACKING_BENCH \
+			or phase == WindowRaider.AssaultPhase.ATTACKING_PLAYER:
+		raider.position.y = FEET_DROP +VanFloorHeight.at(raider.position.x, raider.position.z)
+
+
 ## Where the loper may stand for its phase: outside it stays off the van's body, door leaves
 ## and wheels, inside it stays off the cabin walls. The window loper only floats at its
 ## marker in BREACHING, so only road walkers are pushed out; every non-boss raider is clamped inside.
@@ -152,6 +160,7 @@ func physics_chase_target(delta: float) -> void:
 	if parent_3d == null:
 		raider._move_arrived = true
 		return
+	keep_feet_on_floor()
 	var target_local: Vector3 = raider._move_target_local
 	if raider._move_marker and is_instance_valid(raider._move_marker):
 		target_local = parent_3d.to_local(raider._move_marker.global_position)
@@ -176,6 +185,7 @@ func physics_chase_target(delta: float) -> void:
 			raider.position.y = target_local.y
 		else:
 			keep_feet_on_road()
+		keep_feet_on_floor()
 		if raider._move_marker and is_instance_valid(raider._move_marker):
 			raider.global_transform.basis = raider._move_marker.global_transform.basis
 		raider._move_arrived = true
@@ -188,6 +198,7 @@ func physics_chase_target(delta: float) -> void:
 	elif speed < 0.0:
 		# Fall behind along the approach axis (ready for van-boost distance gains).
 		raider.position -= direction * (-speed) * delta
+	keep_feet_on_floor()
 	if _walks_on_road():
 		if raider.assault_phase == WindowRaider.AssaultPhase.ENTERING:
 			var hop := smoothstep(0.0, 1.0, 1.0 - clampf(remaining / HOP_RUN, 0.0, 1.0))
@@ -202,6 +213,7 @@ func physics_chase_player(delta: float) -> void:
 	if player == null or parent_3d == null:
 		raider._move_arrived = true
 		return
+	keep_feet_on_floor()
 	var target_local := parent_3d.to_local(player.global_position)
 	target_local.y = raider.position.y
 	target_local = clear_point(target_local)
@@ -217,3 +229,4 @@ func physics_chase_player(delta: float) -> void:
 	var step := minf(speed * delta, remaining - raider._MELEE_RANGE + 0.02)
 	if remaining > 0.001:
 		raider.position += to_target / remaining * step
+		keep_feet_on_floor()

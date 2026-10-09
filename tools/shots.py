@@ -46,7 +46,9 @@ NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 # rolls and MachineMotion held still. The floor keeps a fully deterministic
 # view from flagging float jitter; views measured at 0 rely on it. Unknown
 # views (new views, `--van-seeds` views `v..-van-seed...`) fall back to
-# DEFAULT_TOLERANCE. Re-measure with `compare <a> <b> --raw` on two fresh
+# DEFAULT_TOLERANCE. f01..f05 measured 2026-10-09 (van-floor phase 8); 04-combat-front and
+# 08-elevator-stop-back, 10-rear-park-stop-front re-measured 2026-10-09 (their drift was noise between two captures).
+# Re-measure with `compare <a> <b> --raw` on two fresh
 # captures and double the result.
 TOLERANCE_FLOOR = 0.05
 DEFAULT_TOLERANCE = 1.0
@@ -54,15 +56,20 @@ TOLERANCE: dict[str, float] = {
 	"01-idle-front": 0.008,
 	"02-idle-back": 0.622,
 	"03-idle-outside": 0.0,
-	"04-combat-front": 0.634,
+	"04-combat-front": 3.694,
 	"05-combat-back": 4.272,
 	"06-combat-outside": 19.458,
 	"07-elevator-stop-front": 0.106,
-	"08-elevator-stop-back": 0.218,
+	"08-elevator-stop-back": 0.664,
 	"09-elevator-stop-outside": 0.136,
-	"10-rear-park-stop-front": 0.118,
+	"10-rear-park-stop-front": 0.572,
 	"11-rear-park-stop-back": 0.980,
 	"12-rear-park-stop-outside": 0.014,
+	"f01-floor-rear-low": 0.016,
+	"f02-floor-stairs": 0.004,
+	"f03-floor-mid-low": 0.036,
+	"f04-floor-rear-high": 0.008,
+	"f05-floor-plates-close": 0.012,
 	"v01-idle-van-side-front": 0.0,
 	"v02-idle-van-side-rear": 0.0,
 	"v03-idle-van-low-front": 0.0,

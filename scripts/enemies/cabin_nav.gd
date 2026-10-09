@@ -59,10 +59,12 @@ func _ready() -> void:
 func _place_markers() -> void:
 	var y := raider_height
 	var corner_x := VanInteriorSize.BOTTOM_HALF + VanOpenings.SKIN + CORNER_OUT
+	var passage_x := -(VanInteriorSize.BOTTOM_HALF - VanBulkhead.OPENING_WIDTH) + PASSAGE_INSET
+	var cabin_z := bulkhead_z - CABIN_STAGING_DZ
 	passage_marker.position = Vector3(
-			-(VanInteriorSize.BOTTOM_HALF - VanBulkhead.OPENING_WIDTH) + PASSAGE_INSET, y, bulkhead_z)
+			passage_x, y + VanFloorHeight.at(passage_x, bulkhead_z), bulkhead_z)
 	back_staging.position = Vector3(0.0, y, bulkhead_z + BACK_STAGING_DZ)
-	cabin_staging.position = Vector3(0.0, y, bulkhead_z - CABIN_STAGING_DZ)
+	cabin_staging.position = Vector3(0.0, y + VanFloorHeight.at(0.0, cabin_z), cabin_z)
 	rear_corner_left.position = Vector3(-corner_x, y, VanInteriorSize.REAR_Z + CORNER_OUT_Z)
 	rear_corner_right.position = Vector3(corner_x, y, VanInteriorSize.REAR_Z + CORNER_OUT_Z)
 
@@ -106,9 +108,7 @@ func staging_local(from_local: Vector3) -> Vector3:
 	var marker := back_staging if room_of(from_local) == Room.BACK else cabin_staging
 	if marker == null:
 		return from_local
-	var p := marker.position
-	p.y = from_local.y
-	return p
+	return marker.position
 
 
 func room_of(local: Vector3) -> Room:

@@ -202,8 +202,10 @@ static func gap_views(rig: Node3D) -> Array[Dictionary]:
 		var box: AABB = boxes[side]
 		var dc := box.get_center()
 		var d0 := box.position
+		# The raised mid slab (top y 0.30) fills the doors' span: stay 0.12 m above it.
+		var floor_y := maxf(d0.y - 0.01, 0.30)
 		result.append(_gap_view("gap-door-%s-in-threshold" % side,
-			Vector3(s * 0.8, d0.y - 0.01, dc.z), Vector3(dc.x, d0.y - 0.01, dc.z), "on", none))
+			Vector3(s * 0.8, floor_y + 0.12, dc.z), Vector3(dc.x, floor_y, dc.z), "on", none))
 	for side in sides:
 		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
 		var box: AABB = boxes[side]
@@ -274,6 +276,45 @@ static func gap_views(rig: Node3D) -> Array[Dictionary]:
 		result.append(_gap_view("gap-floor-%s" % side, Vector3(s * 0.8, 1.2, 3.0),
 			Vector3(s * profile.inner_x_at(0.0), 0.0, 3.0), "on", none))
 	return result
+
+
+## The five floor views (f01-...), van-local, shot in game light: rear low, the stairs, the
+## mid room low, the rear from high up and the welded plates close under the rear work lamp.
+static func floor_views(_rig: Node3D) -> Array[Dictionary]:
+	return [
+		{"label": "floor-rear-low", "from": Vector3(0.0, 0.6, 5.5),
+				"target": Vector3(-1.5, 0.3, 1.3)},
+		{"label": "floor-stairs", "from": Vector3(-2.5, 1.6, 2.6),
+				"target": Vector3(-2.5, 0.2, 1.1)},
+		{"label": "floor-mid-low", "from": Vector3(-3.0, 1.8, -0.7),
+				"target": Vector3(-2.5, 0.0, -3.5)},
+		{"label": "floor-rear-high", "from": Vector3(-0.2, 2.5, 6.6),
+				"target": Vector3(-1.9, 0.2, 2.6)},
+		{"label": "floor-plates-close", "from": Vector3(0.0, 3.0, 6.3),
+				"target": Vector3(0.0, 0.0, 4.3)},
+	]
+
+
+## Lit audit spots (debug floodlight on): [label, from, target] for three-quarters, straight on,
+## a window close-up and the roof, so every face of the exterior is legible. Rig-local, measured
+## from the shell's edges so a longer or narrower van moves them with it.
+static func lit_spots() -> Array[Array]:
+	var side_x := VanInteriorSize.BOTTOM_HALF + 3.61
+	var front_z := VanInteriorSize.FRONT_Z
+	var rear_z := VanInteriorSize.REAR_Z
+	var target := Vector3(0.0, 1.5, 0.0)
+	return [
+		["van-lit-side-front", Vector3(side_x, 3.0, front_z - 5.3), target],
+		["van-lit-side-rear", Vector3(side_x, 3.0, rear_z + 3.42), target],
+		["van-lit-outside", Vector3(0.0, 9.0, front_z - 3.3), target],
+		["van-lit-quarter-driver", Vector3(-side_x, 2.5, front_z - 5.3), target],
+		["van-lit-quarter-passenger", Vector3(side_x, 2.5, front_z - 5.3), target],
+		["van-lit-front", Vector3(0.0, 1.2, front_z - 7.3), Vector3(0.0, 1.2, 0.0)],
+		["van-lit-rear", Vector3(0.0, 1.5, rear_z + 7.32), Vector3(0.0, 1.5, 0.0)],
+		["van-lit-window", Vector3(side_x, 1.9, -1.5),
+				Vector3(VanInteriorSize.BOTTOM_HALF + 0.21, 1.9, -1.5)],
+		["van-lit-roof", Vector3(0.0, 12.0, 0.5), Vector3(0.0, 3.0, 0.0)],
+	]
 
 
 ## A camera 2.5 m from `point`, tilted 30 degrees off straight-on toward the van's front

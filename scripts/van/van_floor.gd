@@ -5,13 +5,29 @@ extends Node3D
 
 ## Height of flat floor decals above the deck: clears the geometry audit's 1 cm coplanar tolerance (D42).
 const DECAL_LIFT := 0.012
+## Decals on the raised mid slab sit at the rib top plus 1.5 cm.
+const MID_DECAL_LIFT := 0.335
+
+## Front end of the old y 0 slab: the raised MidSlab covers everything ahead of it.
+const DECK_Z0 := 0.90
+
+## Height of the back-room decals (z > 1.0): clears the 0.02 rib top and the 0.035 mat top.
+const BACK_DECAL_LIFT := 0.035
+## The sheet reaches 2 cm past the wall lip's outer face so the two side faces never coincide (audit FLICKER).
+const SHEET_OVERHANG := 0.02
+## Rib run on the rear sheet.
+const RIB_Z0 := 1.06
+const RIB_Z1 := 5.85
+## Host ribs are stamped pressings: length, gap between pressings, shortest piece kept.
+const RIB_STAMP_LEN := 0.50
+const RIB_STAMP_GAP := 0.12
+const RIB_STAMP_MIN := 0.12
 
 @export var span_x := VanInteriorSize.FLOOR_WIDTH
 @export var span_z := VanInteriorSize.FLOOR_LENGTH
 ## Z centre of the deck (the front end stays at the cab).
 @export var center_z := VanInteriorSize.CENTER_Z
 @export var deck_thickness := 0.27
-@export var floor_material: Material
 @export var rebuild_on_ready := true
 
 var _built := false
@@ -34,16 +50,27 @@ func _build() -> void:
 		return
 	_built = true
 
-	var deck_mat := floor_material if floor_material else _default_floor_material()
+	# The sheet is built in floor metres as an unscaled child, so the shader's origin stays 0 and
+	# the pattern lands where the old Deck's offset put it.
+	var sheet_mat := VanFloorSkin.material(VanFloorSkin.TINT_A, 2.0, 0.0)
+	var sheet := MeshInstance3D.new()
+	sheet.name = "RearSheet"
+	sheet.mesh = VanFloorSheet.build_sheet(-span_x * 0.5 - SHEET_OVERHANG,
+			span_x * 0.5 + SHEET_OVERHANG, DECK_Z0, center_z + span_z * 0.5, -deck_thickness, 0.0,
+			VanFloorPlates.pocket_polygons())
+	sheet.material_override = sheet_mat
+	sheet.layers = VanLighting.LAYER_VAN_INTERIOR
+	sheet.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	add_child(sheet)
+	_build_ribs(sheet_mat)
 
-	var deck := MeshInstance3D.new()
-	deck.name = "Deck"
-	deck.mesh = _build_deck_mesh()
-	deck.material_override = deck_mat
-	deck.layers = VanLighting.LAYER_VAN_INTERIOR
-	deck.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	deck.position = Vector3(0.0, -deck_thickness * 0.5, center_z)
-	add_child(deck)
+	_add_raised_part(&"MidSlab", VanFloorSlab.build_mid_slab(),
+			VanFloorSkin.material(VanFloorSkin.TINT_A, 1.0, 0.5))
+	VanFloorMid.add(self)
+	VanFloorPlates.add(self)
+	VanFloorPlates.add_mid(self)
+	VanFloorStairs.add(self)
+	VanFloorLamp.build(self)
 
 	_build_threshold_strips()
 	_build_rear_entry_ramp()
@@ -51,85 +78,67 @@ func _build() -> void:
 	_build_scatter_props()
 
 
-func _build_deck_mesh() -> ArrayMesh:
-	# Thin top slab with UVs in 0..1 mapped to meters via shader floor_size_m.
-	# Sides get dark procedural look from the same shader (acceptable for 25cm slab).
+## Adds `Ribs` (26 columns of short stamped ridges) and the two wall lips on the rear sheet.
+func _build_ribs(mat: Material) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-
-	var hx := span_x * 0.5
-	var hz := span_z * 0.5
-	var y0 := -deck_thickness * 0.5
-	var y1 := deck_thickness * 0.5
-
-	# Top face (y = y1), facing up. UV: u across X, v along Z.
-	_add_quad(st,
-		Vector3(-hx, y1, -hz), Vector2(0.0, 0.0),
-		Vector3(hx, y1, -hz), Vector2(1.0, 0.0),
-		Vector3(hx, y1, hz), Vector2(1.0, 1.0),
-		Vector3(-hx, y1, hz), Vector2(0.0, 1.0)
-	)
-	# Bottom face
-	_add_quad(st,
-		Vector3(-hx, y0, hz), Vector2(0.0, 1.0),
-		Vector3(hx, y0, hz), Vector2(1.0, 1.0),
-		Vector3(hx, y0, -hz), Vector2(1.0, 0.0),
-		Vector3(-hx, y0, -hz), Vector2(0.0, 0.0)
-	)
-	# +X side
-	_add_quad(st,
-		Vector3(hx, y0, -hz), Vector2(0.0, 0.0),
-		Vector3(hx, y0, hz), Vector2(1.0, 0.0),
-		Vector3(hx, y1, hz), Vector2(1.0, 1.0),
-		Vector3(hx, y1, -hz), Vector2(0.0, 1.0)
-	)
-	# -X side
-	_add_quad(st,
-		Vector3(-hx, y0, hz), Vector2(0.0, 0.0),
-		Vector3(-hx, y0, -hz), Vector2(1.0, 0.0),
-		Vector3(-hx, y1, -hz), Vector2(1.0, 1.0),
-		Vector3(-hx, y1, hz), Vector2(0.0, 1.0)
-	)
-	# +Z side (rear)
-	_add_quad(st,
-		Vector3(-hx, y0, hz), Vector2(0.0, 0.0),
-		Vector3(hx, y0, hz), Vector2(1.0, 0.0),
-		Vector3(hx, y1, hz), Vector2(1.0, 1.0),
-		Vector3(-hx, y1, hz), Vector2(0.0, 1.0)
-	)
-	# -Z side (front)
-	_add_quad(st,
-		Vector3(hx, y0, -hz), Vector2(0.0, 0.0),
-		Vector3(-hx, y0, -hz), Vector2(1.0, 0.0),
-		Vector3(-hx, y1, -hz), Vector2(1.0, 1.0),
-		Vector3(hx, y1, -hz), Vector2(0.0, 1.0)
-	)
-
-	st.generate_normals()
+	for side in [-1.0, 1.0]:
+		for k in 13:
+			var x: float = side * (0.125 + 0.25 * k)
+			var z0 := RIB_Z0
+			var z1 := RIB_Z1
+			# Left side: the stair treads and the opening post push the starts back.
+			if side < 0.0 and k >= 8:
+				z0 = 1.38
+			elif side < 0.0 and k == 7:
+				z0 = 1.10
+			if k <= 2:
+				z1 = 5.38
+			for seg in _rib_segments(x, z0, z1):
+				VanFloorSheet.add_rib(st, Vector2(x, seg.x), Vector2(x, seg.y), 0.0)
 	st.generate_tangents()
-	return st.commit()
+	var ribs := MeshInstance3D.new()
+	ribs.name = "Ribs"
+	ribs.mesh = st.commit()
+	ribs.material_override = mat
+	ribs.layers = VanLighting.LAYER_VAN_INTERIOR
+	ribs.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	add_child(ribs)
+	_add_raised_part(&"LipRight", VanFloorSheet.build_lip(1.0, 1.08, 5.85, 0.0), mat)
+	_add_raised_part(&"LipLeft", VanFloorSheet.build_lip(-1.0, 1.70, 5.85, 0.0), mat)
 
 
-func _add_quad(
-	st: SurfaceTool,
-	a: Vector3, uva: Vector2,
-	b: Vector3, uvb: Vector2,
-	c: Vector3, uvc: Vector2,
-	d: Vector3, uvd: Vector2
-) -> void:
-	st.set_uv(uva)
-	st.add_vertex(a)
-	st.set_uv(uvb)
-	st.add_vertex(b)
-	st.set_uv(uvc)
-	st.add_vertex(c)
+## The z ranges (x = start, y = end) of a rib at `x`: stamped 0.50 m pressings 0.12 m apart on one
+## grid from RIB_Z0 (so the gaps line up across the width), minus what the plates and pockets block.
+func _rib_segments(x: float, z0: float, z1: float) -> Array[Vector2]:
+	var runs: Array[Vector2] = []
+	var cursor := z0
+	for b in VanFloorPlates.rib_blocked(x):
+		if b.x > cursor and b.x < z1:
+			runs.append(Vector2(cursor, b.x))
+		cursor = maxf(cursor, b.y)
+	if z1 > cursor:
+		runs.append(Vector2(cursor, z1))
+	var segs: Array[Vector2] = []
+	for run in runs:
+		var cs := RIB_Z0
+		while cs < run.y:
+			var a := maxf(run.x, cs)
+			var b := minf(run.y, cs + RIB_STAMP_LEN)
+			if b - a >= RIB_STAMP_MIN:
+				segs.append(Vector2(a, b))
+			cs += RIB_STAMP_LEN + RIB_STAMP_GAP
+	return segs
 
-	st.set_uv(uva)
-	st.add_vertex(a)
-	st.set_uv(uvc)
-	st.add_vertex(c)
-	st.set_uv(uvd)
-	st.add_vertex(d)
+
+## Adds a raised floor mesh (slab or tread) as an unscaled child on the interior layer.
+func _add_raised_part(part_name: StringName, mesh: ArrayMesh, mat: Material) -> void:
+	var part := MeshInstance3D.new()
+	part.name = part_name
+	part.mesh = mesh
+	part.material_override = mat
+	part.layers = VanLighting.LAYER_VAN_INTERIOR
+	add_child(part)
 
 
 func _build_threshold_strips() -> void:
@@ -201,11 +210,11 @@ func _build_entrance_mats() -> void:
 		16.0
 	)
 	# Main rear entry mat — just inside the back doors.
-	_add_flat(
+	# A real box (y -0.02..0.035) so the rib tops never cut through it.
+	_add_box(
 		"RearEntryMat",
-		Vector2(1.55, 0.95),
-		Vector3(0.0, DECAL_LIFT, center_z + span_z * 0.5 - 0.85),
-		0.0,
+		Vector3(1.55, 0.055, 0.95),
+		Vector3(0.0, 0.0075, center_z + span_z * 0.5 - 0.85),
 		rear_mat
 	)
 
@@ -215,12 +224,12 @@ func _build_entrance_mats() -> void:
 		Color(0.045, 0.03, 0.02, 1.0),
 		12.0
 	)
-	_add_flat(
+	_add_box(
 		"LeftSideMat",
-		Vector2(0.72, 1.15),
-		Vector3(-1.55, DECAL_LIFT, -3.35),
-		8.0,
-		side_mat
+		Vector3(0.72, 0.055, 1.15),
+		Vector3(-1.55, 0.3075, -3.35),
+		side_mat,
+		8.0
 	)
 
 
@@ -233,12 +242,12 @@ func _build_scatter_props() -> void:
 	var tape := _mat_shader_or_standard(Color(0.55, 0.48, 0.22, 1.0), 0.55, 0.05, false)
 	var rag := _mat_shader_or_standard(Color(0.28, 0.22, 0.18, 1.0), 0.98, 0.0, true)
 
-	_add_flat("PaperReceipt", Vector2(0.18, 0.26), Vector3(-0.85, DECAL_LIFT, 1.55), 22.0, paper_a)
-	_add_flat("PaperNote", Vector2(0.22, 0.16), Vector3(0.55, DECAL_LIFT, -0.9), -14.0, paper_b)
-	_add_flat("PaperFolded", Vector2(0.14, 0.2), Vector3(-1.35, DECAL_LIFT, 2.6), 41.0, paper_c)
-	_add_flat("CardboardScrap", Vector2(0.55, 0.4), Vector3(0.95, DECAL_LIFT, 2.1), -28.0, cardboard)
-	_add_flat("DuctTapeStrip", Vector2(0.42, 0.045), Vector3(-0.2, DECAL_LIFT, -2.15), 7.0, tape)
-	_add_flat("RagScrap", Vector2(0.38, 0.28), Vector3(1.35, DECAL_LIFT, -1.75), 33.0, rag)
+	_add_flat("PaperReceipt", Vector2(0.18, 0.26), Vector3(-0.85, BACK_DECAL_LIFT, 1.55), 22.0, paper_a)
+	_add_flat("PaperNote", Vector2(0.22, 0.16), Vector3(0.55, MID_DECAL_LIFT, -0.9), -14.0, paper_b)
+	_add_flat("PaperFolded", Vector2(0.14, 0.2), Vector3(-1.35, BACK_DECAL_LIFT, 2.6), 41.0, paper_c)
+	_add_flat("CardboardScrap", Vector2(0.55, 0.4), Vector3(0.95, BACK_DECAL_LIFT, 2.1), -28.0, cardboard)
+	_add_flat("DuctTapeStrip", Vector2(0.42, 0.045), Vector3(-0.2, MID_DECAL_LIFT, -2.15), 7.0, tape)
+	_add_flat("RagScrap", Vector2(0.38, 0.28), Vector3(1.35, MID_DECAL_LIFT, -1.75), 33.0, rag)
 
 	# Thin oil-stain decals (dark translucent plates).
 	var oil := StandardMaterial3D.new()
@@ -247,8 +256,8 @@ func _build_scatter_props() -> void:
 	oil.roughness = 0.35
 	oil.metallic = 0.15
 	oil.cull_mode = BaseMaterial3D.CULL_DISABLED
-	_add_flat("OilStainA", Vector2(0.55, 0.32), Vector3(-1.7, DECAL_LIFT, 0.4), 18.0, oil)
-	_add_flat("OilStainB", Vector2(0.35, 0.5), Vector3(1.75, DECAL_LIFT, 3.2), -40.0, oil)
+	_add_flat("OilStainA", Vector2(0.55, 0.32), Vector3(-1.7, MID_DECAL_LIFT, 0.4), 18.0, oil)
+	_add_flat("OilStainB", Vector2(0.35, 0.5), Vector3(1.75, BACK_DECAL_LIFT, 3.2), -40.0, oil)
 
 
 func _add_flat(node_name: String, size: Vector2, pos: Vector3, yaw_deg: float, material: Material) -> void:
@@ -273,7 +282,8 @@ func _add_flat(node_name: String, size: Vector2, pos: Vector3, yaw_deg: float, m
 	add_child(mi)
 
 
-func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material) -> void:
+func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material,
+		yaw_deg: float = 0.0) -> void:
 	var box := BoxMesh.new()
 	box.size = size
 	var mi := MeshInstance3D.new()
@@ -281,26 +291,10 @@ func _add_box(node_name: String, size: Vector3, pos: Vector3, material: Material
 	mi.mesh = box
 	mi.material_override = material
 	mi.position = pos
+	mi.rotation_degrees = Vector3(0.0, yaw_deg, 0.0)
 	mi.layers = VanLighting.LAYER_VAN_INTERIOR
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(mi)
-
-
-func _default_floor_material() -> ShaderMaterial:
-	var shader := load("res://scenes/van/van_floor.gdshader") as Shader
-	var mat := ShaderMaterial.new()
-	mat.shader = shader
-	mat.set_shader_parameter("base_color", Color(0.11, 0.105, 0.095, 1.0))
-	mat.set_shader_parameter("rib_color", Color(0.055, 0.052, 0.048, 1.0))
-	mat.set_shader_parameter("wear_color", Color(0.18, 0.165, 0.14, 1.0))
-	mat.set_shader_parameter("stain_color", Color(0.035, 0.028, 0.02, 1.0))
-	mat.set_shader_parameter("rust_color", Color(0.22, 0.09, 0.04, 1.0))
-	mat.set_shader_parameter("floor_size_m", Vector2(span_x, span_z))
-	mat.set_shader_parameter("rib_spacing_m", 0.085)
-	mat.set_shader_parameter("panel_spacing_m", 1.55)
-	mat.set_shader_parameter("roughness_value", 0.88)
-	mat.set_shader_parameter("metallic_value", 0.22)
-	return mat
 
 
 func _rubber_mat(base: Color, groove: Color, groove_scale: float) -> ShaderMaterial:

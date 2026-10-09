@@ -110,6 +110,8 @@ and nothing intersects the bowed wall, a machine or the aisle. The game never
 leaves the van, so the exterior is seen only from the debug `ghost` flight
 and is not detailed further.
 
+- Van floor recipe: every floor mesh uses `scenes/van/van_floor_steel.gdshader` through `VanFloorSkin.material(tint, seed, paint)`, with per-vertex tags (crest, valley, edge, weld, cavity, checker) driving value, roughness and metal; four donor tints `TINT_A`..`TINT_D` keep no two patches alike; ribs, lips and plates are real geometry, never a shader bump.
+
 ## Street art (graffiti and posters)
 
 Generated pixel-art images on wall quads are the one bitmap exception on

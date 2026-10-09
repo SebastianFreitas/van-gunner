@@ -10,25 +10,10 @@
 [ext_resource type="Script" uid="uid://cdlgss0alwyyp" path="res://scripts/van/side_window_interact.gd" id="24"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_ceiling.tscn" id="25"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_floor.tscn" id="28"]
-[ext_resource type="Shader" uid="uid://6ibrc7csxrcw" path="res://scenes/van/van_floor.gdshader" id="29"]
 [ext_resource type="PackedScene" path="res://scenes/van/van_side_wall.tscn" id="30"]
 [ext_resource type="Shader" uid="uid://ct0ys8gil2dhm" path="res://scenes/van/van_ceiling.gdshader" id="32"]
 [ext_resource type="ShaderMaterial" uid="uid://ywmwwtaxixb4" path="res://scenes/van/van_wall_material.tres" id="46"]
 [ext_resource type="Script" path="res://scripts/van/van_shell_colliders.gd" id="shell_colliders"]
-
-[sub_resource type="ShaderMaterial" id="FloorMaterial"]
-render_priority = 0
-shader = ExtResource("29")
-shader_parameter/base_color = Color(0.11, 0.105, 0.095, 1)
-shader_parameter/rib_color = Color(0.055, 0.052, 0.048, 1)
-shader_parameter/wear_color = Color(0.18, 0.165, 0.14, 1)
-shader_parameter/stain_color = Color(0.035, 0.028, 0.02, 1)
-shader_parameter/rust_color = Color(0.22, 0.09, 0.04, 1)
-shader_parameter/floor_size_m = Vector2(6.72, 11.48)
-shader_parameter/rib_spacing_m = 0.085
-shader_parameter/panel_spacing_m = 1.55
-shader_parameter/roughness_value = 0.88
-shader_parameter/metallic_value = 0.22
 
 [sub_resource type="StandardMaterial3D" id="SideDoorTrimMaterial"]
 albedo_color = Color(0.08, 0.09, 0.09, 1)
@@ -37,6 +22,21 @@ roughness = 0.4
 
 [sub_resource type="BoxShape3D" id="FloorShape"]
 size = Vector3(6.72, 0.25, 11.48)
+
+[sub_resource type="BoxShape3D" id="MidSlabMainShape"]
+size = Vector3(5.82, 0.3, 5.73)
+
+[sub_resource type="BoxShape3D" id="MidSlabCabStripShape"]
+size = Vector3(0.9, 0.3, 0.2)
+
+[sub_resource type="BoxShape3D" id="MidSlabRearStripShape"]
+size = Vector3(0.9, 0.3, 2.93)
+
+[sub_resource type="BoxShape3D" id="TreadLowShape"]
+size = Vector3(1.38, 0.165, 0.3)
+
+[sub_resource type="BoxShape3D" id="TreadHighShape"]
+size = Vector3(1.38, 0.335, 0.38)
 
 [sub_resource type="ShaderMaterial" id="CeilingMaterial"]
 render_priority = 0
@@ -167,7 +167,6 @@ size = Vector3(4.9, 0.65, 0.32)
 script = ExtResource("shell_colliders")
 
 [node name="Floor" parent="." unique_id=512164173 instance=ExtResource("28")]
-floor_material = SubResource("FloorMaterial")
 
 [node name="SideWalls" parent="." unique_id=1665520798 groups=["side_walls"] instance=ExtResource("30")]
 wall_material = ExtResource("46")
@@ -176,6 +175,26 @@ door_jamb_material = SubResource("SideDoorTrimMaterial")
 [node name="FloorCollision" type="CollisionShape3D" parent="." unique_id=901514165]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.125, 0.94)
 shape = SubResource("FloorShape")
+
+[node name="MidSlabMainCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.15, -1.865)
+shape = SubResource("MidSlabMainShape")
+
+[node name="MidSlabCabStripCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.91, 0.15, -4.5)
+shape = SubResource("MidSlabCabStripShape")
+
+[node name="MidSlabRearStripCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.91, 0.15, -0.465)
+shape = SubResource("MidSlabRearStripShape")
+
+[node name="TreadLowCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.0825, 1.51)
+shape = SubResource("TreadLowShape")
+
+[node name="TreadHighCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.1675, 1.17)
+shape = SubResource("TreadHighShape")
 
 [node name="Ceiling" parent="." unique_id=1700144643 groups=["van_ceiling"] instance=ExtResource("25")]
 span_x = 5.71

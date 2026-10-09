@@ -137,7 +137,7 @@ shape = SubResource("DoorShape")
 [node name="Props" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1487223170]
 
 [node name="CraftingTable" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1058055410]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 2.6, 0.425, 0.066610575)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 2.6, 0.725, 0.066610575)
 collision_layer = 3
 script = ExtResource("4")
 prompt = "Open Bench"
@@ -166,7 +166,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.75)
 script = ExtResource("59")
 
 [node name="LootAnchor" type="Marker3D" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1267364196]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.244, 0.43830076, -1.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.244, 0.738, -1.8)
 
 [node name="LootMachine" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1988471201 instance=ExtResource("35")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 1.438, 1.35)
@@ -205,7 +205,7 @@ script = ExtResource("58")
 vital_id = &"cab_relay"
 
 [node name="RequestBoard" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1411434472 instance=ExtResource("39")]
-transform = Transform3D(8.742278e-08, 0, -1, 0, 1, 0, 1, 0, 8.742278e-08, -1.62, 0.95, -4.552016)
+transform = Transform3D(8.742278e-08, 0, -1, 0, 1, 0, 1, 0, 8.742278e-08, -1.62, 1.25, -4.552016)
 prompt = "Skill tree terminal"
 
 [node name="WallAnchor" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard"]
@@ -217,7 +217,7 @@ z_offset = 0.147984
 script = ExtResource("61")
 
 [node name="ClassBoard" parent="TravelPath/VanFollow/VanRig/Interior/Props" instance=ExtResource("43")]
-transform = Transform3D(8.742278e-08, 0, -1, 0, 1, 0, 1, 0, 8.742278e-08, 1.62, 0.95, -4.552016)
+transform = Transform3D(8.742278e-08, 0, -1, 0, 1, 0, 1, 0, 8.742278e-08, 1.62, 1.25, -4.552016)
 
 [node name="WallAnchor" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard"]
 script = ExtResource("66")
@@ -280,7 +280,7 @@ script = ExtResource("41")
 [node name="BreachController" parent="TravelPath/VanFollow/VanRig/EnemyContainer" unique_id=1006425113 groups=["breach_controller"] instance=ExtResource("48")]
 
 [node name="Player" parent="TravelPath/VanFollow/VanRig" unique_id=88569583 instance=ExtResource("2")]
-transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 0.05, -2.7)
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 0.35, -2.7)
 movement_reference_path = NodePath("..")
 
 [node name="Lighting" type="Node3D" parent="TravelPath/VanFollow/VanRig" unique_id=863892881]

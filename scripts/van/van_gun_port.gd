@@ -27,8 +27,10 @@ var _interact: StaticBody3D    ## layer-2 hit target that toggles this port
 
 
 func setup(wall_sign: float, walls: VanSideWall, leaf_mid_y: float, leaf_x_ref: float) -> void:
-	var ly := EYE_Y - leaf_mid_y
-	var sx := wall_sign * (walls.wall_x_at(EYE_Y) - leaf_x_ref)
+	var leaf_z: float = (get_parent() as Node3D).position.z
+	var eye_y := EYE_Y + VanFloorHeight.at(wall_sign * (absf(leaf_x_ref) - 0.5), leaf_z + PORT_Z)
+	var ly := eye_y - leaf_mid_y
+	var sx := wall_sign * (walls.wall_x_at(eye_y) - leaf_x_ref)
 	var inner_x := sx - wall_sign * PROUD
 	var outer_x := sx + wall_sign * (DOOR_THICKNESS + PROUD)
 

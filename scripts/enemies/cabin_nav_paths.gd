@@ -91,7 +91,7 @@ func compress(from_local: Vector3, pts: Array[Vector3]) -> Array[Vector3]:
 	var out: Array[Vector3] = []
 	var prev := from_local
 	for p in pts:
-		var a := Vector3(p.x, from_local.y, p.z)
+		var a := Vector3(p.x, nav.raider_height + VanFloorHeight.at(p.x, p.z), p.z)
 		if xz(prev, a) > 0.18:
 			out.append(a)
 			prev = a
@@ -141,10 +141,9 @@ func melee_points(player: Node3D) -> Array[Vector3]:
 	for i in nav.melee_slot_count:
 		var ang := TAU * float(i) / float(nav.melee_slot_count) + 0.4
 		var p: Vector3 = pl + Vector3(cos(ang), 0.0, sin(ang)) * nav.melee_range
-		p.y = nav.raider_height
 		if nav.room_of(p) != room:
 			p = pl + Vector3(cos(ang), 0.0, sin(ang)) * (nav.melee_range * 0.45)
-			p.y = nav.raider_height
+		p.y = nav.raider_height + VanFloorHeight.at(p.x, p.z)
 		result.append(p)
 	return result
 

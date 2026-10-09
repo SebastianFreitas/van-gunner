@@ -249,7 +249,7 @@ func build_shrouds() -> void:
 ## Clamp-on arm lamp with a cool white-blue light hung under its shade; returns the light.
 func build_arm_lamp() -> OmniLight3D:
 	var clamp_at := Vector3(0.53, _TABLE_TOP, 0.15)
-	_box(_bench, "LampClampPlate", _steel, Vector3(0.575, 0.395, 0.15), Vector3(0.015, 0.09, 0.05))
+	_box(_bench, "LampClampPlate", _steel, Vector3(0.575, 0.285, 0.15), Vector3(0.015, 0.09, 0.05))
 	_box(_bench, "LampClampJaw", _steel, Vector3(0.535, 0.435, 0.15), Vector3(0.07, 0.02, 0.05))
 	_segment(_bench, "LampPost", _steel, clamp_at + Vector3(0.0, 0.02, 0.0),
 			Vector3(0.53, 0.98, 0.15), 0.012)

@@ -47,3 +47,6 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - socket: a Marker3D `Socket_<zone>_<letter>` on the railgun Body that a boon visual bolts to (gun_sockets.gd)
 - boon visual: the piece a boon adds to the railgun (gun_boon_visuals.gd REGISTRY, built in gun_boon_pieces.gd)
 - work lamp: the caged hanging lamp lighting the van's cargo floor (VanWorkLamp, scripts/van/look/van_work_lamp.gd)
+- floors: the two interior floors, the raised mid floor (MidSlab, y 0.30, scripts/van/van_floor_slab.gd) and the rear floor (RearSheet, y 0); height from VanFloorHeight.at
+- stairs: the two welded treads at the bulkhead doorway (TreadLow, TreadHigh, scripts/van/van_floor_stairs.gd)
+- step well: the sunken bay at y 0 in the mid floor before the side door (the MidSlab notch, van_floor_slab.gd)
