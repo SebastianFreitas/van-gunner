@@ -35,9 +35,13 @@ read its matching section too.
 - A new file over about 250 lines: the spec says to write a skeleton
   first and add function groups with Edits. One big Write dies on the
   output cap.
-- An implementer that reports "blocked" or "hit the context line": never
-  resume it with SendMessage (that reloads its whole context); write a
-  narrower spec for a fresh call.
+- Never resume an implementer with SendMessage, whether it finished,
+  reported "blocked" or hit its context line: a resumed subagent always
+  runs in the background (Claude Code docs, 2026-10-08), which is the
+  hand-back the agent guard exists to stop, and it reloads its whole
+  context. A reviewer gap or a blocked report is a narrower spec for a
+  fresh call: the reviewer's `file:line` and smallest fix become its
+  Where and Goal.
 - A prepared run saves each spec as `.claude/specs/<k>.md` and the run
   window sends only its path (`.claude/rules/workflow.md` "One prompt").
 - A plan phase that stops after designing saves each finished spec as

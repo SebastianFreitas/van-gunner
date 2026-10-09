@@ -20,6 +20,8 @@ paths:
   - "scripts/debug/debug_arms_frame.gd"
   - "scripts/debug/debug_arms_dump.gd"
   - "scripts/debug/debug_arms_cam.gd"
+  - "scripts/player/arms/**"
+  - "scripts/debug/debug_gun_commands.gd"
   - "tools/stipple.py"
 ---
 
@@ -151,3 +153,50 @@ of `PROJECTION_MATRIX[0][0]` and `[1][1]` (Godot Vulkan bakes a Y flip in, so
 [1][1] is negative); a positive focal term drew the arms rotated 180 degrees
 while `arms frame` (Godot-native `fov_override`) still counted them right.
 After any lens change, Read one player-view shot.
+
+## The railgun
+
+Brief: `.claude/specs/brief.md`. Built by `RailgunBody` (+ `RailgunJunk`, `RailGlow`).
+
+- Composition: a 12-segment cylinder spine, an 8-segment octagon receiver
+  (flats up and to the sides, stretched in y to the old box height), a tapered
+  8-segment muzzle with the 5-degree cant, two rails on top over the orange
+  charge channel. Other numbers live in `railgun_body.gd`.
+- Rails: 0.15p by 0.18p blued-steel caps on 0.46p `RailWeb` webs, tops 0.80p
+  over the axis (0.40p above the receiver apex), running back over the receiver
+  to `ChargeStripRear`. Channel 0.17p wide, 0.38p deep, `ChargeStrip` at its
+  floor. Rear caps radius 0.09p, raised to clear the grip's `Beavertail`.
+- Bounding box: receiver rear z +0.32p, tip zf - 2.8p, top ya + 0.80p, width at
+  most 0.52p (p = the hand's palm length, zf the guard front, ya the guard top).
+- Fixed geometry: only materials, bead spacing, tape tilt and the rusty plate
+  follow rng. Rails, grip, muzzle and sockets never move.
+- Scale: the body is `MonsterGrip.GUN_K` 1.15 over the hand's `p`; grip, guard
+  and trigger stay at `p` (owner, 2026-10-09).
+- Flush junk: only tape wraps and 18 body-shade weld runs stay on the body (8 on
+  the receiver seam ring, tangent to it; 5 per rail foot), never bright studs. Tread, plates,
+  brackets, chain, padlock and the sprayed word are gone for good (owner,
+  2026-10-09: the details obscured the gun; keep the body clean so boon pieces
+  read on top).
+- Sockets (`GunSockets`): Marker3Ds `Socket_<zone>_<letter>` in zones top,
+  left, rear, muzzle, under, hang, right, with metas `size` (*p), `normal`,
+  `zone`, `used`; `claim(body, zones)` takes the first free socket by zone
+  preference. A socket starts inside the mesh it belongs to and snaps out onto
+  that mesh's face at build. It snaps to the mesh's bounding box, and a turned
+  8-segment mesh (octagon receiver, tapered muzzle with `flats_up`) has a box
+  wider than its visible shape, so a socket starting near the box edge lands in
+  the air or sinks: start sockets on the visible face (spec 8b).
+- A boon gets a visual by a `GunBoonVisuals.REGISTRY` entry (zones plus a
+  builder in `GunBoonPieces` that fits the socket's `size`). REGISTRY order is
+  the order pieces are built and claim sockets. No glow unless it is a light.
+- Glow: `ChargeStrip` and `Lamp0`..`Lamp3` are the gun's only emissive parts;
+  `RailGlow` owns the light. Its `LampLight` (amber, on the receiver's rear
+  face) and the glow reach the sockets so pieces read in the dark.
+- Future pieces lie horizontal as part of the barrel (poison canister first),
+  never upright add-ons; the current three pieces are upright and wait for that.
+- Debug: `gun sockets|report|attach` (`debug_gun_commands.gd`). Smoke views
+  `a-arms-gun`, `a-arms-gun-sockets`, `a-arms-gun-boons`,
+  `a09-arms-gunfront-boons`.
+- Lessons: `claim(body, zones: Array[StringName])` is typed, so build zones as
+  `Array[StringName]` (an untyped literal fails at runtime). Check sockets with
+  `gun report` after any body-shape change (distances and box overlaps). A word
+  on the gun, however well drawn, read badly; plain steel reads better.

@@ -1,6 +1,6 @@
 {
   "master": "C:/Users/Traff/Desktop/sebas/claude-workflow",
-  "commit": "405d3eb1aecf89a8a688a739983637826016fd88",
+  "commit": "e6254504f403f76727b6dbac7927f66e55d79eab",
   "files": {
     ".claude/agents/implementer-wt.md": "a038933da542bbf478763467c6d24786512502b239a1ae238423aa584841bc18",
     ".claude/agents/implementer.md": "bc10b52bd70bb7d9b67ba556cf135bc29f28dea80d3d84858d7a283eebed9004",
@@ -23,7 +23,7 @@
     ".claude/modes/shared.md": "3fa2a876cf9e6bcb8653a4912c65abb97e7062ac50abfa50eb4bf5a809e85943",
     ".claude/modes/worktree.md": "9ff281131fbb7da0c3ccdd1a0a8153e092b3a877499d2b4831ed35b5936855a4",
     ".claude/plans/TEMPLATE.md": "074dff6abd7e494c7bdc4a49a014f7b895f55c9db136f1d9b80b0333e8a371b5",
-    ".claude/playbook.md": "6e3abead45a449270432571008295b1b6a28529740c0f27b3c2d72b01902686e",
+    ".claude/playbook.md": "270f930ce1ac7a3afd3614e64f6d021dcdc2ae5f152ab60b7758c2cc8e383190",
     ".claude/rules/workflow.md": "1d255755812fcbfc4ead6f01c2f37136301b62dcffcf2d4d7cfc6ce09d4a368e",
     ".claude/settings.json": "80b035aab66028a5d3688fa83a3c871f50e572cd4594cebdcda88e0c71be2d05",
     ".claude/skills/handoff/SKILL.md": "73871386398479cd8d32648bbcf9e070f17be299d72e18343cc27d9cd8409cae",

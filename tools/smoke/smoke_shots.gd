@@ -275,6 +275,15 @@ func arm_views() -> void:
 	for view in ["front", "side", "left", "top", "elbow", "gun"]:
 		DebugCommands.run("arms cam " + view)
 		await _save("arms-" + view, "a")
+		if view == "gun":
+			DebugCommands.run("gun sockets on")
+			await _save("arms-gun-sockets", "a")
+			DebugCommands.run("gun sockets off")
+			DebugCommands.run("gun attach all")
+			await _save("arms-gun-boons", "a")
+			DebugCommands.run("arms cam gunfront")
+			await _save("arms-gunfront-boons", "a")
+			DebugCommands.run("gun attach clear")
 	for pin: Array in [["reload", "0.5"], ["weave", "2.9"], ["walk", "0.75"]]:
 		DebugCommands.run("arms %s %s" % pin)
 		DebugCommands.run("arms cam front")

@@ -11,6 +11,7 @@ const _MetaCommands := preload("res://scripts/debug/debug_meta_commands.gd")
 const _FacadeCommands := preload("res://scripts/debug/debug_facade_commands.gd")
 const _ArmsCommands := preload("res://scripts/debug/debug_arms_commands.gd")
 const _PerfCommands := preload("res://scripts/debug/debug_perf_commands.gd")
+const _GunCommands := preload("res://scripts/debug/debug_gun_commands.gd")
 const _Completion := preload("res://scripts/debug/debug_completion.gd")
 
 var _commands: Dictionary = {}
@@ -23,6 +24,7 @@ var _meta: RefCounted
 var _catalog: RefCounted
 var _facade: RefCounted
 var _arms: RefCounted
+var _gun: RefCounted
 var _perf: RefCounted
 var _completion: RefCounted
 
@@ -61,6 +63,7 @@ func _register_commands() -> void:
 	_catalog = _DebugCatalog.new(self)
 	_facade = _FacadeCommands.new(self)
 	_arms = _ArmsCommands.new(self)
+	_gun = _GunCommands.new(self)
 	_perf = _PerfCommands.new(self)
 	_completion = _Completion.new(self)
 	_commands = {
@@ -94,6 +97,7 @@ func _register_commands() -> void:
 		"facade": _facade.cmd_facade,
 		"walk_wreck": _facade.cmd_walk_wreck,
 		"arms": _arms.cmd_arms,
+		"gun": _gun.cmd_gun,
 		"perf": _perf.cmd_perf,
 	}
 
@@ -125,6 +129,8 @@ func _usage_text(cmd: String, usage: Dictionary) -> String:
 	var text: String = usage[cmd]
 	if cmd == "arms":
 		text = _arms.usage()
+	if cmd == "gun":
+		text = _gun.usage()
 	return "  " + text.replace("\n", "\n  ")
 
 
@@ -165,6 +171,7 @@ func _usage_lines() -> Dictionary:
 		"facade": "facade [sub]    street facade debug (try facade help)",
 		"walk_wreck": "walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street",
 		"arms": "arms <sub> [args]  first-person arms debug (current values shown)",
+		"gun": "gun <sub> [args]  railgun attachment sockets (gun sockets on)",
 		"perf": "perf [off|fps|full|log|spans|reset|hitch <ms>]  F3 perf overlay, hitch log, "
 				+ "span totals",
 	}

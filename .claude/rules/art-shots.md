@@ -36,6 +36,16 @@ Reading the numbers:
   seeded per run, so street numbers move with the buildings on screen.
   Compare against a before run of the same session, and treat about
   ±0.001 mean and ±0.1 clip% as noise.
+- Dark budget: every `*-back` view was over its budget before the work-lamp
+  round and stays at or below its earlier values (`02-idle-back` mean 0.0115,
+  p95 0.0525 after spec 10b). The van's two hanging work lamps
+  (`WorkLampFront`, `WorkLampRear`) have a front energy of 7.0: that is the
+  knob. Energy 2.5 with a 65-degree cone nearly met the budget at the cost of a
+  darker gun (spec 10b try 1), so the trade is an owner call.
+- Each `VanWorkLamp` has a downward spot plus a 2 m fill omni; the scene dump
+  lists the Fill nodes. Pitfall: raising the rear lamp's fill does not light the
+  far rear wall that `02-idle-back` frames (6 m or more from the lamp) and
+  pushes `05`, `08`, `11` and `01` over budget (spec 10d, three tries).
 - A change to a large surface reads on near walls, docks and stoops, not in
   the means: look at the PNGs as well.
 - The smoke shots visit only the street, the elevator stop (shop) and the

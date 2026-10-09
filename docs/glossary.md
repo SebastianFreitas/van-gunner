@@ -41,3 +41,8 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - monster van / back = the back compartment, sized by VanInteriorSize (`scripts/van/van_interior_size.gd`)
 - plaza: a recessed lot paved with flagstones to the wall (kind 1 run, road_floor_wreck_plaza.gd)
 - build-out: a recessed lot whose sidewalk widens to the wall instead of the road (kind 2 run)
+- railgun: the held gun; RailgunBody, scripts/player/arms/railgun_body.gd (+ railgun_junk, rail_glow)
+- rails: the railgun's two square barrels on top of the body
+- socket: a Marker3D `Socket_<zone>_<letter>` on the railgun Body that a boon visual bolts to (gun_sockets.gd)
+- boon visual: the piece a boon adds to the railgun (gun_boon_visuals.gd REGISTRY, built in gun_boon_pieces.gd)
+- work lamp: the caged hanging lamp lighting the van's cargo floor (VanWorkLamp, scripts/van/look/van_work_lamp.gd)

@@ -50,7 +50,6 @@ func _build() -> void:
 
 	_build_wiring()
 	_build_vent_duct()
-	_build_ceiling_lights()
 	_build_tie_down_rings()
 	_build_junction_box()
 
@@ -176,68 +175,6 @@ func _build_vent_duct() -> void:
 			Vector3(0.025, 0.045, 0.025),
 			Vector3(duct_x + 0.08, hy, hz),
 			hanger_mat
-		)
-
-
-func _build_ceiling_lights() -> void:
-	var fixture_mat := _metal_mat(Color(0.2, 0.19, 0.18, 1.0), 0.4, 0.55)
-	var lens_mat := StandardMaterial3D.new()
-	lens_mat.albedo_color = Color(0.95, 0.88, 0.72, 1.0)
-	lens_mat.emission_enabled = true
-	lens_mat.emission = Color(1.0, 0.86, 0.62, 1.0)
-	lens_mat.emission_energy_multiplier = 0.7
-	lens_mat.roughness = 0.3
-
-	var light_positions: Array[Vector3] = [
-		Vector3(-0.55, 0.0, -2.8),
-		Vector3(0.55, 0.0, 0.5),
-		Vector3(-0.55, 0.0, 3.2),
-	]
-
-	for i in range(light_positions.size()):
-		var lp: Vector3 = light_positions[i]
-		var lt := absf(lp.z) / (span_z * 0.5)
-		var ly := edge_height + peak_rise * (1.0 - lt * lt * 0.35) - 0.09
-
-		# Dome fixture housing.
-		var housing := MeshInstance3D.new()
-		housing.name = "LightHousing_%d" % i
-		var cyl := CylinderMesh.new()
-		cyl.top_radius = 0.11
-		cyl.bottom_radius = 0.13
-		cyl.height = 0.06
-		cyl.radial_segments = 12
-		housing.mesh = cyl
-		housing.material_override = fixture_mat
-		housing.position = Vector3(lp.x, ly, lp.z)
-		housing.layers = VanLighting.LAYER_VAN_INTERIOR
-		housing.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-		add_child(housing)
-
-		# Lens plate.
-		var lens := MeshInstance3D.new()
-		lens.name = "LightLens_%d" % i
-		var disc := CylinderMesh.new()
-		disc.top_radius = 0.095
-		disc.bottom_radius = 0.095
-		disc.height = 0.012
-		disc.radial_segments = 12
-		lens.mesh = disc
-		lens.material_override = lens_mat
-		lens.position = Vector3(lp.x, ly - 0.035, lp.z)
-		lens.layers = VanLighting.LAYER_VAN_INTERIOR
-		lens.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		add_child(lens)
-
-		# Short pendant cord.
-		var cord_mat := _rubber_mat(Color(0.03, 0.028, 0.025, 1.0), 0.0, 0.98, 0.0)
-		_add_cylinder_run(
-			"LightCord_%d" % i,
-			Vector3(lp.x, ly + 0.08, lp.z),
-			0.16,
-			0.004,
-			cord_mat,
-			Vector3(0.0, 0.0, 0.0)
 		)
 
 

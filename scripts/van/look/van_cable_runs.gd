@@ -301,19 +301,22 @@ func _build_lamp_drops() -> void:
 	if lighting == null:
 		return
 	for child in lighting.get_children():
-		if not (child is OmniLight3D):
+		# A work lamp owns its light one level down; its hook is the lamp node's own position.
+		var at := Vector3.ZERO
+		if child is VanWorkLamp:
+			at = (child as Node3D).position
+		elif child is OmniLight3D and (child as OmniLight3D).light_cull_mask == VanLighting.LAYER_VAN_INTERIOR:
+			at = (child as OmniLight3D).position
+		else:
 			continue
-		var light := child as OmniLight3D
-		if light.light_cull_mask != VanLighting.LAYER_VAN_INTERIOR:
+		if absf(at.x) > 1.5:
 			continue
-		if absf(light.position.x) > 1.5:
-			continue
-		var sx := 1.0 if light.position.x >= 0.0 else -1.0
+		var sx := 1.0 if at.x >= 0.0 else -1.0
 		var trunk_pts := _trunk_r if sx > 0.0 else _trunk_l
-		var anchor := _trunk_at(trunk_pts, light.position.z)
-		var target := Vector3(light.position.x, minf(light.position.y + 0.05, TRUNK_Y), light.position.z)
+		var anchor := _trunk_at(trunk_pts, at.z)
+		var target := Vector3(at.x, minf(at.y + 0.05, TRUNK_Y), at.z)
 		MachineParts.cable_bundle(self, PackedVector3Array([anchor, target]), _insul[0], 0.015, 3)
-		_junction(sx, light.position.z)
+		_junction(sx, at.z)
 
 
 func _build_junk(rng: RandomNumberGenerator) -> void:
