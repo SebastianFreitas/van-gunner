@@ -93,28 +93,6 @@ static func dull_alu(seed_offset: float) -> ShaderMaterial:
 			60.0, 6.0, 0.0, 0.75, 0.85, 0.3, seed_offset)
 
 
-## Worn T-shirt cloth shader behind the two sleeves.
-const CLOTH_SHADER := preload("res://scenes/player/arm_cloth.gdshader")
-
-
-## One of four dull shirts, torn and stained; its meshes carry the rest chart in CUSTOM0.
-static func gear_cloth(rng: RandomNumberGenerator) -> ShaderMaterial:
-	var tints: Array[Color] = [
-		Color(0.20, 0.18, 0.13), # yellowed white
-		Color(0.05, 0.05, 0.05), # faded black
-		Color(0.16, 0.07, 0.06), # oxide red
-		Color(0.11, 0.11, 0.07), # olive
-	]
-	var tint: Color = tints[rng.randi_range(0, 3)]
-	tint = Color(tint.r * rng.randf_range(0.92, 1.08), tint.g * rng.randf_range(0.92, 1.08),
-			tint.b * rng.randf_range(0.92, 1.08))
-	var mat := ShaderMaterial.new()
-	mat.shader = CLOTH_SHADER
-	mat.set_shader_parameter(&"base_tint", tint)
-	mat.set_shader_parameter(&"seed", rng.randf_range(0.0, 100.0))
-	return mat
-
-
 ## Claw nails: colour comes from the mesh's per-vertex grime gradient (linear), with a dull horn sheen.
 static func claw() -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()

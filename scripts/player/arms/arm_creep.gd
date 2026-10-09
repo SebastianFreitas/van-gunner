@@ -13,7 +13,7 @@ extends RefCounted
 
 const ArmCreepPoses := preload("res://scripts/player/arms/arm_creep_poses.gd")
 
-const START := 7.0  ## seconds before anything moves, so the sandbox time and the gear-fit sweep keep today's pose
+const START := 7.0  ## seconds before anything moves, so the sandbox time keep today's pose
 const LOOP := 240.0  ## schedule length; t wraps with fposmod, events stop early so the wrap is quiet
 const SCAN := 10.0  ## seconds back from now that stretches can still be running (longest stretch)
 const TIC_GAP := Vector2(3.0, 8.0)  ## seconds between tics

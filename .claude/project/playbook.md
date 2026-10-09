@@ -87,8 +87,8 @@ container has only `python3`.
   runs; compare FPS and hitches only between runs taken with nothing else
   on the GPU; to compare old code with new, measure both in the same
   sitting.
-- **Hand shots:** `py -3 tools/hand_shots.py --out <scratchpad>/hands [--pose NAME | --pose "<arms console line>"]... [--views front,side,left,top,elbow,player] [--dress gear|rags|none]`: boots the run at IDLE once, applies the pose, saves `<view>.png` per view (probe `--shot DIR --views`; hidden desktop on Windows, xvfb-run on Linux). `--list` prints the named poses (rest, weave, reload, shot, knock, press, push, pull, slide_open, slide_close, walk).
-- **Pose sheet:** `py -3 tools/pose_sheet.py --out <scratchpad>/sheets [--pose NAME]... [--views front,side,top,player] [--dress gear|rags|none] [--keep]`: one `<pose>.png` grid per named pose (default all), one Godot launch each.
+- **Hand shots:** `py -3 tools/hand_shots.py --out <scratchpad>/hands [--pose NAME | --pose "<arms console line>"]... [--views front,side,left,top,elbow,player] [--dress bare|rags|none]`: boots the run at IDLE once, applies the pose, saves `<view>.png` per view (probe `--shot DIR --views`; hidden desktop on Windows, xvfb-run on Linux). `--list` prints the named poses (rest, weave, reload, shot, knock, press, push, pull, slide_open, slide_close, walk).
+- **Pose sheet:** `py -3 tools/pose_sheet.py --out <scratchpad>/sheets [--pose NAME]... [--views front,side,top,player] [--dress bare|rags|none] [--keep]`: one `<pose>.png` grid per named pose (default all), one Godot launch each.
 - **Stipple:** `py -3 tools/stipple.py <png or folder>... [--mark DIR]` counts isolated dark
   pixels (at most 0.4 of their 3x3 median, median at least 30 of 255) and prints `STIPPLE <n>
   <file>` per picture and `STIPPLE TOTAL`. It also prints `OUTLIER light <n> dim <n> <file>`:

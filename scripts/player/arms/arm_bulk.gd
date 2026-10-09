@@ -2,7 +2,7 @@ class_name ArmBulk
 extends RefCounted
 ## Inflates a skinned arm mesh around each bone's axis so the limbs read thick.
 
-## Forearm gains live here once; the builder sizes the sleeve and tattoo from them.
+## Forearm gains live here once; the builder sizes the tattoo from them.
 const FOREARM_ELBOW_GAIN := 2.8
 ## Wrist:palm width should be about 0.75-0.8, not 1.0.
 const FOREARM_WRIST_GAIN := 2.1

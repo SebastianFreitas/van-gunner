@@ -2,7 +2,7 @@
 """Render the first-person goblin arms in chosen poses from fixed cameras, one Godot launch.
 
 Usage: `py -3 tools/hand_shots.py --out DIR [--pose NAME | --pose "<console line>"]...
-[--views front,side,left,top,elbow,player] [--dress gear|rags|none] [--timeout S]`.
+[--views front,side,left,top,elbow,player] [--dress bare|rags|none] [--timeout S]`.
 
 Runs `tools/probe.py` with the pose's `arms` console lines and `--views`, so DIR gets one
 `<view>.png` per camera. `--list` prints the named poses and exits.
@@ -43,7 +43,7 @@ def parse_args() -> argparse.Namespace:
         help='pose name or a raw "arms ..." console line (repeatable); default rest',
     )
     parser.add_argument("--views", default=",".join(VIEW_NAMES), help="comma list of cameras")
-    parser.add_argument("--dress", choices=["gear", "rags", "none"], help="arms dress value")
+    parser.add_argument("--dress", choices=["bare", "rags", "none"], help="arms dress value")
     parser.add_argument("--timeout", type=int, default=180, help="timeout in seconds")
     parser.add_argument("--list", action="store_true", help="print the poses and exit")
     opts = parser.parse_args()

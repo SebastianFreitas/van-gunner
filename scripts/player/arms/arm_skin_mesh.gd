@@ -52,7 +52,7 @@ static func ring_weights(mi: MeshInstance3D, sk: Skeleton3D, frame: Transform3D,
 	return {fallback_bind: 1.0}
 
 
-## Each ring blended with its neighbours (0.25 / 0.5 / 0.25), `passes` times, so the sleeve's
+## Each ring blended with its neighbours (0.25 / 0.5 / 0.25), `passes` times, so the
 ## weights fade along the arm instead of stepping at a ring.
 static func smooth_weights(rings: Array[Dictionary], passes: int) -> Array[Dictionary]:
 	var cur: Array[Dictionary] = []
@@ -126,7 +126,7 @@ static func tube_indices(verts: PackedVector3Array, centres: PackedVector3Array,
 static func build(mi: MeshInstance3D, sk: Skeleton3D, node_name: StringName,
 		verts: PackedVector3Array, normals: PackedVector3Array, custom0: PackedFloat32Array,
 		bones: PackedInt32Array, weights: PackedFloat32Array, indices: PackedInt32Array,
-		mat: Material, rest_chart: bool = false) -> MeshInstance3D:
+		mat: Material, rest_chart: bool = false, hand_weight: float = 1.0) -> MeshInstance3D:
 	if mi == null or mi.skin == null or sk == null:
 		push_warning("ArmSkinMesh: arm mesh without a skin, cannot build %s" % node_name)
 		return null
@@ -170,7 +170,7 @@ static func build(mi: MeshInstance3D, sk: Skeleton3D, node_name: StringName,
 			c1[i * 4] = verts[i].x
 			c1[i * 4 + 1] = verts[i].y
 			c1[i * 4 + 2] = verts[i].z
-			c1[i * 4 + 3] = 1.0
+			c1[i * 4 + 3] = hand_weight
 			c2[i * 4] = nrm[i].x
 			c2[i * 4 + 1] = nrm[i].y
 			c2[i * 4 + 2] = nrm[i].z

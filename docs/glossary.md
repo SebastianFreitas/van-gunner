@@ -53,3 +53,4 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - floors: the two interior floors, the raised mid floor (MidSlab, y 0.30, scripts/van/van_floor_slab.gd) and the rear floor (RearSheet, y 0); height from VanFloorHeight.at
 - stairs: the two welded treads at the bulkhead doorway (TreadLow, TreadHigh, scripts/van/van_floor_stairs.gd)
 - step well: the sunken bay at y 0 in the mid floor before the side door (the MidSlab notch, van_floor_slab.gd)
+- cut end: the top of the arm mesh where the glb stops, now hidden by the limb tail (ArmLimbTail) and guarded by `arms reach-end`

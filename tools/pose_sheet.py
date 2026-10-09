@@ -3,7 +3,7 @@
 cameras (default front, side, top and the player's view), one Godot launch per pose.
 
 Usage: `py -3 tools/pose_sheet.py --out DIR [--pose NAME]... [--views front,side,top,player]
-[--dress gear|rags|none] [--keep]`.
+[--dress bare|rags|none] [--keep]`.
 """
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ def parse_args() -> argparse.Namespace:
         help="pose name from hand_shots.py (repeatable); default all",
     )
     parser.add_argument("--views", default="front,side,top,player", help="comma list of cameras")
-    parser.add_argument("--dress", choices=["gear", "rags", "none"], help="arms dress value")
+    parser.add_argument("--dress", choices=["bare", "rags", "none"], help="arms dress value")
     parser.add_argument("--timeout", type=int, default=180, help="timeout in seconds")
     parser.add_argument("--keep", action="store_true", help="keep the raw per-pose view PNGs")
     opts = parser.parse_args()

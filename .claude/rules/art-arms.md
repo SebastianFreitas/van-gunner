@@ -88,7 +88,7 @@ damping the skin tilt the same way removes about half its shading
 `det` divide, NaN return and footprint fade (`TILT_FOOT_MIN` 0.02 to
 `TILT_FOOT_FULL` 0.10) stay as guards only. Judge by the skin-masked
 counts: a whole-image count in these views holds about 2500 HUD-text
-and sleeve-cuff pixels.
+and (before the sleeve was removed) sleeve-cuff pixels.
 Wrist (owner, 2026-10-05: the hand looked "glued to the wrist", the
 join "a bit thinner"): the forearm necks to `ArmBulk.WRIST_END_GAIN`
 1.30 (was 1.45), and the hand side starts at that same girth by
@@ -103,7 +103,7 @@ lifted off the palm, so `ArmFingers._shaft_profile` gives the thumb two
 more rings behind its head that narrow back into the palm (0.80 r at
 0.15 of a bone behind the head, 0.45 r at 0.35): a buried root, like
 the fingers'.
-Thumb-root hump (owner, 2026-10-08, left hand, thumb straight): the mesh, not shading. `DEF-thumb.01`'s flat gain 1.5 met the thumb tube's 1.0 in a step at the joint, which a straight thumb shows as a hump (bent hides it); `ArmBulk` now eases thumb.01 from 1.5 to 1.0 over its far 60 percent. The hand's blight halving was reverted (owner: the skin must stay spiky and coarse); the straight-thumb spike itself is not found yet (mesh outlier scan shows none, 2026-10-08). Lead: a thumb.01 weight cliff on the wrist side of the root (b1151 0.84, b190 0.70 beside 0.9 forearm/palm verts rose 6 to 8 mm straight versus default); `ArmWeightSmooth` (run in `ArmBulk.inflate` after the refine) relaxes the thumb weight over those verts and weights only, so the skin stays coarse. Real cause of the dark knob in `arms cam side` (owner circle, left hand; the side cam frames the left hand there): not mesh. Elimination, changed pixels in the crop: arm skin hidden 9080, hand blight tilt off (`blight_gain`/`hand_blight_gain` 0) 5002, `skin_bump` 0 5168, muscle off 4668, finger tubes 2765, `blight_lift` 0 461, ArmWeightSmooth off 340, knuckles 59, claws/sleeve 0. The knob is the shader's screen-space blight tilt (`arm_surface.gdshader`, skin_bump block) going black on the shaded flank; the hand now keeps 40 percent of that tilt (the geometric blight lift is untouched).
+Thumb-root hump (owner, 2026-10-08, left hand, thumb straight): the mesh, not shading. `DEF-thumb.01`'s flat gain 1.5 met the thumb tube's 1.0 in a step at the joint, which a straight thumb shows as a hump (bent hides it); `ArmBulk` now eases thumb.01 from 1.5 to 1.0 over its far 60 percent. The hand's blight halving was reverted (owner: the skin must stay spiky and coarse); the straight-thumb spike itself is not found yet (mesh outlier scan shows none, 2026-10-08). Lead: a thumb.01 weight cliff on the wrist side of the root (b1151 0.84, b190 0.70 beside 0.9 forearm/palm verts rose 6 to 8 mm straight versus default); `ArmWeightSmooth` (run in `ArmBulk.inflate` after the refine) relaxes the thumb weight over those verts and weights only, so the skin stays coarse. Real cause of the dark knob in `arms cam side` (owner circle, left hand; the side cam frames the left hand there): not mesh. Elimination, changed pixels in the crop: arm skin hidden 9080, hand blight tilt off (`blight_gain`/`hand_blight_gain` 0) 5002, `skin_bump` 0 5168, muscle off 4668, finger tubes 2765, `blight_lift` 0 461, ArmWeightSmooth off 340, knuckles 59, claws/sleeve 0 (the sleeve is removed since 2026-10-09, archived at tag `archive/arm-sleeve`). The knob is the shader's screen-space blight tilt (`arm_surface.gdshader`, skin_bump block) going black on the shaded flank; the hand now keeps 40 percent of that tilt (the geometric blight lift is untouched).
 One fixed hand (owner, 2026-10-05): skin tone, scars, wounds and dirt
 hash from ArmsBuilder.HAND_LOOK_SEED, never the van seed. Muscle lumps,
 the shoulder offset and each finger's sideways crook hash from
@@ -127,7 +127,7 @@ a tip showed; "the nails were kinda fine"): a finger claw rises out of
 the skin from tip-bone t .36 to .60 (ArmClaw.BED_FROM), so a fold at .48
 stood above its root. Any skin fold must end behind the claw root and
 never rise above the claw; check claw top minus skin top, not the look
-from far away. Only the tattoo text and the cloth still follow the van.
+from far away. Only the tattoo text still follows the van.
 Fingers (owner, 2026-10-04: joints read as a line, "each bone a piece
 instead of a hand"; wanted gnarled, tree-like, saggy old meat): each finger
 is one gnarled tube with no pinch at the joints (end rings `.78` and `.92`
@@ -141,6 +141,8 @@ crease). Keep them rare and uneven, never a grid (owner: "looks like a
 pattern"): 18% of cells, a radius and height per knot, and an fbm warp in
 `knot_at`. Mesh `KNOT_SPARSE` 0.88. Plus fine wrinkle fbm in rest space, on skin only, never nails or
 other materials. Thumbs get the same knots and sag.
+
+Limb tail (spec 2, 2026-10-09): `ArmLimbTail` adds a 4-unit bare limb per arm behind the glb's cut shoulder ring (same radii, sinew bulge, taper, capped), skinned wholly to `DEF-upper_arm`, with the arm's own skin material, so a shoulder lunge never shows an end.
 
 Viewmodel scale and lens:
 

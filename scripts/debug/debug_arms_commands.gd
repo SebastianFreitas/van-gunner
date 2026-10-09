@@ -5,20 +5,20 @@ const _Fit := preload("res://scripts/debug/debug_arms_fit.gd")
 const _Thumbs := preload("res://scripts/debug/debug_arms_thumbs.gd")
 const _Ik := preload("res://scripts/debug/debug_arms_ik.gd")
 const _Touch := preload("res://scripts/debug/debug_arms_touch.gd")
-const _GearFit := preload("res://scripts/debug/debug_arms_gear_fit.gd")
 const _HandsCheck := preload("res://scripts/debug/debug_arms_hands.gd")
 const _Dump := preload("res://scripts/debug/debug_arms_dump.gd")
 const _Wrist := preload("res://scripts/debug/debug_arms_wrist.gd")
 const _Hints := preload("res://scripts/debug/debug_arms_hints.gd")
 const _Frame :=preload("res://scripts/debug/debug_arms_frame.gd")
 const _Cam := preload("res://scripts/debug/debug_arms_cam.gd")
+const _ReachEnd := preload("res://scripts/debug/debug_arms_reach_end.gd")
 const _Gesture := preload("res://scripts/player/arms/arm_gesture.gd")
 const _Weave := preload("res://scripts/player/arms/arm_weave.gd")
 
 ## Every subcommand `cmd_arms` handles; the one list behind `sub_commands()`, hints and usage.
 const SUBS: PackedStringArray = [
-	"cam", "curl", "dress", "dump", "fit", "fov", "frame", "gear", "gesture", "gun", "hands",
-	"ik", "inspect", "lthumb", "lthumbaim", "lthumbroll", "reach", "reload", "rall", "ridx", "rmid", "rpinky",
+	"cam", "curl", "dress", "dump", "fit", "fov", "frame", "gesture", "gun", "hands",
+	"ik", "inspect", "lthumb", "lthumbaim", "lthumbroll", "reach", "reload", "rall", "reach-end", "ridx", "rmid", "rpinky",
 	"rring", "shot", "thumbaim", "thumbcurl", "thumbroll", "thumbs", "thumbturn", "touch",
 	"walk", "weave", "wrist", "wristang",
 ]
@@ -141,7 +141,7 @@ func cmd_arms(args: Array) -> String:
 		return "arms shot " + str(vm.debug_shot_t)
 	if args[0] == "dress" and args.size() >= 2:
 		var arg := str(args[1])
-		if arg != "gear" and arg != "rags" and arg != "none":
+		if arg != "rags" and arg != "none" and arg != "bare":
 			return "bad args. " + hint("dress")
 		if not vm.has_method(&"rebuild_arms"):
 			return "arms: no viewmodel"
@@ -198,8 +198,6 @@ func cmd_arms(args: Array) -> String:
 		return _Frame.new().run(vm)
 	if args[0] == "fit":
 		return _Fit.new().run(vm)
-	if args[0] == "gear":
-		return _GearFit.new(host).run(vm)
 	if args[0] == "thumbs":
 		return _Thumbs.new().run(vm)
 	if args[0] == "wristang":
@@ -208,6 +206,8 @@ func cmd_arms(args: Array) -> String:
 		return _Ik.new().run(vm)
 	if args[0] == "touch":
 		return _Touch.new().run(vm)
+	if args[0] == "reach-end":
+		return _ReachEnd.new().run(vm)
 	if args[0] == "lthumb":
 		return _lthumb(args)
 	if args[0] == "lthumbaim":

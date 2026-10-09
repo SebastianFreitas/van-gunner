@@ -206,10 +206,10 @@ const FIXED_SHAPE_PARTS: Array[StringName] = [&"arm_right", &"arm_left"]
 ## the skin, so it is shape. Seed 7's 2.32 put domes on three fingertips and buried the claws.
 const HAND_SKIN_OFFSET := 91.1654968261719
 
-## Hand dressing: `&"gear"` (a wrecked T-shirt sleeve on each arm plus the skin layers),
-## `&"rags"` (the old rag and glove dress) or `&"none"` (bare arms). Set by the `arms dress`
-## console command, then rebuilt.
-static var dress_style := &"gear"
+## Hand dressing: `&"bare"` (monster skin plus `ArmSkinLayers`, the default), `&"none"` (plain
+## skin, no layers, debug) or `&"rags"` (the old rag and glove dress, plus layers). Set by the
+## `arms dress` console command, then rebuilt.
+static var dress_style := &"bare"
 ## Held piece: &"grip" (MonsterGrip, the default) or &"pistol" (HeldGun).
 static var gun_style: StringName = &"grip"
 
@@ -233,8 +233,6 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	# One copy per arm so the skin layers' uniforms (tattoo, scars) differ between the arms.
 	var skin_r := skin.duplicate() as ShaderMaterial
 	var skin_l := skin.duplicate() as ShaderMaterial
-	# One shirt for both arms: the two sleeves are the same cloth.
-	var cloth := ArmMaterials.gear_cloth(rng_for(seed_value, &"arm_cloth"))
 	var claw := ArmMaterials.claw()
 	var gx := HeldGun.gun_xform()
 
@@ -245,7 +243,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	var muscle_r := rng_r.randi()
 	var model_r := ArmRig.spawn(&"R", ARM_SCALE, BULK, muscle_r)
 	right.add_child(model_r)
-	# Parented at once: gear and skin layers aim at the camera, found through the ancestors.
+	# Parented at once: dress and skin layers aim at the camera, found through the ancestors.
 	rig.add_child(right)
 	var gun_root: Node3D
 	if gun_style == &"grip":
@@ -293,12 +291,11 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	model_r.set_meta(&"fingers", fingers_r)
 	ArmRig.add_claws(model_r, ".R", fingers_r, CLAW_K, CLAW_CURVE, claw)
 	_skin_model(model_r, skin_r)
+	ArmLimbTail.build(model_r, ".R", rng_for(seed_value, &"arm_tail_r"), skin_r)
 
 	match dress_style:
 		&"rags":
 			ArmDress.right(model_r, rng_for(seed_value, &"arm_dress_r"))
-		&"gear":
-			ArmSleeve.build(model_r, ".R", rng_for(seed_value, &"arm_gear_r"), cloth)
 	if dress_style != &"none":
 		ArmSkinLayers.apply(skin_r, model_r, ".R", rng_for(seed_value, &"arm_skin_r"),
 				van_name, false)
@@ -338,11 +335,10 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	model_l.set_meta(&"fingers", fingers_l)
 	ArmRig.add_claws(model_l, ".L", fingers_l, CLAW_K, CLAW_CURVE, claw)
 	_skin_model(model_l, skin_l)
+	ArmLimbTail.build(model_l, ".L", rng_for(seed_value, &"arm_tail_l"), skin_l)
 	match dress_style:
 		&"rags":
 			ArmDress.left(model_l, rng_for(seed_value, &"arm_dress_l"))
-		&"gear":
-			ArmSleeve.build(model_l, ".L", rng_for(seed_value, &"arm_gear_l"), cloth)
 	if dress_style != &"none":
 		ArmSkinLayers.apply(skin_l, model_l, ".L", rng_for(seed_value, &"arm_skin_l"),
 				van_name, true)

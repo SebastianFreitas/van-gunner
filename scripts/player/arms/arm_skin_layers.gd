@@ -278,12 +278,12 @@ static func _has(mi: MeshInstance3D, sk: Skeleton3D, bone: String) -> bool:
 	return false
 
 
-## The bare arm mesh: the skeleton's first MeshInstance3D that is not a gear or dress piece.
+## The bare arm mesh: the skeleton's first MeshInstance3D that is not a dress piece.
 static func _arm_mesh(sk: Skeleton3D) -> MeshInstance3D:
 	if sk == null:
 		return null
 	for c in sk.get_children():
 		var nm := String(c.name)
-		if c is MeshInstance3D and not nm.begins_with("Gear_") and not nm.begins_with("Dress_"):
+		if c is MeshInstance3D and not nm.begins_with("Dress_"):
 			return c as MeshInstance3D
 	return null

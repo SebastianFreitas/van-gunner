@@ -1,7 +1,7 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_schlick_ggx;
 
-// First-person arms, sleeve and rifle steel: the road's grime recipe on the 0.18-scaled viewmodel.
+// First-person arms and rifle steel: the road's grime recipe on the 0.18-scaled viewmodel.
 // Patterns are laid out in model-space virtual metres and sampled triplanar, so tapered limb
 // cylinders show no seam; seed_offset shifts the noise so two limbs on one recipe differ.
 

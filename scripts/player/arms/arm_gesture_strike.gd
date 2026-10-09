@@ -12,10 +12,10 @@ const SNATCH_LOW := 0.35
 ## How far (rig units) the snatch's wrist target is sent deeper along the ray.
 const SNATCH_DEEP := 0.2
 ## How far (rig units) the snatch's shoulder drops, on the lunge envelope.
-const SNATCH_SINK := 0.15
+const SNATCH_SINK := 0.075
 ## How far (rig units) the shoulder also lunges along the centre ray, on the sideways lunge's
 ## envelope: the strike's far crossing is only R beyond the shoulder, so this is the depth gain.
-const FORWARD_LUNGE := 0.5
+const FORWARD_LUNGE := 0.45
 ## Longest wrist back-off (rig units) the claw-tip aim may apply.
 const TIP_AIM_MAX := 0.6
 
@@ -37,7 +37,7 @@ static func shoulder(g: RefCounted) -> Vector3:
 	var m := envelope(g)
 	var lunged: Vector3 = g._shoulder + g._lunge_dir * float(g._lunge) * m + g._ray_left * FORWARD_LUNGE * m
 	if g._posed == &"pull" or g._posed == &"slide_open" or g._posed == &"slide_close":
-		# The snatch drops the shoulder with the claw so sleeve and forearm read as one line (D59).
+		# The snatch drops the shoulder with the claw so upper arm and forearm read as one line (D59).
 		lunged += Vector3.DOWN * SNATCH_SINK * m
 	return lunged
 

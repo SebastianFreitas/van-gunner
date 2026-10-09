@@ -8,6 +8,7 @@ extends Node
 ## With --smoke-shots=<dir> (tools/smoke.py --shots) it also saves screenshots at fixed checkpoints.
 
 const _WATCHDOG_SECONDS := 270.0
+const _ArmsPrints := preload("res://tools/smoke/smoke_arms_prints.gd")
 const _Fingerprint :=preload("res://tools/smoke/smoke_fingerprint.gd")
 const _Halt := preload("res://tools/smoke/smoke_halt.gd")
 const _LoperClimb := preload("res://tools/smoke/smoke_loper_climb.gd")
@@ -74,14 +75,7 @@ func _run() -> void:
 
 	await _seconds(2.0)
 	# The van drives at IDLE and the timers are wall-clock, so the shots pin it in place.
-	# Print-only: the IK bars never enter the fingerprint and never fail smoke.
-	var ik_lines := DebugCommands.run("arms ik").split("\n")
-	for ik_line in ik_lines.slice(maxi(ik_lines.size() - 3, 0)):
-		_log("arms ik: " + ik_line)
-	# Print-only, like the IK bars: never fails smoke and never enters the fingerprint.
-	var touch_lines := DebugCommands.run("arms touch").split("\n")
-	for touch_line in touch_lines.slice(maxi(touch_lines.size() - 3, 0)):
-		_log("arms touch: " + touch_line)
+	_ArmsPrints.new(self).run()
 	var pinned := _shots.pin_van() if _shots != null else -1.0
 	await _shot("idle")
 	if _shots != null:
@@ -92,12 +86,8 @@ func _run() -> void:
 		await _shots.van_views_gaps()
 		await _shots.arm_views()
 		await get_tree().process_frame
-		var frame_line: String = DebugCommands.run("arms frame")
-		_log(frame_line)
-		if frame_line.begins_with("FRAME ERR"):
-			_fail(frame_line)
+		_ArmsPrints.new(self).frame_check()
 		_shots.unpin_van(pinned)
-
 	var van := get_tree().get_first_node_in_group(&"van_run")
 	var gun_stats: GunStatsController = get_tree().get_first_node_in_group(&"gun_stats")
 
@@ -234,7 +224,6 @@ func _run_pass(_van: Node) -> bool:
 	if not await _halt.halt_round_trip():
 		return false
 	await _seconds(3.0)
-
 	_log(_Seeds.summon("enemy", 2))
 	await _LoperClimb.new().run(self)
 	await _LoperKnock.new().run(self)
