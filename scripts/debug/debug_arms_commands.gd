@@ -18,7 +18,7 @@ const _Weave := preload("res://scripts/player/arms/arm_weave.gd")
 ## Every subcommand `cmd_arms` handles; the one list behind `sub_commands()`, hints and usage.
 const SUBS: PackedStringArray = [
 	"cam", "curl", "dress", "dump", "fit", "fov", "frame", "gear", "gesture", "gun", "hands",
-	"ik", "inspect", "lthumb", "lthumbaim", "lthumbroll", "reload", "rall", "ridx", "rmid", "rpinky",
+	"ik", "inspect", "lthumb", "lthumbaim", "lthumbroll", "reach", "reload", "rall", "ridx", "rmid", "rpinky",
 	"rring", "shot", "thumbaim", "thumbcurl", "thumbroll", "thumbs", "thumbturn", "touch",
 	"walk", "weave", "wrist", "wristang",
 ]
@@ -87,6 +87,8 @@ func cmd_arms(args: Array) -> String:
 		return "arms reload " + str(vm.debug_reload_t)
 	if args[0] == "gesture" and args.size() >= 2:
 		return _gesture(vm, args)
+	if args[0] == "reach":
+		return _reach(vm)
 	if args[0] == "inspect" and args.size() >= 2:
 		var arg := str(args[1])
 		if arg == "play":
@@ -301,7 +303,7 @@ func _gesture(vm: Node, args: Array) -> String:
 		var play_kind := StringName(str(args[2]))
 		if not kinds.has(play_kind):
 			return "arms gesture: kinds " + ", ".join(kinds)
-		vm.play_gesture(play_kind)
+		vm.play_gesture(play_kind, vm.to_global(Vector3(0.0, 0.0, -0.9)))
 		return "arms gesture play " + str(play_kind)
 	var kind := StringName(str(args[1]))
 	if not kinds.has(kind) or args.size() < 3:
@@ -317,6 +319,38 @@ func _gesture(vm: Node, args: Array) -> String:
 	vm.debug_gesture_kind = kind
 	vm.debug_gesture_t = t
 	return "arms gesture %s %s" % [kind, t]
+
+
+## `arms reach`: the left arm's reach numbers in rig units (1 = 18 cm), in the left root's space.
+func _reach(vm: Node) -> String:
+	var roots := vm.get("_roots") as Dictionary
+	var root := roots.get("left_root") as Node3D
+	var wrist := (roots.get("left_reach", {}) as Dictionary).get("wrist", Vector3.ZERO) as Vector3
+	var sk: Skeleton3D = null
+	var to_rig := Transform3D.IDENTITY
+	for c in root.get_children():
+		if c is Node3D and ArmRig.skeleton(c as Node3D) != null:
+			sk = ArmRig.skeleton(c as Node3D)
+			var n: Node = sk
+			while n != root and n is Node3D:
+				to_rig = (n as Node3D).transform * to_rig
+				n = n.get_parent()
+	var o: Array[Vector3] = []
+	for bone in ["upper_arm", "forearm", "hand"]:
+		o.append(ArmRig._global_rest(sk, sk.find_bone("DEF-%s.L" % bone)).origin)
+	var k := to_rig.basis.x.length()
+	var a := k * o[0].distance_to(o[1])
+	var b := k * o[1].distance_to(o[2])
+	var big_r := 0.98 * (a + b)
+	var shoulder := to_rig * sk.get_bone_global_pose(sk.find_bone("DEF-upper_arm.L")).origin
+	var d := wrist.distance_to(shoulder)
+	var cam := host.get_viewport().get_camera_3d()
+	var hit := root.to_local(cam.to_global(Vector3(0, 0, -0.9)))
+	var rd := (wrist - shoulder).dot((hit - shoulder).normalized())
+	var s := sqrt(big_r * big_r - d * d + rd * rd) - rd
+	return "reach (left root space, rig units): k %.4f a %.4f b %.4f R %.4f d %.4f " % [
+			k, a, b, big_r, d] + "wrist_off %.5f S %.4f" % [
+			wrist.distance_to(ArmsBuilder.LEFT_SHOWN_WRIST), s]
 
 
 ## The player's own meshes would block the front and top views.

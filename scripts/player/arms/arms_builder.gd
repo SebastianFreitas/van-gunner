@@ -350,10 +350,9 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	rig.add_child(gun_root)
 	PerfStats.end(&"arms_build", perf_t)
 	return {
-		"left_root": left,
-		"right_root": right,
-		"gun_root": gun_root,
-		"left_wrist": l["wrist"],
+		"left_root": left, "right_root": right, "gun_root": gun_root,
+		"left_reach": {"shoulder": shoulder_l, "elbow": l.elbow, "wrist": l.wrist,
+			"pole": LEFT_HANG_POLE, "palm": LEFT_HANG_PALM, "drop": LEFT_WRIST_DROP},
 	}
 
 

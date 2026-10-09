@@ -44,3 +44,16 @@ right side, forearm sweep and roll), then the left hand up (back, palm,
 forearm inner and outer), 3 s, rigid root offsets on top of the weave; shot,
 reload and gestures cancel it; identity under SaveSandbox; `arms inspect
 <sec|play|off>` pins it.
+Interact gesture (`arm_gesture*.gd`, plan monster-arm-interact, 2026-10-09): six keyed
+channels (reach, pole, lean, wrist flex/dev, curl, spread, plus `frame` and `slide`) from
+`arm_gesture_keys.gd` tables drive a per-frame `ArmRig.reach` re-solve that keeps the
+weave's wrist delta; each channel's ends equal the baked inputs, so t 0 and the end are the
+weave's own pose and the restore solve changes nothing; the root only leans, at most 0.29
+units. Slam (press, push, knock): palm along `dir`, hand_dir turned 0.4 toward up (`SLAM_UP`, cut from 0.6 in round 05) (about 34
+deg of extension); snatch (pull, slides): hand_dir `dir` + DOWN 0.15 + RIGHT 0.3 (droop and
+cant). Wrist flex/dev use `arm_wrist_routine.gd` FLEX_AXIS/DEV_AXIS; negative flex is
+extension, knuckles to camera. The door reacts at `CONTACT` 0.22 for every kind (0.06-0.10 s
+later than before); E while a gesture plays starts nothing (no restart snap). Yank sign:
+slide_open yanks along rig +x × lat, slide_close along -lat (lat from camera x · van z).
+Measure each change: `anim_series`, pinned stills (`arms gesture <kind> <t>`), `arms dump`
+diffs, `tools/shots.py compare g00 g<NN>`; stop views 07/08/10/11/12 vary run to run.

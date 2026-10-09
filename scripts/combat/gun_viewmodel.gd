@@ -128,7 +128,9 @@ func rebuild_arms(seed_value: int) -> void:
 			ArmsBuilder.SHOW_GUN)
 	_kick = ArmKick.new(_arm_model("right_root"), _roots.get("gun_root") as Node3D)
 	_gesture = ArmGesture.new(_arm_model("left_root"))
-	_inspect = ArmInspect.new(HeldGun.GRIP, _roots.get("left_wrist", Vector3.ZERO) as Vector3)
+	_gesture.bind_reach(_arm_model("left_root"), _roots.get("left_reach", {}) as Dictionary)
+	_inspect = ArmInspect.new(HeldGun.GRIP,
+			(_roots.get("left_reach", {}) as Dictionary).get("wrist", Vector3.ZERO) as Vector3)
 	ViewmodelFov.apply(_rig, viewmodel_fov)
 	_apply()
 
@@ -172,11 +174,12 @@ func play_shot() -> void:
 
 ## Starts a left-hand interaction gesture; returns the contact delay in seconds. While
 ## reloading (the left hand is busy) or without arms nothing plays and the delay is 0.
-func play_gesture(kind: StringName) -> float:
+func play_gesture(kind: StringName, hit: Vector3, lat := 1.0) -> float:
 	if _reloading or _gesture == null:
 		return 0.0
 	if _inspect:
 		_inspect.clear()
+	_gesture.set_hit(_rig.to_local(hit), lat, _rig.to_local(_camera.global_position))
 	return _gesture.play(kind, _kick_clock)
 
 
@@ -300,11 +303,11 @@ func _process(delta: float) -> void:
 			WEAVE_SANDBOX_T if SaveSandbox.enabled else _weave_t)
 	var hold := debug_weave_t < 0.0 and SaveSandbox.enabled
 	var pin := maxf(debug_gesture_t, maxf(debug_inspect_t, debug_reload_t)) >= 0.0
-	var busy: bool = pin or _reloading or (_inspect and _inspect.is_playing(_kick_clock))
-	busy = busy or (_gesture and _gesture.is_playing(_kick_clock))
+	var busy: bool = (pin or _reloading or (_inspect and _inspect.is_playing(_kick_clock))
+			or (_gesture and _gesture.is_playing(_kick_clock)))
 	if _weave:
-		_weave.update(weave_at, _weave.wrist_scale(delta, hold, busy,
-				pin or debug_weave_t >= 0.0, _walk.amount() if _walk else 0.0))
+		_weave.update(weave_at, ArmGesture.wrist_scale(_weave, delta, hold, busy,
+				pin or debug_weave_t >= 0.0, _walk.amount() if _walk else 0.0, debug_gesture_t))
 	var clock := fmod(_kick_clock + delta, 3600.0)
 	if clock < _kick_clock and _kick:
 		_kick.clear()
@@ -320,7 +323,7 @@ func _process(delta: float) -> void:
 			_kick.sample(_kick_clock)
 	if _gesture:
 		if debug_gesture_t >= 0.0:
-			_gesture.pin(debug_gesture_kind, debug_gesture_t)
+			_gesture.pin(debug_gesture_kind, debug_gesture_t, _rig.to_local(_camera.global_position))
 		elif SaveSandbox.enabled:
 			_gesture.settle()  # no gesture, keeps smoke stills comparable
 		else:
@@ -337,7 +340,7 @@ func arms_focus(which: StringName) -> Vector3:
 		return Vector3.ZERO
 	if which == &"left":
 		var left := _roots.get("left_root") as Node3D
-		var wrist := _roots.get("left_wrist", Vector3.ZERO) as Vector3
+		var wrist := (_roots.get("left_reach", {}) as Dictionary).get("wrist", Vector3.ZERO) as Vector3
 		if left == null:
 			return Vector3.ZERO
 		return transform * (_rig.transform * (left.transform * wrist))
@@ -369,7 +372,7 @@ func _apply() -> void:
 	var cant := grip * roll * grip.affine_inverse()
 	var m := _motion()
 	var gun_x := m * insp_r * cant
-	var rest_pt := _roots.get("left_wrist", Vector3.ZERO) as Vector3
+	var rest_pt := (_roots.get("left_reach", {}) as Dictionary).get("wrist", Vector3.ZERO) as Vector3
 	var shown := k.y
 	var hide_off := LEFT_REST * (1.0 - shown)
 	var gx := cant * HeldGun.gun_xform()

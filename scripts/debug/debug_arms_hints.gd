@@ -22,6 +22,7 @@ const INFO := {
 	"walk": ["<cycle 0..1> [amount]", "walk cycle; also start|stop <sec> and off"],
 	"gesture": ["<kind> <sec|contact|off>", "pin a left-hand gesture; also play <kind>"],
 	"thumbs": ["", "thumb report"],
+	"reach": ["", "left arm reach numbers"],
 	"wristang": ["[t|axes|flex|dev|scan [t0 t1]]", "left wrist angles"],
 	"ik": ["", "IK report"],
 	"touch": ["", "touch report"],

@@ -145,7 +145,15 @@ func _interact_with(target: Interactable) -> void:
 	if kind != &"":
 		var vm := get_tree().get_first_node_in_group(&"gun_viewmodel")
 		if vm and vm.has_method(&"play_gesture"):
-			delay = vm.play_gesture(kind)
+			var hit := interaction_ray.to_global(interaction_ray.target_position)
+			if interaction_ray.is_colliding():
+				hit = interaction_ray.get_collision_point()
+			var van := get_tree().get_first_node_in_group(&"van_run") as Node3D
+			var lat := 1.0
+			if van != null and camera.global_transform.basis.x.dot(
+					van.global_transform.basis.z) < 0.0:
+				lat = -1.0
+			delay = vm.play_gesture(kind, hit, lat)
 	if SaveSandbox.enabled:
 		delay = 0.0
 	if delay > 0.0:
