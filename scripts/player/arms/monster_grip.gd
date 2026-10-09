@@ -8,8 +8,13 @@ extends RefCounted
 ## 1.40 so the grip is never shorter than HeldGun's 1.35 p. Depth about 0.55 * span, width
 ## 0.6 * depth. All are in palm lengths (p).
 const GRIP_LEN_K := 1.40
-const GRIP_DEPTH_K := 0.80
+## Thickened 2026-10-09 (owner: "feel free to make the grip thicker") so the palm seats on the
+## back strap; the old 0.80 deep left it floating 0.29 p off. Width stays 0.48: every width gain
+## pushed the fingertips into the core (probe), and the wrist x was re-fitted instead. The front
+## face stays where it was (`_FRONT_DEPTH_K`) so the fingers and the trigger keep their fit: the extra depth is all behind.
+const GRIP_DEPTH_K := 1.4
 const GRIP_WIDTH_K := 0.48
+const _FRONT_DEPTH_K := 0.80
 ## Trigger guard opening (HeldGun's is 0.42 p tall, 0.75 p long: this is 1.7x), in p.
 const GUARD_H_K := 0.72
 const GUARD_L_K := 1.30
@@ -19,6 +24,12 @@ const GROOVES := 4
 ## is unchanged.
 const GUN_K := 1.15
 const _TOP := Vector3(0.0, 0.03, -0.01)
+## Share of the grip length, from the top, that keeps the shallow depth (thumb relief).
+const _RELIEF_F := 0.7
+const _RELIEF_W := 0.5
+const _RELIEF_CORE_D := 0.7
+const _RELIEF_PANEL_D := 0.66
+const _RELIEF_PANEL_X := 0.25
 const _RAKE := 18.0 * PI / 180.0
 
 
@@ -38,17 +49,35 @@ static func build(rng: RandomNumberGenerator, palm_len: float = 0.22) -> Node3D:
 	var wid := GRIP_WIDTH_K * p
 	var gb := Basis(Vector3.RIGHT, -_RAKE)
 	var centre := grip_centre(p)
-	ArmParts.mesh(body, "GripCore", ArmParts.box(Vector3(0.7 * wid, glen, 0.9 * dep)), steel,
-			centre, gb)
+	# Thumb relief: the top _RELIEF_F of the grip keeps the old shallow depth (it only reaches
+	# _FRONT_DEPTH_K behind the front face), so the thumb base clears the back; the thick back
+	# for the palm starts below it. Upper pieces keep the names the arms probes look for.
+	var dep_up := _FRONT_DEPTH_K * p
+	var up_len := _RELIEF_F * glen
+	var lo_len := glen - up_len
+	# Front faces of the core and panels stay where the full-depth pieces had them.
+	var front_z := 0.5 * (GRIP_DEPTH_K - _FRONT_DEPTH_K) * p - 0.45 * dep
+	var core_d := _RELIEF_CORE_D * dep_up
+	var panel_d := _RELIEF_PANEL_D * dep_up
+	var up_c := _seg_centre(p, 0.0, _RELIEF_F, front_z + 0.5 * core_d)
+	var lo_c := _seg_centre(p, _RELIEF_F, 1.0, 0.5 * (GRIP_DEPTH_K - _FRONT_DEPTH_K) * p)
+	ArmParts.mesh(body, "GripCore", ArmParts.box(Vector3(_RELIEF_W * wid, up_len, core_d)),
+			steel, up_c, gb)
+	ArmParts.mesh(body, "GripCoreLow", ArmParts.box(Vector3(0.7 * wid, lo_len, 0.9 * dep)),
+			steel, lo_c, gb)
 	for side: float in [-1.0, 1.0]:
 		var tag := "L" if side < 0.0 else "R"
 		ArmParts.mesh(body, "GripPanel" + tag,
-				ArmParts.box(Vector3(0.2 * wid, 0.92 * glen, 0.86 * dep)), rubber,
-				centre + gb * Vector3(side * 0.4 * wid, 0.0, 0.0), gb)
+				ArmParts.box(Vector3(0.2 * wid, 0.92 * up_len, panel_d)), rubber,
+				up_c + gb * Vector3(side * _RELIEF_PANEL_X * wid, 0.0,
+				0.5 * (panel_d - core_d)), gb)
+		ArmParts.mesh(body, "GripPanelLow" + tag,
+				ArmParts.box(Vector3(0.2 * wid, 0.92 * lo_len, 0.86 * dep)), rubber,
+				lo_c + gb * Vector3(side * 0.4 * wid, 0.0, 0.0), gb)
 	ArmParts.mesh(body, "FrontStrap", ArmParts.box(Vector3(0.84 * wid, 0.94 * glen, 0.1 * dep)),
 			rubber, centre + gb * Vector3(0.0, 0.0, -0.46 * dep), gb)
-	ArmParts.mesh(body, "BackStrap", ArmParts.box(Vector3(0.84 * wid, 0.94 * glen, 0.1 * dep)),
-			rubber, centre + gb * Vector3(0.0, 0.0, 0.46 * dep), gb)
+	ArmParts.mesh(body, "BackStrap", ArmParts.box(Vector3(0.84 * wid, 0.94 * lo_len, 0.1 * dep)),
+			rubber, lo_c + gb * Vector3(0.0, 0.0, 0.46 * dep), gb)
 	for i: int in range(GROOVES):
 		var f := 0.15 + 0.2 * i
 		ArmParts.mesh(body, "Groove%d" % i,
@@ -59,7 +88,7 @@ static func build(rng: RandomNumberGenerator, palm_len: float = 0.22) -> Node3D:
 	ArmParts.mesh(body, "Beavertail", ArmParts.box(Vector3(0.9 * wid, 0.05 * p, 0.45 * dep)),
 			steel, web_point(p) + Vector3(0.0, 0.02 * p, 0.12 * dep),
 			Basis(Vector3.RIGHT, deg_to_rad(25.0)))
-	ArmParts.mesh(body, "TopStub", ArmParts.box(Vector3(0.8 * wid, 0.1 * p, 0.95 * dep)), steel,
+	ArmParts.mesh(body, "TopStub", ArmParts.box(Vector3(0.8 * wid, 0.1 * p, 0.95 * dep_up)), steel,
 			_TOP + Vector3(0.0, 0.05 * p, 0.0))
 	var t := trigger_point(p)
 	var guard_front_z := t.z + 0.30 * p - GUARD_L_K * p
@@ -113,7 +142,16 @@ static func _down() -> Vector3:
 
 ## Middle of the grip, body space.
 static func grip_centre(p: float) -> Vector3:
-	return _TOP + 0.5 * GRIP_LEN_K * p * _down()
+	return (_TOP + 0.5 * GRIP_LEN_K * p * _down()
+			+ Basis(Vector3.RIGHT, -_RAKE) * Vector3(0.0, 0.0,
+			0.5 * (GRIP_DEPTH_K - _FRONT_DEPTH_K) * p))
+
+
+## Middle of the grip between two fractions of its length from the top, with a z shift in the
+## raked frame.
+static func _seg_centre(p: float, f0: float, f1: float, z: float) -> Vector3:
+	return _TOP + Basis(Vector3.RIGHT, -_RAKE) * Vector3(0.0,
+			-0.5 * (f0 + f1) * GRIP_LEN_K * p, z)
 
 
 ## Face of the trigger: one groove spacing above the top groove, in front of the front strap.
@@ -121,7 +159,7 @@ static func trigger_point(p: float) -> Vector3:
 	var spacing := 0.2 * GRIP_LEN_K * p
 	var along := (0.15 * GRIP_LEN_K * p) - spacing
 	return _TOP + Basis(Vector3.RIGHT, -_RAKE) * Vector3(0.0, -along,
-			-(0.5 * GRIP_DEPTH_K + 0.25) * p)
+			-(0.5 * _FRONT_DEPTH_K + 0.25) * p)
 
 
 ## Top of the back strap, where the thumb web sits.

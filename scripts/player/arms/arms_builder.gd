@@ -41,7 +41,7 @@ const RIGHT_CURL := {
 const RIGHT_THUMB_AIM := Vector3(-36, -18, -82)
 ## Pose of the monster grip piece (`gun_style == &"grip"`), a separate set so tuning it leaves the
 ## pistol pose alone. Same shape as the pistol constants above.
-const GRIP_WRIST_IN_GUN := Vector3(0.08, -0.13, 0.17)
+const GRIP_WRIST_IN_GUN := Vector3(0.072, -0.13, 0.17)
 const GRIP_HAND_DIR_IN_GUN := Vector3(-0.05, 0.25, -1.0)
 const GRIP_PALM_IN_GUN := Vector3(-1.0, 0.0, 0.0)
 ## The thumb's .03 value tips its nail slightly down from the player's POV (owner, 2026-10-04).

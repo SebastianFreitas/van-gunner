@@ -65,7 +65,8 @@ func run(vm: Node) -> String:
 		var g: Vector3 = pts[key]
 		var best := INF
 		var part := "-"
-		for part_name in ["GripCore", "GripPanelL", "GripPanelR", "Frame", "Beavertail", "Barrel"]:
+		for part_name in ["GripCore", "GripPanelL", "GripPanelR", "GripCoreLow", "GripPanelLowL",
+				"GripPanelLowR", "Frame", "Beavertail", "Barrel"]:
 			var mi := body.get_node_or_null(NodePath(part_name)) as MeshInstance3D
 			if mi == null:
 				continue
@@ -106,8 +107,8 @@ func run(vm: Node) -> String:
 					total += 1
 					var g := dm.global_transform * v
 					var is_buried := false
-					for part_name in ["GripCore", "GripPanelL", "GripPanelR", "Frame",
-							"Beavertail", "Barrel"]:
+					for part_name in ["GripCore", "GripPanelL", "GripPanelR", "GripCoreLow",
+							"GripPanelLowL", "GripPanelLowR", "Frame", "Beavertail", "Barrel"]:
 						var gm := body.get_node_or_null(NodePath(part_name)) as MeshInstance3D
 						if gm == null:
 							continue

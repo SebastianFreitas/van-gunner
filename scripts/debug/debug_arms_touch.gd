@@ -15,7 +15,8 @@ const GRIP_OUT_P := 0.10
 const WEB_MAX_P := 0.30
 const PALM_MIN_P := -0.02
 
-const _PARTS: Array[String] = ["GripCore", "GripPanelL", "GripPanelR", "Frame", "Beavertail",
+const _PARTS: Array[String] = ["GripCore", "GripPanelL", "GripPanelR", "GripCoreLow", "GripPanelLowL",
+		"GripPanelLowR", "Frame", "Beavertail",
 		"Barrel", "Trigger", "GuardRear", "GuardBottom", "GuardFront", "GuardJoin",
 		"FrontStrap", "BackStrap", "Groove0", "Groove1", "Groove2", "Groove3", "Pommel",
 		"TopStub", "TriggerUpper", "TriggerLower"]
