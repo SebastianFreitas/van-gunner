@@ -3,7 +3,9 @@ extends RefCounted
 
 const CAM_NAME := &"ArmsDebugCam"
 ## Camera offsets from the focus point in Weapon space (metres); `left` aims at the left hand,
-## `elbow` at the left elbow, from below and to its left. The hands are half again as big, so
+## `elbow` at the left elbow, from below and to its left; `gun` and `gunfront` aim at the gun
+## Body's centre and are placed in code (see `run`): `gun` from the player's eye, 2.5 times
+## closer; `gunfront` 0.5 m out along the rails. The hands are half again as big, so
 ## the close-ups step back. All others aim at the right (gun) hand.
 const VIEWS := {
 	&"front": Vector3(0.0, 0.042, -0.448),
@@ -16,6 +18,8 @@ const VIEWS := {
 	&"rtrig": Vector3(0.16, -0.06, -0.18),
 	&"back": Vector3(0.0, 0.10, 0.35),
 	&"elbow": Vector3(-0.14, -0.168, -0.392),
+	&"gun": Vector3.ZERO,
+	&"gunfront": Vector3.ZERO,
 }
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
@@ -86,8 +90,28 @@ func run(vm: Node, args: Array) -> String:
 	var focus: Vector3 = vm.arms_focus(hand)
 	if view == &"elbow":
 		focus += ELBOW_FROM_WRIST
+	if view == &"gun" or view == &"gunfront":
+		focus += _gun_centre_shift(vm)
 	var from: Vector3 = focus + offset
+	if view == &"gun":
+		# On the eye-to-centre line, so the shot shows the gun from the player's own angle.
+		var eye := (parent as Node3D).transform.affine_inverse().origin
+		from = focus + (eye - focus) / 1.7
+	elif view == &"gunfront":
+		from = focus + _gun_basis(vm) * Vector3(0.0, 0.0, -0.5)
 	var up := Vector3.FORWARD if view == &"top" or view == &"under" else Vector3.UP
 	cam.transform = Transform3D(Basis.looking_at(focus - from, up), from)
 	cam.make_current()
 	return reply
+
+
+## Offset from the gun hand's origin to the middle of the gun Body (receiver to muzzle).
+func _gun_centre_shift(vm: Node) -> Vector3:
+	var local := Vector3(0.0, 0.0, HeldGun.muzzle_in_gun.z * 0.5)
+	return _gun_basis(vm) * local
+
+
+## The gun Body's orientation in the camera's space; its -Z points out of the muzzle.
+func _gun_basis(vm: Node) -> Basis:
+	return (vm as Node3D).transform.basis * (vm.get_node("Rig") as Node3D).transform.basis \
+			* HeldGun.gun_xform().basis

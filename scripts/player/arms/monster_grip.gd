@@ -1,6 +1,6 @@
 class_name MonsterGrip
 extends RefCounted
-## The monster-hand grip study plus the redneck railgun barrel: grip, trigger, guard (here) and receiver and barrel (RedneckBarrel).
+## The monster-hand grip study plus the railgun body: grip, trigger, guard (here) and receiver and barrel (RailgunBody).
 
 ## Measured from the right hand (arms dump): palm_len 0.198, knuckle span 0.292 m (index to pinky 0.214
 ## plus one knuckle spacing 0.078). That span is in the same space as the gun's p = palm_len *
@@ -15,6 +15,9 @@ const GUARD_H_K := 0.72
 const GUARD_L_K := 1.30
 ## Grooves on the front strap, one per finger; the trigger sits one spacing above the top one.
 const GROOVES := 4
+## Body scale over the hand's `p`; the grip, guard and trigger stay at `p` so the hand's wrap
+## is unchanged.
+const GUN_K := 1.15
 const _TOP := Vector3(0.0, 0.03, -0.01)
 const _RAKE := 18.0 * PI / 180.0
 
@@ -61,7 +64,8 @@ static func build(rng: RandomNumberGenerator, palm_len: float = 0.22) -> Node3D:
 	var t := trigger_point(p)
 	var guard_front_z := t.z + 0.30 * p - GUARD_L_K * p
 	_build_guard(body, p, steel)
-	var muzzle := RedneckBarrel.build(body, p, rng, guard_front_z, t.y + 0.25 * p)
+	var gp := p * GUN_K
+	var muzzle := RailgunBody.build(body, gp, rng, guard_front_z, t.y + 0.25 * p)
 	for entry: Array in [["GripCentre", centre], ["TriggerPoint", trigger_point(p)],
 			["WebPoint", web_point(p)], ["GripBottom", grip_bottom(p)]]:
 		var m := Marker3D.new()
@@ -72,7 +76,7 @@ static func build(rng: RandomNumberGenerator, palm_len: float = 0.22) -> Node3D:
 	# this piece: shots leave from the barrel tip, not from inside the hand.
 	muzzle_in_gun_set(muzzle,
 			centre + gb * Vector3(0.0, -0.2 * glen, -0.55 * dep), grip_bottom(p))
-	root.set_meta(&"lamp_local", HeldGun.gun_xform() * Vector3(0.0, 0.03, -0.6 * p))
+	root.set_meta(&"lamp_local", HeldGun.gun_xform() * Vector3(0.0, 0.03, -0.6 * gp))
 	return root
 
 

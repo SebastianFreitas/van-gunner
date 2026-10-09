@@ -272,7 +272,7 @@ func van_views_closeups() -> void:
 ## First-person arm close-ups through the `arms` debug command, saved with the "a" prefix.
 func arm_views() -> void:
 	var hidden := _hide_ui()
-	for view in ["front", "side", "left", "top", "elbow"]:
+	for view in ["front", "side", "left", "top", "elbow", "gun"]:
 		DebugCommands.run("arms cam " + view)
 		await _save("arms-" + view, "a")
 	for pin: Array in [["reload", "0.5"], ["weave", "2.9"], ["walk", "0.75"]]:

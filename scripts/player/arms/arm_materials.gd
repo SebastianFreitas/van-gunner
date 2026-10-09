@@ -75,6 +75,18 @@ static func rust(seed_offset: float) -> ShaderMaterial:
 			60.0, 6.0, 0.0, 0.85, 0.9, 0.2, seed_offset)
 
 
+## Worn olive body paint for the railgun's flat faces: mid-dark so the cabin light catches it.
+static func gun_paint(seed_offset: float) -> ShaderMaterial:
+	return surface(Color(0.30, 0.32, 0.22), Color(0.17, 0.18, 0.13), Color(0.10, 0.09, 0.06),
+			60.0, 6.0, 0.0, 0.7, 0.85, 0.15, seed_offset)
+
+
+## Bare dull steel for the railgun's rails: lighter than the body so two bars frame the channel.
+static func rail_steel(seed_offset: float) -> ShaderMaterial:
+	return surface(Color(0.40, 0.41, 0.42), Color(0.24, 0.24, 0.25), Color(0.12, 0.11, 0.09),
+			60.0, 6.0, 0.0, 0.5, 0.6, 0.4, seed_offset)
+
+
 ## Dull scavenged aluminium: pale grey, matte.
 static func dull_alu(seed_offset: float) -> ShaderMaterial:
 	return surface(Color(0.30, 0.31, 0.30), Color(0.15, 0.15, 0.15), Color(0.08, 0.08, 0.06),
@@ -175,3 +187,8 @@ static func brass() -> StandardMaterial3D:
 
 static func lens() -> StandardMaterial3D:
 	return MachineParts.emissive(Color(1.0, 0.85, 0.6), 2.0)
+
+
+## Orange glow of the railgun's charge channel and capacitor lamps.
+static func ember(_seed_offset: float) -> StandardMaterial3D:
+	return MachineParts.emissive(Color(1.0, 0.45, 0.12), 1.6)
