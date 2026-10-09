@@ -155,8 +155,11 @@ static func _vert(st: SurfaceTool, p: Vector3, out: Vector3, inv: Transform3D) -
 	st.add_vertex(inv * p)
 
 
-## The handle mount's steel, else the leaf body's, so the lips match the doors.
+## The surround's rusty steel, else the handle mount's steel or the leaf body's.
 static func _material(left_hinge: Node3D) -> Material:
+	var rust := load("res://scenes/van/van_rust_steel_material.tres") as Material
+	if rust != null:
+		return rust
 	var mount := left_hinge.get_node_or_null("Handle/Mount")
 	if mount != null:
 		var mat := mount.get("material") as Material

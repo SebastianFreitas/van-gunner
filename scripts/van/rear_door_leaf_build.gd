@@ -40,7 +40,8 @@ static func build(_doors: Node3D, left: Node3D, right: Node3D) -> void:
 	var mesh := _build_left_leaf_mesh(left)
 	var mat := _door_body_material(left)
 	_apply_leaf(left, mesh, mat, false)
-	_apply_leaf(right, mesh, mat, true)
+	# Same treatment, different noise, so the mirrored leaves don't look stamped.
+	_apply_leaf(right, mesh, _door_body_material(left, Vector2(37.3, 11.7)), true)
 	_WindowLip.build(left, left, false)
 	_WindowLip.build(left, right, true)
 	_add_astragal(left)
@@ -101,9 +102,10 @@ static func _apply_leaf(hinge: Node3D, mesh: ArrayMesh, mat: Material, mirror_x:
 	hinge.move_child(body, 0)
 
 
-static func _door_body_material(left: Node3D) -> ShaderMaterial:
+static func _door_body_material(left: Node3D, offset := Vector2.ZERO) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = DOOR_SHADER
+	mat.set_shader_parameter("leaf_offset", offset)
 	mat.set_shader_parameter("leaf_width_m", VanInteriorSize.REAR_DOOR_HALF - CENTER_GAP)
 	mat.set_shader_parameter("leaf_bottom_y", Y_MIN - (left.position.y if left else 1.55))
 	return mat
@@ -133,5 +135,8 @@ static func _add_astragal(left: Node3D) -> void:
 	var mount := left.get_node_or_null("Handle/Mount")
 	if mount:
 		strip.material_override = mount.get("material") as Material
+	var rust := load("res://scenes/van/van_rust_steel_material.tres") as Material
+	if rust != null:
+		strip.material_override = rust
 	strip.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	left.add_child(strip)
