@@ -66,6 +66,10 @@ target, and don't add another sourceless light on their precedent.
   0.24, depth fog 20..56 m in (0.008, 0.012, 0.011), glow threshold 1.1.
   Never raise ambient or fog-begin to make something readable: add a light
   that belongs there (a lamp, a lit doorway, a sign).
+- **Van interior lamp map:** two caged work lamps (centre floor) plus two
+  `VanJunkLamp` cans (rear doors and floor, cab end and side doors); about 5 lights, no fills, no shadows. The
+  interior is readable but never by ambient: every light has a fixture. Budget
+  and per-lamp knobs are in `art-shots.md`.
 - **Albedo budget** (linear RGB luminance, the road's range): large surfaces
   0.02..0.25; wear, trims and highlights up to 0.40; small bright litter
   (paper) up to 0.45. Nothing non-emissive above 0.5.

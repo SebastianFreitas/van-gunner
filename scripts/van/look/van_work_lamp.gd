@@ -16,14 +16,9 @@ const SPOT_ANGLE_DEG := 70.0
 @export var light_range := 5.5
 @export var light_color := Color(1.0, 0.82, 0.6, 1.0)
 @export var phase_offset := 0.0
-## Energy of the short bulb-level omni that lights the roof, ribs and nearby walls.
-@export var fill_energy := 8.0
-@export var fill_range := 2.0
 
 ## The lamp's interior light; a child of the swinging part so the pool follows the bulb.
 var light: SpotLight3D
-## Short-range all-round light at the bulb; the open cage throws light up and sideways too.
-var fill: OmniLight3D
 
 var _swing: Node3D
 var _amp_deg := SWAY_PARKED_DEG
@@ -88,18 +83,10 @@ func _build() -> void:
 	light.spot_angle = SPOT_ANGLE_DEG
 	light.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
 	light.light_cull_mask = VanLighting.LAYER_VAN_INTERIOR
+	light.light_volumetric_fog_energy = 0.0
+	light.shadow_enabled = false
 	light.position = Vector3(0.0, mid - 0.01, 0.0)
 	_swing.add_child(light)
-
-	fill = OmniLight3D.new()
-	fill.name = "Fill"
-	fill.light_color = light_color
-	fill.light_energy = fill_energy
-	fill.omni_range = fill_range
-	fill.light_cull_mask = VanLighting.LAYER_VAN_INTERIOR
-	fill.light_specular = 0.0
-	fill.position = light.position
-	_swing.add_child(fill)
 
 
 func _add_mesh(parent: Node3D, mesh_name: String, mesh: Mesh, mat: Material, pos: Vector3,
