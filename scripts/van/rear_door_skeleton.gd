@@ -35,7 +35,7 @@ const STRIP_ROUND := 0.09
 
 ## Adds the pressed cabin face into `st`. `win` is the window hole outline.
 static func build(st: SurfaceTool, rect: Rect2, win: PackedVector2Array, z_cab: float,
-		_z_plate_back: float) -> void:
+		profile: RearDoorProfile) -> void:
 	var lo := Vector2(INF, INF)
 	var hi := Vector2(-INF, -INF)
 	for p in win:
@@ -53,12 +53,19 @@ static func build(st: SurfaceTool, rect: Rect2, win: PackedVector2Array, z_cab: 
 			Vector2(x1, bot_y0)], BOT_ROUND)
 	var openings: Array[PackedVector2Array] = [win, strip, bottom]
 	var slopes: Array[float] = [WIN_SLOPE, STRIP_SLOPE, BOT_SLOPE]
+	var bays := profile.cabin_openings(rect, win, WIN_SLOPE)
+	if not bays.is_empty():
+		openings = [win]
+		openings.append_array(bays)
+		slopes = [WIN_SLOPE]
+		for _b in bays:
+			slopes.append(RearDoorProfile.BAY_SLOPE)
 	# The beam crests are the cabin face; each opening is cut out at the top of its flank.
 	var cuts: Array = []
 	for i in openings.size():
 		cuts.append(_Skin._ring(openings[i], slopes[i]))
 	_Skin.tag(st, _Skin.TAG_CABIN)
-	for poly in _Skin._clip(_Skin._pieces(rect, cuts), _Skin.leaf_outline(rect)):
+	for poly in _Skin._clip(_Skin._pieces(rect, cuts), _Skin.leaf_outline(rect, profile)):
 		_Skin._poly(st, poly, z_cab, Vector3.FORWARD)
 	for i in openings.size():
 		_Press.sweep(st, openings[i], slopes[i], z_cab)

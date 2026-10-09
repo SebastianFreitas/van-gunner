@@ -4,6 +4,8 @@ paths:
   - "scripts/van/broken_iron_cross.gd"
   - "scripts/van/breakable_glass.gd"
   - "scripts/van/rear_door*.gd"
+  - "scripts/van/look/rear_door_donor_*.gd"
+  - "scripts/van/look/rear_door_jerry_can.gd"
   - "scripts/van/rear_window_lip.gd"
   - "scripts/van/roof_edge_seal.gd"
   - "scripts/van/side_door*.gd"
@@ -69,3 +71,5 @@ Every opening is sealed by overlap, never by a tight fit (vangapfix D4, D17): a 
 ## Rear door scrap hardware (spec 3)
 
 `scripts/van/look/van_rear_door_scrap.gd` (called from `van_rear_dressing._build_leaf` after `van_rear_door_hardware.gd`, same hardware RNG) adds the top hinge, check strap with angle-iron bits, seam clamps, floor striker, header latch box, a patch plate, oversized hex bolts and weld beads, all named `MeshInstance3D`s on layer 2. Leaf scrap (top hinge strap, check strap and its arm, clamps, latch box, seam rod kept 1 cm clear of the seam) sits under each hinge and swings with the leaf; body-side scrap (pillar hinge half, check-arm stub, header and floor strikers) sits under `Portal/ScrapBodyL|R` and stays put. Constants `T` 0.02 (front proud) and `BURY` 0.045 (back clears the inner sheet). Pitfalls: scrap plates are not kept out of this hardware, so the dressing seed shifts if `_plate_keep_out` grows (it added a FLICKER row). The window bars (IronCross frame 1.04 x 0.825, skin reach 1.12 x 0.9) cover the chamfered hole (0.99 x 0.775); the rear bars are 1.4x chunkier than the side ones (`SKIN_BAR_SCALE`) and `iron_cross_gusset.gd` adds four welded rebar braces across the chamfer corners (ends 9-10 cm onto the steel on the skin, bead blobs at each end, middle clear of the glass at `BAR_BACK_Z`).
+
+The two rear leaves are no longer mirrors: each takes its own `RearDoorProfile` (`scripts/van/rear_door_profile.gd`; the x<0 donor leaf uses `RearDoorProfile.donor()`). The donor leaf's window must stay inside `rear_window_aabb` and centred on `REAR_WINDOW_X` (its collision is `rear_door_window_collision.gd`). Its cabin-face fittings (vent plate, molle panel, jerry can) stand into the cabin with their own collision, which is intended.

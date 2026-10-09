@@ -25,7 +25,7 @@ const TAG_CAVITY := 5
 
 ## Builds the left leaf. `window` is the window outline around `window_c`.
 static func build(x_max: float, y_lo: float, y_hi: float, z_cab: float, z_street: float,
-		window: PackedVector2Array, window_c: Vector2) -> ArrayMesh:
+		window: PackedVector2Array, window_c: Vector2, profile: RearDoorProfile) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var z_plate_back := z_street - PLATE_T
@@ -33,7 +33,7 @@ static func build(x_max: float, y_lo: float, y_hi: float, z_cab: float, z_street
 	var win := PackedVector2Array()
 	for p in window:
 		win.append(p + window_c)
-	var outline := leaf_outline(rect)
+	var outline := leaf_outline(rect, profile)
 	for poly in _clip(_pieces(rect, [win]), outline):
 		tag(st, TAG_STREET)
 		_poly(st, poly, z_street, Vector3.BACK)
@@ -44,12 +44,23 @@ static func build(x_max: float, y_lo: float, y_hi: float, z_cab: float, z_street
 	var skeleton := load(_SKELETON_PATH)
 	# The window hole is a tunnel through the slab, from the recessed panel level.
 	_walls(st, win, z_cab + skeleton.PANEL_DROP, z_street, true)
-	skeleton.build(st, rect, win, z_cab, z_plate_back)
+	skeleton.build(st, rect, win, z_cab, profile)
+	if profile.is_donor():
+		_filler(st, profile.filler(rect), z_cab)
 	# The street edge of the window is rolled like the skeleton's holes: a pressed lip standing
 	# proud of the plate (under the dark WindowLip, whose face is 1.5 cm proud).
 	skeleton._flange(st, win, z_street, z_street, z_street + WINDOW_LIP_H)
-	preload("res://scripts/van/rear_door_swage.gd").build(st, rect, win, z_street)
+	preload("res://scripts/van/rear_door_swage.gd").build(st, rect, win, z_street, profile)
 	return st.commit()
+
+
+## The donor leaf's flat filler plate behind the cabin plane, bare-steel tagged.
+static func _filler(st: SurfaceTool, poly: PackedVector2Array, z_cab: float) -> void:
+	var z0 := z_cab + 0.05
+	tag(st, TAG_EDGE)
+	_poly(st, poly, z0, Vector3.FORWARD)
+	_poly(st, poly, z0 + 0.02, Vector3.BACK)
+	_walls(st, poly, z0, z0 + 0.02, false)
 
 
 ## Marks every vertex added after this call with face tag `t` (SurfaceTool keeps the colour).
@@ -58,8 +69,10 @@ static func tag(st: SurfaceTool, t: int) -> void:
 
 
 ## The leaf's outline, counter-clockwise: rounded corners, the larger one top-left (hinge side).
-static func leaf_outline(r: Rect2) -> PackedVector2Array:
+static func leaf_outline(r: Rect2, profile: RearDoorProfile = null) -> PackedVector2Array:
 	var pts := PackedVector2Array()
+	if profile != null and profile.is_donor():
+		return profile.outline(r)
 	var corners := [[r.position, CORNER, PI], [Vector2(r.end.x, r.position.y), CORNER, PI * 1.5],
 			[r.end, CORNER, 0.0], [Vector2(r.position.x, r.end.y), CORNER_TOP, PI * 0.5]]
 	for c in corners:

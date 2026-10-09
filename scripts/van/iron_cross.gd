@@ -18,6 +18,8 @@ const IronCrossBuild := preload("res://scripts/van/iron_cross_build.gd")
 ## Skin ends only: the door skin's z and how far the bar runs along it.
 @export var skin_z := 0.05
 @export var skin_reach := Vector2(1.12, 0.90)
+## Skin ends only: the four diagonal braces across a chamfered window (off for round corners).
+@export var gussets := true
 ## Local z of the surface the ends stand on: the side frame ring's front.
 @export var mount_z := 0.03
 ## Rear-door bars: height of the welded posts that lift the skin runs off the face (0 = none).

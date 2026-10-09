@@ -22,7 +22,8 @@ const SLEEVE_OFFSET := 0.015
 
 
 ## Adds the dark window lip to one rear leaf (left-hinge-local, mirrored for the right).
-static func build(left_hinge: Node3D, hinge: Node3D, mirror_x: bool) -> void:
+static func build(left_hinge: Node3D, hinge: Node3D, mirror_x: bool,
+		profile: RearDoorProfile) -> void:
 	if left_hinge == null or hinge == null:
 		return
 	var old := hinge.get_node_or_null("WindowLip")
@@ -31,9 +32,9 @@ static func build(left_hinge: Node3D, hinge: Node3D, mirror_x: bool) -> void:
 	var center := Vector2(_LeafBuild.WINDOW_X,
 			HOLE_CENTER_RIG_Y - left_hinge.position.y)
 	var max_x := absf(left_hinge.position.x) - _LeafBuild.CENTER_GAP - INNER_EDGE_CLEAR
-	var outer := _ring(OVER_SKIN)
-	var inner := _ring(-INTO_GLASS)
-	var sleeve := _ring(SLEEVE_OFFSET)
+	var outer := _ring(profile.window_hole, OVER_SKIN)
+	var inner := _ring(profile.window_hole, -INTO_GLASS)
+	var sleeve := _ring(profile.window_hole, SLEEVE_OFFSET)
 	for i in outer.size():
 		var o := outer[i] + center
 		outer[i] = Vector2(minf(o.x, max_x), o.y)
@@ -86,8 +87,7 @@ static func build(left_hinge: Node3D, hinge: Node3D, mirror_x: bool) -> void:
 
 
 ## The window hole outline offset by `d` (positive outward) with mitred corners.
-static func _ring(d: float) -> PackedVector2Array:
-	var hole := _LeafBuild.WINDOW_HOLE
+static func _ring(hole: PackedVector2Array, d: float) -> PackedVector2Array:
 	var count := hole.size()
 	var pts := PackedVector2Array()
 	for i in count:

@@ -26,21 +26,28 @@ const CREST_FRAC := 0.85
 
 ## Adds the doubler ring around `win` and the swage beads across `rect` into `st`, on the street
 ## face at `z_street`.
-static func build(st: SurfaceTool, rect: Rect2, win: PackedVector2Array, z_street: float) -> void:
+static func build(st: SurfaceTool, rect: Rect2, win: PackedVector2Array, z_street: float,
+		profile: RearDoorProfile) -> void:
 	var lo := Vector2(INF, INF)
 	for p in win:
 		lo = lo.min(p)
-	var doubler: Array[Vector2] = [Vector2(DOUBLER_START, DOUBLER_H)]
-	doubler.append_array(_slope(DOUBLER_FLAT, DOUBLER_WIDTH, DOUBLER_H))
-	_Skin.tag(st, _Skin.TAG_STREET)
-	# The ring's inner edge is a wall that closes against the dark lip.
-	_Skin._walls(st, _Skin._ring(win, DOUBLER_START), z_street, z_street + DOUBLER_H, true)
-	_sweep(st, win, doubler, z_street)
+	var half_w := BEAD_HALF_W
+	var bead_ys: Array[float] = [lo.y - BEAD_BELOW_WINDOW, rect.position.y + BEAD_ABOVE_FLOOR]
+	if profile.wide_street_bead():
+		half_w = RearDoorProfile.WIDE_BEAD_HALF_W
+		bead_ys = [rect.position.y + rect.size.y * RearDoorProfile.WIDE_BEAD_AT]
+	if not profile.wide_street_bead():
+		var doubler: Array[Vector2] = [Vector2(DOUBLER_START, DOUBLER_H)]
+		doubler.append_array(_slope(DOUBLER_FLAT, DOUBLER_WIDTH, DOUBLER_H))
+		_Skin.tag(st, _Skin.TAG_STREET)
+		# The ring's inner edge is a wall that closes against the dark lip.
+		_Skin._walls(st, _Skin._ring(win, DOUBLER_START), z_street, z_street + DOUBLER_H, true)
+		_sweep(st, win, doubler, z_street)
 	var x0 := rect.position.x + BEAD_END_INSET
 	var x1 := rect.end.x - BEAD_END_INSET
-	for y in [lo.y - BEAD_BELOW_WINDOW, rect.position.y + BEAD_ABOVE_FLOOR]:
-		var bead := _Press.rounded([Vector2(x0, y - BEAD_HALF_W), Vector2(x0, y + BEAD_HALF_W),
-				Vector2(x1, y + BEAD_HALF_W), Vector2(x1, y - BEAD_HALF_W)], BEAD_HALF_W * 0.98)
+	for y in bead_ys:
+		var bead := _Press.rounded([Vector2(x0, y - half_w), Vector2(x0, y + half_w),
+				Vector2(x1, y + half_w), Vector2(x1, y - half_w)], half_w * 0.98)
 		var prof: Array[Vector2] = _slope(-BEAD_SLOPE, 0.0, BEAD_H)
 		_sweep(st, bead, prof, z_street)
 		var crest := _Skin._ring(bead, -BEAD_SLOPE)

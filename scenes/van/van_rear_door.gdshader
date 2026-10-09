@@ -28,6 +28,9 @@ uniform vec3 bright_steel_color : source_color = vec3(0.2, 0.16, 0.12);
 uniform vec3 paint_color : source_color = vec3(0.17, 0.19, 0.185);
 uniform vec3 primer_color : source_color = vec3(0.2, 0.2, 0.195);
 uniform vec3 hole_dark_color : source_color = vec3(0.03, 0.03, 0.028);
+// Street-face paint: share of the leaf the islands cover (0.5 = original) and their size.
+uniform float paint_coverage : hint_range(0.0, 1.0) = 0.5;
+uniform float paint_island_scale = 1.8;
 uniform float roughness_value : hint_range(0.0, 1.0) = 0.86;
 uniform float metallic_value : hint_range(0.0, 0.6) = 0.22;
 
@@ -76,7 +79,8 @@ void fragment() {
 	} else if (tag == 0) {
 		// Street face: heavy rust that runs down in streaks, paint islands in the clear middle.
 		float run = smoothstep(0.5, 0.75, fbm(vec2(q.x * 22.0, q.y * 2.2) + vec2(3.1, 0.4)));
-		float island = smoothstep(0.5, 0.6, fbm(q * 1.8 + vec2(9.4, 2.6)) + 0.08 * (fine - 0.5));
+		float island = smoothstep(1.0 - paint_coverage, 1.1 - paint_coverage,
+				fbm(q * paint_island_scale + vec2(9.4, 2.6)) + 0.08 * (fine - 0.5));
 		island *= smoothstep(0.2, 0.6, edge_d) * (1.0 - run * 0.8);
 		float on = smoothstep(0.15, 0.4, island);
 		// A thin darker lip where the paint peels back.

@@ -41,6 +41,7 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - monster van / back = the back compartment, sized by VanInteriorSize (`scripts/van/van_interior_size.gd`)
 - plaza: a recessed lot paved with flagstones to the wall (kind 1 run, road_floor_wreck_plaza.gd)
 - build-out: a recessed lot whose sidewalk widens to the wall instead of the road (kind 2 run)
+- donor door / right door (owner): the rear leaf at x<0 (`van_shell.tscn` node `LeftHinge`, on the player's right from inside; the code names it left from the street), built from `RearDoorProfile.donor()` and `scripts/van/look/rear_door_donor_*.gd`; the x>0 leaf is the stock leaf
 - railgun: the held gun; RailgunBody, scripts/player/arms/railgun_body.gd (+ railgun_junk, rail_glow)
 - rails: the railgun's two square barrels on top of the body
 - socket: a Marker3D `Socket_<zone>_<letter>` on the railgun Body that a boon visual bolts to (gun_sockets.gd)

@@ -71,7 +71,7 @@ func build(geo: IronCrossGeo, rng: RandomNumberGenerator, stage: int) -> void:
 	var lost: Array = _const(&"STAGE_WELDS_LOST")
 	_place_end_welds(lost[stage] as int)
 	_place_posts()
-	if _skin:
+	if _skin and (_o.get(&"gussets") as bool):
 		IronCrossGusset.new(_o, geo, rng).build(_back_z, _skin_z, rebar, _mat(&"weld_material"))
 
 

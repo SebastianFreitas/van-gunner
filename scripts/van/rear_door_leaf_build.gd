@@ -36,15 +36,24 @@ const ASTRAGAL_END_GAP := 0.0
 
 
 static func build(_doors: Node3D, left: Node3D, right: Node3D) -> void:
-	# One canonical left leaf — mirror for the right so bow/normals match.
-	var mesh := _build_left_leaf_mesh(left)
-	var mat := _door_body_material(left)
-	_apply_leaf(left, mesh, mat, false)
-	# Same treatment, different noise, so the mirrored leaves don't look stamped.
-	_apply_leaf(right, mesh, _door_body_material(left, Vector2(37.3, 11.7)), true)
-	_WindowLip.build(left, left, false)
-	_WindowLip.build(left, right, true)
+	# The x<0 leaf is the mismatched donor door, built from its own profile; the x>0 leaf is the
+	# stock mesh mirrored so bow/normals match.
+	var donor := profile_for(true)
+	var stock := profile_for(false)
+	_apply_leaf(left, _build_left_leaf_mesh(left, donor), _door_body_material(left, donor), false)
+	_apply_leaf(right, _build_left_leaf_mesh(left, stock), _door_body_material(left, stock), true)
+	_WindowLip.build(left, left, false, donor)
+	_WindowLip.build(left, right, true, stock)
+	_fit_donor_window(left, donor)
 	_add_astragal(left)
+
+
+## A leaf's profile with the window hole filled in (the hole stays owned by this script).
+static func profile_for(donor: bool) -> RearDoorProfile:
+	var profile := RearDoorProfile.donor() if donor else RearDoorProfile.stock()
+	if not donor:
+		profile.window_hole = WINDOW_HOLE
+	return profile
 
 
 ## The window's sharp corners, each filleted with a true circular arc of radius WINDOW_ROUND
@@ -69,13 +78,14 @@ static func _rounded_window() -> PackedVector2Array:
 	return pts
 
 
-static func _build_left_leaf_mesh(left: Node3D) -> ArrayMesh:
+static func _build_left_leaf_mesh(left: Node3D, profile: RearDoorProfile) -> ArrayMesh:
 	var hinge_x := VanInteriorSize.REAR_DOOR_HALF
 	var hinge_y := left.position.y if left else 1.55
 	# Hinge-local: x 0 at the hinge to the seam, y from the floor gap to the opening top.
 	return _Skin.build(hinge_x - CENTER_GAP, Y_MIN - hinge_y,
 			VanInteriorSize.REAR_DOOR_TOP - hinge_y, CABIN_Z,
-			STREET_HALF - _Skin.STREET_SETBACK, WINDOW_HOLE, Vector2(WINDOW_X, VanOpenings.REAR_WINDOW_Y - hinge_y))
+			STREET_HALF - _Skin.STREET_SETBACK, profile.window_hole,
+			Vector2(WINDOW_X, VanOpenings.REAR_WINDOW_Y - hinge_y), profile)
 
 
 static func _apply_leaf(hinge: Node3D, mesh: ArrayMesh, mat: Material, mirror_x: bool) -> void:
@@ -102,13 +112,38 @@ static func _apply_leaf(hinge: Node3D, mesh: ArrayMesh, mat: Material, mirror_x:
 	hinge.move_child(body, 0)
 
 
-static func _door_body_material(left: Node3D, offset := Vector2.ZERO) -> ShaderMaterial:
+static func _door_body_material(left: Node3D, profile: RearDoorProfile) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = DOOR_SHADER
-	mat.set_shader_parameter("leaf_offset", offset)
+	mat.set_shader_parameter("leaf_offset", profile.leaf_offset)
+	if profile.is_donor():
+		mat.set_shader_parameter("paint_color", profile.paint_color)
+		mat.set_shader_parameter("paint_coverage", profile.paint_coverage)
+		mat.set_shader_parameter("paint_island_scale", profile.paint_island_scale)
+		mat.set_shader_parameter("roughness_value", profile.roughness)
+		mat.set_shader_parameter("metallic_value", profile.metallic)
 	mat.set_shader_parameter("leaf_width_m", VanInteriorSize.REAR_DOOR_HALF - CENTER_GAP)
 	mat.set_shader_parameter("leaf_bottom_y", Y_MIN - (left.position.y if left else 1.55))
 	return mat
+
+
+## The donor leaf's glass box and bars follow its own hole with the stock leaf's margins, the
+## bars seated in the skin (no gussets: the corners are round, not chamfered).
+static func _fit_donor_window(left: Node3D, donor: RearDoorProfile) -> void:
+	var box := donor.window_bounds().size * 0.5
+	var frame_margin := Vector2(0.05, 0.05)
+	var glass := left.get_node("WindowGlass") as MeshInstance3D
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(box.x * 2.0 - 0.10, box.y * 2.0 - 0.10, (glass.mesh as BoxMesh).size.z)
+	glass.mesh = mesh
+	(left.get_node("WindowFrame") as Node3D).visible = false
+	var cross := left.get_node("IronCross") as Node3D
+	cross.set(&"frame_half", box + frame_margin)
+	cross.set(&"clear_half", box - Vector2(0.02, 0.025))
+	# The audit wants the bars to reach past the opening aabb (the stock box), so x runs that far.
+	cross.set(&"skin_reach", Vector2(VanOpenings.REAR_WINDOW_HALF_X + 0.13, box.y + 0.125))
+	cross.set(&"gussets", false)
+	cross.call(&"rebuild")
 
 
 static func _add_astragal(left: Node3D) -> void:

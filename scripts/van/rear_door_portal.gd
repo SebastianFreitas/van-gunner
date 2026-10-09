@@ -3,6 +3,7 @@ extends RefCounted
 ## builds the pressed-steel pillars and header around the smaller door opening.
 
 const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
+const _WindowCollision := preload("res://scripts/van/rear_door_window_collision.gd")
 const _Flange := preload("res://scripts/van/rear_door_flange.gd")
 const _Surround := preload("res://scripts/van/rear_door_surround.gd")
 const _Ramp := preload("res://scripts/van/rear_door_ramp.gd")
@@ -248,88 +249,12 @@ static func _layout(_doors: Node3D, hinge: Node3D, s: float) -> void:
 	(hinge.get_node("Handle") as Node3D).position.x = -s * (half - HANDLE_INSET)
 	var panel := hinge.get_node("Interact") as Node3D
 	panel.position.x = -s * half * 0.5
-	_window_collision(hinge, panel, s)
+	_WindowCollision.build(hinge, panel, s, _LeafBuild.profile_for(s < 0.0))
 	for n in ["Bottom", "Top"]:
 		((panel.get_node(n) as CollisionShape3D).shape as BoxShape3D).size.x = half - 0.01
 	var rail_x := half * 0.5 - RAIL_W * 0.5
 	(panel.get_node("LeftRail") as Node3D).position.x = -rail_x
 	(panel.get_node("RightRail") as Node3D).position.x = rail_x
-
-
-## Glass collision takes the chamfered window outline, and the steel corner it leaves open gets
-## leaf collision of its own, so shots hit the glass only where there is glass.
-static func _window_collision(hinge: Node3D, panel: Node3D, s: float) -> void:
-	var hole := _LeafBuild.WINDOW_HOLE
-	var glass := hinge.get_node("BreakableGlass") as Node3D
-	var pts := PackedVector3Array()
-	for p in hole:
-		for z: float in [_LeafBuild.CABIN_Z, 0.11]:
-			pts.append(Vector3(-s * p.x, p.y, z))
-	var glass_shape := ConvexPolygonShape3D.new()
-	glass_shape.points = pts
-	(glass.get_node("Collision") as CollisionShape3D).shape = glass_shape
-	# The cut corner is the triangle between the bounding box corner and the chamfer's sharp ends.
-	var cut := _LeafBuild.WINDOW_CORNERS
-	var corner := PackedVector3Array()
-	for p: Vector2 in [cut[3], cut[4], Vector2(cut[3].x, cut[4].y)]:
-		for z: float in [_LeafBuild.CABIN_Z, _LeafBuild.STREET_HALF]:
-			corner.append(Vector3(-s * p.x, p.y, z))
-	var shape := ConvexPolygonShape3D.new()
-	shape.points = corner
-	var old := panel.get_node_or_null("WindowCorner")
-	if old != null:
-		old.free()
-	var node := CollisionShape3D.new()
-	node.name = "WindowCorner"
-	node.shape = shape
-	node.position = Vector3(glass.position.x - panel.position.x, glass.position.y, 0.0)
-	panel.add_child(node)
-	_window_notches(panel, node.position, s)
-
-
-## Steel in each rounded window corner (between the arc and the sharp corner): convex prisms
-## fanned from the corner over about 30 degrees of arc, so the collision follows the rounded hole.
-static func _window_notches(panel: Node3D, at: Vector3, s: float) -> void:
-	for old in panel.get_children():
-		if old.name.begins_with("WindowNotch"):
-			old.free()
-	var corners := _LeafBuild.WINDOW_CORNERS
-	var hole := _LeafBuild.WINDOW_HOLE
-	var first := 0
-	var index := 0
-	for i in corners.size():
-		var c: Vector2 = corners[i]
-		var u: Vector2 = (corners[(i + corners.size() - 1) % corners.size()] - c).normalized()
-		var v: Vector2 = (corners[(i + 1) % corners.size()] - c).normalized()
-		var half_angle := absf(u.angle_to(v)) * 0.5
-		var steps := maxi(3, ceili(float(_LeafBuild.WINDOW_ROUND_STEPS)
-				* _arc_sweep(c, u, v, half_angle) / (PI * 0.5)))
-		var chunk := 4
-		var k := 0
-		while k < steps:
-			var last := mini(k + chunk, steps)
-			var pts := PackedVector3Array()
-			for p: Vector2 in [c] + Array(hole.slice(first + k, first + last + 1)):
-				for z: float in [_LeafBuild.CABIN_Z, _LeafBuild.STREET_HALF]:
-					pts.append(Vector3(-s * p.x, p.y, z))
-			var shape := ConvexPolygonShape3D.new()
-			shape.points = pts
-			var piece := CollisionShape3D.new()
-			piece.name = "WindowNotch%d" % index
-			piece.shape = shape
-			piece.position = at
-			panel.add_child(piece)
-			index += 1
-			k = last
-		first += steps + 1
-
-
-## Sweep of the fillet arc at a corner with unit edge directions u and v.
-static func _arc_sweep(c: Vector2, u: Vector2, v: Vector2, half_angle: float) -> float:
-	var centre := c + (u + v).normalized() * (_LeafBuild.WINDOW_ROUND / sin(half_angle))
-	var t1 := c + u * (_LeafBuild.WINDOW_ROUND / tan(half_angle))
-	var t2 := c + v * (_LeafBuild.WINDOW_ROUND / tan(half_angle))
-	return absf(angle_difference((t1 - centre).angle(), (t2 - centre).angle()))
 
 
 ## The fixed blocker follows the same numbers: leaf halves, pillar fills and the header fill.

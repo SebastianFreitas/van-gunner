@@ -8,6 +8,7 @@ const _Hardware := preload("res://scripts/van/look/van_rear_door_hardware.gd")
 const _Scrap := preload("res://scripts/van/look/van_rear_door_scrap.gd")
 
 const _Plates := preload("res://scripts/van/look/van_rear_door_plates.gd")
+const _Donor := preload("res://scripts/van/look/rear_door_donor_dressing.gd")
 
 const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
 const _Skeleton := preload("res://scripts/van/rear_door_skeleton.gd")
@@ -55,7 +56,8 @@ func rebuild_look(look: VanLook) -> void:
 
 	var plates_rng := look.rng_for(&"rear_door_plates")
 
-	_build_leaf(left_hinge, 1.0, rng, plate_mat, hardware_rng, steel_mat, dark_mat, plates_rng)
+	_build_leaf(left_hinge, 1.0, rng, plate_mat, hardware_rng, steel_mat, dark_mat, plates_rng,
+			look.rng_for(&"rear_door_donor"))
 	_build_leaf(right_hinge, -1.0, rng, plate_mat, hardware_rng, steel_mat, dark_mat, plates_rng)
 
 	if bulkhead != null:
@@ -82,14 +84,20 @@ func _spawn(parent: Node3D, mesh: Mesh, mat: Material, pos: Vector3, rot: Vector
 
 func _build_leaf(hinge: Node3D, mirror: float, rng: RandomNumberGenerator,
 		plate_mat: Material, hardware_rng: RandomNumberGenerator, steel_mat: Material,
-		dark_mat: Material, plates_rng: RandomNumberGenerator) -> void:
-	for node: Node3D in _Hardware.build(hinge, mirror, hardware_rng, steel_mat, dark_mat):
-		_spawned.append(node)
-	for node: Node3D in _Scrap.build(hinge, mirror, hardware_rng, steel_mat, dark_mat):
-		_spawned.append(node)
+		dark_mat: Material, plates_rng: RandomNumberGenerator,
+		donor_rng: RandomNumberGenerator = null) -> void:
+	if donor_rng != null:
+		# The donor leaf carries its own cabin fittings instead of the stock hinge/scrap/plates.
+		for node: Node3D in _Donor.build(hinge, donor_rng):
+			_spawned.append(node)
+	else:
+		for node: Node3D in _Hardware.build(hinge, mirror, hardware_rng, steel_mat, dark_mat):
+			_spawned.append(node)
+		for node: Node3D in _Scrap.build(hinge, mirror, hardware_rng, steel_mat, dark_mat):
+			_spawned.append(node)
 
-	for node: Node3D in _Plates.build(hinge, mirror, plates_rng, _plate_keep_out()):
-		_spawned.append(node)
+		for node: Node3D in _Plates.build(hinge, mirror, plates_rng, _plate_keep_out()):
+			_spawned.append(node)
 
 	var taken := _footprints(hinge, _spawned)
 	var patch_count := rng.randi_range(0, 2)

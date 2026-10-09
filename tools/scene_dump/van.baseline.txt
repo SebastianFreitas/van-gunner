@@ -13178,6 +13178,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/IronCross Nod
   clear_half=Vector2(0.97, 0.75)
   skin_z=0.065
   skin_reach=Vector2(1.12, 0.9)
+  gussets=true
   mount_z=0.05
   standoff=0.05
   curve_segments=14
@@ -13818,6 +13819,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/IronCross No
   clear_half=Vector2(0.97, 0.75)
   skin_z=0.065
   skin_reach=Vector2(1.12, 0.9)
+  gussets=true
   mount_z=0.05
   standoff=0.05
   curve_segments=14
@@ -16027,6 +16029,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Iron
   clear_half=Vector2(1.125, 0.642)
   skin_z=0.05
   skin_reach=Vector2(1.12, 0.9)
+  gussets=true
   mount_z=0.03
   standoff=0.0
   curve_segments=14
@@ -16692,6 +16695,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/IronC
   clear_half=Vector2(1.125, 0.642)
   skin_z=0.05
   skin_reach=Vector2(1.12, 0.9)
+  gussets=true
   mount_z=0.03
   standoff=0.0
   curve_segments=14
@@ -17357,6 +17361,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Iro
   clear_half=Vector2(1.125, 0.642)
   skin_z=0.05
   skin_reach=Vector2(1.12, 0.9)
+  gussets=true
   mount_z=0.03
   standoff=0.0
   curve_segments=14
@@ -18022,6 +18027,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Iron
   clear_half=Vector2(1.125, 0.642)
   skin_z=0.05
   skin_reach=Vector2(1.12, 0.9)
+  gussets=true
   mount_z=0.03
   standoff=0.0
   curve_segments=14
