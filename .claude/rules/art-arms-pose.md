@@ -30,16 +30,17 @@ monster skin with no cloth, `none` the same without skin layers (owner, 2026-10-
 the `gear` dress and the `arms gear` fit check were removed; archived at git tag `archive/arm-sleeve`).
 The skin is painted by the shader alone; no rings, straps, bands or other bolt-ons on the arms (owner,
 2026-10-02). `rags` is the old rag and glove dress, opt-in for debugging only. Skin layers
-(`ArmSkinLayers`: the van-name tattoo on the LEFT lower forearm, scars, wounds, dirt) run under
+(`ArmSkinLayers`: the van-name tattoo on the inner (palm-side) LEFT lower forearm, hidden in the holding pose, scars, wounds, dirt) run under
 `bare` (default) and `rags`, not `none`, and paint in LINEAR colours (the skin albedo is a `source_color` uniform) from
 the rest-pose chart in CUSTOM1/CUSTOM2.
 Gun inspect (owner 2026-10-03, plan arms-inspect-anim): hold E 0.4 s looking at nothing
 usable; `ArmInspect` plays 7.2 s of keys from `arm_inspect_keys.gd` once, on top of the weave
 (fingers lag the hand 0.15 s, wrist sway 1.5 deg): beat 1 rest and the gun dip about the grip
-(0-0.7), 2 left hand up (to 0.7, hold 1.5), 3 back to palm (to 2.0, hold 2.8), 4 forearm band
+(0-0.7), 2 left hand up, wrist straight on the forearm line (to 0.7, hold 1.5), 3 back to palm (to 2.0, hold 2.8), 4 forearm band
 about 80 px under the crosshair with the tattoo to the eye (to 3.4, hold 4.9), 5 gun's left side
 (to 5.4), 6 rolled to the right side (to 6.3), 7 back to the dip (7.2). The left arm is an IK
 re-solve (`arm_inspect_solve.gd`): the shoulder slides from the lift on, elbow down (`POLE`).
+The left forearm twist takes `INSPECT_TWIST_SHARE` 0.9 of the hand's roll (default `ArmRig.TWIST_SHARE` 0.5 left the wrist edge-on at the palm view) and follows the unwrapped angle (`reach` args `twist_share`, `prev_twist`, returned `twist`), never the quaternion sign, so -170 to -190 does not snap.
 The gun turns about the grip as a root offset and the right arm re-solves each frame to keep
 its shoulder put. Release (E up) blends out in 0.30 s, a cancel (reload, gesture) in 0.15 s;
 a shot snaps the gun back at once. Identity under SaveSandbox. Debug: `arms inspect

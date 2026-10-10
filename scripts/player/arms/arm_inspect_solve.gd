@@ -13,6 +13,10 @@ var rest_wrist := Vector3.ZERO
 var rest_pole := Vector3.ZERO
 var rest_hand_dir := Vector3.DOWN
 var rest_palm := Vector3.RIGHT
+## Share of the hand's roll the forearm twist bone takes in the inspect (the default 0.5 left the
+## wrist seen edge-on at the palm view), and the last frame's unwrapped twist angle.
+const INSPECT_TWIST_SHARE := 0.9
+var _twist := 0.0
 ## False when the skeleton or a bone is missing; every method then does nothing.
 var ok := false
 ## True for an arm whose forearm twist nothing rewrites each frame (the right one): `solve` puts it
@@ -69,7 +73,12 @@ func solve(shoulder: Vector3, wrist: Vector3, pole: Vector3, hand_dir: Vector3,
 		_sk.set_bone_pose_rotation(_fore, _base_f)
 	var df := _base_f.inverse() * _sk.get_bone_pose_rotation(_fore)
 	var dh := _base_h.inverse() * _sk.get_bone_pose_rotation(_wrist)
-	ArmRig.reach(_model, _suffix, shoulder, wrist, pole, hand_dir, palm_n)
+	if reset_fore:
+		ArmRig.reach(_model, _suffix, shoulder, wrist, pole, hand_dir, palm_n)
+	else:
+		var res := ArmRig.reach(_model, _suffix, shoulder, wrist, pole, hand_dir, palm_n,
+				INSPECT_TWIST_SHARE, _twist)
+		_twist = res.get("twist", NAN) as float
 	_sk.set_bone_pose_rotation(_fore, _sk.get_bone_pose_rotation(_fore) * df)
 	_sk.set_bone_pose_rotation(_wrist, _sk.get_bone_pose_rotation(_wrist) * dh)
 
@@ -106,3 +115,4 @@ func dress(wrist_fd: Vector2, fingers: Vector3, spread: Vector2) -> void:
 ## One solve with the rest inputs, so the arm returns to the weave's own pose.
 func restore() -> void:
 	solve(rest_shoulder, rest_wrist, rest_pole, rest_hand_dir, rest_palm)
+	_twist = 0.0

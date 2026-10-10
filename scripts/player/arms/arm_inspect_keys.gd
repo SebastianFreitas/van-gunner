@@ -37,7 +37,8 @@ const ROT_B_DEG := Vector3(0.0, 70.0, 150.0)
 const SHOULDER_B2 := Vector3(-0.737, -0.737, -0.569)
 ## Beat 4 slide 0.08 less (D45, spec p1-6), after W4 moved down: keeps the elbow at 120 or more.
 const SHOULDER_B4 := Vector3(-0.791, -0.791, -0.545)
-const HAND_DIR_B2 := Vector3(0.871, 0.490, 0.0)
+## Beat 2 continues the forearm line (elbow to wrist, 0.2 deg off) so the wrist is straight.
+const HAND_DIR_B2 := Vector3(0.0271, 0.9957, -0.1099)
 ## Beat 4 unfolds the wrist (D44, spec p1-6): the claw fold read as a puppet head.
 const HAND_DIR_B4 := Vector3(0.95, 0.31, 0.0)
 ## Hand centre at the crosshair, wrist depth 0.97; the wrist sits half a hand back of it.
@@ -47,8 +48,8 @@ const HAND_CENTRE_B2 := Vector3(0.0, 0.0, -0.97)
 const W2_SHIFT := Vector3(-0.049, -0.052, 0.0)
 const PALM_B2 := Vector3(0.2, -0.3, -0.93)
 const WRIST_B4 := Vector3(0.03, -0.004, -0.93)
-## Beat 4 total roll about hand_dir from PALM_B2 (degrees); spec p1-2 tunes it so the tattoo
-## face looks at the camera.
+## Beat 4 total roll about hand_dir from PALM_B2 (degrees): rolls back toward the back of the
+## forearm. The tattoo (inner forearm) is shown in beat 3, the palm beat.
 const ROLL_B4_DEG := -45.0
 const ROLL_B3_DEG := -180.0
 ## Elbow down, not LEFT_HANG_POLE, so the upper arm stays out of the frame.

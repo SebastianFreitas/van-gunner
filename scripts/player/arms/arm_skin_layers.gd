@@ -74,7 +74,8 @@ static func _tattoo(mat: ShaderMaterial, model: Node3D, mi: MeshInstance3D, sk: 
 	var count := segs.size()
 	segs.resize(ArmTattooFont.MAX_SEGS)
 	var bx := frame.basis.x
-	var angle := ArmSkinMesh.facing_angle(model, fore, 1.0)
+	# Plus PI: the ink sits on the inner (palm side) forearm, hidden in the normal holding pose.
+	var angle := ArmSkinMesh.facing_angle(model, fore, 1.0) + PI
 	mat.set_shader_parameter(&"tat_count", count)
 	mat.set_shader_parameter(&"tat_segs", segs)
 	mat.set_shader_parameter(&"tat_origin", p0)

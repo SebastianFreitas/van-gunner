@@ -87,7 +87,8 @@ static func _set_local(sk: Skeleton3D, i: int, parent_global: Transform3D,
 ## Poses shoulder-to-wrist so the wrist lands on `wrist` (clamped to reach). Inputs and result are
 ## in the space of model.get_parent().
 static func reach(model: Node3D, suffix: String, shoulder: Vector3, wrist: Vector3,
-		pole: Vector3, hand_dir: Vector3, palm_n: Vector3) -> Dictionary:
+		pole: Vector3, hand_dir: Vector3, palm_n: Vector3, twist_share := TWIST_SHARE,
+		prev_twist := NAN) -> Dictionary:
 	var sk := skeleton(model)
 	var to_rig := Transform3D.IDENTITY
 	var node: Node = sk
@@ -140,22 +141,31 @@ static func reach(model: Node3D, suffix: String, shoulder: Vector3, wrist: Vecto
 	var h_rest_b := g_f1_rest.basis * sk.get_bone_rest(ih).basis
 	var q := Quaternion((hand_b.orthonormalized() * h_rest_b.orthonormalized().inverse()
 			).orthonormalized())
+	var ax := g_f1_rest.basis.y.normalized()
+	var turn := NAN
+	if not is_nan(prev_twist):
+		# Continuous roll for the inspect: the angle is unwrapped against the last frame's, never
+		# flipped by the quaternion's sign, so the turn through 180 degrees does not snap.
+		var qa := q.normalized()
+		turn = wrapf(2.0 * atan2(Vector3(qa.x, qa.y, qa.z).dot(ax), qa.w), -PI, PI)
+		turn += TAU * roundf((prev_twist - turn) / TAU)
 	if q.w < 0.0:
 		q = Quaternion(-q.x, -q.y, -q.z, -q.w)
 	# Only the roll about the forearm axis is shared: the twist bone takes part of it so the wrist
 	# skin is not wrung into a thin stalk by the hand bone alone.
-	var ax := g_f1_rest.basis.y.normalized()
 	var pr := ax * Vector3(q.x, q.y, q.z).dot(ax)
 	var twist := Quaternion(pr.x, pr.y, pr.z, q.w)
 	if twist.length() < 0.00001:
 		twist = Quaternion.IDENTITY
 	else:
 		twist = twist.normalized()
-	var half := Quaternion.IDENTITY.slerp(twist, TWIST_SHARE)
+	var half := Quaternion.IDENTITY.slerp(twist, twist_share)
+	if not is_nan(turn):
+		half = Quaternion(ax, turn * twist_share)
 	var g_f1 := Transform3D(Basis(half) * g_f1_rest.basis, g_f1_rest.origin)
 	_set_local(sk, ifa1, g_f, g_f1)
 	_set_local(sk, ih, g_f1, Transform3D(hand_b, w))
-	return {"elbow": to_rig * e, "wrist": to_rig * w}
+	return {"elbow": to_rig * e, "wrist": to_rig * w, "twist": turn}
 
 
 ## Curls fingers: each value is the degrees for joints .01/.02/.03 of that finger.
