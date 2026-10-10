@@ -253,10 +253,10 @@ static func _shaft_profile(k: float, r: float, kn: float, bony: bool) -> Array[V
 		# No tube runs behind the thumb's second bone, so its head ring was a free rim standing off
 		# the palm: these two rings carry the tube down into the thumb's root, weighted to the
 		# parent bone by `_ring_weights`, like the fingers' `_root_profile`.
-		p.append(Vector3(-0.35, 0.45 * k, 0.0))
-		p.append(Vector3(-0.15, 0.80 * k, 0.08))
-	p.append(Vector3(0.00, k, 0.10 if bony else 0.18))
-	p.append(Vector3(0.14, 0.96 * k, 0.06 if bony else 0.12))
+		p.append(Vector3(-0.60, 0.45 * k, 0.0))
+		p.append(Vector3(-0.35, 0.80 * k, 0.04))
+	p.append(Vector3(0.00, k, 0.10 if bony else 0.06))
+	p.append(Vector3(0.14, 0.96 * k, 0.06 if bony else 0.04))
 	p.append(Vector3(0.30, r, 0.0))
 	p.append(Vector3(0.55, 0.95 * r, 0.0))
 	if bony:
@@ -306,7 +306,7 @@ static func _radii(r0: float, girth: float, thumb: bool, ref: bool = false) -> A
 		# With `ref`, r0 is already the index's shaft radius.
 		r[2] = THUMB_R * r0 if ref else 1.1 * girth * r0
 		r[3] = 0.90 * r[2]
-		k[2] = 1.28 * r[2]
+		k[2] = 1.05 * r[2]
 	else:
 		r[1] = girth * r0
 		r[2] = 0.90 * r[1]
