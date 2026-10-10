@@ -74,7 +74,7 @@ var _weave: RefCounted = null
 var _weave_t := 0.0
 var _kick: RefCounted = null
 var _gesture: RefCounted = null
-var _inspect: RefCounted = null
+var _inspect: ArmInspect = ArmInspect.new(Vector3.ZERO, null, null, {})  ## inert until rebuilt
 var _kick_clock := 0.0
 var _shots := 0
 var _walk: RefCounted = ArmWalk.new()
@@ -114,7 +114,6 @@ func rebuild_arms(seed_value: int) -> void:
 	_weave = null
 	_kick = null
 	_gesture = null
-	_inspect = null
 	for child in _rig.get_children():
 		_rig.remove_child(child)
 		child.queue_free()
@@ -129,8 +128,8 @@ func rebuild_arms(seed_value: int) -> void:
 	_kick = ArmKick.new(_arm_model("right_root"), _roots.get("gun_root") as Node3D)
 	_gesture = ArmGesture.new(_arm_model("left_root"))
 	_gesture.bind_reach(_arm_model("left_root"), _roots.get("left_reach", {}) as Dictionary)
-	_inspect = ArmInspect.new(HeldGun.GRIP,
-			(_roots.get("left_reach", {}) as Dictionary).get("wrist", Vector3.ZERO) as Vector3)
+	_inspect = ArmInspect.new(HeldGun.GRIP, _arm_model("right_root"), _arm_model("left_root"),
+			_roots)
 	ViewmodelFov.apply(_rig, viewmodel_fov)
 	_apply()
 
@@ -163,8 +162,7 @@ func apply_family(_family: ClassDefinition.Family) -> Vector3:
 func play_shot() -> void:
 	if _reloading:
 		return
-	if _inspect:
-		_inspect.clear()
+	_inspect.clear(true)
 	if _kick:
 		_kick.fire(_kick_clock, _shots)
 	_shots += 1
@@ -177,21 +175,28 @@ func play_shot() -> void:
 func play_gesture(kind: StringName, hit: Vector3, lat := 1.0) -> float:
 	if _reloading or _gesture == null:
 		return 0.0
-	if _inspect:
-		_inspect.clear()
 	_gesture.set_hit(_rig.to_local(hit), lat, _rig.to_local(_camera.global_position))
+	if _inspect.is_playing(_kick_clock):  # D35: starts on the frame the inspect has eased out
+		_inspect.clear()
+		_inspect.queue(func() -> void: _gesture.play(kind, _kick_clock))
+		return float(ArmGesture.CONTACT.get(kind, 0.0)) + _inspect.blend_left(_kick_clock)
 	return _gesture.play(kind, _kick_clock)
 
 
 ## Starts the gun inspect (held E with nothing to use); false while reloading, mid-gesture,
 ## already inspecting or without arms.
 func play_inspect() -> bool:
-	if _reloading or _inspect == null or _inspect.is_playing(_kick_clock):
+	if _reloading or _inspect.is_playing(_kick_clock):
 		return false
 	if _gesture != null and _gesture.is_playing(_kick_clock):
 		return false
 	_inspect.play(_kick_clock)
 	return true
+
+
+## The E key going up: the inspect eases the arms back; nothing unless it is playing.
+func release_inspect() -> void:
+	_inspect.release(_kick_clock)
 
 
 func play_reload(duration: float) -> void:
@@ -202,8 +207,7 @@ func play_reload(duration: float) -> void:
 		_kick.clear()
 	if _gesture:
 		_gesture.clear()
-	if _inspect:
-		_inspect.clear()
+	_inspect.clear()
 	_reloading = true
 	_reload_tween = create_tween()
 	_reload_tween.tween_method(_set_reload_t, 0.0, 1.0, d)
@@ -217,8 +221,7 @@ func snap_rest() -> void:
 		_kick.clear()
 	if _gesture:
 		_gesture.clear()
-	if _inspect:
-		_inspect.clear()
+	_inspect.snap()
 	_reload_t = 0.0
 	_sway = Vector2.ZERO
 	_walk.reset()
@@ -303,7 +306,7 @@ func _process(delta: float) -> void:
 			WEAVE_SANDBOX_T if SaveSandbox.enabled else _weave_t)
 	var hold := debug_weave_t < 0.0 and SaveSandbox.enabled
 	var pin := maxf(debug_gesture_t, maxf(debug_inspect_t, debug_reload_t)) >= 0.0
-	var busy: bool = (pin or _reloading or (_inspect and _inspect.is_playing(_kick_clock))
+	var busy: bool = (pin or _reloading or _inspect.is_playing(_kick_clock)
 			or (_gesture and _gesture.is_playing(_kick_clock)))
 	if _weave:
 		_weave.update(weave_at, ArmGesture.wrist_scale(_weave, delta, hold, busy,
@@ -321,6 +324,7 @@ func _process(delta: float) -> void:
 			_kick.pin(10.0)  # fully settled, keeps smoke stills comparable
 		else:
 			_kick.sample(_kick_clock)
+	_inspect.step(_kick_clock, debug_inspect_t)  # before the gesture: its restore must not undo its solve
 	if _gesture:
 		if debug_gesture_t >= 0.0:
 			_gesture.pin(debug_gesture_kind, debug_gesture_t, _rig.to_local(_camera.global_position))
@@ -329,8 +333,6 @@ func _process(delta: float) -> void:
 		else:
 			_gesture.sample(_kick_clock)
 		_gesture.apply_bones()
-	if _inspect:
-		_inspect.step(_kick_clock, debug_inspect_t)
 	_apply()
 
 
@@ -361,8 +363,6 @@ func _apply() -> void:
 	var kick_r: Transform3D = _kick.right_offset() if _kick else Transform3D.IDENTITY
 	var kick_l: Transform3D = _kick.left_offset() if _kick else Transform3D.IDENTITY
 	var gest_l: Transform3D = _gesture.left_offset() if _gesture else Transform3D.IDENTITY
-	var insp_r: Transform3D = _inspect.right_offset() if _inspect else Transform3D.IDENTITY
-	var insp_l: Transform3D = _inspect.left_offset() if _inspect else Transform3D.IDENTITY
 	var kick_w: Transform3D = _kick.wrist_offset() if _kick else Transform3D.IDENTITY
 	var grip := Transform3D(Basis.IDENTITY, HeldGun.GRIP)
 	var k := HeldGun.reload_curves(_reload_t if debug_reload_t < 0.0 else debug_reload_t)
@@ -371,7 +371,7 @@ func _apply() -> void:
 	)
 	var cant := grip * roll * grip.affine_inverse()
 	var m := _motion()
-	var gun_x := m * insp_r * cant
+	var gun_x := m * _inspect.right_offset() * cant
 	var rest_pt := (_roots.get("left_reach", {}) as Dictionary).get("wrist", Vector3.ZERO) as Vector3
 	var shown := k.y
 	var hide_off := LEFT_REST * (1.0 - shown)
@@ -396,5 +396,5 @@ func _apply() -> void:
 	if right != null:
 		right.transform = right_x
 	if left != null:
-		left.transform = (m * _walk.left_offset() * kick_l * gest_l * insp_l
+		left.transform = (m * _walk.left_offset() * kick_l * gest_l * _inspect.left_offset()
 				* Transform3D(tilt_l, off) * drift_l)

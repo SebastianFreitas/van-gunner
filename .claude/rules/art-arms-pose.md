@@ -33,12 +33,18 @@ The skin is painted by the shader alone; no rings, straps, bands or other bolt-o
 (`ArmSkinLayers`: the van-name tattoo on the LEFT lower forearm, scars, wounds, dirt) run under
 `bare` (default) and `rags`, not `none`, and paint in LINEAR colours (the skin albedo is a `source_color` uniform) from
 the rest-pose chart in CUSTOM1/CUSTOM2.
-Gun inspect (owner 2026-10-03): hold E 0.4 s looking at nothing usable;
-`ArmInspect` turns gun and right arm about the grip (left side, rolled to the
-right side, forearm sweep and roll), then the left hand up (back, palm,
-forearm inner and outer), 3 s, rigid root offsets on top of the weave; shot,
-reload and gestures cancel it; identity under SaveSandbox; `arms inspect
-<sec|play|off>` pins it.
+Gun inspect (owner 2026-10-03, plan arms-inspect-anim): hold E 0.4 s looking at nothing
+usable; `ArmInspect` plays 7.2 s of keys from `arm_inspect_keys.gd` once, on top of the weave
+(fingers lag the hand 0.15 s, wrist sway 1.5 deg): beat 1 rest and the gun dip about the grip
+(0-0.7), 2 left hand up (to 0.7, hold 1.5), 3 back to palm (to 2.0, hold 2.8), 4 forearm band
+about 80 px under the crosshair with the tattoo to the eye (to 3.4, hold 4.9), 5 gun's left side
+(to 5.4), 6 rolled to the right side (to 6.3), 7 back to the dip (7.2). The left arm is an IK
+re-solve (`arm_inspect_solve.gd`): the shoulder slides from the lift on, elbow down (`POLE`).
+The gun turns about the grip as a root offset and the right arm re-solves each frame to keep
+its shoulder put. Release (E up) blends out in 0.30 s, a cancel (reload, gesture) in 0.15 s;
+a shot snaps the gun back at once. Identity under SaveSandbox. Debug: `arms inspect
+<sec|play|off>`, `arms inspect cancel <sec>`; smoke view `a19-arms-inspect`; `arms reach-end`
+samples the pins 1.1/2.8/4.0/5.5/6.3.
 Interact gesture (`arm_gesture*.gd`, plan monster-arm-interact, 2026-10-09): six keyed
 channels (reach, pole, lean, wrist flex/dev, curl, spread, plus `frame` and `slide`) from
 `arm_gesture_keys.gd` tables drive a per-frame `ArmRig.reach` re-solve that keeps the

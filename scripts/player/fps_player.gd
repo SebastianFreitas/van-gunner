@@ -110,6 +110,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_close_open_dialogue()
 			if not event.is_echo():
 				_inspect_hold = 0.0
+	elif event.is_action_released("interact"):
+		var vm := get_tree().get_first_node_in_group(&"gun_viewmodel")
+		if vm and vm.has_method(&"release_inspect"):
+			vm.release_inspect()
 	elif event.is_action_pressed("jump"):
 		_jump_queued = true
 		_mantle_buffer = MANTLE_BUFFER_TIME

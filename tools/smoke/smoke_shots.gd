@@ -11,9 +11,8 @@ var dir := ""
 var _count := 0
 ## Seeds rolled for the variation shots at IDLE (tools/smoke.py --van-seeds N); 0 skips them.
 var van_seeds := 0
-## Van shots number themselves v01-, v02-... so the main 01-... numbering, which the
-## art notes cite by number, never shifts. Keyed by prefix, so a new prefix (e.g. "c") starts
-## its own 01-... run instead of continuing "v"'s count.
+## Van shots number themselves v01-, v02-... so the main 01-... numbering, which the art notes
+## cite, never shifts. Keyed by prefix, so a new prefix (e.g. "c") starts its own 01-... run.
 var _prefix_counts: Dictionary = {}
 
 const _SideDoors := preload("res://scripts/van/side_doors.gd")
@@ -283,6 +282,9 @@ func arm_views() -> void:
 		print("SMOKE: gesture %s: %s" % [kind, DebugCommands.run("arms frame")])
 		await _save("arms-g-" + kind, "a")
 	DebugCommands.run("arms gesture off")
+	DebugCommands.run("arms inspect 4.0")
+	await _save("arms-inspect", "a")
+	DebugCommands.run("arms inspect off")
 	for layer in hidden:
 		layer.visible = true
 

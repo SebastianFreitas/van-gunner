@@ -12,7 +12,7 @@ const RFINGER := {
 const INFO := {
 	"cam": ["<front|side|rside|left|top|under|trig|rtrig|back|elbow|orbit yaw pitch [dist] [hand]|off>", "orbit camera on the arms"],
 	"reload": ["<0..1|off>", "pin the reload at this progress"],
-	"inspect": ["<sec|play|off>", "pin or play the gun inspect"],
+	"inspect": ["<sec|play|off|cancel sec>", "pin or play the gun inspect"],
 	"dress": ["<bare|rags|none>", "bare|rags|none"],
 	"fov": ["<deg>", "viewmodel FOV, 0 = world camera"],
 	"frame": ["", "framing report"],

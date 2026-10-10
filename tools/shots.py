@@ -86,6 +86,8 @@ TOLERANCE: dict[str, float] = {
 	"v14-idle-van-lit-rear": 0.0,
 	"v15-idle-van-lit-window": 0.0,
 	"v16-idle-van-lit-roof": 0.0,
+	# a19-arms-inspect measured 2026-10-10 (plan arms-inspect-anim phase 4): noise 0.043, tolerance 2x.
+	"a19-arms-inspect": 0.086,
 }
 
 

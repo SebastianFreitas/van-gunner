@@ -9,6 +9,8 @@ const _TAIL := &"Limb_tail_L"
 const _SECTORS := 14
 ## The delta of each posing step: GunViewmodel._process ignores a delta of zero.
 const _STEP := 0.001
+## The gun inspect pins sampled, in seconds.
+const _INSPECT_PINS: Array[float] = [1.1, 2.8, 4.0, 5.5, 6.3]
 
 
 ## One line per kind and sample, the hand-to-target lines and a summary; BAD lines mark failures.
@@ -65,6 +67,25 @@ func run(vm: Node) -> String:
 				var target := rig.to_global(_Gesture.DEFAULT_HIT_RIG)
 				out.append("REACH_END %s hand %.3f m" % [kind, hand.origin.distance_to(target)])
 	vm.debug_gesture_t = -1.0
+	vm.call(&"_process", _STEP)
+	for t: float in _INSPECT_PINS:
+		vm.debug_inspect_t = t
+		vm.call(&"_process", _STEP)
+		var m := _margin(sk, tail, vm, cam)
+		total += 1
+		var behind := m.w > 0.0
+		var ok := behind or m.z > 0.0
+		if not ok:
+			bad += 1
+		var reading := "behind %.2f" % m.w if behind else "ndc %.2f,%.2f margin %.2f" % [
+			m.x, m.y, m.z]
+		out.append("REACH_END inspect pin %.2f: %s %s" % [t, reading, "OK" if ok else "BAD"])
+		var score := m.w if behind else m.z - 1000.0
+		if score < worst_score:
+			worst_score = score
+			worst = "REACH_END MIN inspect %.2f %s" % [t,
+					"%.2f m behind" % m.w if behind else "%.2f margin" % m.z]
+	vm.debug_inspect_t = -1.0
 	vm.call(&"_process", _STEP)
 	out.append(worst)
 	out.append("REACH_END %d/%d OK" % [total - bad, total] if bad == 0

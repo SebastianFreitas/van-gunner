@@ -12,6 +12,7 @@ const _Hints := preload("res://scripts/debug/debug_arms_hints.gd")
 const _Frame :=preload("res://scripts/debug/debug_arms_frame.gd")
 const _Cam := preload("res://scripts/debug/debug_arms_cam.gd")
 const _ReachEnd := preload("res://scripts/debug/debug_arms_reach_end.gd")
+const _InspectPx := preload("res://scripts/debug/debug_arms_inspect_px.gd")
 const _Gesture := preload("res://scripts/player/arms/arm_gesture.gd")
 const _Weave := preload("res://scripts/player/arms/arm_weave.gd")
 
@@ -93,13 +94,21 @@ func cmd_arms(args: Array) -> String:
 		var arg := str(args[1])
 		if arg == "play":
 			return "arms inspect play" if vm.play_inspect() else "arms inspect: busy"
+		var insp: RefCounted = vm.get(&"_inspect")
+		insp.set(&"debug_cancel_t", -1.0)
 		if arg == "off":
 			vm.debug_inspect_t = -1.0
 			return "arms inspect off"
+		if arg == "cancel" and args.size() >= 3 and str(args[2]).is_valid_float():
+			vm.debug_inspect_t = 4.0
+			insp.set(&"debug_cancel_t", maxf(float(args[2]), 0.0))
+			return "arms inspect cancel " + str(args[2])
 		if not arg.is_valid_float():
 			return "bad args. " + hint("inspect")
 		vm.debug_inspect_t = maxf(float(arg), 0.0)
-		return "arms inspect " + str(vm.debug_inspect_t)
+		return "arms inspect " + str(vm.debug_inspect_t) + "
+" + _InspectPx.new().run(
+				vm, vm.debug_inspect_t)
 	if args[0] == "weave" and args.size() >= 2:
 		var arg := str(args[1])
 		if arg == "off":

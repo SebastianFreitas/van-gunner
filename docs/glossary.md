@@ -2,6 +2,7 @@
 
 Owner's words → code names. Add a line when the owner uses a word the code does not.
 
+- check the arms animation: the gun inspect (hold E; `ArmInspect`, scripts/player/arms/arm_inspect.gd, console `arms inspect`)
 - loper: WindowRaider, scripts/enemies/window_raider.gd (+ _motion/_anim/_targeting); the hunched beast at the doors and the windows, scenes/enemies/window_raider.tscn, door_raider.png
 - door goon / door raider: the loper at a rear-door BreachPoint; resources/enemies/door_raider.tres (breach_point.gd)
 - window loper / window climber: the agile WindowRaider (the loper) at a side or rear-door window; resources/enemies/agile_raider.tres. The green crawler art (agile_raider.png) was retired in 2026-10.

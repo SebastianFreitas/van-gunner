@@ -255,11 +255,11 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	gun_root.visible = SHOW_GUN
 	var shoulder_r := RIGHT_SHOULDER + _jitter(rng_r)
 	var r: Dictionary
+	var right_reach := {}
 	if SHOW_GUN:
-		r = ArmRig.reach(model_r, ".R", shoulder_r,
-				gx * (right_wrist_in_gun * HAND_K), RIGHT_POLE,
-				(gx.basis * (GRIP_HAND_DIR_IN_GUN if gun_style == &"grip" else RIGHT_HAND_DIR_IN_GUN)).normalized(),
-				(gx.basis * (GRIP_PALM_IN_GUN if gun_style == &"grip" else RIGHT_PALM_IN_GUN)).normalized())
+		right_reach = ArmRightReach.inputs(gx, gun_style, shoulder_r)
+		r = ArmRig.reach(model_r, ".R", right_reach.shoulder, right_reach.wrist,
+				right_reach.pole, right_reach.hand_dir, right_reach.palm)
 	else:
 		r = ArmRig.reach(model_r, ".R", shoulder_r, RIGHT_WEAVE_WRIST, RIGHT_POLE,
 				(RIGHT_WEAVE_WRIST - shoulder_r).normalized(),
@@ -349,6 +349,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 		"left_root": left, "right_root": right, "gun_root": gun_root,
 		"left_reach": {"shoulder": shoulder_l, "elbow": l.elbow, "wrist": l.wrist,
 			"pole": LEFT_HANG_POLE, "palm": LEFT_HANG_PALM, "drop": LEFT_WRIST_DROP},
+		"right_reach": right_reach,
 	}
 
 
