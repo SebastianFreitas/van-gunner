@@ -47,14 +47,10 @@ const HAND_CENTRE_B2 := Vector3(0.0, 0.0, -0.97)
 const W2_SHIFT := Vector3(-0.049, -0.052, 0.0)
 const PALM_B2 := Vector3(0.2, -0.3, -0.93)
 const WRIST_B4 := Vector3(0.03, -0.004, -0.93)
-## Beat 5 palm: from the half-dropped wrist (-0.385, -0.302, -1.09, half way from WRIST_B4 to
-## LEFT_SHOWN_WRIST) toward the grip at pose A (HeldGun.GRIP + GRIP_A = (0.16, -0.23, -1.30)),
-## normalised. The roll key is cancelled so the sampled palm_n is exactly this.
-const PALM_B5 := Vector3(0.926, 0.122, -0.357)
 ## Beat 4 total roll about hand_dir from PALM_B2 (degrees); spec p1-2 tunes it so the tattoo
 ## face looks at the camera.
 const ROLL_B4_DEG := -45.0
-const ROLL_B3_DEG := 180.0
+const ROLL_B3_DEG := -180.0
 ## Elbow down, not LEFT_HANG_POLE, so the upper arm stays out of the frame.
 const POLE := Vector3(0.2, -1.0, 0.0)
 
@@ -94,13 +90,13 @@ func _init(rest_shoulder: Vector3, rest_wrist: Vector3, rest_hand_dir: Vector3, 
 		palm_len: float) -> void:
 	var dir_b2 := HAND_DIR_B2.normalized()
 	var wrist_b2 := HAND_CENTRE_B2 - 0.5 * palm_len * dir_b2 + W2_SHIFT
-	# Beats 5 and 6 half-drop the left hand: half way from beat 4 back to the rest pose.
+	# Beats 5 and 6 drop the left hand to its rest pose, out of the gun's way.
 	var dir_b4 := HAND_DIR_B4.normalized()
-	var dir_b5 := dir_b4.lerp(rest_hand_dir, 0.5).normalized()
-	var roll_b5 := ROLL_B4_DEG * 0.5
-	var palm_b5 := Quaternion(dir_b5, -deg_to_rad(roll_b5)) * PALM_B5
-	var shoulder_b5 := SHOULDER_B4.lerp(rest_shoulder, 0.5)
-	var wrist_b5 := WRIST_B4.lerp(rest_wrist, 0.5)
+	var dir_b5 := rest_hand_dir
+	var roll_b5 := 0.0
+	var palm_b5 := rest_palm
+	var shoulder_b5 := rest_shoulder
+	var wrist_b5 := rest_wrist
 	var dip_pos := Vector3(0.0, -DIP_DOWN, 0.0)
 	var dip_rot := Vector3(0.0, 0.0, -DIP_CANT_DEG)
 	_shoulder = [
@@ -137,8 +133,8 @@ func _init(rest_shoulder: Vector3, rest_wrist: Vector3, rest_hand_dir: Vector3, 
 		_k(T_B2_END + FINGER_LAG, FINGERS_B2, &"out"),
 		_k(T_B2_HOLD + FINGER_LAG, FINGERS_B2), _k(T_B3_END + FINGER_LAG, FINGERS_B3, &"out"),
 		_k(T_B3_HOLD + FINGER_LAG, FINGERS_B3), _k(T_B4_END + FINGER_LAG, FINGERS_B4, &"out"),
-		_k(T_B4_HOLD + FINGER_LAG, FINGERS_B4), _k(T_B5_END + FINGER_LAG, FINGERS_B4 * 0.5, &"out"),
-		_k(T_B6_HOLD + FINGER_LAG, FINGERS_B4 * 0.5), _k(T_B7_END + FINGER_LAG, FINGERS_B4),
+		_k(T_B4_HOLD + FINGER_LAG, FINGERS_B4), _k(T_B5_END + FINGER_LAG, Vector3.ZERO, &"out"),
+		_k(T_B6_HOLD + FINGER_LAG, Vector3.ZERO), _k(T_B7_END + FINGER_LAG, FINGERS_B4),
 	]
 	_spread = [
 		_k(0.0, Vector2.ZERO), _k(T_SPREAD_START + FINGER_LAG, Vector2.ZERO),

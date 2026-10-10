@@ -152,3 +152,10 @@ Measured after 5cc3d55 (`--region 0.2,0.2,1,1`, out `%TEMP%/series/p5-<x>`), one
 - still-b 7.4:9.0:6 `--dead 0.0005`: ANIM SERIES OK, steps 4.72/4.93/2.64/1.24/4.34 %, max 4.93%, mean 3.57%, under 5 %: pass. Delta 0.00.
 - cancel `arms inspect cancel {t}` 0:0.15:6: ANIM SERIES JUMPY 1-5, min 15.26%, max 37.01%, steps 36.67/37.01/30.01/21.58/15.26 falling, no pop. Delta: min 0.02, max 0.00.
 - Verdict: unchanged from phase 4 (every number within 0.05 points); the one open item is the gun verdict word, explained above by the dead threshold.
+
+## Round 6 (owner fix, fix1)
+
+Owner: the left palm turned the wrong way ("impossible"), and the left hand sat in front of the gun in the turn.
+- Roll: `ROLL_B3_DEG` 180 to -180, so the roll goes 0 -> -180 -> -45 (135 deg the short way) instead of 0 -> +180 -> -45 (a 225 deg unwind through palm-forward). Final pose unchanged: probe at 4.0 band 977,746, elbow 125, letter 401.4.
+- Gun turn (5.4-6.7): the left hand goes all the way to the rest pose (shoulder, wrist, hand_dir, palm, roll 0, fingers 0 instead of the half-drop); `PALM_B5` removed. Probe 5.5 / 6.3: left wrist 279,1047 tip 712,863 (hand low left, off the gun's grip side), elbow 157; right d/R 0.98, twist 6 / 2.
+- Series (`--region 0.2,0.2,1,1`): 1.5:3.4:20 and 4.9:7.2:47 `--jump 0.15`, no pop (no step over twice both neighbours); `arms reach-end` 23/23 OK, MIN 0.12 at 4.0, 5.5/6.3 behind 0.47 (was 0.33).
