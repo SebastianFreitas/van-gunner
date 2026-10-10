@@ -72,13 +72,25 @@ static func steel(seed_offset: float) -> ShaderMaterial:
 ## Rusted plate: oxide brown, rough.
 static func rust(seed_offset: float) -> ShaderMaterial:
 	return surface(Color(0.20, 0.12, 0.08), Color(0.10, 0.06, 0.05), Color(0.08, 0.08, 0.06),
-			60.0, 6.0, 0.0, 0.85, 0.9, 0.2, seed_offset)
+			60.0, 6.0, 0.0, 0.95, 0.9, 0.2, seed_offset)
 
 
-## Worn olive body paint for the railgun's flat faces: mid-dark so the cabin light catches it.
+## Flaking, pitted rust for patches laid over the body: darker and redder than `rust`, all grime.
+static func heavy_rust(seed_offset: float) -> ShaderMaterial:
+	return surface(Color(0.24, 0.115, 0.06), Color(0.09, 0.045, 0.03), Color(0.06, 0.05, 0.04),
+			60.0, 6.0, 0.0, 1.0, 0.95, 0.1, seed_offset)
+
+
+## Heat-discoloured steel near the shot: blue-black with a brown cast.
+static func scorched_steel(seed_offset: float) -> ShaderMaterial:
+	return surface(Color(0.06, 0.055, 0.065), Color(0.03, 0.025, 0.03), Color(0.05, 0.035, 0.025),
+			60.0, 6.0, 0.0, 0.8, 0.5, 0.5, seed_offset)
+
+
+## Old body paint worn down to rusty olive: only the flakes `RailgunWear` lays on top stay olive.
 static func gun_paint(seed_offset: float) -> ShaderMaterial:
-	return surface(Color(0.30, 0.32, 0.22), Color(0.17, 0.18, 0.13), Color(0.10, 0.09, 0.06),
-			60.0, 6.0, 0.0, 0.7, 0.85, 0.15, seed_offset)
+	return surface(Color(0.24, 0.20, 0.11), Color(0.13, 0.10, 0.06), Color(0.09, 0.07, 0.05),
+			60.0, 6.0, 0.0, 0.95, 0.88, 0.15, seed_offset)
 
 
 ## Bare dull steel for the railgun's rails: lighter than the body so two bars frame the channel.

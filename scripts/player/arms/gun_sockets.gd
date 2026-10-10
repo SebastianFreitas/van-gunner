@@ -16,24 +16,34 @@ static func place(body: Node3D, p: float, z_front: float, y_axis: float) -> void
 	var left := Vector3(0.30, 0.25, 0.5)
 	var rear := Vector3(0.25, 0.3, 0.3)
 	var under := Vector3(0.4, 0.3, 0.4)
+	# Start points sit inside the mesh they belong to, so the snap lands them on its face: the
+	# upper barrel's centre (top, muzzle), the lower barrel's centre (left, right, rear, under)
+	# and the wedge's flank between the lower barrel's top and its slope (left_a).
+	var uy := ya + RailgunBarrels.UP_Y * p
+	var ly := ya + RailgunBarrels.LOW_Y * p
+	var low_bottom := ly - (RailgunBarrels.LOW_R - 0.04) * p
+	var wedge_front := zf - 0.15 * p
+	var wedge_len := RailgunBody.WEDGE_ZR * p - wedge_front
+	var wedge_y := ya + (RailgunBarrels.LOW_Y + RailgunBarrels.LOW_R + 0.10) * p
 	var rows: Array = [
-		["Socket_top_a", Vector3(0.0, ya + 0.40 * p, zf - 0.9 * p), top, Vector3.UP],
-		["Socket_top_b", Vector3(0.0, ya + 0.40 * p, zf - 1.6 * p), top, Vector3.UP],
-		["Socket_top_c", Vector3(0.0, ya + 0.40 * p, zf - 2.3 * p), top, Vector3.UP],
-		["Socket_left_a", Vector3(-0.21 * p, ya + 0.30 * p, zf - 0.6 * p), left, Vector3.LEFT],
-		["Socket_left_b", Vector3(-0.19 * p, ya + 0.01 * p, zf - 1.2 * p), left, Vector3.LEFT],
-		["Socket_left_c", Vector3(-0.21 * p, ya + 0.30 * p, zf - 1.9 * p), left, Vector3.LEFT],
-		["Socket_rear_a", Vector3(-0.17 * p, ya + 0.20 * p, 0.25 * p), rear, Vector3.BACK],
-		["Socket_rear_b", Vector3(0.17 * p, ya + 0.20 * p, 0.25 * p), rear, Vector3.BACK],
-		["Socket_muzzle_a", Vector3(0.0, ya + 0.55 * p, zt + 0.1 * p), Vector3(0.4, 0.3, 0.3),
+		["Socket_top_a", Vector3(0.0, uy, zt + 1.6 * p), top, Vector3.UP],
+		["Socket_top_b", Vector3(0.0, uy, zt + 2.05 * p), top, Vector3.UP],
+		["Socket_top_c", Vector3(0.0, uy, zt + 2.5 * p), top, Vector3.UP],
+		["Socket_left_a", Vector3(-0.10 * p, wedge_y, wedge_front + 0.3 * wedge_len), left,
+				Vector3.LEFT],
+		["Socket_left_b", Vector3(-0.10 * p, ly, zf - 0.9 * p), left, Vector3.LEFT],
+		["Socket_left_c", Vector3(-0.10 * p, ly, zf - 2.3 * p), left, Vector3.LEFT],
+		["Socket_rear_a", Vector3(-0.08 * p, ly, 0.25 * p), rear, Vector3.BACK],
+		["Socket_rear_b", Vector3(0.08 * p, ly, 0.25 * p), rear, Vector3.BACK],
+		["Socket_muzzle_a", Vector3(0.0, uy, zt + 1.1 * p), Vector3(0.4, 0.3, 0.3),
 				Vector3.UP],
-		["Socket_muzzle_b", Vector3(-0.435 * p, ya + 0.25 * p, zt + 0.1 * p),
+		["Socket_muzzle_b", Vector3(-0.15 * p, uy, zt + 1.2 * p),
 				Vector3(0.3, 0.4, 0.3), Vector3.LEFT],
-		["Socket_under_a", Vector3(0.0, ya - 0.22 * p, zf - 1.0 * p), under, Vector3.DOWN],
-		["Socket_under_b", Vector3(0.0, ya - 0.22 * p, zf - 2.0 * p), under, Vector3.DOWN],
-		["Socket_hang_a", Vector3(-0.15 * p, ya - 0.15 * p, zf - 0.4 * p), Vector3(0.3, 0.6, 0.3),
+		["Socket_under_a", Vector3(0.0, low_bottom, zf - 1.0 * p), under, Vector3.DOWN],
+		["Socket_under_b", Vector3(0.0, low_bottom, zf - 2.0 * p), under, Vector3.DOWN],
+		["Socket_hang_a", Vector3(-0.05 * p, low_bottom, zf - 0.4 * p), Vector3(0.3, 0.6, 0.3),
 				Vector3.DOWN],
-		["Socket_right_a", Vector3(0.21 * p, ya + 0.30 * p, zf - 1.2 * p), left, Vector3.RIGHT],
+		["Socket_right_a", Vector3(0.10 * p, ly, zf - 1.2 * p), left, Vector3.RIGHT],
 	]
 	for row: Array in rows:
 		var m := Marker3D.new()

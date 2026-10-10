@@ -1,6 +1,6 @@
 class_name RailgunJunk
 extends RefCounted
-## Flush scavenged junk on the held railgun: tape wraps on the rails and receiver, and weld beads at the seams.
+## Flush scavenged junk on the held railgun: tape wraps, broken weld beads, empty bolt holes and a loose bolt; RailgunWear adds the rust, split seam, plate and cable.
 
 
 ## Adds the junk under `body` (gun space). Same arguments as RailgunBody.build.
@@ -10,7 +10,9 @@ static func build(body: Node3D, p: float, rng: RandomNumberGenerator, z_front: f
 	var weld := ArmMaterials.surface(Color(0.28, 0.30, 0.21), Color(0.17, 0.18, 0.13),
 			Color(0.10, 0.09, 0.06), 60.0, 6.0, 0.0, 0.7, 0.9, 0.15, rng.randf_range(0.0, 100.0))
 	_tape(body, p, rng, z_front, y_axis)
-	_clamp_welds(body, p, rng, z_front, y_axis, weld)
+	_welds(body, p, rng, z_front, y_axis, weld)
+	_holes(body, p, z_front, y_axis)
+	RailgunWear.build(body, p, rng, z_front, y_axis)
 
 
 static func _bead(body: Node3D, node_name: String, mat: Material, at: Vector3, r: float,
@@ -23,48 +25,64 @@ static func _bead(body: Node3D, node_name: String, mat: Material, at: Vector3, r
 	ArmParts.mesh(body, node_name, s, mat, at, rot).scale = squash
 
 
-## Tape wraps: two boxy rings on the flat-sided rails and three 8-segment rings round the receiver.
+## Tape wraps: octagonal rings, three round the upper barrel and two round the lower one.
 static func _tape(body: Node3D, p: float, rng: RandomNumberGenerator, zf: float,
 		ya: float) -> void:
-	var wraps := [
-		["RailL", Vector3(-0.16 * p, ya + 0.71 * p, zf - 1.25 * p), Vector2(0.162, 0.192), 4],
-		["RailR", Vector3(0.16 * p, ya + 0.71 * p, zf - 1.95 * p), Vector2(0.162, 0.192), 3],
-	]
+	# Outside the coil window (zf - 1.795p to zf - 0.685p, jolt included): on the upper between its
+	# rear band and cap, on the lower just ahead of the window.
+	var wraps := [["Upper", true, zf - 0.288 * p, 3], ["Lower", false, zf - 1.86 * p, 2]]
 	for w: Array in wraps:
-		var at: Vector3 = w[1]
-		var size: Vector2 = w[2]
 		for k: int in range(w[3] as int):
-			var rot := Basis(Vector3.UP, deg_to_rad(rng.randf_range(-8.0, 8.0))) 					* Basis(Vector3.RIGHT, deg_to_rad(rng.randf_range(-3.0, 3.0)))
-			ArmParts.mesh(body, "Tape%s%d" % [w[0] as String, k],
-					ArmParts.box(Vector3(size.x * p, size.y * p, 0.028 * p)),
-					ArmMaterials.tape(rng), at + Vector3(0.0, 0.0, k * 0.036 * p), rot)
-	# Receiver: same octagon and y stretch as RailgunBody's Receiver, 4% wider, a hair of tilt.
-	var rh := ya + 0.40 * p - 0.03
-	var oct_r := 0.22 * p / cos(deg_to_rad(22.5)) * 1.04
-	for k: int in range(3):
-		var tilt := Basis(Vector3.RIGHT, deg_to_rad(rng.randf_range(-1.5, 1.5)))
-		ArmParts.mesh(body, "TapeReceiver%d" % k, ArmParts.cyl(oct_r, 0.028 * p, oct_r, 8),
-				ArmMaterials.tape(rng), Vector3(0.0, 0.03 + rh * 0.5, zf + (0.5 + k * 0.036) * p),
-				tilt * Basis.from_scale(Vector3(1.0, rh / (0.44 * p), 1.0))
-				* ArmParts.along(Vector3.BACK) * Basis(Vector3.UP, deg_to_rad(22.5)))
+			var tilt := Basis(Vector3.RIGHT, deg_to_rad(rng.randf_range(-1.5, 1.5)))
+			RailgunWear._wrap(body, "Tape%s%d" % [w[0] as String, k], ArmMaterials.tape(rng),
+					w[1] as bool, (w[2] as float) - k * 0.036 * p, 0.028 * p, 0.012 * p,
+					0.003 * p, p, ya, tilt)
 
 
-## Weld beads, body-coloured and low: eight runs round the receiver to spine seam, and five along
-## each rail web's outer foot where it meets the receiver.
-static func _clamp_welds(body: Node3D, p: float, rng: RandomNumberGenerator, zf: float,
+## Weld beads along each side of the wedge's base seam, body-coloured and low. The run is
+## broken: two beads gone on the right, one cracked clean through on the left, one fat blob.
+static func _welds(body: Node3D, p: float, rng: RandomNumberGenerator, zf: float,
 		ya: float, weld: Material) -> void:
-	for k: int in range(8):
-		var a := TAU * (k + rng.randf_range(-0.2, 0.2)) / 8.0
-		_bead(body, "WeldSeam%d" % k, weld, Vector3(sin(a) * 0.215 * p,
-				ya + 0.009 * p + cos(a) * 0.215 * p, zf - 0.04 * p), 0.03 * p,
-				Vector3(2.6, 0.7, 1.0), Basis(Vector3.BACK, -a))
-	# The web's outer face (x 0.205 p) meets the receiver's 45 degree flat, which sits
-	# 0.106 p of the 0.22 p apothem above the axis, stretched like the receiver.
-	var rh := ya + 0.40 * p - 0.03
-	var y := 0.03 + rh * 0.5 + 0.106 * rh / 0.44
+	var crack := ArmMaterials.surface(Color(0.03, 0.025, 0.02), Color(0.02, 0.02, 0.02),
+			Color(0.02, 0.02, 0.02), 60.0, 6.0, 0.0, 0.6, 0.9, 0.0, 0.0)
 	for side: float in [-1.0, 1.0]:
 		var tag := "L" if side < 0.0 else "R"
 		for k: int in range(5):
-			var z := lerpf(0.30 * p, zf + 0.1 * p, k / 4.0) + rng.randf_range(-0.01, 0.01) * p
-			_bead(body, "WeldRail%s%d" % [tag, k], weld, Vector3(side * 0.205 * p, y, z),
-					0.03 * p, Vector3(1.0, 0.7, 3.0))
+			var z := lerpf(0.30 * p - 0.02 * p, zf - 0.13 * p, k / 4.0) \
+					+ rng.randf_range(-0.01, 0.01) * p
+			if side > 0.0 and (k == 1 or k == 3):
+				continue
+			var big := 1.5 if side > 0.0 and k == 2 else 1.0
+			# On the base plate's top edge, against the wedge's flank.
+			var at := Vector3(side * RailgunBarrels.UP_HW * p, ya + 0.165 * p, z)
+			_bead(body, "WeldWedge%s%d" % [tag, k], weld, at, 0.03 * p * big,
+					Vector3(1.0, 0.7, 3.0))
+			if side < 0.0 and k == 2:
+				ArmParts.mesh(body, "WeldCrack", ArmParts.box(Vector3(0.05 * p, 0.05 * p, 0.012 * p)),
+						crack, at + Vector3(-0.01 * p, 0.0, 0.0))
+
+
+## Bolt heads gone: a dark pit over the head of one band bolt on each barrel, and a loose bolt
+## backing out of the left strut.
+static func _holes(body: Node3D, p: float, zf: float, ya: float) -> void:
+	var pit := ArmMaterials.surface(Color(0.02, 0.018, 0.016), Color(0.015, 0.015, 0.015),
+			Color(0.02, 0.02, 0.02), 60.0, 6.0, 0.0, 0.6, 0.9, 0.0, 0.0)
+	var holes := [
+		["PitLower", -RailgunBarrels.LOW_HW * p, ya + RailgunBarrels.LOW_Y * p, zf - 1.55 * p],
+		["PitUpper", RailgunBarrels.UP_HW * p, ya + RailgunBarrels.UP_Y * p, zf - 1.5 * p],
+	]
+	for h: Array in holes:
+		var x := h[1] as float
+		var dir := Vector3(signf(x), 0.0, 0.0)
+		# Over the bolt head on the band's flank: the band stands 0.025p off, the head 0.015p more.
+		ArmParts.mesh(body, h[0] as String, ArmParts.cyl(0.036 * p, 0.006 * p, 0.036 * p, 8), pit,
+				Vector3(x + signf(x) * 0.043 * p, h[2] as float, h[3] as float),
+				ArmParts.along(dir))
+	var steel := ArmMaterials.steel(11.0)
+	var strut_z := zf - 0.15 * p - 0.17 * p
+	ArmParts.mesh(body, "LooseBolt", ArmParts.cyl(0.012 * p, 0.09 * p, 0.012 * p, 6), steel,
+			Vector3(-0.19 * p, ya + 0.28 * p, strut_z + 0.07 * p),
+			Basis(Vector3.BACK, deg_to_rad(-20.0)) * ArmParts.along(Vector3.LEFT))
+	ArmParts.mesh(body, "LooseBoltHead", ArmParts.cyl(0.028 * p, 0.02 * p, 0.028 * p, 6), steel,
+			Vector3(-0.235 * p, ya + 0.28 * p + 0.015 * p, strut_z + 0.07 * p),
+			Basis(Vector3.BACK, deg_to_rad(-20.0)) * ArmParts.along(Vector3.LEFT))

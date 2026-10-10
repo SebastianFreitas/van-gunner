@@ -1,122 +1,103 @@
 class_name RailgunBody
 extends RefCounted
-## Held gun body: two steel rails over an orange charge channel, rust clamps, a spine, a muzzle block and a receiver whose rear face shows a 2x2 capacitor bank.
+## Held gun body: a long lower barrel, a short fat upper barrel with an open gap between them, and a capacitor wedge butted against the upper barrel's rear, its slope (with the charge window) falling toward the player.
+
+## The wedge's base height above the guard top and its rear z, in palm units p.
+const WEDGE_YB := 0.14
+const WEDGE_ZR := 0.30
 
 
-## Builds receiver + rails under `body` (the gun's "Body" node, gun space, -Z forward, +Y up).
+## Builds barrels + wedge under `body` (the gun's "Body" node, gun space, -Z forward, +Y up).
 ## `p` is the palm length, `z_front` the trigger guard's front z, `y_axis` = trigger_y + 0.25 p
 ## (the guard's top). Returns the muzzle point in gun space.
 static func build(body: Node3D, p: float, rng: RandomNumberGenerator, z_front: float,
 		y_axis: float) -> Vector3:
 	# Geometry never depends on rng: the aim must not depend on the seed.
-	var steel := ArmMaterials.steel(rng.randf_range(0.0, 100.0))
-	var alu := ArmMaterials.dull_alu(rng.randf_range(0.0, 100.0))
+	var muzzle := RailgunBarrels.build(body, p, rng, z_front, y_axis)
 	var paint := ArmMaterials.gun_paint(rng.randf_range(0.0, 100.0))
-	# Darker blued steel so the bars separate from the olive body at the player's distance.
-	var rail_mat := ArmMaterials.surface(Color(0.20, 0.25, 0.34), Color(0.11, 0.14, 0.20),
-			Color(0.08, 0.08, 0.07), 60.0, 6.0, 0.0, 0.5, 0.6, 0.4, rng.randf_range(0.0, 100.0))
-	var ember := ArmMaterials.ember(rng.randf_range(0.0, 100.0))
+	var steel := ArmMaterials.steel(rng.randf_range(0.0, 100.0))
+	var cable := ArmMaterials.surface(Color(0.04, 0.04, 0.035), Color(0.02, 0.02, 0.02),
+			Color(0.03, 0.03, 0.02), 60.0, 6.0, 0.0, 0.6, 0.9, 0.0, rng.randf_range(0.0, 100.0))
 	var ya := y_axis
-	var zf := z_front
-	var ztip := zf - 2.8 * p
+	var uy := ya + RailgunBarrels.UP_Y * p
+	var ur := z_front - 0.15 * p
+	var zr := WEDGE_ZR * p
+	var yb := ya + WEDGE_YB * p
+	var yt := uy + RailgunBarrels.UP_R * p
+	var hw := RailgunBarrels.UP_HW * p
+	var wlen := zr - ur
+	var hgt := yt - yb
+	# Point on the slope at fraction f from the peak (0) to the rear base (1), lifted by `lift`.
+	var slope_n := Vector3(0.0, wlen, hgt).normalized()
+	var on_slope := func(f: float, lift: float) -> Vector3:
+		return Vector3(0.0, yt - hgt * f, ur + wlen * f) + slope_n * lift
 
-	# Receiver over the hand, from the grip top up past the guard's top.
-	var rh := ya + 0.40 * p - 0.03
-	# Octagon with flats up and to the sides (22.5 degrees), stretched in y to the box's height.
-	var oct_r := 0.22 * p / cos(deg_to_rad(22.5))
-	var flats_up := Basis(Vector3.UP, deg_to_rad(22.5))
-	ArmParts.mesh(body, "Receiver", ArmParts.cyl(oct_r, 0.32 * p - zf, oct_r, 8), paint,
-			Vector3(0.0, 0.03 + rh * 0.5, (0.32 * p + zf) * 0.5),
-			Basis.from_scale(Vector3(1.0, rh / (0.44 * p), 1.0)) * ArmParts.along(Vector3.BACK)
-			* flats_up)
-	_build_caps(body, p, rng, alu, ya)
-
-	# Round spine tube, as wide as the box it replaced; the rails sit on its upper flanks.
-	var spine_z0 := zf - 0.05 * p
-	var spine_z1 := ztip + 0.30 * p
-	ArmParts.mesh(body, "Spine", ArmParts.cyl(0.20 * p, spine_z0 - spine_z1, 0.20 * p, 12),
-			paint, Vector3(0.0, ya + 0.009 * p, (spine_z0 + spine_z1) * 0.5),
-			ArmParts.along(Vector3.BACK))
-
-	# Two rails standing 0.40 p above the receiver's apex (0.80 p over the axis against 0.40 p):
-	# each is a 0.15 x 0.18 p cap on a 0.09 p web sunk into the tube, so from the eye and
-	# from behind they read as two bars with a deep channel (0.17 p wide, 0.38 p deep) between
-	# them. The orange line lies at the channel's floor.
-	var rail_z0 := 0.32 * p + 0.02 * p
-	var rail_z1 := ztip + 0.01 * p
+	# The wedge: a triangle in side view; its vertical face butts the upper barrel's rear and
+	# the slope falls to the base at the rear, toward the player.
+	ArmParts.mesh(body, "Wedge", _wedge_mesh(ur, zr, yb, yt, hw), paint, Vector3.ZERO)
+	# Two thin rods on the slope's side edges, so nothing crosses the charge window.
+	for side: float in [-1.0, 1.0]:
+		ArmParts.limb(body, "WedgeEdge%s" % ("L" if side < 0.0 else "R"),
+				Vector3(side * hw, yt, ur), Vector3(side * hw, yb, zr),
+				0.01 * p, 0.01 * p, steel, 6)
+	ArmParts.mesh(body, "WedgeBase", ArmParts.box(Vector3(0.40 * p, 0.04 * p, wlen)), steel,
+			Vector3(0.0, yb - 0.01 * p, (zr + ur) * 0.5))
 	for side: float in [-1.0, 1.0]:
 		var tag := "L" if side < 0.0 else "R"
-		ArmParts.mesh(body, "Rail" + tag,
-				ArmParts.box(Vector3(0.15 * p, 0.18 * p, rail_z0 - rail_z1)), rail_mat,
-				Vector3(side * 0.16 * p, ya + 0.71 * p, (rail_z0 + rail_z1) * 0.5))
-		ArmParts.mesh(body, "RailWeb" + tag,
-				ArmParts.box(Vector3(0.09 * p, 0.46 * p, rail_z0 - rail_z1)), rail_mat,
-				Vector3(side * 0.16 * p, ya + 0.39 * p, (rail_z0 + rail_z1) * 0.5))
-	var strip_z0 := zf - 0.5 * p
-	var strip_z1 := ztip + 0.25 * p
-	# Fills the channel floor (0.17 p between the rails), from the tube's top to 0.42 p.
-	ArmParts.mesh(body, "ChargeStrip", ArmParts.box(Vector3(0.17 * p, 0.22 * p, strip_z0 - strip_z1)),
-			ember, Vector3(0.0, ya + 0.31 * p, (strip_z0 + strip_z1) * 0.5))
-	# The same line over the receiver, a hair above its top flat, so it shows from behind.
-	ArmParts.mesh(body, "ChargeStripRear", ArmParts.box(Vector3(0.17 * p, 0.03 * p, 0.32 * p - zf)),
-			ember, Vector3(0.0, ya + 0.405 * p, (0.32 * p + zf) * 0.5))
-
-	for i: int in range(3):
-		_build_clamp(body, p, paint, steel, i, zf - (0.7 + 0.8 * i) * p, ya)
-
-	# Muzzle nose tapering to 70% at the tip, slightly canted, and the two flared rail ends.
-	ArmParts.mesh(body, "MuzzleBlock", ArmParts.cyl(0.7 * oct_r, 0.30 * p, oct_r, 8), paint,
-			Vector3(0.0, ya + 0.20 * p, ztip + 0.17 * p),
-			Basis(Vector3.RIGHT, deg_to_rad(5.0)) * ArmParts.along(Vector3.FORWARD) * flats_up)
-	for side: float in [-1.0, 1.0]:
-		var tag := "L" if side < 0.0 else "R"
-		ArmParts.mesh(body, "RailEnd" + tag, ArmParts.box(Vector3(0.18 * p, 0.24 * p, 0.12 * p)),
-				steel, Vector3(side * 0.17 * p, ya + 0.68 * p, ztip + 0.06 * p))
-
-	RailgunJunk.build(body, p, rng, zf, ya)
-	body.add_child(RailGlow.new())
-	GunSockets.place(body, p, zf, ya)
-	body.add_child(GunAttachments.new())
-	return Vector3(0.0, ya + 0.20 * p, ztip - 0.04 * p)
-
-
-## One U-bracket under and around the round spine, with hex bolt heads on both sides.
-static func _build_clamp(body: Node3D, p: float, rust: Material, steel: Material, i: int,
-		z: float, ya: float) -> void:
-	ArmParts.mesh(body, "ClampBase%d" % i, ArmParts.box(Vector3(0.48 * p, 0.05 * p, 0.14 * p)),
-			rust, Vector3(0.0, ya - 0.213 * p, z))
-	var side_h := 0.21 * p
-	for side: float in [-1.0, 1.0]:
-		var tag := "L" if side < 0.0 else "R"
-		ArmParts.mesh(body, "ClampArm%s%d" % [tag, i],
-				ArmParts.box(Vector3(0.04 * p, side_h, 0.14 * p)), rust,
-				Vector3(side * 0.22 * p, ya - 0.2 * p + side_h * 0.5, z))
 		for k: int in range(2):
-			ArmParts.mesh(body, "ClampBolt%s%d_%d" % [tag, i, k],
-					ArmParts.cyl(0.035 * p, 0.03 * p, 0.035 * p, 6), steel,
-					Vector3(side * 0.245 * p, ya + (-0.04 - 0.1 * k) * p, z),
+			ArmParts.mesh(body, "WedgeBolt%s%d" % [tag, k],
+					ArmParts.cyl(0.03 * p, 0.03 * p, 0.03 * p, 6), steel,
+					Vector3(side * hw, ya + 0.28 * p, ur + (0.30 + 0.45 * k) * p),
 					ArmParts.along(Vector3(side, 0.0, 0.0)))
+	# Charge window on the slope (facing up and back), in a steel frame.
+	var tilt := Basis(Vector3.RIGHT, -atan2(slope_n.y, slope_n.z))
+	ArmParts.mesh(body, "WindowFrame", ArmParts.box(Vector3(0.20 * p, 0.14 * p, 0.012 * p)),
+			steel, on_slope.call(0.45, 0.004 * p), tilt)
+	ArmParts.mesh(body, "Lamp0", ArmParts.box(Vector3(0.14 * p, 0.08 * p, 0.012 * p)),
+			ArmMaterials.ember(0.0), on_slope.call(0.45, 0.012 * p), tilt)
+
+	# Two cables over the slope: the upper one runs up to the upper barrel's rear beside the
+	# wedge's peak, the lower one dives into the lower barrel.
+	var cu_a: Vector3 = on_slope.call(0.75, 0.02 * p)
+	ArmParts.limb(body, "CableUpper", Vector3(-0.14 * p, cu_a.y, cu_a.z),
+			Vector3(-0.14 * p, yt - 0.02 * p, ur), 0.02 * p, 0.02 * p, cable, 6)
+	var cl_a: Vector3 = on_slope.call(0.55, 0.02 * p)
+	ArmParts.limb(body, "CableLower", Vector3(0.10 * p, cl_a.y, cl_a.z),
+			Vector3(0.10 * p, ya + 0.10 * p, ur + 0.30 * p), 0.02 * p, 0.02 * p, cable, 6)
+
+	RailgunCoils.build(body, p, rng, muzzle.y, muzzle.z + 0.05 * p, 1.28)
+	# Sockets snap before the wear exists, so its thin parts never move them.
+	GunSockets.place(body, p, z_front, ya)
+	RailgunJunk.build(body, p, rng, z_front, ya)
+	body.add_child(RailGlow.new())
+	body.add_child(GunAttachments.new())
+	return muzzle
 
 
-## Four capacitor ends on the receiver's rear face, each with a brass post and an amber lamp.
-static func _build_caps(body: Node3D, p: float, rng: RandomNumberGenerator, alu: Material,
-		ya: float) -> void:
-	var brass := ArmMaterials.brass()
-	var rear := 0.32 * p
-	var n := 0
-	for row: int in range(2):
-		for col: int in range(2):
-			var at := Vector3((-0.10 + 0.20 * col) * p, ya + (0.29 - 0.20 * row) * p, 0.0)
-			ArmParts.mesh(body, "Cap%d" % n, ArmParts.cyl(0.09 * p, 0.12 * p, 0.09 * p, 12), alu,
-					at + Vector3(0.0, 0.0, rear - 0.01 * p), ArmParts.along(Vector3.BACK))
-			ArmParts.mesh(body, "Post%d" % n, ArmParts.cyl(0.03 * p, 0.044 * p, 0.03 * p, 6),
-					brass, at + Vector3(0.0, 0.0, rear + 0.072 * p), ArmParts.along(Vector3.BACK))
-			var lamp := SphereMesh.new()
-			lamp.radius = 0.025 * p
-			lamp.height = 0.05 * p
-			lamp.radial_segments = 8
-			lamp.rings = 4
-			var lamp_mat: Material = ArmMaterials.ember(rng.randf_range(0.0, 100.0))
-			ArmParts.mesh(body, "Lamp%d" % n, lamp, lamp_mat,
-					at + Vector3(0.0, 0.07 * p, rear + 0.05 * p))
-			n += 1
+## A triangular prism, +-hw wide: vertical face from yb to yt at zv, sloping down to yb at zs.
+static func _wedge_mesh(zv: float, zs: float, yb: float, yt: float, hw: float) -> ArrayMesh:
+	var v: Array[Vector3] = []
+	for s: float in [-hw, hw]:
+		v.append_array([Vector3(s, yb, zv), Vector3(s, yt, zv), Vector3(s, yb, zs)])
+	var c := Vector3.ZERO
+	for q: Vector3 in v:
+		c += q / 6.0
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# Left cap, right cap, vertical face, bottom, slope.
+	var tris: Array = [[0, 1, 2], [3, 5, 4], [0, 3, 1], [3, 4, 1], [0, 2, 3], [3, 2, 5],
+			[1, 4, 2], [4, 5, 2]]
+	for t: Array in tris:
+		var a: Vector3 = v[t[0] as int]
+		var b: Vector3 = v[t[1] as int]
+		var d: Vector3 = v[t[2] as int]
+		# Godot's front face is clockwise: flip any triangle that is counter-clockwise outside.
+		if (b - a).cross(d - a).dot((a + b + d) / 3.0 - c) > 0.0:
+			var tmp := b
+			b = d
+			d = tmp
+		st.add_vertex(a)
+		st.add_vertex(b)
+		st.add_vertex(d)
+	st.generate_normals()
+	return st.commit()

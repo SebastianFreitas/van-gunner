@@ -160,39 +160,32 @@ After any lens change, Read one player-view shot.
 
 Brief: `.claude/specs/brief.md`. Built by `RailgunBody` (+ `RailgunJunk`, `RailGlow`).
 
-- Composition: a 12-segment cylinder spine, an 8-segment octagon receiver
-  (flats up and to the sides, stretched in y to the old box height), a tapered
-  8-segment muzzle with the 5-degree cant, two rails on top over the orange
-  charge channel. Other numbers live in `railgun_body.gd`.
-- Rails: 0.15p by 0.18p blued-steel caps on 0.46p `RailWeb` webs, tops 0.80p
-  over the axis (0.40p above the receiver apex), running back over the receiver
-  to `ChargeStripRear`. Channel 0.17p wide, 0.38p deep, `ChargeStrip` at its
-  floor. Rear caps radius 0.09p, raised to clear the grip's `Beavertail`.
-- Bounding box: receiver rear z +0.32p, tip zf - 2.8p, top ya + 0.80p, width at
-  most 0.52p (p = the hand's palm length, zf the guard front, ya the guard top).
-- Fixed geometry: only materials, bead spacing, tape tilt and the rusty plate
-  follow rng. Rails, grip, muzzle and sockets never move.
+- Composition (owner sketch, specs 1 to 4): two box-section barrels of equal height (half-height 0.20p, half-width 0.19p, chamfered; `RailgunBarrels` constants), a long `LowerBarrel` (collar, three bands, grooves, six fins, slotted `brake` at the muzzle) and a short `UpperBarrel` (1.7p long, front 0.9p behind the muzzle tip) 0.17p above it, with fins, side vents, bands, caps, a bore and a `TopRail` on its centreline. Two `Strut`s tie them at the rear only. The `Wedge` (triangular prism, `WEDGE_YB`/`WEDGE_ZR` in `railgun_body.gd`) has its vertical face forward against the upper barrel's rear and its slope falling to the rear toward the player; the `Lamp0` charge window and both cables sit on the slope. `GapGlow` is in the gap; `muzzle_in_gun` is at the gap's centre just ahead of the upper barrel. Numbers live in `railgun_barrels.gd`, `railgun_barrel_detail.gd` and `railgun_body.gd`.
+- Rails: there are none. The two barrels are the rails; the 0.17p gap (capped by the barrel height) is where the shot leaves and where the coils go. Keep the front half open; only the two rear `Strut`s cross it.
+- Coils (`RailgunCoils`): four floating square frames (two copper windings, steel lugs, a glowing `Field` disc) sized to 75 percent of the gap, 0.32p apart from the upper barrel's front +0.24p. They wobble and bob instead of spinning, so no corner reaches a barrel, and jolt 0.06p forward and flare on `shot`; held at t 1.1 under `SaveSandbox`. `GapGlow` is a thin 0.03p beam through their holes.
+- Bounding box: tip zf - 2.8p, top about ya + 0.86p (the upper barrel's top and the wedge's peak with the two side rods `WedgeEdgeL`/`WedgeEdgeR`, split from the old single `WedgeEdge` in spec 6), width at most 0.52p
+  (p = the hand's palm length, zf the guard front, ya the guard top).
+- Fixed geometry: barrels, wedge, grip, muzzle and sockets never move; materials, bead spacing, tape and
+  wire tilt and the rust/scorch tones follow rng. `HangPlate` is fixed.
 - Scale: the body is `MonsterGrip.GUN_K` 1.15 over the hand's `p`; grip, guard
   and trigger stay at `p` (owner, 2026-10-09).
-- Flush junk: only tape wraps and 18 body-shade weld runs stay on the body (8 on
-  the receiver seam ring, tangent to it; 5 per rail foot), never bright studs. Tread, plates,
-  brackets, chain, padlock and the sprayed word are gone for good (owner,
-  2026-10-09: the details obscured the gun; keep the body clean so boon pieces
-  read on top).
+- Wear (spec 3, owner: "old and rusty like it's gonna break apart"): `RailgunJunk` (tape, broken weld run with two beads gone, one cracked, one fat; two empty bolt pits; a `LooseBolt` backing out of the left strut) plus `RailgunWear` (`HeavyRust` patches on both barrels, a few olive paint flakes on the wedge flanks, `SplitGap` + lips on the upper barrel's top bound by three `SplitWire` rings, `BandDent`/`BandCurl` on the lower middle band, `Scorch*` patches and ring at the gap's front, a `HangPlate` swung 16 degrees off the left wedge bolt, a sagging taped `CableSag` run). `ArmMaterials` has `heavy_rust` and `scorched_steel`; `rust` and `gun_paint` are retuned darker and grimier, so the body is mostly rust and the olive survives only as flakes. All static, thin and flush on a barrel or wedge face (face-based: patches sit on the flat faces and the slope, not on a cylinder); none in front of the muzzle line or the rings, and none on a socket's snap z.
+- Flush junk: tape wraps, weld runs and bolt pits stay flush on the body; `LooseBolt`, `HangPlate` and
+  `CableSag` are the only loose parts, on the wedge's left flank and strut. Tread, brackets, chain,
+  padlock and the sprayed word are gone (owner, 2026-10-09: keep the body clean so boons read).
 - Sockets (`GunSockets`): Marker3Ds `Socket_<zone>_<letter>` in zones top,
   left, rear, muzzle, under, hang, right, with metas `size` (*p), `normal`,
   `zone`, `used`; `claim(body, zones)` takes the first free socket by zone
   preference. A socket starts inside the mesh it belongs to and snaps out onto
-  that mesh's face at build. It snaps to the mesh's bounding box, and a turned
-  8-segment mesh (octagon receiver, tapered muzzle with `flats_up`) has a box
-  wider than its visible shape, so a socket starting near the box edge lands in
-  the air or sinks: start sockets on the visible face (spec 8b).
+  that mesh's face at build (spec 5: offsets derive from `RailgunBarrels` and `RailgunBody`
+  constants: top and muzzle on the upper barrel, left, right, rear, under and hang on the
+  lower barrel, `left_a` on the wedge flank). It snaps to the mesh's bounding box, which is the
+  box barrels' own faces now, so start each socket inside the mesh it belongs to.
 - A boon gets a visual by a `GunBoonVisuals.REGISTRY` entry (zones plus a
   builder in `GunBoonPieces` that fits the socket's `size`). REGISTRY order is
   the order pieces are built and claim sockets. No glow unless it is a light.
-- Glow: `ChargeStrip` and `Lamp0`..`Lamp3` are the gun's only emissive parts;
-  `RailGlow` owns the light. Its `LampLight` (amber, on the receiver's rear
-  face) and the glow reach the sockets so pieces read in the dark.
+- Glow: `GapGlow`, `Lamp0` and the coils' `Field` discs are the gun's only emissive parts;
+  `RailGlow` owns the light. Its `LampLight` (amber, at the wedge's rear face) reaches the sockets.
 - Future pieces lie horizontal as part of the barrel (poison canister first),
   never upright add-ons; the current three pieces are upright and wait for that.
 - Debug: `gun sockets|report|attach` (`debug_gun_commands.gd`). Smoke views

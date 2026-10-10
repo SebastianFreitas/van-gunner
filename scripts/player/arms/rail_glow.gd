@@ -15,7 +15,7 @@ const LIGHT_RANGE := 0.45
 ## The lamp bank's own small pool, so the receiver's rear face and what sits on it is lit.
 const LAMP_LIGHT_RANGE := 0.35
 ## Rig units above the strip's centre, so the pool washes the rail tops.
-const LIGHT_LIFT := 0.1
+const LIGHT_LIFT := 0.0
 
 var _light: OmniLight3D
 var _lamp_light: OmniLight3D
@@ -78,7 +78,7 @@ func _bind() -> void:
 	if weapon != null:
 		_light.reparent(weapon, false)
 		_lamp_light.reparent(weapon, false)
-	_strip = parent.get_node_or_null("ChargeStrip") as MeshInstance3D
+	_strip = parent.get_node_or_null("GapGlow") as MeshInstance3D
 	if _strip != null:
 		_strip_mat = _own_material(_strip)
 		_strip_mat.emission_energy_multiplier = IDLE_STRIP
