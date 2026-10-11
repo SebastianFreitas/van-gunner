@@ -68,16 +68,31 @@ static func apply(arrays: Array, new_verts: PackedVector3Array, heads: Dictionar
 	arrays[Mesh.ARRAY_NORMAL] = _normals(arrays, verts, orig_normals)
 	arrays[Mesh.ARRAY_TANGENT] = null
 	# Vein frame: origin at the shoulder, axis shoulder -> hand, u toward the thumb side.
-	var axis_all := (h_hand - h_up).normalized()
-	var u := (thumb_dir - axis_all * thumb_dir.dot(axis_all)).normalized()
-	var v := axis_all.cross(u)
+	var vf := frame(heads)
 	for i in count:
-		var d := verts[i] - h_up
-		custom[i * 4] = d.dot(axis_all)
-		custom[i * 4 + 1] = d.dot(u)
-		custom[i * 4 + 2] = d.dot(v)
+		var c := frame_xyz(vf, verts[i])
+		custom[i * 4] = c.x
+		custom[i * 4 + 1] = c.y
+		custom[i * 4 + 2] = c.z
 		custom[i * 4 + 3] = float(MASK.get(StringName(families[i]), 0.0))
 	arrays[Mesh.ARRAY_CUSTOM0] = custom
+
+
+## Vein frame from the bone heads: {origin, axis, u, v}. Origin is the shoulder, axis runs
+## shoulder -> hand, u toward the thumb side. Needs the four heads `apply` checks for.
+static func frame(heads: Dictionary) -> Dictionary:
+	var h_up: Vector3 = heads[&"DEF-upper_arm"]
+	var h_hand: Vector3 = heads[&"DEF-hand"]
+	var thumb_dir: Vector3 = Vector3(heads[&"DEF-thumb.01"]) - h_hand
+	var axis_all := (h_hand - h_up).normalized()
+	var u := (thumb_dir - axis_all * thumb_dir.dot(axis_all)).normalized()
+	return {&"origin": h_up, &"axis": axis_all, &"u": u, &"v": axis_all.cross(u)}
+
+
+## The CUSTOM0 xyz of a bind-space position in a `frame`; `apply` writes exactly this.
+static func frame_xyz(f: Dictionary, p: Vector3) -> Vector3:
+	var d: Vector3 = p - Vector3(f[&"origin"])
+	return Vector3(d.dot(f[&"axis"]), d.dot(f[&"u"]), d.dot(f[&"v"]))
 
 
 ## Bone name without the ".L"/".R" side suffix and without ".001", whichever order they come in.
