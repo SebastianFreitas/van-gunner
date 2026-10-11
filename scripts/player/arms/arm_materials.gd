@@ -37,18 +37,19 @@ static func skin(rng: RandomNumberGenerator) -> ShaderMaterial:
 	var mat := surface(base, Color(0.13, 0.17, 0.14), Color(0.08, 0.08, 0.06), 60.0, 6.0, 0.0,
 			0.45, 0.88, 0.0, rng.randf_range(0.0, 100.0))
 	mat.set_shader_parameter(&"vein_strength", rng.randf_range(0.7, 1.0))
-	# 4.5 times the shader default, with shaded flanks, so the veins read at arm's length.
-	mat.set_shader_parameter(&"vein_height", 0.0056)
-	mat.set_shader_parameter(&"vein_shade", 0.55)
-	mat.set_shader_parameter(&"vein_under", 0.8)
-	mat.set_shader_parameter(&"vein_wrist", 1.2)
+	# 6 times the shader default (range max 0.008), shaded flanks: thin old skin, veins pop.
+	mat.set_shader_parameter(&"vein_height", 0.0075)
+	mat.set_shader_parameter(&"vein_shade", 0.6)
+	mat.set_shader_parameter(&"vein_under", 0.95)
+	mat.set_shader_parameter(&"vein_wrist", 1.7)
 	mat.set_shader_parameter(&"vein_wrap", 0.9)
-	mat.set_shader_parameter(&"vein_width", 0.036)
+	mat.set_shader_parameter(&"vein_width", 0.044)
 	# Measured palm bone length 0.125 rest units, so a finger is about 0.11: sag_scale 36 gives
-	# about 4 big folds per finger, wrinkle_scale 216 (6x) the fine ones.
-	mat.set_shader_parameter(&"skin_bump", 0.85)
+	# about 4 big folds per finger, wrinkle_scale 280 the fine ones (older, creased skin).
+	mat.set_shader_parameter(&"skin_bump", 1.0)
 	mat.set_shader_parameter(&"sag_scale", 36.0)
-	mat.set_shader_parameter(&"wrinkle_scale", 216.0)
+	mat.set_shader_parameter(&"wrinkle_scale", 280.0)
+	mat.set_shader_parameter(&"hand_blight_gain", 9.0) # age spots and blotches on the hands
 	mat.set_shader_parameter(&"use_rest_pos", true)
 	return mat
 
