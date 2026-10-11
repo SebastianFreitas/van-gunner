@@ -23,7 +23,7 @@ const INFO := {
 	"thumbs": ["", "thumb report"],
 	"reach": ["", "left arm reach numbers"],
 	"seam": ["", "hand-forearm seam edge lengths"],
-	"roots": ["", "finger-root seam and mask-step meter (blend meters come with the blend)"],
+	"roots": ["", "finger-root seam, mask-step and streak meter (S0, S_f, sweep, build ms)"],
 	"wristang": ["[t|axes|flex|dev|scan [t0 t1]]", "left wrist angles"],
 	"ik": ["", "IK report"],
 	"touch": ["", "touch report"],

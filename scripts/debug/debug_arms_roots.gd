@@ -1,10 +1,11 @@
 extends RefCounted
-## Debug console `arms roots`: per hand, how each finger tube meets the palm skin (crossing size, normal angle, vein-frame and mask steps) and the arm mesh's mask steps, in bind space. Read-only; the per-finger blend meters (S0, S_f, sweep, build ms) arrive with the blend itself.
+## Debug console `arms roots`: per hand, how each finger tube meets the palm skin (crossing size, normal angle, vein-frame and mask steps) and the arm mesh's mask steps, in bind space. Read-only; per finger the streak meter (S0, S_f, sweep) and the hand's build ms.
 
 const SECTORS := 8
 const SIDES := [["R", "right_root"], ["L", "left_root"]]
 
 var _mesh := preload("res://scripts/debug/debug_arms_roots_mesh.gd").new()
+var _streak := preload("res://scripts/debug/debug_arms_roots_streak.gd")
 
 
 ## One block per hand.
@@ -111,9 +112,14 @@ func _hand(model: Node3D, side: String) -> String:
 			rt = maxf(rt, ctp.distance_to(q[&"p"]))
 		out += "\n %s r %.4f t_c %.3f crossing %d%s: angle %.1f deg, dxyz %.4f, w tube %.2f palm %.2f, n.stored min %.2f, worst lane %d t %.2f" % [
 				name, rr, tmax, cross.size(), " (fallback)" if fallback else "", ang, dc, wt, wp, sign_min, (worst - first) % SECTORS, float(info[worst][&"t"]) if info.has(worst) else 0.0]
+		var fr: Dictionary = (model.get_meta(&"finger_roots", {}) as Dictionary).get(name, {})
+		if not fr.is_empty():
+			out += _streak.line(fr[&"c_f"], fr[&"t_c"], ids, tv, tc, hd, d)
 		if is_thumb:
 			thumb = ctp
 			r_t = rt
+	var ms: float = (model.get_meta(&"finger_roots", {}) as Dictionary).get(&"ms", -1.0)
+	out += "\n build %.1f ms" % ms
 	return out + _mesh.arm(vf, heads, thumb, r_t)
 
 
