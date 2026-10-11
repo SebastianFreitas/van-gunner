@@ -48,6 +48,7 @@ static func apply(verts: PackedVector3Array, normals: PackedVector3Array, bones:
 		return
 	var peak := PEAK * spacing
 	var groove := GROOVE * spacing
+	var group_normals := _group_normals(verts, normals)
 	for i in verts.size():
 		var hw := 0.0
 		for j in per:
@@ -56,7 +57,7 @@ static func apply(verts: PackedVector3Array, normals: PackedVector3Array, bones:
 				hw += weights[i * per + j]
 		if hw < 0.05:
 			continue
-		var back := smoothstep(0.15, 0.6, normals[i].dot(dorsal))
+		var back := smoothstep(0.15, 0.6, group_normals[i].dot(dorsal))
 		if back <= 0.0:
 			continue
 		var uv := (verts[i] - heads[1]).dot(lateral)
@@ -81,3 +82,18 @@ static func apply(verts: PackedVector3Array, normals: PackedVector3Array, bones:
 			var s := -a / (BACK_REACH * plen[n])
 			along = lerpf(1.0, TENDON, smoothstep(0.0, 0.6, s)) * (1.0 - smoothstep(0.6, 1.0, s))
 		verts[i] += dorsal * lat * along * back * clampf(hw, 0.0, 1.0)
+
+
+## One normal per same-position group (the normalised mean of its members'), keyed like
+## ArmWeightSmooth.weld, so copies on a hard-normal seam get the identical push.
+static func _group_normals(verts: PackedVector3Array,
+		normals: PackedVector3Array) -> PackedVector3Array:
+	var sums := {}
+	for i in verts.size():
+		var at := Vector3i((verts[i] * 100000.0).round())
+		sums[at] = Vector3(sums.get(at, Vector3.ZERO)) + normals[i]
+	var out := PackedVector3Array()
+	out.resize(verts.size())
+	for i in verts.size():
+		out[i] = Vector3(sums[Vector3i((verts[i] * 100000.0).round())]).normalized()
+	return out

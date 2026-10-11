@@ -109,3 +109,43 @@ static func _retarget(bones: PackedInt32Array, weights: PackedFloat32Array, per:
 	var down := (1.0 - to) / maxf(1.0 - from, 0.0001)
 	for k in per:
 		weights[base + k] *= up if is_thumb[bones[base + k]] == 1 else down
+
+
+## Gives every group of vertices that share a position one set of bone weights (their mean), so a
+## UV or hard-normal seam skins and inflates as one point and cannot open a crack at the wrist.
+static func weld(arrays: Array) -> void:
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+	var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+	var per := int(float(bones.size()) / maxf(verts.size(), 1.0))
+	var groups := {}
+	for i in verts.size():
+		var at := Vector3i((verts[i] * 100000.0).round())
+		# A packed array in a Dictionary is a value: append to a local, then store it back.
+		var list: PackedInt32Array = groups.get(at, PackedInt32Array())
+		list.append(i)
+		groups[at] = list
+	for at: Vector3i in groups:
+		var members: PackedInt32Array = groups[at]
+		if members.size() < 2:
+			continue
+		var merged := {}
+		for i in members:
+			for k in per:
+				var w := weights[i * per + k]
+				if w > 0.0:
+					merged[bones[i * per + k]] = float(merged.get(bones[i * per + k], 0.0)) + w
+		var entries: Array = []
+		for bone in merged:
+			entries.append([bone, merged[bone]])
+		entries.sort_custom(func(x: Array, y: Array) -> bool: return x[1] > y[1])
+		var total := 0.0
+		for k in mini(per, entries.size()):
+			total += entries[k][1]
+		for i in members:
+			for k in per:
+				var has := k < entries.size()
+				bones[i * per + k] = entries[k][0] if has else 0
+				weights[i * per + k] = entries[k][1] / total if has else 0.0
+	arrays[Mesh.ARRAY_BONES] = bones
+	arrays[Mesh.ARRAY_WEIGHTS] = weights

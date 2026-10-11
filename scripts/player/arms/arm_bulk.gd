@@ -205,6 +205,7 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 		var arrays := src.surface_get_arrays(s)
 		arrays = ArmRefine.refine(arrays)
 		ArmWeightSmooth.apply(arrays, bone_names, inv_poses, side)
+		ArmWeightSmooth.weld(arrays)
 		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 		var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
 		var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
