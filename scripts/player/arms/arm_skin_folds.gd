@@ -17,13 +17,15 @@ const REACH_KNUCKLE := 2.4
 ## Crease reach at the other joints, in finger radii.
 const REACH_JOINT := 2.2
 ## Tendon half-width, in finger radii.
-const TENDON_HALF := 0.32
+const TENDON_HALF := 0.42
 ## How far from the wrist toward the knuckle a tendon starts.
 const TENDON_START := 0.15
 ## How far a crease sinks into the skin.
-const FOLD_HEIGHT := 0.8
+const FOLD_HEIGHT := 1.0
 ## How dark a crease floor gets (shader default 0.7): sharper cavity darkening at joints.
 const FOLD_SHADE := 0.8
+## How much a tendon crown lifts (shader default 0.26, range max 0.4): salient cords.
+const TENDON_LIGHT := 0.4
 
 
 ## Sets the crease and tendon uniforms of `mat` from the bones of `mi`; all points are rest
@@ -94,6 +96,7 @@ static func apply(mat: ShaderMaterial, mi: MeshInstance3D, sk: Skeleton3D, side:
 	mat.set_shader_parameter(&"tendon_n", ten_n)
 	mat.set_shader_parameter(&"fold_height", FOLD_HEIGHT)
 	mat.set_shader_parameter(&"fold_shade", FOLD_SHADE)
+	mat.set_shader_parameter(&"tendon_light", TENDON_LIGHT)
 
 
 ## The part of `ref` perpendicular to `axis`, normalised: the direction of the back of the hand.
