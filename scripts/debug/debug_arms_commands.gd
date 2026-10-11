@@ -9,6 +9,7 @@ const _HandsCheck := preload("res://scripts/debug/debug_arms_hands.gd")
 const _Dump := preload("res://scripts/debug/debug_arms_dump.gd")
 const _Wrist := preload("res://scripts/debug/debug_arms_wrist.gd")
 const _Seam := preload("res://scripts/debug/debug_arms_seam.gd")
+const _Roots := preload("res://scripts/debug/debug_arms_roots.gd")
 const _Hints := preload("res://scripts/debug/debug_arms_hints.gd")
 const _Frame :=preload("res://scripts/debug/debug_arms_frame.gd")
 const _Cam := preload("res://scripts/debug/debug_arms_cam.gd")
@@ -20,7 +21,7 @@ const _Weave := preload("res://scripts/player/arms/arm_weave.gd")
 ## Every subcommand `cmd_arms` handles; the one list behind `sub_commands()`, hints and usage.
 const SUBS: PackedStringArray = [
 	"cam", "curl", "dress", "dump", "fit", "fov", "frame", "gesture", "gun", "hands",
-	"ik", "inspect", "seam", "lthumb", "lthumbaim", "lthumbroll", "reach", "reload", "rall", "reach-end", "ridx", "rmid", "rpinky",
+	"ik", "inspect", "seam", "roots", "lthumb", "lthumbaim", "lthumbroll", "reach", "reload", "rall", "reach-end", "ridx", "rmid", "rpinky",
 	"rring", "shot", "thumbaim", "thumbcurl", "thumbroll", "thumbs", "thumbturn", "touch",
 	"walk", "weave", "wrist", "wristang",
 ]
@@ -212,6 +213,8 @@ func cmd_arms(args: Array) -> String:
 		return _Thumbs.new().run(vm)
 	if args[0] == "seam":
 		return _Seam.new().run(vm)
+	if args[0] == "roots":
+		return _Roots.new().run(vm)
 	if args[0] == "wristang":
 		return _Wrist.new().run(vm, args)
 	if args[0] == "ik":
