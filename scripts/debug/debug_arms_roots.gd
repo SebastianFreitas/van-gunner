@@ -46,6 +46,7 @@ func _hand(model: Node3D, side: String) -> String:
 	var tv: PackedVector3Array = tb[Mesh.ARRAY_VERTEX]
 	var tn: PackedVector3Array = tb[Mesh.ARRAY_NORMAL]
 	var tc: PackedFloat32Array = tb[Mesh.ARRAY_CUSTOM0]
+	var fingers: Dictionary = model.get_meta(&"fingers", {})
 	var comp := _components(tv.size(), tb[Mesh.ARRAY_INDEX])
 	var thumb := Vector3.ZERO
 	var r_t := 0.0
@@ -58,14 +59,8 @@ func _hand(model: Node3D, side: String) -> String:
 		var d: Vector3 = Vector3(heads.get(nxt, Vector3.ZERO)) - hd
 		var ids: PackedInt32Array = comp[fi]
 		var first := ids[0]
-		var ring := 4 if is_thumb else 3
-		var mid := Vector3.ZERO
-		for k in SECTORS:
-			mid += tv[first + ring * SECTORS + k] / SECTORS
-		var rr := 0.0
-		for k in SECTORS:
-			rr += mid.distance_to(tv[first + ring * SECTORS + k]) / SECTORS
-		var tris := ArmSkinNearest.prefilter(_mesh.v, _mesh.idx, hd if is_thumb else hd - 0.25 * d, 2.0 * rr)
+		var rr := float((fingers.get(name, {}) as Dictionary).get(&"shaft", 0.0))
+		var tris := ArmSkinNearest.prefilter(_mesh.v, _mesh.idx, hd - 0.25 * d, 2.0 * rr)
 		var info := {}
 		var tmax := -INF
 		for i in ids:
@@ -97,10 +92,16 @@ func _hand(model: Node3D, side: String) -> String:
 		var wp := 0.0
 		var sign_min := 1.0
 		var rt := 0.0
+		var worst := 0
+		var worst_a := -1.0
 		var ctp := hd + maxf(tmax, 0.0) * d
 		for i in cross:
 			var q: Dictionary = info[i]
-			ang = maxf(ang, rad_to_deg(tn[i].angle_to(q[&"n"])))
+			var a := rad_to_deg(tn[i].angle_to(q[&"n"]))
+			if a > worst_a:
+				worst_a = a
+				worst = i
+			ang = maxf(ang, a)
 			var cx := Vector3(tc[i * 4], tc[i * 4 + 1], tc[i * 4 + 2])
 			dc = maxf(dc, cx.distance_to(ArmMuscle.frame_xyz(vf, tv[i])))
 			wt = maxf(wt, tc[i * 4 + 3])
@@ -108,8 +109,8 @@ func _hand(model: Node3D, side: String) -> String:
 			wp = maxf(wp, pw.x)
 			sign_min = minf(sign_min, pw.y)
 			rt = maxf(rt, ctp.distance_to(q[&"p"]))
-		out += "\n %s r %.4f t_c %.3f crossing %d%s: angle %.1f deg, dxyz %.4f, w tube %.2f palm %.2f, n.stored min %.2f" % [
-				name, rr, tmax, cross.size(), " (fallback)" if fallback else "", ang, dc, wt, wp, sign_min]
+		out += "\n %s r %.4f t_c %.3f crossing %d%s: angle %.1f deg, dxyz %.4f, w tube %.2f palm %.2f, n.stored min %.2f, worst lane %d t %.2f" % [
+				name, rr, tmax, cross.size(), " (fallback)" if fallback else "", ang, dc, wt, wp, sign_min, (worst - first) % SECTORS, float(info[worst][&"t"]) if info.has(worst) else 0.0]
 		if is_thumb:
 			thumb = ctp
 			r_t = rt
