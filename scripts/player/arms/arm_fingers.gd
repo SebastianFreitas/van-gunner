@@ -4,8 +4,8 @@ extends RefCounted
 
 ## Vertices per ring.
 const SECTORS := 8
-const BONY_SQUASH := 0.86  ## lateral squash of a finger ring
-const BONY_CORNER := 1.10  ## the four diagonal sectors pushed out so the ring reads square
+const BONY_SQUASH := 0.80  ## lateral squash of a finger ring
+const BONY_CORNER := 1.18  ## the four diagonal sectors pushed out so the ring reads square
 const BONY_PAD_H := 0.80  ## dorsal half-width kept on the flat pad side of a ring
 ## Dorsal half-width of the nail bed, on the distal rings from this fraction of the tip on.
 const NAIL_H := 0.85
@@ -21,7 +21,7 @@ const THUMB_R := 1.35
 ## Old-meat lumpiness: slight per-ring radius wobble, sparse peaked knots (mostly at the joints) and a palm-side sag, all as fractions of the ring radius.
 ## KNOT trimmed 2026-10-05: the owner found the bumps a bit extreme on straight fingers.
 const LUMP_RING := 0.03
-const KNOT := 0.22
+const KNOT := 0.32
 const KNOT_SPARSE := 0.88
 const SAG := 0.10
 
