@@ -21,7 +21,9 @@ const TENDON_HALF := 0.32
 ## How far from the wrist toward the knuckle a tendon starts.
 const TENDON_START := 0.15
 ## How far a crease sinks into the skin.
-const FOLD_HEIGHT := 0.55
+const FOLD_HEIGHT := 0.8
+## How dark a crease floor gets (shader default 0.7): sharper cavity darkening at joints.
+const FOLD_SHADE := 0.8
 
 
 ## Sets the crease and tendon uniforms of `mat` from the bones of `mi`; all points are rest
@@ -91,6 +93,7 @@ static func apply(mat: ShaderMaterial, mi: MeshInstance3D, sk: Skeleton3D, side:
 	mat.set_shader_parameter(&"tendon_b", ten_b)
 	mat.set_shader_parameter(&"tendon_n", ten_n)
 	mat.set_shader_parameter(&"fold_height", FOLD_HEIGHT)
+	mat.set_shader_parameter(&"fold_shade", FOLD_SHADE)
 
 
 ## The part of `ref` perpendicular to `axis`, normalised: the direction of the back of the hand.
