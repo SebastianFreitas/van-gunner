@@ -2,27 +2,25 @@ class_name ArmFingerRoot
 extends RefCounted
 ## Blends the finger tubes' roots into the palm skin without moving a vertex: near the root the
 ## tube normals lean to the palm's, and CUSTOM0 carries the palm's vein-frame value at the
-## crossing, fading to one flat value per finger just past the knuckle. Static only.
+## crossing; the dirt streak fades to its flat finger value just past the knuckle by the
+## per-vertex fade `g` (CUSTOM3), not by moving the coordinates. Static only.
 
 ## Normal blend width as a multiple of the root bone's tube radius (look fallback: 1.0).
 const BLEND_R := 0.5
 ## Rings up to this t of the root bone (the thumb's is .02) take the palm normal; t_c may raise it.
 const NORMAL_T := 0.30
-## How far past the crossing t_c the palm's frame value takes to fade to the flat value.
+## How far past the crossing t_c the palm streak takes to fade to the flat value.
 const FADE_T := 0.30
 ## Crossing: tube vertices within this share of the radius of the palm skin.
 const CROSS_R := 0.05
 ## Rings past this t of the root bone are never searched for the crossing (the palm ends
 ## well before; the search is the build's cost).
 const SEARCH_T := 0.8
-## Vertices a tube ring has (`ArmFingers.SECTORS`).
-const RING_SECTORS := 8
-const Streak := preload("res://scripts/debug/debug_arms_roots_streak.gd")
 
 
 ## `verts`/`indices` are the merged tubes, `parts` one dict per finger: {name, base, count,
-## centres, rings, r} (r the root bone's tube radius). Returns {normals, custom0} for
-## `ArmSkinMesh.build`, and stores the build ms and per finger {c_f, t_c} on the model's
+## centres, rings, r} (r the root bone's tube radius). Returns {normals, custom0, fade} for
+## `ArmSkinMesh.build`, and stores the build ms and per finger {t_c} on the model's
 ## `finger_roots` meta.
 static func build(model: Node3D, mi: MeshInstance3D, sk: Skeleton3D, suffix: String,
 		verts: PackedVector3Array, indices: PackedInt32Array, parts: Array) -> Dictionary:
@@ -41,21 +39,23 @@ static func build(model: Node3D, mi: MeshInstance3D, sk: Skeleton3D, suffix: Str
 		normals[i] = normals[i].normalized()
 	var custom0 := PackedFloat32Array()
 	custom0.resize(verts.size() * 4)
+	var fade := PackedFloat32Array()
+	fade.resize(verts.size())
 	var heads := _heads(mi, sk, suffix)
 	var arm := _arm_mesh(mi.mesh)
 	var meta := {}
 	if heads.has(&"DEF-thumb.01") and heads.has(&"DEF-hand") and heads.has(&"DEF-upper_arm"):
 		var vf := ArmMuscle.frame(heads)
 		for part: Dictionary in parts:
-			meta[part[&"name"]] = _finger(part, heads, vf, arm, verts, normals, custom0)
+			meta[part[&"name"]] = _finger(part, heads, vf, arm, verts, normals, custom0, fade)
 	meta[&"ms"] = float(Time.get_ticks_usec() - t0) / 1000.0
 	model.set_meta(&"finger_roots", meta)
-	return {&"normals": normals, &"custom0": custom0}
+	return {&"normals": normals, &"custom0": custom0, &"fade": fade}
 
 
 static func _finger(part: Dictionary, heads: Dictionary, vf: Dictionary, arm: Array,
 		verts: PackedVector3Array, normals: PackedVector3Array,
-		custom0: PackedFloat32Array) -> Dictionary:
+		custom0: PackedFloat32Array, fade: PackedFloat32Array) -> Dictionary:
 	var name: StringName = part[&"name"]
 	var thumb := name == &"thumb"
 	var root := StringName("DEF-%s.0%d" % [name, 2 if thumb else 1])
@@ -91,36 +91,13 @@ static func _finger(part: Dictionary, heads: Dictionary, vf: Dictionary, arm: Ar
 			continue
 		var w := 1.0 - smoothstep(0.0, BLEND_R * r, maxf(float(q[&"s"]), 0.0))
 		normals[base + k] = (w * n_p + (1.0 - w) * normals[base + k]).normalized()
-	# Ring centre nearest t_c, for the flat per-finger value.
-	var centres: PackedVector3Array = part[&"centres"]
-	var best := INF
-	var ring := 0
-	var c_f := ArmMuscle.frame_xyz(vf, hd + t_c * d)
-	for ci in centres.size():
-		var c := centres[ci]
-		var e := absf((c - hd).dot(d) / maxf(d.length_squared(), 1e-12) - t_c)
-		if e < best:
-			best = e
-			ring = ci
-			c_f = ArmMuscle.frame_xyz(vf, c)
-	# The dirt streak must stay as it was with xyz 0: if the centre's differs, take the vertex
-	# of that ring whose streak is nearest (the meter in `arms roots` checks the result).
-	var s0 := Streak.streak(Vector3.ZERO)
-	if absf(Streak.streak(c_f) - s0) > 0.1:
-		var gap := INF
-		for k in RING_SECTORS:
-			var x := ArmMuscle.frame_xyz(vf, verts[base + ring * RING_SECTORS + k])
-			var g := absf(Streak.streak(x) - s0)
-			if g < gap:
-				gap = g
-				c_f = x
 	for k in count:
-		var f := 1.0 - smoothstep(t_c, t_c + FADE_T, ts[k])
-		var x := c_f.lerp(ArmMuscle.frame_xyz(vf, verts[base + k]), f)
+		var x := ArmMuscle.frame_xyz(vf, verts[base + k])
 		custom0[(base + k) * 4] = x.x
 		custom0[(base + k) * 4 + 1] = x.y
 		custom0[(base + k) * 4 + 2] = x.z
-	return {&"c_f": c_f, &"t_c": t_c}
+		fade[base + k] = smoothstep(t_c, t_c + FADE_T, ts[k])
+	return {&"t_c": t_c}
 
 
 ## Bone heads in bind space keyed by name without the side suffix.

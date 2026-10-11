@@ -153,17 +153,24 @@ void sk_knuckles(vec3 p, float gf, inout vec3 albedo, inout float rough) {
 	}
 }
 
+// Streak noise at a vein frame value: across from the two side projections so the wrap-around
+// has no seam.
+float sk_streak(float ax, float y, float z, float fw) {
+	float wu = abs(y) / max(abs(y) + abs(z), 1e-4);
+	float sn = wu * noise21(vec2(ax * 2.0, z * 64.0))
+			+ (1.0 - wu) * noise21(vec2(ax * 2.0, y * 64.0) + vec2(5.3, 8.1));
+	return mix(0.2, smoothstep(0.50, 0.80, sn), sk_fade(1.0 / 64.0, fw));
+}
+
 // Patchy mottle collecting more on the hands, plus streaks along the arm and crisp patches.
 void sk_dirt(vec3 p, float hand, float axis_d, float fw, inout vec3 albedo, inout float rough) {
 	float k = dirt_amount * (0.35 + 0.65 * hand);
 	float f = sk_fbm(p, SK_MOTTLE);
 	float mask = k * smoothstep(0.45, 0.75, f);
-	// Streaks: noise on (along x 2, across x 64), across from the two side projections of the vein
-	// frame so the wrap-around has no seam.
-	float wu = abs(vein_data.y) / max(abs(vein_data.y) + abs(vein_data.z), 1e-4);
-	float sn = wu * noise21(vec2(axis_d * 2.0, vein_data.z * 64.0))
-			+ (1.0 - wu) * noise21(vec2(axis_d * 2.0, vein_data.y * 64.0) + vec2(5.3, 8.1));
-	float streak = mix(0.2, smoothstep(0.50, 0.80, sn), sk_fade(1.0 / 64.0, fw));
+	// Streaks fade per vertex (finger_g 0 palm, 1 flat) to the value at frame 0, never by
+	// sweeping the noise coordinates, which would draw lines at the finger roots.
+	float streak = mix(sk_streak(axis_d, vein_data.y, vein_data.z, fw),
+			sk_streak(0.0, 0.0, 0.0, fw), finger_g);
 	mask += k * 0.35 * streak;
 	mask += k * 0.25 * smoothstep(0.56, 0.64, f);
 	mask = clamp(mask, 0.0, 1.0);

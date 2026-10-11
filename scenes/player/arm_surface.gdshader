@@ -84,6 +84,8 @@ varying vec3 obj_pos;
 varying vec3 obj_normal;
 // CUSTOM0: x along the arm, y and z across it, w vein mask.
 varying vec4 vein_data;
+// CUSTOM3.r: 0 palm streak, 1 flat finger value (only the finger tubes write it).
+varying float finger_g;
 // Rest-pose position (xyz) and hand weight (w); the posed VERTEX when use_rest_pos is off.
 varying vec4 rest_data;
 
@@ -103,6 +105,7 @@ void vertex() {
 	obj_pos = rest_data.xyz;
 	obj_normal = use_rest_pos ? CUSTOM2.xyz : NORMAL;
 	vein_data = CUSTOM0;
+	finger_g = CUSTOM3.r;
 	if (skin_bump > 0.0) {
 		// Real relief for the blights: lift along the normal by the rest-chart blight height.
 		float v_dorsal = blight_dorsal(normalize(obj_normal).y, rest_data.w);

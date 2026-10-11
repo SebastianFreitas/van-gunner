@@ -1,11 +1,10 @@
 extends RefCounted
-## Debug console `arms roots`: per hand, how each finger tube meets the palm skin (crossing size, normal angle, vein-frame and mask steps) and the arm mesh's mask steps, in bind space. Read-only; per finger the streak meter (S0, S_f, sweep) and the hand's build ms.
+## Debug console `arms roots`: per hand, how each finger tube meets the palm skin (crossing size, normal angle, vein-frame and mask steps) and the arm mesh's mask steps, in bind space. Read-only; per finger the streak meter (S0, S_end, sweep) and the hand's build ms.
 
 const SECTORS := 8
 const SIDES := [["R", "right_root"], ["L", "left_root"]]
 
 var _mesh := preload("res://scripts/debug/debug_arms_roots_mesh.gd").new()
-var _streak := preload("res://scripts/debug/debug_arms_roots_streak.gd")
 
 
 ## One block per hand.
@@ -47,6 +46,7 @@ func _hand(model: Node3D, side: String) -> String:
 	var tv: PackedVector3Array = tb[Mesh.ARRAY_VERTEX]
 	var tn: PackedVector3Array = tb[Mesh.ARRAY_NORMAL]
 	var tc: PackedFloat32Array = tb[Mesh.ARRAY_CUSTOM0]
+	var tg: PackedFloat32Array = tb[Mesh.ARRAY_CUSTOM3]
 	var fingers: Dictionary = model.get_meta(&"fingers", {})
 	var comp := _components(tv.size(), tb[Mesh.ARRAY_INDEX])
 	var thumb := Vector3.ZERO
@@ -114,13 +114,49 @@ func _hand(model: Node3D, side: String) -> String:
 				name, rr, tmax, cross.size(), " (fallback)" if fallback else "", ang, dc, wt, wp, sign_min, (worst - first) % SECTORS, float(info[worst][&"t"]) if info.has(worst) else 0.0]
 		var fr: Dictionary = (model.get_meta(&"finger_roots", {}) as Dictionary).get(name, {})
 		if not fr.is_empty():
-			out += _streak.line(fr[&"c_f"], fr[&"t_c"], ids, tv, tc, hd, d)
+			out += _streak_line(float(fr[&"t_c"]), ids, tv, tc, tg, hd, d)
 		if is_thumb:
 			thumb = ctp
 			r_t = rt
 	var ms: float = (model.get_meta(&"finger_roots", {}) as Dictionary).get(&"ms", -1.0)
 	out += "\n build %.1f ms" % ms
 	return out + _mesh.arm(vf, heads, thumb, r_t)
+
+
+## Streak meter text for one finger: S0 the flat value, S_end the faded streak of the lane
+## vertex at the end of the fade, t_c + fade (worst lane), sweep the worst lane's total variation of it from
+## t_c on. `tg` is the tube fade (CUSTOM3).
+func _streak_line(t_c: float, ids: PackedInt32Array, tv: PackedVector3Array,
+		tc: PackedFloat32Array, tg: PackedFloat32Array, hd: Vector3, d: Vector3) -> String:
+	var s0 := ArmSkinStreak.streak(Vector3.ZERO, 0.0)
+	var s_end := s0
+	var sweep := 0.0
+	for k in SECTORS:
+		var lane: Array[Vector2] = []
+		for j in range(k, ids.size(), SECTORS):
+			var i := ids[j]
+			var t := (tv[i] - hd).dot(d) / maxf(d.length_squared(), 1e-12)
+			if t < t_c:
+				continue
+			var x := Vector3(tc[i * 4], tc[i * 4 + 1], tc[i * 4 + 2])
+			lane.append(Vector2(t, ArmSkinStreak.streak(x, tg[i])))
+		lane.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.x < b.x)
+		# Up to the first ring that is fully faded (g 1), where the fade ends.
+		var end := lane.size()
+		for j in lane.size():
+			if lane[j].x >= t_c + ArmFingerRoot.FADE_T - 1e-4:
+				end = j + 1
+				break
+		lane = lane.slice(0, end)
+		var tv_sum := 0.0
+		for j in range(1, lane.size()):
+			tv_sum += absf(lane[j].y - lane[j - 1].y)
+		sweep = maxf(sweep, tv_sum)
+		if not lane.is_empty() and absf(lane[-1].y - s0) > absf(s_end - s0):
+			s_end = lane[-1].y
+	var ok := absf(s_end - s0) <= 0.1 and sweep <= 1.0
+	return "  streak S0 %.2f S_end %.2f |dS| %.2f sweep %.2f%s" % [
+			s0, s_end, absf(s_end - s0), sweep, "" if ok else " FAIL"]
 
 
 ## Vertex ids of each connected piece of an indexed mesh, in order of first vertex.

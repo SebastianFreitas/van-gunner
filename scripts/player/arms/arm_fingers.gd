@@ -71,7 +71,7 @@ static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumber
 	if not verts.is_empty():
 		var blend := ArmFingerRoot.build(model, mi, sk, suffix, verts, indices, parts)
 		ArmSkinMesh.build(mi, sk, &"Skin_fingers", verts, blend[&"normals"],
-				blend[&"custom0"], bones, weights, indices, mat, true)
+				blend[&"custom0"], bones, weights, indices, mat, true, 1.0, blend[&"fade"])
 	return out
 
 
