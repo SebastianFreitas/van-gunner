@@ -39,6 +39,9 @@ do a whole plan dude, to make a pass on the 3d arms, theres soem texture thta se
 - D2 (auto): the crossing search stops past t 0.8 of the root bone (`SEARCH_T`), which brought the build from 51 to about 40 ms a hand without switching to nearest-vertex; t_c unchanged.
 - D3 (owner, 2026-10-11, phase 3 blocker): fade the streak itself, not the noise coordinate: a per-vertex streak-fade (CUSTOM0 or another channel) ramps the palm streak to the finger's flat value over t_c..t_c+0.30, xyz kept at the palm value, with a small shader change in `arm_skin_layers.gdshaderinc`; the sweep and |S_f - S0| limits then apply to the faded streak.
   missed: phase 3 found the 0.30 coordinate fade crosses 1-3 noise cells and the vertex fallback still left |dS| up to 0.31; the interview assumed a coordinate fade would stay under one cell.
+- D4 (auto): with the per-vertex streak fade the meter reads S_end at t_c+0.30 (equals S0 by construction) and sweep = total variation of the faded streak per lane over the fade; the old coordinate-sweep limit no longer applies.
+- D5 (auto): the fallback 1.0 x r[1] normal blend changed nothing visible (look-judge: the root marks are unchanged and read as geometry) and was reverted to 0.5; the run stops as the phase says.
+  missed: the root marks the owner sees are hard-edged polygon shapes (tube faces against the palm), which a normal and colour blend cannot remove without changing the tube shape, and the plan rules out a flare.
 
 ## Initial idea
 
@@ -58,7 +61,7 @@ Initial idea skipped (light path).
 |---|---|---|---|---|---|
 | 1 | Root meter and before shots | code | - | Brief | done 08c5ae9 |
 | 2 | Fade the vein mask | code | 1 | Brief | done 559d5d8 |
-| 3 | Blend the finger roots | code | 1, 2 | Brief | todo (partial 4f75923) |
+| 3 | Blend the finger roots | code | 1, 2 | Brief | blocked (partial 4f75923, 230f0f1) |
 
 ## Phases
 
