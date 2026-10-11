@@ -17,6 +17,7 @@ func run(vm: Node) -> String:
 		for c in root.get_children():
 			if c is Node3D and ArmRig.skeleton(c as Node3D) != null:
 				lines.append(_measure(c as Node3D, hand[0]))
+				lines.append(_thumb_root(c as Node3D, hand[0]))
 	return "\n".join(lines)
 
 
@@ -140,3 +141,82 @@ func _spread(side: String, surf: int, verts: PackedVector3Array, bones: PackedIn
 				dw += 1.0
 		out.z = maxf(out.z, dw)
 	return out
+
+
+## Posed vertices and normals of one surface of `mi`, skinned the way the GPU does.
+func _posed(sk: Skeleton3D, mi: MeshInstance3D, s: int) -> Array:
+	var xf: Array[Transform3D] = []
+	for b in mi.skin.get_bind_count():
+		var bone := mi.skin.get_bind_bone(b)
+		if bone < 0:
+			bone = sk.find_bone(mi.skin.get_bind_name(b))
+		xf.append(sk.get_bone_global_pose(bone) * mi.skin.get_bind_pose(b))
+	var arrays := mi.mesh.surface_get_arrays(s)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var nrm: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+	var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+	var per := int(float(bones.size()) / maxf(verts.size(), 1.0))
+	var pos := PackedVector3Array()
+	var dir := PackedVector3Array()
+	var w1 := PackedFloat32Array()
+	for i in verts.size():
+		var acc := Vector3.ZERO
+		var an := Vector3.ZERO
+		var wt := 0.0
+		for k in per:
+			var w := weights[i * per + k]
+			if w > 0.0:
+				acc += w * (xf[bones[i * per + k]] * verts[i])
+				an += w * (xf[bones[i * per + k]].basis * nrm[i])
+				if mi.skin.get_bind_name(bones[i * per + k]).begins_with("DEF-thumb"):
+					wt += w
+		pos.append(acc)
+		dir.append(an.normalized())
+		w1.append(wt)
+	return [pos, dir, w1]
+
+
+## Thumb root: the thumb tube's vertices that sit in the palm (weight on a thumb bone) against the
+## nearest palm vertex. Reports their gap to the palm skin and the angle between the two normals.
+func _thumb_root(model: Node3D, side: String) -> String:
+	var sk := ArmRig.skeleton(model)
+	sk.force_update_all_bone_transforms()
+	var arm := model.find_child("Arm" + side, true, false) as MeshInstance3D
+	var tube := sk.get_node_or_null("Skin_fingers") as MeshInstance3D
+	var th := sk.find_bone("DEF-thumb.02." + side)
+	if arm == null or tube == null or th < 0 or tube.mesh == null or arm.mesh == null:
+		return "thumbroot %s: no mesh" % side
+	var palm: Array = []
+	for s in arm.mesh.get_surface_count():
+		palm.append(_posed(sk, arm, s))
+	var head := sk.get_bone_global_pose(th).origin
+	var tb := _posed(sk, tube, 0)
+	var tp: PackedVector3Array = tb[0]
+	var tn: PackedVector3Array = tb[1]
+	var tw: PackedFloat32Array = tb[2]
+	var gap_max := 0.0
+	var gap_sum := 0.0
+	var ang_max := 0.0
+	var ang_sum := 0.0
+	var n := 0
+	for i in tp.size():
+		if tw[i] < 0.5 or tp[i].distance_to(head) > 0.08:
+			continue
+		var best := 1e9
+		var bn := Vector3.UP
+		for pl: Array in palm:
+			var pp: PackedVector3Array = pl[0]
+			for j in pp.size():
+				var d := pp[j].distance_to(tp[i])
+				if d < best:
+					best = d
+					bn = (pl[1] as PackedVector3Array)[j]
+		var ang := rad_to_deg(tn[i].angle_to(bn))
+		gap_max = maxf(gap_max, best)
+		gap_sum += best
+		ang_max = maxf(ang_max, ang)
+		ang_sum += ang
+		n += 1
+	return "thumbroot %s: %d root verts within 0.08 m of the thumb head: gap to palm max %.4f mean %.4f m, normal mismatch max %.1f mean %.1f deg" % [
+			side, n, gap_max, gap_sum / maxf(n, 1.0), ang_max, ang_sum / maxf(n, 1.0)]

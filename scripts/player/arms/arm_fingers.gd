@@ -253,8 +253,12 @@ static func _shaft_profile(k: float, r: float, kn: float, bony: bool) -> Array[V
 		# No tube runs behind the thumb's second bone, so its head ring was a free rim standing off
 		# the palm: these two rings carry the tube down into the thumb's root, weighted to the
 		# parent bone by `_ring_weights`, like the fingers' `_root_profile`.
-		p.append(Vector3(-0.60, 0.45 * k, 0.0))
-		p.append(Vector3(-0.35, 0.80 * k, 0.04))
+		# Four rings, not two: the radius eases in over a longer run so the tube leaves the
+		# palm at a shallow angle (its normals lean into the palm's) instead of a visible rim.
+		p.append(Vector3(-0.85, 0.35 * k, 0.0))
+		p.append(Vector3(-0.60, 0.60 * k, 0.02))
+		p.append(Vector3(-0.35, 0.82 * k, 0.04))
+		p.append(Vector3(-0.15, 0.94 * k, 0.05))
 	p.append(Vector3(0.00, k, 0.10 if bony else 0.06))
 	p.append(Vector3(0.14, 0.96 * k, 0.06 if bony else 0.04))
 	p.append(Vector3(0.30, r, 0.0))
