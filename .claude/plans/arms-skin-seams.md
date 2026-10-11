@@ -1,12 +1,12 @@
 # arms-skin-seams
 
-Stage: planning
+Stage: ready
 Started: 2026-10-11
 Procedure: `.claude/skills/plan/interview.md` (the interview), then `run.md` (state in `.claude/plans/<name>.state.md` while running).
 Path: light (one area: the first-person arm mesh and skin shader; a fix pass, no new design) (from Brief)
 Size: at most 20 KB (10 KB on the light path), each phase at most 2.5 KB (interview.md "Plan size")
-Interview: A done · C done · review 2 applied · 8 asked (light path)   <- A/B/C open or done, running total; missed: lines while running
-Questions: ask   <- or auto: phase questions never defer, the recommended option is taken (run.md "Phase questions")
+Interview: A done · C done · ready gate passed · 10 asked (light path)   <- A/B/C open or done, running total; missed: lines while running
+Questions: auto   <- or auto: phase questions never defer, the recommended option is taken (run.md "Phase questions")
 
 ## Brief (owner's words, verbatim)
 
@@ -31,7 +31,7 @@ do a whole plan dude, to make a pass on the 3d arms, theres soem texture thta se
 
 ## Open items
 
-- review leftover: `DEF-thumb.01` MASK 1.0 puts faded veins on the thumb mound (today none there); the look-judge rules on it against Pass test (3) in phase 2.
+- none (thumb mound: owner OK'd faint veins that fade to nothing there; the look-judge checks no line in phase 2)
 
 ## Decisions (while asking; folded into the phases in Part C; `(auto)` = taken while running)
 
