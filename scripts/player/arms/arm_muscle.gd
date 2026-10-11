@@ -16,7 +16,16 @@ const FORE: Array = [
 ]
 ## Raised-vein strength per bone. The hand is 1.0 (was 0.7): the palm was deflated on 2026-10-03,
 ## so the veins carry onto the leaner back of the hand.
-const MASK := {&"DEF-forearm": 1.0, &"DEF-upper_arm": 0.6, &"DEF-hand": 1.0}
+const MASK := {&"DEF-forearm": 1.0, &"DEF-upper_arm": 0.6, &"DEF-hand": 1.0, &"DEF-thumb.01": 1.0}
+## Vein-fade measures (`arms roots` before phase 2): the hand's edge extent over L, the elbow's
+## over Lu, the thumb root's radius, edge length and centre along thumb.02 -> thumb.03.
+const E_H := 0.284
+const E_E := 0.087
+const R_T := 0.0814
+const E_T := 0.1240
+const T_C := 0.55
+const FINGER_HEADS: Array[StringName] = [&"DEF-f_index.01", &"DEF-f_middle.01",
+		&"DEF-f_ring.01", &"DEF-f_pinky.01"]
 
 
 static func apply(arrays: Array, new_verts: PackedVector3Array, heads: Dictionary,
@@ -27,7 +36,8 @@ static func apply(arrays: Array, new_verts: PackedVector3Array, heads: Dictionar
 	custom.resize(count * 4)
 	var orig_normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
 	var heads_ok := true
-	for key in [&"DEF-upper_arm", &"DEF-forearm", &"DEF-hand", &"DEF-thumb.01"]:
+	for key in [&"DEF-upper_arm", &"DEF-forearm", &"DEF-hand", &"DEF-thumb.01",
+			&"DEF-thumb.02", &"DEF-thumb.03"] + FINGER_HEADS:
 		if not heads.has(key):
 			heads_ok = false
 	if not heads_ok:
@@ -69,12 +79,43 @@ static func apply(arrays: Array, new_verts: PackedVector3Array, heads: Dictionar
 	arrays[Mesh.ARRAY_TANGENT] = null
 	# Vein frame: origin at the shoulder, axis shoulder -> hand, u toward the thumb side.
 	var vf := frame(heads)
+	var axis: Vector3 = vf[&"axis"]
+	var x_w := (h_hand - h_up).dot(axis)
+	var x_e := (h_fore - h_up).dot(axis)
+	var big_l := -x_w
+	for n in FINGER_HEADS:
+		big_l += (Vector3(heads[n]) - h_up).dot(axis) / FINGER_HEADS.size()
+	# The hand fade ends at x_w + 0.65 L, so the knuckles carry no vein.
+	var b_end := x_w + 0.65 * big_l
+	var fade_w := clampf(maxf(0.40 * big_l, 6.0 * E_H * big_l), 0.0, 0.65 * big_l)
+	var h_thumb2: Vector3 = heads[&"DEF-thumb.02"]
+	var c_t := h_thumb2 + T_C * (Vector3(heads[&"DEF-thumb.03"]) - h_thumb2)
+	var w_t := maxf(2.0 * R_T, 6.0 * E_T)
+	var w_e := maxf(0.24 * x_e, 2.4 * E_E * x_e)
+	var bone_mask := PackedFloat32Array()
+	var bone_arm := PackedByteArray()
+	for n in bone_names:
+		var fam := StringName(_family(n))
+		bone_mask.append(float(MASK.get(fam, 0.0)))
+		bone_arm.append(1 if fam == &"DEF-upper_arm" or fam == &"DEF-forearm" else 0)
 	for i in count:
 		var c := frame_xyz(vf, verts[i])
 		custom[i * 4] = c.x
 		custom[i * 4 + 1] = c.y
 		custom[i * 4 + 2] = c.z
-		custom[i * 4 + 3] = float(MASK.get(StringName(families[i]), 0.0))
+		# Elbow: one smooth arm factor instead of the per-bone 0.6 / 1.0 step.
+		var arm_f := lerpf(0.6, 1.0, smoothstep(x_e - 0.5 * w_e, x_e + 0.5 * w_e, c.x))
+		var m := 0.0
+		var wsum := 0.0
+		for k in per:
+			var bw := weights[i * per + k]
+			var bi := bones[i * per + k]
+			m += bw * (arm_f if bone_arm[bi] == 1 else bone_mask[bi])
+			wsum += bw
+		m /= maxf(wsum, 1e-6)
+		var h := 1.0 - smoothstep(b_end - fade_w, b_end, c.x)
+		var g := smoothstep(R_T, R_T + w_t, verts[i].distance_to(c_t))
+		custom[i * 4 + 3] = m * h * g
 	arrays[Mesh.ARRAY_CUSTOM0] = custom
 
 

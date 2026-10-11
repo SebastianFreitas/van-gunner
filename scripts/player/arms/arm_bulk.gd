@@ -14,6 +14,10 @@ const FOREARM_WRIST_GAIN := 2.1
 ## fingers. 1.45 to 1.30 on 2026-10-05 with the hand-side ramp: the hand started at 2.13 against
 ## the forearm's 1.45 and read as glued on.
 const WRIST_END_GAIN := 1.30
+## Bone heads `ArmMuscle` needs for the vein frame and fades.
+const HEAD_BONES: Array[String] = ["DEF-upper_arm", "DEF-forearm", "DEF-hand", "DEF-thumb.01",
+		"DEF-thumb.02", "DEF-thumb.03", "DEF-f_index.01", "DEF-f_middle.01", "DEF-f_ring.01",
+		"DEF-f_pinky.01"]
 ## The pose scale ArmRig.scale_hand puts on DEF-hand (palm, thumb and fingers inherit it, the
 ## forearm does not). It lives here because the wrist gains divide by it, and ArmsBuilder.HAND_K
 ## reads it.
@@ -144,7 +148,7 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 		var base := full
 		if base.ends_with(".L") or base.ends_with(".R"):
 			base = base.substr(0, base.length() - 2)
-		if full.ends_with(side) and base in ["DEF-upper_arm", "DEF-forearm", "DEF-hand", "DEF-thumb.01"]:
+		if full.ends_with(side) and base in HEAD_BONES:
 			heads[StringName(base)] = inv_poses[b].origin
 	for b in count:
 		if not (bone_names[b].begins_with("DEF-forearm") and bone_names[b].contains(".001")):
