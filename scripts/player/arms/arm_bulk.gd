@@ -25,7 +25,7 @@ const HAND_RAMP_END := 0.45
 ## point of a hand. Only slightly above neutral: the procedural finger tubes' knobs carry most of
 ## the knuckle swell. Lowered on 2026-10-04: at 1.15 the knuckle half of the palm became a
 ## flat-topped slab the finger roots stuck out of.
-const KNUCKLE_GAIN := 1.05
+const KNUCKLE_GAIN := 1.12
 ## Fraction of the palm bone where the knuckle boost starts.
 const KNUCKLE_RAMP_START := 0.5
 ## Glb finger segments shrink to a thin core hidden inside the procedural finger tubes
@@ -49,14 +49,14 @@ const GAIN: Array = [
 	["DEF-forearm", FOREARM_ELBOW_GAIN],
 	["DEF-upper_arm", 2.5],
 	# Hand and palm gains halved above neutral on 2026-10-03 so the palm matches the finger tubes.
-	["DEF-hand", 1.45],
+	["DEF-hand", 1.17],
 	# ".01" is the metacarpal (thenar mass), tapered to the tip.
 	["DEF-thumb.01", 1.5],
 	["DEF-thumb.02", FINGER_CORE],
 	["DEF-thumb.03", TIP_CORE],
-	["DEF-palm.01", 1.45],
-	["DEF-palm.04", 1.45],
-	["DEF-palm", 1.4],
+	["DEF-palm.01", 1.17],
+	["DEF-palm.04", 1.17],
+	["DEF-palm", 1.13],
 	["DEF-f_", 1.0],
 ]
 
