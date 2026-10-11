@@ -30,10 +30,12 @@ uniform float vein_around_m = 6.0;
 // Full width of a main vein in mesh units; branches are 0.55 of it.
 uniform float vein_width : hint_range(0.004, 0.06) = 0.022;
 // Peak ridge height in view metres (the rig is 0.18-scaled): 0.4 x the half width x 0.18.
-uniform float vein_height : hint_range(0.0, 0.004) = 0.0008;
+uniform float vein_height : hint_range(0.0, 0.008) = 0.0008;
 // How dark a vein's flanks get; the crown lifts by half as much.
 uniform float vein_shade : hint_range(0.0, 0.6) = 0.0;
 // Extra vein relief around the wrist, where the hand weight crosses from 0 to 1.
+// Blue-green/purple undertone in the vein channel: 0 is none, 1 pulls the channel to a dark teal.
+uniform float vein_under : hint_range(0.0, 1.0) = 0.0;
 uniform float vein_wrist : hint_range(0.0, 2.0) = 0.0;
 // Sideways jog of the veins across the wrist, so they wrap it like roots.
 uniform float vein_wrap : hint_range(0.0, 2.0) = 0.0;
@@ -298,6 +300,7 @@ void fragment() {
 		// The cord's flanks sink into shade and its crown catches the lamp, so a vein reads
 		// across the cabin and not only when the light rakes it.
 		col *= 1.0 - vein_shade * 4.0 * vn * (1.0 - vn);
+		col = mix(col, col * vec3(0.55, 0.72, 0.80), vein_under * smoothstep(0.1, 0.7, vn));
 		vec3 crest = col * vec3(0.90, 1.00, 1.04) * (1.06 + 0.5 * vein_shade);
 		col = mix(col, crest, vn * vn * 0.6);
 		col *= 1.0 + clamp(lit * 0.35, -0.20, 0.15);
