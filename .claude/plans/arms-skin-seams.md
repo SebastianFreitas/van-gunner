@@ -5,7 +5,7 @@ Started: 2026-10-11
 Procedure: `.claude/skills/plan/interview.md` (the interview), then `run.md` (state in `.claude/plans/<name>.state.md` while running).
 Path: light (one area: the first-person arm mesh and skin shader; a fix pass, no new design) (from Brief)
 Size: at most 20 KB (10 KB on the light path), each phase at most 2.5 KB (interview.md "Plan size")
-Interview: A open · 0 asked (intake written, 4 questions out)   <- A/B/C open or done, running total; missed: lines while running
+Interview: A done · 4 asked   <- A/B/C open or done, running total; missed: lines while running
 Questions: ask   <- or auto: phase questions never defer, the recommended option is taken (run.md "Phase questions")
 
 ## Brief (owner's words, verbatim)
@@ -36,11 +36,15 @@ do a whole plan dude, to make a pass on the 3d arms, theres soem texture thta se
 
 ## Open items
 
-- intake questions: finger join fix, knuckle creases, vein ends, where else lines show (asked next)
+- none
 
 ## Decisions (while asking; folded into the phases in Part C; `(auto)` = taken while running)
 
 - **D1 · Light path.** One area (arm mesh and skin shader), a fix pass with no new design (from Brief). Goes to: Constraints.
+- **D2 · Finger join.** Blend the join: keep today's gnarled finger shapes, smooth each finger tube's root into the palm skin and give the fingers the same skin detail (veins/grime data) as the palm so shading runs across without a line (owner). Goes to: phases.
+- **D3 · Knuckle creases.** Keep the three knuckle-row creases exactly as they are; only the mesh line at the root goes (owner).
+- **D4 · Vein ends.** Veins fade out over the back of the hand and never reach the knuckles; no hard stop on a mesh edge (owner).
+- **D5 · Where else.** Besides the finger roots, the owner has seen straight-line endings around the elbow / upper arm: the elbow vein step is in scope. The 8-sided finger facets are not called out: leave finger facet count as is (owner picked only "Elbow / upper arm").
 
 ## Initial idea (full path, Part B; prose, beginning to end, as the owner experiences it)
 
