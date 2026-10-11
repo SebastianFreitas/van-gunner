@@ -35,7 +35,8 @@ do a whole plan dude, to make a pass on the 3d arms, theres soem texture thta se
 
 ## Decisions (while asking; folded into the phases in Part C; `(auto)` = taken while running)
 
-- none
+- D1 (auto): the thumb's normal blend uses the same t limit max(0.30, t_c) on its root bone `.02` (reading "thumb `.02`" as the bone, not t 0.02); the other reading left a 93 deg crossing.
+- D2 (auto): the crossing search stops past t 0.8 of the root bone (`SEARCH_T`), which brought the build from 51 to about 40 ms a hand without switching to nearest-vertex; t_c unchanged.
 
 ## Initial idea
 
@@ -55,7 +56,7 @@ Initial idea skipped (light path).
 |---|---|---|---|---|---|
 | 1 | Root meter and before shots | code | - | Brief | done 08c5ae9 |
 | 2 | Fade the vein mask | code | 1 | Brief | done 559d5d8 |
-| 3 | Blend the finger roots | code | 1, 2 | Brief | todo |
+| 3 | Blend the finger roots | code | 1, 2 | Brief | todo (blocked, work in 4f75923) |
 
 ## Phases
 

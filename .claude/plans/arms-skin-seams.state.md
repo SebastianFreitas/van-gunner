@@ -1,30 +1,38 @@
-Status: phase-done
+Status: blocked
 # Plan state: arms-skin-seams
 
 ## Plan
 `arms-skin-seams`, `.claude/plans/arms-skin-seams.md`; branch `claude/plan-arms-skin-seams`, worktree `/home/user/van-gunner/.claude/worktrees/plan-arms-skin-seams`, cloud; PR https://github.com/SebastianFreitas/van-gunner/pull/22
 
 ## Architecture now
-- `scripts/player/arms/arm_muscle.gd`: static `ArmMuscle.frame(heads) -> Dictionary` {origin, axis, u, v} and `ArmMuscle.frame_xyz(f, p) -> Vector3`; `apply` uses both (CUSTOM0 unchanged).
-- `scripts/player/arms/arm_skin_nearest.gd` (`ArmSkinNearest`, static): `prefilter(positions, indices, centre, limit) -> PackedInt32Array`, `nearest(positions, indices, tris, v) -> {p, n, s}` (exact closest point; n = (c-a)x(b-a), checked outward by the meter, n.stored min 0.48-0.89).
-- `ArmMuscle.apply`: w = weighted MASK (thumb.01 1.0) x hand fade h x thumb-root g, elbow lerp 0.6-1.0; heads list in `arm_bulk.gd` now has `DEF-f_*.01`, `DEF-thumb.02/.03`; limb tail w 0.6.
-- `scripts/debug/debug_arms_roots.gd` + `debug_arms_roots_mesh.gd`: console `arms roots`, wired in `debug_arms_commands.gd`, hint in `debug_arms_hints.gd`. r comes from the build's `shaft` via model meta `fingers`. S0/S_f/sweep/build ms not yet printed (phase 3).
+- `scripts/player/arms/arm_muscle.gd`: static `ArmMuscle.frame(heads)` / `frame_xyz(f, p)`; `apply` writes CUSTOM0 (vein mask fades, phase 2).
+- `scripts/player/arms/arm_skin_nearest.gd` (`ArmSkinNearest`, static): `prefilter`, `nearest -> {p, n, s}`.
+- `scripts/player/arms/arm_finger_root.gd` (`ArmFingerRoot`, new, 149 lines): `build` from `ArmFingers.build` (`arm_fingers.gd` 381 lines, collects `parts`, passes normals + CUSTOM0 into `ArmSkinMesh.build`). Palm-normal blend 0.5 x r[1] on rings t <= max(0.30, t_c), `SEARCH_T` 0.8; CUSTOM0 xyz lerps to c_f over t_c..t_c+0.30, w 0; meta `finger_roots` (build ms, per-finger c_f, t_c). Fallback c_f = ring vertex at t_c with S nearest S0 (preloads the debug streak script, see Blocker).
+- `scripts/debug/debug_arms_roots_streak.gd` (new): GDScript port of `hash21`/`noise21`/`sn`/`streak`; `arms roots` (`debug_arms_roots.gd`) prints S0, S_f, |dS|, sweep per finger and build ms per hand; hint in `debug_arms_hints.gd`.
 
 ## Completed phase
-2 · Fade the vein mask, commit 559d5d8 (`arm_muscle.gd` 218 lines, `arm_bulk.gd` 309, `arm_limb_tail.gd`). `python3 tools/check.py` CHECK CLEAN; `python3 tools/smoke.py` SMOKE CLEAN + VAN AUDIT CLEAN, no bless (no fingerprint line printed). `arms roots`: max w step thumb 0.27 R / 0.26 L (bar 0.25, accepted per plan: judge saw no hard stop), hand 0.02 (bar 0.66), elbow 0.13, w past x_w+0.65L 0.00, tube and palm w 0.00 at every crossing. Stipple close-ups (dark/light/dim) left 344/2532/1583, right 453/1747/2045, none above before. Reviewer: no gaps (meter reads built CUSTOM0 w; same bind space). Look-judge PASS 14/14 on Pass test (2) veins and (3) (veins thin out partway down the hand, gone before knuckles; no line at wrist, thumb mound or elbow; in wide views veins too small to read, close-ups and side views carry it); report was /tmp/p2-look.md. Shots for the supervisor to send: `.godot/shots/arms-p2/closeup-left.png`, `.godot/shots/arms-p2/rest/side.png` (before: `.godot/shots/arms-before/` same names).
+3 · Blend the finger roots, partly: commit 4f75923. `python3 tools/check.py` CHECK CLEAN (0 warnings); `python3 tools/smoke.py` SMOKE CLEAN + VAN AUDIT CLEAN, no bless. `arms roots` (both hands): crossing angle 0.0-1.6 deg (before 39-155), dxyz 0.0000 (before 1.2-1.3), tube/palm w 0.00, build 39.8 / 39.7 ms. Streak: FAIL (Blocker). Reviewer: no gaps against the specs; must-fix: player code preloads a debug script. Not done: art-arms.md paragraph, shots into `.godot/shots/arms-p3/`, stipple, look-judge (no pictures taken this phase).
 
 ## Next phase
-3 · Blend the finger roots (plan `### 3 ·`): new `scripts/player/arms/arm_finger_root.gd` (RefCounted) called from `ArmFingers.build`, palm normal blend and CUSTOM0 xyz fade to c_f on the root rings, `arms roots` prints S0/S_f/sweep/build ms; art-arms.md paragraph last. Verification and checks per plan `### 3 ·` (angle at most 10 deg, xyz diff under 0.001, |S_f - S0| at most 0.1, sweep at most 1.0, build under 50 ms a hand; look-judge on Pass test (1) to (3), root-line fallback widen to 1.0 x r[1] once). Rests on Brief. First action: spec from plan `### 3 ·` naming `arm_fingers.gd` `build`/`_root_profile`, `arm_skin_mesh.gd` build (~127-152), `arm_skin_nearest.gd`, `debug_arms_roots*.gd`, `grime.gdshaderinc:5-25`, `arm_skin_layers.gdshaderinc:162-166`; it is two specs (helper+call site, then meter S0/S_f/sweep/ms + art-arms note).
+3 · Blend the finger roots, after the owner answers the Blocker: apply the chosen streak fix in `arm_finger_root.gd`, move the streak port out of `scripts/debug/` to the player side (meter calls it), re-run `arms roots`, then the rest of `.claude/specs/p3-2.md` (gitignored, may be gone: plan `### 3 ·` Verification): shots into `.godot/shots/arms-p3/`, stipple, look-judge on Pass test (1) to (3), art-arms.md paragraph last.
 
 ## Requirements / gotchas
-- e_h is 0.284 (> 0.20), so W = the 0.65 L cap and the hand bar is 1.5 e_h L / W (about 0.66); use the plan's numbers as written.
-- Close-ups: `hand_shots.py` only takes named views (front, side, left, top, elbow, player) and writes `<out>/<view>.png` per pose, so use per-pose subfolders; close-ups via `python3 tools/probe.py --cmd "arms cam orbit 0 70 0.2 left" --shot <png> --timeout 600`.
-- `gh pr` GraphQL is refused here; use `gh api repos/SebastianFreitas/van-gunner/pulls...` (REST).
-- `arm_bulk.gd` is 309 lines (305 before): add nothing there; new code goes in helpers.
-- Keep implementer prompts narrow: the meter build overran the implementer's 60k line once.
+- Close-ups: `python3 tools/probe.py --cmd "arms cam orbit 0 70 0.2 left" --shot <png> --timeout 600`; `hand_shots.py` per-pose subfolders.
+- `gh pr` GraphQL is refused; use `gh api` REST.
+- `arm_bulk.gd` 309 and `arm_fingers.gd` 381 lines: new code goes in helpers.
+- Implementers overran 60k twice: one deliverable per call, shots in their own call.
 
 ## Questions
 none
 
 ## Blocker
-none
+Phase 3 streak check fails, with no fallback left (plan: "none within 0.1: stop and report"). `arms roots` per finger, index/middle/ring/pinky/thumb:
+- Centre c_f: |S_f - S0| R .25/1.00/.06/1.00/1.00, L 1.00/1.00/1.00/.31/.18 (limit 0.1).
+- After the ring-vertex fallback: |dS| R .07/.06/.06/.17/.15, L .31/.08/.05/.03/.09; still over 0.1 on R pinky, R thumb, L index.
+- Sweep max(|dy|,|dz|) x 64 over t_c..t_c+0.30: 1.19 to 3.28 on every finger (limit 1.0; the plan expected under one). The fade crosses 1-3 noise cells, so the streak may show bands in the fade; the fallback cannot fix that.
+Question (phase 3, plan `### 3 ·` CUSTOM0 line): how should the finger-root streak fade be made clean?
+1. (Recommended) Fade the streak itself, not the noise coordinate: write a per-vertex streak-fade into CUSTOM0 (or another channel) that ramps the palm streak to the finger's flat value over t_c..t_c+0.30, xyz kept at the palm value; needs a small shader change in `arm_skin_layers.gdshaderinc`.
+2. Lengthen the fade until sweep <= 1.0 (about 3x, t_c..t_c+0.9: streak reaches its flat value near the fingertip) and accept the best vertex where |dS| stays at 0.15-0.31.
+3. Keep today's build (angles and normals fixed) and relax the streak limits; the look-judge decides from shots.
+4. Drop the CUSTOM0 change (fingers keep xyz 0, as before) and keep only the normal blend.
+Finished without it: normal blend (root shading line gone by the meter), streak meter, checks clean.
