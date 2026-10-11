@@ -126,7 +126,8 @@ static func tube_indices(verts: PackedVector3Array, centres: PackedVector3Array,
 static func build(mi: MeshInstance3D, sk: Skeleton3D, node_name: StringName,
 		verts: PackedVector3Array, normals: PackedVector3Array, custom0: PackedFloat32Array,
 		bones: PackedInt32Array, weights: PackedFloat32Array, indices: PackedInt32Array,
-		mat: Material, rest_chart: bool = false, hand_weight: float = 1.0) -> MeshInstance3D:
+		mat: Material, rest_chart: bool = false, hand_weight: float = 1.0,
+		streak_fade := PackedFloat32Array()) -> MeshInstance3D:
 	if mi == null or mi.skin == null or sk == null:
 		push_warning("ArmSkinMesh: arm mesh without a skin, cannot build %s" % node_name)
 		return null
@@ -178,6 +179,10 @@ static func build(mi: MeshInstance3D, sk: Skeleton3D, node_name: StringName,
 		arrays[Mesh.ARRAY_CUSTOM2] = c2
 		flags |= Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM1_SHIFT
 		flags |= Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM2_SHIFT
+	if not streak_fade.is_empty():
+		# CUSTOM3.r: 0 palm streak, 1 flat finger value; meshes without it read 0.
+		arrays[Mesh.ARRAY_CUSTOM3] = streak_fade
+		flags |= Mesh.ARRAY_CUSTOM_R_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM3_SHIFT
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, flags)
 	var node := MeshInstance3D.new()

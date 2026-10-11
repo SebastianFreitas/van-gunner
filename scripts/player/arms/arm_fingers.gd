@@ -42,6 +42,7 @@ static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumber
 	var weights := PackedFloat32Array()
 	var indices := PackedInt32Array()
 	var out := {}
+	var parts: Array = []
 	var ref_r := 0.0
 	for f in ArmRig.FINGERS:
 		var cr := rng.randf_range(-0.40, 0.40) * (0.0 if f == &"thumb" else 1.0)
@@ -58,6 +59,8 @@ static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumber
 		var base := verts.size()
 		for i in idx:
 			indices.append(base + i)
+		parts.append({&"name": f, &"base": verts.size(), &"count": fv.size(),
+				&"centres": centres, &"rings": rings, &"r": fg[&"info"][&"shaft"]})
 		verts.append_array(fv)
 		var wts: Array = fg[&"wts"]
 		for w in wts:
@@ -66,8 +69,9 @@ static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumber
 			weights.append_array(t4[1])
 		out[f] = fg[&"info"]
 	if not verts.is_empty():
-		ArmSkinMesh.build(mi, sk, &"Skin_fingers", verts, PackedVector3Array(),
-				PackedFloat32Array(), bones, weights, indices, mat, true)
+		var blend := ArmFingerRoot.build(model, mi, sk, suffix, verts, indices, parts)
+		ArmSkinMesh.build(mi, sk, &"Skin_fingers", verts, blend[&"normals"],
+				blend[&"custom0"], bones, weights, indices, mat, true, 1.0, blend[&"fade"])
 	return out
 
 

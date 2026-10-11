@@ -195,3 +195,9 @@ Brief: `.claude/specs/brief.md`. Built by `RailgunBody` (+ `RailgunJunk`, `RailG
   `Array[StringName]` (an untyped literal fails at runtime). Check sockets with
   `gun report` after any body-shape change (distances and box overlaps). A word
   on the gun, however well drawn, read badly; plain steel reads better.
+
+- Finger roots (skin seams): they take the palm normal and vein frame over the
+  buried rings. The palm dirt streak fades by a per-vertex fade (CUSTOM3,
+  `finger_g`) to the flat per-finger value just past the knuckle
+  (t_c..t_c+0.30). Veins fade over b - W to b on the back of the hand and
+  blend at the elbow; limb tail 0.6.

@@ -54,7 +54,7 @@ static func build(model: Node3D, side: String, rng: RandomNumberGenerator,
 			var r := lerpf(radii[j], mean_r, smoothstep(0.0, 0.5, s)) * girth * sinew
 			var v := Vector3(centre.x + cos(a) * r, y, centre.y + sin(a) * r)
 			verts.append(frame * v)
-			custom0.append_array(PackedFloat32Array([-s * length, cos(a) * r, sin(a) * r, 1.0]))
+			custom0.append_array(PackedFloat32Array([-s * length, cos(a) * r, sin(a) * r, 0.6]))
 		centres.append(frame * Vector3(centre.x, y, centre.y))
 
 	var indices := ArmSkinMesh.tube_indices(verts, centres, RINGS, SECTORS)
