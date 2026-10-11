@@ -53,7 +53,7 @@ Initial idea skipped (light path).
 
 | # | Phase | Kind | Needs | Rests on | Status |
 |---|---|---|---|---|---|
-| 1 | Root meter and before shots | code | - | Brief | todo |
+| 1 | Root meter and before shots | code | - | Brief | done 08c5ae9 |
 | 2 | Fade the vein mask | code | 1 | Brief | todo |
 | 3 | Blend the finger roots | code | 1, 2 | Brief | todo |
 
@@ -63,7 +63,7 @@ Initial idea skipped (light path).
 Deliverable: two static helpers, then a read-only meter. (a) `ArmMuscle.frame(heads)` returns origin and axes, and `ArmMuscle.apply` uses it (CUSTOM0 unchanged; smoke fingerprint unchanged). (b) New `scripts/player/arms/arm_skin_nearest.gd` (RefCounted, static): nearest point on the arm mesh in bind space, its triangle normal n_p and height s = (v - p) . n_p, searching only triangles with a vertex within 2 `r[1]` of the finger's root ring centre. (c) Console line `arms roots` (new `scripts/debug/debug_arms_roots.gd`, wired like `seam` in `debug_arms_commands.gd` and `debug_arms_hints.gd`, under 200 lines), per hand. Per finger: crossing = tube vertices with |s| at most 0.05 `r[1]` (thumb `r[2]`); print its count, and when 0 use the two vertices of smallest |s| on each of the 8 sector lines. Over the crossing: max angle (deg) between tube normal and n_p, max |CUSTOM0 xyz - frame formula at the vertex|, max tube w, max palm w at p. t_c = largest t on the root bone (thumb `.02`) of a tube vertex with s at most 0.05 `r[1]` (always defined: the buried ring at t -0.25 is under the skin). Thumb: c_t = the point at its t_c on the `.02` axis, r_t = max |p - c_t| over its crossing, e_t = longest arm-mesh edge within 3 r_t of c_t (a length). Arm mesh: max w step over edges in groups thumb (within r_t + max(2 r_t, 6 e_t) of c_t), hand (x past x_w), elbow (within 0.25 Lu of x_e), rest, each with the bone pair of its largest step; max w past x_w + 0.65 L; e_h = longest hand edge extent along the axis / L; e_e = the same within 0.25 Lu of x_e / Lu. Once phase 3 exists: S0, S_f and sweep per finger, build ms per hand. Then the before set: hand_shots rest and weave, views front, side, left, top, elbow, and the two close-ups, into `.godot/shots/arms-before/`, plus `stipple.py` on the close-ups.
 Verification: implementer runs check, smoke, `python3 tools/probe.py --cmd "arms roots"` and records every number and the stipple counts in Carry forward (expected: angles tens of degrees, hand step 1.0). No look check (nothing visible changes).
 Reviewed: Right (owner, phases question)
-Notes:
+Notes: helpers 9a07695, meter 6ce7c2d + 08c5ae9 (reviewer: r from build `shaft`, thumb centre at t -0.25, worst lane printed); close-ups taken with `probe.py --cmd "arms cam orbit ..." --shot` (hand_shots takes named views only).
 
 ### 2 · Fade the vein mask
 Read first: `.claude/rules/art-style.md`, `.claude/rules/art-arms.md`.
@@ -89,4 +89,12 @@ Notes:
 
 ## Carry forward
 
-- <phase 1: every `arms roots` number (incl. crossing counts, t_c per finger, e_h, e_e, r_t, e_t, bone pairs) and stipple counts>
+- Phase 1 `arms roots` (before; R / L where they differ). Per finger r, t_c, crossing count, max angle deg, dxyz, worst lane+t; tube w and palm w 0.00 at every crossing:
+  - index r 0.0274 t_c 0.140 cross 7/6, angle 104.3/99.3, dxyz 1.2834, worst lane 7/1 t 0.00 (n.stored min 0.72)
+  - middle r 0.0333 t_c 0.300 cross 7/7, angle 155.2/154.3, dxyz 1.3051, worst lane 6/2 t 0.30 (reviewer: not a normal-sign bug; n_p outward)
+  - ring r 0.0270 t_c 0.550 cross 6/6, angle 61.1/59.5, dxyz 1.3201, worst lane 1/7 t 0.00
+  - pinky r 0.0239 t_c 0.300 cross 3/3, angle 39.5/39.8, dxyz 1.2894, worst lane 4/4 t 0.30
+  - thumb r 0.0370 t_c 0.550 cross 5/5, angle 93.0/92.4, dxyz 1.2221, worst lane 5/3 t 0.14; c_t (+-0.405112, 0.448713, 0.496561), r_t 0.0814, e_t 0.1240
+  - arm mesh: L 0.1583, x_w 1.1235, x_e 0.6195, Lu 0.6195; e_h 0.284 (above 0.20: phase 2 W hits the 0.65 L cap), e_e 0.087; w past x_w+0.65L 1.00
+  - max w step: thumb 1.00 (R DEF-hand/DEF-palm.04, L DEF-palm.04/DEF-forearm.001), hand 1.00 (DEF-hand/DEF-palm.04), elbow 0.40 (DEF-upper_arm.001/DEF-forearm), rest 0.00
+- Phase 1 before shots `.godot/shots/arms-before/`: rest/ and weave/ subfolders x front, side, left, top, elbow, player (hand_shots.py, 12 PNGs); closeup-left.png, closeup-right.png (`python3 tools/probe.py --cmd "arms cam orbit 0 70 0.2 left|right" --shot <png> --timeout 600`). Stipple close-ups (dark / light / dim): left 344 / 2535 / 1660, right 457 / 1776 / 2056. Full meter text was /tmp only: re-run `arms roots` rather than look for it.
