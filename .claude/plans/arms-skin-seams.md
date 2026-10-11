@@ -54,7 +54,7 @@ Initial idea skipped (light path).
 | # | Phase | Kind | Needs | Rests on | Status |
 |---|---|---|---|---|---|
 | 1 | Root meter and before shots | code | - | Brief | done 08c5ae9 |
-| 2 | Fade the vein mask | code | 1 | Brief | todo |
+| 2 | Fade the vein mask | code | 1 | Brief | done 559d5d8 |
 | 3 | Blend the finger roots | code | 1, 2 | Brief | todo |
 
 ## Phases
