@@ -63,14 +63,6 @@ static func weld_on(hinge: Node3D, size: Vector2, y: float, rng: RandomNumberGen
 			Vector3.ZERO, out)
 
 
-## Plate C's pad on the cabin side and its same-size backing plate on the street side.
-static func clamp_pair(hinge: Node3D, y: float, out: Array[Node3D]) -> Vector2:
-	var c := Vector2(C_X0 + SIZE_C.x * 0.5, y)
-	_slab(hinge, "ClampPad", SIZE_C, c, PAD_Z, PAD_Z - T, out)
-	_slab(hinge, "ClampBack", SIZE_C, c, CLAMP_Z, CLAMP_Z + T, out)
-	return c
-
-
 ## A slab `size` centred at `c`: flat face at `z_flat`, flame-cut bevel on the `z_bevel` face.
 static func _slab(parent: Node3D, node_name: String, size: Vector2, c: Vector2, z_flat: float,
 		z_bevel: float, out: Array[Node3D]) -> void:

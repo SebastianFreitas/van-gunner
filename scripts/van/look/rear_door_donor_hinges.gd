@@ -32,8 +32,9 @@ static func build(hinge: Node3D, rect: Rect2, rng: RandomNumberGenerator,
 	var weld := _Welds.weld_steel()
 	var top := rect.end.y - RearDoorProfile.DONOR_HINGE_ROUND - ARM_TOP_DROP
 	var bottom := rect.position.y + ARM_BOTTOM_RISE
-	_hinge_arm(hinge, top, rust, dark, weld, rng, out, true)
-	_hinge_arm(hinge, bottom, rust, dark, weld, rng, out, false)
+	_hinge_arm(hinge, top, rust, dark, weld, rng, out)
+	# The lower hinge is a strap welded across the roofing sheet's dent, with its own knuckle.
+	RearDoorDonorStrap.strap_hinge(hinge, rect, RearDoorProfile.donor(), bottom, rng, out)
 	# Plate B must sit on the tread plate: just above its bottom seam, never the bare midpoint.
 	var seam_y := RearDoorDonorPlate.seam(rect, RearDoorProfile.donor())[0].y
 	_check_arm(hinge, seam_y + 0.2, rust, dark, rng, out)
@@ -60,12 +61,11 @@ static func _hex_bolt(parent: Node3D, x: float, y: float, face_z: float, mat: Ma
 
 
 static func _hinge_arm(parent: Node3D, y: float, rust: Material, dark: Material, weld: Material,
-		rng: RandomNumberGenerator, out: Array[Node3D], upper: bool) -> void:
+		rng: RandomNumberGenerator, out: Array[Node3D]) -> void:
 	var arm_z := FACE - 0.06
 	# The arm roots at the pillar and climbs toward the street onto its iron plate: A (welded to
-	# the tread plate) above, C's pad (clamped through the roofing sheet) below.
-	var plate_z := _Iron.CABIN_FACE if upper else _Iron.PAD_Z - _Iron.T
-	var end := Vector2(_Iron.X0 + rng.randf_range(0.31, 0.32), plate_z - ARM * 0.5)
+	# the tread plate).
+	var end := Vector2(_Iron.X0 + rng.randf_range(0.31, 0.32), _Iron.CABIN_FACE - ARM * 0.5)
 	var run := end - Vector2(X0, arm_z)
 	_Panels.add(parent, "HingeArm", _Panels.box(Vector3(run.length(), ARM, ARM)), rust,
 			Vector3((X0 + end.x) * 0.5, y, (arm_z + end.y) * 0.5),
@@ -80,16 +80,13 @@ static func _hinge_arm(parent: Node3D, y: float, rust: Material, dark: Material,
 	_Panels.add(parent, "HingeKnuckle", knuckle, rust,
 			Vector3(X0 + ARM * 0.6, y, arm_z), Vector3.ZERO, out)
 	_street(out.back())
-	if upper:
-		_Iron.weld_on(parent, _Iron.SIZE_A, y, rng, out)
-		# Four bolts through plate A, two each side of the arm.
-		for sx: float in [0.3, 0.9]:
-			for sy: float in [-1.0, 1.0]:
-				_hex_bolt(parent, _Iron.X0 + _Iron.SIZE_A.x * sx,
-						y + sy * (_Iron.SIZE_A.y * 0.5 - 0.035), _Iron.CABIN_FACE, dark, out)
-				_street(out.back())
-	else:
-		_clamp(parent, y, dark, out)
+	_Iron.weld_on(parent, _Iron.SIZE_A, y, rng, out)
+	# Four bolts through plate A, two each side of the arm.
+	for sx: float in [0.3, 0.9]:
+		for sy: float in [-1.0, 1.0]:
+			_hex_bolt(parent, _Iron.X0 + _Iron.SIZE_A.x * sx,
+					y + sy * (_Iron.SIZE_A.y * 0.5 - 0.035), _Iron.CABIN_FACE, dark, out)
+			_street(out.back())
 	# Beads where the arm's end meets the pillar side: two vertical runs on its front face.
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -131,28 +128,6 @@ static func _check_arm(parent: Node3D, y: float, rust: Material, dark: Material,
 			Vector3(PI * 0.5, 0.0, 0.0), out)
 	_hex_bolt(parent, x_bar + 0.02, y, bar_z - 0.004, dark, out)
 	_hex_bolt(parent, ARM_END_X - 0.03, y, _Iron.CABIN_FACE - 0.012, dark, out)
-
-
-## Plate C: pad and backing plate either side of the roofing sheet, four through-bolts with the
-## nuts showing on the cabin side.
-static func _clamp(parent: Node3D, y: float, dark: Material, out: Array[Node3D]) -> void:
-	var c := _Iron.clamp_pair(parent, y, out)
-	var shank := CylinderMesh.new()
-	shank.top_radius = 0.008
-	shank.bottom_radius = 0.008
-	shank.height = _Iron.CLAMP_Z - _Iron.PAD_Z
-	shank.radial_segments = 6
-	shank.rings = 1
-	for sx: float in [-1.0, 1.0]:
-		for sy: float in [-1.0, 1.0]:
-			var x := c.x + sx * (_Iron.SIZE_C.x * 0.5 - 0.035)
-			var by := y + sy * 0.066
-			_Panels.add(parent, "ClampShank", shank, dark, Vector3(x, by,
-					(_Iron.CLAMP_Z + _Iron.PAD_Z) * 0.5), Vector3(PI * 0.5, 0.0, 0.0), out)
-			_hex_bolt(parent, x, by, _Iron.PAD_Z - _Iron.T, dark, out)
-			_street(out.back())
-			_hex_bolt(parent, x, by, _Iron.CLAMP_Z + _Iron.T + BOLT_H, dark, out)
-			_street(out.back())
 
 
 ## Cut-down striker plate, a bent flat-bar handle bolted through it, and a padlocked hasp.

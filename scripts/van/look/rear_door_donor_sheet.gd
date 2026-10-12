@@ -1,8 +1,9 @@
 class_name RearDoorDonorSheet
 extends RefCounted
 ## The corrugated roofing sheet screwed over the bottom of the donor rear leaf's hole (spec 4):
-## thin pale-olive box-rib sheet stood on end, lapped behind the tread plate on a packer strip,
-## skewed, with a lifted corner, six hex-washer screws and one missing. Hinge-local metres.
+## thin green sheet with a smooth sine corrugation stood on end, lapped behind the tread plate on
+## a packer strip, dented into the cabin with its edges pinned, six hex-washer screws and one
+## missing. Hinge-local metres.
 
 const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
 const _Skin := preload("res://scripts/van/rear_door_skin.gd")
@@ -11,83 +12,110 @@ const _Plate := preload("res://scripts/van/look/rear_door_donor_plate.gd")
 
 const SHELL := 0.004
 const PITCH := 0.11
-const PAN_W := 0.07
-const SIDE_W := 0.005
 const RIB_H := 0.018
 const BOTTOM_LIFT := 0.01
 const LAP := 0.06
 const CUT_GAP := 0.003
-## Pan x at the hinge side: 0.06 at the bottom, 0.03 at the top.
-const HINGE_X_BOTTOM := 0.06
-const HINGE_X_TOP := 0.03
-## tan(2 degrees): how far the ribs shift in x per metre of height.
-const LEAN := 0.0349
+## Fixed column grid: this many columns per rib pitch, the same on every row.
+const COLS := 10
+## The sheet's hinge-side edge, and how far it runs under the cut (hidden behind the door skin).
+const EDGE_X := 0.02
+## Hinge-local y of the sheet's bottom, set per build, for the UVs.
+static var _uv_bottom := 0.0
+const EDGE_UNDER := 0.025
+## Street face of the ribs' crests, hinge-local z.
+const Z_FACE := -0.004
 ## Corner bend into the cabin and how far it reaches.
 const BEND := 0.015
 const BEND_REACH := 0.12
+## The middle of the sheet is shoved into the cabin this far; its edges stay pinned.
+const DENT := 0.09
 const PACKER := Vector3(0.0, 0.03, 0.02)
 const SCREW_R := 0.009
 const SCREW_H := 0.012
 ## Sheet colour (sRGB, already darkened to the large-surface luminance ceiling, art-style.md).
-const PAINT := Color(0.52, 0.53, 0.36)
+const PAINT := Color(0.40, 0.46, 0.27)
 
 
-## Builds the sheet, its packer, screws and the rust backing that closes the edge gaps. Returns
-## every node added.
+## Builds the sheet, its packer and screws. Returns every node added.
 static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile) -> Array[Node3D]:
 	var out: Array[Node3D] = []
 	var seam := _Plate.seam(rect, profile)
 	var y0 := rect.position.y + BOTTOM_LIFT
 	var y1 := seam[0].y + LAP
 	var y_seam := seam[0].y
-	# Street face at the tread plate's street plane; the 4 cm drop to tuck behind the plate (it
-	# must clear the plate's backing) is a hurried kink just below the plate.
-	var z_street := _LeafBuild.STREET_HALF - _Skin.STREET_SETBACK
-	var step := z_street
 	# Rows at the cut's corners so the sheet edge follows the cut to its 3 mm gap.
 	var rows: Array[float] = []
 	for p in profile.donor_cut(rect):
 		if p.y > y0 + 0.01 and p.y < y1 - 0.01:
 			rows.append(p.y)
 	var fixed := rows.duplicate()
-	for y: float in [y0, y0 + 0.06, y0 + BEND_REACH, y_seam - 0.25, y_seam - 0.125, y_seam, y1]:
+	var extra: Array[float] = [y0, y0 + 0.06, y0 + BEND_REACH, y_seam - 0.25, y_seam - 0.125,
+			y_seam, y1]
+	# Rows every 12 cm so the dent is a smooth dome, not a few flat bands.
+	for k in int((y1 - y0) / 0.12):
+		extra.append(y0 + 0.12 * (k + 1))
+	for y: float in extra:
 		var near := false
 		for f: float in fixed:
 			near = near or absf(f - y) <= 0.01
 		if not near:
 			rows.append(y)
 	rows = _clean_rows(rows)
-	var xs: Array[float] = [0.0]
-	for k in 6:
-		for d: float in [PAN_W, PAN_W + SIDE_W, PITCH - SIDE_W, PITCH]:
-			xs.append(k * PITCH + d)
+	var x_max := 0.0
+	for y in rows:
+		x_max = maxf(x_max, profile.cut_x(rect, y) + EDGE_UNDER)
+	var xs: Array[float] = []
+	for k in int(ceil((x_max - EDGE_X) * COLS / PITCH)) + 1:
+		xs.append(EDGE_X + k * PITCH / COLS)
+	_uv_bottom = y0
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var grid: Array = []
 	for y in rows:
 		var t := (y - y0) / (y1 - y0)
-		var xl := lerpf(HINGE_X_BOTTOM, HINGE_X_TOP, t)
-		var xr := profile.cut_x(rect, y) - CUT_GAP
-		var z_base := z_street - step * smoothstep(y_seam - 0.25, y_seam, y)
-		# The 2 degrees off plumb: every rib leans toward the hinge going up.
-		var skew := LEAN * (y - y0)
+		var xr := profile.cut_x(rect, y) + EDGE_UNDER
 		var row: Array[Vector3] = []
 		for x in xs:
-			var cx := clampf(x - skew, xl, xr)
-			var bend := BEND * clampf(1.0 - (cx - xl) / BEND_REACH, 0.0, 1.0) \
-					* clampf(1.0 - (y - y0) / BEND_REACH, 0.0, 1.0)
-			row.append(Vector3(cx, y, z_base + _rib(cx) - bend))
+			var cx := minf(x, xr)
+			var bend := BEND * clampf(1.0 - (cx - EDGE_X) / BEND_REACH, 0.0, 1.0) 					* clampf(1.0 - (y - y0) / BEND_REACH, 0.0, 1.0)
+			var dent := _dome((cx - EDGE_X) / (xr - EDGE_X), t)
+			row.append(Vector3(cx, y, Z_FACE + _rib(cx) - bend - dent))
 		grid.append(row)
 	_shell(st, grid)
-	var mat := _Panels.grime(PAINT)
+	var mat := _Panels.grime(PAINT) as ShaderMaterial
+	# Belt and seam lines pushed off the sheet; a rusty band low down.
+	mat.set_shader_parameter(&"wall_size_m", Vector2(1.0, 50.0))
+	mat.set_shader_parameter(&"panel_spacing_m", 40.0)
+	mat.set_shader_parameter(&"belt_y_m", 90.0)
+	mat.set_shader_parameter(&"waist_y_m", 90.0)
+	mat.set_shader_parameter(&"rib_spacing_m", PITCH)
+	mat.set_shader_parameter(&"roughness_value", 0.55)
+	mat.set_shader_parameter(&"metallic_value", 0.3)
+	mat.set_shader_parameter(&"kick_height_m", 0.3)
+	mat.set_shader_parameter(&"kick_color", Color(0.24, 0.1, 0.05))
 	_Panels.add(hinge, "DonorSheet", st.commit(), mat, Vector3.ZERO, Vector3.ZERO, out)
 	_street(out.back(), true)
-	var z_at := func(y: float) -> float:
-		return z_street - step * smoothstep(y_seam - 0.25, y_seam, y)
 	_packer(hinge, seam, out)
-	_screws(hinge, rect, profile, seam, z_at, out)
-	_backing(hinge, rect, profile, seam, z_street - RIB_H - SHELL - 0.01, out)
+	_screws(hinge, rect, profile, seam, out)
 	return out
+
+
+## Depth of the dent at fractions sx, sy across the sheet: zero on every edge, deepest a little
+## toward the hinge and below the middle.
+static func _dome(sx: float, sy: float) -> float:
+	var u := sin(PI * pow(clampf(sx, 0.0, 1.0), 0.76))
+	var v := sin(PI * pow(clampf(sy, 0.0, 1.0), 0.87))
+	return DENT * u * u * v * v
+
+
+## The dent's depth at hinge-local (x, y), for fittings that follow the sheet's surface.
+static func dent_at(rect: Rect2, profile: RearDoorProfile, x: float, y: float) -> float:
+	var y0 := rect.position.y + BOTTOM_LIFT
+	var y1 := _Plate.seam(rect, profile)[0].y + LAP
+	var t := (y - y0) / (y1 - y0)
+	var xr := profile.cut_x(rect, y) + EDGE_UNDER
+	return _dome((x - EDGE_X) / (xr - EDGE_X), t)
 
 
 static func _clean_rows(rows: Array[float]) -> Array[float]:
@@ -99,16 +127,19 @@ static func _clean_rows(rows: Array[float]) -> Array[float]:
 	return clean
 
 
-## The cabin-ward depth of the box-rib profile at x (0 on the pans, down to -RIB_H on the ribs).
+## The cabin-ward depth of the corrugation at x: 0 on the crests, down to -RIB_H in the troughs.
 static func _rib(x: float) -> float:
-	var u := fposmod(x, PITCH)
-	if u < PAN_W:
-		return 0.0
-	if u < PAN_W + SIDE_W:
-		return -RIB_H * (u - PAN_W) / SIDE_W
-	if u < PITCH - SIDE_W:
-		return -RIB_H
-	return -RIB_H * (PITCH - u) / SIDE_W
+	return -RIB_H * 0.5 * (1.0 - cos(TAU * x / PITCH))
+
+
+## Smooth normal at grid point (j, i) from the differences to its neighbours.
+static func _normal(grid: Array, j: int, i: int) -> Vector3:
+	var rows := grid.size()
+	var cols: int = (grid[0] as Array).size()
+	var dx: Vector3 = (grid[j][mini(i + 1, cols - 1)] as Vector3) - grid[j][maxi(i - 1, 0)]
+	var dy: Vector3 = (grid[mini(j + 1, rows - 1)][i] as Vector3) - grid[maxi(j - 1, 0)][i]
+	var n := dx.cross(dy)
+	return n.normalized() * signf(n.z) if n.length() > 1e-9 else Vector3.BACK
 
 
 static func _shell(st: SurfaceTool, grid: Array) -> void:
@@ -117,12 +148,14 @@ static func _shell(st: SurfaceTool, grid: Array) -> void:
 	var cols: int = (grid[0] as Array).size()
 	for j in rows - 1:
 		for i in cols - 1:
-			var a: Vector3 = grid[j][i]
-			var b: Vector3 = grid[j][i + 1]
-			var c: Vector3 = grid[j + 1][i + 1]
-			var d: Vector3 = grid[j + 1][i]
-			_quad(st, a, b, c, d, 1.0)
-			_quad(st, a + down, b + down, c + down, d + down, -1.0)
+			var ids := [[j, i], [j, i + 1], [j + 1, i + 1], [j + 1, i]]
+			var top: Array[Vector3] = []
+			var nrm: Array[Vector3] = []
+			for id: Array in ids:
+				top.append(grid[id[0]][id[1]])
+				nrm.append(_normal(grid, id[0], id[1]))
+			_smooth(st, top, nrm, 1.0)
+			_smooth(st, [top[0] + down, top[1] + down, top[2] + down, top[3] + down], nrm, -1.0)
 	for j in rows - 1:
 		var l0: Vector3 = grid[j][0]
 		var l1: Vector3 = grid[j + 1][0]
@@ -137,6 +170,28 @@ static func _shell(st: SurfaceTool, grid: Array) -> void:
 		var t0: Vector3 = grid[rows - 1][i]
 		var t1: Vector3 = grid[rows - 1][i + 1]
 		_quad(st, t0, t1, t1 + down, t0 + down, 0.0, Vector3.UP)
+
+
+## The wall shader's UV for hinge-local `p`: x in metres shifted 20.02 m (a whole number of ribs,
+## half a seam spacing of 40 m) to sit between seams, y in metres up from the sheet's bottom so
+## only the bottom `kick_height_m` reads rusty (the material's wall_size_m is (1, 50)).
+static func _uv(p: Vector3) -> Vector2:
+	return Vector2(p.x + 20.02, (p.y - _uv_bottom) / 50.0)
+
+
+## Two triangles with per-vertex normals, wound clockwise seen along `side` * those normals.
+static func _smooth(st: SurfaceTool, v: Array[Vector3], nrm: Array[Vector3], side: float) -> void:
+	for tri: Array in [[0, 1, 2], [0, 2, 3]]:
+		var idx: Array = tri.duplicate()
+		var n := (v[idx[1]] - v[idx[0]]).cross(v[idx[2]] - v[idx[0]])
+		if n.length() < 1e-9:
+			continue
+		if n.dot(nrm[idx[0]] * side) > 0.0:
+			idx = [idx[0], idx[2], idx[1]]
+		for k: int in idx:
+			st.set_normal(nrm[k] * side)
+			st.set_uv(_uv(v[k]))
+			st.add_vertex(v[k])
 
 
 ## Two triangles; faces `side` * the quad's own z (or `fixed` when side is 0), UV in metres / 0.8.
@@ -160,7 +215,7 @@ static func _quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector
 			r = swap
 		for v: Vector3 in [p, q, r]:
 			st.set_normal(out_n)
-			st.set_uv(Vector2(v.x, v.y) / 0.8)
+			st.set_uv(_uv(v))
 			st.add_vertex(v)
 
 
@@ -185,7 +240,7 @@ static func _packer(hinge: Node3D, seam: PackedVector2Array, out: Array[Node3D])
 
 
 static func _screws(hinge: Node3D, rect: Rect2, profile: RearDoorProfile,
-		seam: PackedVector2Array, z_at: Callable, out: Array[Node3D]) -> void:
+		seam: PackedVector2Array, out: Array[Node3D]) -> void:
 	var steel := _Panels.flat(Color(0.30, 0.17, 0.10), 0.8, 0.2)
 	var head := CylinderMesh.new()
 	head.top_radius = SCREW_R
@@ -206,9 +261,8 @@ static func _screws(hinge: Node3D, rect: Rect2, profile: RearDoorProfile,
 	var y_high := seam[0].y - 0.35
 	for k in 4:
 		var y := lerpf(y_low + 0.12, y_high, float(k) / 3.0)
-		var xr := profile.cut_x(rect, y) - CUT_GAP
-		var pan := floorf((xr - 0.02 - PAN_W * 0.5) / PITCH) * PITCH + PAN_W * 0.5
-		var z := z_at.call(y) as float
+		var pan := floorf((profile.cut_x(rect, y) - CUT_GAP - 0.03) / PITCH) * PITCH
+		var z := Z_FACE - dent_at(rect, profile, pan, y)
 		if k == 2:
 			var hole := CylinderMesh.new()
 			hole.top_radius = SCREW_R * 0.6
@@ -221,40 +275,3 @@ static func _screws(hinge: Node3D, rect: Rect2, profile: RearDoorProfile,
 			_Panels.add(hinge, "DonorSheetScrew", head, steel,
 					Vector3(pan, y, z + SCREW_H * 0.5 - 0.002), rot, out)
 		_street(out.back(), false)
-
-
-## Rust strips behind the sheet that close only the cut-side, hinge-side and bottom slits. The
-## bottom strip starts cut-ward of x 0.34 so the sheet's bent corner stays open to the cabin.
-static func _backing(hinge: Node3D, rect: Rect2, profile: RearDoorProfile,
-		seam: PackedVector2Array, z_front: float, out: Array[Node3D]) -> void:
-	var y_bot := rect.position.y
-	var y_top := seam[0].y
-	var polys: Array[PackedVector2Array] = []
-	# Cut side: a 4 cm band along the cut, one convex quad per leg of its polyline.
-	var ys: Array[float] = [y_bot]
-	for p in profile.donor_cut(rect):
-		if p.y > y_bot + 0.01 and p.y < y_top - 0.01:
-			ys.append(p.y)
-	ys.sort()
-	ys.append(y_top)
-	for i in ys.size() - 1:
-		var xa := profile.cut_x(rect, ys[i])
-		var xb := profile.cut_x(rect, ys[i + 1])
-		polys.append(PackedVector2Array([Vector2(xa - 0.04, ys[i]), Vector2(xa + 0.012, ys[i]),
-				Vector2(xb + 0.012, ys[i + 1]), Vector2(xb - 0.04, ys[i + 1])]))
-	# Hinge side, as wide as the slit (the sheet starts at x 0.06 low, 0.03 high).
-	polys.append(PackedVector2Array([Vector2(-0.01, y_bot), Vector2(0.07, y_bot),
-			Vector2(0.04, y_top), Vector2(-0.01, y_top)]))
-	# Bottom, cut-ward of the open corner.
-	polys.append(PackedVector2Array([Vector2(0.34, y_bot), Vector2(profile.cut_x(rect, y_bot)
-			+ 0.012, y_bot), Vector2(profile.cut_x(rect, y_bot) + 0.012, y_bot + 0.04),
-			Vector2(0.34, y_bot + 0.04)]))
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for poly in polys:
-		_Skin._poly(st, poly, z_front, Vector3.BACK)
-		_Skin._poly(st, poly, z_front - _Plate.BACKING_T, Vector3.FORWARD)
-		_Skin._walls(st, poly, z_front - _Plate.BACKING_T, z_front, false)
-	_Panels.add(hinge, "DonorSheetBacking", st.commit(), _Panels.flat(Color(0.28, 0.15, 0.09),
-			0.85, 0.2), Vector3.ZERO, Vector3.ZERO, out)
-	_street(out.back(), false)

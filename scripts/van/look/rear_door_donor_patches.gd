@@ -16,5 +16,6 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile,
 	var out: Array[Node3D] = []
 	out.append_array(_Plate.build(hinge, rect, profile, rng))
 	out.append_array(_Sheet.build(hinge, rect, profile))
+	RearDoorDonorStrap.cap(hinge, rect, profile, rng, out)
 	out.append_array(_Seam.build(hinge, rect, profile))
 	return out

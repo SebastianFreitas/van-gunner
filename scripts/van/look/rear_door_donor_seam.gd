@@ -16,7 +16,7 @@ const BAR_T := 0.006
 const BAR_Z := _LeafBuild.CABIN_Z - 0.015
 ## Where the packers end: the cabin faces of the tread plate's backing and of the roofing sheet.
 const PATCH_Z_TOP := 0.009
-const PATCH_Z_BOTTOM := 0.01
+const PATCH_Z_BOTTOM := -0.008
 ## The bar sections' margins from the leaf top, the split, the leaf bottom.
 const TOP_MARGIN := 0.06
 const SPLIT_MARGIN := 0.03
@@ -59,6 +59,10 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile) -> Array
 		_ribbon(packers, line, -BAR_HALF_W, -0.004, BAR_Z + BAR_T, patch_z, false)
 	_Panels.add(hinge, "DonorSeamBar", bar.commit(), steel, Vector3.ZERO, Vector3.ZERO, out)
 	_Panels.add(hinge, "DonorSeamPacker", packers.commit(), steel, Vector3.ZERO, Vector3.ZERO, out)
+	# The dented sheet no longer hides the packer from the street, so it is solid from both sides.
+	var packer: Node3D = out.back()
+	packer.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
+	VanLighting.retarget_layers(packer as VisualInstance3D, VanLighting.LAYER_STREET_AND_INTERIOR)
 	var bolts := SurfaceTool.new()
 	bolts.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var welds := SurfaceTool.new()
@@ -94,7 +98,8 @@ static func _line(rect: Rect2, profile: RearDoorProfile, y_hi: float, y_lo: floa
 
 
 ## A strip along `line` between lateral offsets `lo` and `hi` (+ is the leaf side), z0 to z1,
-## mitred at the corners. The cabin cap (z0) is left off when `cap` is false: a packer hides it.
+## mitred at the corners. The cabin cap (z0) is left off when `cap` is false: a packer hides it;
+## the z1 cap is always built, as the packer's street end now stops short of the sheet's face.
 static func _ribbon(st: SurfaceTool, line: PackedVector2Array, lo: float, hi: float, z0: float,
 		z1: float, cap: bool) -> void:
 	var n := line.size()
@@ -117,8 +122,8 @@ static func _ribbon(st: SurfaceTool, line: PackedVector2Array, lo: float, hi: fl
 		if cap:
 			_quad(st, _v(left[i], z0), _v(left[i + 1], z0), _v(right[i + 1], z0),
 					_v(right[i], z0), Vector3(0.0, 0.0, -1.0))
-			_quad(st, _v(left[i], z1), _v(right[i], z1), _v(right[i + 1], z1),
-					_v(left[i + 1], z1), Vector3(0.0, 0.0, 1.0))
+		_quad(st, _v(left[i], z1), _v(right[i], z1), _v(right[i + 1], z1),
+				_v(left[i + 1], z1), Vector3(0.0, 0.0, 1.0))
 		var nl := (left[i + 1] - left[i]).normalized()
 		var nr := (right[i + 1] - right[i]).normalized()
 		_quad(st, _v(left[i], z0), _v(left[i], z1), _v(left[i + 1], z1), _v(left[i + 1], z0),
