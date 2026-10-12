@@ -43,12 +43,13 @@ TABLE = {
     "PreToolUse": [
         ("Bash|PowerShell", "git-guard.py"),
         ("Bash|PowerShell", "review-guard.py"),
+        ("Bash|PowerShell", "poll-guard.py"),
         ("Read|Write|Edit|MultiEdit|NotebookEdit|Bash|PowerShell", "file-guard.py"),
         ("Agent|Task", "agent-guard.py"),
         (None, "context-watch.py"),
     ],
     "PostToolUse": [],
-    "SubagentStop": [(None, "context-watch.py")],
+    "SubagentStop": [(None, "reply-cap.py"), (None, "context-watch.py")],
     "Stop": [(None, "stop-guard.py")],
 }
 

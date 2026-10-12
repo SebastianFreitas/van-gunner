@@ -14,8 +14,9 @@ logs or images, runs verify only as a one-line spot check (Run step 4),
 and makes at most two quick lookups (a grep, a short range) before
 delegating; more goes to `Explore`. Agent prompts name paths, never
 pasted content. Agents write the full report to a file and return at
-most about 150 words plus its path; every `Explore` or `general-purpose`
-prompt ends with the playbook's report line (playbook Delegation).
+most about 150 words plus its path (`reply-cap.py` sends a longer one
+back once); every `Explore` or `general-purpose` prompt ends with the
+playbook's report line (playbook Delegation).
 
 ## Shared files
 
@@ -249,6 +250,9 @@ subagent runs in the foreground (playbook Delegation).
 - `git-guard.py` blocks blanket git (`add -A`/`.`, `commit -a`,
   `stash`, `checkout --`, `restore`, `reset --hard`, `clean`, `rebase`,
   force push). Do not work around it; the owner runs those if wanted.
+- `poll-guard.py` refuses a `sleep` of 10 s or more and any shell loop
+  that sleeps: a check runs in the foreground with the call's timeout,
+  and a background command's exit is reported by the harness.
 - Commands shown to the owner go in fenced `bash` blocks (the app adds a
   Run button), one command per block, and must also work pasted into
   Windows PowerShell 5.1: forward-slash paths, no `&&`, `||`, `$(...)`

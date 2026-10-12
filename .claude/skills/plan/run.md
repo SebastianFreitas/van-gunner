@@ -33,8 +33,9 @@ start one; when one is live, report where it is (below) and stop.
   (the runner finds plans only in its own checkout: a plan written on
   an app worktree's branch runs from that worktree, 2026-10-06)
   (no `| tail`, no `--claude`: it finds the CLI itself). Say in one
-  line which phase runs. Do not poll or sleep:
-  the harness notifies when it exits.
+  line which phase runs. Do not poll or sleep (`poll-guard.py` refuses a
+  sleep of 10 s or more and any loop that sleeps): the harness notifies
+  when it exits.
 - **When it exits:** read the run's last 12 lines of output (the
   session row and `stop reason:`), the state file (`Status`, Completed
   phase, Next phase) and `git log --oneline` of the new commits on

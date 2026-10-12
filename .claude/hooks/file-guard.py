@@ -34,7 +34,9 @@ repo is allowed.
   sed -i, cp/mv/install, python open(..., 'w'), Set-Content) are refused in
   the main session too: they skipped the Write/Edit check, and in cloud
   threads the main session wrote code itself that way (2026-10-03). Found by
-  regex, not a shell parser; subagents may write source.
+  regex, not a shell parser; subagents may write source. Heredoc bodies are
+  not scanned (python open() targets are); a target with an unresolved $,
+  only digits or /dev/null is skipped.
 
 The project tunes this through an optional .claude/project/file-guard.json
 (read once per call; missing or bad JSON means no config):
@@ -214,26 +216,67 @@ def unquote(word: str) -> str:
     return word.strip().strip("'\"")
 
 
+def strip_heredocs(command: str) -> str:
+    out: list[str] = []
+    words: list[str] = []
+    for line in command.split("\n"):
+        if words:
+            if line.strip() == words[0]:
+                words.pop(0)
+            continue
+        out.append(line)
+        words = re.findall(r"(?:^|[\s\d])<<(?!<)-?\s*['\"]?([A-Za-z_][\w-]*)['\"]?", line)
+    return "\n".join(out)
+
+
+def sed_args(command: str, pos: int) -> str:
+    """Text from pos to the first ; | & or newline that is outside quotes."""
+    quote = ""
+    i = pos
+    while i < len(command):
+        c = command[i]
+        if quote:
+            if c == "\\" and quote == '"':
+                i += 1
+            elif c == quote:
+                quote = ""
+        elif c in "'\"":
+            quote = c
+        elif c in ";|&\n":
+            break
+        i += 1
+    return command[pos:i]
+
+
+def resolve_target(base: str, target: str) -> str | None:
+    target = os.path.expandvars(target)
+    if "$" in target or target.isdigit() or target == "/dev/null":
+        return None
+    return os.path.abspath(os.path.join(base, target))
+
+
 def bash_write_targets(command: str) -> list[str]:
     out: list[str] = []
+    full = command
+    command = strip_heredocs(command)
     for m in re.finditer(r"(?<![\w<>&-])(\d?)>>?(?!&)[ \t]*([^\s;|&<>()]+)", command):
         if m.group(1) in ("", "1") and unquote(m.group(2)) != "/dev/null":
             out.append(unquote(m.group(2)))
     start = r"(?:^|[\s;|&(])"
     for m in re.finditer(start + r"tee\b([^\n;|&]*)", command):
         out += [unquote(w) for w in m.group(1).split() if not w.startswith("-")]
-    for m in re.finditer(start + r"sed\b([^\n|&]*)", command):
-        args = m.group(1)
+    for m in re.finditer(start + r"sed\b", command):
+        args = sed_args(command, m.end())
         if re.search(r"\s(-[A-Za-z]*i\S*|--in-place\S*)(?=\s|$)", args):
             out += [unquote(w) for w in args.split() if not w.startswith("-")]
     for m in re.finditer(start + r"(?:cp|mv|install)\s+([^\n;|&]*)", command):
         words = [unquote(w) for w in m.group(1).split() if not w.startswith("-")]
         if words:
             out.append(words[-1])
-    if re.search(r"\b(?:python3?|py)\b", command):
-        out += re.findall(r"open\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"][wax]", command)
+    if re.search(r"\b(?:python3?|py)\b", full):
+        out += re.findall(r"open\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"][wax]", full)
         out += re.findall(
-            r"Path\(\s*['\"]([^'\"]+)['\"]\s*\)\.write_(?:text|bytes)\(", command)
+            r"Path\(\s*['\"]([^'\"]+)['\"]\s*\)\.write_(?:text|bytes)\(", full)
     for m in re.finditer(r"(?i)\b(?:Set-Content|Add-Content|Out-File)\b([^\n;|]*)", command):
         args = m.group(1)
         named = re.search(r"(?i)-(?:File)?Path\s+(\S+)", args)
@@ -250,7 +293,9 @@ def bash_violation(d: dict, tool_input: dict) -> None:
     command = tool_input.get("command") or ""
     base = d.get("cwd") or os.getcwd()
     for target in bash_write_targets(command):
-        path = os.path.abspath(os.path.join(base, target))
+        path = resolve_target(base, target)
+        if path is None:
+            continue
         root = find_root(path)
         if root is None:
             continue
@@ -262,10 +307,11 @@ def bash_violation(d: dict, tool_input: dict) -> None:
             return
         suffixes, source_files = source_rule(cfg)
         if ext(path) in suffixes or rel in source_files:
-            deny(f"Main session: {rel} is a source file; Bash writes to source "
-                 "files are refused like Write/Edit. Write a spec and hand it to "
-                 "the implementer subagent (.claude/rules/workflow.md Main "
-                 "session role).")
+            deny(f"Main session: {rel} is a source file; a shell write (sed -i, "
+                 ">, tee, cp, python open) skips the Edit check. Use the Edit "
+                 "tool for a single-line change, else write a spec for the "
+                 "implementer subagent (.claude/rules/workflow.md Main session "
+                 "role).")
             return
 
 
@@ -275,7 +321,9 @@ def report_only_bash_violation(d: dict, tool_input: dict, agent_type: str) -> No
     command = tool_input.get("command") or ""
     base = d.get("cwd") or os.getcwd()
     for target in bash_write_targets(command):
-        path = os.path.abspath(os.path.join(base, target))
+        path = resolve_target(base, target)
+        if path is None:
+            continue
         root = find_root(path)
         if root is None:
             continue
@@ -290,7 +338,9 @@ def bash_handoff_violation(d: dict, tool_input: dict) -> bool:
     command = tool_input.get("command") or ""
     base = d.get("cwd") or os.getcwd()
     for target in bash_write_targets(command):
-        path = os.path.abspath(os.path.join(base, target))
+        path = resolve_target(base, target)
+        if path is None:
+            continue
         root = find_root(path)
         if root is None:
             continue

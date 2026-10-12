@@ -28,8 +28,8 @@ the runner's kill line above it. The phase has to fit between the
   (`workflow.md` "Coordinator"). A 1,000-line file read in main costs
   30k and writes no code.
 - **Implementers run in the foreground** (`run_in_background: false`).
-  Never launch one in the background and wait: no sleeps, no "waiting"
-  messages, no ending the turn while one runs. Its commit must land
+  Never launch one in the background and wait: no sleeps (`poll-guard.py`
+  refuses them), no "waiting" messages, no ending the turn while one runs. Its commit must land
   before you write the state file.
 - **Verify what you touched, once**, with the cheapest check `CLAUDE.md`
   § Verify names for it, run by the implementer (the spec's Acceptance). Run the slow full checks only when the phase

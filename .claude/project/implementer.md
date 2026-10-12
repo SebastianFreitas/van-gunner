@@ -100,7 +100,9 @@ scan, load of every script and resource, and a debugger pass that fails on
 any GDScript warning), the smoke test (`py -3 tools/smoke.py`) and, for
 van scene edits, the scene dump (`py -3 tools/scene_dump.py`). The tools
 find Godot themselves and wait for each other, so two of them never run
-Godot on one folder at once. Report every output line containing
+Godot on one folder at once. Run them in the foreground with the Bash
+call's `timeout` (up to 600000 ms), never in the background with a wait
+loop or a `sleep` (`poll-guard.py` refuses both). Report every output line containing
 `SCRIPT ERROR`, `Parse Error`, `ERROR:` or a GDScript warning. Say
 "clean" only when there are none; the exit code alone is not reliable.
 A `SMOKE PAUSED:` or `SCENE DUMP PAUSED:` line means the owner paused the van audit and the baselines: report that run as clean, and never try to fix audit findings or baseline diffs while it is there.

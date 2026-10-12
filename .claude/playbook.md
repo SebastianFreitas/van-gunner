@@ -14,7 +14,8 @@ read its matching section too.
 - **Reports:** every agent writes its full report to a file and returns
   at most about 150 words: a status or verdict line, the files changed,
   each blocker or must-fix finding in one line (at most five), and the
-  report's path. The default path is
+  report's path; `reply-cap.py` sends a reply over 250 words back once.
+  The default path is
   `.claude/specs/reports/<agent>-<slug>.md` in the agent's checkout
   (gitignored with `.claude/specs/`; only a run's final commit deletes it); name
   another in the prompt when needed (`implementer-wt`: an absolute path
