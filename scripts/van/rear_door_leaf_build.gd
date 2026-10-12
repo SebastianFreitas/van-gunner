@@ -116,6 +116,8 @@ static func _door_body_material(left: Node3D, profile: RearDoorProfile) -> Shade
 	var mat := ShaderMaterial.new()
 	mat.shader = DOOR_SHADER
 	mat.set_shader_parameter("leaf_offset", profile.leaf_offset)
+	mat.set_shader_parameter("rust_amount", profile.rust_amount)
+	mat.set_shader_parameter("cabin_paint", profile.cabin_paint)
 	if profile.is_donor():
 		mat.set_shader_parameter("paint_color", profile.paint_color)
 		mat.set_shader_parameter("paint_coverage", profile.paint_coverage)

@@ -9,6 +9,7 @@ const _Panels := preload("res://scripts/van/look/rear_door_donor_panels.gd")
 const _Can := preload("res://scripts/van/look/rear_door_jerry_can.gd")
 const _Hinges := preload("res://scripts/van/look/rear_door_donor_hinges.gd")
 const _Welds := preload("res://scripts/van/look/rear_door_donor_welds.gd")
+const _Patches := preload("res://scripts/van/look/rear_door_donor_patches.gd")
 ## Collision stays this far inside the opening's edges.
 const CLEAR := 0.02
 ## How far the panel's rails and bolts stand into the cabin from the bay floor.
@@ -39,7 +40,10 @@ static func build(hinge: Node3D, rng: RandomNumberGenerator) -> Array[Node3D]:
 			Vector3(inner.size.x, inner.size.y, PANEL_STAND)))
 	var rect := _leaf_rect(hinge)
 	_Hinges.build(hinge, rect, rng, out)
-	_Welds.build(hinge, rect, _LeafBuild.profile_for(true), rng, out)
+	var profile := _LeafBuild.profile_for(true)
+	_Welds.build(hinge, rect, profile, rng, out)
+	out.append_array(_Patches.build(hinge, rect, profile, rng))
+	out.append_array(RearDoorDonorJamb.build(hinge, rng))
 	return out
 
 

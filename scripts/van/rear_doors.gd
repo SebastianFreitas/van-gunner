@@ -259,8 +259,11 @@ func _create_leaf_collision_body(hinge: Node3D) -> StaticBody3D:
 			var half := (cs.shape as BoxShape3D).size * 0.5
 			lo = lo.min(Vector2(cs.position.x - half.x, cs.position.y - half.y))
 			hi = hi.max(Vector2(cs.position.x + half.x, cs.position.y + half.y))
-	var outline := _LEAF_BUILD._Skin.leaf_outline(Rect2(lo, hi - lo),
-			_LEAF_BUILD.profile_for(hinge == _left_hinge))
+	var profile := _LEAF_BUILD.profile_for(hinge == _left_hinge)
+	var outline := _LEAF_BUILD._Skin.leaf_outline(Rect2(lo, hi - lo), profile)
+	if profile.is_donor():
+		# The flame-cut hole is solid once patched: collide with the pre-cut shape.
+		outline = profile.footprint(Rect2(lo, hi - lo))
 	if interact.position.x < 0.0:
 		for i in outline.size():
 			outline[i].x = lo.x + hi.x - outline[i].x

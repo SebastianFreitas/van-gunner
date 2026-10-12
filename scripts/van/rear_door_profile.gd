@@ -48,6 +48,9 @@ var paint_island_scale := 1.8
 var leaf_offset := Vector2.ZERO
 var roughness := 0.86
 var metallic := 0.22
+## Share of the rust base and streaks kept, and whether the cabin face is painted like the street.
+var rust_amount := 1.0
+var cabin_paint := 0.0
 
 
 ## The original leaf: 18 cm corners, three pressed openings, swage beads and window doubler.
@@ -58,13 +61,15 @@ static func stock() -> RearDoorProfile:
 
 
 ## The mismatched donor door: big hinge rounding, diagonal latch cut, two big bays, wide bead,
-## dull mustard paint in flaking islands over rust.
+## utility-yellow paint, mostly intact, over little rust.
 static func donor() -> RearDoorProfile:
 	var p := RearDoorProfile.new()
 	p._donor = true
-	# Luminance about 0.15 linear, inside the 0.25 large-surface albedo budget.
-	p.paint_color = Color(0.52, 0.40, 0.11)
-	p.paint_coverage = 0.38
+	# Ex-fleet utility yellow, luminance about 0.24 linear, just inside the 0.25 budget.
+	p.paint_color = Color(0.62, 0.52, 0.04)
+	p.paint_coverage = 0.80
+	p.rust_amount = 0.45
+	p.cabin_paint = 1.0
 	p.paint_island_scale = 1.3
 	p.leaf_offset = Vector2(91.7, 23.1)
 	p.window_hole = _donor_window()
@@ -88,8 +93,24 @@ func window_bounds() -> Rect2:
 
 
 ## The leaf outline counter-clockwise inside `r`, or empty for the stock one (rear_door_skin.gd
-## builds that from its own corner radii).
+## builds that from its own corner radii). The donor's hinge side is the flame cut: vertices 0-3
+## are bottom-hinge, bottom-latch, latch-top and the diagonal's end, then the top corner and the
+## cut down to vertex 0.
 func outline(r: Rect2) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	if not _donor:
+		return pts
+	var cut := donor_cut(r)
+	pts.append(cut[3])
+	pts.append(Vector2(r.end.x, r.position.y))
+	pts.append(Vector2(r.end.x, r.end.y - DONOR_LATCH_CUT))
+	pts.append(Vector2(r.end.x - DONOR_LATCH_CUT, r.end.y))
+	pts.append_array(cut.slice(0, 3))
+	return pts
+
+
+## The donor's pre-cut shape (the big hinge rounding): what collision and interaction cover.
+func footprint(r: Rect2) -> PackedVector2Array:
 	var pts := PackedVector2Array()
 	if not _donor:
 		return pts
@@ -101,17 +122,45 @@ func outline(r: Rect2) -> PackedVector2Array:
 	return pts
 
 
-## The flat plate closing the gap between the hinge-side rounding and the opening's corner.
-## Empty for the stock leaf.
+## Where the flame cut changes direction: the window hole's bottom less 0.10 (hole centre is
+## REAR_DOOR_TOP - REAR_WINDOW_Y below the leaf top).
+func donor_split_y(r: Rect2) -> float:
+	var centre_y := r.end.y - (VanInteriorSize.REAR_DOOR_TOP - VanOpenings.REAR_WINDOW_Y)
+	return centre_y + window_bounds().position.y - 0.10
+
+
+## The flame cut, top to bottom: slanting in under the top, then a near-vertical run to the floor.
+func donor_cut(r: Rect2) -> PackedVector2Array:
+	var split_y := donor_split_y(r)
+	var x := r.position.x
+	return PackedVector2Array([Vector2(x + 0.52, r.end.y), Vector2(x + 0.46, split_y),
+			Vector2(x + 0.42, split_y - 0.06), Vector2(x + 0.42, r.position.y)])
+
+
+## The cut's x at height `y` (the stock leaf has none: the hinge edge). It only grows with y.
+func cut_x(r: Rect2, y: float) -> float:
+	if not _donor:
+		return r.position.x
+	var cut := donor_cut(r)
+	for i in cut.size() - 1:
+		if y >= cut[i + 1].y:
+			var t := clampf((cut[i].y - y) / (cut[i].y - cut[i + 1].y), 0.0, 1.0)
+			return lerpf(cut[i].x, cut[i + 1].x, t)
+	return cut[3].x
+
+
+## The flat strip behind the cut, 0.03 inboard of it and never across it. Empty for the stock leaf.
 func filler(r: Rect2) -> PackedVector2Array:
 	var pts := PackedVector2Array()
 	if not _donor:
 		return pts
-	var rad := DONOR_HINGE_ROUND
-	pts.append(Vector2(r.position.x + rad, r.end.y - FILLER_INSET))
-	pts.append(Vector2(r.position.x + FILLER_INSET, r.end.y - FILLER_INSET))
-	pts.append(Vector2(r.position.x + FILLER_INSET, r.end.y - rad))
-	pts.append_array(_hinge_arc(r, rad - FILLER_OVERLAP, PI, PI * 0.5))
+	var cut := donor_cut(r)
+	cut[0].y -= FILLER_INSET
+	cut[3].y += FILLER_INSET
+	for p in cut:
+		pts.append(p + Vector2(FILLER_OVERLAP, 0.0))
+	for i in range(cut.size() - 1, -1, -1):
+		pts.append(cut[i] + Vector2(FILLER_OVERLAP + 0.02, 0.0))
 	return pts
 
 
@@ -138,7 +187,7 @@ func cabin_openings(r: Rect2, win: PackedVector2Array, win_slope: float) -> Arra
 			Vector2(vx1, vent_y1), Vector2(vx1, vent_y0)], BAY_ROUND))
 	var molle_y0 := r.position.y + MOLLE_BEAM_BOTTOM + BAY_SLOPE
 	var molle_y1 := lo.y - win_slope - MOLLE_BEAM_BELOW - BAY_SLOPE
-	var mx0 := r.position.x + MOLLE_SIDE_BEAM
+	var mx0 := maxf(r.position.x + MOLLE_SIDE_BEAM, cut_x(r, molle_y1 + BAY_SLOPE) + 0.06)
 	var mx1 := r.end.x - MOLLE_SIDE_BEAM
 	out.append(_Press.rounded([Vector2(mx0, molle_y0), Vector2(mx0, molle_y1),
 			Vector2(mx1, molle_y1), Vector2(mx1, molle_y0)], BAY_ROUND))

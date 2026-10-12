@@ -46,7 +46,9 @@ static func build(st: SurfaceTool, rect: Rect2, win: PackedVector2Array, z_stree
 	var x0 := rect.position.x + BEAD_END_INSET
 	var x1 := rect.end.x - BEAD_END_INSET
 	for y in bead_ys:
-		var bead := _Press.rounded([Vector2(x0, y - half_w), Vector2(x0, y + half_w),
+		# A donor bead starts 3 cm inboard of the flame cut at its highest edge.
+		var bx0 := maxf(x0, profile.cut_x(rect, y + half_w) + 0.03)
+		var bead := _Press.rounded([Vector2(bx0, y - half_w), Vector2(bx0, y + half_w),
 				Vector2(x1, y + half_w), Vector2(x1, y - half_w)], half_w * 0.98)
 		var prof: Array[Vector2] = _slope(-BEAD_SLOPE, 0.0, BEAD_H)
 		_sweep(st, bead, prof, z_street)

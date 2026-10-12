@@ -1,7 +1,7 @@
 extends RefCounted
 ## Cut-to-fit welds of the donor rear leaf (spec 4): an L-section angle-iron strip along each raw
 ## cut edge (bottom, latch side, diagonal top cut) with an uneven weld bead where it meets the
-## skin, and a bead all round the hinge-corner filler plate with two plug welds in its middle.
+## skin, and a bead all round the hinge-side filler strip with two plug welds on its centre line.
 ## Positions come from the leaf profile's outline and filler, never from constants of their own.
 
 const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
@@ -31,12 +31,12 @@ const PLUG_R := 0.02
 
 
 static func rust_steel() -> Material:
-	return _Panels.flat(Color(0.22, 0.14, 0.09), 0.88, 0.35)
+	return _Panels.flat(Color(0.22, 0.14, 0.09), 0.88, 0.3)
 
 
 ## Fresh welds: darker, bluish steel.
 static func weld_steel() -> Material:
-	return _Panels.flat(Color(0.09, 0.11, 0.16), 0.5, 0.6)
+	return _Panels.flat(Color(0.09, 0.11, 0.16), 0.78, 0.3)
 
 
 ## Builds the strips, their beads and the filler welds under `hinge`; `rect` is the leaf rect in
@@ -49,7 +49,8 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile,
 	iron.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var beads := SurfaceTool.new()
 	beads.begin(Mesh.PRIMITIVE_TRIANGLES)
-	# The three straight cuts follow the hinge-side arc in the outline: bottom, latch, diagonal.
+	# The three straight cuts are the first outline segments after the hinge-side corner: bottom,
+	# latch, diagonal.
 	for i: int in 3:
 		var a := outline[i]
 		var b := outline[i + 1]
@@ -164,20 +165,19 @@ static func _filler(st: SurfaceTool, poly: PackedVector2Array, rng: RandomNumber
 				Vector2.ZERO, rng)
 
 
-## Two plug-weld discs in the sliver between the corner and the arc: half way along the corner's
-## diagonal, pushed a little each way along the arc's tangent.
+## Two plug-weld discs on the filler strip's centre line, a third and three quarters of the way
+## down from its first corner (the strip is the cut offset twice: points 0-3 down one edge, 4-7
+## back up the other).
 static func _filler_plugs(parent: Node3D, poly: PackedVector2Array, out: Array[Node3D]) -> void:
-	var corner := poly[1]
-	var arc_mid := poly[3 + int((poly.size() - 3) * 0.5)]
-	var u := arc_mid - corner
-	var v := Vector2(-u.y, u.x)
+	var top := (poly[1] + poly[6]) * 0.5
+	var bottom := (poly[3] + poly[4]) * 0.5
 	var disc := CylinderMesh.new()
 	disc.top_radius = PLUG_R
 	disc.bottom_radius = PLUG_R * 1.15
 	disc.height = BEAD_H
 	disc.radial_segments = 8
 	disc.rings = 1
-	for s: float in [-1.0, 1.0]:
-		var p := corner + u * 0.5 + v * 0.3 * s
+	for t: float in [0.33, 0.75]:
+		var p := top.lerp(bottom, t)
 		_Panels.add(parent, "FillerPlug", disc, weld_steel(),
 				Vector3(p.x, p.y, FILLER_FACE_Z - BEAD_H * 0.4), Vector3(PI * 0.5, 0.0, 0.0), out)

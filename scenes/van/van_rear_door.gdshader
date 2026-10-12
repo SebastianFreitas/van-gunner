@@ -33,6 +33,10 @@ uniform float paint_coverage : hint_range(0.0, 1.0) = 0.5;
 uniform float paint_island_scale = 1.8;
 uniform float roughness_value : hint_range(0.0, 1.0) = 0.86;
 uniform float metallic_value : hint_range(0.0, 0.6) = 0.22;
+// Scales the rust base and the streaks on both faces (1 = original).
+uniform float rust_amount : hint_range(0.0, 1.0) = 1.0;
+// 1 gives the cabin face the street face's paint system too (0 = bare rust and primer only).
+uniform float cabin_paint : hint_range(0.0, 1.0) = 0.0;
 
 varying vec3 v_pos;
 varying flat float v_tag;
@@ -61,10 +65,10 @@ void fragment() {
 	float pits = smoothstep(0.7, 0.9, noise21(q * 30.0)) * fine_vis;
 	float streak = fbm(vec2(q.x * 14.0, q.y * 1.4) + 5.5);
 	float rust = smoothstep(0.34, 0.66, blotch + low * 0.2 + (fine - 0.5) * 0.3);
-	rust = clamp(rust + edge * 0.35, 0.0, 1.0);
+	rust = clamp(rust + edge * 0.35, 0.0, 1.0) * rust_amount;
 	float deep = smoothstep(0.55, 1.0, rust) * (0.5 + 0.5 * pits + 0.3 * fine);
 
-	vec3 col = mix(steel_color, scale_color, smoothstep(0.35, 0.8, streak) * 0.8);
+	vec3 col = mix(steel_color, scale_color, smoothstep(0.35, 0.8, streak) * 0.8 * rust_amount);
 	col = mix(col, rust_color, rust * 0.9);
 	col = mix(col, deep_rust_color, deep * 0.7);
 	col = mix(col, vec3(0.01), pits * rust * 0.5);
@@ -78,7 +82,8 @@ void fragment() {
 		metal = 0.0;
 	} else if (tag == 0) {
 		// Street face: heavy rust that runs down in streaks, paint islands in the clear middle.
-		float run = smoothstep(0.5, 0.75, fbm(vec2(q.x * 22.0, q.y * 2.2) + vec2(3.1, 0.4)));
+		float run = smoothstep(0.5, 0.75, fbm(vec2(q.x * 22.0, q.y * 2.2) + vec2(3.1, 0.4)))
+				* rust_amount;
 		float island = smoothstep(1.0 - paint_coverage, 1.1 - paint_coverage,
 				fbm(q * paint_island_scale + vec2(9.4, 2.6)) + 0.08 * (fine - 0.5));
 		island *= smoothstep(0.2, 0.6, edge_d) * (1.0 - run * 0.8);
@@ -93,11 +98,28 @@ void fragment() {
 		metal = mix(metal, 0.1, on);
 	} else if (tag == 1) {
 		// Cabin face: mostly bare rusty steel, a few primer-grey patches, grime low down.
+		float on = 0.0;
+		if (cabin_paint > 0.0) {
+			// Same paint system as the street face, mirrored pattern offset so the faces differ.
+			float run = smoothstep(0.5, 0.75, fbm(vec2(q.x * 22.0, q.y * 2.2) + vec2(5.3, 1.9)))
+					* rust_amount;
+			float island = smoothstep(1.0 - paint_coverage, 1.1 - paint_coverage,
+					fbm(q * paint_island_scale + vec2(4.1, 7.7)) + 0.08 * (fine - 0.5));
+			island *= smoothstep(0.2, 0.6, edge_d) * (1.0 - run * 0.8);
+			on = smoothstep(0.15, 0.4, island) * cabin_paint;
+			float lip = on * (1.0 - smoothstep(0.4, 0.7, island));
+			vec3 paint = paint_color * (0.85 + 0.3 * fine);
+			paint = mix(paint, paint * 0.55, lip * fine_vis);
+			col = mix(col, rust_color * 0.8, run * 0.4 * (1.0 - on) * cabin_paint);
+			col = mix(col, paint, on);
+			rough = mix(rough, 0.88, on);
+			metal = mix(metal, 0.1, on);
+		}
 		float patch = smoothstep(0.6, 0.7, fbm(q * 2.4 + vec2(2.0, 7.0)) + 0.1 * (fine - 0.5));
 		patch *= 1.0 - edge * 0.8;
 		vec3 primer = primer_color * (0.85 + 0.3 * fine);
 		col = mix(col, primer, patch * 0.85);
-		col = mix(col, deep_rust_color, low * 0.3 * (1.0 - patch));
+		col = mix(col, deep_rust_color, low * 0.3 * (1.0 - patch) * (1.0 - on));
 		rough = mix(rough, 0.84, patch);
 		metal = mix(metal, 0.12, patch);
 	} else if (tag == 3) {
