@@ -12,6 +12,7 @@ const _FacadeCommands := preload("res://scripts/debug/debug_facade_commands.gd")
 const _ArmsCommands := preload("res://scripts/debug/debug_arms_commands.gd")
 const _PerfCommands := preload("res://scripts/debug/debug_perf_commands.gd")
 const _GunCommands := preload("res://scripts/debug/debug_gun_commands.gd")
+const _WindowCams := preload("res://scripts/debug/debug_window_cams.gd")
 const _Completion := preload("res://scripts/debug/debug_completion.gd")
 
 var _commands: Dictionary = {}
@@ -26,6 +27,7 @@ var _facade: RefCounted
 var _arms: RefCounted
 var _gun: RefCounted
 var _perf: RefCounted
+var _wcam: RefCounted
 var _completion: RefCounted
 
 
@@ -65,6 +67,7 @@ func _register_commands() -> void:
 	_arms = _ArmsCommands.new(self)
 	_gun = _GunCommands.new(self)
 	_perf = _PerfCommands.new(self)
+	_wcam = _WindowCams.new(self)
 	_completion = _Completion.new(self)
 	_commands = {
 		"help": _cmd_help,
@@ -99,6 +102,7 @@ func _register_commands() -> void:
 		"arms": _arms.cmd_arms,
 		"gun": _gun.cmd_gun,
 		"perf": _perf.cmd_perf,
+		"wcam": _wcam.cmd_wcam,
 	}
 
 
@@ -171,6 +175,7 @@ func _usage_lines() -> Dictionary:
 		"facade": "facade [sub]    street facade debug (try facade help)",
 		"walk_wreck": "walk_wreck [share]  obliterated sidewalk share (default 0.30), rebuilds the street",
 		"arms": "arms <sub> [args]  first-person arms debug (current values shown)",
+		"wcam": "wcam list | <name> [in] | off  look through a van window camera (in: turned inward)",
 		"gun": "gun <sub> [args]  railgun attachment sockets (gun sockets on)",
 		"perf": "perf [off|fps|full|log|spans|reset|hitch <ms>]  F3 perf overlay, hitch log, "
 				+ "span totals",

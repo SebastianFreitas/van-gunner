@@ -79,6 +79,8 @@ const DOOR_BOT_Y := 0.15
 const DOOR_TOP_Y := 2.85
 const DOOR_WIN_BOT_Y := 1.85
 const DOOR_WIN_TOP_Y := 2.65
+## Cab door window pane offset outside the cab side (keeps the outward pane from flickering).
+const DOOR_WIN_OUT := 0.025
 
 
 func rebuild_look(look: VanLook) -> void:

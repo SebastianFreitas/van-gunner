@@ -16,6 +16,7 @@ const _LoperKnock := preload("res://tools/smoke/smoke_loper_knock.gd")
 const _Route := preload("res://tools/smoke/smoke_route.gd")
 const _Seeds := preload("res://tools/smoke/smoke_seeds.gd")
 const _Shots := preload("res://tools/smoke/smoke_shots.gd")
+const _WcamShots := preload("res://tools/smoke/smoke_shots_wcam.gd")
 
 var _watchdog: SceneTreeTimer
 ## Direction chosen at the previous forced fork, so the next one picks differently.
@@ -28,12 +29,15 @@ var _route: RefCounted
 var _halt: RefCounted
 ## Screenshot taker (tools/smoke.py --shots); null in the headless run.
 var _shots: _Shots
+## Only the window cam views, then quit (tools/smoke.py --shots DIR --views wcam).
+var _wcam_only := false
 
 
 func _ready() -> void:
 	_watchdog = get_tree().create_timer(_WATCHDOG_SECONDS)
 	_watchdog.timeout.connect(func() -> void: _fail("watchdog timeout"))
 	var van_seeds := 0
+	_wcam_only = "--smoke-views=wcam" in OS.get_cmdline_user_args()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--smoke-shots="):
 			_shots = _Shots.new()
@@ -75,6 +79,13 @@ func _run() -> void:
 
 	await _seconds(2.0)
 	# The van drives at IDLE and the timers are wall-clock, so the shots pin it in place.
+	if _wcam_only and _shots != null:
+		var wcam_pinned := _shots.pin_van()
+		await _WcamShots.new(_shots).run()
+		_shots.unpin_van(wcam_pinned)
+		_log("done")
+		get_tree().quit(0)
+		return
 	_ArmsPrints.new(self).run()
 	var pinned := _shots.pin_van() if _shots != null else -1.0
 	await _shot("idle")

@@ -32,6 +32,9 @@ behaviour of the headless run is unchanged.
 
 `--van-seeds N` (with `--shots`) also shoots the van's side view for N rerolled
 look seeds at the idle checkpoint.
+
+`--views wcam` (with `--shots`) saves only `wcam_<name>.png` and `wcam_<name>_out.png` for every
+van window camera, skips the stress shards and the fingerprint, and writes no verify stamp.
 """
 import argparse
 import difflib
@@ -106,7 +109,7 @@ def _game_ok(job: Job) -> bool:
     if not any(line == "SMOKE: done" for line in smoke_lines):
         print("SMOKE FAILED: missing 'SMOKE: done' line")
         return False
-    if not FINGERPRINT.exists():
+    if not FINGERPRINT.exists() and "--smoke-views=wcam" not in job.args:
         print("SMOKE FAILED: missing fingerprint.txt")
         return False
     return True
@@ -189,6 +192,11 @@ def main() -> int:
         help="with --shots: also shoot the van's side view for N rerolled look seeds at IDLE",
     )
     parser.add_argument(
+        "--views", choices=["wcam"],
+        help="with --shots: save only this view set and quit (wcam: every van window camera, "
+        "inside and out, as wcam_<name>[_out].png); the default set is unchanged",
+    )
+    parser.add_argument(
         "--plant-flicker", action="store_true",
         help="plant a coplanar box pair in the audit to prove the strict audit fails",
     )
@@ -212,6 +220,9 @@ def main() -> int:
         print("SMOKE FAILED: --bless and --shots don't mix; bless from a headless run")
         return 1
 
+    if opts.views and not opts.shots:
+        print("SMOKE FAILED: --views needs --shots")
+        return 1
     if opts.van_seeds < 0 or (opts.van_seeds > 0 and not opts.shots):
         print("SMOKE FAILED: --van-seeds needs --shots and a count of 0 or more")
         return 1
@@ -241,6 +252,8 @@ def main() -> int:
             "--resolution", "1440x720", "res://tools/smoke/smoke_test.tscn", "--",
             "--smoke-sandbox", "--smoke-shots=" + shots.as_posix(),
         ]
+        if opts.views:
+            args.append("--smoke-views=" + opts.views)
         if opts.van_seeds > 0:
             args.append("--smoke-van-seeds=" + str(opts.van_seeds))
         args += ["--smoke-pre=" + line for line in opts.pre]
@@ -265,7 +278,7 @@ def main() -> int:
         )
 
     game = Job("game", args, EST_GAME, game_blocking)
-    stress = [
+    stress = [] if opts.views else [
         Job(
             f"stress {i}/{STRESS_SHARDS}",
             [
@@ -322,6 +335,14 @@ def main() -> int:
         return 1
     if not _stress_ok(stress):
         return 1
+    if opts.views:
+        # A view-set run skips the fingerprint, so it is no verify and writes no stamp.
+        pngs = sorted(shots.glob("*.png"))
+        print(f"   {len(pngs)} shot(s) in {shots}:")
+        for png in pngs:
+            print("     " + png.name)
+        print("SMOKE VIEWS DONE")
+        return 0
     audit_ok = shots is not None or bool(paused) or _audit_ok(audit)
 
     if opts.bless:

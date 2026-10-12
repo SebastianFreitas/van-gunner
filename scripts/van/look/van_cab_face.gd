@@ -118,7 +118,7 @@ func _build_door_window(suffix: String, s: float, win_mat: Material,
 	var top_y := VanCab.DOOR_WIN_TOP_Y
 	var centre := Vector3(0.0, 1.5, (VanCab.DOOR_BACK_Z + VanCab.DOOR_FRONT_Z) * 0.5)
 	# 2.5 cm off the cab side so the outward-facing pane does not flicker against it.
-	var wx := s * (VanCab.CAB_HALF_W + 0.025)
+	var wx := s * (VanCab.CAB_HALF_W + VanCab.DOOR_WIN_OUT)
 
 	var a := Vector3(wx, bot_y, back_z)
 	var b := Vector3(wx, bot_y, front_z)

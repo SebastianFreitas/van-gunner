@@ -51,6 +51,8 @@ Render layers and light pairing (set `layers` before `add_child`) are in `van-re
 
 ## Van shell geometry
 
+Before changing any window, inspect it with `py -3 tools/smoke.py --shots <scratchpad>/wcam --views wcam`: it writes `wcam_<name>.png` (inside, looking at the window) and `wcam_<name>_out.png` (outside, looking at the window) for the 8 cameras `VanWindowCams` lists.
+
 `VanSideWall` exposes the bow profile (`wall_x_at`, `local_x_on_wall`) and the curved mesh builders (`build_curved_shell_mesh`, `build_curved_pane_from_poly`, `build_curved_frame_ring_mesh`) that doors, windows, iron crosses, bulkhead and hull use. The builders delegate to `van_side_wall_shell.gd`; the wall's own panel is `van_side_wall_panel.gd`. Keep those public names on `VanSideWall`.
 
 `VanBodyProfile` (`scripts/van/van_body_profile.gd`, RefCounted, built by `VanBodyProfile.from_interior(Interior)`) is the one cross-section inside and outside sample: `inner_x_at(y)`, `outer_x_at(y)` (`WALL_THICKNESS` beyond the liner), `roof_y_at(x)`, `outer_roof_y_at(x)`, `section_points(steps, outer)` and `build_reveal_mesh`. It lives beside `VanSideWall` because that script is near the 400-line cap. Anything new that must meet the walls or the vault (a partition, a cab back, a skin) takes its outline from here, never from its own constants: the old front end was three slabs with their own insets and it deformed against the vault.
