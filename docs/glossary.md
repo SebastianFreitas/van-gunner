@@ -44,7 +44,12 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - build-out: a recessed lot whose sidewalk widens to the wall instead of the road (kind 2 run)
 - donor door / right door (owner): the rear leaf at x<0 (`van_shell.tscn` node `LeftHinge`, on the player's right from inside; the code names it left from the street), built from `RearDoorProfile.donor()` and `scripts/van/look/rear_door_donor_*.gd`; the x>0 leaf is the stock leaf
 - railgun: the held gun; RailgunBody, scripts/player/arms/railgun_body.gd (+ railgun_junk, rail_glow)
-- rails: the railgun's two square barrels on top of the body
+- rails: the railgun's two flush rails, `UpperBarrel` and `LowerBarrel` (railgun_barrels.gd), with the gap between
+- receiver: the railgun's panelled box behind the rails, node `Receiver` (railgun_receiver.gd)
+- stock: the railgun's rear block with the rubber `StockPad` and the `Lamp0` window (railgun_receiver.gd `_stock`)
+- breech: the sliding block `Breech` over the slug rod in the receiver's top channel (railgun_pivots.gd)
+- charge cell: the hinged aluminium box `ChargeCell` on the receiver's left flank, with `Lamp1` and cables (railgun_pivots.gd)
+- vent flaps: the two hinged covers `VentL` / `VentR` on the receiver's top (railgun_pivots.gd)
 - socket: a Marker3D `Socket_<zone>_<letter>` on the railgun Body that a boon visual bolts to (gun_sockets.gd)
 - boon visual: the piece a boon adds to the railgun (gun_boon_visuals.gd REGISTRY, built in gun_boon_pieces.gd)
 - work lamp: the caged hanging lamp lighting the van's cargo floor (VanWorkLamp, scripts/van/look/van_work_lamp.gd)

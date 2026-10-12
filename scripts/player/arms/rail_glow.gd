@@ -13,7 +13,7 @@ const FLARE_LIGHT := 2.5
 ## World metres: the rig is 0.18-scaled, so the light lives under the unscaled Weapon.
 const LIGHT_RANGE := 0.45
 ## The lamp bank's own small pool, so the receiver's rear face and what sits on it is lit.
-const LAMP_LIGHT_RANGE := 0.35
+const LAMP_LIGHT_RANGE := 0.50
 ## Rig units above the strip's centre, so the pool washes the rail tops.
 const LIGHT_LIFT := 0.0
 
@@ -61,10 +61,9 @@ func _process(_delta: float) -> void:
 	_light.position = host.global_transform.affine_inverse() * at
 	if _lamps.is_empty():
 		return
-	var mid := Vector3.ZERO
-	for lamp: MeshInstance3D in _lamps:
-		mid += lamp.global_position / float(_lamps.size())
-	_lamp_light.position = host.global_transform.affine_inverse() * mid
+	# Just off the stock's rear face, in Lamp0's space; Lamp1 only flares.
+	var lamp_at := _lamps[0].global_transform * Vector3(0.0, 0.0, 0.03)
+	_lamp_light.position = host.global_transform.affine_inverse() * lamp_at
 
 
 ## Finds the parts once the rig is built and listens for shots.
@@ -83,7 +82,7 @@ func _bind() -> void:
 		_strip_mat = _own_material(_strip)
 		_strip_mat.emission_energy_multiplier = IDLE_STRIP
 	for n: int in range(4):
-		var lamp := parent.get_node_or_null("Lamp%d" % n) as MeshInstance3D
+		var lamp := parent.find_child("Lamp%d" % n, true, false) as MeshInstance3D
 		if lamp != null:
 			var mat := _own_material(lamp)
 			mat.emission_energy_multiplier = IDLE_LAMP

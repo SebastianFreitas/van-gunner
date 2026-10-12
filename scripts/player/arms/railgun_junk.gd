@@ -34,36 +34,38 @@ static func _tape(body: Node3D, p: float, rng: RandomNumberGenerator, zf: float,
 	for w: Array in wraps:
 		for k: int in range(w[3] as int):
 			var tilt := Basis(Vector3.RIGHT, deg_to_rad(rng.randf_range(-1.5, 1.5)))
-			RailgunWear._wrap(body, "Tape%s%d" % [w[0] as String, k], ArmMaterials.tape(rng),
+			RailgunWear._wrap(body, "Tape%s%d" % [w[0] as String, k], ArmMaterials.gun_tape(rng.randf_range(0.0, 100.0)),
 					w[1] as bool, (w[2] as float) - k * 0.036 * p, 0.028 * p, 0.012 * p,
 					0.003 * p, p, ya, tilt)
 
 
-## Weld beads along each side of the wedge's base seam, body-coloured and low. The run is
-## broken: two beads gone on the right, one cracked clean through on the left, one fat blob.
-static func _welds(body: Node3D, p: float, rng: RandomNumberGenerator, zf: float,
+## Weld beads up each side of the stock-to-receiver seam, low and standing on the flank. The run
+## is broken: two beads gone on the right, one cracked clean through on the left, one fat blob.
+## Four more run down the donor plate's rear edge.
+static func _welds(body: Node3D, p: float, rng: RandomNumberGenerator, _zf: float,
 		ya: float, weld: Material) -> void:
 	var crack := ArmMaterials.surface(Color(0.03, 0.025, 0.02), Color(0.02, 0.02, 0.02),
 			Color(0.02, 0.02, 0.02), 60.0, 6.0, 0.0, 0.6, 0.9, 0.0, 0.0)
+	var flat := Vector3(1.0, 3.0, 0.7)
 	for side: float in [-1.0, 1.0]:
 		var tag := "L" if side < 0.0 else "R"
 		for k: int in range(5):
-			var z := lerpf(0.30 * p - 0.02 * p, zf - 0.13 * p, k / 4.0) \
-					+ rng.randf_range(-0.01, 0.01) * p
+			var y := ya + (0.40 + 0.1375 * k) * p + rng.randf_range(-0.01, 0.01) * p
 			if side > 0.0 and (k == 1 or k == 3):
 				continue
 			var big := 1.5 if side > 0.0 and k == 2 else 1.0
-			# On the base plate's top edge, against the wedge's flank.
-			var at := Vector3(side * RailgunBarrels.UP_HW * p, ya + 0.165 * p, z)
-			_bead(body, "WeldWedge%s%d" % [tag, k], weld, at, 0.03 * p * big,
-					Vector3(1.0, 0.7, 3.0))
+			var at := Vector3(side * 0.21 * p, y, 0.32 * p)
+			_bead(body, "WeldSeam%s%d" % [tag, k], weld, at, 0.03 * p * big, flat)
 			if side < 0.0 and k == 2:
-				ArmParts.mesh(body, "WeldCrack", ArmParts.box(Vector3(0.05 * p, 0.05 * p, 0.012 * p)),
+				ArmParts.mesh(body, "WeldCrack", ArmParts.box(Vector3(0.012 * p, 0.05 * p, 0.05 * p)),
 						crack, at + Vector3(-0.01 * p, 0.0, 0.0))
+	for k: int in range(4):
+		_bead(body, "WeldPlate%d" % k, weld,
+				Vector3(0.22 * p, ya + (0.25 + 0.1 * k) * p, -0.55 * p), 0.03 * p, flat)
 
 
 ## Bolt heads gone: a dark pit over the head of one band bolt on each barrel, and a loose bolt
-## backing out of the left strut.
+## backing out of the receiver's left flank.
 static func _holes(body: Node3D, p: float, zf: float, ya: float) -> void:
 	var pit := ArmMaterials.surface(Color(0.02, 0.018, 0.016), Color(0.015, 0.015, 0.015),
 			Color(0.02, 0.02, 0.02), 60.0, 6.0, 0.0, 0.6, 0.9, 0.0, 0.0)
@@ -78,11 +80,15 @@ static func _holes(body: Node3D, p: float, zf: float, ya: float) -> void:
 		ArmParts.mesh(body, h[0] as String, ArmParts.cyl(0.036 * p, 0.006 * p, 0.036 * p, 8), pit,
 				Vector3(x + signf(x) * 0.043 * p, h[2] as float, h[3] as float),
 				ArmParts.along(dir))
+	# RecBoltL1 itself is dropped: the same head stands 0.03p out of the receiver's left flank, tilted.
+	var old := body.get_node_or_null("RecBoltL1")
+	if old != null:
+		body.remove_child(old)
+		old.free()
 	var steel := ArmMaterials.steel(11.0)
-	var strut_z := zf - 0.15 * p - 0.17 * p
-	ArmParts.mesh(body, "LooseBolt", ArmParts.cyl(0.012 * p, 0.09 * p, 0.012 * p, 6), steel,
-			Vector3(-0.19 * p, ya + 0.28 * p, strut_z + 0.07 * p),
-			Basis(Vector3.BACK, deg_to_rad(-20.0)) * ArmParts.along(Vector3.LEFT))
-	ArmParts.mesh(body, "LooseBoltHead", ArmParts.cyl(0.028 * p, 0.02 * p, 0.028 * p, 6), steel,
-			Vector3(-0.235 * p, ya + 0.28 * p + 0.015 * p, strut_z + 0.07 * p),
-			Basis(Vector3.BACK, deg_to_rad(-20.0)) * ArmParts.along(Vector3.LEFT))
+	var tilt := Basis(Vector3.BACK, deg_to_rad(-20.0)) * ArmParts.along(Vector3.LEFT)
+	ArmParts.mesh(body, "LooseBolt", ArmParts.cyl(0.03 * p, 0.03 * p, 0.03 * p, 6),
+			steel, Vector3(-0.245 * p, ya + 0.28 * p, -0.35 * p), tilt)
+	# Shank from inside the flank (x -0.22p) out to the head, on the head's tilted axis.
+	ArmParts.mesh(body, "LooseBoltShank", ArmParts.cyl(0.012 * p, 0.06 * p, 0.012 * p, 6),
+			steel, Vector3(-0.2325 * p, ya + 0.28 * p, -0.35 * p), tilt)

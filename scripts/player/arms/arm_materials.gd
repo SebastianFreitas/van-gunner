@@ -74,27 +74,61 @@ static func rust(seed_offset: float) -> ShaderMaterial:
 
 
 ## Flaking, pitted rust for patches laid over the body: darker and redder than `rust`, all grime.
+## No specular: the warm lights' sheen would wash its near-black albedo to the body's tan.
 static func heavy_rust(seed_offset: float) -> ShaderMaterial:
-	return surface(Color(0.24, 0.115, 0.06), Color(0.09, 0.045, 0.03), Color(0.06, 0.05, 0.04),
-			60.0, 6.0, 0.0, 1.0, 0.95, 0.1, seed_offset)
+	var mat := surface(Color(0.085, 0.05, 0.035), Color(0.06, 0.035, 0.025),
+			Color(0.06, 0.04, 0.03), 60.0, 6.0, 0.0, 0.5, 1.0, 0.0, seed_offset)
+	mat.set_shader_parameter(&"specular_value", 0.0)
+	return mat
+
+
+## Dull grey cloth tape: lighter and greyer than the rusty body, so wraps stand out.
+static func gun_tape(seed_offset: float) -> ShaderMaterial:
+	return surface(Color(0.21, 0.235, 0.25), Color(0.18, 0.2, 0.215), Color(0.18, 0.2, 0.21),
+			60.0, 6.0, 0.0, 0.4, 1.0, 0.0, seed_offset)
 
 
 ## Heat-discoloured steel near the shot: blue-black with a brown cast.
 static func scorched_steel(seed_offset: float) -> ShaderMaterial:
-	return surface(Color(0.06, 0.055, 0.065), Color(0.03, 0.025, 0.03), Color(0.05, 0.035, 0.025),
-			60.0, 6.0, 0.0, 0.8, 0.5, 0.5, seed_offset)
+	var mat := surface(Color(0.035, 0.034, 0.038), Color(0.025, 0.024, 0.027),
+			Color(0.03, 0.028, 0.026), 60.0, 6.0, 0.0, 0.5, 0.85, 0.0, seed_offset)
+	mat.set_shader_parameter(&"specular_value", 0.0)
+	return mat
 
 
 ## Old body paint worn down to rusty olive: only the flakes `RailgunWear` lays on top stay olive.
+## A low specular keeps the warm lights from washing it into the rust and tape beside it.
 static func gun_paint(seed_offset: float) -> ShaderMaterial:
-	return surface(Color(0.24, 0.20, 0.11), Color(0.13, 0.10, 0.06), Color(0.09, 0.07, 0.05),
+	var mat := surface(Color(0.24, 0.20, 0.11), Color(0.13, 0.10, 0.06), Color(0.09, 0.07, 0.05),
 			60.0, 6.0, 0.0, 0.95, 0.88, 0.15, seed_offset)
+	mat.set_shader_parameter(&"specular_value", 0.15)
+	return mat
+
+
+## Turns on the shader's soft wear masks (soot, rust, tape band) on `mat`. `spots` are
+## (centre xyz, radius) and `info` (kind: 0 soot, 1 rust, 2 tape band; band z0, z1), in gun space.
+static func with_wear(mat: ShaderMaterial, spots: PackedVector4Array,
+		info: PackedVector4Array) -> ShaderMaterial:
+	mat.set_shader_parameter(&"wear_on", 1.0)
+	mat.set_shader_parameter(&"wear_count", info.size())
+	spots.resize(6)
+	info.resize(6)
+	mat.set_shader_parameter(&"wear_spot", spots)
+	mat.set_shader_parameter(&"wear_info", info)
+	mat.set_shader_parameter(&"wear_tape_color", Color(0.40, 0.425, 0.45))
+	return mat
 
 
 ## Bare dull steel for the railgun's rails: lighter than the body so two bars frame the channel.
 static func rail_steel(seed_offset: float) -> ShaderMaterial:
 	return surface(Color(0.40, 0.41, 0.42), Color(0.24, 0.24, 0.25), Color(0.12, 0.11, 0.09),
 			60.0, 6.0, 0.0, 0.5, 0.6, 0.4, seed_offset)
+
+
+## Worn rail steel: dark, dull grey with rust-brown dirt, under the albedo and metallic caps.
+static func worn_steel(seed_offset: float) -> ShaderMaterial:
+	return surface(Color(0.24, 0.235, 0.22), Color(0.12, 0.11, 0.10), Color(0.14, 0.08, 0.05),
+			60.0, 6.0, 0.0, 0.75, 0.82, 0.3, seed_offset)
 
 
 ## Dull scavenged aluminium: pale grey, matte.

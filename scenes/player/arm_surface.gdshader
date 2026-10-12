@@ -19,6 +19,8 @@ uniform float rib_m : hint_range(0.0, 0.1) = 0.0;
 uniform float grime : hint_range(0.0, 1.0) = 0.5;
 uniform float roughness_value : hint_range(0.78, 0.95) = 0.88;
 uniform float metallic_value : hint_range(0.0, 0.3) = 0.0;
+// Dielectric reflectance: wear patches lower it, or the warm lights' specular washes dark albedo tan.
+uniform float specular_value : hint_range(0.0, 0.5) = 0.5;
 uniform float seed_offset = 0.0;
 // Raised veins (skin only): 0 is no veins. Drawn from the mesh's CUSTOM0 (x along the arm,
 // y and z across it, w the mask). Widths are in mesh units: the inflated forearm is about 0.25
@@ -93,6 +95,8 @@ varying vec4 rest_data;
 #include "res://scenes/player/arm_skin_blights.gdshaderinc"
 #include "res://scenes/player/arm_skin_folds.gdshaderinc"
 #include "res://scenes/player/arm_skin_grease.gdshaderinc"
+// Railgun soot, rust and tape masks; off unless wear_on is set.
+#include "res://scenes/player/arm_wear.gdshaderinc"
 
 // Back-of-limb mask; on the hand it starts lower so the tilted finger tops get blights too.
 float blight_dorsal(float ny, float hand) {
@@ -371,11 +375,17 @@ void fragment() {
 		col *= 1.0 + (rib - 0.5) * 0.25 * rib_fade;
 	}
 
-	ALBEDO = col;
-	ROUGHNESS = clamp(roughness_value - 0.04 * (grain - 0.5) - 0.25 * vn
+	float rough = clamp(roughness_value - 0.04 * (grain - 0.5) - 0.25 * vn
 			+ 0.05 * skin_bump * fold_dark + blight_rough, 0.60, 0.95);
-	METALLIC = metallic_value;
-	SPECULAR = 0.5 + 0.2 * vn;
+	float spec = specular_value + 0.2 * vn;
+	float metal = metallic_value;
+	if (wear_on > 0.0) {
+		wear_apply(obj_pos + wear_origin, w, col, rough, spec, metal);
+	}
+	ALBEDO = col;
+	ROUGHNESS = rough;
+	METALLIC = metal;
+	SPECULAR = spec;
 	// The night lighting has almost no ambient light, so AO must also touch the direct light.
 	AO = blight_ao;
 	AO_LIGHT_AFFECT = 0.4;

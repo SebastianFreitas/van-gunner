@@ -158,39 +158,33 @@ After any lens change, Read one player-view shot.
 
 ## The railgun
 
-Brief: `.claude/specs/brief.md`. Built by `RailgunBody` (+ `RailgunJunk`, `RailGlow`).
+Brief: `.claude/specs/brief.md`; plan `.claude/plans/railgun-redesign.md`. Built by `RailgunBody` from `RailgunBarrels`, `RailgunReceiver`, `RailgunPivots`, `RailgunCoils`, `RailgunJunk` (+ `RailgunWear`) and `RailGlow`. Units are p (the hand's palm length), y above the guard top `ya`, zf the guard front.
 
-- Composition (owner sketch, specs 1 to 4): two box-section barrels of equal height (half-height 0.20p, half-width 0.19p, chamfered; `RailgunBarrels` constants), a long `LowerBarrel` (collar, three bands, grooves, six fins, slotted `brake` at the muzzle) and a short `UpperBarrel` (1.7p long, front 0.9p behind the muzzle tip) 0.17p above it, with fins, side vents, bands, caps, a bore and a `TopRail` on its centreline. Two `Strut`s tie them at the rear only. The `Wedge` (triangular prism, `WEDGE_YB`/`WEDGE_ZR` in `railgun_body.gd`) has its vertical face forward against the upper barrel's rear and its slope falling to the rear toward the player; the `Lamp0` charge window and both cables sit on the slope. `GapGlow` is in the gap; `muzzle_in_gun` is at the gap's centre just ahead of the upper barrel. Numbers live in `railgun_barrels.gd`, `railgun_barrel_detail.gd` and `railgun_body.gd`.
-- Rails: there are none. The two barrels are the rails; the 0.17p gap (capped by the barrel height) is where the shot leaves and where the coils go. Keep the front half open; only the two rear `Strut`s cross it.
-- Coils (`RailgunCoils`): four floating square frames (two copper windings, steel lugs, a glowing `Field` disc) sized to 75 percent of the gap, 0.32p apart from the upper barrel's front +0.24p. They wobble and bob instead of spinning, so no corner reaches a barrel, and jolt 0.06p forward and flare on `shot`; held at t 1.1 under `SaveSandbox`. `GapGlow` is a thin 0.03p beam through their holes.
-- Bounding box: tip zf - 2.8p, top about ya + 0.86p (the upper barrel's top and the wedge's peak with the two side rods `WedgeEdgeL`/`WedgeEdgeR`, split from the old single `WedgeEdge` in spec 6), width at most 0.52p
-  (p = the hand's palm length, zf the guard front, ya the guard top).
-- Fixed geometry: barrels, wedge, grip, muzzle and sockets never move; materials, bead spacing, tape and
-  wire tilt and the rust/scorch tones follow rng. `HangPlate` is fixed.
-- Scale: the body is `MonsterGrip.GUN_K` 1.15 over the hand's `p`; grip, guard
-  and trigger stay at `p` (owner, 2026-10-09).
-- Wear (spec 3, owner: "old and rusty like it's gonna break apart"): `RailgunJunk` (tape, broken weld run with two beads gone, one cracked, one fat; two empty bolt pits; a `LooseBolt` backing out of the left strut) plus `RailgunWear` (`HeavyRust` patches on both barrels, a few olive paint flakes on the wedge flanks, `SplitGap` + lips on the upper barrel's top bound by three `SplitWire` rings, `BandDent`/`BandCurl` on the lower middle band, `Scorch*` patches and ring at the gap's front, a `HangPlate` swung 16 degrees off the left wedge bolt, a sagging taped `CableSag` run). `ArmMaterials` has `heavy_rust` and `scorched_steel`; `rust` and `gun_paint` are retuned darker and grimier, so the body is mostly rust and the olive survives only as flakes. All static, thin and flush on a barrel or wedge face (face-based: patches sit on the flat faces and the slope, not on a cylinder); none in front of the muzzle line or the rings, and none on a socket's snap z.
-- Flush junk: tape wraps, weld runs and bolt pits stay flush on the body; `LooseBolt`, `HangPlate` and
-  `CableSag` are the only loose parts, on the wedge's left flank and strut. Tread, brackets, chain,
-  padlock and the sprayed word are gone (owner, 2026-10-09: keep the body clean so boons read).
+- Composition (D42 look): a boxy panelled `Receiver` (half-width `HW` 0.22p, front face -1.28p = `RAIL_REAR` where the rails start, rear face +0.32p, `rust`): seven top panels (`TopFront`, `VentMid`, `VentEdgeL/R`, `TopMid`, `TopRearL/R`) around two vent openings (dark `VentFloor` plus three steel `VentSlat`s) and a breech channel (`BreechFloor`, `SlugRod` in steel); mismatched flanks (left: dark cut-corner `FlankPlateL`; right: olive `gun_paint` donor `FlankPlateR` with two `PlatePit`s; ribs and hex `RecBolt`s differ per side, the `RecSlot`s match). Behind it the chamfered `Stock` (+ `StockLow`, rust), the rubber `StockPad` (`grip_rubber`, rearmost part) and the `WindowFrame` (steel) round `Lamp0`.
+- Rails: two flush rails of `worn_steel`, `LowerBarrel` (`LOW_R` 0.20p) and `UpperBarrel` (`UP_R` 0.32p, 1.6x the lower; both 0.19p half-width) with a `GAP_H` 0.17p open gap, from the receiver front to `ztip` = zf - 2.8p. Lower: `LowerBand1/2` (rust, steel), 32 dark `LowerSlot`s on its top; upper: `UpperBand0/1` (paint, steel) and a dark `UpperGroove` per flank. `GapGlow` (0.03p beam, `ember`) sits in the gap; `muzzle_in_gun` is centred in the gap 0.05p past the tips. `RailgunCoils` floats four square frames with a glowing `Field` disc in the gap (held at t 1.1 under `SaveSandbox`).
+- Pivots (`RailgunPivots`, each origin on its hinge or slide line, meshes as children, ready for a later animation): `Breech` (`BreechBlock`, steel) slides +0.30 z later and uncovers the `SlugRod`; `VentL`/`VentR` rotate about Z on their outer long edge (the right flap `heavy_rust`, the left rust with a `VentFlake`); `ChargeCell` (`dull_alu`) rotates about Y on its rear vertical edge, swinging the front out toward the player; its `Lamp1` and two `CellBolt`s ride along and its cables (`CableUpper`, `CableLower`) end in dark holes on the hinge line so a swing leaves their ends put; `CableSag` is taped under the cell.
+- Bounding box: tip zf - 2.8p, top ya + 1.07p (upper rail), width about 0.52p (receiver 0.44p plus the `ChargeCell`/`Lamp1` out to x -0.289p and the right `PlatePit`s at +0.23p); sockets, muzzle and the hinges never move, materials follow rng.
+- Scale: the body is `MonsterGrip.GUN_K` 1.15 over the hand's `p`; grip, guard and trigger stay at `p` (owner, 2026-10-09).
+- Wear homes: soot, rust and the tape band on the receiver and stock are painted by the shader (D42): `arm_wear.gdshaderinc` is included by `arm_surface.gdshader`, off by default (`wear_on` 0, so hands and arms never change), switched on by `ArmMaterials.with_wear(mat, spots, info)` with up to `WEAR_MAX` 6 spot/info entries set in `RailgunReceiver._wear`, each mesh passing its position as `instance uniform wear_origin`. Inside a soot or rust mask specular and metallic go to 0 (tape: specular 0.1, metallic 0). `arm_surface.gdshader` is at its 400-line cap: new shader code goes in the include. Box wear stays in `RailgunWear` (rust patches, flakes, `SplitGap` with three wire wraps, `BandDent`/`BandCurl`, `Scorch*`, `HangPlate`, flush on the rails and bound by their faces) and `RailgunJunk` (weld seams and plates, `PitLower`/`PitUpper`, `LooseBolt`, tape wraps: three on the upper rail, two on the lower). `ArmMaterials` has `heavy_rust` and `scorched_steel`; none of it sits in front of the muzzle or on a socket's snap z. Tread, brackets, chain, padlock and a sprayed word are gone (owner, 2026-10-09: keep the body clean so boons read).
 - Sockets (`GunSockets`): Marker3Ds `Socket_<zone>_<letter>` in zones top,
   left, rear, muzzle, under, hang, right, with metas `size` (*p), `normal`,
   `zone`, `used`; `claim(body, zones)` takes the first free socket by zone
   preference. A socket starts inside the mesh it belongs to and snaps out onto
   that mesh's face at build (spec 5: offsets derive from `RailgunBarrels` and `RailgunBody`
-  constants: top and muzzle on the upper barrel, left, right, rear, under and hang on the
-  lower barrel, `left_a` on the wedge flank). It snaps to the mesh's bounding box, which is the
+  constants: top and muzzle on the upper barrel, left, right, under and hang on the
+  lower barrel, `left_a` on the receiver flank, `rear_a`/`rear_b` on the `StockPad` rear face). It snaps to the mesh's bounding box, which is the
   box barrels' own faces now, so start each socket inside the mesh it belongs to.
 - A boon gets a visual by a `GunBoonVisuals.REGISTRY` entry (zones plus a
   builder in `GunBoonPieces` that fits the socket's `size`). REGISTRY order is
   the order pieces are built and claim sockets. No glow unless it is a light.
-- Glow: `GapGlow`, `Lamp0` and the coils' `Field` discs are the gun's only emissive parts;
-  `RailGlow` owns the light. Its `LampLight` (amber, at the wedge's rear face) reaches the sockets.
+- Glow: `GapGlow`, `Lamp0`, `Lamp1` (the third emissive, on the charge cell) and the coils' `Field` discs are the gun's only emissive parts; `RailGlow` owns the light. Its amber `LampLight` sits just off the stock's rear face at `Lamp0` (range `LAMP_LIGHT_RANGE` 0.50) and reaches the rear sockets; `Lamp1` only flares.
 - Future pieces lie horizontal as part of the barrel (poison canister first),
   never upright add-ons; the current three pieces are upright and wait for that.
 - Debug: `gun sockets|report|attach` (`debug_gun_commands.gd`). Smoke views
   `a-arms-gun`, `a-arms-gun-sockets`, `a-arms-gun-boons`,
-  `a09-arms-gunfront-boons`.
+  `a09-arms-gunfront-boons`, `a19-arms-inspect`; the player view sees the stock, receiver top and
+  left flank, the inspect roll shows the sides: `py -3 tools/probe.py --cmd "arms inspect 5.4"
+  --shot <png>` (left side) and `6.3` (right). Run `gun report` after any body change.
 - Lessons: `claim(body, zones: Array[StringName])` is typed, so build zones as
   `Array[StringName]` (an untyped literal fails at runtime). Check sockets with
   `gun report` after any body-shape change (distances and box overlaps). A word
