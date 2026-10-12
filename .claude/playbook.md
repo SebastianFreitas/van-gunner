@@ -84,19 +84,19 @@ medium whatever the app shows, and a run never passes `--model` (owner,
 2026-10-12: plan on Fable, clear, run on Opus medium). No Haiku: a
 missed caller costs more than it saves (owner, 2026-10-01). Each project
 keeps its own `.claude/agents/explore.md` with `model: sonnet`; without
-one the built-in Explore runs on the main model. Effort: an agent
-file's `effort:` overrides the session's effort, so the owner's effort
-pick reaches only the main session and the built-in agents (owner,
-2026-10-12: picking Fable xhigh for an interview reached only the
-manager). The main session defaults to low (`modelSettings` in
-`.claude/settings.json`, a deliberate test, owner 2026-10-05) until the
-owner picks another level in the app. Agents keep medium except
-`plan-writer` at high, because its research and math are where effort
-pays while the manager only relays questions; for an interview, Fable
-at low or medium is enough, since `plan-writer` gets Fable at high
-either way. Autoplan's headless phases pass `--effort medium`. Model
-and effort come only from the agent files and the owner's pick:
-`agent-guard.py` refuses an Agent call that passes `model` or `effort`.
+one the built-in Explore runs on the main model. Effort: medium is the
+base everywhere, and anything above it is the owner's pick for a hard
+task or a long shot, never a default (owner, 2026-10-12). The main
+session defaults to medium (`modelSettings` in `.claude/settings.json`)
+until the owner picks another level in the app. `plan-writer` has no
+`effort:`, so it follows the session's effort as well as its model: a
+pick of Fable high reaches the research and math, where it pays, while
+an Opus medium session plans at Opus medium. Every other agent file
+fixes medium, which overrides the session's effort, so the agents that
+build and review never go above it. Autoplan's headless phases pass
+`--effort medium`. Model and effort come only from the agent files and
+the owner's pick: `agent-guard.py` refuses an Agent call that passes
+`model` or `effort`.
 
 ## Spec format
 

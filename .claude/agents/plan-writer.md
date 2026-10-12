@@ -2,7 +2,6 @@
 name: plan-writer
 description: Does the planning work for the plan skill's interview (explore, research, the math, writing the plan) so the app session only manages and asks the owner. One job per call; the caller names the plan path, the job and the answers so far. Returns what it wrote and the questions ready for AskUserQuestion.
 model: inherit
-effort: high
 tools: Read, Grep, Glob, Bash, Write, Edit, WebSearch, WebFetch
 maxTurns: 150
 ---

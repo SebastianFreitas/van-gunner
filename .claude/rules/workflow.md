@@ -185,8 +185,9 @@ anything else prepared again) on the same branch, with the same report.
   whole file.
 - Models and effort (Opus judges, Sonnet does, a Fable session makes
   only the main session and inheriting agents Fable, plan runs on Opus
-  medium, no Haiku; agent files fix their own effort; never pass `model`
-  or `effort` on an Agent call): playbook "Models".
+  medium, no Haiku; medium is the base and only the owner picks higher,
+  which reaches the main session and plan-writer; never pass `model` or
+  `effort` on an Agent call): playbook "Models".
 
 ## Context budget
 
