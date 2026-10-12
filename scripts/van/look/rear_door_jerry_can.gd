@@ -17,9 +17,11 @@ const STRAP_X: Array[float] = [-0.12, 0.12]
 const CAN_BACK_Z := _Panels.PLATE_FACE_Z
 
 
-## The can's centre for a molle plate rect: lower hinge-side corner, clear of the plate edges.
+## The can's centre for a molle plate rect: lower hinge-side corner, clear of the plate edges and
+## raised 12 cm (owner's markup) off the door beam.
 static func centre(plate: Rect2) -> Vector2:
-	return Vector2(plate.position.x + 0.14 + SIZE.x * 0.5, plate.position.y + 0.14 + SIZE.y * 0.5)
+	return Vector2(plate.position.x + 0.14 + SIZE.x * 0.5,
+			plate.position.y + 0.26 + SIZE.y * 0.5)
 
 
 ## XY rect the can and its straps cover (the slot grid skips it).

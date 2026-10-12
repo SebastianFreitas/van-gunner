@@ -39,6 +39,8 @@ func setup(leaf: Node3D, frame_at: Vector3, beam_lug: Vector3, sleeve_len: float
 		cyl.radial_segments = 10
 		cyl.rings = 1
 		sleeve.mesh = cyl
+		# Odd sleeves turn half a facet, so no two nested facets are parallel.
+		sleeve.rotation.y = PI / 10.0 * (i % 2)
 		sleeve.material_override = _mat(colors[i], 0.6, 0.3)
 		_add(sleeve)
 		_stages.append(sleeve)

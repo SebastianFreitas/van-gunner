@@ -129,6 +129,19 @@ static func settle(side_doors: Node, side_windows: Node) -> float:
 	)
 
 
+## Opens or closes the rear doors the way the `reardoor` debug command does, then waits for
+## the scripts' own tween durations plus a settle margin.
+static func set_rear_doors(rear_doors: Node, want_open: bool) -> void:
+	if want_open:
+		rear_doors.open()
+	else:
+		rear_doors.close()
+	await rear_doors.get_tree().create_timer(
+		rear_doors.open_duration + rear_doors.grip_retract_duration
+		+ rear_doors.mount_retract_duration + 0.3
+	).timeout
+
+
 ## One row per gap-light view: {label, from, target, mode, doors}, all rig-local. Read with
 ## gaplight on (`mode` "on": from the cabin) or out (`mode` "out": from the street). `doors`
 ## lists the side doors to open (only the control opens one).
@@ -162,6 +175,9 @@ static func gap_views(rig: Node3D) -> Array[Dictionary]:
 	))
 	result.append(_gap_view("gap-rear-in-whole", Vector3(0, 1.6, rz - 4.0),
 		Vector3(0, 1.55, rz), "on", none))
+	# Rear doors open, shot in game light (gaplight off): the magenta rules are for gaps.
+	result.append(_gap_view("gap-rear-in-whole-open", Vector3(0, 1.6, rz - 4.0),
+		Vector3(0, 1.55, rz), "off", none, true))
 	result.append(_gap_view("gap-rear-in-header", Vector3(0, vy - 0.12, rz - 1.5),
 		Vector3(0, vy - 0.02, rz), "on", none))
 	result.append(_gap_view("gap-rear-in-sill", Vector3(0, 0.10, rz - 1.5),
@@ -219,6 +235,8 @@ static func gap_views(rig: Node3D) -> Array[Dictionary]:
 			Vector3(s * 0.8, 1.6, d1.z + 0.01), Vector3(dc.x, 1.6, d1.z + 0.01), "on", none))
 	result.append(_gap_view("gap-rear-out-whole", Vector3(0, 1.7, oz + 5.0),
 		Vector3(0, 1.55, oz), "out", none))
+	result.append(_gap_view("gap-rear-out-whole-open", Vector3(0, 1.7, oz + 5.0),
+		Vector3(0, 1.55, oz), "off", none, true))
 	result.append(_gap_view("gap-rear-out-header", Vector3(0, vy - 0.12, oz + 2.0),
 		Vector3(0, vy - 0.02, oz), "out", none))
 	result.append(_gap_view("gap-rear-out-sill", Vector3(0, 0.10, oz + 2.0),
@@ -334,9 +352,13 @@ static func _view(
 
 
 static func _gap_view(
-	label: String, from: Vector3, target: Vector3, mode: String, doors: Array[StringName]
+	label: String, from: Vector3, target: Vector3, mode: String, doors: Array[StringName],
+	rear_open := false
 ) -> Dictionary:
-	return {"label": label, "from": from, "target": target, "mode": mode, "doors": doors}
+	return {
+		"label": label, "from": from, "target": target, "mode": mode, "doors": doors,
+		"rear_open": rear_open,
+	}
 
 
 ## Merges every descendant MeshInstance3D's AABB into one AABB in `rig`-local space.

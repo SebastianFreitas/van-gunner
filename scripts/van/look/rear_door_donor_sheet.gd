@@ -14,7 +14,7 @@ const _Beam := preload("res://scripts/van/look/rear_door_donor_beam.gd")
 const SHELL := 0.004
 const PITCH := 0.11
 const RIB_H := 0.018
-## The sheet starts 1 cm inside the beam's upper flange, so the beam hides its bottom edge.
+## The sheet starts 1 cm inside the beam's top, so the beam hides its bottom edge.
 const BOTTOM_LIFT := _Beam.TOP - 0.01
 const LAP := 0.06
 const CUT_GAP := 0.003

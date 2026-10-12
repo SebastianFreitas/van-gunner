@@ -305,13 +305,7 @@ func van_views_gaps() -> void:
 	var previous := get_viewport().get_camera_3d()
 	print("SMOKE: " + DebugCommands.run("floodlight on"))
 	var player := get_tree().get_first_node_in_group(&"player") as Node3D
-	# The scripts' own tween durations, summed, plus a settle margin.
-	var settle: float = (
-		side_doors.recess_duration + side_doors.slide_duration
-		+ side_doors.grip_retract_duration + side_doors.mount_retract_duration
-		+ side_windows.open_duration + side_windows.grip_retract_duration
-		+ side_windows.mount_retract_duration + 0.3
-	)
+	var settle: float = _CloseupViews.settle(side_doors, side_windows)
 	# Called once, while the doors are closed (the close-ups leave them closed).
 	var views := _CloseupViews.gap_views(rig)
 	if views.is_empty():
@@ -323,6 +317,7 @@ func van_views_gaps() -> void:
 		return
 	var open_doors: Array[StringName] = []
 	var mode := ""
+	var rear_doors := get_tree().get_first_node_in_group(&"rear_doors")
 	for view in views:
 		var wanted_doors: Array[StringName] = view["doors"]
 		if wanted_doors != open_doors:
@@ -333,6 +328,9 @@ func van_views_gaps() -> void:
 					side_doors.close_door(side)
 			open_doors = wanted_doors
 			await get_tree().create_timer(settle).timeout
+		var rear_wanted: bool = view["rear_open"]
+		if rear_doors != null and rear_wanted != rear_doors.is_open():
+			await _CloseupViews.set_rear_doors(rear_doors, rear_wanted)
 		var from: Vector3 = view["from"]
 		var target: Vector3 = view["target"]
 		if player != null and rig.to_global(from).distance_to(player.global_position) < 0.5:
@@ -342,6 +340,8 @@ func van_views_gaps() -> void:
 			mode = view["mode"]
 			print("SMOKE: " + DebugCommands.run("gaplight " + mode))
 		await _save_van_view(rig, from, view["label"], target, "g")
+		if rear_wanted: # closed again so the next views are unchanged
+			await _CloseupViews.set_rear_doors(rear_doors, false)
 	for side in [_SideDoors.SIDE_LEFT, _SideDoors.SIDE_RIGHT]:
 		side_doors.close_door(side)
 	await get_tree().create_timer(settle).timeout

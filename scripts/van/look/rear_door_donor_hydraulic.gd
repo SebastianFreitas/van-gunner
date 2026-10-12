@@ -13,10 +13,12 @@ const PIN_R := 0.028
 const BARREL_R := 0.055
 const BARREL_H := 0.33
 ## Frame lug and beam lug (hinge-local, y relative to the beam's mid height).
-const FRAME_LUG := Vector3(-0.4, 0.14, 0.17)
-const BEAM_LUG := Vector3(0.15, 0.0, 0.19)
+## The beam lug sits far enough out that its fork and the rod eye clear Portal/Pillar_L over the whole
+## swing (5 cm+ at 110 degrees); the frame lug is up and in so the ram stays 0.25 to 0.51 m long.
+const FRAME_LUG := Vector3(-0.18, 0.2, 0.17)
+const BEAM_LUG := Vector3(0.27, -0.03, _Beam.BEAM_FRONT_Z + 0.06)
 ## Length of each telescoping sleeve: three of them cover 0.24 m closed to 0.57 m open.
-const BODY_LEN := 0.216
+const BODY_LEN := 0.2
 
 
 ## Builds the hinge and strut for the leaf under `hinge`; returns every node added.
@@ -32,27 +34,32 @@ static func build(hinge: Node3D, rect: Rect2) -> Array[Node3D]:
 	var worn := _Panels.flat(Color(0.2, 0.17, 0.14), 0.6, 0.65)
 	var bolt := _Panels.flat(Color(0.07, 0.07, 0.08), 0.8, 0.4)
 	# Leaf side: plate on the end plate's hinge face, the barrel on the axis, the pin through it.
-	_box(hinge, "HingeLeafPlate", Vector3(0.04, 0.3, 0.15), steel,
-			Vector3(mount.x - 0.02, ym, mount.z), out)
+	# It spans x 0 to 0.07, so its +x face is buried in the beam 1.5 cm past the cap's (x 0.055) and
+	# 3 cm past the rear reveal (x 0.04); its y faces sit 1.75 cm inside the beam's, so it shares no
+	# plane; the bolt heads sit on the cap's street face.
+	# The ears are 3 cm and sit toward the barrel, off the floor.
+	_box(hinge, "HingeLeafPlate", Vector3(0.07, 0.14, 0.16), steel,
+			Vector3(0.035, ym, mount.z), out)
 	_part(hinge, "HingeBarrel", _cyl(BARREL_R, BARREL_R, BARREL_H, 14), steel,
 			Vector3(0.0, ym, 0.0), out)
 	_part(hinge, "HingePin", _cyl(PIN_R, PIN_R, 0.4, 12), worn, Vector3(0.0, ym, 0.0), out)
 	for s: float in [-1.0, 1.0]:
 		_part(hinge, "HingeNut", _cyl(0.04, 0.04, 0.028, 6), bolt,
 				Vector3(0.0, ym + s * 0.2, 0.0), out)
-		_part(hinge, "HingeLeafBolt", _cyl(0.017, 0.017, 0.016, 6), bolt,
-				Vector3(mount.x - 0.02, ym + s * 0.09, mount.z + 0.075 + 0.006), out,
+		_part(hinge, "HingeLeafBolt", _cyl(0.011, 0.011, 0.016, 6), bolt,
+				Vector3(0.0425, ym + s * 0.05, _Beam.BEAM_FRONT_Z + 0.01 + 0.006), out,
 				Vector3(PI * 0.5, 0.0, 0.0))
 	# Frame side: base plate on the fixed edge, two clevis ears over and under the barrel.
 	_box(frame, "HingeFramePlate", Vector3(0.4, 0.46, 0.03), steel,
 			base + Vector3(-0.28, ym, -0.015), out)
-	for sx: float in [-0.4, -0.16]:
+	for sx: float in [-0.4, -0.3]:
 		for s: float in [-1.0, 1.0]:
 			_part(frame, "HingeFrameBolt", _cyl(0.02, 0.02, 0.018, 6), bolt,
 					base + Vector3(sx, ym + s * 0.19, 0.009), out, Vector3(PI * 0.5, 0.0, 0.0))
 	for s: float in [-1.0, 1.0]:
 		var ey := ym + s * 0.145
-		_box(frame, "HingeEar", Vector3(0.1, 0.04, 0.14), steel, base + Vector3(-0.09, ey, 0.0),
+		_box(frame, "HingeEar", Vector3(0.1, 0.03, 0.14), steel,
+				base + Vector3(-0.09, ey - s * 0.01, 0.0),
 				out)
 		_part(frame, "HingeEarDisc", _cyl(0.07, 0.07, 0.08, 14), steel,
 				base + Vector3(0.0, ey, 0.0), out)
@@ -62,9 +69,10 @@ static func build(hinge: Node3D, rect: Rect2) -> Array[Node3D]:
 	_lug(frame, base + f, Vector3(0.09, 0.012, 0.17), 0.0, steel, bolt, out)
 	_box(frame, "FrameLugWeb", Vector3(0.09, 0.09, 0.03), steel,
 			base + Vector3(f.x, f.y, 0.015), out)
-	_lug(hinge, b, Vector3(0.09, 0.012, 0.09), 0.1, steel, bolt, out)
+	_lug(hinge, b, Vector3(0.09, 0.012, 0.09), 0.0, steel, bolt, out)
+	# Welded to the beam's street face, with the fork plates reaching out from it.
 	_box(hinge, "BeamLugBack", Vector3(0.09, 0.09, 0.03), steel,
-			Vector3(b.x, b.y, _Beam.FRONT_Z + 0.015), out)
+			Vector3(b.x, b.y, _Beam.BEAM_FRONT_Z + 0.015), out)
 	var strut := _Strut.new()
 	strut.name = "DonorStrut"
 	frame.add_child(strut)
