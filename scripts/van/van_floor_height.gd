@@ -2,12 +2,12 @@ class_name VanFloorHeight
 extends RefCounted
 ## Floor top height (rig-local metres) anywhere in the cabin: the raised mid slab, the side-door step well and the stairs to the rear floor.
 
-const RAISE := 0.30
+const RAISE := 0.45
 const WELL_X := -2.46        ## left bay: floor stays at 0 for x <= this
 const WELL_RAMP := 0.30      ## raiders have no physics, so the well lip is a smooth ramp 0 -> RAISE
 const DOOR_X0 := -3.30       ## bulkhead doorway, stairs span
 const DOOR_X1 := -1.92
-const STAIR_END_Z := 1.66
+const STAIR_END_Z := 1.96
 const SLAB_Z0 := -4.60
 const SLAB_Z1 := 1.00
 const _CABIN_HALF_X := 3.36

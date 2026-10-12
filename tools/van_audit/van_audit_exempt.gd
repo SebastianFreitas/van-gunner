@@ -6,7 +6,8 @@ extends RefCounted
 ## the side door stop strips reach 5 cm over each leaf on purpose (vangapfix D13).
 const _WIN_FRAME: Array = ["Interior/Shell/SideWalls/", "VanLook/Hull/SideSkin", "/WindowStop", "/HingeRail/"]
 const OPENING: Dictionary = {
-	&"door_left": ["Interior/Shell/SideWalls/DoorStop_"],
+	# The step well spans exactly the door opening in z, so its exit step cannot leave the bay.
+	&"door_left": ["Interior/Shell/SideWalls/DoorStop_", "Interior/Shell/Floor/WellStep"],
 	&"door_right": ["Interior/Shell/SideWalls/DoorStop_"],
 	&"win_left_front": _WIN_FRAME,
 	&"win_left_rear": _WIN_FRAME,

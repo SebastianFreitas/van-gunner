@@ -138,7 +138,7 @@ shape = SubResource("DoorShape")
 [node name="Props" type="Node3D" parent="TravelPath/VanFollow/VanRig/Interior" unique_id=1487223170]
 
 [node name="CraftingTable" type="StaticBody3D" parent="TravelPath/VanFollow/VanRig/Interior/Props" unique_id=1058055410]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 2.6, 0.725, 0.066610575)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 2.6, 0.875, 0.066610575)
 collision_layer = 3
 script = ExtResource("4")
 prompt = "Open Bench"
@@ -281,7 +281,7 @@ script = ExtResource("41")
 [node name="BreachController" parent="TravelPath/VanFollow/VanRig/EnemyContainer" unique_id=1006425113 groups=["breach_controller"] instance=ExtResource("48")]
 
 [node name="Player" parent="TravelPath/VanFollow/VanRig" unique_id=88569583 instance=ExtResource("2")]
-transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 0.35, -2.7)
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0, 0.5, -2.7)
 movement_reference_path = NodePath("..")
 
 [node name="Lighting" type="Node3D" parent="TravelPath/VanFollow/VanRig" unique_id=863892881]

@@ -1,12 +1,12 @@
 class_name VanFloorStairs
 extends RefCounted
-## The doorway's welded scrap stairs: two angle-iron stringers, a ribbed low tread, a checker high tread and weld beads.
+## The doorway's welded scrap stairs: two angle-iron stringers, ribbed low and mid treads, a checker high tread and weld beads.
 
 ## The stringers' top edge: (z, y) at the foot and at the head, 2 cm inside MidSlab's end face.
-const LINE_Z0 := 1.68
-const LINE_Y0 := 0.04
+const LINE_Z0 := 1.98
+const LINE_Y0 := 0.0
 const LINE_Z1 := 0.98
-const LINE_Y1 := 0.30
+const LINE_Y1 := VanFloorHeight.RAISE
 const WEB_T := 0.02
 const WEB_H := 0.08
 const FLANGE_W := 0.06
@@ -15,20 +15,34 @@ const FLANGE_T := 0.02
 const _STRINGERS := [[&"StringerL", -3.28, 1.0, 10.0], [&"StringerR", -1.94, -1.0, 11.0]]
 const TREAD_X0 := -3.26
 const TREAD_X1 := -1.96
-const LOW_Z0 := 1.36
-const LOW_Z1 := 1.66
+const LOW_Z0 := 1.66
+const LOW_Z1 := 1.96
 const LOW_Y0 := 0.115
 const LOW_Y1 := 0.165
+const MID_Z0 := 1.36
+const MID_Z1 := 1.66
+const MID_Y0 := 0.265
+const MID_Y1 := 0.315
 const HIGH_Z0 := 0.98
 const HIGH_Z1 := 1.36
-const HIGH_Y0 := 0.275
-const HIGH_Y1 := 0.335
+const HIGH_Y0 := VanFloorHeight.RAISE - 0.025
+const HIGH_Y1 := VanFloorHeight.RAISE + 0.035
 const BEAD_W := 0.04
 const BEAD_LEN := 0.06
 const BEAD_GAP := 0.01
 const BEAD_CORNER := 0.05
 const BEAD_SINK := 0.02
 const BEAD_RISE := 0.015
+## Foot beads stand on LipLeft (the stringer foot is over it), so their tops ride one bead rise
+## above the lip's top (and its 1.5 cm scallop floor) instead of within 1 cm of it.
+const FOOT_TOP := VanFloorSheet.LIP_RISE
+## Half-height exit step in the side-door well, flush with the rear strip's face (z -1.93).
+## X span: the well's collider (-3.36..-2.46) clipped to the visible well wall at -3.33.
+const WELL_X0 := -3.33
+const WELL_X1 := -2.46
+const WELL_Z0 := -2.23
+const WELL_Z1 := -1.94
+const WELL_Y1 := VanFloorHeight.RAISE * 0.5
 const BEAD_YAW := deg_to_rad(8.0)
 
 
@@ -46,6 +60,16 @@ static func add(parent: Node3D) -> void:
 	var rib_z := (LOW_Z0 + LOW_Z1) * 0.5
 	VanFloorSheet.add_rib(low, Vector2(TREAD_X0 + 0.02, rib_z), Vector2(TREAD_X1 - 0.02, rib_z), LOW_Y1)
 	_add_mesh(parent, "TreadLow", low, VanFloorSkin.material(VanFloorSkin.TINT_B, 12.0, 0.95, 1.0))
+	var mid := SurfaceTool.new()
+	mid.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_add_box(mid, MID_Y0, MID_Y1, MID_Z0, MID_Z1, &"top")
+	var mid_rib_z := (MID_Z0 + MID_Z1) * 0.5
+	VanFloorSheet.add_rib(mid, Vector2(TREAD_X0 + 0.02, mid_rib_z), Vector2(TREAD_X1 - 0.02, mid_rib_z), MID_Y1)
+	_add_mesh(parent, "TreadMid", mid, VanFloorSkin.material(VanFloorSkin.TINT_B, 15.0, 0.95, 1.0))
+	var well := SurfaceTool.new()
+	well.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_add_box(well, 0.0, WELL_Y1, WELL_Z0, WELL_Z1, &"top", WELL_X0, WELL_X1)
+	_add_mesh(parent, "WellStep", well, VanFloorSkin.material(VanFloorSkin.TINT_B, 10.0, 0.95, 1.0))
 	var high := SurfaceTool.new()
 	high.begin(Mesh.PRIMITIVE_TRIANGLES)
 	_add_box(high, HIGH_Y0, HIGH_Y1, HIGH_Z0, HIGH_Z1, &"checker")
@@ -90,11 +114,11 @@ static func _at(p: Vector2, z: float) -> Vector3:
 	return Vector3(p.x, line_y(z) + p.y, z)
 
 
-## A closed tread box over the doorway width; only the top carries `top_tag`.
+## A closed tread box over the doorway width (or x0..x1); only the top carries `top_tag`.
 static func _add_box(st: SurfaceTool, y0: float, y1: float, z0: float, z1: float,
-		top_tag: StringName) -> void:
-	var lo := Vector3(TREAD_X0, y0, z0)
-	var hi := Vector3(TREAD_X1, y1, z1)
+		top_tag: StringName, x0: float = TREAD_X0, x1: float = TREAD_X1) -> void:
+	var lo := Vector3(x0, y0, z0)
+	var hi := Vector3(x1, y1, z1)
 	VanFloorSkin.set_tag(st, top_tag)
 	VanFloorSheet._quad(st, Vector3(lo.x, hi.y, lo.z), Vector3(hi.x, hi.y, lo.z),
 			Vector3(hi.x, hi.y, hi.z), Vector3(lo.x, hi.y, hi.z), Vector3.UP)
@@ -114,7 +138,7 @@ static func _add_box(st: SurfaceTool, y0: float, y1: float, z0: float, z1: float
 ## Beads along both ends of each tread, and on the sheet at each stringer's foot.
 static func _add_beads(st: SurfaceTool) -> void:
 	var flip := 1.0
-	for tread in [[LOW_Z0, LOW_Z1, LOW_Y1], [HIGH_Z0, HIGH_Z1, HIGH_Y1]]:
+	for tread in [[LOW_Z0, LOW_Z1, LOW_Y1], [MID_Z0, MID_Z1, MID_Y1], [HIGH_Z0, HIGH_Z1, HIGH_Y1]]:
 		for x in [TREAD_X0, TREAD_X1]:
 			var span: float = float(tread[1]) - float(tread[0])
 			var count := int((span - 2.0 * BEAD_CORNER + BEAD_GAP) / (BEAD_LEN + BEAD_GAP))
@@ -128,9 +152,9 @@ static func _add_beads(st: SurfaceTool) -> void:
 		var web_x: float = s[1]
 		var inner: float = web_x + float(s[2]) * WEB_T
 		flip = -flip
-		_add_bead(st, Vector2(inner, 1.62), Vector2(0.0, 1.0), flip, 0.0)
+		_add_bead(st, Vector2(inner, 1.92), Vector2(0.0, 1.0), flip, FOOT_TOP)
 		flip = -flip
-		_add_bead(st, Vector2(web_x + float(s[2]) * FLANGE_W * 0.5, LINE_Z0), Vector2(1.0, 0.0), flip, 0.0)
+		_add_bead(st, Vector2(web_x + float(s[2]) * FLANGE_W * 0.5, LINE_Z0), Vector2(1.0, 0.0), flip, FOOT_TOP)
 
 
 ## One bead segment centred on `mid` (xz) running along `u`, from `top` - 0.02 to + 0.015.

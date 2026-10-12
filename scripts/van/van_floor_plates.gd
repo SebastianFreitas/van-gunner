@@ -9,12 +9,12 @@ const BEAD_W := 0.04
 const BEAD_LEN := 0.06
 const BEAD_GAP := 0.01
 const BEAD_SINK := 0.02
-## The two mid-slab patches: plate y 0.28..0.35, beads to 0.335, no holes.
-const MID_Y0 := 0.28
-const MID_Y1 := 0.35
+## The two mid-slab patches: plate y RAISE-0.02..+0.05, beads to +0.035, no holes.
+const MID_Y0 := VanFloorHeight.RAISE - 0.02
+const MID_Y1 := VanFloorHeight.RAISE + 0.05
 ## Bead bottom 1.5 cm above the plate bottom so the two bottom faces never coincide (audit FLICKER).
-const MID_BEAD_Y0 := 0.295
-const MID_BEAD_Y1 := 0.335
+const MID_BEAD_Y0 := VanFloorHeight.RAISE - 0.005
+const MID_BEAD_Y1 := VanFloorHeight.RAISE + 0.035
 ## Mid ribs stop this far inside a patch outline.
 const MID_RIB_INSET := 0.02
 const BEAD_YAW := deg_to_rad(8.0)

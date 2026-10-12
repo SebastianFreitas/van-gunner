@@ -11384,7 +11384,7 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable StaticBody3D scrip
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(0.0, 0, 1, 0, 1, 0, -1, 0, 0.0, 2.6, 0.725, 0.067)
+  transform=Transform3D(0.0, 0, 1, 0, 1, 0, -1, 0, 0.0, 2.6, 0.875, 0.067)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
@@ -12497,13 +12497,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/MidSlabCabStripCollision Collisi
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.91, 0.15, -4.5)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.91, 0.225, -4.5)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/MidSlabCabStripCollision:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.9, 0.3, 0.2)}
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/MidSlabCabStripCollision:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.9, 0.45, 0.2)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/MidSlabMainCollision CollisionShape3D
@@ -12515,13 +12515,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/MidSlabMainCollision CollisionSh
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.15, -1.865)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.225, -1.865)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/MidSlabMainCollision:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(5.82, 0.3, 5.73)}
+  shape=ConvexPolygonShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/MidSlabMainCollision:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, points=<PackedVector3Array len=233 md5=a50862e421db8fe0f062310cb070cf5f>}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/MidSlabRearStripCollision CollisionShape3D
@@ -12533,13 +12533,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/MidSlabRearStripCollision Collis
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.91, 0.15, -0.465)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.91, 0.225, -0.465)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/MidSlabRearStripCollision:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.9, 0.3, 2.93)}
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/MidSlabRearStripCollision:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.9, 0.45, 2.93)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall Node3D script=res://scripts/van/rear_doors.gd
@@ -18409,13 +18409,13 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/TreadHighCollision CollisionShap
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.168, 1.17)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.243, 1.17)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
-  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/TreadHighCollision:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.38, 0.335, 0.38)}
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/TreadHighCollision:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.38, 0.485, 0.38)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/TreadLowCollision CollisionShape3D
@@ -18427,13 +18427,49 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/TreadLowCollision CollisionShape
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.083, 1.51)
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.083, 1.81)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false
   visible=true
   visibility_parent=NodePath("")
   shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/TreadLowCollision:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.38, 0.165, 0.3)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/TreadMidCollision CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.158, 1.51)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/TreadMidCollision:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(1.38, 0.315, 0.3)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/WellStepCollision CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.895, 0.113, -2.08)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/WellStepCollision:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.87, 0.225, 0.3)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Lighting Node3D script=res://scripts/van/van_lighting.gd
@@ -18692,7 +18728,7 @@ NODE TravelPath/VanFollow/VanRig/Player CharacterBody3D script=res://scripts/pla
   physics_interpolation_mode=0
   auto_translate_mode=0
   editor_description=""
-  transform=Transform3D(-1, 0, 0.0, 0, 1, 0, 0.0, 0, -1, 0, 0.35, -2.7)
+  transform=Transform3D(-1, 0, 0.0, 0, 1, 0, 0.0, 0, -1, 0, 0.5, -2.7)
   rotation_edit_mode=0
   rotation_order=2
   top_level=false

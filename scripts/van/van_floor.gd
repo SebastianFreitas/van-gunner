@@ -6,7 +6,7 @@ extends Node3D
 ## Height of flat floor decals above the deck: clears the geometry audit's 1 cm coplanar tolerance (D42).
 const DECAL_LIFT := 0.012
 ## Decals on the raised mid slab sit at the rib top plus 1.5 cm.
-const MID_DECAL_LIFT := 0.335
+const MID_DECAL_LIFT := VanFloorHeight.RAISE + 0.035
 
 ## Front end of the old y 0 slab: the raised MidSlab covers everything ahead of it.
 const DECK_Z0 := 0.90
@@ -227,7 +227,7 @@ func _build_entrance_mats() -> void:
 	_add_box(
 		"LeftSideMat",
 		Vector3(0.72, 0.055, 1.15),
-		Vector3(-1.55, 0.3075, -3.35),
+		Vector3(-1.55, VanFloorHeight.RAISE + 0.0075, -3.35),
 		side_mat,
 		8.0
 	)

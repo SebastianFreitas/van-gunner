@@ -2,15 +2,15 @@ class_name VanFloorMid
 extends RefCounted
 ## Ribs, wall lips and the step-well nosing on the raised mid slab, on the rear sheet's recipe.
 
-const HOST_TOP := 0.30
+const HOST_TOP := VanFloorHeight.RAISE
 const Z0 := -4.60
 const Z1 := 0.94
 ## Ribs whose far end reaches into the doorway's TreadHigh.
 const DOORWAY_Z1 := 1.00
 const WELL_Z0 := -4.42
 const WELL_Z1 := -1.91
-const NOSING_Y0 := 0.28
-const NOSING_Y1 := 0.335
+const NOSING_Y0 := HOST_TOP - 0.02
+const NOSING_Y1 := HOST_TOP + 0.035
 
 
 ## Adds MidRibs, MidLipLeft, MidLipRight and Nosing as unscaled children of `floor_node`.

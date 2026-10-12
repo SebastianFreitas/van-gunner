@@ -23,20 +23,26 @@ roughness = 0.4
 [sub_resource type="BoxShape3D" id="FloorShape"]
 size = Vector3(6.72, 0.25, 11.48)
 
-[sub_resource type="BoxShape3D" id="MidSlabMainShape"]
-size = Vector3(5.82, 0.3, 5.73)
+[sub_resource type="ConvexPolygonShape3D" id="MidSlabMainShape"]
+points = PackedVector3Array(-2.91, -0.225, -2.865, 2.91, -0.225, -2.865, 2.91, 0.225, -2.865, -2.79, 0.225, -2.865, -2.91, 0.105, -2.865, -2.91, -0.225, 2.865, 2.91, -0.225, 2.865, 2.91, 0.225, 2.865, -2.79, 0.225, 2.865, -2.91, 0.105, 2.865)
 
 [sub_resource type="BoxShape3D" id="MidSlabCabStripShape"]
-size = Vector3(0.9, 0.3, 0.2)
+size = Vector3(0.9, 0.45, 0.2)
 
 [sub_resource type="BoxShape3D" id="MidSlabRearStripShape"]
-size = Vector3(0.9, 0.3, 2.93)
+size = Vector3(0.9, 0.45, 2.93)
+
+[sub_resource type="BoxShape3D" id="WellStepShape"]
+size = Vector3(0.87, 0.225, 0.3)
 
 [sub_resource type="BoxShape3D" id="TreadLowShape"]
 size = Vector3(1.38, 0.165, 0.3)
 
+[sub_resource type="BoxShape3D" id="TreadMidShape"]
+size = Vector3(1.38, 0.315, 0.3)
+
 [sub_resource type="BoxShape3D" id="TreadHighShape"]
-size = Vector3(1.38, 0.335, 0.38)
+size = Vector3(1.38, 0.485, 0.38)
 
 [sub_resource type="ShaderMaterial" id="CeilingMaterial"]
 render_priority = 0
@@ -177,23 +183,31 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.125, 0.94)
 shape = SubResource("FloorShape")
 
 [node name="MidSlabMainCollision" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.15, -1.865)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.225, -1.865)
 shape = SubResource("MidSlabMainShape")
 
 [node name="MidSlabCabStripCollision" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.91, 0.15, -4.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.91, 0.225, -4.5)
 shape = SubResource("MidSlabCabStripShape")
 
 [node name="MidSlabRearStripCollision" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.91, 0.15, -0.465)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.91, 0.225, -0.465)
 shape = SubResource("MidSlabRearStripShape")
 
+[node name="WellStepCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.895, 0.1125, -2.08)
+shape = SubResource("WellStepShape")
+
 [node name="TreadLowCollision" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.0825, 1.51)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.0825, 1.81)
 shape = SubResource("TreadLowShape")
 
+[node name="TreadMidCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.1575, 1.51)
+shape = SubResource("TreadMidShape")
+
 [node name="TreadHighCollision" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.1675, 1.17)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.61, 0.2425, 1.17)
 shape = SubResource("TreadHighShape")
 
 [node name="Ceiling" parent="." unique_id=1700144643 groups=["van_ceiling"] instance=ExtResource("25")]

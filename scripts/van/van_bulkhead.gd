@@ -130,7 +130,7 @@ func _build() -> void:
 		panel_inner,
 		outer_sign,
 		0.0,
-		kick_height,
+		_kick_plate_top(),
 		_VanBulkheadMesh.KICK_DEPTH,
 		steel,
 		frame_thickness * 0.25
@@ -177,6 +177,13 @@ func _build() -> void:
 	col.shape = shape
 	col.position = Vector3((panel_inner + col_outer) * 0.5, collision_height * 0.5, 0.0)
 	add_child(col)
+
+
+## Top of the kick plate, trimmed so the strip boundary just over the mid floor's top
+## (`VanFloorHeight.RAISE`) sits 2 cm above it, not on it (audit FLICKER).
+func _kick_plate_top() -> float:
+	var strips_below := ceilf(VanFloorHeight.RAISE / (kick_height / 6.0))
+	return 6.0 * (VanFloorHeight.RAISE + 0.02) / strips_below
 
 
 func _vault_y(x: float) -> float:
