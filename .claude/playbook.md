@@ -74,20 +74,29 @@ Opus thinks and judges (main, plan runs, `plan-writer`, Plan,
 The reviewers moved to Opus because Sonnet 5.5 misses more on hard
 reviews and more of its comments are noise; it matches Opus on
 spec-driven code at half the cost (owner, 2026-10-05). When the owner
-picks Fable (`claude-fable-5-1`) for a session, Fable takes Opus's place
-and nothing else changes: it manages, writes specs and delegates every
-code change exactly as Opus does (owner, 2026-10-02). `plan-writer` and
-Plan inherit the session's model; a plan run uses Fable with
-`autoplan.py --model claude-fable-5-1`. No Haiku: a missed caller costs
-more than it saves (owner, 2026-10-01). Each project keeps its own
-`.claude/agents/explore.md` with `model: sonnet`; without one the
-built-in Explore runs on the main model (Opus). Effort: the main
-session runs at low (`modelSettings` in `.claude/settings.json`, a
-deliberate test, owner 2026-10-05); agents keep medium (the agent files'
-`effort:`) except `plan-writer` at high, because its research and math
-are where effort pays while the manager only relays questions (owner,
+picks Fable (`claude-fable-5-1`) for a session, only the main session
+and the agents that inherit its model (`plan-writer`, Plan,
+general-purpose, a built-in Explore) become Fable; the agent files that
+name `opus` or `sonnet` keep that model. Fable manages, writes specs and
+delegates every code change exactly as Opus does (owner, 2026-10-02).
+Plan runs use Opus: `autoplan.py` defaults to `claude-opus-5-5` at
+medium whatever the app shows, and a run never passes `--model` (owner,
+2026-10-12: plan on Fable, clear, run on Opus medium). No Haiku: a
+missed caller costs more than it saves (owner, 2026-10-01). Each project
+keeps its own `.claude/agents/explore.md` with `model: sonnet`; without
+one the built-in Explore runs on the main model. Effort: an agent
+file's `effort:` overrides the session's effort, so the owner's effort
+pick reaches only the main session and the built-in agents (owner,
 2026-10-12: picking Fable xhigh for an interview reached only the
-manager); autoplan's headless phases pass `--effort medium`.
+manager). The main session defaults to low (`modelSettings` in
+`.claude/settings.json`, a deliberate test, owner 2026-10-05) until the
+owner picks another level in the app. Agents keep medium except
+`plan-writer` at high, because its research and math are where effort
+pays while the manager only relays questions; for an interview, Fable
+at low or medium is enough, since `plan-writer` gets Fable at high
+either way. Autoplan's headless phases pass `--effort medium`. Model
+and effort come only from the agent files and the owner's pick:
+`agent-guard.py` refuses an Agent call that passes `model` or `effort`.
 
 ## Spec format
 

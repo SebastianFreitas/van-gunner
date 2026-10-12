@@ -183,9 +183,10 @@ anything else prepared again) on the same branch, with the same report.
   implementer reads them.
 - A plan, state file or handoff: grep the heading, never re-read the
   whole file.
-- Models and effort (Opus judges, Sonnet does, Fable in Opus's place,
-  no Haiku; main session effort low, agents and autoplan medium):
-  playbook "Models".
+- Models and effort (Opus judges, Sonnet does, a Fable session makes
+  only the main session and inheriting agents Fable, plan runs on Opus
+  medium, no Haiku; agent files fix their own effort; never pass `model`
+  or `effort` on an Agent call): playbook "Models".
 
 ## Context budget
 

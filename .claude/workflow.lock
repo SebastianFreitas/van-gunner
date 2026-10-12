@@ -1,6 +1,6 @@
 {
   "master": "C:/Users/Traff/Desktop/sebas/claude-workflow",
-  "commit": "c886eb71127e3fc236ae0fbcfa1b9fed306a72e5",
+  "commit": "c1fd8f9eb24f729e7d9af5fd89d325764b20f977",
   "files": {
     ".claude/agents/implementer-wt.md": "a038933da542bbf478763467c6d24786512502b239a1ae238423aa584841bc18",
     ".claude/agents/implementer.md": "bc10b52bd70bb7d9b67ba556cf135bc29f28dea80d3d84858d7a283eebed9004",
@@ -8,7 +8,7 @@
     ".claude/agents/plan-reviewer.md": "c0d1167a91047f9d3d583528ba585483b4f183b364e9cc47be8004786c0d47b9",
     ".claude/agents/plan-writer.md": "53a9407d8aab535cfa3bdf577debfa455371bb4608ba422ad2ee73c162f330a7",
     ".claude/agents/reviewer.md": "b938a2a835da168db0b963631c3794b2a92eb72333c757515680e42efcc10987",
-    ".claude/hooks/agent-guard.py": "c21f1005ffcd0eabe0500d71eef33e8e24e9c4c1a7e56ff42703e0bb5e42abaf",
+    ".claude/hooks/agent-guard.py": "12cc5aef25be49b4b491d3d1bcb184924a2793ae062c4b528bc4971601b8c69f",
     ".claude/hooks/context-watch.py": "eebc447b5ec2c9c03fce328cb323b8aefe849cc90bcd2e8bbf3dbe7d65478301",
     ".claude/hooks/file-guard.py": "59df6870c587152e74b8f70c1d8ebef41165e888252a34d630be73f0a90d2df8",
     ".claude/hooks/git-guard.py": "01908a6081787d77657ad3b4a3f12b98e91feb4d3d7d7181a69a6e2b35874a42",
@@ -25,8 +25,8 @@
     ".claude/modes/shared.md": "3fa2a876cf9e6bcb8653a4912c65abb97e7062ac50abfa50eb4bf5a809e85943",
     ".claude/modes/worktree.md": "9ff281131fbb7da0c3ccdd1a0a8153e092b3a877499d2b4831ed35b5936855a4",
     ".claude/plans/TEMPLATE.md": "999420f9817d2308b0d46f771e29e2b3a02c509c791adf7cf489913f60f41c41",
-    ".claude/playbook.md": "70c6591b395256d2b211317e20988c6621e380e841a438439b74772fac0cb673",
-    ".claude/rules/workflow.md": "2d1fc2bb696223fd8dd5076cf3837b8d9b6c31d359d889d64ba50126debb87c9",
+    ".claude/playbook.md": "f804a16117648d1bf8f359a42af8cafb7456e5cdd51b9af4efa7e8fecb673a4d",
+    ".claude/rules/workflow.md": "621cefec8f3e7862b0adc5ee268c6c0a9f2f57586f6d5ee7c4865864281034e1",
     ".claude/settings.json": "312d3f615271b21ee2704ad77f4e578e8509a664b548c92a8d8813b160236dae",
     ".claude/skills/handoff/SKILL.md": "73871386398479cd8d32648bbcf9e070f17be299d72e18343cc27d9cd8409cae",
     ".claude/skills/plan/SKILL.md": "437aa42d49ff0a497ac04e531d3aee188d7cd5b81cfc30a87bb26713400905aa",
