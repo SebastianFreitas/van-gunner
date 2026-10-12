@@ -35,6 +35,7 @@ look seeds at the idle checkpoint.
 
 `--views wcam` (with `--shots`) saves only `wcam_<name>.png` and `wcam_<name>_out.png` for every
 van window camera, skips the stress shards and the fingerprint, and writes no verify stamp.
+`--views icam` does the same with one `icam_<name>.png` per van interior camera.
 """
 import argparse
 import difflib
@@ -109,7 +110,7 @@ def _game_ok(job: Job) -> bool:
     if not any(line == "SMOKE: done" for line in smoke_lines):
         print("SMOKE FAILED: missing 'SMOKE: done' line")
         return False
-    if not FINGERPRINT.exists() and "--smoke-views=wcam" not in job.args:
+    if not FINGERPRINT.exists() and not any(a.startswith("--smoke-views=") for a in job.args):
         print("SMOKE FAILED: missing fingerprint.txt")
         return False
     return True
@@ -192,9 +193,10 @@ def main() -> int:
         help="with --shots: also shoot the van's side view for N rerolled look seeds at IDLE",
     )
     parser.add_argument(
-        "--views", choices=["wcam"],
+        "--views", choices=["wcam", "icam"],
         help="with --shots: save only this view set and quit (wcam: every van window camera, "
-        "inside and out, as wcam_<name>[_out].png); the default set is unchanged",
+        "inside and out, as wcam_<name>[_out].png; icam: every van interior camera as "
+        "icam_<name>.png); the default set is unchanged",
     )
     parser.add_argument(
         "--plant-flicker", action="store_true",

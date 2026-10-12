@@ -91,6 +91,7 @@ func _ready() -> void:
 	_overlays = _VanOverlays.new(self)
 	_overlays.build_debug_console()
 	VanAnchors.rig(get_tree()).add_child(VanWindowCams.new())
+	VanAnchors.rig(get_tree()).add_child(VanInteriorCams.new())
 	add_to_group(&"van_run")
 	AudioDirector.bind_run()
 	player.interaction_prompt_changed.connect(_hud.on_prompt_changed)

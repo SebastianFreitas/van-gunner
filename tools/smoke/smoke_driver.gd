@@ -16,6 +16,7 @@ const _LoperKnock := preload("res://tools/smoke/smoke_loper_knock.gd")
 const _Route := preload("res://tools/smoke/smoke_route.gd")
 const _Seeds := preload("res://tools/smoke/smoke_seeds.gd")
 const _Shots := preload("res://tools/smoke/smoke_shots.gd")
+const _IcamShots := preload("res://tools/smoke/smoke_shots_icam.gd")
 const _WcamShots := preload("res://tools/smoke/smoke_shots_wcam.gd")
 
 var _watchdog: SceneTreeTimer
@@ -29,17 +30,18 @@ var _route: RefCounted
 var _halt: RefCounted
 ## Screenshot taker (tools/smoke.py --shots); null in the headless run.
 var _shots: _Shots
-## Only the window cam views, then quit (tools/smoke.py --shots DIR --views wcam).
-var _wcam_only := false
+## Only the `wcam` or `icam` view set, then quit (tools/smoke.py --shots DIR --views ...).
+var _views_only := ""
 
 
 func _ready() -> void:
 	_watchdog = get_tree().create_timer(_WATCHDOG_SECONDS)
 	_watchdog.timeout.connect(func() -> void: _fail("watchdog timeout"))
 	var van_seeds := 0
-	_wcam_only = "--smoke-views=wcam" in OS.get_cmdline_user_args()
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--smoke-shots="):
+		if arg.begins_with("--smoke-views="):
+			_views_only = arg.trim_prefix("--smoke-views=")
+		elif arg.begins_with("--smoke-shots="):
 			_shots = _Shots.new()
 			_shots.dir = arg.trim_prefix("--smoke-shots=")
 			add_child(_shots)
@@ -57,7 +59,6 @@ func _run() -> void:
 	if not DebugConfig.ENABLED:
 		_fail("DebugConfig.ENABLED is false")
 		return
-
 	var mtimes := _record_user_mtimes()
 	var lines := PackedStringArray()
 	seed(12345)
@@ -66,7 +67,6 @@ func _run() -> void:
 	_Fingerprint.fingerprint_act_deck(lines)
 	_Fingerprint.fingerprint_waves(lines)
 	_Fingerprint.fingerprint_rest_offer(lines)
-
 	# Save slots are 1-based; slot 0 would be an out-of-range no-op.
 	GameSession.start_new(1)
 	SceneRouter.go_to_van()
@@ -79,10 +79,10 @@ func _run() -> void:
 
 	await _seconds(2.0)
 	# The van drives at IDLE and the timers are wall-clock, so the shots pin it in place.
-	if _wcam_only and _shots != null:
-		var wcam_pinned := _shots.pin_van()
-		await _WcamShots.new(_shots).run()
-		_shots.unpin_van(wcam_pinned)
+	if _views_only != "" and _shots != null:
+		var views_pinned := _shots.pin_van()
+		await (_IcamShots if _views_only == "icam" else _WcamShots).new(_shots).run()
+		_shots.unpin_van(views_pinned)
 		_log("done")
 		get_tree().quit(0)
 		return
