@@ -41,7 +41,8 @@ the runner's kill line above it. The phase has to fit between the
   picture yourself: the implementer or reviewer does, as `run.md`
   "Verify in a phase" says.
 - **Look checks** go to the `look-judge` (foreground, `run.md` "Verify
-  in a phase"); SendUserFile does not exist here, so write the shot
+  in a phase"), told which Pass test statements this phase's
+  Verification names; SendUserFile does not exist here, so write the shot
   paths and the verdict in the state file's Completed phase for the
   supervisor to send. The run never waits for the owner's reply.
 - **The plan's numbers are built as written:** measure once, and apply

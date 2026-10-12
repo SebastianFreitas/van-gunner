@@ -166,9 +166,12 @@ for a look no tool measures, or when a number says a view changed
 and the question is how; read each one once, write one line on what it
 shows, and never re-read a picture an earlier phase or session already
 described. **The Pass test and look checks** go to the `look-judge`
-(prompt: plan path, phase, each shot's path with its view and seed, the
-report path, earlier verdicts and owner replies), never to the
-implementer, which looks for defects, not for the Brief. A FAIL gets the
+(prompt: plan path, phase, the Pass test statements this phase's
+Verification names, by number, each shot's path with its view and seed,
+the report path, earlier verdicts and owner replies), never to the
+implementer, which looks for defects, not for the Brief. The judge
+reports the other statements as not judged yet; only a named one can
+FAIL the phase. A FAIL gets the
 phase's tuning fallback once, then the judge again; still FAIL:
 `Status: blocked`, Blocker `Pass test failed: <the judge's reasons>`,
 whatever `Questions:` says. The owner decides what changes. A visible phase's Verification names the screenshots or views

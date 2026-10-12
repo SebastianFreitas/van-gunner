@@ -70,7 +70,7 @@ Needs: earlier phases whose output it builds on. Rests on: decisions still in th
 ### 1 · <name>
 Research: <full path only, optional: topics and where things are, then "go past the list">.
 Deliverable: <what it delivers, with the decisions it uses written in plain words (D<n>); every number with its working, check and fallback ("x = a (file:line) − b (file:line) = 0.3 cm. Check: ...; else ..."); only what cannot be known before building as "→ phase decides: measure X, then apply rule Y">. Files: <exact files / functions; at most two it reads to design>.
-Verification: <exact commands from CLAUDE.md § Verify, and the screenshots that must change / stay the same; who runs each (implementer, reviewer, look-judge); look checks: "look-judge on <views>, FAIL stops the run">.
+Verification: <exact commands from CLAUDE.md § Verify, and the screenshots that must change / stay the same; who runs each (implementer, reviewer, look-judge); look checks: "look-judge on <views>, statements (<numbers this phase and earlier ones built>), FAIL stops the run">.
 Reviewed: <the owner's answer to the phases question>
 Notes: <filled when done: what changed, sha>
 

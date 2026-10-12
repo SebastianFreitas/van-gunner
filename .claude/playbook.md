@@ -83,7 +83,10 @@ more than it saves (owner, 2026-10-01). Each project keeps its own
 built-in Explore runs on the main model (Opus). Effort: the main
 session runs at low (`modelSettings` in `.claude/settings.json`, a
 deliberate test, owner 2026-10-05); agents keep medium (the agent files'
-`effort:`) and autoplan's headless phases pass `--effort medium`.
+`effort:`) except `plan-writer` at high, because its research and math
+are where effort pays while the manager only relays questions (owner,
+2026-10-12: picking Fable xhigh for an interview reached only the
+manager); autoplan's headless phases pass `--effort medium`.
 
 ## Spec format
 

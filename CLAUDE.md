@@ -42,7 +42,7 @@ When the user points you at a file in `docs/tasks/`, that file is the task. It f
 13. `SaveSandbox` is the only test hook in game code.
 14. Nothing the facade system places may enter a stop-bay mouth, the reverse-park approach or the raider lane: every placement passes `FacadeKeepOut.allows`, bodies are gated by construction, and the smoke test asserts it (`facade stress 1`, run as five parallel shards of `tools/smoke/facade_stress.tscn`, and `bay mouth clear:` after the garage docks).
 15. Two art styles, one dark look: low-poly 3D skinned with procedural grime shaders in the road's recipe (the road and the van are the references), and flat pixel-art sprites (NPCs, enemies, items, icons); it is always night and light comes only from sources you can point at. A spec for any change someone can see names `.claude/rules/art-style.md` and the area's `art-*.md` file under Read first, plus `art-shots.md` when the change moves a shot's numbers.
-16. Van sizes live only in `VanInteriorSize` (the box, rear door size and rear window x), `VanBodyProfile` (cross-section, wall and roof thickness) and `VanOpenings` (side, cab and rear window hole sizes), and the van contract audit pass must stay clean (`.claude/rules/van-geometry.md`, "Remodelling the van").
+16. Van sizes live only in `VanInteriorSize` (the box, rear door size and rear window x), `VanBodyProfile` (cross-section, wall and roof thickness) and `VanOpenings` (side, cab and rear window hole sizes), and the van contract audit pass must stay clean (`.claude/rules/van-geometry.md`, "Remodelling the van") (paused only by the owner's `tools/smoke/PAUSED`, § Verify).
 
 ## Where things are
 
@@ -68,6 +68,7 @@ In worktree and cloud mode `verify-guard.py` (Stop) refuses to end a turn whose 
 - The van's scenes (`scenes/van/`, `scenes/ui/run_hud.tscn`): also `py -3 tools/scene_dump.py`.
 - Anything visible (models, materials, shaders, facades, lighting, HUD): `py -3 tools/smoke.py --shots <scratchpad>/shots`, then judge each view by the numbers the tools print (`tools/gap_check.py` pixel counts, `tools/shots.py compare`); a PNG is read only for a look no number measures (workflow.md "Numbers before pictures"). Views, hidden desktop, before/after: `.claude/project/playbook.md` "Shots". Never launch a windowed Godot any other way.
 - `--bless` only when a change is meant to alter the fingerprint or the van tree; say so in the report.
+- `tools/smoke/PAUSED` (committed, one line saying why and since when) pauses the van audit and the fingerprint and scene-dump baselines while the owner remakes the van: `smoke.py` and `scene_dump.py` still run the game and the error-line check, print `SMOKE PAUSED` / `SCENE DUMP PAUSED` and count as clean. Only the owner creates or deletes it; a spec never asks for it, and nobody makes the audit or a baseline pass while it exists.
 - Neither the smoke nor the shots drive panel UI that `speed` mode skips (act reveal, boon pick): review those by reading, and tell the owner in Try where to look.
 - A failure is any output line containing `SCRIPT ERROR`, `Parse Error`, `ERROR:` or a GDScript warning; Godot's exit code alone is not reliable.
 

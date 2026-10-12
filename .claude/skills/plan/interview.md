@@ -235,9 +235,12 @@ Then the ready gate as usual. A light-path plan aims at 10 KB.
 
 ### Part A · Brief and direction
 
-1. **Intake.** Explore the current state (grep `.claude/MAP.md` first,
-   then read around the hits; `file:line` anchors, no code bodies). Write
-   it under Current state.
+1. **Intake.** First grep `missed:` across `.claude/plans/*.md`: every
+   hit is a question an earlier plan should have asked and paid for
+   during its run; the ones this Brief raises again go on the open list
+   or become a D `(from <plan>)`. Then explore the current state (grep
+   `.claude/MAP.md` first, then read around the hits; `file:line`
+   anchors, no code bodies). Write it under Current state.
 2. **Research** the areas the brief touches, as wide as the choices
    need (other games, films, painters, techniques, engine or library
    docs). Load `WebSearch`/`WebFetch`. Digest into
@@ -328,6 +331,14 @@ every piece.
      deletion): Verification ends with the `look-judge` on the named
      shots, and the pictures go to the owner too. A FAIL after the
      phase's tuning fallback stops the run (`run.md`).
+     **Each look check names the Pass test statements it judges**, by
+     number: only those this phase and the phases before it have built.
+     A statement the phase skips ("wear skipped this phase only") or a
+     later phase builds (framing, baselines, docs) is never judged yet;
+     the last look check judges them all. The look proof judges every
+     statement its crude version stands in for. railgun-redesign
+     (2026-10-12) stopped at phases 1 and 4, each a full session plus an
+     owner round, on wear and framing that phases 6 and 7 build.
    - **A phase that deletes or replaces the old version** (a swap, a
      removal) Needs the last look check, and runs only after it passed.
    Fill
@@ -378,8 +389,9 @@ every piece.
   agreed to leave.
 - **Pass test:** filled when the Brief judges the result or the plan
   changes looks; a look plan has its look proof phase, its look checks
-  name the `look-judge`, and a swap or deletion phase Needs the last
-  look check. Every Verification check names who runs it.
+  name the `look-judge` and the statements each judges (none that the
+  phase skips or a later phase builds), and a swap or deletion phase
+  Needs the last look check. Every Verification check names who runs it.
 - Every piece has a Walk-through line; every phase has a `Reviewed:`
   line, rests on at least one decision or Brief line, has its Needs
   filled, and is `todo` in the Progress table. Constraints and Scope are

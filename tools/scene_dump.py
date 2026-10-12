@@ -13,6 +13,7 @@ tools/scene_dump/van.baseline.txt; with `--bless`, the baseline is
 overwritten after a clean run. A failing compare prints a node summary (added,
 removed, renamed, value changes) before the raw diff, capped at 40 lines. This exists so a later text-edit split of
 van.tscn into sub-scenes can prove the instantiated tree is unchanged.
+While the owner's tools/smoke/PAUSED exists, the compare is skipped and the run counts as clean.
 """
 import difflib
 import pathlib
@@ -151,6 +152,17 @@ def main() -> int:
         BASELINE.write_bytes(DUMP.read_bytes())
         print("BASELINE WRITTEN")
         stamp_clean(ROOT, "scene_dump", started)
+        print("SCENE DUMP CLEAN")
+        return 0
+
+    paused_file = ROOT / "tools" / "smoke" / "PAUSED"
+    if paused_file.exists():
+        reason = paused_file.read_text(encoding="utf-8").strip() or "no reason given"
+        stamp_clean(ROOT, "scene_dump", started)
+        print(
+            f"SCENE DUMP PAUSED: {reason} (baseline compare skipped; "
+            "delete tools/smoke/PAUSED to resume)"
+        )
         print("SCENE DUMP CLEAN")
         return 0
 

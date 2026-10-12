@@ -43,7 +43,9 @@ container has only `python3`.
   between `tools/smoke/fingerprint.txt` and `fingerprint.baseline.txt`.
   The `[waves]` section pins `segment_wave_min` and `segment_wave_max` to
   2 and 4 while it plans, so the owner's balance edits never move the
-  fingerprint and a clean clone reproduces the baseline.
+  fingerprint and a clean clone reproduces the baseline. While the
+  owner's `tools/smoke/PAUSED` exists, the headless run skips the van
+  audit and the fingerprint compare (and `scene_dump.py` its compare).
 - **Scene dump:** `py -3 tools/scene_dump.py [--bless]`. Instantiates
   `van.tscn` headless and fails on any difference from
   `tools/scene_dump/van.baseline.txt`. Run it for any change to the van's

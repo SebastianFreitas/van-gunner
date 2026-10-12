@@ -164,8 +164,5 @@
         ]
       }
     ]
-  },
-  "enabledPlugins": {
-    "unity@unity-agent-plugin": false
   }
 }

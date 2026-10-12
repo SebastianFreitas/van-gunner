@@ -37,6 +37,10 @@ phase impossible to build, or make it build the wrong thing?* That is:
 - a Verification check nobody can run: a picture to be judged with no
   `look-judge` named (the phase session never reads pictures), or a
   check with no command;
+- a look check that does not say which Pass test statements it judges,
+  or names one the phase itself skips ("wear skipped this phase only")
+  or a later phase builds: that check fails by construction and stops
+  the run for nothing;
 - against the `## Pass test` (when the plan has one): a constraint,
   cap or decision that makes it impossible or unlikely to pass (say
   why in look terms: contrast, size, light, room on the wall); a look

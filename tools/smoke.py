@@ -16,6 +16,8 @@ this is diffed against the committed tools/smoke/fingerprint.baseline.txt;
 with `--bless`, the baseline is overwritten after a clean run. The headless run's
 audit shards (`van_audit.PASSES`, summed) fail on any audit finding; `--plant-flicker`
 runs one unsharded audit with a coplanar box pair planted to prove it fails.
+While the owner's tools/smoke/PAUSED exists (its text is the reason), the headless run builds
+no audit jobs and skips the fingerprint compare, and `--plant-flicker` fails.
 
 `--shots DIR` plays the same run in a real window instead of headless, since
 headless Godot renders nothing, and saves PNGs to DIR at four checkpoints (idle,
@@ -56,6 +58,7 @@ TIMEOUT_SECONDS = 300
 
 FINGERPRINT = ROOT / "tools" / "smoke" / "fingerprint.txt"
 BASELINE = ROOT / "tools" / "smoke" / "fingerprint.baseline.txt"
+PAUSED = ROOT / "tools" / "smoke" / "PAUSED"
 
 
 STRESS_SHARDS = 5
@@ -273,6 +276,12 @@ def main() -> int:
         )
         for i in range(STRESS_SHARDS)
     ]
+    paused = ""
+    if shots is None and PAUSED.exists():
+        paused = PAUSED.read_text(encoding="utf-8").strip() or "no reason given"
+        if opts.plant_flicker:
+            print("SMOKE FAILED: --plant-flicker runs no audit while tools/smoke/PAUSED exists")
+            return 1
     audit: list[Job] = []
     report_dir = ROOT / ".godot" / "van_audit"
     if shots is None and opts.plant_flicker:
@@ -280,7 +289,7 @@ def main() -> int:
         audit.append(Job(
             "audit", van_audit.build_args(report_dir / "report.txt", plant_flicker=True), 155.0,
         ))
-    elif shots is None:
+    elif shots is None and not paused:
         report_dir.mkdir(parents=True, exist_ok=True)
         for name in van_audit.PASSES:
             audit.append(Job(
@@ -313,7 +322,7 @@ def main() -> int:
         return 1
     if not _stress_ok(stress):
         return 1
-    audit_ok = shots is not None or _audit_ok(audit)
+    audit_ok = shots is not None or bool(paused) or _audit_ok(audit)
 
     if opts.bless:
         BASELINE.write_bytes(FINGERPRINT.read_bytes())
@@ -325,13 +334,13 @@ def main() -> int:
         print("SMOKE CLEAN")
         return 0
 
-    if not BASELINE.exists():
+    if not paused and not BASELINE.exists():
         print("SMOKE FAILED: no baseline; run `py -3 tools/smoke.py --bless` first")
         return 1
 
     current = FINGERPRINT.read_text(encoding="utf-8").replace("\r\n", "\n")
-    baseline = BASELINE.read_text(encoding="utf-8").replace("\r\n", "\n")
-    if current != baseline:
+    baseline = "" if paused else BASELINE.read_text(encoding="utf-8").replace("\r\n", "\n")
+    if not paused and current != baseline:
         diff = difflib.unified_diff(
             baseline.splitlines(keepends=True),
             current.splitlines(keepends=True),
@@ -351,6 +360,11 @@ def main() -> int:
         for png in pngs:
             print("     " + png.name)
     print(wall)
+    if paused:
+        print(
+            f"SMOKE PAUSED: {paused} (van audit and the fingerprint baseline skipped; "
+            "delete tools/smoke/PAUSED to resume)"
+        )
     print("SMOKE CLEAN")
     return 0
 

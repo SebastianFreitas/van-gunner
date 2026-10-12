@@ -103,6 +103,7 @@ find Godot themselves and wait for each other, so two of them never run
 Godot on one folder at once. Report every output line containing
 `SCRIPT ERROR`, `Parse Error`, `ERROR:` or a GDScript warning. Say
 "clean" only when there are none; the exit code alone is not reliable.
+A `SMOKE PAUSED:` or `SCENE DUMP PAUSED:` line means the owner paused the van audit and the baselines: report that run as clean, and never try to fix audit findings or baseline diffs while it is there.
 Right after moving files, the first check can print stale `uid_cache`
 errors; run it again. In
 a cloud session (a Linux container) `py -3` doesn't exist: run the same

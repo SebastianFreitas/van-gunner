@@ -6,14 +6,17 @@ Removes local session branches (claude/*, worktree-*, plan-*, or any branch
 checked out under .claude/worktrees) and their worktrees once their work is on
 main and nobody has touched them for a while. Never pushes, never touches
 origin, never deletes a branch whose work is not on main, and never removes a
-worktree with uncommitted or untracked files.
+worktree with uncommitted or untracked files. It also removes registered
+worktrees under the temp folder (before/after captures) once they are idle and clean.
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 
@@ -64,6 +67,26 @@ def worktrees() -> dict[str, Path]:
     return out
 
 
+def temp_roots() -> list[Path]:
+    raw = [tempfile.gettempdir(), os.environ.get("TEMP"), os.environ.get("TMP")]
+    return [Path(r).resolve() for r in raw if r]
+
+
+def temp_worktrees() -> list[Path]:
+    paths = [Path(l[len("worktree "):]) for l in git("worktree", "list", "--porcelain").splitlines()
+             if l.startswith("worktree ")]
+    roots = [os.path.normcase(str(r)) for r in temp_roots()]
+    out = []
+    for p in paths[1:]:
+        rp = p.resolve()
+        if rp == ROOT.resolve() or inside(rp, ROOT):
+            continue
+        n = os.path.normcase(str(rp))
+        if any(n.startswith(r + os.sep) for r in roots):
+            out.append(p)
+    return out
+
+
 def candidates(wts: dict[str, Path]) -> list[str]:
     current = git("branch", "--show-current")
     names = git("for-each-ref", "--format=%(refname:short)", "refs/heads").splitlines()
@@ -111,6 +134,16 @@ def idle_hours(b: str, path: Path | None) -> float:
     if not stamps:
         return 0.0
     return (time.time() - max(stamps)) / 3600
+
+
+def path_idle_hours(path: Path) -> float:
+    stamps = []
+    for e in [path / ".git", *path.iterdir()]:
+        try:
+            stamps.append(e.stat().st_mtime)
+        except OSError:
+            pass
+    return (time.time() - max(stamps)) / 3600 if stamps else 0.0
 
 
 def dirty(path: Path) -> bool:
@@ -174,6 +207,29 @@ def main() -> None:
             removed += 1
         except Exception as e:
             notes.append(f"kept {b}: error {e}")
+
+    keep = {os.path.normcase(str(Path(k).resolve())) for k in args.keep}
+    for p in temp_worktrees():
+        try:
+            if os.path.normcase(str(p.resolve())) in keep:
+                continue
+            if dirty(p):
+                notes.append(f"kept temp worktree {p}: uncommitted files")
+                continue
+            h = path_idle_hours(p)
+            if h < args.idle_hours:
+                notes.append(f"kept temp worktree {p}: touched {h:.0f} h ago")
+                continue
+            if not args.dry_run:
+                r = run("worktree", "remove", str(p))
+                if r.returncode != 0:
+                    err = (r.stderr.strip().splitlines() or [""])[0]
+                    notes.append(f"kept temp worktree {p}: could not remove: {err}")
+                    continue
+            print(f"cleanup: {verb} temp worktree {p} (idle {h:.0f} h)")
+            removed += 1
+        except Exception as e:
+            notes.append(f"kept temp worktree {p}: error {e}")
 
     try:
         for d in empty_leftovers():

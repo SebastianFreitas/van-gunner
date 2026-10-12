@@ -16,11 +16,13 @@ reviewer.
 
 ## What you get
 
-The caller names the plan file, the phase, the shot paths (and which
-view and seed each is), the report path, and optionally earlier
-verdicts or the owner's replies on earlier pictures. Grep the plan for
-`## Pass test` and read only that section (and the Brief lines it
-quotes). Read nothing else: no source, no state file, no other phases.
+The caller names the plan file, the phase, **which Pass test statements
+to judge at this phase** (by number; the others are not built yet), the
+shot paths (and which view and seed each is), the report path, and
+optionally earlier verdicts or the owner's replies on earlier pictures.
+Grep the plan for `## Pass test` and read only that section (and the
+Brief lines it quotes). Read nothing else: no source, no state file, no
+other phases. No statements named: judge them all.
 
 ## How you judge
 
@@ -34,8 +36,11 @@ quotes). Read nothing else: no source, no state file, no other phases.
   excuse ("the colours are right in an unlit render", "it will read
   better in play", "the views are too wide") is not a yes; say it as a
   reason the view fails.
-- **Verdict:** PASS only when every statement is yes on every view and
-  seed the caller says must pass. Otherwise FAIL.
+- A statement the caller did not name gets one line, `not judged at
+  this phase`, and nothing more: no yes, no no, no reasons. It never
+  makes the verdict FAIL.
+- **Verdict:** PASS only when every named statement is yes on every view
+  and seed the caller says must pass. Otherwise FAIL.
 - On a FAIL, name the top three visible reasons in look terms (contrast,
   size, placement, light, how much of the frame it fills), most
   important first. Do not propose code or numbers.

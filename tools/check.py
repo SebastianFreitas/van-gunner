@@ -10,6 +10,7 @@ SCRIPT ERROR, Parse Error or ERROR:. Godot's exit code alone is not reliable.
    .gdshader under res:// so parse errors and broken references surface.
 3. The same load with the local debugger attached (-d), which is the only way Godot
    prints GDScript warnings; any warning fails the check because the tree is kept at 0.
+   This pass is skipped when the load check failed, since a script error under -d hangs.
 
 Godot discovery (env var, then the Windows user variable, then PATH, then
 ~/.local/bin/godot) lives in godot_env.py, shared with smoke.py and scene_dump.py.
@@ -101,7 +102,11 @@ def main() -> int:
         load_hits, load_code = run_pass(
             exe, ["--script", "res://tools/check_scripts.gd"], "load check"
         )
-        warnings = run_warning_pass(exe)
+        if not import_hits and not load_hits and load_code == 0:
+            warnings = run_warning_pass(exe)
+        else:
+            print("   warnings pass skipped: the load check failed (a script error would hang the -d pass)")
+            warnings = []
     failures = len(import_hits) + len(load_hits)
     if failures or load_code != 0:
         print(f"CHECK FAILED: {failures} failure line(s), load check exit {load_code}")

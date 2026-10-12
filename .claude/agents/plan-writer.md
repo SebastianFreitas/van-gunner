@@ -2,7 +2,7 @@
 name: plan-writer
 description: Does the planning work for the plan skill's interview (explore, research, the math, writing the plan) so the app session only manages and asks the owner. One job per call; the caller names the plan path, the job and the answers so far. Returns what it wrote and the questions ready for AskUserQuestion.
 model: inherit
-effort: medium
+effort: high
 tools: Read, Grep, Glob, Bash, Write, Edit, WebSearch, WebFetch
 maxTurns: 150
 ---
@@ -26,6 +26,7 @@ checkouts: never edit their files.
 ## The jobs
 
 - **intake**: Part A steps 1 to 4 (or the Light path steps 1 and 2):
+  the `missed:` lines of earlier plans (grep `.claude/plans/*.md`),
   Current state, research digest, Option map, the open list. Return the
   open list as questions.
 - **idea**: Part B step 1: the Initial idea and its pieces. Return the
