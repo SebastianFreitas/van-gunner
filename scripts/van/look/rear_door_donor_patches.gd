@@ -5,8 +5,10 @@ extends RefCounted
 ## Hinge-local metres, x 0 at the hinge.
 
 const _Plate := preload("res://scripts/van/look/rear_door_donor_plate.gd")
+const _Beam := preload("res://scripts/van/look/rear_door_donor_beam.gd")
 const _Sheet := preload("res://scripts/van/look/rear_door_donor_sheet.gd")
 const _Seam := preload("res://scripts/van/look/rear_door_donor_seam.gd")
+const _Hydraulic := preload("res://scripts/van/look/rear_door_donor_hydraulic.gd")
 
 
 ## Builds the patches under `hinge`; `rect` is the leaf rect the skin was pressed from. Returns
@@ -15,6 +17,8 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile,
 		rng: RandomNumberGenerator) -> Array[Node3D]:
 	var out: Array[Node3D] = []
 	out.append_array(_Plate.build(hinge, rect, profile, rng))
+	out.append_array(_Beam.build(hinge, rect))
+	out.append_array(_Hydraulic.build(hinge, rect))
 	out.append_array(_Sheet.build(hinge, rect, profile))
 	RearDoorDonorStrap.cap(hinge, rect, profile, rng, out)
 	out.append_array(_Seam.build(hinge, rect, profile))

@@ -18,9 +18,8 @@ const KNUCKLE_H := 0.22
 const ARM_END_X := 0.36
 const BOLT_R := 0.02
 const BOLT_H := 0.02
-## Hinge arm centres: below the rounded corner, and above the bottom edge strip.
+## Hinge arm centre: below the rounded corner.
 const ARM_TOP_DROP := 0.3
-const ARM_BOTTOM_RISE := 0.4
 ## Latch height as a fraction of the leaf's height.
 const LATCH_AT := 0.36
 
@@ -31,10 +30,7 @@ static func build(hinge: Node3D, rect: Rect2, rng: RandomNumberGenerator,
 	var dark := _Panels.flat(Color(0.12, 0.08, 0.06), 0.9, 0.25)
 	var weld := _Welds.weld_steel()
 	var top := rect.end.y - RearDoorProfile.DONOR_HINGE_ROUND - ARM_TOP_DROP
-	var bottom := rect.position.y + ARM_BOTTOM_RISE
 	_hinge_arm(hinge, top, rust, dark, weld, rng, out)
-	# The lower hinge is a strap welded across the roofing sheet's dent, with its own knuckle.
-	RearDoorDonorStrap.strap_hinge(hinge, rect, RearDoorProfile.donor(), bottom, rng, out)
 	# Plate B must sit on the tread plate: just above its bottom seam, never the bare midpoint.
 	var seam_y := RearDoorDonorPlate.seam(rect, RearDoorProfile.donor())[0].y
 	_check_arm(hinge, seam_y + 0.2, rust, dark, rng, out)
