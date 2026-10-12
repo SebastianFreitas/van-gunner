@@ -122,11 +122,30 @@ static func tube_indices(verts: PackedVector3Array, centres: PackedVector3Array,
 	return out
 
 
+## Area-weighted vertex normals of an indexed triangle list, wound as `build` reads it.
+static func area_normals(verts: PackedVector3Array, indices: PackedInt32Array) -> PackedVector3Array:
+	var nrm := PackedVector3Array()
+	nrm.resize(verts.size())
+	for i in range(0, indices.size() - 2, 3):
+		var a := indices[i]
+		var b := indices[i + 1]
+		var c := indices[i + 2]
+		var fn := (verts[c] - verts[a]).cross(verts[b] - verts[a])
+		nrm[a] += fn
+		nrm[b] += fn
+		nrm[c] += fn
+	for i in nrm.size():
+		nrm[i] = nrm[i].normalized()
+	return nrm
+
+
 ## Skinned cloth mesh on `sk`, sharing the arm mesh's Skin so ARRAY_BONES index its binds.
 static func build(mi: MeshInstance3D, sk: Skeleton3D, node_name: StringName,
 		verts: PackedVector3Array, normals: PackedVector3Array, custom0: PackedFloat32Array,
 		bones: PackedInt32Array, weights: PackedFloat32Array, indices: PackedInt32Array,
-		mat: Material, rest_chart: bool = false, hand_weight: float = 1.0) -> MeshInstance3D:
+		mat: Material, rest_chart: bool = false, hand_weight: float = 1.0,
+		rest_normals: PackedVector3Array = PackedVector3Array(),
+		hand_weights: PackedFloat32Array = PackedFloat32Array()) -> MeshInstance3D:
 	if mi == null or mi.skin == null or sk == null:
 		push_warning("ArmSkinMesh: arm mesh without a skin, cannot build %s" % node_name)
 		return null
@@ -136,17 +155,7 @@ static func build(mi: MeshInstance3D, sk: Skeleton3D, node_name: StringName,
 		old.queue_free()
 	var nrm := normals
 	if nrm.is_empty():
-		nrm.resize(verts.size())
-		for i in range(0, indices.size() - 2, 3):
-			var a := indices[i]
-			var b := indices[i + 1]
-			var c := indices[i + 2]
-			var fn := (verts[c] - verts[a]).cross(verts[b] - verts[a])
-			nrm[a] += fn
-			nrm[b] += fn
-			nrm[c] += fn
-		for i in nrm.size():
-			nrm[i] = nrm[i].normalized()
+		nrm = area_normals(verts, indices)
 	var c0 := custom0
 	if c0.is_empty():
 		c0.resize(verts.size() * 4)
@@ -170,10 +179,11 @@ static func build(mi: MeshInstance3D, sk: Skeleton3D, node_name: StringName,
 			c1[i * 4] = verts[i].x
 			c1[i * 4 + 1] = verts[i].y
 			c1[i * 4 + 2] = verts[i].z
-			c1[i * 4 + 3] = hand_weight
-			c2[i * 4] = nrm[i].x
-			c2[i * 4 + 1] = nrm[i].y
-			c2[i * 4 + 2] = nrm[i].z
+			c1[i * 4 + 3] = hand_weight if hand_weights.is_empty() else hand_weights[i]
+			var rn := nrm[i] if rest_normals.is_empty() else rest_normals[i]
+			c2[i * 4] = rn.x
+			c2[i * 4 + 1] = rn.y
+			c2[i * 4 + 2] = rn.z
 		arrays[Mesh.ARRAY_CUSTOM1] = c1
 		arrays[Mesh.ARRAY_CUSTOM2] = c2
 		flags |= Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM1_SHIFT

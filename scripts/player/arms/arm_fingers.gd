@@ -42,6 +42,7 @@ static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumber
 	var weights := PackedFloat32Array()
 	var indices := PackedInt32Array()
 	var out := {}
+	var joins: Array[Vector3i] = []
 	var ref_r := 0.0
 	for f in ArmRig.FINGERS:
 		var cr := rng.randf_range(-0.40, 0.40) * (0.0 if f == &"thumb" else 1.0)
@@ -65,9 +66,26 @@ static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumber
 			bones.append_array(t4[0])
 			weights.append_array(t4[1])
 		out[f] = fg[&"info"]
+		out[f][&"vert_base"] = base
+		out[f][&"emerge"] = fg[&"emerge"]
+		joins.append(Vector3i(base, rings, fg[&"emerge"]))
 	if not verts.is_empty():
-		ArmSkinMesh.build(mi, sk, &"Skin_fingers", verts, PackedVector3Array(),
-				PackedFloat32Array(), bones, weights, indices, mat, true)
+		# Near each root the tubes take the palm skin's normals and hand weight (ArmFingerJoin).
+		var pal := ArmFingerJoin.palm(mi)
+		var has_palm := not (pal[&"pos"] as PackedVector3Array).is_empty()
+		if has_palm:
+			for j in joins:
+				ArmFingerJoin.fillet(pal, verts, j.x, j.y, j.z)
+		var nrm := ArmSkinMesh.area_normals(verts, indices)
+		var rest_n := nrm.duplicate()
+		var hand_w := PackedFloat32Array()
+		hand_w.resize(verts.size())
+		hand_w.fill(1.0)
+		if has_palm:
+			for j in joins:
+				ArmFingerJoin.transfer(pal, verts, nrm, rest_n, hand_w, j.x, j.y, j.z)
+		ArmSkinMesh.build(mi, sk, &"Skin_fingers", verts, nrm, PackedFloat32Array(), bones,
+				weights, indices, mat, true, 1.0, rest_n, hand_w)
 	return out
 
 
@@ -119,6 +137,9 @@ static func _finger(mi: MeshInstance3D, sk: Skeleton3D, own: Dictionary, f: Stri
 			prof = _root_profile(knob[j], shaft[j], knob[j + 1])
 		elif j != 3:
 			prof = _shaft_profile(knob[j], shaft[j], knob[j + 1], not thumb)
+		if j == first:
+			# The rings behind t 0 are inside the palm: the tube emerges at the first one past it.
+			fg[&"emerge"] = prof.filter(func(p: Vector3) -> bool: return p.x < 0.0).size()
 		_segment(mi, sk, fg, j, prof)
 	# The pole closes the tip on the finger's own (crooked) axis, weighted to .03 only.
 	var base := ArmSkinMesh.ring_frame(mi, sk, names[3], 0.0)

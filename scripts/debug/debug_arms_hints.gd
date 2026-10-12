@@ -23,6 +23,7 @@ const INFO := {
 	"thumbs": ["", "thumb report"],
 	"reach": ["", "left arm reach numbers"],
 	"seam": ["", "hand-forearm seam edge lengths"],
+	"join": ["", "finger-to-palm normal gap at the root rings"],
 	"wristang": ["[t|axes|flex|dev|scan [t0 t1]]", "left wrist angles"],
 	"ik": ["", "IK report"],
 	"touch": ["", "touch report"],
