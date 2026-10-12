@@ -15,7 +15,7 @@ float blight_dome(vec3 o, float r, float k) {
 
 // Soft-clamped fields in 0..1: x wart, y scab, z pit core, w pit lip. Blobs are summed, never
 // max()ed, because max leaves a crease where two meet.
-vec4 blight_field(vec3 p, float scale, float accept, float widen) {
+vec4 blight_field(vec3 p, float scale, float accept, float fade, float widen) {
 	vec3 q = p * scale + vec3(seed_offset * 1.7);
 	// One low octave only: fbm's high octaves made the edges jagged.
 	q += 0.25 * (vec3(noise21(q.yz * 0.6), noise21(q.zx * 0.6), noise21(q.xy * 0.6)) - 0.5);
@@ -26,7 +26,14 @@ vec4 blight_field(vec3 p, float scale, float accept, float widen) {
 			for (int z = -1; z <= 1; z++) {
 				vec3 c = cell + vec3(float(x), float(y), float(z));
 				vec3 a = blight_hash(c);
-				if (a.x >= accept) {
+				// With fade > 0 the cell's acceptance fades out over the last `fade` share of the
+				// threshold, so the hand weight ramp thins the blotches instead of cutting domes
+				// along a line; 0 is the hard test the hand blights keep.
+				float keep = float(a.x < accept);
+				if (fade > 0.0) {
+					keep = 1.0 - smoothstep((1.0 - fade) * accept, accept, a.x);
+				}
+				if (keep <= 0.0) {
 					continue;
 				}
 				vec3 b = blight_hash(c + vec3(19.3, 7.1, 43.7));
@@ -50,14 +57,14 @@ vec4 blight_field(vec3 p, float scale, float accept, float widen) {
 						blob += mix(0.6, 0.9, h.z) * blight_dome(so, r * mix(0.45, 0.7, h.y), kx);
 					}
 					if (b.x < 0.5) {
-						sum.x += blob;
+						sum.x += keep * blob;
 					} else {
-						sum.y += blob;
+						sum.y += keep * blob;
 					}
 				} else {
 					float qq = dot(o, o) / (r * r);
-					sum.z += pow(max(1.0 - qq, 0.0), 2.0);
-					sum.w += pow(max(1.0 - qq / 1.69, 0.0), 2.0);
+					sum.z += keep * pow(max(1.0 - qq, 0.0), 2.0);
+					sum.w += keep * pow(max(1.0 - qq / 1.69, 0.0), 2.0);
 				}
 			}
 		}
@@ -72,8 +79,8 @@ float blight_height(vec4 f) {
 
 // Vertex relief: wider and lower than the shading field so one coarse vertex never pokes up
 // alone, and no pits so the mesh is never dented.
-float blight_relief(vec3 p, float scale, float accept) {
-	vec4 f = blight_field(p, scale, accept, 1.5);
+float blight_relief(vec3 p, float scale, float accept, float fade) {
+	vec4 f = blight_field(p, scale, accept, fade, 1.5);
 	return 0.5 * (f.x + 0.6 * smoothstep(0.0, 0.45, f.y));
 }
 

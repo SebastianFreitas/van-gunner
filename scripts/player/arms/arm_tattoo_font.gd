@@ -133,18 +133,6 @@ static func layout(text: String, width: float, height: float) -> Dictionary:
 	return result
 
 
-## Copy of `segs` with every endpoint moved by up to `amount` on x and y independently, for a
-## hand-poked wobble. The caller passes about 0.15 x the layout's unit.
-static func jitter(segs: PackedVector4Array, rng: RandomNumberGenerator,
-		amount: float) -> PackedVector4Array:
-	var out := PackedVector4Array()
-	for s: Vector4 in segs:
-		out.append(Vector4(
-				s.x + rng.randf_range(-amount, amount), s.y + rng.randf_range(-amount, amount),
-				s.z + rng.randf_range(-amount, amount), s.w + rng.randf_range(-amount, amount)))
-	return out
-
-
 ## Grid-unit width of one line; the gap after the last glyph is left out so centring is true.
 static func _line_w(line: String) -> float:
 	return line.length() * (GLYPH_W + GAP) - GAP

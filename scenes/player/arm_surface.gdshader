@@ -92,6 +92,7 @@ varying vec4 rest_data;
 // Blights; need fbm, noise21 and crack_field from grime and the uniforms above.
 #include "res://scenes/player/arm_skin_blights.gdshaderinc"
 #include "res://scenes/player/arm_skin_folds.gdshaderinc"
+#include "res://scenes/player/arm_skin_grease.gdshaderinc"
 
 // Back-of-limb mask; on the hand it starts lower so the tilted finger tops get blights too.
 float blight_dorsal(float ny, float hand) {
@@ -109,9 +110,9 @@ void vertex() {
 		float v_accept = mix(0.12, 0.55, rest_data.w);
 		// The hand layer is halved so the coarse finger vertices never spike.
 		VERTEX += NORMAL * blight_lift * v_dorsal * skin_bump
-				* (blight_relief(rest_data.xyz, blight_scale, v_accept) / blight_scale
+				* (blight_relief(rest_data.xyz, blight_scale, v_accept, 0.2) / blight_scale
 				+ 0.5 * rest_data.w * blight_relief(rest_data.xyz, hand_blight_scale,
-				hand_blight_accept) / hand_blight_scale);
+				hand_blight_accept, 0.0) / hand_blight_scale);
 	}
 	if (!IN_SHADOW_PASS) {
 		apply_viewmodel_fov(PROJECTION_MATRIX);
@@ -171,12 +172,12 @@ float wrinkle_fade(float fw) {
 }
 
 float skin_height(vec3 rest, vec3 w, float accept, float dorsal, float hand, float fw) {
-	vec4 f = blight_field(rest, blight_scale, accept, 1.0);
+	vec4 f = blight_field(rest, blight_scale, accept, 0.2, 1.0);
 	vec2 wq = rest.xz * blight_scale * 12.0 + vec2(rest.y * blight_scale * 12.0);
 	float wart_skin = f.x * 0.12 * (noise21(wq) - 0.5); // fine bumpy wart skin, shading only
 	float h = (blight_height(f) + wart_skin);
 	if (hand > 0.01) {
-		vec4 fh = blight_field(rest, hand_blight_scale, hand_blight_accept, 1.0);
+		vec4 fh = blight_field(rest, hand_blight_scale, hand_blight_accept, 0.0, 1.0);
 		h += hand * (hand_blight_gain / blight_gain) * blight_height(fh);
 	}
 	// Creases and tendons ride the same height field, so they tilt the light like the knots.
@@ -237,7 +238,9 @@ vec3 vein_field(vec4 c, float fw, float hand) {
 			sum.z += ws * hk * fade * slope * dFdy(t);
 		}
 	}
-	return sum * clamp(c.w, 0.0, 1.0);
+	// The per-bone mask eases in over its first third, so where a bone's weight ends inside a
+	// triangle the veins fade out instead of stopping on the triangle edge.
+	return sum * clamp(c.w, 0.0, 1.0) * smoothstep(0.0, 0.35, c.w);
 }
 
 // Tilts n by a height that changes hx, hy per pixel (the surface gradient form; dpdx and dpdy
@@ -307,6 +310,7 @@ void fragment() {
 	}
 	// Saggy skin: tilt the normal by the fold height's gradient, darken and roughen the hollows.
 	float fold_dark = 0.0;
+	float crease = 0.0;
 	float blight_rough = 0.0;
 	float blight_ao = 1.0;
 	if (skin_bump > 0.0) {
@@ -345,12 +349,13 @@ void fragment() {
 			// Crease floors go dark and tendon crowns catch a little light, so both read under
 			// the cabin's dim lamp and not only when it rakes them.
 			float relief = fold_relief(rest, n, fw);
+			crease = max(-relief, 0.0);
 			col *= 1.0 - fold_shade * max(-relief, 0.0);
 			col *= 1.0 + tendon_light * max(relief, 0.0);
 		}
-		vec4 bf = blight_field(rest, blight_scale, accept, 1.0);
+		vec4 bf = blight_field(rest, blight_scale, accept, 0.2, 1.0);
 		if (hand > 0.01) {
-			bf = min(bf + hand * blight_field(rest, hand_blight_scale, hand_blight_accept, 1.0),
+			bf = min(bf + hand * blight_field(rest, hand_blight_scale, hand_blight_accept, 0.0, 1.0),
 					vec4(1.0));
 		}
 		blight_shade(bf, rest, mix(blight_scale, hand_blight_scale, hand), dorsal * skin_bump, col,
@@ -378,6 +383,7 @@ void fragment() {
 		vec3 skin_albedo = ALBEDO;
 		float skin_rough = ROUGHNESS;
 		skin_layers(rest_data.xyz, rest_data.w, vein_data.x, skin_albedo, skin_rough);
+		grease_layer(rest_data.xyz, n, rest_data.w, vein_data.x, crease, skin_albedo, skin_rough);
 		ALBEDO = skin_albedo;
 		ROUGHNESS = skin_rough;
 	}

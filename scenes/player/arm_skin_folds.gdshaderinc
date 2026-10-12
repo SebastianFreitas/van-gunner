@@ -65,7 +65,7 @@ float fold_relief(vec3 rest, vec3 n, float fw) {
 		float t = min(length(ap - ab * s) / hw, 1.0);
 		float ridge = (1.0 - t * t) * (1.0 - t * t);
 		// Fades in off the wrist and sinks under the knuckle.
-		float run = smoothstep(0.0, 0.3, s) * (1.0 - smoothstep(0.8, 1.0, s));
+		float run = smoothstep(0.0, 0.5, s) * (1.0 - smoothstep(0.6, 1.0, s));
 		h += ridge * run * up * fold_fade(2.0 * hw, fw);
 	}
 	return clamp(h, -1.0, 1.0);

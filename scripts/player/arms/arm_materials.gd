@@ -4,6 +4,9 @@ extends RefCounted
 
 ## Triplanar grime shader behind skin, cloth, steel and pipe.
 const SHADER := preload("res://scenes/player/arm_surface.gdshader")
+## The skin's noise offset: it places the wart domes the shader lifts out of the skin, so it is
+## shape (seed 1337's draw; seed 7's 2.32 put domes on three fingertips and buried the claws).
+const HAND_SKIN_OFFSET := 91.1654968261719
 
 
 ## A fresh grime material; never cached, because the arms rebuild per run.
@@ -25,19 +28,12 @@ static func surface(base: Color, shade: Color, dirt: Color, grain_m: float, mott
 
 
 ## Grime skin; the only material with raised veins (the others keep vein_strength 0).
-static func skin(rng: RandomNumberGenerator) -> ShaderMaterial:
-	var bases: Array[Color] = [
-		Color(0.27, 0.32, 0.25), # grey-green
-		Color(0.25, 0.31, 0.27), # green-blue
-		Color(0.29, 0.31, 0.23), # moss
-	]
-	var base: Color = bases[rng.randi_range(0, 2)]
-	base = Color(base.r + rng.randf_range(-0.02, 0.02), base.g + rng.randf_range(-0.02, 0.02),
-			base.b + rng.randf_range(-0.02, 0.02))
+static func skin() -> ShaderMaterial:
+	# One fixed tone and vein strength: the values the hand look seed drew (owner: one design).
+	var base := Color(0.2806945, 0.3307963, 0.2565564)
 	var mat := surface(base, Color(0.13, 0.17, 0.14), Color(0.08, 0.08, 0.06), 60.0, 6.0, 0.0,
-			0.45, 0.88, 0.0, rng.randf_range(0.0, 100.0))
-	mat.set_shader_parameter(&"vein_strength", rng.randf_range(0.7, 1.0))
-	# 6 times the shader default (range max 0.008), shaded flanks: thin old skin, veins pop.
+			0.45, 0.88, 0.0, HAND_SKIN_OFFSET)
+	mat.set_shader_parameter(&"vein_strength", 0.9405867)
 	mat.set_shader_parameter(&"vein_height", 0.0075)
 	mat.set_shader_parameter(&"vein_shade", 0.6)
 	mat.set_shader_parameter(&"vein_under", 0.95)
