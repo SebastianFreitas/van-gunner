@@ -9,6 +9,7 @@ const _Beam := preload("res://scripts/van/look/rear_door_donor_beam.gd")
 const _Sheet := preload("res://scripts/van/look/rear_door_donor_sheet.gd")
 const _Seam := preload("res://scripts/van/look/rear_door_donor_seam.gd")
 const _Hydraulic := preload("res://scripts/van/look/rear_door_donor_hydraulic.gd")
+const _Box := preload("res://scripts/van/look/rear_door_donor_box.gd")
 const _HydraulicCabin := preload("res://scripts/van/look/rear_door_donor_hydraulic_cabin.gd")
 
 
@@ -21,6 +22,7 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile,
 	out.append_array(_Beam.build(hinge, rect))
 	out.append_array(_Hydraulic.build(hinge, rect))
 	out.append_array(_HydraulicCabin.build(hinge, rect))
+	out.append_array(_Box.build(hinge, rect, profile))
 	out.append_array(_Sheet.build(hinge, rect, profile))
 	RearDoorDonorStrap.cap(hinge, rect, profile, rng, out)
 	out.append_array(_Seam.build(hinge, rect, profile))

@@ -9,13 +9,13 @@ const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
 const _Skin := preload("res://scripts/van/rear_door_skin.gd")
 const _Panels := preload("res://scripts/van/look/rear_door_donor_panels.gd")
 const _Plate := preload("res://scripts/van/look/rear_door_donor_plate.gd")
-const _Beam := preload("res://scripts/van/look/rear_door_donor_beam.gd")
+const _Box := preload("res://scripts/van/look/rear_door_donor_box.gd")
 
 const SHELL := 0.004
 const PITCH := 0.11
 const RIB_H := 0.018
-## The sheet starts 1 cm inside the beam's top, so the beam hides its bottom edge.
-const BOTTOM_LIFT := _Beam.TOP - 0.01
+## The sheet starts 1 cm inside the welded box's top, so the box hides its bottom edge.
+const BOTTOM_LIFT := _Box.TOP - 0.01
 const LAP := 0.06
 const CUT_GAP := 0.003
 ## Fixed column grid: this many columns per rib pitch, the same on every row.
