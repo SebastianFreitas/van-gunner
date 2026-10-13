@@ -44,6 +44,7 @@ static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumber
 	var out := {}
 	var joins: Array[Vector3i] = []
 	var ref_r := 0.0
+	var mask := PackedFloat32Array()
 	for f in ArmRig.FINGERS:
 		var cr := rng.randf_range(-0.40, 0.40) * (0.0 if f == &"thumb" else 1.0)
 		var fg := _finger(mi, sk, own, f, suffix, girth, cr, ref_r)
@@ -60,14 +61,13 @@ static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumber
 		for i in idx:
 			indices.append(base + i)
 		verts.append_array(fv)
-		var wts: Array = fg[&"wts"]
-		for w in wts:
+		mask.append_array(ArmFingerJoin.vein_mask_of(fg))
+		for w: Dictionary in fg[&"wts"]:
 			var t4 := ArmSkinMesh.top4(w)
 			bones.append_array(t4[0])
 			weights.append_array(t4[1])
 		out[f] = fg[&"info"]
-		out[f][&"vert_base"] = base
-		out[f][&"emerge"] = fg[&"emerge"]
+		out[f].merge({&"vert_base": base, &"emerge": fg[&"emerge"]})
 		joins.append(Vector3i(base, rings, fg[&"emerge"]))
 	if not verts.is_empty():
 		# Near each root the tubes take the palm skin's normals and hand weight (ArmFingerJoin).
@@ -84,7 +84,8 @@ static func build(model: Node3D, suffix: String, girth: float, rng: RandomNumber
 		if has_palm:
 			for j in joins:
 				ArmFingerJoin.transfer(pal, verts, nrm, rest_n, hand_w, j.x, j.y, j.z)
-		ArmSkinMesh.build(mi, sk, &"Skin_fingers", verts, nrm, PackedFloat32Array(), bones,
+		ArmSkinMesh.build(mi, sk, &"Skin_fingers", verts, nrm,
+				ArmFingerJoin.chart(mi, sk, suffix, verts, mask), bones,
 				weights, indices, mat, true, 1.0, rest_n, hand_w)
 	return out
 

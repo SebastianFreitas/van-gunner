@@ -7,6 +7,8 @@ const SHADER := preload("res://scenes/player/arm_surface.gdshader")
 ## The skin's noise offset: it places the wart domes the shader lifts out of the skin, so it is
 ## shape (seed 1337's draw; seed 7's 2.32 put domes on three fingertips and buried the claws).
 const HAND_SKIN_OFFSET := 91.1654968261719
+## Size of the shader's `vein_pts` array (`VEIN_MAX` in arm_vein.gdshaderinc); both sets pack under it.
+const VEIN_MAX := 160
 
 
 ## A fresh grime material; never cached, because the arms rebuild per run.
@@ -33,13 +35,9 @@ static func skin() -> ShaderMaterial:
 	var base := Color(0.2806945, 0.3307963, 0.2565564)
 	var mat := surface(base, Color(0.13, 0.17, 0.14), Color(0.08, 0.08, 0.06), 60.0, 6.0, 0.0,
 			0.45, 0.88, 0.0, HAND_SKIN_OFFSET)
-	mat.set_shader_parameter(&"vein_strength", 0.9405867)
-	mat.set_shader_parameter(&"vein_height", 0.0075)
-	mat.set_shader_parameter(&"vein_shade", 0.6)
-	mat.set_shader_parameter(&"vein_under", 0.95)
-	mat.set_shader_parameter(&"vein_wrist", 1.7)
-	mat.set_shader_parameter(&"vein_wrap", 0.9)
-	mat.set_shader_parameter(&"vein_width", 0.044)
+	mat.set_shader_parameter(&"vein_strength", 1.0)
+	mat.set_shader_parameter(&"vein_shade", 1.8)
+	mat.set_shader_parameter(&"vein_under", 1.8)
 	# Measured palm bone length 0.125 rest units, so a finger is about 0.11: sag_scale 36 gives
 	# about 4 big folds per finger, wrinkle_scale 280 the fine ones (older, creased skin).
 	mat.set_shader_parameter(&"skin_bump", 1.0)
@@ -48,6 +46,19 @@ static func skin() -> ShaderMaterial:
 	mat.set_shader_parameter(&"hand_blight_gain", 9.0) # age spots and blotches on the hands
 	mat.set_shader_parameter(&"use_rest_pos", true)
 	return mat
+
+
+## Hands the arm's packed vein paths to the skin shader (`vein_pts`, `VEIN_MAX` points at most).
+static func set_veins(mat: ShaderMaterial, side: String) -> void:
+	var vein_set := load("res://resources/arms/vein_set_%s.tres" % side) as ArmVeinSet
+	var packed := vein_set.pack()
+	if packed.size() > VEIN_MAX:
+		push_warning("Vein set %s packs %d points, over the shader cap %d." % [
+				side, packed.size(), VEIN_MAX])
+	var count := mini(packed.size(), VEIN_MAX)
+	packed.resize(VEIN_MAX)
+	mat.set_shader_parameter(&"vein_pts", packed)
+	mat.set_shader_parameter(&"vein_count", count)
 
 
 static func cloth(rng: RandomNumberGenerator) -> ShaderMaterial:

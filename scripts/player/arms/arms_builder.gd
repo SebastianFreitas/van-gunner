@@ -221,6 +221,9 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	# One copy per arm so the skin layers' uniforms (tattoo, scars) differ between the arms.
 	var skin_r := skin.duplicate() as ShaderMaterial
 	var skin_l := skin.duplicate() as ShaderMaterial
+	# Each arm shades its own authored vein paths, the data the skin geometry is raised by.
+	ArmMaterials.set_veins(skin_r, "right")
+	ArmMaterials.set_veins(skin_l, "left")
 	var claw := ArmMaterials.claw()
 	var gx := HeldGun.gun_xform()
 

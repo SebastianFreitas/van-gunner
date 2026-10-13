@@ -58,7 +58,15 @@ reference: stacked wrinkle folds, tendons fanning from the wrist):
 `arm_skin_folds.gdshaderinc` adds a signed relief to `skin_height` from
 rest-space joints and cords that `ArmSkinFolds.apply` sets per arm with
 no rng draw; it never reaches vertex(), so it cannot cover a claw. Veins
-read by shade as well as tilt (`vein_shade`, `vein_wrist`, `vein_wrap`).
+read by shade as well as tilt (`vein_shade`, `vein_under`).
+Pitfall: a wound is a long ellipse with a dark crust ring, so a big one reads as a pill outline; the old right wound 0 (z 0.049, r 0.047, stretch 1.9) was the owner's wrist pill and is deleted from `arm_skin_fixed.gd`; keep wounds small.
+Veins are authored per arm from the owner's arm photos, not noise, each arm its own pattern (no mirroring):
+- Data: `resources/arms/vein_set_left.tres` and `vein_set_right.tres` (`ArmVeinSet`: paths of chart x, v, radius; edit the .tres). Chart = `(x, 0.035 * atan2(z, y))` of CUSTOM0; back of hand is +v right, -v left.
+- Sampler: `ArmVeinField` (height 0..1, distance), rounded profile, smooth-max join.
+- Geometry: `ArmVeinRelief` (run in `ArmBulk.inflate`) refines and raises the skin along the veins.
+- Cache: `ArmVeinRelief.apply` stores the finished arrays in `user://arm_vein_cache/<side>_<surface>.bin`, keyed on a hash of the packed vein set, the relief constants (`RELIEF_M`, `TARGET_EDGE`, `NEAR`, `MAX_PASSES`, `TILT_GAIN`, `ArmVeinField.BLEND`) and the incoming mesh arrays; a miss builds (about 0.5 s per arm), a hit loads (about 5 ms). Change a constant outside that list and the cache must be deleted by hand.
+- Shading: `arm_vein.gdshaderinc` `vein_field` evaluates the same packed paths per pixel (uniform `vein_pts`, 160 points (`ArmMaterials.VEIN_MAX`; `set_veins` warns if a set packs more), `vein_count`; `ArmMaterials.set_veins` sets them per arm) and `arm_surface.gdshader` adds a fine normal tilt, a flank groove (`vein_shade`), a teal tint scaled by radius (`vein_under`) and a soft crest. No painted key light. `ArmMuscle` gives `DEF-palm*` and `DEF-thumb.01` mask 1.0 so veins reach the hand back.
+- Pitfalls: the back-of-hand sign differs per arm; the pixel fade must use the chart's own footprint (`fwidth` of the chart), not rest-chart units; palm bones need the CUSTOM0.w mask; check a vein change by painting the mask red in a temporary shot.
 No rig mesh casts a shadow (`ViewmodelFov._walk`, and `ArmSkinMesh.build`
 at creation): the shadow pass skips the viewmodel lens, so one would land
 off its mesh. The dark patch on the back of the left hand was the dirt
@@ -68,16 +76,15 @@ dirt mix eased to 0.6: hand back 59 to 75, against 86 with no layers.
 White and dark pixels on the arms (owner, 2026-10-05: "these white
 pixels"; dashed straight lines and dots along the veins on the left
 forearm and wrist) had two causes, both in `arm_surface.gdshader`:
-- Dashed lines were false vein-centre pixels. `vein_field` took the
-  distance as `abs(v) * fw / fwidth(v)`, a rest-space scale over a
-  CUSTOM0 screen derivative, so the ratio jumped on triangle edges. It
-  now uses the noise-space distance `abs(v) / |grad|` from the analytic
-  gradient of `noise21g`: vein-paint outliers (tilts off) wrist/forearm
-  1288/645 down to 140/119, and the vein paint stays as strong.
-- Dots along the vein borders were the vein tilt's sub-pixel slope. The
-  vein slope is damped by its own per-pixel change (`VEIN_TILT_DAMP`
-  200), which keeps 0.96/0.91 (wrist) and 1.00/0.96 (forearm) of the
-  tilt shading.
+- Dashed lines were false vein-centre pixels from a distance taken as a
+  rest-space scale over a CUSTOM0 screen derivative, so the ratio jumped
+  on triangle edges. `vein_field` (`arm_vein.gdshaderinc`) now measures
+  distance to the per-arm packed paths (`vein_pts`) in chart units, with
+  a footprint from `fwidth` of the chart and the palm bones masked in
+  via CUSTOM0.w.
+- Dots along the vein borders were the vein tilt's sub-pixel slope; the
+  shader still fades the tilt where the pixel footprint collapses (see
+  the footprint comments in `arm_surface.gdshader`).
 Light/dim outlier pixels counted on the skin only (views `arms cam
 orbit 0 70 0.2 left` and `0.4 left`)
 went from wrist 503/705 and forearm 218/363 to 333/278 and 183/178.
@@ -113,7 +120,7 @@ table: seed 7 with a hand-picked table turned the left hand 1.7 degrees
 and moved its fingertips sideways up to 0.015, a posture change the
 owner forbids. The skin shader's `seed_offset` is shape too: it places
 the wart domes `arm_surface.gdshader` lifts out of the skin along the
-normals (and shifts the veins and grime mottle), so the builder sets it
+normals (and shifts the grime mottle; the veins no longer move with it), so the builder sets it
 to the constant `HAND_SKIN_OFFSET` 91.165, seed 1337's draw. On seed 7's
 2.32 the domes sat on the index, middle and ring fingertips and swelled
 them over the claws (crop pixels differing from the pre-branch shot:

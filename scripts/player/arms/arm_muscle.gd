@@ -76,7 +76,11 @@ static func apply(arrays: Array, new_verts: PackedVector3Array, heads: Dictionar
 		custom[i * 4] = d.dot(axis_all)
 		custom[i * 4 + 1] = d.dot(u)
 		custom[i * 4 + 2] = d.dot(v)
-		custom[i * 4 + 3] = float(MASK.get(StringName(families[i]), 0.0))
+		var fam: String = families[i]
+		# Palm and thumb-root bones carry the hand's back, so the veins need the mask there too.
+		var mask: float = 1.0 if fam.begins_with("DEF-palm") or fam == "DEF-thumb.01" \
+				else float(MASK.get(StringName(fam), 0.0))
+		custom[i * 4 + 3] = mask
 	arrays[Mesh.ARRAY_CUSTOM0] = custom
 
 

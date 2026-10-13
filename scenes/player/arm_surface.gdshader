@@ -22,25 +22,14 @@ uniform float metallic_value : hint_range(0.0, 0.3) = 0.0;
 // Dielectric reflectance: wear patches lower it, or the warm lights' specular washes dark albedo tan.
 uniform float specular_value : hint_range(0.0, 0.5) = 0.5;
 uniform float seed_offset = 0.0;
-// Raised veins (skin only): 0 is no veins. Drawn from the mesh's CUSTOM0 (x along the arm,
-// y and z across it, w the mask). Widths are in mesh units: the inflated forearm is about 0.25
-// wide, so the main vein is about 0.09 of it and the branches 0.05.
+// Raised veins (skin only): 0 is no veins. The paths are per-arm uniforms (vein_pts, set from
+// ArmVeinSet.pack in arm_vein.gdshaderinc); this scales the shading, the skin geometry is raised
+// separately by ArmVeinRelief.
 uniform float vein_strength : hint_range(0.0, 1.0) = 0.0;
-// Vein cells per mesh unit along the arm and across it.
-uniform float vein_along_m = 1.5;
-uniform float vein_around_m = 6.0;
-// Full width of a main vein in mesh units; branches are 0.55 of it.
-uniform float vein_width : hint_range(0.004, 0.06) = 0.022;
-// Peak ridge height in view metres (the rig is 0.18-scaled): 0.4 x the half width x 0.18.
-uniform float vein_height : hint_range(0.0, 0.008) = 0.0008;
-// How dark a vein's flanks get; the crown lifts by half as much.
-uniform float vein_shade : hint_range(0.0, 0.6) = 0.0;
-// Extra vein relief around the wrist, where the hand weight crosses from 0 to 1.
-// Blue-green/purple undertone in the vein channel: 0 is none, 1 pulls the channel to a dark teal.
+// How dark the groove along a vein's flanks gets.
+uniform float vein_shade : hint_range(0.0, 1.0) = 0.0;
+// Blue-teal under-skin tint, strongest where the vein is fattest: 0 is none.
 uniform float vein_under : hint_range(0.0, 1.0) = 0.0;
-uniform float vein_wrist : hint_range(0.0, 2.0) = 0.0;
-// Sideways jog of the veins across the wrist, so they wrap it like roots.
-uniform float vein_wrap : hint_range(0.0, 2.0) = 0.0;
 
 // Saggy old-meat bump (skin only): 0 is off, so cloth and steel, which share this shader, stay
 // as they are. Shades folds and wrinkles from the rest chart so they do not swim when the hand bends.
@@ -68,14 +57,8 @@ const float MAX_SKIN_TILT = 0.8;
 const float TILT_FOOT_MIN = 0.02;
 const float TILT_FOOT_FULL = 0.10;
 
-// Damps the vein tilt by its own change per pixel (hx, hy over the footprint): a slope that
-// turns faster than a pixel can hold printed dark and bright stipple along every vein border.
-// 200 removes it and keeps over 90 % of the tilt's shading (60 kept 80 %, 20 left the stipple).
-const float VEIN_TILT_DAMP = 200.0;
-
-// Painted crown highlight: a fixed view-space key, up and toward the camera's left, so the
-// ridge's lit flank and shaded flank read even where the arm lamp does not reach.
-const vec3 VEIN_KEY = normalize(vec3(-0.3, 0.8, 0.52));
+// Fine per-pixel vein detail on top of the raised geometry, in view metres per unit of crest height.
+const float VEIN_FINE_TILT = 0.0006;
 
 // Skin only: the engine skins vertices before vertex() runs, so VERTEX is already posed and a
 // pattern drawn from it swims as the arm moves. The skin mesh bakes its rest pose into CUSTOM1
@@ -97,6 +80,8 @@ varying vec4 rest_data;
 #include "res://scenes/player/arm_skin_grease.gdshaderinc"
 // Railgun soot, rust and tape masks; off unless wear_on is set.
 #include "res://scenes/player/arm_wear.gdshaderinc"
+// Vein paths and vein_field (reads vein_pts and vein_count).
+#include "res://scenes/player/arm_vein.gdshaderinc"
 
 // Back-of-limb mask; on the hand it starts lower so the tilted finger tops get blights too.
 float blight_dorsal(float ny, float hand) {
@@ -191,62 +176,6 @@ float skin_height(vec3 rest, vec3 w, float accept, float dorsal, float hand, flo
 			+ blight_gain * dorsal * h + folds;
 }
 
-// noise21 (grime.gdshaderinc) with its analytic gradient: x the value, yz d(value)/d(p).
-vec3 noise21g(vec2 p) {
-	vec2 i = floor(p);
-	vec2 f = fract(p);
-	float a = hash21(i);
-	float b = hash21(i + vec2(1.0, 0.0));
-	float c = hash21(i + vec2(0.0, 1.0));
-	float d = hash21(i + vec2(1.0, 1.0));
-	vec2 u = f * f * (3.0 - 2.0 * f);
-	vec2 du = 6.0 * f * (1.0 - f);
-	float val = mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-	vec2 g = du * vec2(mix(b - a, d - c, u.y), mix(c - a, d - b, u.x));
-	return vec3(val, g);
-}
-
-// Veins from two side projections of the across coordinates, blended so there is no seam.
-// x is the crest profile, y and z its screen derivatives; fw is the mesh units per pixel.
-vec3 vein_field(vec4 c, float fw, float hand) {
-	float wu = abs(c.y) / max(abs(c.y) + abs(c.z), 1e-4);
-	vec3 sum = vec3(0.0);
-	for (int i = 0; i < 2; i++) {
-		float s = (i == 0) ? c.z : c.y;
-		float ws = (i == 0) ? wu : 1.0 - wu;
-		vec2 q = vec2(c.x * vein_along_m, s * vein_around_m) + vec2(seed_offset);
-		q.y += vein_wrap * hand; // the jog across the wrist
-		q.y += (fbm(q * 0.7) - 0.5) * 1.6; // wiggle and branching
-		for (int k = 0; k < 2; k++) {
-			// Layer 0 is the main vein, layer 1 a thinner branch on its own noise.
-			vec2 qk = (k == 0) ? q : q * 1.9 + vec2(37.1, 11.7);
-			float w = (k == 0) ? vein_width * 0.5 : vein_width * 0.275;
-			float hk = (k == 0) ? 1.0 : 0.6;
-			vec3 ng = noise21g(qk);
-			float v = ng.x * 2.0 - 1.0;
-			// Distance to the zero crossing in mesh units from the analytic slope of v. The old
-			// abs(v) * fw / fwidth(v) divided a rest-space scale by a CUSTOM0 screen derivative,
-			// two per-triangle scales whose ratio jumps on triangle edges and printed dotted lines.
-			// The branch layer's noise runs 1.9 times faster.
-			float gm = 2.0 * length(ng.yz * vec2(vein_along_m, vein_around_m))
-					* ((k == 0) ? 1.0 : 1.9);
-			float d = abs(v) / max(gm, 1e-6);
-			float t = d / w;
-			float tt = min(t, 1.0);
-			float prof = (1.0 - tt * tt) * (1.0 - tt * tt);
-			float slope = (t < 1.0) ? -4.0 * t * (1.0 - t * t) : 0.0;
-			// A ridge under 4 px vanishes, one over 8 px is whole, so it never shimmers.
-			float fade = smoothstep(4.0, 8.0, 2.0 * w / fw);
-			sum.x += ws * hk * fade * prof;
-			sum.y += ws * hk * fade * slope * dFdx(t);
-			sum.z += ws * hk * fade * slope * dFdy(t);
-		}
-	}
-	// The per-bone mask eases in over its first third, so where a bone's weight ends inside a
-	// triangle the veins fade out instead of stopping on the triangle edge.
-	return sum * clamp(c.w, 0.0, 1.0) * smoothstep(0.0, 0.35, c.w);
-}
-
 // Tilts n by a height that changes hx, hy per pixel (the surface gradient form; dpdx and dpdy
 // are the view position's change per pixel). The old form normalized abs(det) * n - grad:
 // NaN where the footprint degenerates (det 0), and past the cap wherever det fell under the
@@ -286,31 +215,23 @@ void fragment() {
 	float grain_fade = 1.0 - smoothstep(0.3 / grain_m, 0.8 / grain_m, fw);
 	float grain = tri_noise(p, w, grain_m);
 	col *= 1.0 + (grain - 0.5) * 0.3 * grain_fade;
-	// Veins: a raised soft ridge, tilted by its analytic slope, with a painted crown highlight.
+	// Veins: the geometry is already raised; this adds fine tilt, a groove along each flank, a
+	// teal tint under the skin and a soft crest. Light comes only from the scene's own lights.
 	float vn = 0.0;
 	if (vein_strength > 0.0) {
-		float wrist = 4.0 * rest_data.w * (1.0 - rest_data.w);
-		vec3 vf = vein_field(vein_data, fw, rest_data.w) * vein_strength
-				* (1.0 + vein_wrist * wrist);
-		vn = min(vf.x, 1.0);
-		vec3 dpdx = dFdx(VERTEX);
-		vec3 dpdy = dFdy(VERTEX);
-		float hx = vf.y * vein_height;
-		float hy = vf.z * vein_height;
-		float ts = (abs(dFdx(hx)) + abs(dFdy(hx)) + abs(dFdx(hy)) + abs(dFdy(hy)))
-				/ sqrt(max(length(dpdx) * length(dpdy), 1e-20));
-		hx /= 1.0 + VEIN_TILT_DAMP * ts;
-		hy /= 1.0 + VEIN_TILT_DAMP * ts;
-		vec3 n_old = NORMAL;
-		NORMAL = tilt_normal(NORMAL, dpdx, dpdy, hx, hy);
-		float lit = dot(NORMAL, VEIN_KEY) - dot(n_old, VEIN_KEY);
-		// The cord's flanks sink into shade and its crown catches the lamp, so a vein reads
-		// across the cabin and not only when the light rakes it.
-		col *= 1.0 - vein_shade * 4.0 * vn * (1.0 - vn);
-		col = mix(col, col * vec3(0.55, 0.72, 0.80), vein_under * smoothstep(0.1, 0.7, vn));
-		vec3 crest = col * vec3(0.90, 1.00, 1.04) * (1.06 + 0.5 * vein_shade);
-		col = mix(col, crest, vn * vn * 0.6);
-		col *= 1.0 + clamp(lit * 0.35, -0.20, 0.15);
+		vec3 vf = vein_field(vein_data);
+		float vmask = clamp(vein_data.w, 0.0, 1.0) * smoothstep(0.0, 0.35, vein_data.w);
+		vn = vf.x * vein_strength;
+		float hx = dFdx(vn) * VEIN_FINE_TILT;
+		float hy = dFdy(vn) * VEIN_FINE_TILT;
+		NORMAL = tilt_normal(NORMAL, dFdx(VERTEX), dFdy(VERTEX), hx, hy);
+		// Soft ambient-occlusion-like band just outside the edge; gone under 1.5 px wide.
+		float out_d = vf.y;
+		float groove = smoothstep(0.0, 0.0008, out_d) * (1.0 - smoothstep(0.0008, VEIN_GROOVE, out_d));
+		groove *= vmask * vein_strength * smoothstep(0.75, 2.5, VEIN_GROOVE / max(vf.z, 1e-6));
+		col *= 1.0 - 0.04 * vein_shade * groove;
+		col = mix(col, col * vec3(0.62, 0.82, 0.90), 0.55 * vein_under * smoothstep(0.0, 0.5, vn));
+		col = mix(col, col * vec3(0.92, 1.0, 1.04) * 1.12, vn * vn * 0.05);
 	}
 	// Saggy skin: tilt the normal by the fold height's gradient, darken and roughen the hollows.
 	float fold_dark = 0.0;

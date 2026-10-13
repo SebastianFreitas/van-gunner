@@ -253,6 +253,9 @@ static func inflate(mi: MeshInstance3D, skel: Skeleton3D, bulk: float,
 				bone_names, inv_poses, side)
 		ArmMuscle.apply(arrays, new_verts, heads, bone_names, muscle_seed, bulk,
 				side == ".L")
+		ArmVeinRelief.apply(arrays, load("res://resources/arms/vein_set_%s.tres"
+				% ("left" if side == ".L" else "right")) as ArmVeinSet,
+				"%s_%d" % ["left" if side == ".L" else "right", s])
 		_rest_channels(arrays, mi)
 		var flags := src.surface_get_format(s) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS
 		flags |= Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT

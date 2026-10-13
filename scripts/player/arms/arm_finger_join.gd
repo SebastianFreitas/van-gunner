@@ -9,6 +9,8 @@ const FLARE := 0.35
 const HAIR := 0.0004
 ## Share of the ring centre's rise over the snapped ring removed, for the rings after it.
 const SINK: Array[float] = [0.85, 0.5, 0.2]
+## Share of the first phalanx where the vein mask starts to fade out.
+const FADE_FROM := 0.6
 
 
 ## The inflated palm skin of the glb mesh `mi` as {pos, nrm, rest_n, w} arrays: only vertices that
@@ -135,3 +137,52 @@ static func transfer(pal: Dictionary, verts: PackedVector3Array, nrm: PackedVect
 			nrm[i] = nrm[i].lerp(pm[&"n"], t).normalized()
 			rest_n[i] = rest_n[i].lerp(pm[&"rest_n"], t).normalized()
 			hand_w[i] = lerpf(hand_w[i], pm[&"w"], t)
+
+
+## `vein_mask` for a digit built by `ArmFingers._finger` (its `fg` dictionary).
+static func vein_mask_of(fg: Dictionary) -> PackedFloat32Array:
+	return vein_mask(fg[&"centres"], fg[&"rings"], fg[&"emerge"], fg[&"lens"])
+
+
+## Vein mask per vertex of one digit: 1 up to `FADE_FROM` of its first phalanx, 0 by its far joint.
+## `lens` are the finger's bone lengths (thumb: .01 is 0, its tube starts at .02).
+static func vein_mask(centres: PackedVector3Array, rings: int, emerge: int,
+		lens: Array[float]) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	var first_len := lens[1] if lens[1] > 0.0 else lens[2]
+	var along := 0.0
+	for ring in rings:
+		if ring > emerge:
+			along += centres[ring].distance_to(centres[ring - 1])
+		var m := 1.0 - smoothstep(FADE_FROM, 1.0, along / maxf(first_len, 0.0001))
+		for s in ArmFingers.SECTORS:
+			out.append(m)
+	out.append(0.0)  # the tip pole
+	return out
+
+
+## CUSTOM0 (x along the arm, y and z across it, w mask) of the tube vertices `verts`, in the
+## hand's own vein frame (ArmMuscle: origin at the upper arm head, axis to the hand head, u toward
+## the thumb root), so the chart runs on from the hand back without a jump.
+static func chart(mi: MeshInstance3D, sk: Skeleton3D, suffix: String,
+		verts: PackedVector3Array, mask: PackedFloat32Array) -> PackedFloat32Array:
+	var heads: Array[Vector3] = []
+	for n in ["DEF-upper_arm", "DEF-hand", "DEF-thumb.01"]:
+		var b := ArmWrap.bind_index(mi, sk, n + suffix)
+		if b < 0:
+			push_warning("ArmFingerJoin: %s missing, finger tubes carry no veins" % n)
+			return PackedFloat32Array()
+		heads.append(mi.skin.get_bind_pose(b).affine_inverse().origin)
+	var axis := (heads[1] - heads[0]).normalized()
+	var thumb_dir := heads[2] - heads[1]
+	var u := (thumb_dir - axis * thumb_dir.dot(axis)).normalized()
+	var v := axis.cross(u)
+	var out := PackedFloat32Array()
+	out.resize(verts.size() * 4)
+	for i in verts.size():
+		var d := verts[i] - heads[0]
+		out[i * 4] = d.dot(axis)
+		out[i * 4 + 1] = d.dot(u)
+		out[i * 4 + 2] = d.dot(v)
+		out[i * 4 + 3] = mask[i]
+	return out
