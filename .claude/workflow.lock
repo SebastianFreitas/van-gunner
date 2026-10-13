@@ -1,6 +1,6 @@
 {
   "master": "C:/Users/Traff/Desktop/sebas/claude-workflow",
-  "commit": "777ac913db27aa276f04989110401641d7febc2d",
+  "commit": "c29e8cfa5f1f678e75ce98e37452762454e58354",
   "files": {
     ".claude/agents/implementer-wt.md": "a038933da542bbf478763467c6d24786512502b239a1ae238423aa584841bc18",
     ".claude/agents/implementer.md": "bc10b52bd70bb7d9b67ba556cf135bc29f28dea80d3d84858d7a283eebed9004",
@@ -10,7 +10,7 @@
     ".claude/agents/reviewer.md": "b938a2a835da168db0b963631c3794b2a92eb72333c757515680e42efcc10987",
     ".claude/hooks/agent-guard.py": "12cc5aef25be49b4b491d3d1bcb184924a2793ae062c4b528bc4971601b8c69f",
     ".claude/hooks/context-watch.py": "eebc447b5ec2c9c03fce328cb323b8aefe849cc90bcd2e8bbf3dbe7d65478301",
-    ".claude/hooks/file-guard.py": "59df6870c587152e74b8f70c1d8ebef41165e888252a34d630be73f0a90d2df8",
+    ".claude/hooks/file-guard.py": "c0303293ad638c591af72344d5a02d85f74b32780dc5ed6351c9ebe7a582aa15",
     ".claude/hooks/git-guard.py": "01908a6081787d77657ad3b4a3f12b98e91feb4d3d7d7181a69a6e2b35874a42",
     ".claude/hooks/go-check.py": "b84d896e559ac8f0cf7ccc6fd78c4a7fbfb2f3cbbccc4bd2c5b5159606db19c8",
     ".claude/hooks/guard_config.py": "54471cc4eaa8fa72084c063900354aca2a1f9c369cb71a5d90471e5efe4de67a",

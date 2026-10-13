@@ -248,6 +248,32 @@ def sed_args(command: str, pos: int) -> str:
     return command[pos:i]
 
 
+def mask_quoted_gt(command: str) -> str:
+    """Blank every > inside quotes, so a grep pattern like "> ?400" is not
+    read as a redirect. A quoted part holding $( or a backtick keeps its >."""
+    out = list(command)
+    quote = ""
+    start = 0
+    i = 0
+    while i < len(command):
+        c = command[i]
+        if quote:
+            if c == "\\" and quote == '"':
+                i += 1
+            elif c == quote:
+                part = command[start:i]
+                if "$(" not in part and "`" not in part:
+                    for j in range(start, i):
+                        if out[j] == ">":
+                            out[j] = " "
+                quote = ""
+        elif c in "'\"":
+            quote = c
+            start = i + 1
+        i += 1
+    return "".join(out)
+
+
 def resolve_target(base: str, target: str) -> str | None:
     target = os.path.expandvars(target)
     if "$" in target or target.isdigit() or target == "/dev/null":
@@ -259,7 +285,8 @@ def bash_write_targets(command: str) -> list[str]:
     out: list[str] = []
     full = command
     command = strip_heredocs(command)
-    for m in re.finditer(r"(?<![\w<>&-])(\d?)>>?(?!&)[ \t]*([^\s;|&<>()]+)", command):
+    for m in re.finditer(r"(?<![\w<>&-])(\d?)>>?(?!&)[ \t]*([^\s;|&<>()]+)",
+                         mask_quoted_gt(command)):
         if m.group(1) in ("", "1") and unquote(m.group(2)) != "/dev/null":
             out.append(unquote(m.group(2)))
     start = r"(?:^|[\s;|&(])"
