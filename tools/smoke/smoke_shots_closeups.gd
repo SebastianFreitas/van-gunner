@@ -184,6 +184,11 @@ static func gap_views(rig: Node3D) -> Array[Dictionary]:
 		Vector3(0, 0.015, rz), "on", none))
 	result.append(_gap_view("gap-rear-in-centre", Vector3(0, 1.6, rz - 1.2),
 		Vector3(0, 1.6, rz), "on", none))
+	# Donor leaf (x<0) cabin-side hydraulic hinge, from inside, low and a little off its axis.
+	var hx := -profile.inner_x_at(0.35)
+	for open in [true, false]:
+		result.append(_gap_view("gap-rear-in-donor-hinge%s" % ("" if open else "-closed"),
+			Vector3(hx + 1.9, 0.9, rz - 1.9), Vector3(hx + 0.95, 0.2, rz - 0.6), "off", none, open))
 	for side in sides:
 		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
 		var ix := profile.inner_x_at(1.6)

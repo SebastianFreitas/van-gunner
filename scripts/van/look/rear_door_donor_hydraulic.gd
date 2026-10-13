@@ -81,12 +81,13 @@ static func build(hinge: Node3D, rect: Rect2) -> Array[Node3D]:
 	return out
 
 
-## Fork of two plates around an eye at `at`, a pin through them. `back` shifts the plates in z.
+## Fork of two plates around an eye at `at`, a pin through them. `back` shifts the plates in z and
+## `side` -1 mirrors them to the cabin side.
 static func _lug(parent: Node3D, at: Vector3, plate: Vector3, back: float, steel: Material,
-		bolt: Material, out: Array[Node3D]) -> void:
+		bolt: Material, out: Array[Node3D], side: float = 1.0) -> void:
 	for s: float in [-1.0, 1.0]:
 		_box(parent, "LugPlate", plate, steel,
-				at + Vector3(0.0, s * 0.036, -plate.z * 0.5 + 0.045 + back), out)
+				at + Vector3(0.0, s * 0.036, side * (-plate.z * 0.5 + 0.045) + back), out)
 	_part(parent, "LugPin", _cyl(0.01, 0.01, 0.1, 8), bolt, at, out)
 	_part(parent, "LugBolt", _cyl(0.02, 0.02, 0.014, 6), bolt, at + Vector3(0.0, 0.056, 0.0), out)
 
