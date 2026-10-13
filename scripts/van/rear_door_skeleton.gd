@@ -63,11 +63,18 @@ static func build(st: SurfaceTool, rect: Rect2, win: PackedVector2Array, z_cab: 
 	# The beam crests are the cabin face; each opening is cut out at the top of its flank.
 	var cuts: Array = []
 	for i in openings.size():
-		cuts.append(_Skin._ring(openings[i], slopes[i]))
+		# The donor's window gets a small 1 cm pressed return, bare steel (no rubber on this face).
+		if i == 0 and profile.is_donor():
+			cuts.append(_Skin._ring(openings[i], 0.01))
+		else:
+			cuts.append(_Skin._ring(openings[i], slopes[i]))
 	_Skin.tag(st, _Skin.TAG_CABIN)
 	for poly in _Skin._clip(_Skin._pieces(rect, cuts), _Skin.leaf_outline(rect, profile)):
 		_Skin._poly(st, poly, z_cab, Vector3.FORWARD)
 	for i in openings.size():
+		if i == 0 and profile.is_donor():
+			_Press.sweep(st, openings[i], 0.01, z_cab, 0.01, true)
+			continue
 		_Press.sweep(st, openings[i], slopes[i], z_cab)
 		# The window is a hole through the leaf, so only the strip and the bottom have a panel.
 		if i > 0:

@@ -6,7 +6,8 @@ static func apply(left: Node3D, right: Node3D) -> void:
 	for hinge in [left, right]:
 		if hinge == null:
 			continue
-		for part in ["CurvedBody", "Astragal", "WindowGlass", "WindowFrame"]:
+		for part in ["CurvedBody", "Astragal", "WindowGlass", "WindowGasket",
+				"WindowFrame"]:
 			var root := (hinge as Node3D).get_node_or_null(part)
 			if root == null:
 				continue

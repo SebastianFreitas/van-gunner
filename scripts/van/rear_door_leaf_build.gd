@@ -3,6 +3,7 @@ extends RefCounted
 
 const _WindowLip := preload("res://scripts/van/rear_window_lip.gd")
 const _Skin := preload("res://scripts/van/rear_door_skin.gd")
+const _Gasket := preload("res://scripts/van/rear_window_gasket.gd")
 const DOOR_SHADER := preload("res://scenes/van/van_rear_door.gdshader")
 ## Leaf slab depth from the cabin face (CABIN_Z) to the nominal street plane (STREET_HALF).
 const DOOR_THICKNESS := 0.25
@@ -29,6 +30,9 @@ const WINDOW_CORNERS: Array[Vector2] = [
 		Vector2(0.55, -VanOpenings.REAR_WINDOW_HALF_Y)]
 ## Astragal: a trim strip on the left leaf's cabin face covering the 2.4 cm centre seam, 10 cm wide
 ## (vangapfix D24). The lift keeps its street face 1.1 cm clear of the handle mounts (D28).
+## Donor pane: node z (front face 0.038, back 0.022, never coplanar with the skin's 0.02/0.04).
+const GLASS_Z := 0.030
+const GLASS_THICK := 0.016
 const ASTRAGAL_HALF_W := 0.05
 const ASTRAGAL_T := 0.012
 const ASTRAGAL_LIFT := 0.036
@@ -42,7 +46,7 @@ static func build(_doors: Node3D, left: Node3D, right: Node3D) -> void:
 	var stock := profile_for(false)
 	_apply_leaf(left, _build_left_leaf_mesh(left, donor), _door_body_material(left, donor), false)
 	_apply_leaf(right, _build_left_leaf_mesh(left, stock), _door_body_material(left, stock), true)
-	_WindowLip.build(left, left, false, donor)
+	# The donor has no steel lip; its window wears a rubber gasket (_fit_donor_window).
 	_WindowLip.build(left, right, true, stock)
 	_fit_donor_window(left, donor)
 	_add_astragal(left)
@@ -135,9 +139,8 @@ static func _fit_donor_window(left: Node3D, donor: RearDoorProfile) -> void:
 	var box := donor.window_bounds().size * 0.5
 	var frame_margin := Vector2(0.05, 0.05)
 	var glass := left.get_node("WindowGlass") as MeshInstance3D
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(box.x * 2.0 - 0.10, box.y * 2.0 - 0.10, (glass.mesh as BoxMesh).size.z)
-	glass.mesh = mesh
+	glass.mesh = _glass_mesh(donor.window_hole)
+	glass.position.z = GLASS_Z
 	(left.get_node("WindowFrame") as Node3D).visible = false
 	var cross := left.get_node("IronCross") as Node3D
 	cross.set(&"frame_half", box + frame_margin)
@@ -146,6 +149,48 @@ static func _fit_donor_window(left: Node3D, donor: RearDoorProfile) -> void:
 	cross.set(&"skin_reach", Vector2(VanOpenings.REAR_WINDOW_HALF_X + 0.13, box.y + 0.125))
 	cross.set(&"gussets", false)
 	cross.call(&"rebuild")
+	_Gasket.build(left, donor)
+
+
+## The donor pane: the hole outline pulled 4 mm in, extruded `GLASS_THICK` about the node's z, so
+## its edge tucks under the gasket lip. Faces wind clockwise from outside.
+static func _glass_mesh(hole: PackedVector2Array) -> ArrayMesh:
+	var poly := _Skin._ring(hole, -0.004)
+	var half := GLASS_THICK * 0.5
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var idx := Geometry2D.triangulate_polygon(poly)
+	for t in int(idx.size() / 3.0):
+		var tri: Array[Vector2] = [poly[idx[t * 3]], poly[idx[t * 3 + 1]], poly[idx[t * 3 + 2]]]
+		_glass_tri(st, Vector3(tri[0].x, tri[0].y, half), Vector3(tri[1].x, tri[1].y, half),
+				Vector3(tri[2].x, tri[2].y, half), Vector3.BACK)
+		_glass_tri(st, Vector3(tri[0].x, tri[0].y, -half), Vector3(tri[1].x, tri[1].y, -half),
+				Vector3(tri[2].x, tri[2].y, -half), Vector3.FORWARD)
+	for k in poly.size():
+		var a := poly[k]
+		var b := poly[(k + 1) % poly.size()]
+		var n := _Skin._out_normal(poly, a, b)
+		var out := Vector3(n.x, n.y, 0.0)
+		_glass_tri(st, Vector3(a.x, a.y, -half), Vector3(b.x, b.y, -half),
+				Vector3(b.x, b.y, half), out)
+		_glass_tri(st, Vector3(a.x, a.y, -half), Vector3(b.x, b.y, half),
+				Vector3(a.x, a.y, half), out)
+	return st.commit()
+
+
+## One triangle facing `out`, flipped when it would wind counter-clockwise from there.
+static func _glass_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, out: Vector3) -> void:
+	var second := b
+	var third := c
+	if (c - a).cross(b - a).dot(out) < 0.0:
+		second = c
+		third = b
+	st.set_normal(out)
+	st.add_vertex(a)
+	st.set_normal(out)
+	st.add_vertex(second)
+	st.set_normal(out)
+	st.add_vertex(third)
 
 
 static func _add_astragal(left: Node3D) -> void:

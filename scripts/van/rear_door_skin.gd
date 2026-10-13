@@ -21,6 +21,8 @@ const TAG_EDGE := 2
 const TAG_CREST := 3
 const TAG_VALLEY := 4
 const TAG_CAVITY := 5
+## Donor window wall and its pressed step: dark worn steel, bared at the lip (COLOR.g weight).
+const TAG_DONOR_WALL := 6
 
 
 ## Builds the left leaf. `window` is the window outline around `window_c`.
@@ -43,13 +45,18 @@ static func build(x_max: float, y_lo: float, y_hi: float, z_cab: float, z_street
 	_walls(st, outline, z_cab, z_street, false)
 	var skeleton := load(_SKELETON_PATH)
 	# The window hole is a tunnel through the slab, from the recessed panel level.
-	_walls(st, win, z_cab + skeleton.PANEL_DROP, z_street, true)
+	# The donor's starts at the foot of its 1 cm pressed step and is its own dark worn steel (TAG_DONOR_WALL).
+	var z_tunnel: float = z_cab + 0.01 if profile.is_donor() else z_cab + skeleton.PANEL_DROP
+	if profile.is_donor():
+		tag(st, TAG_DONOR_WALL)
+	_walls(st, win, z_tunnel, z_street, true)
 	skeleton.build(st, rect, win, z_cab, profile)
 	if profile.is_donor():
 		_filler(st, profile.filler(rect), z_cab)
-	# The street edge of the window is rolled like the skeleton's holes: a pressed lip standing
-	# proud of the plate (under the dark WindowLip, whose face is 1.5 cm proud).
-	skeleton._flange(st, win, z_street, z_street, z_street + WINDOW_LIP_H)
+	else:
+		# The street edge of the window is rolled like the skeleton's holes: a pressed lip
+		# standing proud of the plate (under the dark WindowLip, whose face is 1.5 cm proud).
+		skeleton._flange(st, win, z_street, z_street, z_street + WINDOW_LIP_H)
 	preload("res://scripts/van/rear_door_swage.gd").build(st, rect, win, z_street, profile)
 	return st.commit()
 
@@ -64,8 +71,8 @@ static func _filler(st: SurfaceTool, poly: PackedVector2Array, z_cab: float) -> 
 
 
 ## Marks every vertex added after this call with face tag `t` (SurfaceTool keeps the colour).
-static func tag(st: SurfaceTool, t: int) -> void:
-	st.set_color(Color(float(t) / 8.0, 0.0, 0.0, 1.0))
+static func tag(st: SurfaceTool, t: int, lip: float = 0.0) -> void:
+	st.set_color(Color(float(t) / 8.0, lip, 0.0, 1.0))
 
 
 ## The leaf's outline, counter-clockwise: rounded corners, the larger one top-left (hinge side).

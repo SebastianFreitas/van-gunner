@@ -41,9 +41,13 @@ uniform float cabin_paint : hint_range(0.0, 1.0) = 0.0;
 varying vec3 v_pos;
 varying flat float v_tag;
 varying flat float v_street;
+varying vec3 v_nrm;
+varying float v_lip;
 
 void vertex() {
 	v_pos = VERTEX;
+	v_nrm = NORMAL;
+	v_lip = COLOR.g;
 	v_tag = floor(COLOR.r * 8.0 + 0.5);
 	v_street = NORMAL.z > 0.0 ? 1.0 : 0.0;
 }
@@ -136,6 +140,34 @@ void fragment() {
 		col *= 0.7 + 0.3 * fine;
 		rough = 0.92;
 		metal = 0.05;
+	} else if (tag == 6) {
+		// Donor window wall and pressed step: dark worn painted steel like the rest of the leaf.
+		// The wall runs along z, so wear is laid out along the hole's perimeter (the tangent of the
+		// wall's own xy normal) and across the depth; COLOR.g is the lip weight (1 at the step's
+		// crest where it meets the cabin face, 0 on the tunnel) and bared steel gathers there.
+		vec2 wn = normalize(v_nrm.xy + vec2(0.0001));
+		float along = dot(p, vec2(-wn.y, wn.x));
+		// Streaks are long across `along` and fine across z, so they circle the hole; the
+		// generic x-running `streak` is left out (it ran glass to cabin like wood grain).
+		float grain = mix(0.5, fbm(vec2(along * 2.5, v_pos.z * 160.0) + vec2(4.7, 1.3)), fine_vis);
+		float blotch_w = fbm(vec2(along * 3.0, v_pos.z * 14.0) + vec2(8.2, 2.9));
+		float grime = smoothstep(0.35, 0.7, blotch_w);
+		float loss = smoothstep(0.55, 0.8, fbm(vec2(along * 5.0, v_pos.z * 30.0) + vec2(1.1, 6.3)));
+		// Near-black grime, dark worn paint, a little rust where the paint is gone.
+		vec3 paint = paint_color * 0.14 * (0.75 + 0.5 * grain);
+		col = mix(paint, vec3(0.012, 0.012, 0.011), grime * 0.7);
+		col = mix(col, deep_rust_color * 0.5, loss * 0.5);
+		// Bare steel rim on the step's crest: chipped, not an even line.
+		float lip = clamp(v_lip, 0.0, 1.0);
+		float chip = fbm(vec2(along * 70.0, lip * 6.0) + vec2(3.3, 8.8));
+		float bare = smoothstep(0.45, 0.62, lip - 0.12 * (1.0 - chip) + 0.25 * (chip - 0.5))
+				* smoothstep(0.3, 0.5, chip + 0.35 * lip);
+		col = mix(col, vec3(0.3, 0.28, 0.25) * (0.8 + 0.4 * chip), bare * 0.9);
+		// The hole's bottom wall faces up into the light from both sides: keep it darkest.
+		col *= mix(1.0, 0.2, smoothstep(0.3, 0.7, v_nrm.y) * (1.0 - bare));
+		rough = mix(0.88, 0.8, bare);
+		metal = 0.28 * bare;
+		streak = grain;
 	} else {
 		// Cut edge and rim: bare steel gone rusty.
 		col = mix(col, steel_color * 1.4, (1.0 - rust) * 0.5);

@@ -42,6 +42,8 @@ Surfaces, in the road's recipe:
   corrugation 0.30 m, roll-up slats 0.40 m, planks 0.35 m, mullions 12 cm,
   seams and joints 3..4 cm; no hard repeating pitch under 0.20 m, no line
   under 3 cm; wall grain about 10/m, prop and plank grain about 8/m.
+  Exception: donor rear window seal 1.5 cm ring / 1 cm press step (owner
+  2026-10-13, plan rear-window-seal D12).
   Street paving: tiles 0.5 m, setts 0.25 m, granite curb blocks 1 m,
   joints 3 cm, chamfers 1.2 cm; tiles dark (albedo 0.33), setts 0.25, and
   the paving's glare fades out over 18-45 m so a far grid never glows.

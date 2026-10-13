@@ -18,9 +18,10 @@ const CREST_FROM := 3
 
 ## Sweeps the flank from the opening outline (recess depth) out to `width` (beam crest, z_cab),
 ## smooth normals along the profile, crest points tagged wear and foot points tagged grime.
+## `donor_wall` tags the whole flank as the donor window wall, its lip weight rising to the crest.
 static func sweep(st: SurfaceTool, outline: PackedVector2Array, width: float,
-		z_cab: float) -> void:
-	var prof := profile(width)
+		z_cab: float, depth: float = DEPTH, donor_wall: bool = false) -> void:
+	var prof := profile(width, depth)
 	var norms := _profile_normals(prof)
 	var count := outline.size()
 	var far := _Skin._ring(outline, 1.0)
@@ -35,14 +36,20 @@ static func sweep(st: SurfaceTool, outline: PackedVector2Array, width: float,
 			var pos: Array[Vector3] = []
 			var nrm: Array[Vector3] = []
 			var tags: Array[int] = []
+			var lips: Array[float] = []
 			for c in corners:
 				var dir := (far[c.x] - outline[c.x]).normalized()
 				var r := rings[c.y][c.x]
 				pos.append(Vector3(r.x, r.y, z_cab + prof[c.y].y))
 				nrm.append(Vector3(dir.x * norms[c.y].x, dir.y * norms[c.y].x, norms[c.y].y))
-				tags.append(_Skin.TAG_CREST if c.y >= CREST_FROM else _Skin.TAG_VALLEY)
-			_tri(st, [0, 1, 2], pos, nrm, tags)
-			_tri(st, [0, 2, 3], pos, nrm, tags)
+				if donor_wall:
+					tags.append(_Skin.TAG_DONOR_WALL)
+					lips.append(float(c.y) / float(prof.size() - 1))
+				else:
+					tags.append(_Skin.TAG_CREST if c.y >= CREST_FROM else _Skin.TAG_VALLEY)
+					lips.append(0.0)
+			_tri(st, [0, 1, 2], pos, nrm, tags, lips)
+			_tri(st, [0, 2, 3], pos, nrm, tags, lips)
 
 
 ## The recessed panel behind an opening, flat at the profile's foot depth.
@@ -52,12 +59,12 @@ static func floor_panel(st: SurfaceTool, outline: PackedVector2Array, z_cab: flo
 
 
 ## The cross-section as (offset from the opening, depth behind the crest), foot to crest.
-static func profile(width: float) -> Array[Vector2]:
+static func profile(width: float, depth: float = DEPTH) -> Array[Vector2]:
 	var pts: Array[Vector2] = []
 	for k in STEPS:
 		var t := float(k) / float(STEPS - 1)
 		var s := lerpf(t, t * t * (3.0 - 2.0 * t), ROUND)
-		pts.append(Vector2(width * t, DEPTH * (1.0 - s)))
+		pts.append(Vector2(width * t, depth * (1.0 - s)))
 	return pts
 
 
@@ -82,7 +89,7 @@ static func _profile_normals(prof: Array[Vector2]) -> Array[Vector2]:
 
 ## One triangle of the quad `pos` picked by `idx`, wound clockwise seen from its normals.
 static func _tri(st: SurfaceTool, idx: Array, pos: Array[Vector3], nrm: Array[Vector3],
-		tags: Array[int]) -> void:
+		tags: Array[int], lips: Array[float] = []) -> void:
 	var order: Array = idx.duplicate()
 	var a: Vector3 = pos[idx[0]]
 	var b: Vector3 = pos[idx[1]]
@@ -90,7 +97,7 @@ static func _tri(st: SurfaceTool, idx: Array, pos: Array[Vector3], nrm: Array[Ve
 	if (b - a).cross(c - a).dot(nrm[idx[0]] + nrm[idx[1]] + nrm[idx[2]]) > 0.0:
 		order = [idx[0], idx[2], idx[1]]
 	for k: int in order:
-		st.set_color(Color(float(tags[k]) / 8.0, 0.0, 0.0, 1.0))
+		st.set_color(Color(float(tags[k]) / 8.0, lips[k] if not lips.is_empty() else 0.0, 0.0, 1.0))
 		st.set_normal(nrm[k])
 		st.add_vertex(pos[k])
 
