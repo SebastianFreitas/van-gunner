@@ -37,6 +37,9 @@ uniform float metallic_value : hint_range(0.0, 0.6) = 0.22;
 uniform float rust_amount : hint_range(0.0, 1.0) = 1.0;
 // 1 gives the cabin face the street face's paint system too (0 = bare rust and primer only).
 uniform float cabin_paint : hint_range(0.0, 1.0) = 0.0;
+// Cabin-face band (leaf-local x, metres) painted solid out to the seam-side beam; off when x1 <= x0.
+uniform float crest_paint_x0 = 0.0;
+uniform float crest_paint_x1 = 0.0;
 
 varying vec3 v_pos;
 varying flat float v_tag;
@@ -110,8 +113,13 @@ void fragment() {
 			float island = smoothstep(1.0 - paint_coverage, 1.1 - paint_coverage,
 					fbm(q * paint_island_scale + vec2(4.1, 7.7)) + 0.08 * (fine - 0.5));
 			island *= smoothstep(0.2, 0.6, edge_d) * (1.0 - run * 0.8);
-			on = smoothstep(0.15, 0.4, island) * cabin_paint;
-			float lip = on * (1.0 - smoothstep(0.4, 0.7, island));
+			on = smoothstep(0.15, 0.4, island);
+			// The unpressed seam-side crest is painted solid, not faded by the seam or the islands.
+			float band = smoothstep(crest_paint_x0, crest_paint_x0 + 0.02, p.x)
+					* (1.0 - step(crest_paint_x1, p.x))
+					* step(0.0001, crest_paint_x1 - crest_paint_x0);
+			on = max(on, band) * cabin_paint;
+			float lip = on * (1.0 - smoothstep(0.4, 0.7, island)) * (1.0 - band);
 			vec3 paint = paint_color * (0.85 + 0.3 * fine);
 			paint = mix(paint, paint * 0.55, lip * fine_vis);
 			col = mix(col, rust_color * 0.8, run * 0.4 * (1.0 - on) * cabin_paint);

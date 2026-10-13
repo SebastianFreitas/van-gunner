@@ -126,6 +126,8 @@ static func _door_body_material(left: Node3D, profile: RearDoorProfile) -> Shade
 		mat.set_shader_parameter("paint_color", profile.paint_color)
 		mat.set_shader_parameter("paint_coverage", profile.paint_coverage)
 		mat.set_shader_parameter("paint_island_scale", profile.paint_island_scale)
+		mat.set_shader_parameter("crest_paint_x0", profile.crest_paint_x0)
+		mat.set_shader_parameter("crest_paint_x1", profile.crest_paint_x1)
 		mat.set_shader_parameter("roughness_value", profile.roughness)
 		mat.set_shader_parameter("metallic_value", profile.metallic)
 	mat.set_shader_parameter("leaf_width_m", VanInteriorSize.REAR_DOOR_HALF - CENTER_GAP)

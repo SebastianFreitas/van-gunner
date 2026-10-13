@@ -298,6 +298,9 @@ static func gap_views(rig: Node3D) -> Array[Dictionary]:
 		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
 		result.append(_gap_view("gap-floor-%s" % side, Vector3(s * 0.8, 1.2, 3.0),
 			Vector3(s * profile.inner_x_at(0.0), 0.0, 3.0), "on", none))
+	# Whole latch edge of the donor leaf (x<0), floor to top corner, in game light.
+	result.append(_gap_view("gap-rear-in-donor-latch", Vector3(-0.7, 1.9, rz - 2.8),
+		Vector3(-0.1, 1.9, rz), "off", none))
 	return result
 
 

@@ -1,7 +1,7 @@
 extends RefCounted
-## Cut-to-fit welds of the donor rear leaf (spec 4): an L-section angle-iron strip along each raw
-## cut edge (bottom, latch side, diagonal top cut) with an uneven weld bead where it meets the
-## skin, and a bead all round the hinge-side filler strip with two plug welds on its centre line.
+## Cut-to-fit welds of the donor rear leaf (spec 4): an L-section angle-iron strip along the raw
+## bottom cut with an uneven weld bead where it meets the skin (the latch-side and diagonal strips
+## are archived at tag archive/donor-latch-cut-strips), and a bead all round the hinge-side filler strip with two plug welds on its centre line.
 ## Positions come from the leaf profile's outline and filler, never from constants of their own.
 
 const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
@@ -61,9 +61,16 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile,
 		var shift := inward * (_LeafBuild.ASTRAGAL_HALF_W + LEG_T if i == 1 else EDGE_LIFT)
 		from += shift
 		b += shift
+		# The latch and diagonal strips are archived (tag archive/donor-latch-cut-strips): they
+		# build into scratch tools nobody commits, so every rng draw keeps its order.
+		var strip_st := iron if i == 0 else SurfaceTool.new()
+		var bead_st := beads if i == 0 else SurfaceTool.new()
+		if i > 0:
+			strip_st.begin(Mesh.PRIMITIVE_TRIANGLES)
+			bead_st.begin(Mesh.PRIMITIVE_TRIANGLES)
 		for run: Array in (_runs(from, b, gap) if i == 1 else [[from, b]]):
-			_strip(iron, run[0], run[1], inward)
-			add_bead(beads, run[0], run[1], _LeafBuild.CABIN_Z + BEAD_Z, inward * (LEG + 0.012),
+			_strip(strip_st, run[0], run[1], inward)
+			add_bead(bead_st, run[0], run[1], _LeafBuild.CABIN_Z + BEAD_Z, inward * (LEG + 0.012),
 					rng, STRIP_BEAD_H)
 	_commit(hinge, iron, "CutStrip", rust_steel(), out)
 	if profile.filler(rect).size() > 3:

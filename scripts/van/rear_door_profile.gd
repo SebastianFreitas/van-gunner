@@ -51,6 +51,9 @@ var metallic := 0.22
 ## Share of the rust base and streaks kept, and whether the cabin face is painted like the street.
 var rust_amount := 1.0
 var cabin_paint := 0.0
+## Leaf-local x band of the cabin face painted solid (the seam-side crest); off when x1 <= x0.
+var crest_paint_x0 := 0.0
+var crest_paint_x1 := 0.0
 
 
 ## The original leaf: 18 cm corners, three pressed openings, swage beads and window doubler.
@@ -70,6 +73,9 @@ static func donor() -> RearDoorProfile:
 	p.paint_coverage = 0.80
 	p.rust_amount = 0.45
 	p.cabin_paint = 1.0
+	# 2.09 not 2.278: the seam edge fade (edge_d 0.2..0.6) is only solid from there.
+	p.crest_paint_x0 = 2.09
+	p.crest_paint_x1 = 2.48
 	p.paint_island_scale = 1.3
 	p.leaf_offset = Vector2(91.7, 23.1)
 	p.window_hole = _donor_window()
