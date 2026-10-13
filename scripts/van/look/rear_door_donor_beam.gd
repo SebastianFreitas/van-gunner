@@ -27,6 +27,8 @@ const FLANGE_T := 0.05
 const WEB_T := 0.06
 ## The web's cabin face sits this far in from the flanges' cabin edge: a dark channel the bolts sit in.
 const WEB_SET := 0.07
+## How far the bent top section is cut back from the corner of the latch cut.
+const TOP_TRIM := 0.10
 const BOLT_R := 0.016
 const BOLT_H := 0.014
 ## Bolt spacing along a run and the gap from the run's start to the first bolt.
@@ -89,13 +91,15 @@ static func build_edge(hinge: Node3D, rect: Rect2) -> Array[Node3D]:
 	var y_bottom := rect.position.y + LIFT + HEIGHT
 	var mid_up := Vector2((xo + xi) * 0.5, y_bottom)
 	var mid_m := (mo + mi) * 0.5
+	# The bend is cut off TOP_TRIM short of its corner: a plain open I end, no end plate.
 	var mid_far := (far_o + far_i) * 0.5
+	mid_far -= (mid_far - mid_m).normalized() * TOP_TRIM
 	var steel := SurfaceTool.new()
 	steel.begin(Mesh.PRIMITIVE_TRIANGLES)
 	# The upright starts on the L's mitre, on the bottom beam's centreline.
 	var foot := Vector2(mid_up.x, y_bottom - HEIGHT * 0.5)
 	_run(steel, foot, mid_m, -Vector2.ONE.normalized(), n, false, false)
-	_run(steel, mid_m, mid_far, -n, Vector2.ZERO, false, true)
+	_run(steel, mid_m, mid_far, -n, Vector2.ZERO, false, false)
 	_commit(hinge, steel, true, out, "DonorEdgeBeam")
 	# Every bolt is present: the straps move to sit between them (`upright_bolt_ys`).
 	# One continuous pitch along both runs (the bend carries on the vertical's pattern).

@@ -9,22 +9,26 @@ const _Welds := preload("res://scripts/van/look/rear_door_donor_welds.gd")
 const _Beam := preload("res://scripts/van/look/rear_door_donor_beam.gd")
 
 ## Each strap is three bars 1.2 cm thick and 5 cm tall: a face leg across the beam's cabin face
-## (z -0.23), a side leg down its seam-side edge and a foot on the yellow crest. Boxes as
-## [x0, x1, z0, z1].
+## (z -0.284..-0.272, 2 mm proud of the beam's cabin face at BACK_Z -0.27), a side leg wrapping the
+## beam's seam-side edge (x 2.473) with a 4 mm gap for the strap's few degrees of turn, and a foot
+## on the yellow crest. Nothing enters the beam. Boxes as [x0, x1, z0, z1].
 const STRAP_H := 0.05
 const STRAP_BARS: Array[Vector4] = [
-	Vector4(2.483, 2.633, -0.242, -0.23),
-	Vector4(2.461, 2.473, -0.242, -0.17),
-	Vector4(2.356, 2.461, -0.182, -0.17),
+	Vector4(2.469, 2.633, -0.284, -0.272),
+	Vector4(2.457, 2.469, -0.284, -0.17),
+	Vector4(2.356, 2.457, -0.182, -0.17),
 ]
 const STRAP_Y: Array[float] = [0.09, 0.495, 0.90, 1.305, 1.71]
 ## Straps turn about the face leg's beam-side end.
 const STRAP_PIVOT_X := 2.633
-## Two hex screws per foot, standing on its cabin face (z -0.182).
+## Two hex screws per foot, standing on its cabin face (z -0.182), and two on each face leg.
 const SCREW_X: Array[float] = [2.376, 2.436]
 const SCREW_R := 0.015
 const SCREW_H := 0.012
 const SCREW_Z := -0.182 - SCREW_H * 0.5 + 0.002
+## Face-leg screws: x on the leg, standing on its cabin face (z -0.284).
+const FACE_SCREW_X: Array[float] = [2.50, 2.60]
+const FACE_SCREW_Z := -0.284 - SCREW_H * 0.5 + 0.002
 
 
 ## Builds the beam and straps under `hinge` and appends every node to `out`.
@@ -69,10 +73,13 @@ static func build(hinge: Node3D, rng: RandomNumberGenerator, out: Array[Node3D])
 			steel.append_from(box, 0, turn * Transform3D(Basis.IDENTITY,
 					Vector3((bar.x + bar.y) * 0.5 - pivot.x, 0.0, (bar.z + bar.w) * 0.5)))
 		weld.append_from(bead, 0, turn * Transform3D(Basis(Vector3.UP, PI * 0.25),
-				Vector3(0.0, 0.0, -0.23)))
+				Vector3(0.0, 0.0, -0.29)))
 		for sx: float in SCREW_X:
 			screws.append_from(head, 0, turn * Transform3D(Basis(Vector3.RIGHT, PI * 0.5),
 					Vector3(sx - pivot.x, 0.0, SCREW_Z)))
+		for sx: float in FACE_SCREW_X:
+			screws.append_from(head, 0, turn * Transform3D(Basis(Vector3.RIGHT, PI * 0.5),
+					Vector3(sx - pivot.x, 0.0, FACE_SCREW_Z)))
 	_Panels.add(hinge, "DonorEdgeStrap", rust.commit(), _Welds.rust_steel(), Vector3.ZERO,
 			Vector3.ZERO, out)
 	_Panels.add(hinge, "DonorEdgeStrapWeld", weld.commit(), _Welds.weld_steel(), Vector3.ZERO,
