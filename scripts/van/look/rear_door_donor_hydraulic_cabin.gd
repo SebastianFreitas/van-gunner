@@ -21,6 +21,7 @@ extends RefCounted
 ## The box (x 0.02.., z -0.27..-0.03, y up to 0.62) stands at the ram's height, so it is in the sweep:
 ## with its hinge-end cabin corner cut off 4 cm at 45 degrees (`RearDoorDonorBox.BEVEL`) the worst
 ## clearance against it is 0.065 m at 110 deg (0.0448 m with a square corner), over the collar's 1 cm.
+## Its closing top plate (same top, hinge-end corner notched square past the bevel) stays inside that outline.
 
 const _Panels := preload("res://scripts/van/look/rear_door_donor_panels.gd")
 const _Beam := preload("res://scripts/van/look/rear_door_donor_beam.gd")

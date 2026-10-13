@@ -2,7 +2,8 @@ class_name RearDoorDonorBox
 extends RefCounted
 ## The welded iron box that replaces the bottom of the donor leaf's green sheet: a cut stub of
 ## square steel box section stood on the beam's top, as wide as the sheet's hole, its top a
-## flame-cut edge that leaves the wall thickness open, a stitch weld bead along its floor seam.
+## thick plate set in 4 mm from the walls and stitch-welded all round, so it reads as a solid block,
+## a stitch weld bead along its floor seam too.
 ## It reaches inward to the beam's cabin face (BACK_Z), so the cast spring hanger the ram's door
 ## end pins to (`RearDoorDonorHydraulicCabin`) sits flush on its cabin face. Hinge-local metres.
 
@@ -44,7 +45,7 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile) -> Array
 	iron.set_shader_parameter(&"kick_color", Color(0.2, 0.09, 0.05))
 	var bead := _Panels.flat(Color(0.09, 0.085, 0.08), 0.9, 0.3)
 	var bolt := _Panels.flat(Color(0.07, 0.07, 0.08), 0.8, 0.3)
-	# Four walls on the beam, which is the floor: the top stays open, the cut wall edge showing its thickness.
+	# Four walls on the beam, which is the floor, closed by a top plate further down.
 	# The hinge-end cabin corner is flame-cut off at 45 degrees so the ram's swing clears it.
 	_Hydraulic._box(hinge, "DonorBoxWall", Vector3(size.x, size.y, WALL), iron,
 			c + Vector3(0.0, 0.0, (size.z - WALL) * 0.5), out)
@@ -59,6 +60,28 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile) -> Array
 	var inward := Vector3(1.0, 0.0, 1.0).normalized() * WALL * 0.5
 	_Hydraulic._part(hinge, "DonorBoxBevel", _Panels.box(Vector3(BEVEL * 1.414 + 0.01, size.y, WALL)),
 			iron, bevel_mid + inward, out, Vector3(0.0, PI * 0.25, 0.0))
+	# Top plate: set in 4 mm, its hinge-end corner notched past the bevel so the ram still clears it.
+	var inset := 0.004
+	var pt := 0.03
+	var py := y1 - pt * 0.5
+	var px0 := X0 + inset
+	var pz1 := back + inset
+	var pz0 := FRONT_Z - inset
+	_Hydraulic._box(hinge, "DonorBoxLid", Vector3(x1 - inset - (px0 + BEVEL), pt, pz0 - pz1), iron,
+			Vector3((px0 + BEVEL + x1 - inset) * 0.5, py, (pz0 + pz1) * 0.5), out)
+	_Hydraulic._box(hinge, "DonorBoxLid", Vector3(BEVEL, pt, pz0 - (pz1 + BEVEL)), iron,
+			Vector3(px0 + BEVEL * 0.5, py, (pz0 + pz1 + BEVEL) * 0.5), out)
+	# Weld beads round the plate's cabin, cut and hinge edges, and two bolts on the cabin half.
+	var lid_mid := (pz0 + pz1) * 0.5
+	for lx in range(int((x1 - X0 - 0.12) / STITCH)):
+		_Hydraulic._box(hinge, "DonorBoxBead", Vector3(STITCH * 0.7, 0.012, 0.014),
+				bead, Vector3(X0 + BEVEL + 0.03 + lx * STITCH, y1 - 0.004, pz1 + 0.001), out)
+	for lz in range(2):
+		_Hydraulic._box(hinge, "DonorBoxBead", Vector3(0.014, 0.012, STITCH * 0.7), bead,
+				Vector3(x1 - inset - 0.001, y1 - 0.004, lid_mid - 0.03 + lz * 0.09), out)
+	for bx: float in [0.35, 0.7]:
+		_Hydraulic._part(hinge, "DonorBoxBolt", _Hydraulic._cyl(0.022, 0.022, 0.012, 6), bolt,
+				Vector3(lerpf(X0, x1, bx), y1 + 0.001, pz1 + 0.07), out)
 	# Stitch weld along the floor seam on the cabin side, each bead a little off its neighbour.
 	var k := 0
 	var x := X0 + 0.06

@@ -70,7 +70,8 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile) -> Array
 	var xs: Array[float] = []
 	for k in int(ceil((x_max - EDGE_X) * COLS / PITCH)) + 1:
 		xs.append(EDGE_X + k * PITCH / COLS)
-	_uv_bottom = y0
+	# Rust band measured from the leaf's bottom, so it ends (0.38 m) well inside the box.
+	_uv_bottom = rect.position.y
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var grid: Array = []
