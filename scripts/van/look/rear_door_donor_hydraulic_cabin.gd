@@ -1,36 +1,46 @@
 class_name RearDoorDonorHydraulicCabin
 extends RefCounted
-## Cabin-side hinge of the donor leaf (owner drawing 2026-10-13): a thick slab welded and bolted to the
-## beam's cabin face a third along the leaf, two fat bent tubes running low across to a collar, and a
-## steel post standing on a floor slab in front of the rear wall beside the pillar, with a second
-## pillar under the tube elbows. The slab and the sleeve pins ride the leaf under `hinge`; floor
-## slab, post, collar, elbow pillar, elbows and post tubes stay under its parent, and each moving
-## rod (`RearDoorDonorCabinArm`) follows the swing.
+## Cabin-side hinge of the donor leaf: one 3-stage telescoping hydraulic ram
+## (`RearDoorDonorCabinArm`) from a welded bracket on the rear wall beside the hinge pillar to a
+## slab welded and bolted to the beam's cabin face, with two flat bars standing the door pin out
+## to the ram's low line. The slab and its bars ride the leaf under `hinge`; the wall bracket and
+## the ram stay under its parent.
+##
+## Layout found by a sweep in the hinge-local xz plane, leaf angle 0..110 deg in 5 deg steps: the
+## ram's axis segment (wall pin to the leaf pin rotated by the angle) against two keep-outs, the
+## leaf (x 0..1.4, z -0.23..0.145, the beam's back being -0.23) and the hinge pillar's deep ring
+## (x <= -0.1, z >= -0.45; the ring's real x extent is -0.30..-0.14 plus its 0.16 ramp), and
+## against the hinge axis. Worst clearance 0.0572 m at 110 deg (also with the 0.15 m beyond the
+## pin), so the outermost parts (collar 1 and the base cap, r 0.047) keep their 1 cm. Pin distance
+## 0.365 m closed to 1.217 m open, ratio 3.3. Three tubes (cylinder 0.49, stages 0.52), stage 3
+## ending in a yoke whose tines straddle the cylinder to the leaf pin, so the closed cylinder's
+## overrun past the pin hangs between the tines; stage overlap at full stretch is 0.084 m. The
+## wall pin is 8 cm off its plate so the base cap clears it at every heading.
+## The strut rides at KNEE above the leaf rect's bottom (about 0.52 m above the cabin floor); the
+## slab is narrow enough to stay clear of the jerry can (x >= 0.42, bottom 0.20 above the rect).
 
 const _Panels := preload("res://scripts/van/look/rear_door_donor_panels.gd")
 const _Beam := preload("res://scripts/van/look/rear_door_donor_beam.gd")
 const _Hydraulic := preload("res://scripts/van/look/rear_door_donor_hydraulic.gd")
 
 ## Door slab: centre x along the leaf, size; its back sinks 1 cm into the beam's cabin face.
-const SLAB_X := 0.9
-const SLAB := Vector3(0.36, 0.3, 0.06)
-## The sliding rods pin to the slab at this z, clear of the beam (4 cm).
-const ARM_Z := _Beam.BACK_Z - 0.07
-## Fixed parts (post, elbow pillar, tubes) stand at this z, cabin-ward of the pillar surround's
-## deep ring (face at -0.45), and at these x: the post in front of the rear wall beside the pillar
-## (the wall is at -0.69), the elbow pillar out in the opening, past every swing of the rods.
-const FIXED_Z := -0.62
-const POST_X := -0.40
-const ELBOW_X := 0.7
-const TUBE_R := 0.029
-const POST_R := 0.05
-const POST_H := 0.5
-const COLLAR_R := 0.085
-## Floor slab under the post (its pillar-side edge is the surround's ring face) and the elbow
-## pillar's small floor plate.
-const FLOOR_SLAB := Vector3(0.32, 0.07, 0.44)
-const PLATE := Vector3(0.22, 0.04, 0.22)
-const PILLAR_R := 0.045
+const SLAB_X := 0.30
+const SLAB := Vector3(0.2, 0.52, 0.06)
+## The slab reaches 8 cm lower than the strut centre, so its foot overlaps the beam (top 0.255).
+const SLAB_DY := -0.04
+## Hinge-local height of the whole strut (pins, slab, bracket) above the leaf rect's bottom.
+const KNEE := 0.50
+## Standoff bars and wall lugs stand this far off the ram's axis.
+const BAR_Y := 0.08
+const WALL_LUG_Y := 0.062
+## The ram pins to the slab's standoff bars at this z, 41 cm cabin-ward of the beam.
+const ARM_Z := -0.64
+## Wall bracket: plate on the rear wall (at -0.69) beside the hinge pillar, pin 9 cm out of it,
+## cabin-ward of the pillar surround's deep ring (face at -0.45).
+const WALL_X := -0.06
+const WALL_PLATE_Z := -0.675
+const WALL_PIN_Z := -0.58
+const WALL_PLATE := Vector3(0.2, 0.26, 0.03)
 
 
 ## Builds the cabin hinge for the leaf under `hinge`; returns every node added.
@@ -40,85 +50,58 @@ static func build(hinge: Node3D, rect: Rect2) -> Array[Node3D]:
 	if frame == null:
 		return out
 	var base := hinge.position
-	var ym := _Beam.hinge_mount(rect).y
-	var floor_y := -base.y
-	var steel := _Panels.flat(Color(0.11, 0.11, 0.12), 0.7, 0.55)
-	var worn := _Panels.flat(Color(0.2, 0.17, 0.14), 0.6, 0.65)
-	var bolt := _Panels.flat(Color(0.07, 0.07, 0.08), 0.8, 0.4)
-	# Door slab against the beam's cabin face, with four bolt heads and a welded rib along the top.
+	var ym := rect.position.y + KNEE
+	var steel := _Panels.flat(Color(0.11, 0.11, 0.12), 0.7, 0.3)
+	var ram_steel := _Panels.flat(Color(0.12, 0.12, 0.13), 0.6, 0.3)
+	var worn := _Panels.flat(Color(0.2, 0.17, 0.14), 0.6, 0.3)
+	var bolt := _Panels.flat(Color(0.07, 0.07, 0.08), 0.8, 0.3)
+	# Polished: metallic at the art cap (0.3) so diffuse light lands on it,
+	# light albedo, low roughness.
+	var chrome := _Panels.flat(Color(0.85, 0.86, 0.88), 0.15, 0.3)
+	var collar := _Panels.flat(Color(0.5, 0.48, 0.45), 0.35, 0.3)
+	var ring := _Panels.flat(Color(1.0, 1.0, 1.0), 0.15, 0.3)
+	# Door slab against the beam's cabin face with four bolt heads, and two lugs holding the pin.
 	var slab_z := _Beam.BACK_Z - SLAB.z * 0.5 + 0.01
-	_Hydraulic._box(hinge, "CabinHingeSlab", SLAB, steel, Vector3(SLAB_X, ym, slab_z), out)
-	for sx: float in [-0.12, 0.12]:
-		for sy: float in [-0.09, 0.09]:
+	_Hydraulic._box(hinge, "CabinHingeSlab", SLAB, steel, Vector3(SLAB_X, ym + SLAB_DY, slab_z), out)
+	for sx: float in [-0.06, 0.06]:
+		for sy: float in [-0.14, 0.14]:
 			_bolt(hinge, Vector3(SLAB_X + sx, ym + sy, slab_z - SLAB.z * 0.5 - 0.008), 0.03, bolt, out)
-	# Tubes: a sliding rod from the slab to the elbow on its pillar, then a fixed tube on to the collar
-	# so they meet the post above the floor slab. Elbows get a ball so the bend reads welded.
-	var cy := floor_y + FLOOR_SLAB.y + 0.13
-	for k: int in 2:
-		var y0 := ym + (0.075 if k == 0 else -0.075)
-		var y1 := cy + (0.05 if k == 0 else -0.04)
-		var elbow := Vector3(ELBOW_X, y0, FIXED_Z)
-		# The post side is fixed: post tube, elbow and collar stay under the frame. The door side is
-		# a rod turning about the elbow and sliding in a sleeve pinned to the slab.
-		_tube(frame, "CabinHingeTube", base + elbow, base + Vector3(POST_X, y1, FIXED_Z), steel, out)
-		var ball := SphereMesh.new()
-		ball.radius = TUBE_R * 1.15
-		ball.height = ball.radius * 2.0
-		ball.radial_segments = 8
-		ball.rings = 4
-		_Hydraulic._part(frame, "CabinHingeElbow", ball, steel, base + elbow, out)
-		var arm := RearDoorDonorCabinArm.new()
-		arm.name = "CabinHingeArm%d" % k
-		arm.position = base + elbow
-		frame.add_child(arm)
-		out.append(arm)
-		arm.setup(hinge, Vector3(SLAB_X, y0, ARM_Z), TUBE_R, steel, worn)
-		# Vertical pin through the sleeve's end.
-		_Hydraulic._part(hinge, "CabinHingePin", _Hydraulic._cyl(0.022, 0.022, 0.14, 8), bolt,
-				Vector3(SLAB_X, y0, ARM_Z), out)
-	# Collar wrapping the post, with a nut on each end.
-	_Hydraulic._part(frame, "CabinHingeCollar", _Hydraulic._cyl(COLLAR_R, COLLAR_R, 0.2, 12), worn,
-			base + Vector3(POST_X, cy, FIXED_Z), out)
+	# Two flat standoff bars from the slab out to the pin, 16 cm apart so the yoke's tines pass between them and the bars.
+	var bar_z0 := slab_z - SLAB.z * 0.5 + 0.005
+	var bar_z1 := ARM_Z - 0.04
 	for s: float in [-1.0, 1.0]:
-		_Hydraulic._part(frame, "CabinHingeCollarNut", _Hydraulic._cyl(0.06, 0.06, 0.03, 6), bolt,
-				base + Vector3(POST_X, cy + s * 0.105, FIXED_Z), out)
-	# Floor slab bolted to the floor in front of the rear wall, the post, and the elbow pillar on its
-	# own bolted plate holding both elbows up.
-	var slab_top := floor_y + FLOOR_SLAB.y - 0.01
-	var slab_c := Vector3(POST_X, 0.0, FIXED_Z - 0.07)
-	_Hydraulic._box(frame, "CabinHingeFloorSlab", FLOOR_SLAB, steel,
-			base + slab_c + Vector3(0.0, slab_top - FLOOR_SLAB.y * 0.5, 0.0), out)
-	for sx: float in [-0.1, 0.1]:
-		for sz: float in [-0.14, 0.14]:
-			_bolt(frame, base + slab_c + Vector3(sx, slab_top + 0.008, sz), 0.035, bolt, out, true)
-	_Hydraulic._part(frame, "CabinHingePost", _Hydraulic._cyl(POST_R, POST_R, POST_H, 12), steel,
-			base + Vector3(POST_X, slab_top + POST_H * 0.5 - 0.01, FIXED_Z), out)
-	_Hydraulic._part(frame, "CabinHingePostNut", _Hydraulic._cyl(0.07, 0.07, 0.04, 6), bolt,
-			base + Vector3(POST_X, slab_top + POST_H - 0.01, FIXED_Z), out)
-	var plate_top := floor_y + PLATE.y
-	_Hydraulic._box(frame, "CabinHingeElbowPlate", PLATE, steel,
-			base + Vector3(ELBOW_X, floor_y + PLATE.y * 0.5, FIXED_Z), out)
+		_Hydraulic._box(hinge, "CabinHingeLug", Vector3(0.07, 0.025, bar_z0 - bar_z1), worn,
+				Vector3(SLAB_X, ym + s * BAR_Y, (bar_z0 + bar_z1) * 0.5), out)
+	# Two pin stubs through the yoke tines and the bars, none through the tubes between them.
+	for s: float in [-1.0, 1.0]:
+		_Hydraulic._part(hinge, "CabinHingePin", _Hydraulic._cyl(0.016, 0.016, 0.046, 8), bolt,
+				Vector3(SLAB_X, ym + s * 0.07, ARM_Z), out)
+	# Wall bracket on the pillar: plate with four bolts, two lugs and the vertical pin.
+	var wall := base + Vector3(WALL_X, ym, WALL_PLATE_Z)
+	_Hydraulic._box(frame, "CabinHingeWallPlate", WALL_PLATE, steel, wall, out)
 	for sx: float in [-0.07, 0.07]:
-		for sz: float in [-0.07, 0.07]:
-			_bolt(frame, base + Vector3(ELBOW_X + sx, plate_top + 0.008, FIXED_Z + sz), 0.025, bolt,
-					out, true)
-	var top_y := ym + 0.075 + 0.04
-	_Hydraulic._part(frame, "CabinHingeElbowPillar",
-			_Hydraulic._cyl(PILLAR_R, PILLAR_R, top_y - plate_top, 10), steel,
-			base + Vector3(ELBOW_X, (top_y + plate_top) * 0.5, FIXED_Z), out)
+		for sy: float in [-0.09, 0.09]:
+			_bolt(frame, wall + Vector3(sx, sy, WALL_PLATE.z * 0.5 + 0.008), 0.026, bolt, out)
+	# The cylinder's cap sits between the lugs, which stand 6.2 cm out from the axis.
+	var lug_z0 := WALL_PLATE_Z + WALL_PLATE.z * 0.5 - 0.005
+	var lug_z1 := WALL_PIN_Z + 0.04
+	for s: float in [-1.0, 1.0]:
+		_Hydraulic._box(frame, "CabinHingeWallLug", Vector3(0.07, 0.02, lug_z1 - lug_z0), worn,
+				base + Vector3(WALL_X, ym + s * WALL_LUG_Y, (lug_z0 + lug_z1) * 0.5), out)
+	_Hydraulic._part(frame, "CabinHingeWallPin", _Hydraulic._cyl(0.016, 0.016, 0.16, 8), bolt,
+			base + Vector3(WALL_X, ym, WALL_PIN_Z), out)
+	# The strut itself: dark cylinder, chrome stages sliding out of it.
+	var arm := RearDoorDonorCabinArm.new()
+	arm.name = "CabinHingeStrut"
+	arm.position = base + Vector3(WALL_X, ym, WALL_PIN_Z)
+	frame.add_child(arm)
+	out.append(arm)
+	arm.setup(hinge, Vector3(SLAB_X, ym, ARM_Z), {"body": ram_steel, "chrome": chrome,
+			"collar": collar, "ring": ring, "weld": worn})
 	return out
 
 
-## Hex bolt head of radius `r`; `up` stands it on a horizontal face instead of a vertical one.
-static func _bolt(parent: Node3D, at: Vector3, r: float, mat: Material, out: Array[Node3D],
-		up: bool = false) -> void:
+## Hex bolt head of radius `r` on a vertical face.
+static func _bolt(parent: Node3D, at: Vector3, r: float, mat: Material, out: Array[Node3D]) -> void:
 	_Hydraulic._part(parent, "CabinHingeBolt", _Hydraulic._cyl(r, r, 0.016, 6), mat, at, out,
-			Vector3.ZERO if up else Vector3(PI * 0.5, 0.0, 0.0))
-
-
-## Round tube from `a` to `b` (both at one z, so the run lies in the xy plane).
-static func _tube(parent: Node3D, node_name: String, a: Vector3, b: Vector3, mat: Material,
-		out: Array[Node3D]) -> void:
-	var d := b - a
-	_Hydraulic._part(parent, node_name, _Hydraulic._cyl(TUBE_R, TUBE_R, d.length(), 10), mat,
-			(a + b) * 0.5, out, Vector3(0.0, 0.0, atan2(-d.x, d.y)))
+			Vector3(PI * 0.5, 0.0, 0.0))
