@@ -23,9 +23,9 @@ const RAIL_T := 0.012
 const RAIL_H := 0.04
 ## Rail centres below the plate top: each sits between two slot rows so no slot is covered.
 const RAIL_DROP: Array[float] = [0.1825, 0.3675]
-const RAIL_X0 := 0.45
+const RAIL_X0 := 0.68
 const RAIL_X1 := 2.15
-const ANCHOR_X: Array[float] = [0.75, 1.85]
+const ANCHOR_X: Array[float] = [0.88, 1.85]
 
 
 ## The molle plate's rect (hinge-local XY) inside the bottom bay.

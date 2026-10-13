@@ -27,6 +27,8 @@ const VENT_BEAM_TOP := 0.07
 const MOLLE_SIDE_BEAM := 0.25
 const MOLLE_BEAM_BELOW := 0.07
 const MOLLE_BEAM_BOTTOM := 0.09
+## The molle bay is this much narrower per side than its beams allow, so more door paint shows.
+const MOLLE_NARROW := 0.07
 ## Street-face wide bead: half width and height above the leaf bottom as a share of the leaf height.
 const WIDE_BEAD_HALF_W := 0.055
 const WIDE_BEAD_AT := 1.0 / 3.0
@@ -68,8 +70,9 @@ static func stock() -> RearDoorProfile:
 static func donor() -> RearDoorProfile:
 	var p := RearDoorProfile.new()
 	p._donor = true
-	# Ex-fleet utility yellow, luminance about 0.24 linear, just inside the 0.25 budget.
-	p.paint_color = Color(0.62, 0.52, 0.04)
+	# Old faded mustard, washed out and grimy (saturated colour is for lights), luminance
+	# about 0.12 linear.
+	p.paint_color = Color(0.42, 0.38, 0.22)
 	p.paint_coverage = 0.80
 	p.rust_amount = 0.45
 	p.cabin_paint = 1.0
@@ -193,8 +196,8 @@ func cabin_openings(r: Rect2, win: PackedVector2Array, win_slope: float) -> Arra
 			Vector2(vx1, vent_y1), Vector2(vx1, vent_y0)], BAY_ROUND))
 	var molle_y0 := r.position.y + MOLLE_BEAM_BOTTOM + BAY_SLOPE
 	var molle_y1 := lo.y - win_slope - MOLLE_BEAM_BELOW - BAY_SLOPE
-	var mx0 := maxf(r.position.x + MOLLE_SIDE_BEAM, cut_x(r, molle_y1 + BAY_SLOPE) + 0.06)
-	var mx1 := r.end.x - MOLLE_SIDE_BEAM
+	var mx0 := maxf(r.position.x + MOLLE_SIDE_BEAM, cut_x(r, molle_y1 + BAY_SLOPE) + 0.06) + MOLLE_NARROW
+	var mx1 := r.end.x - MOLLE_SIDE_BEAM - MOLLE_NARROW
 	out.append(_Press.rounded([Vector2(mx0, molle_y0), Vector2(mx0, molle_y1),
 			Vector2(mx1, molle_y1), Vector2(mx1, molle_y0)], BAY_ROUND))
 	return out
