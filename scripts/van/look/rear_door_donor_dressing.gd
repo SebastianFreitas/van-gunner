@@ -47,7 +47,7 @@ static func build(hinge: Node3D, rng: RandomNumberGenerator) -> Array[Node3D]:
 	out.append_array(_Patches.build(hinge, rect, profile, rng))
 	out.append_array(RearDoorDonorJamb.build(hinge, rng))
 	_Edge.build(hinge, rng, out)
-	_Lock.build(hinge, rng, out)
+	_Lock.build(hinge)
 	return out
 
 

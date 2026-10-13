@@ -189,6 +189,20 @@ static func gap_views(rig: Node3D) -> Array[Dictionary]:
 	for open in [true, false]:
 		result.append(_gap_view("gap-rear-in-donor-hinge%s" % ("" if open else "-closed"),
 			Vector3(hx + 1.9, 0.9, rz - 1.9), Vector3(hx + 0.95, 0.2, rz - 0.6), "off", none, open))
+	# Donor edge beam from inside, 0.8 m off, angled 30 degrees: the lower latch corner (the L) and
+	# the 45-degree bend, so the flanges' depth and the bolts show.
+	var donor_edge := hinge.find_child("DonorEdgeBeam0", true, false) as MeshInstance3D
+	if donor_edge != null:
+		# The beam is itself the MeshInstance3D; the merge only walks descendants.
+		var eb := (rig.global_transform.affine_inverse() * donor_edge.global_transform
+				* donor_edge.get_aabb())
+		# The aabb's max x is the upright's outer edge, its top the bend's far end.
+		for view in [["gap-rear-in-donor-corner", Vector2(eb.end.x - 0.02, eb.position.y + 0.3)],
+				["gap-rear-in-donor-bend", Vector2(eb.end.x - 0.19, eb.end.y - 0.16)]]:
+			var at: Vector2 = view[1]
+			var target := Vector3(at.x, at.y, eb.position.z)
+			result.append(_gap_view(view[0] as String,
+				target + Vector3(-0.4, 0.2, -0.69), target, "off", none))
 	for side in sides:
 		var s := -1.0 if side == _SideDoors.SIDE_LEFT else 1.0
 		var ix := profile.inner_x_at(1.6)

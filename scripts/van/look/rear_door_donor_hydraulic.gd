@@ -70,7 +70,11 @@ static func build(hinge: Node3D, rect: Rect2) -> Array[Node3D]:
 	_box(frame, "FrameLugWeb", Vector3(0.09, 0.09, 0.03), steel,
 			base + Vector3(f.x, f.y, 0.015), out)
 	_lug(hinge, b, Vector3(0.09, 0.012, 0.09), 0.0, steel, bolt, out)
-	# Welded to the beam's street face, with the fork plates reaching out from it.
+	# Welded to the beam's street face, with the fork plates reaching out from it; a filler plate
+	# between the flanges ties it to the web.
+	var fill := _Beam.BEAM_FRONT_Z - 0.002 - _Beam.WEB_ZF
+	_box(hinge, "BeamLugFiller", Vector3(0.08, 0.08, fill), steel,
+			Vector3(b.x, b.y, _Beam.WEB_ZF + fill * 0.5), out)
 	_box(hinge, "BeamLugBack", Vector3(0.09, 0.09, 0.03), steel,
 			Vector3(b.x, b.y, _Beam.BEAM_FRONT_Z + 0.015), out)
 	var strut := _Strut.new()

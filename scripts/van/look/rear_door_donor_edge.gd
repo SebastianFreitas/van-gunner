@@ -20,10 +20,6 @@ const STRAP_BARS: Array[Vector4] = [
 const STRAP_Y: Array[float] = [0.09, 0.495, 0.90, 1.305, 1.71]
 ## Straps turn about the face leg's beam-side end.
 const STRAP_PIVOT_X := 2.633
-## The upright's cabin-face joint on the bottom beam (x span, y).
-const JOINT_X0 := 2.473
-const JOINT_X1 := 2.648
-const JOINT_Y := -1.275
 ## Two hex screws per foot, standing on its cabin face (z -0.182).
 const SCREW_X: Array[float] = [2.376, 2.436]
 const SCREW_R := 0.015
@@ -35,15 +31,16 @@ const SCREW_Z := -0.182 - SCREW_H * 0.5 + 0.002
 static func build(hinge: Node3D, rng: RandomNumberGenerator, out: Array[Node3D]) -> void:
 	var rect := Rect2(0.0, _LeafBuild.Y_MIN - hinge.position.y, VanInteriorSize.REAR_DOOR_HALF
 			- _LeafBuild.CENTER_GAP, VanInteriorSize.REAR_DOOR_TOP - _LeafBuild.Y_MIN)
-	out.append_array(_Beam.build_edge(hinge, rect, STRAP_Y, STRAP_H * 0.5))
-	# A diamond bead across the cabin-face joint of the upright on the bottom beam; the inner-side
-	# bead down the upright and the bend is already in build_edge.
-	var joint := SurfaceTool.new()
-	joint.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_Beam._corner(joint, Vector3(JOINT_X0 + 0.02, JOINT_Y, -0.23),
-			Vector3(JOINT_X1 - 0.02, JOINT_Y, -0.23))
-	_Panels.add(hinge, "DonorEdgeJointWeld", joint.commit(), _Welds.weld_steel(), Vector3.ZERO,
-			Vector3.ZERO, out)
+	out.append_array(_Beam.build_edge(hinge, rect))
+	# Each strap sits midway between two upright bolts, in consecutive gaps from the one nearest
+	# the first STRAP_Y, so no bolt is ever covered.
+	var bolts := _Beam.upright_bolt_ys(rect)
+	var first := 0
+	for k in bolts.size() - 1:
+		if absf((bolts[k] + bolts[k + 1]) * 0.5 - STRAP_Y[0]) < absf(
+				(bolts[first] + bolts[first + 1]) * 0.5 - STRAP_Y[0]):
+			first = k
+	first = mini(first, bolts.size() - 1 - STRAP_Y.size())
 	# Straps alternate rust and weld steel; each turns a few degrees about its beam-side end.
 	var rust := SurfaceTool.new()
 	rust.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -61,7 +58,7 @@ static func build(hinge: Node3D, rng: RandomNumberGenerator, out: Array[Node3D])
 	bead.size = Vector3(0.02, STRAP_H, 0.02)
 	var sign_k := 1.0
 	for i in STRAP_Y.size():
-		var pivot := Vector3(STRAP_PIVOT_X, STRAP_Y[i], 0.0)
+		var pivot := Vector3(STRAP_PIVOT_X, (bolts[first + i] + bolts[first + i + 1]) * 0.5, 0.0)
 		var turn := Transform3D(Basis(Vector3.BACK, deg_to_rad(sign_k * rng.randf_range(1.0, 4.0))),
 				pivot)
 		sign_k = -sign_k
