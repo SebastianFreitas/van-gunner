@@ -4,7 +4,6 @@ paths:
   - ".claude/settings.json"
   - ".claude/project/settings.json"
   - ".claude/project/file-guard.json"
-  - ".claude/project/autoplan.json"
   - "tools/autoplan.py"
   - "tools/cleanup.py"
 ---

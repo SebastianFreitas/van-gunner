@@ -1,12 +1,6 @@
 extends RefCounted
 ## Mesh builder for IronCross: rods, boxes, bolts and weld blobs that follow the bowed side wall.
 
-const BOLT_RADIUS := 0.011
-## Hex top under 1 cm² so it never trips the audit's FLICKER rule.
-const BOLT_TOP_RADIUS := 0.0055
-const BOLT_HEIGHT := 0.009
-const BOLT_SINK := 0.002
-
 ## Wall profile to follow (null = flat) and the window centre height in wall space.
 var walls: VanSideWall = null
 var mid_y := 0.0
@@ -60,31 +54,6 @@ func add_box(
 	mi.mesh = mesh
 	var b := basis_at(at.x, at.y)
 	var pos := Vector3(at.x, at.y, surface_z(at.x, at.y)) + b.z * (z_back + size.z * 0.5)
-	mi.transform = Transform3D(b, pos)
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	_commit(parent, mi)
-	return mi
-
-
-## One hex bolt head on the surface at `at`; z_base is its base height off the surface (2 mm sunk).
-func add_bolt(
-	parent: Node3D, node_name: String, at: Vector2, z_base: float, mat: Material
-) -> MeshInstance3D:
-	var mesh := CylinderMesh.new()
-	mesh.bottom_radius = BOLT_RADIUS
-	mesh.top_radius = BOLT_TOP_RADIUS
-	mesh.height = BOLT_HEIGHT
-	mesh.radial_segments = 6
-	mesh.rings = 0
-	var mi := MeshInstance3D.new()
-	mi.name = node_name
-	mi.mesh = mesh
-	var sb := basis_at(at.x, at.y)
-	# Turned about its own axis so the hex flats are not axis-aligned.
-	var b := sb * Basis(Vector3.RIGHT, PI / 2.0) * Basis(Vector3.UP, 0.3)
-	var pos := Vector3(at.x, at.y, surface_z(at.x, at.y))
-	pos += sb.z * (z_base - BOLT_SINK + BOLT_HEIGHT * 0.5)
 	mi.transform = Transform3D(b, pos)
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON

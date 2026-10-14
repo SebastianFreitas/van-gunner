@@ -131,10 +131,6 @@ func set_rear_exit_allowed(allowed: bool) -> void:
 		rear.disabled = allowed
 
 
-func is_side_exit_allowed() -> bool:
-	return _side_exit_allowed
-
-
 ## Opens or closes the side door bays; the closed door leaves still block on their own.
 func set_side_exit_allowed(allowed: bool) -> void:
 	_side_exit_allowed = allowed

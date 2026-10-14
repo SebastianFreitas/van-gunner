@@ -19,17 +19,6 @@ const OPENING_BAY := 2
 const _LIGHT_POINT_SIZE := Vector3(0.2, 0.2, 0.2)
 
 
-## Every mouth violation on every tile under `corridor_root` that has an open bay side.
-static func mouth_violations(corridor_root: Node) -> Array[String]:
-	var violations: Array[String] = []
-	var counts := {&"bays": 0, &"checked": 0}
-	for piece in corridor_root.get_children():
-		if not (piece is Node3D) or not piece.has_method(&"opening_of"):
-			continue
-		violations.append_array(tile_mouth_violations(piece as Node3D, counts))
-	return violations
-
-
 ## Mouth violations for one tile's open bay side(s). Adds to `counts[&"bays"]` and
 ## `counts[&"checked"]` so a caller walking many tiles can still report one clear/fail line. A
 ## bay side that checked zero nodes is itself a violation: a hidden or half-freed build must not

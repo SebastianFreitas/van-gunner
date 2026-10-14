@@ -1,6 +1,6 @@
 class_name ArmSkinMesh
 extends RefCounted
-## Builds skinned cloth meshes on an arm skeleton: ring frames, averaged ring weights, tube indices.
+## Builds skinned cloth meshes on an arm skeleton: ring frames and tube indices.
 
 
 ## Bone frame in mesh (= bind) space, origin moved t of the bone's length along its Y.
@@ -13,64 +13,6 @@ static func ring_frame(mi: MeshInstance3D, sk: Skeleton3D, bone: StringName,
 	var frame := mi.skin.get_bind_pose(b).affine_inverse()
 	frame.origin += frame.basis.y.normalized() * t * ArmWrap.bone_len(mi, sk, bone)
 	return frame
-
-
-## Arm-mesh weights (bind index to share, summing to 1) of the vertices inside a ring slab, so
-## cloth sitting on that ring blends the same bones the skin underneath does.
-static func ring_weights(mi: MeshInstance3D, sk: Skeleton3D, frame: Transform3D,
-		half_width: float, radius: float, bone: StringName) -> Dictionary:
-	var fallback_bind := ArmWrap.bind_index(mi, sk, bone)
-	if fallback_bind == -1 or not (mi.mesh is ArrayMesh):
-		push_warning("ArmSkinMesh: arm mesh or bone %s missing" % bone)
-		return {}
-	var mesh := mi.mesh as ArrayMesh
-	var arrays := mesh.surface_get_arrays(0)
-	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-	var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
-	var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
-	var per := 4
-	if (mesh.surface_get_format(0) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS) != 0:
-		per = 8
-	if bones.size() < verts.size() * per or weights.size() < verts.size() * per:
-		return {fallback_bind: 1.0}
-	var inv := frame.affine_inverse()
-	var hw := half_width
-	for _try in 3:
-		var sum := {}
-		for k in verts.size():
-			var p := inv * verts[k]
-			if absf(p.y) > hw or Vector2(p.x, p.z).length() > 2.5 * radius:
-				continue
-			for m in per:
-				var w := weights[k * per + m]
-				if w > 0.0:
-					var bi := bones[k * per + m]
-					sum[bi] = float(sum.get(bi, 0.0)) + w
-		if not sum.is_empty():
-			return _normalized(sum)
-		hw *= 2.0
-	return {fallback_bind: 1.0}
-
-
-## Each ring blended with its neighbours (0.25 / 0.5 / 0.25), `passes` times, so the
-## weights fade along the arm instead of stepping at a ring.
-static func smooth_weights(rings: Array[Dictionary], passes: int) -> Array[Dictionary]:
-	var cur: Array[Dictionary] = []
-	for r in rings:
-		cur.append(r)
-	for _p in passes:
-		var nxt: Array[Dictionary] = []
-		for i in cur.size():
-			var mixed := {}
-			var parts: Array[Dictionary] = [
-				cur[maxi(i - 1, 0)], cur[i], cur[mini(i + 1, cur.size() - 1)]]
-			var shares := [0.25, 0.5, 0.25]
-			for j in 3:
-				for key in parts[j]:
-					mixed[key] = float(mixed.get(key, 0.0)) + float(parts[j][key]) * shares[j]
-			nxt.append(_normalized(mixed))
-		cur = nxt
-	return cur
 
 
 ## The 4 largest weights as [PackedInt32Array bones, PackedFloat32Array weights], renormalized
@@ -222,17 +164,6 @@ static func camera_in_skeleton(model: Node3D) -> Transform3D:
 	return Transform3D.IDENTITY
 
 
-## A camera-space direction in the bone's own space under the current pose.
-static func posed_local(model: Node3D, bone: StringName, dir_cam: Vector3) -> Vector3:
-	var sk := ArmRig.skeleton(model)
-	var i := sk.find_bone(bone) if sk != null else -1
-	if i == -1:
-		push_warning("ArmSkinMesh: bone %s missing" % bone)
-		return Vector3.ZERO
-	var pose := _posed_global(sk, i)
-	return (pose.basis.inverse() * (camera_in_skeleton(model).basis * dir_cam)).normalized()
-
-
 ## Angle (ArmWrap.section's atan2(z, x) convention) around the bone, at fraction t of its
 ## length, of the direction toward the camera under the current pose.
 static func facing_angle(model: Node3D, bone: StringName, t: float) -> float:
@@ -264,15 +195,3 @@ static func _arm_mesh(sk: Skeleton3D) -> MeshInstance3D:
 		if c is MeshInstance3D and (c as MeshInstance3D).skin != null:
 			return c as MeshInstance3D
 	return null
-
-
-static func _normalized(w: Dictionary) -> Dictionary:
-	var total := 0.0
-	for key in w:
-		total += float(w[key])
-	if total <= 0.0:
-		return w
-	var out := {}
-	for key in w:
-		out[key] = float(w[key]) / total
-	return out

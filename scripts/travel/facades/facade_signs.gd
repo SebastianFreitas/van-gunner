@@ -9,7 +9,6 @@ const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
 const _FacadeBody := preload("res://scripts/travel/facades/facade_body.gd")
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
 
-const MAX_SIGNS_PER_BUILDING := 1  # build() always returns after placing zero or one.
 const FACE_GAP := 0.03
 const BOX_DEPTH := 0.25
 const BLADE_SIZE := Vector3(1.4, 6.0, 0.25)

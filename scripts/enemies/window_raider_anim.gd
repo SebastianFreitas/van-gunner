@@ -12,9 +12,6 @@ const SHEET_ROWS := 8
 ## JUMP_TIME 0.8 s and, at 10 fps, the latch's impact frame (index 2) starts at 0.75 s, i.e. on
 ## contact. Keep the two in step.
 const LATCH_START := 0.55
-## Run frames whose claws touch the floor (every frame but the airborne kick, fall and drop
-## at 6-8). Inside the cabin the loper prowls on these so it does not hop around the van.
-const GROUNDED_FRAMES: Array[int] = [0, 1, 2, 3, 4, 5, 9, 10, 11, 12]
 ## Clips by name: {"row": sheet row, "frames": columns in play order, "fps", "loop"}.
 ## No death clip yet: W7/W8 add it, and _die then holds it before the fade.
 const CLIPS: Dictionary = {

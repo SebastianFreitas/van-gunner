@@ -15,8 +15,6 @@ const TINT_D := Color(0.20, 0.25, 0.34)
 ## P4 oxblood red-oxide primer, P5 faded olive-khaki.
 const TINT_E := Color(0.45, 0.11, 0.08)
 const TINT_F := Color(0.25, 0.24, 0.14)
-const TINT_B_OLD := Color(0.0855, 0.036, 0.027)
-const TINT_D_OLD := Color(0.132, 0.143, 0.165)
 
 
 @warning_ignore("shadowed_global_identifier")

@@ -21,7 +21,6 @@ const PANEL_CENTER_Y := -0.07
 const PANEL_HALF_Z := 1.005
 const PANEL_HALF_Y := 1.22
 const PANEL_FRAME_INSET := 0.08
-const PANEL_RECESS_DEPTH := 0.05
 const BELT_Y := -0.05
 const BELT_HALF_H := 0.025
 const LOWER_CREASE_Y := -0.85

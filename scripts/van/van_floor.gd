@@ -3,8 +3,6 @@ extends Node3D
 
 ## Worn cargo-van floor with ribbed decking plus flat floor dressing (mats, paper, tape).
 
-## Height of flat floor decals above the deck: clears the geometry audit's 1 cm coplanar tolerance (D42).
-const DECAL_LIFT := 0.012
 ## Decals on the raised mid slab sit at the rib top plus 1.5 cm.
 const MID_DECAL_LIFT := VanFloorHeight.RAISE + 0.035
 

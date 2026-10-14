@@ -44,11 +44,6 @@ static func roll(
 	return {&"piece": piece, &"side_idx": side_idx}
 
 
-## The piece with that id, or null; for the debug console later.
-static func debug_force(id: StringName) -> FacadeSetPiece:
-	return _FacadeRegistry.set_piece(id)
-
-
 ## `forced_id`'s piece for these openings, respecting span/side eligibility only; ignores
 ## `allow_rare`, the chance and the piece's `districts` so a forced piece covers every district.
 static func _forced(openings: Array[int]) -> Dictionary:

@@ -273,22 +273,6 @@ static func preset(name: StringName) -> Dictionary:
 			return preset(&"brick_red")
 
 
-static func preset_names() -> Array[StringName]:
-	var names: Array[StringName] = [
-		&"brick_red",
-		&"brick_brown",
-		&"concrete_grey",
-		&"plaster_tan",
-		&"plaster_green",
-		&"glass_blue",
-		&"corrugated_green",
-		&"corrugated_rust",
-		&"stone_grey",
-		&"bare_frame",
-	]
-	return names
-
-
 ## A word's label texture, cached by (text, scale, vertical) so the same word across buildings
 ## costs one Image. Rebuilt with mipmaps so the neon halo's textureLod sample has something to read.
 static func label_texture(text: String, scale: int, vertical: bool) -> ImageTexture:

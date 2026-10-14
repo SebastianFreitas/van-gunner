@@ -28,10 +28,6 @@ static func muzzle_local() -> Vector3:
 	return gun_xform() * muzzle_in_gun
 
 
-static func fore_end_local() -> Vector3:
-	return gun_xform() * fore_end_in_gun
-
-
 ## Builds the pistol under a "Gun" root the caller animates; `palm_len` is the right hand's
 ## palm length, which every dimension scales from. The lamp's rig-space spot is stored in
 ## the root's `lamp_local` meta.

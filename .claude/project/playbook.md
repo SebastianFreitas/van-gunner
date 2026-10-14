@@ -23,7 +23,8 @@
   game is playing stays under 3 ms a frame (the tile build queue's step),
   and a one-off build at run start or on a reroll under 100 ms. Over it:
   split the work into frame steps or cache it, never raise the ceiling
-  silently (2026-10-07: the salvage interior's `van_look` rebuild reached
+  silently (2026-10-07: a procedural salvage-interior kit, since reverted and
+  archived at tag `archive/van-salvage-kit`, reached
   2.7 to 3.4 s per seed and no plan line had asked for a number).
 
 ## Commands

@@ -109,13 +109,6 @@ func allows(aabb: AABB) -> bool:
 	return true
 
 
-func allows_body(aabb: AABB) -> bool:
-	for box: AABB in body_boxes:
-		if box.intersects(aabb):
-			return false
-	return true
-
-
 func conflict_name(aabb: AABB) -> String:
 	for i in prop_boxes.size():
 		if prop_boxes[i].intersects(aabb):

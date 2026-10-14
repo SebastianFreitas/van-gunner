@@ -21,7 +21,6 @@ const _LeafBuild := preload("res://scripts/van/rear_door_leaf_build.gd")
 ## Body hinge plate: thickness, how far its back sinks into the ring, and the cabin-side z span
 ## (centre, depth) it covers; the leaf knuckle sits at FACE_Z - 0.10 and its outer edge 3 cm out.
 const PLATE_T := 0.05
-const PLATE_SINK := 0.025
 const PLATE_Z := -0.3325
 const PLATE_DEPTH := 0.135
 const KNUCKLE_Z := -0.27

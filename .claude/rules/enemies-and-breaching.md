@@ -59,7 +59,7 @@ The points live in `scenes/van/van_breach_points.tscn`, instanced at `VanRig/Ene
   orientation-free because the sprite is a billboard and the node is not.
   The billboard is Y-only (`billboard = 2`): a full billboard tips toward the camera and
   the claws slide up and down as the player looks up or down (the owner saw it "swimming"
-  in the van). Inside the cabin (ATTACKING_*) the anim loops `GROUNDED_FRAMES`, skipping
+  in the van). Inside the cabin (ATTACKING_*) the anim loops the `prowl` clip (the grounded frames), skipping
   the airborne 6 to 8, so it prowls instead of hopping. The 1.54 m card swings to face the
   camera, so `window_raider_motion.gd` keeps the loper's centre `CLEARANCE` 0.85 m off
   anything it could cut through. Outside, `clear_point`/`_push_out` keep it off

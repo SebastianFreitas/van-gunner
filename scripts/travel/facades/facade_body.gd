@@ -7,10 +7,8 @@ extends RefCounted
 const _FacadeMaterials := preload("res://scripts/travel/facades/facade_materials.gd")
 const _FacadePlan := preload("res://scripts/travel/facades/facade_plan.gd")
 
-const RETURN_DEPTH := 0.8
 const ROOF_DEPTH := 1.2
 const MOUTH_REVEAL_X := 9.6
-const FLANK_COLLISION_THICKNESS := 0.4
 
 
 ## Builds one non-mouth body, or (mouth) the header/flank/flank trio that frames a stop-bay

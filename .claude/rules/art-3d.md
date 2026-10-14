@@ -91,7 +91,7 @@ Surfaces, in the road's recipe:
   uses 2.4 m). Small steel (grills, rivets, guides, rails) is flat at
   metallic 0.3, roughness 0.75.
 
-The van (owner, 2026-09-25, task `docs/tasks/van-war-rig.md`): a scrap war
+The van (owner, 2026-09-25): a scrap war
 rig built from a seed, a new look every run. Doors, windows, breach points,
 machines' positions and the walk space never vary; only the look does,
 drawn from hand-made kits with seeded jitter, one RNG stream per part. The

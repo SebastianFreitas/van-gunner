@@ -53,18 +53,6 @@ static func vents(body: Node3D, node_name: String, hw: float, hr: float, z: floa
 					Vector3(side * (hw - 0.002 * p), y, z + 0.14 * p * k))
 
 
-## A top rail along the barrel with three upright posts under it.
-static func top_rail(body: Node3D, node_name: String, hr: float, z0: float, z1: float, y: float,
-		mat: Material, p: float) -> void:
-	var top := y + hr
-	ArmParts.mesh(body, node_name, ArmParts.box(Vector3(0.09 * p, 0.04 * p, z0 - z1)), mat,
-			Vector3(0.0, top + 0.05 * p, (z0 + z1) * 0.5))
-	for k: int in range(3):
-		ArmParts.mesh(body, "%sPost%d" % [node_name, k], ArmParts.box(Vector3(0.05 * p, 0.05 * p,
-				0.05 * p)), mat, Vector3(0.0, top + 0.015 * p,
-				z1 + (z0 - z1) * (0.15 + 0.35 * k)))
-
-
 ## Machined grooves: dark rings a hair proud of the barrel, `n` of them, 0.12p apart from `z`.
 static func grooves(body: Node3D, node_name: String, hw: float, hr: float, z: float, n: int,
 		y: float, mat: Material, p: float) -> void:

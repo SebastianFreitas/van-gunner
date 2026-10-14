@@ -11,8 +11,7 @@ const _Press := preload("res://scripts/van/rear_door_press.gd")
 const DONOR_HINGE_ROUND := 0.45
 const DONOR_LATCH_CUT := 0.25
 const ARC_STEPS := 12
-## The filler plate sits this far behind the cabin plane, and reaches this far under the body.
-const FILLER_DEPTH := 0.02
+## The filler plate reaches this far under the body.
 const FILLER_OVERLAP := 0.03
 ## Its straight edges stay this far inside the opening so their walls never share a plane with the collar's.
 const FILLER_INSET := 0.02

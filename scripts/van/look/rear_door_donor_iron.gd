@@ -15,17 +15,11 @@ const BEVEL := 0.006
 const X0 := 0.04
 const SIZE_A := Vector2(0.34, 0.22)
 const SIZE_B := Vector2(0.30, 0.20)
-const SIZE_C := Vector2(0.30, 0.18)
-## C starts clear of the sheet's hinge-side backing strip (x up to 0.07).
-const C_X0 := 0.08
 ## The cabin face of the tread plate's backing, where A and B sit.
 const BACK_Z := _LeafBuild.STREET_HALF - _Skin.STREET_SETBACK - _Plate.THICK - 0.011 \
 		- _Plate.BACKING_T
 ## Cabin face of A and B: the arms end against it.
 const CABIN_FACE := BACK_Z - T
-## C's pad (cabin side of the roofing sheet) and backing plate (street side), 7 mm off its ribs.
-const PAD_Z := 0.011
-const CLAMP_Z := 0.047
 const BEAD_Z := BACK_Z - 0.008
 const BEAD_T := 0.016
 

@@ -147,16 +147,6 @@ func _box(size: Vector3) -> BoxMesh:
 	return mesh
 
 
-static func glass_material() -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.02, 0.025, 0.03, 0.45)
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.roughness = 0.35
-	mat.metallic = 0.0
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	return mat
-
-
 static func _dark_material(albedo: Color, roughness: float) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = albedo

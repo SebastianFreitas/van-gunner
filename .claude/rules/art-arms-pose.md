@@ -26,7 +26,7 @@ forward, a C with the trigger finger (`RIGHT_THUMB_AIM`, `RIGHT_THUMB_CURL`);
 gap/p, hook, up and fwd against the bars in `debug_arms_thumbs.gd`, then
 `THUMBS OK` or `THUMBS CHECK`.
 Arm dressing (`ArmsBuilder.dress_style`, console `arms dress bare|rags|none`): `bare` (default) is
-monster skin with no cloth, `none` the same without skin layers (owner, 2026-10-09: the T-shirt sleeve, `ArmSleeve` with `arm_cloth.gdshader`,
+monster skin with no cloth, `none` the same without skin layers (owner, 2026-10-09: the T-shirt sleeve, `ArmSleeve` with `arm_cloth.gdshader`, both retired,
 the `gear` dress and the `arms gear` fit check were removed; archived at git tag `archive/arm-sleeve`).
 The skin is painted by the shader alone; no rings, straps, bands or other bolt-ons on the arms (owner,
 2026-10-02). `rags` is the old rag and glove dress, opt-in for debugging only. Skin layers

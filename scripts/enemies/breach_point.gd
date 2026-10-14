@@ -24,6 +24,7 @@ enum Kind { REAR_DOOR, SIDE_DOOR, WINDOW, SIDE_DOOR_WINDOW }
 const _SAME_OPENING_XZ := 0.75
 
 const _BreachPointMarkers := preload("res://scripts/enemies/breach_point_markers.gd")
+const _BreachPointBars := preload("res://scripts/enemies/breach_point_bars.gd")
 
 @onready var outside_marker: Marker3D = $Outside
 @onready var entry_marker: Marker3D = $Entry
@@ -31,9 +32,7 @@ const _BreachPointMarkers := preload("res://scripts/enemies/breach_point_markers
 var health := 0.0
 var is_breached := false
 var _occupants: Array[Node] = []
-var _glass_cleared := false
-## Last damage stage sent to the window bars (0 sound .. 2 nearly gone).
-var _bars_stage := 0
+var _bars := _BreachPointBars.new(self)
 
 
 func _ready() -> void:
@@ -51,17 +50,10 @@ func _ready() -> void:
 	add_to_group(&"breach_points")
 
 
-## The window's IronCross (swapped to BrokenIronCross when breached): the `opening_bars` group
-## member whose opening_id matches. Null, with an error naming the id, when none or two match.
+## The window's IronCross (see breach_point_bars.gd); null, with an error naming the id, when
+## none or two match.
 func find_bars() -> Node:
-	var found: Array[Node] = []
-	for n in get_tree().get_nodes_in_group(&"opening_bars"):
-		if n.get(&"opening_id") == opening_id:
-			found.append(n)
-	if found.size() != 1:
-		push_error("BreachPoint %s: %d bars with opening id '%s'" % [name, found.size(), opening_id])
-		return null
-	return found[0]
+	return _bars.find_bars()
 
 
 func get_outside_position() -> Vector3:
@@ -134,10 +126,10 @@ func take_damage(amount) -> void:
 	if dmg <= 0.0:
 		return
 	# First smash on a barred window always pops the pane if it is still intact.
-	_shatter_window_glass_if_needed()
+	_bars.shatter_glass_if_needed()
 	health = maxf(0.0, health - dmg)
 	health_changed.emit(health, max_health)
-	_update_bars_stage()
+	_bars.update_stage()
 	CombatFeedback.show_damage(get_outside_position() + Vector3(0, 0.6, 0), dmg, false)
 	if is_zero_approx(health):
 		_mark_breached()
@@ -159,28 +151,8 @@ func repair(amount: float) -> float:
 		if was_breached:
 			_restore_after_repair()
 	health_changed.emit(health, max_health)
-	_update_bars_stage()
+	_bars.update_stage()
 	return gained
-
-
-## Bend the window bars as HP drops: stage 0 above 2/3, 1 above 1/3, else 2.
-func _update_bars_stage() -> void:
-	if kind != Kind.WINDOW and kind != Kind.SIDE_DOOR_WINDOW:
-		return
-	if is_breached:
-		return
-	var frac := health / max_health if max_health > 0.0 else 1.0
-	var stage := 0
-	if frac <= 1.0 / 3.0:
-		stage = 2
-	elif frac <= 2.0 / 3.0:
-		stage = 1
-	if stage == _bars_stage:
-		return
-	_bars_stage = stage
-	var bars := find_bars()
-	if bars and bars.has_method(&"set_damage_stage"):
-		bars.call(&"set_damage_stage", stage)
 
 
 func is_at_full_health() -> bool:
@@ -208,19 +180,9 @@ func _restore_after_repair() -> void:
 				if doors and doors.has_method("clear_door_broken"):
 					doors.clear_door_broken(door_side)
 		Kind.WINDOW, Kind.SIDE_DOOR_WINDOW:
-			_repair_bars_visual()
+			_bars.repair_visual()
 		_:
 			pass
-
-
-func _repair_bars_visual() -> void:
-	var bars := find_bars()
-	if bars == null:
-		return
-	if bars.has_method("repair_bars"):
-		bars.repair_bars()
-	elif bars is Node3D:
-		(bars as Node3D).visible = true
 
 
 func _mark_breached() -> void:
@@ -248,7 +210,7 @@ func _mark_breached() -> void:
 				_breach_adjacent_open_window()
 		Kind.WINDOW, Kind.SIDE_DOOR_WINDOW:
 			# Bars only — sash stays put (player can tip it open separately).
-			_break_bars()
+			_bars.break_bars()
 		_:
 			pass
 	breached.emit()
@@ -260,9 +222,9 @@ func force_breach() -> void:
 	if kind != Kind.WINDOW and kind != Kind.SIDE_DOOR_WINDOW:
 		return
 	if is_breached:
-		_shatter_window_glass_if_needed()
+		_bars.shatter_glass_if_needed()
 		return
-	_shatter_window_glass_if_needed()
+	_bars.shatter_glass_if_needed()
 	_mark_breached()
 
 
@@ -278,40 +240,6 @@ func _breach_adjacent_open_window() -> void:
 		if node is BreachPoint and (node as BreachPoint).point_id == target_id:
 			(node as BreachPoint).force_breach()
 			return
-
-
-func _break_bars() -> void:
-	var bars := find_bars()
-	if bars == null:
-		return
-	if bars.has_method("break_bars"):
-		bars.break_bars()
-	elif bars is Node3D:
-		(bars as Node3D).visible = false
-
-
-func _shatter_window_glass_if_needed() -> void:
-	if _glass_cleared:
-		return
-	if kind != Kind.WINDOW and kind != Kind.SIDE_DOOR_WINDOW:
-		return
-	_glass_cleared = true
-	var bars := find_bars()
-	if bars == null:
-		return
-	var host := bars.get_parent()
-	if host == null:
-		return
-	var glass := host.get_node_or_null("BreakableGlass")
-	if glass == null:
-		return
-	if glass.has_method("is_intact") and not glass.is_intact():
-		return
-	if glass.has_method("take_damage"):
-		var dmg := 1.0
-		if "max_health" in glass:
-			dmg = maxf(float(glass.max_health), 1.0)
-		glass.take_damage(dmg)
 
 
 func _is_door_kind() -> bool:
