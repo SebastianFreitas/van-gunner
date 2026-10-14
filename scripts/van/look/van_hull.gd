@@ -211,6 +211,11 @@ func _build_rear(walls: VanSideWall) -> void:
 		var xo := side * (VanInteriorSize.FLOOR_WIDTH * 0.5 + 0.04)
 		_rear_quad(st, Vector3(xi, 0.02, z_deck), Vector3(xo, 0.02, z_deck),
 				Vector3(xi, -0.28, z_deck), Vector3(xo, -0.28, z_deck))
+	# Between those plates the bottom strip ends at -0.25 but the deck goes to -0.27: this thin
+	# band hides the deck's end face under the door sill.
+	var x_mid := x_join - 0.04
+	_rear_quad(st, Vector3(-x_mid, -0.24, z_deck), Vector3(x_mid, -0.24, z_deck),
+			Vector3(-x_mid, -0.28, z_deck), Vector3(x_mid, -0.28, z_deck))
 
 	# Top: the opening's rounded top (arcs concentric with the leaves' big corners, then the flat)
 	# to the upper outline, same fractions along both.

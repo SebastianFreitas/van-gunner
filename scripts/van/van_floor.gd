@@ -56,7 +56,7 @@ func _build() -> void:
 	var sheet := MeshInstance3D.new()
 	sheet.name = "RearSheet"
 	sheet.mesh = VanFloorSheet.build_sheet(-span_x * 0.5 - SHEET_OVERHANG,
-			span_x * 0.5 + SHEET_OVERHANG, DECK_Z0, center_z + span_z * 0.5, -deck_thickness, 0.0,
+			span_x * 0.5 + SHEET_OVERHANG, DECK_Z0, center_z + span_z * 0.5 - 0.05,-deck_thickness, 0.0,
 			VanFloorPlates.pocket_polygons())
 	sheet.material_override = sheet_mat
 	sheet.layers = VanLighting.LAYER_VAN_INTERIOR

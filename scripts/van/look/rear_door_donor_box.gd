@@ -18,10 +18,12 @@ const WALL := 0.014
 ## Hinge-side x of the box (the sheet's EDGE_X), the gap kept to the cut (the sheet's CUT_GAP) and
 ## the 45 degree cut-off of the hinge-end cabin corner.
 const X0 := 0.02
-const CUT_GAP := 0.003
+const CUT_GAP := 0.022
 const BEVEL := 0.04
 ## Stitch weld bead pitch along the floor seam.
 const STITCH := 0.09
+## The top plate stands this far above the walls' top, so their faces are not coplanar.
+const LID_RISE := 0.012
 
 
 ## Builds the box under `hinge`; returns every node added.
@@ -61,9 +63,9 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile) -> Array
 	_Hydraulic._part(hinge, "DonorBoxBevel", _Panels.box(Vector3(BEVEL * 1.414 + 0.01, size.y, WALL)),
 			iron, bevel_mid + inward, out, Vector3(0.0, PI * 0.25, 0.0))
 	# Top plate: set in 4 mm, its hinge-end corner notched past the bevel so the ram still clears it.
-	var inset := 0.004
+	var inset := 0.011
 	var pt := 0.03
-	var py := y1 - pt * 0.5
+	var py := y1 + LID_RISE - pt * 0.5
 	var px0 := X0 + inset
 	var pz1 := back + inset
 	var pz0 := FRONT_Z - inset
@@ -75,13 +77,13 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile) -> Array
 	var lid_mid := (pz0 + pz1) * 0.5
 	for lx in range(int((x1 - X0 - 0.12) / STITCH)):
 		_Hydraulic._box(hinge, "DonorBoxBead", Vector3(STITCH * 0.7, 0.012, 0.014),
-				bead, Vector3(X0 + BEVEL + 0.03 + lx * STITCH, y1 - 0.004, pz1 + 0.001), out)
+				bead, Vector3(X0 + BEVEL + 0.03 + lx * STITCH, y1 + LID_RISE - 0.004, pz1 + 0.001), out)
 	for lz in range(2):
 		_Hydraulic._box(hinge, "DonorBoxBead", Vector3(0.014, 0.012, STITCH * 0.7), bead,
-				Vector3(x1 - inset - 0.001, y1 - 0.004, lid_mid - 0.03 + lz * 0.09), out)
+				Vector3(x1 - inset - 0.001, y1 + LID_RISE - 0.004, lid_mid - 0.03 + lz * 0.09), out)
 	for bx: float in [0.35, 0.7]:
 		_Hydraulic._part(hinge, "DonorBoxBolt", _Hydraulic._cyl(0.022, 0.022, 0.012, 6), bolt,
-				Vector3(lerpf(X0, x1, bx), y1 + 0.001, pz1 + 0.07), out)
+				Vector3(lerpf(X0, x1, bx), y1 + LID_RISE + 0.001, pz1 + 0.07), out)
 	# Stitch weld along the floor seam on the cabin side, each bead a little off its neighbour.
 	var k := 0
 	var x := X0 + 0.06
@@ -91,8 +93,8 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile) -> Array
 		x += STITCH
 		k += 1
 	# Welded corner bead up the bevel, and three plug bolts on the cabin face.
-	var outward := Vector3(-1.0, 0.0, -1.0).normalized() * 0.002
-	_Hydraulic._part(hinge, "DonorBoxBead", _Panels.box(Vector3(0.016, size.y * 0.8, 0.016)), bead,
+	var outward := Vector3(-1.0, 0.0, -1.0).normalized() * 0.0065
+	_Hydraulic._part(hinge, "DonorBoxBead", _Panels.box(Vector3(0.012, size.y * 0.8, 0.012)), bead,
 			bevel_mid + outward, out, Vector3(0.0, PI * 0.25, 0.0))
 	for bx: float in [0.25, 0.5, 0.75]:
 		_Hydraulic._part(hinge, "DonorBoxBolt", _Hydraulic._cyl(0.02, 0.02, 0.014, 6), bolt,

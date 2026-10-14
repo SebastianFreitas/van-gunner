@@ -18,6 +18,7 @@ var _prefix_counts: Dictionary = {}
 const _SideDoors := preload("res://scripts/van/side_doors.gd")
 const _SideWindows := preload("res://scripts/van/side_windows.gd")
 const _CloseupViews := preload("res://tools/smoke/smoke_shots_closeups.gd")
+const _FloorViews := preload("res://tools/smoke/smoke_shots_floor_views.gd")
 const _DebugFacadeRender := preload("res://scripts/debug/debug_facade_render_commands.gd")
 
 ## Rig-local point the van cameras look at: the van body's middle.
@@ -173,8 +174,7 @@ func van_views(shot_name: String) -> void:
 					rig, _VAN_SIDE_FRONT, "%s-van-seed-%d" % [shot_name, seed_value]
 				)
 			look.rebuild(original)
-	for view in _CloseupViews.floor_views(rig):
-		await _save_van_view(rig, view["from"], view["label"], view["target"], "f")
+	await _FloorViews.save_all(self, rig)
 	if previous != null:
 		previous.make_current()
 	for layer in hidden:
@@ -355,11 +355,10 @@ func van_views_gaps() -> void:
 
 ## Points a temporary camera at the van from a rig-local spot, saves the shot and frees it.
 ## Defaults to looking at the van body's middle; interior audit spots pass their own target.
-## The player's mesh is hidden throughout: these cameras sit close to the player's spot
-## and would otherwise show the capsule mesh in frame.
+## The player's mesh is hidden throughout: these cameras sit close to it and would show it.
 func _save_van_view(
 	rig: Node3D, from: Vector3, label: String, target: Vector3 = _VAN_TARGET,
-	prefix: String = "v"
+	prefix: String = "v", fov: float = 0.0
 ) -> void:
 	var player := get_tree().get_first_node_in_group(&"player") as Node3D
 	var hidden_meshes: Array[VisualInstance3D] = []
@@ -372,6 +371,7 @@ func _save_van_view(
 	var cam := Camera3D.new()
 	rig.add_child(cam)
 	cam.transform = Transform3D(Basis.looking_at(target - from, Vector3.UP), from)
+	cam.fov = fov if fov > 0.0 else cam.fov
 	cam.make_current()
 	await _save(label, prefix)
 	cam.queue_free()

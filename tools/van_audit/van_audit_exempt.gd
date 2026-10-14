@@ -60,12 +60,6 @@ const RULES: Array[Dictionary] = [
 			+ "in several depths: the slab end is hidden behind them; nudges up to 7 cm only moved it",
 	},
 	{
-		"section": "FLICKER", "a": "Interior/Shell/Floor/RearSheet",
-		"b": "Interior/Shell/RearWall/*/AstragalOuter", "d": "D31 (auto)",
-		"reason": "the sheet's rear face meets each astragal's inner face within 1 cm, 6 cm2 hidden "
-			+ "behind the sill; nudges to 6.65 and 6.70 only moved it onto RearSkin and the leaf lips",
-	},
-	{
 		"section": "FLICKER", "a": "Interior/Shell/Floor/Plate*",
 		"b": "Interior/Shell/Floor/Bead*", "d": "D32 (auto)",
 		"reason": "each bead is sunk into its plate's side and shares the plate's underside at "

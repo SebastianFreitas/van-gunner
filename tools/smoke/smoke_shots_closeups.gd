@@ -189,6 +189,8 @@ static func gap_views(rig: Node3D) -> Array[Dictionary]:
 	for open in [true, false]:
 		result.append(_gap_view("gap-rear-in-donor-hinge%s" % ("" if open else "-closed"),
 			Vector3(hx + 1.9, 0.9, rz - 1.9), Vector3(hx + 0.95, 0.2, rz - 0.6), "off", none, open))
+		result.append(_gap_view("gap-rear-in-donor-topram%s" % ("" if open else "-closed"),
+			Vector3(hx + 1.6, 3.2, rz - 1.9), Vector3(hx + 0.4, 3.38, rz - 0.4), "off", none, open))
 	# Donor edge beam from inside, 0.8 m off, angled 30 degrees: the lower latch corner (the L) and
 	# the 45-degree bend, so the flanges' depth and the bolts show.
 	var donor_edge := hinge.find_child("DonorEdgeBeam0", true, false) as MeshInstance3D
@@ -316,23 +318,6 @@ static func gap_views(rig: Node3D) -> Array[Dictionary]:
 	result.append(_gap_view("gap-rear-in-donor-latch", Vector3(-0.7, 1.9, rz - 2.8),
 		Vector3(-0.1, 1.9, rz), "off", none))
 	return result
-
-
-## The five floor views (f01-...), van-local, shot in game light: rear low, the stairs, the
-## mid room low, the rear from high up and the welded plates close under the rear work lamp.
-static func floor_views(_rig: Node3D) -> Array[Dictionary]:
-	return [
-		{"label": "floor-rear-low", "from": Vector3(0.0, 0.6, 5.5),
-				"target": Vector3(-1.5, 0.3, 1.3)},
-		{"label": "floor-stairs", "from": Vector3(-2.5, 1.6, 2.6),
-				"target": Vector3(-2.5, 0.2, 1.1)},
-		{"label": "floor-mid-low", "from": Vector3(-3.0, 1.8, -0.7),
-				"target": Vector3(-2.5, 0.0, -3.5)},
-		{"label": "floor-rear-high", "from": Vector3(-0.2, 2.5, 6.6),
-				"target": Vector3(-1.9, 0.2, 2.6)},
-		{"label": "floor-plates-close", "from": Vector3(0.0, 3.0, 6.3),
-				"target": Vector3(0.0, 0.0, 4.3)},
-	]
 
 
 ## Lit audit spots (debug floodlight on): [label, from, target] for three-quarters, straight on,

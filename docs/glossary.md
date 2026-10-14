@@ -60,3 +60,11 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - stairs: the two welded treads at the bulkhead doorway (TreadLow, TreadHigh, scripts/van/van_floor_stairs.gd)
 - step well: the sunken bay at y 0 in the mid floor before the side door (the MidSlab notch, van_floor_slab.gd)
 - cut end: the top of the arm mesh where the glb stops, now hidden by the limb tail (ArmLimbTail) and guarded by `arms reach-end`
+- top ram: the second ram of the donor rear door, above its window (owner: "the wedge"); `RearDoorDonorTopRam` in rear_door_donor_top_ram.gd, built by rear_door_donor_top_ram_build.gd
+- door rod: the top ram's dark grey rod pinned to the leaf above the window (`DoorRod`, `DoorPin`)
+- body rod: the top ram's dark grey rod pinned to the arch bracket (`BodyRod`, `BodyPin`)
+- twin sleeve: the top ram's two parallel light-grey tubes in the middle, stacked in y; each rod slides into its own tube (`TwinSleeveDoorTube`, `TwinSleeveBodyTube`)
+- arch bracket: welded under the rear arch's header, inboard of the right door's hinge; carries the top ram's body pin (`ArchBracket`)
+- HV leads: the two thick dark cables that run along the arch header from the arch bracket, then hang in a slack loop down the hinge-side pillar to the floor battery (`HVLeads0_*`, `HVLeads1_*`)
+- floor battery: the grimy dark truck battery on the rear floor in the donor corner, faded yellow label, one red and one black terminal cap (`FloorBattery`, `FloorBatteryCap`)
+- battery strap: the welded flat bar over the floor battery with a leg and a bolted foot on the floor (`BatteryStrap`)

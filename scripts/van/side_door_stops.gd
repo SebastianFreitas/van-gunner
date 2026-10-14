@@ -71,7 +71,9 @@ func add_door_stops(wall_sign: float, mat: Material) -> void:
 	if mat != null:
 		node.material_override = mat
 	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	node.layers = VanLighting.LAYER_VAN_INTERIOR
+	# The rear return shows through the 4 cm gap at the leaf's rear edge, so it lights from the street too.
+	node.layers = VanLighting.LAYER_STREET_AND_INTERIOR
+	node.add_to_group(VanLighting.GROUP_EXTERIOR_LAYER)
 	_walls.add_child(node)
 	_add_front_edge_seal(wall_sign, mat, y0, y1)
 

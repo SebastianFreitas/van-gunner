@@ -20,6 +20,19 @@ func run() -> void:
 		driver.call(&"_log", line)
 	if reach.contains("BAD"):
 		driver.call(&"_fail", reach)
+	var ram := driver.get_tree().root.find_child("TopRam", true, false) as RearDoorDonorTopRam
+	var built: Dictionary = ram.check_built() if ram != null else {"pin_err": INF, "outside": []}
+	var pin_err: float = built["pin_err"]
+	var lead_clear := RearDoorDonorTopRam.lead_clearance()
+	driver.call(&"_log", "%s pin_err=%.4f lead_clearance=%.3f"
+			% [RearDoorDonorTopRam.sweep(), pin_err, lead_clear])
+	if not lead_clear > 0.0:
+		driver.call(&"_fail", "top ram lead_clearance %.3f" % lead_clear)
+	for outside: String in built["outside"]:
+		driver.call(&"_log", "top ram outside: " + outside)
+		driver.call(&"_fail", "top ram outside: " + outside)
+	if not pin_err < 0.01:
+		driver.call(&"_fail", "top ram pin_err %.4f" % pin_err)
 
 
 ## The framing check after the arm shots; ERR fails smoke.

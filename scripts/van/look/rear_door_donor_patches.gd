@@ -22,6 +22,7 @@ static func build(hinge: Node3D, rect: Rect2, profile: RearDoorProfile,
 	out.append_array(_Beam.build(hinge, rect))
 	out.append_array(_Hydraulic.build(hinge, rect))
 	out.append_array(_HydraulicCabin.build(hinge, rect))
+	out.append_array(RearDoorDonorTopRamBuild.build(hinge))
 	out.append_array(_Box.build(hinge, rect, profile))
 	out.append_array(_Sheet.build(hinge, rect, profile))
 	RearDoorDonorStrap.cap(hinge, rect, profile, rng, out)
