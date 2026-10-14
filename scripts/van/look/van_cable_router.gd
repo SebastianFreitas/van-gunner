@@ -54,6 +54,26 @@ func lift(p: Vector3, inset: float) -> Vector3:
 	return Vector3(signf(p.x) * hx, ceiling_y(hx) - HOP_DROP, p.z)
 
 
+## The +x trunk ends here: the SalvagePiece1 corner post and kick box stand beyond it. Ties and
+## splices past it still draw their RNG but `_claim` refuses them, so no mesh.
+const TRUNK_STOP_Z := 4.88
+
+
+## A trunk's points for drawing: +x is cut at TRUNK_STOP_Z, its last point interpolated on the
+## crossing segment; -x is returned whole.
+func cut_trunk(pts: PackedVector3Array, sx: float) -> PackedVector3Array:
+	if sx < 0.0:
+		return pts
+	var out := PackedVector3Array()
+	for i: int in range(pts.size()):
+		if pts[i].z > TRUNK_STOP_Z and i > 0:
+			var a: Vector3 = pts[i - 1]
+			out.append(a.lerp(pts[i], (TRUNK_STOP_Z - a.z) / maxf(pts[i].z - a.z, 1e-6)))
+			break
+		out.append(pts[i])
+	return out
+
+
 ## Lifts every upper-wall stretch that crosses a side door bay onto the ceiling (D40).
 func hop_bays(points: PackedVector3Array, inset: float) -> PackedVector3Array:
 	var lo := VanInnerShell.DOOR_Z_MIN - HOP_PAD
@@ -173,11 +193,19 @@ func read_ports(host: Node3D, group: StringName) -> Dictionary:
 
 
 ## Every machine's collision box in host space, grown 0.05 m, for route() to avoid.
+## Nodes in group `cable_keepout` add their `keepout_aabbs()` (in their own space) the same way.
 func build_keepouts(props: Node, host: Node3D) -> Array[AABB]:
 	var boxes: Array[AABB] = []
+	var to_rig := host.global_transform.affine_inverse()
+	for node in host.get_tree().get_nodes_in_group(&"cable_keepout"):
+		var piece := node as Node3D
+		if piece == null or not piece.has_method(&"keepout_aabbs"):
+			continue
+		var xf := to_rig * piece.global_transform
+		for box: AABB in piece.call(&"keepout_aabbs"):
+			boxes.append(xf * box)
 	if props == null:
 		return boxes
-	var to_rig := host.global_transform.affine_inverse()
 	for body in props.get_children():
 		if not (body is StaticBody3D):
 			continue

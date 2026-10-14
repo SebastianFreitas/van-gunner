@@ -14,6 +14,7 @@
 [ext_resource type="Shader" uid="uid://ct0ys8gil2dhm" path="res://scenes/van/van_ceiling.gdshader" id="32"]
 [ext_resource type="ShaderMaterial" uid="uid://ywmwwtaxixb4" path="res://scenes/van/van_wall_material.tres" id="46"]
 [ext_resource type="Script" path="res://scripts/van/van_shell_colliders.gd" id="shell_colliders"]
+[ext_resource type="Script" path="res://scripts/van/look/van_salvage_piece1.gd" id="salvage_piece1"]
 
 [sub_resource type="StandardMaterial3D" id="SideDoorTrimMaterial"]
 albedo_color = Color(0.08, 0.09, 0.09, 1)
@@ -186,6 +187,9 @@ script = ExtResource("shell_colliders")
 [node name="SideWalls" parent="." unique_id=1665520798 groups=["side_walls"] instance=ExtResource("30")]
 wall_material = ExtResource("46")
 door_jamb_material = SubResource("SideDoorTrimMaterial")
+
+[node name="SalvagePiece1" type="Node3D" parent="."]
+script = ExtResource("salvage_piece1")
 
 [node name="FloorCollision" type="CollisionShape3D" parent="." unique_id=901514165]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.125, 0.94)

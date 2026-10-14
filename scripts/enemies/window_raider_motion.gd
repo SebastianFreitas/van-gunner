@@ -67,6 +67,12 @@ const REAR_DOOR_INSET := 0.07
 const INTERIOR_HALF_X := VanInteriorSize.BOTTOM_HALF - CLEARANCE
 const INTERIOR_MIN_Z := VanInteriorSize.FRONT_Z + CLEARANCE
 const INTERIOR_MAX_Z := VanInteriorSize.REAR_Z - CLEARANCE - REAR_DOOR_INSET
+## Rear-right corner post (x >= 2.89, z 4.9..6.3) grown by CLEARANCE: a centre past this z
+## stays inside this x on the +x side only.
+const CORNER_POST_X := 2.89
+const CORNER_POST_Z := 4.9
+const CORNER_KEEP_X := CORNER_POST_X - CLEARANCE
+const CORNER_KEEP_Z := CORNER_POST_Z - CLEARANCE
 
 var raider: Node3D  # the WindowRaider; reads/writes its fields when called
 
@@ -152,6 +158,8 @@ func _push_out(p: Vector3) -> Vector3:
 func _clamp_in(p: Vector3) -> Vector3:
 	p.x = clampf(p.x, -INTERIOR_HALF_X, INTERIOR_HALF_X)
 	p.z = clampf(p.z, INTERIOR_MIN_Z, INTERIOR_MAX_Z)
+	if p.z > CORNER_KEEP_Z:
+		p.x = minf(p.x, CORNER_KEEP_X)
 	return p
 
 

@@ -307,12 +307,19 @@ func _add_rail_segments(mat: Material, rail_y: float, ranges: Array, prefix: Str
 		var length: float = z1 - z0
 		if length < 0.35:
 			continue
-		var z_mid := (z0 + z1) * 0.5
 		for wall_sign in [-1.0, 1.0]:
+			# +x rails stop at the rear-right corner post (SalvagePiece1).
+			var r_z1 := z1
+			if wall_sign > 0.0:
+				if prefix == "BeltRail" and z0 >= 5.5:
+					continue
+				if prefix == "CargoRail" and z0 < 4.88 and z1 > 4.88:
+					r_z1 = 4.88
+			var z_mid := (z0 + r_z1) * 0.5
 			var rail := MeshInstance3D.new()
 			rail.name = "%s_%s_%d" % [prefix, "L" if wall_sign < 0.0 else "R", idx]
 			var box := BoxMesh.new()
-			box.size = Vector3(0.06, 0.06, length)
+			box.size = Vector3(0.06, 0.06, r_z1 - z0)
 			rail.mesh = box
 			rail.material_override = mat
 			# 1.5 cm into the wall, 4.5 cm proud: embedded so the faces never z-fight.

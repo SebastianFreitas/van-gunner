@@ -24,6 +24,7 @@ paths:
   - "scripts/van/look/van_hull*.gd"
   - "scripts/van/look/van_marker_lights.gd"
   - "scripts/van/look/van_roof.gd"
+  - "scripts/van/look/van_salvage_piece1*.gd"
   - "scripts/player/fps_player.gd"
   - "scenes/van/van_shell.tscn"
   - "scenes/van/van_side_wall.tscn"
@@ -70,6 +71,10 @@ Player height is one number, `FpsPlayer.EYE_HEIGHT` (2.0 m, owner 2026-10-03: "h
 ## Seams and the gap light
 
 Every opening is sealed by overlap, never by a tight fit (vangapfix D4, D17): a seal reaches about 5 cm over its neighbour (never more than 7 cm into an opening), stands at least 2 cm clear of a moving leaf in depth, and its edge over a fixed surface is sunk 2 cm into that surface. A new face never sits within 1 cm of a parallel face of another node that looks the same way and overlaps it by more than 1 cm² (the audit's FLICKER rule). The seals: `Ceiling/CoveL` and `CoveR` (`van_ceiling_cove.gd`), `RearWall/Frame` (`rear_door_frame.gd`), `OuterLip` on both rear hinges and `AstragalOuter` on the right one (`rear_door_lips.gd`, layer 1 through `VanLighting.GROUP_EXTERIOR_LAYER`), `SideWalls/DoorStop_L` and `DoorStop_R` (`side_door_stops.gd`). Both door kinds move away from the cabin, so fixed seals stand on the cabin side and only the rear lips and the two astragals ride on a leaf. `gaplight [on|out|off]` in the debug console paints everything that is not van magenta, `on` for a cabin camera and `out` for a street camera: one magenta pixel at a closed seam is a gap. vangapfix2 closed the rest, so `gap_check.py --strict` passes on all 48 views: `SideWalls/RoofEdgeSeal_L` and `_R` (`roof_edge_seal.gd`, the roof-edge band along the whole roof), `DoorStop_*` reaching 5 cm past the bay's rear edge (`side_door_stops.gd`), `WindowLip` with its hole sleeve on each rear hinge (`rear_window_lip.gd`), the side window rings wound for clockwise polys (`van_side_wall_shell.gd` `build_curved_frame_ring_mesh`), reveals whose cabin edge starts 4 mm cabin side of the liner's grid chord (`van_side_wall_panel.gd` `reveal_inner_profile_x`) and side panes cut to `PANE_POLY`, 2 cm under the frame (`side_windows.gd`). `gaplight` paints `ExteriorPane` black like `WindowGlass`.
+
+## Salvage piece 1
+
+`Interior/Shell/SalvagePiece1` (`van_salvage_piece1.gd`) builds the +x rear corner post (D-pillar, with its pressed pocket), kick box, head panel, cant rail, roof panel and roof bow as bevelled hard-edged prisms in one `WallPieces` mesh, on the rear arch's own outline. The work is split into RefCounted helpers beside it: `_wall` (post, kick box, head and the hull list), `_head` (outline and ring angles), `_seam` (room-face fillet into the arch), `_press` (recessed panels), `_mesh` (prism and quad emitters), `_roof` (cant rail and roof panel), `_bow` (roof bow) and `_bead` (return bead on the corner arc). Each prism gets its own `ConvexPolygonShape3D` (`SalvagePiece1Collision`, added to the shell). Ring radius, ring offset and pocket y/z come from `rear_door_surround.gd` and `rear_door_flange.gd` constants, never retyped; the rear z comes from the +x hinge. Every piece sinks 2 cm (`SINK`) into the arch or post it meets (and the back cap into the post), so no seam opens and no cap is coplanar with another. On the +x side the cable trunk stops at z 4.88 (`van_cable_router.gd` `TRUNK_STOP_Z`), and `CoveR` and `RoofEdgeSeal_R` end at z 4.18 (`van_ceiling_cove.gd`, `roof_edge_seal.gd`). The node is in group `cable_keepout`: `van_cable_router.gd` `build_keepouts` calls its `keepout_aabbs()` (node-local boxes, converted to host space). The smoke line `salvage seam: max step` (`tools/smoke/salvage_seam_check.gd`) fails the run on a depth step along the post-to-arch seam and otherwise logs the largest.
 
 ## Rear door scrap hardware (spec 3)
 

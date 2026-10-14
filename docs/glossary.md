@@ -68,3 +68,9 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - HV leads: the two thick dark cables that run along the arch header from the arch bracket, then hang in a slack loop down the hinge-side pillar to the floor battery (`HVLeads0_*`, `HVLeads1_*`)
 - floor battery: the grimy dark truck battery on the rear floor in the donor corner, faded yellow label, one red and one black terminal cap (`FloorBattery`, `FloorBatteryCap`)
 - battery strap: the welded flat bar over the floor battery with a leg and a bolted foot on the floor (`BatteryStrap`)
+- corner post / D-pillar: the rear-right upright beside the arch, with its pressed pocket (`SalvagePiece1`, `WallPieces`, scripts/van/look/van_salvage_piece1_wall.gd)
+- kick box: the low box at the foot of the corner post, `KICK_Z0`..`KICK_TOP` in van_salvage_piece1_wall.gd
+- head panel: the panel over the rear-right opening's top corner, built from the arch's outline (van_salvage_piece1_head.gd)
+- cant rail: the head panel's outline run forward along the roof edge to z 4.2 (van_salvage_piece1_roof.gd)
+- roof bow: the hat-section rib under the roof panel, cut by the cant rail's arc (van_salvage_piece1_bow.gd)
+- salvage piece: a rear-right corner part (post, kick box, head panel, cant rail, roof panel, roof bow); `SalvagePiece1`, scripts/van/look/van_salvage_piece1*.gd

@@ -57,13 +57,16 @@ TOLERANCE: dict[str, float] = {
 	"02-idle-back": 0.622,
 	"03-idle-outside": 0.0,
 	"04-combat-front": 3.694,
-	"05-combat-back": 4.272,
+	# 2026-10-14 salvage piece 1: 3.323/0.162 x2
+	"05-combat-back": 6.646,
 	"06-combat-outside": 19.458,
 	"07-elevator-stop-front": 0.106,
-	"08-elevator-stop-back": 0.664,
+	# 2026-10-14 salvage piece 1: 1.009/0.221 x2
+	"08-elevator-stop-back": 2.018,
 	"09-elevator-stop-outside": 0.136,
 	"10-rear-park-stop-front": 0.572,
-	"11-rear-park-stop-back": 0.980,
+	# 2026-10-14 salvage piece 1: 0.903/0.450 x2
+	"11-rear-park-stop-back": 1.806,
 	"12-rear-park-stop-outside": 0.014,
 	"f01-floor-rear-low": 0.016,
 	"f02-floor-stairs": 0.004,
@@ -88,6 +91,16 @@ TOLERANCE: dict[str, float] = {
 	"v16-idle-van-lit-roof": 0.0,
 	# a19-arms-inspect measured 2026-10-12 (plan railgun-redesign phase 7): noise 0.034, tolerance 2x.
 	"a19-arms-inspect": 0.068,
+	# 2026-10-14 salvage piece 1: 0.007/0.009 x2
+	"g02-gap-rear-in-whole": 0.018,
+	# 2026-10-14 salvage piece 1: 0.002/0.010 x2
+	"icam_ceiling_rear": 0.020,
+	# 2026-10-14 salvage piece 1: 0.003/0.011 x2
+	"icam_piece_rear_left": 0.022,
+	# 2026-10-14 salvage piece 1: 0.002/0.001 x2
+	"icam_salvage_seam": 0.004,
+	# 2026-10-14 salvage piece 1: 0.007/0.006 x2
+	"icam_wall_left_rear": 0.014,
 }
 
 

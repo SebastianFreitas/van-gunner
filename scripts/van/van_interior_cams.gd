@@ -42,6 +42,9 @@ func refresh() -> void:
 	_add("ceiling_mid", Vector3(0.0, _f(0.0, mid_z) + 0.6, mid_z), Vector3(0.0, top, mid_z + 0.01))
 	_add("ceiling_rear", Vector3(0.0, _f(0.0, rear_z) + 0.6, rear_z),
 			Vector3(0.0, top, rear_z + 0.01))
+	_add("piece_rear_left", Vector3(-3.0, _EYE, VanOpenings.BULKHEAD_Z + 0.4),
+			Vector3(wall - 0.5, _EYE, 5.5))
+	_add("salvage_seam", Vector3(0.9, 2.2, 3.9), Vector3(3.0, 2.0, 5.9))
 	for side in [1, -1]:
 		var tag := "left" if side > 0 else "right"
 		for part in ["mid", "rear"]:

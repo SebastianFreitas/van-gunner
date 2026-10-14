@@ -3,6 +3,8 @@ extends RefCounted
 
 const _RearDoorLips := preload("res://scripts/van/rear_door_lips.gd")
 
+## Where the +x seal ends, at the front of the salvage roof rail.
+const SALVAGE_Z := 4.18
 ## How far the strip's outer face stands proud of the roof lip's x.
 const OUT_M := 0.02
 ## How far the strip's inner-bottom corner is sunk into the side skin.
@@ -38,6 +40,8 @@ static func _add_side(walls: VanSideWall, parent: Node3D, sign_x: float, node_na
 	var rim_y := walls.wall_height + VanHull.SKIN_OFFSET_M
 	var z0 := VanInteriorSize.FRONT_Z
 	var z1 := VanHull.ROOF_Z_MAX
+	if sign_x > 0.0:
+		z1 = minf(z1, SALVAGE_Z)
 	var section: Array[Vector2] = [
 		Vector2(w - SINK_M, walls.wall_height - DROP_M),
 		Vector2(w + OUT_M, walls.wall_height - OUTER_DROP_M),

@@ -91,6 +91,7 @@ func _register_commands() -> void:
 		"torch": _van.cmd_torch,
 		"floodlight": _van.cmd_floodlight,
 		"gaplight": _van.cmd_gaplight,
+		"flatgrey": _van.cmd_flatgrey,
 		"bars": _van.cmd_bars,
 		"van": _van.cmd_van,
 		"class": _meta.cmd_class,
@@ -165,6 +166,8 @@ func _usage_lines() -> Dictionary:
 		"floodlight": "floodlight [on|off]  work lights at the van's four corners",
 		"gaplight": "gaplight [on|out|off]  paints everything that is not van magenta "
 				+ "(on: seen from the cabin, out: seen from the street)",
+		"flatgrey": "flatgrey [on|off]  one flat grey material on the van interior (judge shape, "
+				+ "no textures); works as a smoke --pre line",
 		"bars": "bars <0|1|2|break|fix>  window bars: damage stage, break, or restore (looks only)",
 		"van": "van seed        print the van look seed\n"
 				+ "van reroll [s]  rebuild the van look from a new (or given) seed",

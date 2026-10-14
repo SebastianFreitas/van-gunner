@@ -15,6 +15,8 @@ const _REAR_Z_FALLBACK := 4.547
 const _HINGE_TO_FRAME := 0.163
 ## The front end is buried this far into the front wall.
 const _FRONT_BURY := 0.02
+## Where the +x strip ends, at the front of the salvage roof rail.
+const _SALVAGE_Z := 4.18
 
 var _ceiling: VanCeiling
 
@@ -50,7 +52,8 @@ func add_coves() -> void:
 		var s: float = sides[cove_name]
 		var node := MeshInstance3D.new()
 		node.name = cove_name
-		node.mesh = _build_mesh(section, s, z0, z1, walls)
+		# CoveR stops where the salvage roof starts (plan van-salvage-piece-1).
+		node.mesh = _build_mesh(section, s, z0, minf(z1, _SALVAGE_Z) if s > 0.0 else z1, walls)
 		node.material_override = mat
 		node.layers = VanLighting.LAYER_VAN_INTERIOR
 		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON

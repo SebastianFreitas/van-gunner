@@ -105,7 +105,7 @@ func _build_trunk(sx: float, rng: RandomNumberGenerator) -> PackedVector3Array:
 			sag = rng.randf_range(0.03, 0.08)
 		pts.append(Vector3(x, TRUNK_Y - sag, z))
 	pts = _router.hop_bays(pts, 0.0)
-	MachineParts.cable_bundle(self, pts, _insul[0], 0.018, 4)
+	MachineParts.cable_bundle(self, _router.cut_trunk(pts, sx), _insul[0], 0.018, 4)
 	_add_ties(rng, pts, side)
 	_add_splices(rng, pts, side)
 	return pts
@@ -146,6 +146,7 @@ func _trunk_at(pts: PackedVector3Array, z: float) -> Vector3:
 
 ## True the first time hardware of this kind is placed at this z on this trunk side.
 func _claim(kind: StringName, side_x: float, z: float) -> bool:
+	if side_x > 0.0 and z > _router.TRUNK_STOP_Z and kind in [&"tie", &"splice"]: return false
 	var key := "%s_%d_%d" % [kind, int(signf(side_x)), roundi(z / 0.2)]
 	if _used.has(key):
 		return false

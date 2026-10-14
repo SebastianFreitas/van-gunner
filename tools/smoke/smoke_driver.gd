@@ -89,8 +89,7 @@ func _run() -> void:
 	_ArmsPrints.new(self).run()
 	var pinned := _shots.pin_van() if _shots != null else -1.0
 	await _shot("idle")
-	if _shots != null:
-		# Exterior views of the van itself, IDLE only.
+	if _shots != null:  # exterior views of the van itself, IDLE only
 		await _shots.van_views("idle")
 		await _shots.van_views_lit("idle")
 		await _shots.van_views_closeups()
@@ -99,6 +98,7 @@ func _run() -> void:
 		await get_tree().process_frame
 		_ArmsPrints.new(self).frame_check()
 		_shots.unpin_van(pinned)
+	preload("res://tools/smoke/salvage_seam_check.gd").new(self).run()
 	var van := get_tree().get_first_node_in_group(&"van_run")
 	var gun_stats: GunStatsController = get_tree().get_first_node_in_group(&"gun_stats")
 
