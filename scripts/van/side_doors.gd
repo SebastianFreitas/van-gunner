@@ -284,6 +284,20 @@ func _set_passable(side: StringName, value: bool) -> void:
 	passage_changed.emit(side, value)
 
 
+## While a door is open its leaf hides behind the body panel, so the interact mark moves to a
+## proxy across the doorway (layer 32, bullet-transparent); the leaf's own shape is off then.
+func _set_doorway_mark(side: StringName, is_open_now: bool, to_doorway: Vector3) -> void:
+	var leaf := _left if side == SIDE_LEFT else _right
+	var interact := leaf.get_node_or_null("Interact") as Interactable
+	if interact == null:
+		return
+	var proxy := interact.get_node("DoorwayProxy") as StaticBody3D
+	proxy.position = leaf.basis.inverse() * to_doorway
+	(proxy.get_node("Shape") as CollisionShape3D).disabled = not is_open_now
+	(interact.get_node("Hit") as CollisionShape3D).disabled = is_open_now
+	interact.refresh_marker()
+
+
 func _inward_axis(side: StringName) -> Vector3:
 	return Vector3.RIGHT if side == SIDE_LEFT else Vector3.LEFT
 
@@ -332,8 +346,10 @@ func _animate_door(side: StringName, opening: bool) -> void:
 		tween.parallel().tween_callback(_set_passable.bind(side, true)).set_delay(
 			slide_duration * passage_slide_ratio
 		)
+		tween.tween_callback(_set_doorway_mark.bind(side, true, closed_pos - open_pos))
 	else:
 		_set_passable(side, false)
+		_set_doorway_mark(side, false, Vector3.ZERO)
 		tween.tween_property(leaf, "position", recessed_pos, slide_duration)
 		tween.tween_property(leaf, "position", closed_pos, recess_duration)
 		tween.tween_property(mount, "position", mount_closed, mount_retract_duration)

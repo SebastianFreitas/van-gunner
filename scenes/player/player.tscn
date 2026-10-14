@@ -49,7 +49,7 @@ near = 0.02
 
 [node name="InteractionRay" type="RayCast3D" parent="Head/Camera3D"]
 target_position = Vector3(0, 0, -2.6)
-collision_mask = 2
+collision_mask = 34
 
 [node name="Weapon" type="Node3D" parent="Head/Camera3D"]
 script = ExtResource("2")

@@ -10918,6 +10918,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/CabDoor StaticBody3D script=res://scri
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Interact"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/CabDoor/Collision CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -11106,6 +11108,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CabRelay StaticBody3D script=res
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Cab relay"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Props/CabRelay/Collision CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -11262,6 +11266,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard StaticBody3D script=r
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Change class"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Props/ClassBoard/Board MeshInstance3D
   unique_name_in_owner=false
   process_mode=0
@@ -11407,6 +11413,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable StaticBody3D scrip
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Open Bench"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Props/CraftingTable/Collision CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -11563,6 +11571,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/FuseBox StaticBody3D script=res:
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Fuse box"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Props/FuseBox/Collision CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -11735,6 +11745,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine StaticBody3D script=
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Dispense loot"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Props/LootMachine/Body MeshInstance3D
   unique_name_in_owner=false
   process_mode=0
@@ -11975,6 +11987,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard StaticBody3D script
   constant_angular_velocity=Vector3(0, 0, 0)
   prompt="Skill tree terminal"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Props/RequestBoard/Board MeshInstance3D
   unique_name_in_owner=false
   process_mode=0
@@ -13139,6 +13153,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact Stat
   side="left"
   prompt="Interact"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -13173,6 +13189,54 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Left
   visible=true
   visibility_parent=NodePath("")
   shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/LeftRail:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.25, 1.44, 0.16)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Proxy StaticBody3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  disable_mode=0
+  collision_layer=32
+  collision_mask=0
+  collision_priority=1.0
+  input_ray_pickable=true
+  input_capture_on_drag=false
+  axis_lock_linear_x=false
+  axis_lock_linear_y=false
+  axis_lock_linear_z=false
+  axis_lock_angular_x=false
+  axis_lock_angular_y=false
+  axis_lock_angular_z=false
+  physics_material_override=null
+  constant_linear_velocity=Vector3(0, 0, 0)
+  constant_angular_velocity=Vector3(0, 0, 0)
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Proxy/Glass CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0.85, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Proxy/Glass:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(2.85, 1.44, 0.16)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/RightRail CollisionShape3D
@@ -13780,6 +13844,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact Sta
   side="right"
   prompt="Interact"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -13814,6 +13880,54 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Lef
   visible=true
   visibility_parent=NodePath("")
   shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/LeftRail:shape
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Proxy StaticBody3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  disable_mode=0
+  collision_layer=32
+  collision_mask=0
+  collision_priority=1.0
+  input_ray_pickable=true
+  input_capture_on_drag=false
+  axis_lock_linear_x=false
+  axis_lock_linear_y=false
+  axis_lock_linear_z=false
+  axis_lock_angular_x=false
+  axis_lock_angular_y=false
+  axis_lock_angular_z=false
+  physics_material_override=null
+  constant_linear_velocity=Vector3(0, 0, 0)
+  constant_angular_velocity=Vector3(0, 0, 0)
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/Proxy/Glass CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0.85, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/LeftHinge/Interact/Proxy/Glass:shape
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/RearWall/RightHinge/Interact/RightRail CollisionShape3D
@@ -14542,6 +14656,56 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact StaticBo
   side="left"
   prompt="Interact"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact/DoorwayProxy StaticBody3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  disable_mode=0
+  collision_layer=32
+  collision_mask=0
+  collision_priority=1.0
+  input_ray_pickable=true
+  input_capture_on_drag=false
+  axis_lock_linear_x=false
+  axis_lock_linear_y=false
+  axis_lock_linear_z=false
+  axis_lock_angular_x=false
+  axis_lock_angular_y=false
+  axis_lock_angular_z=false
+  physics_material_override=null
+  constant_linear_velocity=Vector3(0, 0, 0)
+  constant_angular_velocity=Vector3(0, 0, 0)
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact/DoorwayProxy/Shape CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact/DoorwayProxy/Shape:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.04, 3.05, 2.53)}
+  disabled=true
+  debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact/Hit CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -15046,6 +15210,56 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Interact StaticB
   side="right"
   prompt="Interact"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Interact/DoorwayProxy StaticBody3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  disable_mode=0
+  collision_layer=32
+  collision_mask=0
+  collision_priority=1.0
+  input_ray_pickable=true
+  input_capture_on_drag=false
+  axis_lock_linear_x=false
+  axis_lock_linear_y=false
+  axis_lock_linear_z=false
+  axis_lock_angular_x=false
+  axis_lock_angular_y=false
+  axis_lock_angular_z=false
+  physics_material_override=null
+  constant_linear_velocity=Vector3(0, 0, 0)
+  constant_angular_velocity=Vector3(0, 0, 0)
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Interact/DoorwayProxy/Shape CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Left/Interact/DoorwayProxy/Shape:shape
+  disabled=true
+  debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideDoors/Right/Interact/Hit CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -15990,6 +16204,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Inte
   window_id="left_front"
   prompt="Interact"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -16024,6 +16240,54 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Inte
   visible=true
   visibility_parent=NodePath("")
   shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/LeftRail:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.2, 1.08, 0.14)}
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/Proxy StaticBody3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  disable_mode=0
+  collision_layer=32
+  collision_mask=0
+  collision_priority=1.0
+  input_ray_pickable=true
+  input_capture_on_drag=false
+  axis_lock_linear_x=false
+  axis_lock_linear_y=false
+  axis_lock_linear_z=false
+  axis_lock_angular_x=false
+  axis_lock_angular_y=false
+  axis_lock_angular_z=false
+  physics_material_override=null
+  constant_linear_velocity=Vector3(0, 0, 0)
+  constant_angular_velocity=Vector3(0, 0, 0)
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/Proxy/Glass CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/Proxy/Glass:shape{resource_local_to_scene=false, resource_name="", custom_solver_bias=0.0, margin=0.04, size=Vector3(0.2, 1.08, 2.12)}
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/RightRail CollisionShape3D
@@ -16656,6 +16920,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Inter
   window_id="left_rear"
   prompt="Interact"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -16690,6 +16956,54 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Inter
   visible=true
   visibility_parent=NodePath("")
   shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/LeftRail:shape
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact/Proxy StaticBody3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  disable_mode=0
+  collision_layer=32
+  collision_mask=0
+  collision_priority=1.0
+  input_ray_pickable=true
+  input_capture_on_drag=false
+  axis_lock_linear_x=false
+  axis_lock_linear_y=false
+  axis_lock_linear_z=false
+  axis_lock_angular_x=false
+  axis_lock_angular_y=false
+  axis_lock_angular_z=false
+  physics_material_override=null
+  constant_linear_velocity=Vector3(0, 0, 0)
+  constant_angular_velocity=Vector3(0, 0, 0)
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact/Proxy/Glass CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/Proxy/Glass:shape
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftRear/Hinge/Interact/RightRail CollisionShape3D
@@ -17322,6 +17636,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Int
   window_id="right_front"
   prompt="Interact"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -17356,6 +17672,54 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Int
   visible=true
   visibility_parent=NodePath("")
   shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/LeftRail:shape
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact/Proxy StaticBody3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  disable_mode=0
+  collision_layer=32
+  collision_mask=0
+  collision_priority=1.0
+  input_ray_pickable=true
+  input_capture_on_drag=false
+  axis_lock_linear_x=false
+  axis_lock_linear_y=false
+  axis_lock_linear_z=false
+  axis_lock_angular_x=false
+  axis_lock_angular_y=false
+  axis_lock_angular_z=false
+  physics_material_override=null
+  constant_linear_velocity=Vector3(0, 0, 0)
+  constant_angular_velocity=Vector3(0, 0, 0)
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact/Proxy/Glass CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/Proxy/Glass:shape
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightFront/Hinge/Interact/RightRail CollisionShape3D
@@ -17988,6 +18352,8 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Inte
   window_id="right_rear"
   prompt="Interact"
   gesture=&"press"
+  show_marker=true
+  marker_offset=Vector3(0, 0, 0)
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact/Bottom CollisionShape3D
   unique_name_in_owner=false
   process_mode=0
@@ -18022,6 +18388,54 @@ NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Inte
   visible=true
   visibility_parent=NodePath("")
   shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/LeftRail:shape
+  disabled=false
+  debug_fill=true
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact/Proxy StaticBody3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  disable_mode=0
+  collision_layer=32
+  collision_mask=0
+  collision_priority=1.0
+  input_ray_pickable=true
+  input_capture_on_drag=false
+  axis_lock_linear_x=false
+  axis_lock_linear_y=false
+  axis_lock_linear_z=false
+  axis_lock_angular_x=false
+  axis_lock_angular_y=false
+  axis_lock_angular_z=false
+  physics_material_override=null
+  constant_linear_velocity=Vector3(0, 0, 0)
+  constant_angular_velocity=Vector3(0, 0, 0)
+NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact/Proxy/Glass CollisionShape3D
+  unique_name_in_owner=false
+  process_mode=0
+  process_priority=0
+  process_physics_priority=0
+  process_thread_group=0
+  physics_interpolation_mode=0
+  auto_translate_mode=0
+  editor_description=""
+  transform=Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+  rotation_edit_mode=0
+  rotation_order=2
+  top_level=false
+  visible=true
+  visibility_parent=NodePath("")
+  shape=BoxShape3D@TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/LeftFront/Hinge/Interact/Proxy/Glass:shape
   disabled=false
   debug_fill=true
 NODE TravelPath/VanFollow/VanRig/Interior/Shell/SideWindows/RightRear/Hinge/Interact/RightRail CollisionShape3D
@@ -18906,7 +19320,7 @@ NODE TravelPath/VanFollow/VanRig/Player/Head/Camera3D/InteractionRay RayCast3D
   enabled=true
   exclude_parent=true
   target_position=Vector3(0, 0, -2.6)
-  collision_mask=2
+  collision_mask=34
   hit_from_inside=false
   hit_back_faces=true
   collide_with_areas=false

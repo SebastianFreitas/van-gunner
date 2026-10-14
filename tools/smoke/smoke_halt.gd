@@ -2,6 +2,8 @@ extends RefCounted
 
 ## Smoke step: the C-C halt, exit, climb-in and Shift resume round trip.
 
+const _InteractMarks := preload("res://tools/smoke/smoke_interact_marks.gd")
+
 var driver: Node
 
 
@@ -98,7 +100,7 @@ func halt_round_trip() -> bool:
 		driver._fail("halt round trip step %d" % step)
 		return false
 	driver._log("halt round trip ok")
-	return true
+	return await _InteractMarks.new(driver).run()
 
 
 ## Walks the halted van's floor with real input: rear floor, up the doorway stairs onto the mid

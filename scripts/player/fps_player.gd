@@ -365,7 +365,10 @@ func _physics_process(delta: float) -> void:
 func _update_interaction() -> void:
 	var next: Interactable
 	if interaction_ray.is_colliding():
-		var collider := interaction_ray.get_collider()
+		var collider: Object = interaction_ray.get_collider()
+		# A proxy body (layer 32, bullet-transparent) belongs to the Interactable above it.
+		if collider is StaticBody3D and (collider as Node).get_parent() is Interactable:
+			collider = (collider as StaticBody3D).get_parent()
 		if collider is Interactable:
 			next = collider
 			if collider.get_script() == _REAR_DOOR_INTERACT_SCRIPT:
@@ -376,7 +379,11 @@ func _update_interaction() -> void:
 		if next:
 			interaction_prompt_changed.emit(next.get_interaction_prompt())
 		return
+	if is_instance_valid(_current_interactable) and _current_interactable.has_method(&"set_focused"):
+		_current_interactable.set_focused(false)
 	_current_interactable = next
+	if is_instance_valid(next) and next.has_method(&"set_focused"):
+		next.set_focused(true)
 	interaction_prompt_changed.emit(
 		_current_interactable.get_interaction_prompt() if _current_interactable else ""
 	)

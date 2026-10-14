@@ -110,6 +110,15 @@ size = Vector3(0.2, 0.14, 2.4)
 [sub_resource type="BoxShape3D" id="SideWindowInteractRail"]
 size = Vector3(0.2, 1.08, 0.14)
 
+[sub_resource type="BoxShape3D" id="SideWindowInteractGlass"]
+size = Vector3(0.2, 1.08, 2.12)
+
+[sub_resource type="BoxShape3D" id="RearDoorLeafGlass"]
+size = Vector3(2.85, 1.44, 0.16)
+
+[sub_resource type="BoxShape3D" id="SideDoorDoorwayMark"]
+size = Vector3(0.04, 3.05, 2.53)
+
 [sub_resource type="BoxShape3D" id="SideDoorShape"]
 size = Vector3(0.18, 3.05, 2.53)
 
@@ -407,6 +416,13 @@ shape = SubResource("SideWindowInteractRail")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.13)
 shape = SubResource("SideWindowInteractRail")
 
+[node name="Proxy" type="StaticBody3D" parent="SideWindows/LeftRear/Hinge/Interact"]
+collision_layer = 32
+collision_mask = 0
+
+[node name="Glass" type="CollisionShape3D" parent="SideWindows/LeftRear/Hinge/Interact/Proxy"]
+shape = SubResource("SideWindowInteractGlass")
+
 [node name="LeftFront" type="Node3D" parent="SideWindows" unique_id=219665426]
 transform = Transform3D(0.9953866, 0.0959455, 0, -0.0959455, 0.9953866, 0, 0, 0, 1, -3.5199273, 1.775, -0.45)
 
@@ -494,6 +510,13 @@ shape = SubResource("SideWindowInteractRail")
 [node name="RightRail" type="CollisionShape3D" parent="SideWindows/LeftFront/Hinge/Interact" unique_id=1766894250]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.13)
 shape = SubResource("SideWindowInteractRail")
+
+[node name="Proxy" type="StaticBody3D" parent="SideWindows/LeftFront/Hinge/Interact"]
+collision_layer = 32
+collision_mask = 0
+
+[node name="Glass" type="CollisionShape3D" parent="SideWindows/LeftFront/Hinge/Interact/Proxy"]
+shape = SubResource("SideWindowInteractGlass")
 
 [node name="RightRear" type="Node3D" parent="SideWindows" unique_id=1617635276]
 transform = Transform3D(0.9953866, -0.0959455, 0, 0.0959455, 0.9953866, 0, 0, 0, 1, 3.5199273, 1.775, 4.342)
@@ -583,6 +606,13 @@ shape = SubResource("SideWindowInteractRail")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.13)
 shape = SubResource("SideWindowInteractRail")
 
+[node name="Proxy" type="StaticBody3D" parent="SideWindows/RightRear/Hinge/Interact"]
+collision_layer = 32
+collision_mask = 0
+
+[node name="Glass" type="CollisionShape3D" parent="SideWindows/RightRear/Hinge/Interact/Proxy"]
+shape = SubResource("SideWindowInteractGlass")
+
 [node name="RightFront" type="Node3D" parent="SideWindows" unique_id=1383495958]
 transform = Transform3D(0.9953866, -0.0959455, 0, 0.0959455, 0.9953866, 0, 0, 0, 1, 3.5199273, 1.775, -0.45)
 
@@ -671,6 +701,13 @@ shape = SubResource("SideWindowInteractRail")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.13)
 shape = SubResource("SideWindowInteractRail")
 
+[node name="Proxy" type="StaticBody3D" parent="SideWindows/RightFront/Hinge/Interact"]
+collision_layer = 32
+collision_mask = 0
+
+[node name="Glass" type="CollisionShape3D" parent="SideWindows/RightFront/Hinge/Interact/Proxy"]
+shape = SubResource("SideWindowInteractGlass")
+
 [node name="SideDoors" type="Node3D" parent="." unique_id=1902064671 groups=["side_doors"]]
 script = ExtResource("19")
 
@@ -728,6 +765,15 @@ script = ExtResource("20")
 [node name="Hit" type="CollisionShape3D" parent="SideDoors/Left/Interact" unique_id=245777711]
 shape = SubResource("SideDoorShape")
 
+[node name="DoorwayProxy" type="StaticBody3D" parent="SideDoors/Left/Interact"]
+collision_layer = 32
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="SideDoors/Left/Interact/DoorwayProxy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, 0, 0)
+shape = SubResource("SideDoorDoorwayMark")
+disabled = true
+
 [node name="Right" type="Node3D" parent="SideDoors" unique_id=532555923]
 transform = Transform3D(0.9991643, -0.0408739, 0, 0.0408739, 0.9991643, 0, 0, 0, 1, 3.5370463, 1.525, -3.164)
 
@@ -782,6 +828,15 @@ side = "right"
 
 [node name="Hit" type="CollisionShape3D" parent="SideDoors/Right/Interact" unique_id=964440166]
 shape = SubResource("SideDoorShape")
+
+[node name="DoorwayProxy" type="StaticBody3D" parent="SideDoors/Right/Interact"]
+collision_layer = 32
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="SideDoors/Right/Interact/DoorwayProxy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09, 0, 0)
+shape = SubResource("SideDoorDoorwayMark")
+disabled = true
 
 [node name="RearWall" type="Node3D" parent="." unique_id=1122502090 groups=["rear_doors"]]
 script = ExtResource("14")
@@ -877,6 +932,14 @@ shape = SubResource("RearDoorLeafRail")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.56, 0.85, 0)
 shape = SubResource("RearDoorLeafRail")
 
+[node name="Proxy" type="StaticBody3D" parent="RearWall/LeftHinge/Interact"]
+collision_layer = 32
+collision_mask = 0
+
+[node name="Glass" type="CollisionShape3D" parent="RearWall/LeftHinge/Interact/Proxy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0.85, 0)
+shape = SubResource("RearDoorLeafGlass")
+
 [node name="RightHinge" type="Node3D" parent="RearWall" unique_id=1576193080]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.36, 1.55, 6.59)
 
@@ -968,6 +1031,14 @@ shape = SubResource("RearDoorLeafRail")
 [node name="RightRail" type="CollisionShape3D" parent="RearWall/RightHinge/Interact" unique_id=1550700883]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.54, 0.85, 0)
 shape = SubResource("RearDoorLeafRail")
+
+[node name="Proxy" type="StaticBody3D" parent="RearWall/RightHinge/Interact"]
+collision_layer = 32
+collision_mask = 0
+
+[node name="Glass" type="CollisionShape3D" parent="RearWall/RightHinge/Interact/Proxy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0.85, 0)
+shape = SubResource("RearDoorLeafGlass")
 
 [node name="Blocker" type="StaticBody3D" parent="RearWall" unique_id=1788784777]
 collision_mask = 0
