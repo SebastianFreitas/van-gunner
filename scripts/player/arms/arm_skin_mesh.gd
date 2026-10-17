@@ -112,7 +112,7 @@ static func build(mi: MeshInstance3D, sk: Skeleton3D, node_name: StringName,
 	var flags := Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT
 	if rest_chart and not verts.is_empty():
 		# The skin shader reads the unposed position and normal from CUSTOM1/CUSTOM2 (the same
-		# chart ArmBulk._rest_channels bakes); w 1.0 is the hand weight it uses for grime.
+		# chart the baked hand carries); w 1.0 is the hand weight it uses for grime.
 		var c1 := PackedFloat32Array()
 		c1.resize(verts.size() * 4)
 		var c2 := PackedFloat32Array()

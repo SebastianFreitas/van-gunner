@@ -9,7 +9,6 @@ const _HandsCheck := preload("res://scripts/debug/debug_arms_hands.gd")
 const _Dump := preload("res://scripts/debug/debug_arms_dump.gd")
 const _Wrist := preload("res://scripts/debug/debug_arms_wrist.gd")
 const _Seam := preload("res://scripts/debug/debug_arms_seam.gd")
-const _Join := preload("res://scripts/debug/debug_arms_join.gd")
 const _Hints := preload("res://scripts/debug/debug_arms_hints.gd")
 const _Frame :=preload("res://scripts/debug/debug_arms_frame.gd")
 const _Cam := preload("res://scripts/debug/debug_arms_cam.gd")
@@ -17,11 +16,20 @@ const _ReachEnd := preload("res://scripts/debug/debug_arms_reach_end.gd")
 const _InspectPx := preload("res://scripts/debug/debug_arms_inspect_px.gd")
 const _Gesture := preload("res://scripts/player/arms/arm_gesture.gd")
 const _Weave := preload("res://scripts/player/arms/arm_weave.gd")
+const _Export := preload("res://scripts/debug/debug_arms_export.gd")
+const _ImportDiff := preload("res://scripts/debug/debug_arms_import_diff.gd")
+const _Prove := preload("res://scripts/debug/debug_arms_prove.gd")
+
+## Subcommands that are one report script's `run(vm)`.
+const _REPORTS := {
+	"fit": _Fit, "thumbs": _Thumbs, "seam": _Seam, "ik": _Ik,
+	"touch": _Touch, "reach-end": _ReachEnd, "hands": _HandsCheck,
+}
 
 ## Every subcommand `cmd_arms` handles; the one list behind `sub_commands()`, hints and usage.
 const SUBS: PackedStringArray = [
-	"cam", "curl", "dress", "dump", "fit", "fov", "frame", "gesture", "gun", "hands",
-	"ik", "inspect", "seam", "join", "lthumb", "lthumbaim", "lthumbroll", "reach", "reload", "rall", "reach-end", "ridx", "rmid", "rpinky",
+	"import-diff", "cam", "curl", "dress", "dump", "export", "fit", "fov", "frame", "gesture", "gun", "hands",
+	"ik", "inspect", "prove", "seam", "lthumb", "lthumbaim", "lthumbroll", "reach", "reload", "rall", "reach-end", "ridx", "rmid", "rpinky",
 	"rring", "shot", "thumbaim", "thumbcurl", "thumbroll", "thumbs", "thumbturn", "touch",
 	"walk", "weave", "wrist", "wristang",
 ]
@@ -207,22 +215,14 @@ func cmd_arms(args: Array) -> String:
 		if vm.get_parent().get_node_or_null(NodePath(_Cam.CAM_NAME)) != null:
 			return "FRAME n/a (arms cam on; run arms cam off)"
 		return _Frame.new().run(vm)
-	if args[0] == "fit":
-		return _Fit.new().run(vm)
-	if args[0] == "thumbs":
-		return _Thumbs.new().run(vm)
-	if args[0] == "seam":
-		return _Seam.new().run(vm)
-	if args[0] == "join":
-		return _Join.new().run(vm)
+	if _REPORTS.has(str(args[0])):
+		return str((_REPORTS[str(args[0])] as GDScript).new().run(vm))
+	if args[0] == "import-diff": return _ImportDiff.new().run(args)
+	if args[0] == "prove": return _Prove.new().run(args)
+	if args[0] == "export":
+		return _Export.new().run(vm, args)
 	if args[0] == "wristang":
 		return _Wrist.new().run(vm, args)
-	if args[0] == "ik":
-		return _Ik.new().run(vm)
-	if args[0] == "touch":
-		return _Touch.new().run(vm)
-	if args[0] == "reach-end":
-		return _ReachEnd.new().run(vm)
 	if args[0] == "lthumb":
 		return _lthumb(args)
 	if args[0] == "lthumbaim":
@@ -231,8 +231,6 @@ func cmd_arms(args: Array) -> String:
 		return _thumbroll(args, false)
 	if args[0] == "thumbroll":
 		return _thumbroll(args, true)
-	if args[0] == "hands":
-		return _HandsCheck.new().run(vm)
 	if args[0] == "dump":
 		var parts: Array[String] = []
 		for a in args.slice(1):

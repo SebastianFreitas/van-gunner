@@ -24,7 +24,7 @@ uniform float specular_value : hint_range(0.0, 0.5) = 0.5;
 uniform float seed_offset = 0.0;
 // Raised veins (skin only): 0 is no veins. The paths are per-arm uniforms (vein_pts, set from
 // ArmVeinSet.pack in arm_vein.gdshaderinc); this scales the shading, the skin geometry is raised
-// separately by ArmVeinRelief.
+// separately in the baked hand mesh.
 uniform float vein_strength : hint_range(0.0, 1.0) = 0.0;
 // How dark the groove along a vein's flanks gets.
 uniform float vein_shade : hint_range(0.0, 1.0) = 0.0;

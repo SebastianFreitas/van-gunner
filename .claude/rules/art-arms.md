@@ -1,13 +1,9 @@
 ---
 paths:
-  - "scripts/player/arms/arm_bulk.gd"
   - "scripts/player/arms/arm_claw.gd"
   - "scripts/player/arms/arm_finger*.gd"
-  - "scripts/player/arms/arm_knuckles.gd"
-  - "scripts/player/arms/arm_muscle.gd"
   - "scripts/player/arms/arm_skin_*.gd"
   - "scripts/player/arms/arm_materials.gd"
-  - "scripts/player/arms/arm_refine.gd"
   - "scripts/player/arms/arm_rig.gd"
   - "scripts/player/arms/arm_parts.gd"
   - "scripts/player/arms/arms_builder.gd"
@@ -27,6 +23,8 @@ paths:
 
 # Art style: the first-person arms (mesh and skin)
 
+The hand's shape lives in `tools/blender/arms.blend` (baked parts, loaded as is). The game only adds channels (`ArmChannels`), material, claws, the limb tail and pose. The procedural build (inflate gain loop, refine, weld/weight smoothing, wrist ramp, hand dome, knuckles, muscle, vein relief, finger build/web/join/profile) and the `arms bake` / `arms join` consoles and finger info capture were removed in spec 4; the pre-removal code is at git tag `archive/arms-procedural-build`. The `arms seam` duplicate-position report went with the refine step.
+
 The general 3D rules are in `art-3d.md`; motion, grip, dressing and
 inspect are in `art-arms-pose.md`.
 
@@ -38,21 +36,7 @@ the fingertip from the tube's own recorded rings (`tip_rings`), sunk 3 %
 into the skin so they never float, then taper to a point curving 15-30
 degrees toward the pad (owner, 2026-10-03: the old 6-sided horns floated
 and looked too low-poly).
-Knuckles (owner, 2026-10-04, third pass: finger-tube knobs read first as a
-row of teeth, then as round lumps; wanted an old labourer's muscular hand):
-the knuckle is the palm's own skin. `ArmKnuckles.apply` (run in
-`ArmBulk.inflate` before `ArmMuscle`) lifts the back of the palm into a ridge
-at each `.01` head (`PEAK` 0.15 mean head spacing, about 0.25 finger radius)
-and sinks a groove midway between heads (`GROOVE` 0.16), both running back
-three quarters of the palm bone and thinning to a 0.35 tendon line. The
-finger tubes carry no ball: `ArmFingers` root knob 1.0 r on the axis, shaft
-knobs 1.07 r2 and 1.06 r3, and a squarer bony ring (lateral squash 0.86,
-diagonals pushed out 1.10, pad 0.80). The ridge, the two knobs and the
-ring knots were trimmed on 2026-10-05 (`PEAK` from 0.18, knobs from 1.12
-and 1.10, `KNOT` 0.30 to 0.22: the owner found the joint bumps "a bit
-extreme", and minor, so the trim is small). Thumbs take the same bony ring,
-lumps, knots and sag (owner, 2026-10-04) but keep their own radii and
-profiles, so grip and pose are untouched. Both hands share the code.
+Knuckles (owner, 2026-10-04): the ridge, grooves, finger knobs and knots are authored in the baked hand in `arms.blend` (the runtime knuckle, muscle and finger-build code is retired). Thumbs keep their own radii and profiles, so grip and pose are untouched.
 Knuckle creases and back-of-hand tendons are shading only (owner's
 reference: stacked wrinkle folds, tendons fanning from the wrist):
 `arm_skin_folds.gdshaderinc` adds a signed relief to `skin_height` from
@@ -62,10 +46,8 @@ read by shade as well as tilt (`vein_shade`, `vein_under`).
 Pitfall: a wound is a long ellipse with a dark crust ring, so a big one reads as a pill outline; the old right wound 0 (z 0.049, r 0.047, stretch 1.9) was the owner's wrist pill and is deleted from `arm_skin_fixed.gd`; keep wounds small.
 Veins are authored per arm from the owner's arm photos, not noise, each arm its own pattern (no mirroring):
 - Data: `resources/arms/vein_set_left.tres` and `vein_set_right.tres` (`ArmVeinSet`: paths of chart x, v, radius; edit the .tres). Chart = `(x, 0.035 * atan2(z, y))` of CUSTOM0; back of hand is +v right, -v left.
-- Sampler: `ArmVeinField` (height 0..1, distance), rounded profile, smooth-max join.
-- Geometry: `ArmVeinRelief` (run in `ArmBulk.inflate`) refines and raises the skin along the veins.
-- Cache: `ArmVeinRelief.apply` stores the finished arrays in `user://arm_vein_cache/<side>_<surface>.bin`, keyed on a hash of the packed vein set, the relief constants (`RELIEF_M`, `TARGET_EDGE`, `NEAR`, `MAX_PASSES`, `TILT_GAIN`, `ArmVeinField.BLEND`) and the incoming mesh arrays; a miss builds (about 0.5 s per arm), a hit loads (about 5 ms). Change a constant outside that list and the cache must be deleted by hand.
-- Shading: `arm_vein.gdshaderinc` `vein_field` evaluates the same packed paths per pixel (uniform `vein_pts`, 160 points (`ArmMaterials.VEIN_MAX`; `set_veins` warns if a set packs more), `vein_count`; `ArmMaterials.set_veins` sets them per arm) and `arm_surface.gdshader` adds a fine normal tilt, a flank groove (`vein_shade`), a teal tint scaled by radius (`vein_under`) and a soft crest. No painted key light. `ArmMuscle` gives `DEF-palm*` and `DEF-thumb.01` mask 1.0 so veins reach the hand back.
+- Geometry: the relief is part of the baked hand mesh in `arms.blend` (the runtime vein relief and its cache are retired).
+- Shading: `arm_vein.gdshaderinc` `vein_field` evaluates the same packed paths per pixel (uniform `vein_pts`, 160 points (`ArmMaterials.VEIN_MAX`; `set_veins` warns if a set packs more), `vein_count`; `ArmMaterials.set_veins` sets them per arm) and `arm_surface.gdshader` adds a fine normal tilt, a flank groove (`vein_shade`), a teal tint scaled by radius (`vein_under`) and a soft crest. No painted key light. the shape the retired muscle step made is now baked in `arms.blend`.
 - Pitfalls: the back-of-hand sign differs per arm; the pixel fade must use the chart's own footprint (`fwidth` of the chart), not rest-chart units; palm bones need the CUSTOM0.w mask; check a vein change by painting the mask red in a temporary shot.
 No rig mesh casts a shadow (`ViewmodelFov._walk`, and `ArmSkinMesh.build`
 at creation): the shadow pass skips the viewmodel lens, so one would land
@@ -96,21 +78,8 @@ damping the skin tilt the same way removes about half its shading
 `TILT_FOOT_FULL` 0.10) stay as guards only. Judge by the skin-masked
 counts: a whole-image count in these views holds about 2500 HUD-text
 and (before the sleeve was removed) sleeve-cuff pixels.
-Wrist (owner, 2026-10-05: the hand looked "glued to the wrist", the
-join "a bit thinner"): the forearm necks to `ArmBulk.WRIST_END_GAIN`
-1.30 (was 1.45), and the hand side starts at that same girth by
-construction: `DEF-hand`, the palm bones and the thumb root start at
-`WRIST_END_GAIN / HAND_SCALE` and swell to full over `HAND_RAMP_END`
-0.45 of the bone, so no step is left where the 1.47 hand
-(`ArmBulk.HAND_SCALE`, which `ArmsBuilder.HAND_K` reads) meets the
-forearm (the step was 1.45 against 2.13).
-Thumb root (owner, 2026-10-05: "a piece of skin just in the air coming
-out of the root of the thumb"): the thumb tube's head ring was open and
-lifted off the palm, so `ArmFingers._shaft_profile` gives the thumb two
-more rings behind its head that narrow back into the palm (0.80 r at
-0.15 of a bone behind the head, 0.45 r at 0.35): a buried root, like
-the fingers'.
-Thumb-root hump (owner, 2026-10-08, left hand, thumb straight): the mesh, not shading. `DEF-thumb.01`'s flat gain 1.5 met the thumb tube's 1.0 in a step at the joint, which a straight thumb shows as a hump (bent hides it); `ArmBulk` now eases thumb.01 from 1.5 to 1.0 over its far 60 percent. The hand's blight halving was reverted (owner: the skin must stay spiky and coarse); the straight-thumb spike itself is not found yet (mesh outlier scan shows none, 2026-10-08). Lead: a thumb.01 weight cliff on the wrist side of the root (b1151 0.84, b190 0.70 beside 0.9 forearm/palm verts rose 6 to 8 mm straight versus default); `ArmWeightSmooth` (run in `ArmBulk.inflate` after the refine) relaxes the thumb weight over those verts and weights only, so the skin stays coarse. Real cause of the dark knob in `arms cam side` (owner circle, left hand; the side cam frames the left hand there): not mesh. Elimination, changed pixels in the crop: arm skin hidden 9080, hand blight tilt off (`blight_gain`/`hand_blight_gain` 0) 5002, `skin_bump` 0 5168, muscle off 4668, finger tubes 2765, `blight_lift` 0 461, ArmWeightSmooth off 340, knuckles 59, claws/sleeve 0 (the sleeve is removed since 2026-10-09, archived at tag `archive/arm-sleeve`). The knob is the shader's screen-space blight tilt (`arm_surface.gdshader`, skin_bump block) going black on the shaded flank; the hand now keeps 40 percent of that tilt (the geometric blight lift is untouched).
+Wrist and thumb root (owner, 2026-10-05): the wrist girth curve and the thumb's buried root rings are authored in the baked hand in `tools/blender/arms.blend`; the game no longer shapes them.
+Thumb-root hump (owner, 2026-10-08, left hand, thumb straight): the mesh, not shading. `DEF-thumb.01`'s flat gain 1.5 met the thumb tube's 1.0 in a step at the joint, which a straight thumb shows as a hump (bent hides it); the thumb.01 gain easing the retired inflate step made is now baked in `arms.blend`. The hand's blight halving was reverted (owner: the skin must stay spiky and coarse); the straight-thumb spike itself is not found yet (mesh outlier scan shows none, 2026-10-08). Lead: a thumb.01 weight cliff on the wrist side of the root (b1151 0.84, b190 0.70 beside 0.9 forearm/palm verts rose 6 to 8 mm straight versus default); the weight smoothing that relaxed it (retired) is now baked in `arms.blend`. Real cause of the dark knob in `arms cam side` (owner circle, left hand; the side cam frames the left hand there): not mesh. Elimination, changed pixels in the crop: arm skin hidden 9080, hand blight tilt off (`blight_gain`/`hand_blight_gain` 0) 5002, `skin_bump` 0 5168, muscle off 4668, finger tubes 2765, `blight_lift` 0 461, weight smoothing off 340, knuckles 59, claws/sleeve 0 (the sleeve is removed since 2026-10-09, archived at tag `archive/arm-sleeve`). The knob is the shader's screen-space blight tilt (`arm_surface.gdshader`, skin_bump block) going black on the shaded flank; the hand now keeps 40 percent of that tilt (the geometric blight lift is untouched).
 One fixed hand (owner, 2026-10-05): skin tone, scars, wounds and dirt
 hash from ArmsBuilder.HAND_LOOK_SEED, never the van seed. Muscle lumps,
 the shoulder offset and each finger's sideways crook hash from
@@ -162,6 +131,10 @@ of `PROJECTION_MATRIX[0][0]` and `[1][1]` (Godot Vulkan bakes a Y flip in, so
 [1][1] is negative); a positive focal term drew the arms rotated 180 degrees
 while `arms frame` (Godot-native `fov_override`) still counted them right.
 After any lens change, Read one player-view shot.
+
+## Editing the hands
+
+Edit `tools/blender/arms.blend`, run `py -3 tools/blender/arms.py build`, then `py -3 tools/check.py` so Godot re-imports the glb. `py -3 tools/blender/arms.py prove` checks the path is still 1:1: it moves the right back-of-hand slab (1937 verts) 4 mm outward in memory, exports a scratch glb (arms.blend and arms.glb untouched), and `arms prove` in the game headless measures each vertex by its CUSTOM2.w id against the asked offset. It must print `PROVE OK` (moved error under 0.0002, unmoved drift under 0.0001); the numbers go to `.claude/specs/reports/prove.md`.
 
 ## The railgun
 

@@ -38,7 +38,7 @@ const MID_COLOR := Color(0.10, 0.088, 0.055)
 const TIP_COLOR := Color(0.24, 0.22, 0.16)
 
 
-## `rings` are `ArmFingers.build`'s tip rings ({t, centre, half_w, half_h}, centre x lateral, y
+## `rings` are the baked finger info's tip rings ({t, centre, half_w, half_h}, centre x lateral, y
 ## along the bone, z dorsal). Origin and axes are those of the rings; `reach` is how far the
 ## point clears the finger's pole and `curve_deg` how far it hooks toward the pad (-Z).
 static func mesh(rings: Array, reach: float, curve_deg: float,

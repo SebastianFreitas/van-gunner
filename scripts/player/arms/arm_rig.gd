@@ -10,25 +10,78 @@ const TWIST_SHARE := 0.5
 const FINGERS:Array[StringName] = [&"f_index", &"f_middle", &"f_ring", &"f_pinky", &"thumb"]
 
 
-static func spawn(side: StringName, scale_v: float, bulk: float = 1.0,
-		muscle_seed: int = 0) -> Node3D:
+## Shows the baked parts of one side exactly as Blender built them (`<S>_skin`, `<S>_fingers`,
+## `<S>_webs`); the game only adds the shared Skin, layers, the `&"fingers"` meta and the channels
+## check. The glTF import merges both sides into one skeleton, so the other side's parts go.
+static func spawn(side: StringName, scale_v: float, _bulk: float = 1.0,
+		_muscle_seed: int = 0) -> Node3D:
 	var model := SCENE.instantiate() as Node3D
-	var keep := "Arm" + String(side)
-	for n in ["ArmL", "ArmR"]:
-		var m := model.find_child(n, true, false)
+	var sk := skeleton(model)
+	_restore_bone_names(sk)
+	var keep := String(side) + "_"
+	var skin_mi: MeshInstance3D = null
+	var parts: Array[MeshInstance3D] = []
+	for n in ["L_skin", "L_fingers", "L_webs", "R_skin", "R_fingers", "R_webs"]:
+		var m := model.find_child(n, true, false) as MeshInstance3D
 		if m == null:
 			continue
-		if n == keep:
-			var mi := m as MeshInstance3D
-			mi.layers = VanLighting.LAYER_VAN_INTERIOR
-			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			ArmBulk.inflate(mi, skeleton(model), bulk, muscle_seed)
-		else:
+		if not n.begins_with(keep):
 			m.get_parent().remove_child(m)
 			m.free()
+			continue
+		if m.get_parent() != sk:
+			m.get_parent().remove_child(m)
+			sk.add_child(m)
+			m.skeleton = NodePath("..")
+		if n.ends_with("_skin"):
+			skin_mi = m
+		parts.append(m)
+	if skin_mi != null:
+		sk.move_child(skin_mi, 0)
+		for m in parts:
+			m.skin = skin_mi.skin
+			m.layers = VanLighting.LAYER_VAN_INTERIOR
+			m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			ArmChannels.ensure(m)
+		model.set_meta(&"fingers", _finger_data(model, sk, skin_mi, String(side)))
+		var info_set := load("res://assets/models/arms/arm_fingers_info.tres") as ArmFingerInfoSet
+		skin_mi.set_meta(&"wrist_seam", info_set.wrist_seam.get(String(side), {}))
+		skin_mi.set_meta(&"knuckle_rise", info_set.knuckle_rise.get(String(side), PackedFloat32Array()))
 	var s := scale_v if scale_v > 0.0 else 1.0
 	model.transform = Transform3D(Basis(Vector3.UP, PI).scaled(Vector3.ONE * s), Vector3.ZERO)
 	return model
+
+
+## The glTF importer turns "." in bone names into "_" ("DEF-f_index.01.L" -> "DEF-f_index_01_L");
+## every pose and bind lookup uses the Blender names.
+static func _restore_bone_names(sk: Skeleton3D) -> void:
+	var digits := RegEx.create_from_string("_(\\d+)")
+	var tail := RegEx.create_from_string("_([LR])$")
+	for i in sk.get_bone_count():
+		var n := String(sk.get_bone_name(i))
+		n = digits.sub(n, ".$1", true)
+		n = tail.sub(n, ".$1")
+		sk.set_bone_name(i, n)
+
+
+## The `&"fingers"` meta: per finger the claw and probe data, design values from
+## `arm_fingers_info.tres` and mesh-owned ones read from the loaded `<S>_fingers` part.
+static func _finger_data(model: Node3D, sk: Skeleton3D, skin_mi: MeshInstance3D,
+		side: String) -> Dictionary:
+	var out := {}
+	var fingers_mi := model.find_child(side + "_fingers", true, false) as MeshInstance3D
+	if fingers_mi == null:
+		return out
+	var arrays := (fingers_mi.mesh as ArrayMesh).surface_get_arrays(0)
+	var ids := ArmFingerInfo.id_map(arrays)
+	var set_res := load("res://assets/models/arms/arm_fingers_info.tres") as ArmFingerInfoSet
+	for info in set_res.fingers:
+		if String(info.side) != side:
+			continue
+		var bone := StringName("DEF-%s.03.%s" % [info.finger, side])
+		var frame := ArmSkinMesh.ring_frame(skin_mi, sk, bone, 0.0)
+		out[info.finger] = ArmFingerInfo.resolve(info, arrays, frame, ids)
+	return out
 
 
 static func skeleton(model: Node3D) -> Skeleton3D:
@@ -228,7 +281,16 @@ static func scale_hand(model: Node3D, suffix: String, k: float) -> void:
 	sk.set_bone_pose_scale(i, Vector3.ONE * k)
 
 
-## One swept claw per finger on its `.03` bone, sized from `ArmFingers.build`'s dictionary: the
+## The horn length `add_claws` builds for one digit's finger info dictionary.
+static func horn_length(info: Dictionary, is_thumb: bool, claw_k: float) -> float:
+	var horn_len := claw_k * float(info[&"tip_len"])
+	# Thumb tips are long and fat; cap the horn by the tip radius so it stays a nail.
+	if is_thumb:
+		horn_len = minf(horn_len, 1.6 * float(info[&"bed_r"]))
+	return horn_len
+
+
+## One swept claw per finger on its `.03` bone, sized from the finger info dictionary: the
 ## nail bed starts half-way along the tip's back and the horn reaches `claw_k` tips past it.
 static func add_claws(model: Node3D, suffix: String, fingers: Dictionary, claw_k: float,
 		curve_deg: float, mat: Material) -> void:
@@ -238,11 +300,8 @@ static func add_claws(model: Node3D, suffix: String, fingers: Dictionary, claw_k
 		if i3 == -1 or not fingers.has(f):
 			continue
 		var d: Dictionary = fingers[f]
-		var tip_len: float = d[&"tip_len"]
 		var bed_r: float = d[&"bed_r"]
-		var horn_len := claw_k * tip_len
-		# Thumb tips are long and fat; cap the horn by the tip radius so it stays a nail.
-		horn_len = minf(horn_len, 1.6 * bed_r)
+		var horn_len := horn_length(d, f == &"thumb", claw_k)
 		if horn_len <= 0.0 or bed_r <= 0.0:
 			continue
 		var tip_rings: Array = d[&"tip_rings"]
