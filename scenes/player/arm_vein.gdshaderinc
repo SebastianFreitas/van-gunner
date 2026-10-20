@@ -1,15 +1,16 @@
 // Vein shading from the same packed paths the skin geometry is raised by (ArmVeinSet.pack, set
 // per arm as vein_pts). Same chart and rounded profile as the baked hand mesh's vein relief, evaluated per pixel.
-const int VEIN_MAX = 160;
-// Chart radius, ArmVeinSet.ARC_R, and the height scale of the fattest vein, ArmVeinSet.MAX_R.
+const int VEIN_MAX = 512;
+// Chart radius, ArmVeinSet.ARC_R, and the radius that reads as full height. The organic sets run
+// radii 0.0006..0.0025, so ArmVeinSet.MAX_R (0.006, the old baked scale) left them at 10..40 percent.
 const float VEIN_ARC_R = 0.035;
-const float VEIN_MAX_R = 0.006;
+const float VEIN_MAX_R = 0.0025;
 // Smooth-max width where two veins join.
 const float VEIN_BLEND = 0.3;
 // How far the groove reaches past a vein's edge, in chart units.
 const float VEIN_GROOVE = 0.0035;
 
-uniform vec4 vein_pts[160]; // x, v, radius, height scale; paths split by a z < 0 point
+uniform vec4 vein_pts[512]; // x, v, radius, height scale; paths split by a z < 0 point
 uniform int vein_count = 0;
 
 float vein_smax(float a, float b) {

@@ -12,7 +12,7 @@ renders both hands at rest (back, palm, side, plus 4x fingertip and knuckle clos
 half the archive_ `<step>_*` copies, right half the live parts) and writes look.txt; it never saves
 arms.blend. `step <name> [args] [--blend <copy>] [--out <dir>]` runs the scripted edit `arms_<name>_bl.py` (e.g. `step mass`; archive_ copies
 `<name>_<part>` first, a re-run restores them, then build). `veinpaths <dir>` runs research 04's vein gates (Set v2) on the real mesh chart and
-writes <dir>/paths.txt (needs the ARMS_PHOTO env var, the owner's fist photo; fails, exempt fails with skin vertex ids); it never saves arms.blend. `relief <dir>` writes <dir>/relief.txt (vein crest per hand and path, finger cord gates; read-only). `veindump <dir>`
+writes <dir>/paths.txt (needs the ARMS_PHOTO env var, the owner's fist photo; fails, exempt fails with skin vertex ids); it never saves arms.blend. `veingen [<previewdir>]` grows seeded organic vein trees (arms_veingen.py, pure Python, no Blender) and writes resources/arms/vein_set_<side>_next.tres, plus a chart preview PNG when given a dir. `relief <dir>` writes <dir>/relief.txt (vein crest per hand and path, finger cord gates; read-only). `veindump <dir>`
 writes the mesh chart tables <dir>/mesh_R.json and mesh_L.json for research 04's offline mesh_table.py. `hunt <glb> <dir>`
 (a glb from the `arms export` console command, with its .bones.json beside it) writes hunt.txt,
 one line per defect cluster, plus orbit and close-up renders; it does not need arms.blend. Blender is
@@ -171,6 +171,9 @@ def main(argv: list[str]) -> int:
         return run(BLEND, str(pathlib.Path(rest[0]).resolve()), *step, script="arms_look_bl.py")
     if cmd == "veinpaths" and rest:
         return run(BLEND, str(pathlib.Path(rest[0]).resolve()), script="arms_veinpaths_bl.py")
+    if cmd == "veingen":
+        import arms_veingen
+        return arms_veingen.main(rest)
     if cmd == "relief" and rest:
         base = ["--baseline", str(pathlib.Path(rest[rest.index("--baseline") + 1]).resolve())] \
             if "--baseline" in rest else []

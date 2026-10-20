@@ -2,7 +2,7 @@
 """Render the first-person goblin arms in chosen poses from fixed cameras, one Godot launch.
 
 Usage: `py -3 tools/hand_shots.py --out DIR [--pose NAME | --pose "<console line>"]...
-[--views front,side,left,top,elbow,player] [--dress bare|rags|none] [--timeout S]`.
+[--views front,side,left,top,elbow,player,back_left,...] [--dress bare|rags|none] [--timeout S]`.
 
 Runs `tools/probe.py` with the pose's `arms` console lines and `--views`, so DIR gets one
 `<view>.png` per camera. `--list` prints the named poses and exits.
@@ -19,6 +19,18 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # The first five are the `arms cam` views in scripts/debug/debug_arms_cam.gd (`VIEWS`);
 # `player` is the player's own camera (handled in tools/probe/probe_runner.gd).
 VIEW_NAMES = ["front", "side", "left", "top", "elbow", "player"]
+
+# Close-ups of the back of each hand and each forearm: `arms cam orbit <args>` (yaw pitch dist
+# hand), one probe launch each since the probe's own --views only knows the named cameras.
+ORBIT_VIEWS: dict[str, str] = {
+    "back_left": "-20 75 0.2 left",
+    "back_right": "150 12 0.11 right 0.01 -0.01 0.02",
+    "forearm_left": "-60 55 0.22 left -0.06 -0.03 0",
+    "forearm_right": "165 45 0.18 right 0.05 -0.02 0.2",
+    "side_left": "-90 15 1.0 left 0 0 0.25",
+    "side_right": "90 10 1.0 right 0 0 0.35",
+}
+ALL_VIEWS = VIEW_NAMES + list(ORBIT_VIEWS)
 
 POSES: dict[str, list[str]] = {
     "rest": [],  # the arms as they hang, no pose forced
@@ -53,9 +65,9 @@ def parse_args() -> argparse.Namespace:
     if not opts.out:
         parser.error("--out is required")
     views = [v.strip() for v in opts.views.split(",") if v.strip()]
-    bad = [v for v in views if v not in VIEW_NAMES]
+    bad = [v for v in views if v not in ALL_VIEWS]
     if not views or bad:
-        parser.error("views must be from: " + ", ".join(VIEW_NAMES))
+        parser.error("views must be from: " + ", ".join(ALL_VIEWS))
     opts.views = ",".join(views)
     for pose in opts.pose:
         if " " not in pose and pose not in POSES:
@@ -86,9 +98,21 @@ def main() -> int:
         return 0
 
     out_dir = pathlib.Path(opts.out).resolve()
-    code = run_shots(pose_lines(opts), out_dir, opts.views, opts.timeout)
-    if code != 0:
-        return code
+    lines = pose_lines(opts)
+    named = [v for v in opts.views.split(",") if v in VIEW_NAMES]
+    if named:
+        code = run_shots(lines, out_dir, ",".join(named), opts.timeout)
+        if code != 0:
+            return code
+    for view in opts.views.split(","):
+        if view in ORBIT_VIEWS:
+            cmd = [sys.executable, str(ROOT / "tools" / "probe.py")]
+            for line in lines + ["arms cam orbit " + ORBIT_VIEWS[view]]:
+                cmd += ["--cmd", line]
+            cmd += ["--shot", str(out_dir / f"{view}.png"), "--timeout", str(opts.timeout)]
+            code = subprocess.run(cmd, cwd=ROOT).returncode
+            if code != 0:
+                return code
     pngs = [out_dir / f"{v}.png" for v in opts.views.split(",")]
     print(f"HAND SHOTS: {len(pngs)} PNG(s) in {out_dir}")
     for png in pngs:

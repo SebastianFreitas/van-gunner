@@ -6,13 +6,16 @@ import re
 HERE = os.path.dirname(os.path.abspath(__file__))
 RES = os.path.normpath(os.path.join(HERE, "..", "..", "resources", "arms"))
 NAME = {"R": "right", "L": "left"}
-PALM = {"R": (10, 11, 12), "L": (1, 2)}  # old palm paths kept verbatim
+PALM_X = 1.05  # chart x below which a baked path is wrist or forearm
+ROPE_X = 1.2  # a forearm rope ends before this x; past it the traced back veins take over
+PALM_SIGN = {"R": -1, "L": 1}  # sign of v on the palm side (the back of the hand is the other)
 FADE3 = 0.036  # ArmVeinSet.FADE_LEN * 3: shorter paths get no eased end points
 
 
 def read_old(side: str) -> tuple:
-    """(paths, flags, text) of the live vein_set_<side>.tres; paths are lists of (x, v, r)."""
-    with open(os.path.join(RES, "vein_set_%s.tres" % NAME[side])) as fh:
+    """(paths, flags, text) of the archived vein_set_<side>_baked.tres (never the live set, which
+    already holds a splice); paths are lists of (x, v, r)."""
+    with open(os.path.join(RES, "archive", "vein_set_%s_baked.tres" % NAME[side])) as fh:
         text = fh.read()
     body = re.search(r"^paths = Array\[PackedVector3Array\]\(\[(.*)\]\)$", text, re.M).group(1)
     paths = []
@@ -21,6 +24,22 @@ def read_old(side: str) -> tuple:
         paths.append([tuple(v[i:i + 3]) for i in range(0, len(v), 3)])
     fl = re.search(r"^free_ends = PackedInt32Array\((.*)\)$", text, re.M).group(1)
     return paths, [int(x) for x in fl.split(",")], text
+
+
+def palm_indices(side: str) -> tuple:
+    """Indices of the baked paths kept verbatim: those that start below PALM_X and either lie on
+    the palm side or are forearm ropes (end below ROPE_X); the rest are dorsal and are traced."""
+    keep = []
+    for i, pts in enumerate(read_old(side)[0]):
+        if min(p[0] for p in pts) >= PALM_X:
+            continue
+        mean_v = sum(p[1] for p in pts) / len(pts)
+        if mean_v * PALM_SIGN[side] > 0 or max(p[0] for p in pts) < ROPE_X:
+            keep.append(i)
+    return tuple(keep)
+
+
+PALM = {s: palm_indices(s) for s in NAME}  # baked indices kept verbatim
 
 
 def pack_of(paths: list, flags: list) -> int:

@@ -8,7 +8,7 @@ const SHADER := preload("res://scenes/player/arm_surface.gdshader")
 ## shape (seed 1337's draw; seed 7's 2.32 put domes on three fingertips and buried the claws).
 const HAND_SKIN_OFFSET := 91.1654968261719
 ## Size of the shader's `vein_pts` array (`VEIN_MAX` in arm_vein.gdshaderinc); both sets pack under it.
-const VEIN_MAX := 160
+const VEIN_MAX := 512
 
 
 ## A fresh grime material; never cached, because the arms rebuild per run.
@@ -48,12 +48,12 @@ static func skin() -> ShaderMaterial:
 	return mat
 
 
-## Hands the arm's packed vein paths to the skin shader (`vein_pts`, `VEIN_MAX` points at most).
+## Hands the arm's packed vein paths to the skin shader (`vein_pts`, `VEIN_MAX` points at most; more is an error).
 static func set_veins(mat: ShaderMaterial, side: String) -> void:
 	var vein_set := load("res://resources/arms/vein_set_%s.tres" % side) as ArmVeinSet
 	var packed := vein_set.pack()
 	if packed.size() > VEIN_MAX:
-		push_warning("Vein set %s packs %d points, over the shader cap %d." % [
+		push_error("Vein set %s packs %d points, over the shader cap %d." % [
 				side, packed.size(), VEIN_MAX])
 	var count := mini(packed.size(), VEIN_MAX)
 	packed.resize(VEIN_MAX)

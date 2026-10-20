@@ -24,7 +24,7 @@ const VIEWS := {
 ## Where `DEF-forearm.L` starts (the left elbow) relative to the left-hand focus, Weapon space,
 ## measured with the arms at rest (-0.099, -0.051, 0.002).
 const ELBOW_FROM_WRIST := Vector3(-0.1, -0.05, 0.0)
-const ORBIT_USAGE := "bad args. arms cam orbit <yaw> <pitch> [dist] [hand=right|left]"
+const ORBIT_USAGE := "bad args. arms cam orbit <yaw> <pitch> [dist] [hand=right|left] [fx fy fz]"
 
 var _cmds: RefCounted  # the DebugArmsCommands owner (hides the body, builds hints)
 
@@ -33,7 +33,7 @@ func _init(owner: RefCounted) -> void:
 	_cmds = owner
 
 
-## `args` is `[view]` or `[orbit, yaw, pitch, dist?, hand?]`; returns the console reply.
+## `args` is `[view]` or `[orbit, yaw, pitch, dist?, hand?, fx?, fy?, fz?]`; returns the console reply.
 func run(vm: Node, args: Array) -> String:
 	var view := StringName(str(args[0]))
 	var parent := vm.get_parent()
@@ -53,9 +53,10 @@ func run(vm: Node, args: Array) -> String:
 		return "bad args. " + str(_cmds.hint("cam"))
 	var offset := Vector3.ZERO
 	var hand := &"right"
+	var shift := Vector3.ZERO
 	var reply := "arms cam " + str(view)
 	if orbit:
-		if args.size() < 3 or args.size() > 5 or not str(args[1]).is_valid_float() \
+		if args.size() < 3 or (args.size() != 8 and args.size() > 5) or not str(args[1]).is_valid_float() \
 				or not str(args[2]).is_valid_float():
 			return ORBIT_USAGE
 		var yaw := float(str(args[1]))
@@ -65,10 +66,15 @@ func run(vm: Node, args: Array) -> String:
 			if not str(args[3]).is_valid_float() or float(str(args[3])) <= 0.0:
 				return ORBIT_USAGE
 			dist = float(str(args[3]))
-		if args.size() == 5:
+		if args.size() >= 5:
 			hand = StringName(str(args[4]))
 			if hand != &"right" and hand != &"left":
 				return ORBIT_USAGE
+		if args.size() == 8:
+			for i in 3:
+				if not str(args[5 + i]).is_valid_float():
+					return ORBIT_USAGE
+				shift[i] = float(str(args[5 + i]))
 		# Yaw 0 / pitch 0 is the `front` side (-Z); yaw 90 swings to +X; pitch 90 is overhead.
 		offset = Basis(Vector3.UP, deg_to_rad(-yaw)) \
 				* Basis(Vector3.RIGHT, deg_to_rad(pitch)) * Vector3(0.0, 0.0, -dist)
@@ -87,7 +93,7 @@ func run(vm: Node, args: Array) -> String:
 		cam.cull_mask = player_cam.cull_mask
 	parent.add_child(cam)
 	_cmds._hide_body(vm)
-	var focus: Vector3 = vm.arms_focus(hand)
+	var focus: Vector3 = vm.arms_focus(hand) + shift
 	if view == &"elbow":
 		focus += ELBOW_FROM_WRIST
 	if view == &"gun" or view == &"gunfront":
