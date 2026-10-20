@@ -24,6 +24,11 @@ Under AUTOPLAN=1 a call with no run_in_background key passes too: the
 headless CLI's Agent tool has no such field and runs every call in the
 foreground (street-setbacks phase 1, 2026-10-05).
 
+Toggle: an optional `.claude/project/agent-guard.json` lets a named plan
+pass a set model and effort for named agent types while that plan is bound
+in `.claude/plans/HERE`. No file means the rule above, unchanged; deleting
+the file switches the exception off.
+
 Never fails the hook: any error allows the call (exit 0).
 """
 import json
@@ -31,12 +36,32 @@ import os
 import sys
 
 
+def allowed(d, ti, who, pinned):
+    """True when the project's allow toggle covers this pinned call."""
+    root = d.get("cwd") or os.environ.get("CLAUDE_PROJECT_DIR") or "."
+    try:
+        with open(os.path.join(root, ".claude/project/agent-guard.json"),
+                  encoding="utf-8") as f:
+            cfg = json.load(f)
+        with open(os.path.join(root, ".claude/plans/HERE"),
+                  encoding="utf-8") as f:
+            plan = f.read().strip()
+    except Exception:
+        return False
+    for e in cfg.get("allow", []):
+        if e.get("plan") == plan and who in e.get("subagent_type", []) and all(
+                str(e.get(k, "")).lower() == str(ti.get(k)).lower()
+                for k in pinned):
+            return True
+    return False
+
+
 def main():
     d = json.load(sys.stdin)
     ti = d.get("tool_input") or {}
     who = ti.get("subagent_type") or "subagent"
     pinned = [k for k in ("model", "effort") if ti.get(k)]
-    if pinned:
+    if pinned and not allowed(d, ti, who, pinned):
         print(json.dumps({"hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
