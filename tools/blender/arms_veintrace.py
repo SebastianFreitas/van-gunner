@@ -10,8 +10,7 @@ import sys
 
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+from arm_names import HERE
 from arms_veingates import HEADS, SPAN  # noqa: E402
 from arms_veintrace_gates import (VEIN_MAX, W_TO_R, _bad, _fails, _length, _ok_a, _ok_c,  # noqa: E402
                                   _pack, _push_b, _push_shared, _slide)

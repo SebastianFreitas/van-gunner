@@ -9,24 +9,25 @@ import math
 
 import bpy
 from mathutils import Vector
+from arm_names import VG_HAND, VG_FING_ROOT, VG_INDEX1, VG_MIDDLE1, VG_PINKY1, UV_A, UV_B, RIG
 
 
 class HandFrame:
     def __init__(self, side: str):
-        rig = bpy.data.objects["rig"]
+        rig = bpy.data.objects[RIG]
         rw = rig.matrix_world
 
         def head(b):
             return rw @ rig.data.bones[b + "." + side].head_local
         self.side = side
         self.head = head
-        self.H = head("DEF-hand")
-        M = head("DEF-f_middle.01")
+        self.H = head(VG_HAND)
+        M = head(VG_MIDDLE1)
         self.span = (M - self.H).length
         self.axis = (M - self.H).normalized()
         up = Vector((0, 0, 1))
         self.dors = (up - self.axis * up.dot(self.axis)).normalized()
-        lat = head("DEF-f_index.01") - head("DEF-f_pinky.01")
+        lat = head(VG_INDEX1) - head(VG_PINKY1)
         self.lat = (lat - self.axis * lat.dot(self.axis)).normalized()
 
     def s(self, p: Vector) -> float:
@@ -55,7 +56,7 @@ class ShapeFrame(HandFrame):
     def __init__(self, side: str):
         super().__init__(side)
         names = ("index", "middle", "ring", "pinky")
-        roots = [self.head("DEF-f_%s.01" % n) for n in names]
+        roots = [self.head(VG_FING_ROOT % n) for n in names]
         self.roots = roots
         self.span = ((roots[0] + roots[1] + roots[2] + roots[3]) * 0.25 - self.H).dot(self.axis)
         self.lat = -self.lat
@@ -67,7 +68,7 @@ def shape_frame(side: str) -> ShapeFrame:
 
 def chart(ob) -> list:
     """Per vertex of mesh object `ob`: (x, v, mask) of its CUSTOM0 chart, as GDScript
-    `ArmVeinSet.chart_of` reads it. c = (UVMap.002 u, 1 - v, UVMap.003 u, 1 - v), loop UVs
+    `ArmVeinSet.chart_of` reads it. c = (UV_A u, 1 - v, UV_B u, 1 - v), loop UVs
     averaged per vertex; x = c.x, v = 0.035 atan2(c.z, c.y), mask = c.w."""
     me = ob.data
     n = len(me.vertices)
@@ -82,7 +83,7 @@ def chart(ob) -> list:
             acc[lp][0] += uv.uv[0]
             acc[lp][1] += uv.uv[1]
         return [(a[0] / max(c, 1), a[1] / max(c, 1)) for a, c in zip(acc, cnt)]
-    a, b = per_vertex("UVMap.002"), per_vertex("UVMap.003")
+    a, b = per_vertex(UV_A), per_vertex(UV_B)
     out = []
     for i in range(n):
         c = (a[i][0], 1 - a[i][1], b[i][0], 1 - b[i][1])

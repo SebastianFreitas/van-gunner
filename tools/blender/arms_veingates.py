@@ -1,7 +1,7 @@
 # Copy of .claude/plans/research/hands-blender-review-04/gates.py; edit the research file and re-copy.
 """Gate checker for research 04's vein sets (hand frame s, lat; r chart). Chart fit from survey.txt.
 
-Copied from Temp/vg-hbr/veinfix (D45). Every fail starts "G<n> " (its research 04 gate; G0 = a
+Copied from the research scratch veinfix (D45). Every fail starts "G<n> " (its research 04 gate; G0 = a
 data error). check(..., mesh=None) runs Gates 1-8 and 10 on the fit; with a mesh object
 (phase 3 spec 2: .chart(side, p) -> (x, v), .weight(side, p) -> max finger/thumb weight of the
 nearest skin vertex, .cover(side, chart_pts, r) -> skin vertices within 2.26 r of them) the chart

@@ -1,0 +1,134 @@
+{
+ "L_fingers": {
+  "bad_sum_verts": 0,
+  "faces": 3084,
+  "flipped_edges": 0,
+  "inside_out_faces": 152,
+  "loose_verts": 0,
+  "no_weight_verts": 0,
+  "nonmanifold_edges": 0,
+  "over4_verts": 0,
+  "uv_maps": [
+   "UVMap",
+   "UVMap.001",
+   "UVMap.002",
+   "UVMap.003",
+   "UVMap.004",
+   "UVMap.005",
+   "UVMap.006",
+   "UVMap.007"
+  ],
+  "verts": 1577,
+  "zero_area_faces": 0
+ },
+ "L_skin": {
+  "bad_sum_verts": 0,
+  "faces": 96366,
+  "flipped_edges": 0,
+  "inside_out_faces": 652,
+  "loose_verts": 0,
+  "no_weight_verts": 0,
+  "nonmanifold_edges": 0,
+  "over4_verts": 0,
+  "uv_maps": [
+   "UVMap",
+   "UVMap.001",
+   "UVMap.002",
+   "UVMap.003",
+   "UVMap.004",
+   "UVMap.005",
+   "UVMap.006",
+   "UVMap.007"
+  ],
+  "verts": 48652,
+  "zero_area_faces": 0
+ },
+ "L_webs": {
+  "bad_sum_verts": 0,
+  "faces": 16,
+  "flipped_edges": 7,
+  "inside_out_faces": 4,
+  "loose_verts": 0,
+  "no_weight_verts": 0,
+  "nonmanifold_edges": 0,
+  "over4_verts": 0,
+  "uv_maps": [
+   "UVMap",
+   "UVMap.001",
+   "UVMap.002",
+   "UVMap.003",
+   "UVMap.004",
+   "UVMap.005",
+   "UVMap.006",
+   "UVMap.007"
+  ],
+  "verts": 18,
+  "zero_area_faces": 0
+ },
+ "R_fingers": {
+  "bad_sum_verts": 0,
+  "faces": 3084,
+  "flipped_edges": 0,
+  "inside_out_faces": 200,
+  "loose_verts": 0,
+  "no_weight_verts": 0,
+  "nonmanifold_edges": 0,
+  "over4_verts": 0,
+  "uv_maps": [
+   "UVMap",
+   "UVMap.001",
+   "UVMap.002",
+   "UVMap.003",
+   "UVMap.004",
+   "UVMap.005",
+   "UVMap.006",
+   "UVMap.007"
+  ],
+  "verts": 1577,
+  "zero_area_faces": 0
+ },
+ "R_skin": {
+  "bad_sum_verts": 0,
+  "faces": 120649,
+  "flipped_edges": 0,
+  "inside_out_faces": 779,
+  "loose_verts": 0,
+  "no_weight_verts": 0,
+  "nonmanifold_edges": 0,
+  "over4_verts": 0,
+  "uv_maps": [
+   "UVMap",
+   "UVMap.001",
+   "UVMap.002",
+   "UVMap.003",
+   "UVMap.004",
+   "UVMap.005",
+   "UVMap.006",
+   "UVMap.007"
+  ],
+  "verts": 60918,
+  "zero_area_faces": 0
+ },
+ "R_webs": {
+  "bad_sum_verts": 0,
+  "faces": 16,
+  "flipped_edges": 10,
+  "inside_out_faces": 2,
+  "loose_verts": 0,
+  "no_weight_verts": 0,
+  "nonmanifold_edges": 0,
+  "over4_verts": 0,
+  "uv_maps": [
+   "UVMap",
+   "UVMap.001",
+   "UVMap.002",
+   "UVMap.003",
+   "UVMap.004",
+   "UVMap.005",
+   "UVMap.006",
+   "UVMap.007"
+  ],
+  "verts": 18,
+  "zero_area_faces": 0
+ }
+}

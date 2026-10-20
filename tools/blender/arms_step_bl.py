@@ -8,15 +8,12 @@ with `finish()` (`arms_bl.do_build`: saves arms.blend, exports the live parts). 
 vertices only; coincident vertices (1e-6 m) move as one group by their mean vector.
 """
 import importlib
-import os
-import sys
 
 import bpy
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
-PARTS = tuple(s + "_" + p for s in "LR" for p in ("skin", "fingers", "webs"))
+from arm_names import PARTS
+import bl_result  # noqa: E402
 
 
 def prepare(name: str) -> bool:
@@ -133,8 +130,9 @@ def finish() -> None:
 
 
 def main() -> None:
-    args = sys.argv[sys.argv.index("--") + 1:]
+    args = bl_result.args()
     importlib.import_module("arms_%s_bl" % args[0]).main(args[1:])
+    bl_result.write("step " + args[0])
 
 
 if __name__ == "__main__":

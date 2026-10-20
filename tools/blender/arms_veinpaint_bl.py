@@ -7,9 +7,9 @@ import sys
 import bpy
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+from arm_names import photo_path, UV_A, UV_B, SKIN, RIG
 from arms_frame_bl import hand_frame  # noqa: E402
+from arms_veinmesh import VeinMesh  # noqa: E402
 import arms_veingates as G  # noqa: E402
 from arms_hunt_bl import setup_render, shoot  # noqa: E402
 from arms_veinsplice import NAME, RES  # noqa: E402
@@ -21,7 +21,6 @@ BLUE = np.array((0.08, 0.2, 0.95))
 S_LO, S_HI = -0.2, 2.2  # arms_look_bl's framing
 
 
-PHOTO = "C:/Users/Traff/AppData/Local/Temp/vg-hbr/ref/owner_fists.png"
 # The photo's rows in px (600 x 900, y down), read once from the picture: knuckle-row top and
 # dorsal wrist crease per fist (hand length 170 px L, 180 px R, research 05), and the fist's
 # centre column; our L is the photo's left half (x < 300), our R its right half.
@@ -108,8 +107,8 @@ def _setup(side: str) -> tuple:
     sh = sc.display.shading
     sh.light = "FLAT"
     sh.color_type = "VERTEX"
-    bpy.data.objects["rig"].data.pose_position = "REST"
-    src = bpy.data.objects[side + "_skin"]
+    bpy.data.objects[RIG].data.pose_position = "REST"
+    src = bpy.data.objects[side + SKIN]
     ev = src.evaluated_get(bpy.context.evaluated_depsgraph_get())
     me = bpy.data.meshes.new_from_object(ev)
     ob = bpy.data.objects.new("paint_" + side, me)
@@ -153,7 +152,7 @@ def _paint(cov: np.ndarray, bri: np.ndarray, pts: list, k: float, x0: float, ang
 
 def _chart_image(side: str, mesh, paths: list, me) -> None:
     """Per pixel like arm_vein.gdshaderinc: the vein brightness on an (x, angle) grid, sampled
-    bilinear through a UV layer made from each loop's chart (UVMap.002 / .003), not interpolated
+    bilinear through a UV layer made from each loop's chart (UV_A / UV_B in arm_names), not interpolated
     per vertex. The grid reaches PAD past +-pi and a face that crosses the seam is shifted whole."""
     x0, x1 = float(mesh.ch[:, 0].min()) - 0.01, float(mesh.ch[:, 0].max()) + 0.01
     ang0, span = -math.pi - PAD, 2 * (math.pi + PAD)
@@ -170,8 +169,8 @@ def _chart_image(side: str, mesh, paths: list, me) -> None:
                            .astype(np.float32).ravel())
     n = len(me.loops)
     a, b = np.zeros(2 * n), np.zeros(2 * n)
-    me.uv_layers["UVMap.002"].data.foreach_get("uv", a)
-    me.uv_layers["UVMap.003"].data.foreach_get("uv", b)
+    me.uv_layers[UV_A].data.foreach_get("uv", a)
+    me.uv_layers[UV_B].data.foreach_get("uv", b)
     a, b = a.reshape(n, 2), b.reshape(n, 2)
     ang = np.arctan2(b[:, 0], 1 - a[:, 1])
     ls, lt = np.zeros(len(me.polygons), np.int32), np.zeros(len(me.polygons), np.int32)
@@ -180,7 +179,7 @@ def _chart_image(side: str, mesh, paths: list, me) -> None:
     lo, hi = np.minimum.reduceat(ang, ls), np.maximum.reduceat(ang, ls)
     cross = np.repeat(hi - lo > math.pi, lt)  # loops are in polygon order
     ang = np.where(cross & (ang < 0), ang + 2 * math.pi, ang)
-    uv = me.uv_layers["UVMap.002"]  # the copy is at the UV layer limit: reuse one, chart is read
+    uv = me.uv_layers[UV_A]  # the copy is at the UV layer limit: reuse one, chart is read
     uv.data.foreach_set("uv", np.stack(((a[:, 0] - x0) / (w * TEXEL),
                                         (ang - ang0) / span), axis=1).ravel())
     me.uv_layers.active = uv
@@ -217,7 +216,7 @@ def sheet(side: str, out_dir: str, traced_png: str, rejected_png: str) -> str:
     """Writes <out_dir>/sheet_<side>_back.png: the owner's photo fist | traced | rejected."""
     tr, rj = _pixels(traced_png), _pixels(rejected_png)
     n = tr.shape[0]
-    ph = _pixels(PHOTO)
+    ph = _pixels(photo_path())
     pps = n / ((SHEET_S[1] - SHEET_S[0]) * 1.04)  # render pixels per s
     lpx = PH_WRIST[side] - PH_KNUCKLE[side]  # photo pixels per s
     k = lpx / pps
@@ -290,7 +289,6 @@ def main(args: list) -> None:
     """`-- <out_dir> <scratch_dir>`: true-width live and scratch _next renders and the sheets."""
     out, scratch = args[:2]
     os.makedirs(out, exist_ok=True)
-    from arms_veinpaths_bl import VeinMesh  # noqa: E402
     for side in ("R", "L"):
         mesh = VeinMesh(side)
         tr = os.path.join(out, "traced_%s_back.png" % side)

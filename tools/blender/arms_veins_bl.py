@@ -16,13 +16,12 @@ from types import SimpleNamespace
 import bpy
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
 import arms_step_bl as S  # noqa: E402
 from arms_cords_bl import centre, cords, polyline  # noqa: E402
 from arms_frame_bl import chart  # noqa: E402
 from arms_relief_bl import read_paths  # noqa: E402
 from arms_veinsplice import NAME, PALM, RES  # noqa: E402
+from arm_names import SKIN
 
 MAX_R = 0.006
 FADE_LEN = 0.012
@@ -145,7 +144,7 @@ def main(args) -> None:
     blocked = []
     k = k_r = 0.0
     for side in "RL":
-        part = S.Part(side + "_skin")
+        part = S.Part(side + SKIN)
         me = part.ob.data
         nrm = np.empty(len(part.co) * 3)
         me.vertices.foreach_get("normal", nrm)

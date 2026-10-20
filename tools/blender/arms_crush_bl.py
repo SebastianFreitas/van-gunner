@@ -7,21 +7,18 @@ smoothed, with the 12 vertices nearest each claw seat and the knots0 vertices pi
 whose 0-based line number is in crush_strong.txt (one per line, optional) use factor 1.0 x 4.
 """
 import os
-import sys
 
 import bmesh
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+from arm_names import HERE, FINGERS, VG_FING_TIP, VG_THUMB_FMT, FINGERS_PART
 import arms_hunt_bl as H  # noqa: E402
 from arms_bl import _stored_ids  # noqa: E402
 
-SCR = "C:/Users/Traff/AppData/Local/Temp/vg-hbr/"
-IDS = SCR + "crush_ids.txt"
-STRONG = SCR + "crush_strong.txt"
-KNOTS = SCR + "knots0.txt"
-TIP = ("DEF-f_index.03.", "DEF-f_middle.03.", "DEF-f_ring.03.", "DEF-f_pinky.03.", "DEF-thumb.03.")
+IDS = os.path.join(HERE, "arms_crush_ids.txt")
+STRONG = os.path.join(HERE, "arms_crush_strong.txt")
+KNOTS = os.path.join(HERE, "arms_knots0.txt")
+TIP = tuple((VG_FING_TIP % f) + "." for f in FINGERS) + (VG_THUMB_FMT % 3 + ".",)
 PIN = 12
 
 
@@ -138,7 +135,7 @@ def crush(parts, lines) -> None:
     targets = read_targets()
     for name in sorted({t[0] for t in targets}):
         part = parts[name]
-        fg = parts[name[0] + "_fingers"]
+        fg = parts[name[0] + FINGERS_PART]
         side = name[0]
         stored = _stored_ids(part.ob)
         by_id = {v: i for i, v in stored.items()}

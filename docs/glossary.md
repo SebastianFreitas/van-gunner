@@ -34,7 +34,7 @@ Owner's words → code names. Add a line when the owner uses a word the code doe
 - rares / set pieces: FacadeSetPiece, facade_set_piece.gd, facade_set_pieces.gd
 - graffiti / posters: scripts/travel/facades/facade_street_art.gd, street_art/
 - sidewalk wreck / broken paving: scripts/travel/road_floor_wreck_map.gd (+ road_floor_wreck*.gd), facade_wreck.gd
-- hands / arms / sausages: scripts/player/arms/ (arm_bulk.gd for hand and finger taper), arms_builder.gd
+- hands / arms / sausages: scripts/player/arms/ (the hand's shape is baked in tools/blender/arms.blend; arm_channels.gd for the channels), arms_builder.gd
 - war-rig: the van's look, .claude/rules/van-look.md; scripts/van/look/
 - fps counter / stats: the perf overlay, PerfOverlay, scripts/ui/perf_overlay.gd (F3 cycles off, FPS, full; console `perf`), numbers from scripts/debug/perf_stats.gd
 - bars over the road / overheads: scripts/travel/facades/facade_overheads.gd, set_pieces/pedestrian_bridge.gd, set_pieces/pipe_bridge.gd

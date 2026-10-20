@@ -6,16 +6,15 @@ Writes <dir>/relief.txt; never saves arms.blend or any .tres, moves no vertex.
 import math
 import os
 import re
-import sys
 
 import bpy
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+import bl_result  # noqa: E402
 from arms_frame_bl import hand_frame  # noqa: E402
 from arms_cords_bl import WRAP, Skin, centre, cords, polyline  # noqa: E402
 from arms_veinsplice import NAME, PALM, RES  # noqa: E402
+from arm_names import SKIN
 
 
 def read_paths(path: str) -> list:
@@ -116,8 +115,8 @@ def main(args) -> None:
     tail = []
     up = np.array((0.0, 0.0, 1.0))
     for side in ("R", "L"):
-        sk = Skin(bpy.data.objects[side + "_skin"])
-        arch = bpy.data.objects.get("veins_%s_skin" % side)
+        sk = Skin(bpy.data.objects[side + SKIN])
+        arch = bpy.data.objects.get("veins_%s" % side + SKIN)
         before = Skin(arch, live=False).pos if arch is not None else None
         sets = sets_of(side)
         pre = Skin(arch, live=False) if arch is not None else sk
@@ -191,4 +190,5 @@ def main(args) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[sys.argv.index("--") + 1:])
+    main(bl_result.args())
+    bl_result.write("relief")

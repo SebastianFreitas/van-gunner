@@ -8,19 +8,15 @@ import sys
 import bpy
 from mathutils import Matrix, Vector
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+from arm_names import BLEND, GLB_OUT, MESHES, PARTS, VG_HAND, VG_INDEX1, VG_MIDDLE1, VG_PINKY1, SKIN, RIG
+import bl_result  # noqa: E402
 from arms_frame_bl import hand_frame  # noqa: E402
-BLEND = os.path.join(HERE, "arms.blend")
-GLB_OUT = os.path.abspath(os.path.join(HERE, "..", "..", "assets", "models", "arms", "arms.glb"))
-MESHES = ("ArmL", "ArmR")
-PARTS = tuple(s + "_" + p for s in "LR" for p in ("skin", "fingers", "webs"))
 
 
 def _export(path: str = GLB_OUT) -> None:
     for o in bpy.context.view_layer.objects:
         o.select_set(False)
-    keep = [bpy.data.objects["rig"]] + [bpy.data.objects[n] for n in PARTS]
+    keep = [bpy.data.objects[RIG]] + [bpy.data.objects[n] for n in PARTS]
     for o in keep:
         o.select_set(True)
     bpy.context.view_layer.objects.active = keep[0]
@@ -41,7 +37,7 @@ def do_import(glb: str) -> None:
         bpy.data.objects.remove(ico)
     arms = [o for o in bpy.data.objects if o.type == "ARMATURE"]
     assert len(arms) == 1, "expected one armature"
-    arms[0].name = "rig"
+    arms[0].name = RIG
     for n in MESHES:
         assert n in bpy.data.objects, "missing mesh " + n
     col = bpy.data.collections.new("cc0")
@@ -58,70 +54,13 @@ def do_import(glb: str) -> None:
     print("SAVED", BLEND, os.path.getsize(BLEND))
 
 
-def _archive(names: list) -> None:
-    """Move objects to the hidden `archive_` collection (removed art is archived, never deleted)."""
-    arch = bpy.data.collections.get("archive_")
-    if arch is None:
-        arch = bpy.data.collections.new("archive_")
-        bpy.context.scene.collection.children.link(arch)
-    for n in names:
-        ob = bpy.data.objects.get(n)
-        if ob is None:
-            continue
-        for c in list(ob.users_collection):
-            c.objects.unlink(ob)
-        arch.objects.link(ob)
-    old = bpy.data.collections.get("cc0")
-    if old is not None and not old.objects:
-        bpy.data.collections.remove(old)
-    arch.hide_render = True
-    arch.hide_viewport = True
-    bpy.context.view_layer.layer_collection.children["archive_"].exclude = True
-
-
-def do_import_baked(glb: str, force: bool) -> None:
-    """Replace the source meshes with the baked parts, skinned to the existing rig."""
-    if bpy.data.objects.get(PARTS[0]) and not force:
-        raise SystemExit("Error: baked parts already in arms.blend; pass --force")
-    for n in PARTS:
-        ob = bpy.data.objects.get(n)
-        if ob:
-            me = ob.data
-            bpy.data.objects.remove(ob)
-            bpy.data.meshes.remove(me)
-    before = set(bpy.data.objects.keys())
-    bpy.ops.import_scene.gltf(filepath=glb)
-    new = [o for o in bpy.data.objects if o.name not in before]
-    rig = bpy.data.objects["rig"]
-    bones = {b.name.replace(".", "_"): b.name for b in rig.data.bones}
-    for o in new:
-        if o.type == "MESH" and o.name in PARTS:
-            for g in o.vertex_groups:
-                # Blender made the second skeleton's names unique with a trailing "2".
-                key = g.name[:-1] if g.name.endswith("2") else g.name
-                g.name = bones[key]
-            for m in o.modifiers:
-                if m.type == "ARMATURE":
-                    m.object = rig
-            o.parent = rig
-            o.matrix_parent_inverse = Matrix.Identity(4)
-    for o in new:
-        if o.type != "MESH" or o.name not in PARTS:
-            bpy.data.objects.remove(o)
-    missing = [n for n in PARTS if n not in bpy.data.objects]
-    assert not missing, "baked glb lacks parts " + str(missing)
-    _archive(list(MESHES) + ["cc0_" + n for n in MESHES])
-    bpy.context.preferences.filepaths.save_version = 0
-    bpy.ops.wm.save_mainfile(compress=True)
-    print("SAVED", BLEND, os.path.getsize(BLEND))
-
-
-def do_build() -> None:
+def do_build(glb: str = GLB_OUT) -> None:
+    bl_result.check_names()
     # arms_edit_bl.apply is not run: its steps are for the raw archived meshes (all off anyway).
     bpy.context.preferences.filepaths.save_version = 0  # no arms.blend1 backup
     bpy.ops.wm.save_mainfile(compress=True)
-    print("SAVED", BLEND, os.path.getsize(BLEND))
-    _export()
+    print("SAVED", bpy.data.filepath, os.path.getsize(bpy.data.filepath))
+    _export(glb)
 
 
 def _stored_ids(ob) -> dict:
@@ -150,9 +89,10 @@ def do_prove(out_glb: str, out_json: str) -> None:
     stored CUSTOM2.w ids (not Blender indices) and the offset in glb axes.
     """
     import json
+    bl_result.check_names()
     fr = hand_frame("R")
     H, span, axis, dors, lat = fr.H, fr.span, fr.axis, fr.dors, fr.lat
-    ob = bpy.data.objects["R_skin"]
+    ob = bpy.data.objects["R" + SKIN]
     pts = [ob.matrix_world @ v.co for v in ob.data.vertices]
     # Back of the hand: the slab 0.3..0.5 of the way to the middle knuckle, on the dorsal side.
     idx = [i for i, p in enumerate(pts)
@@ -172,29 +112,29 @@ def do_prove(out_glb: str, out_json: str) -> None:
     ob.data.update()
     _export(out_glb)
     with open(out_json, "w") as f:
-        json.dump({"part": "R_skin", "ids": ids, "offset": [off.x, off.z, -off.y]}, f)
+        json.dump({"part": "R" + SKIN, "ids": ids, "offset": [off.x, off.z, -off.y]}, f)
     print("PROVE", len(ids), "vertices moved", tuple(off), "->", out_glb)
 
 
 def do_preview(out: str) -> None:
     os.makedirs(out, exist_ok=True)
     sc = bpy.context.scene
-    rig = bpy.data.objects["rig"]
+    rig = bpy.data.objects[RIG]
     bpy.data.collections["archive_"].hide_render = False
     bpy.context.view_layer.layer_collection.children["archive_"].exclude = False
     rw = rig.matrix_world
 
     def head(b):
         return rw @ rig.data.bones[b].head_local
-    H = head("DEF-hand.R")
-    M = head("DEF-f_middle.01.R")
+    H = head(VG_HAND + ".R")
+    M = head(VG_MIDDLE1 + ".R")
     span = (M - H).length
     axis = (M - H).normalized()
     up = Vector((0, 0, 1))
     dors = (up - axis * up.dot(axis)).normalized()
-    lat = head("DEF-f_index.01.R") - head("DEF-f_pinky.01.R")
+    lat = head(VG_INDEX1 + ".R") - head(VG_PINKY1 + ".R")
     lat = (lat - axis * lat.dot(axis)).normalized()
-    cc0 = bpy.data.objects["cc0_ArmR"]
+    cc0 = bpy.data.objects["cc0_" + MESHES[1]]
     new = [bpy.data.objects[n] for n in PARTS if n.startswith("R_")]
     # Frame on the cc0 right hand: vertices past the wrist along the hand axis.
     pts = [cc0.matrix_world @ v.co for v in cc0.data.vertices]
@@ -203,7 +143,7 @@ def do_preview(out: str) -> None:
     hi = max(p.dot(lat) for p in hand)
     centre = H + axis * span * 0.55
     scale = max(span * 2.2, (hi - lo) * 1.4)
-    for n in ("cc0_ArmL", "ArmL", "ArmR") + tuple(q for q in PARTS if q.startswith("L_")):
+    for n in ("cc0_" + MESHES[0],) + MESHES + tuple(q for q in PARTS if q.startswith("L_")):
         bpy.data.objects[n].hide_render = True
     rig.hide_render = True
     cc0.hide_viewport = False
@@ -261,20 +201,19 @@ def do_preview(out: str) -> None:
 
 
 def main() -> None:
-    args = sys.argv[sys.argv.index("--") + 1:]
+    args = bl_result.args()
     mode = args[0]
     if mode == "import":
         do_import(args[1])
-    elif mode == "import-baked":
-        do_import_baked(args[1], "force" in args[2:])
     elif mode == "build":
-        do_build()
+        do_build(*args[1:2])
     elif mode == "prove":
         do_prove(args[1], args[2])
     elif mode == "preview":
         do_preview(args[1])
     else:
         raise SystemExit("unknown mode " + mode)
+    bl_result.write(mode, blend_bytes=os.path.getsize(BLEND) if os.path.exists(BLEND) else 0)
 
 
 if __name__ == "__main__":

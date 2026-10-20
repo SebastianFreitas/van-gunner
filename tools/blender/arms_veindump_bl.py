@@ -7,16 +7,15 @@ Never saves arms.blend.
 """
 import json
 import os
-import sys
 
 import bpy
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
-from arms_veinpaths_bl import VeinMesh, WRAP  # noqa: E402
+from arms_veinmesh import WRAP, VeinMesh
+import bl_result  # noqa: E402
 from arms_frame_bl import hand_frame  # noqa: E402
 from arms_veinsets import apply, side_L, side_R  # noqa: E402
+from arm_names import SKIN, FINGERS_PART, WEBS
 
 
 def part_sl(name: str, fr) -> list:
@@ -39,7 +38,7 @@ def main(args) -> None:
     for side, fn in (("R", side_R), ("L", side_L)):
         mesh = VeinMesh(side)
         fr = hand_frame(side)
-        ev = bpy.data.objects[side + "_skin"].evaluated_get(bpy.context.evaluated_depsgraph_get())
+        ev = bpy.data.objects[side + SKIN].evaluated_get(bpy.context.evaluated_depsgraph_get())
         P = apply(side, fn())
         pts = [p[:2] for q in P.values() for p in q["pts"]]
         pts = pts[::max(1, len(pts) // 20)][:20]
@@ -50,11 +49,12 @@ def main(args) -> None:
              "fw": mesh.fw[mesh.ids].tolist(), "tw": mesh.tw[mesh.ids].tolist(),
              # s * span and lat are in metres for every skin vertex, so edge lengths need no more
              "edges": [list(e.vertices) for e in ev.data.edges],
-             "fingers": part_sl(side + "_fingers", fr), "webs": part_sl(side + "_webs", fr)}
+             "fingers": part_sl(side + FINGERS_PART, fr), "webs": part_sl(side + WEBS, fr)}
         with open(os.path.join(out, "mesh_%s.json" % side), "w") as fh:
             json.dump(d, fh)
         print("dumped", side, len(mesh.s), "verts", len(mesh.ids), "dorsal")
 
 
 if __name__ == "__main__":
-    main(sys.argv[sys.argv.index("--") + 1:])
+    main(bl_result.args())
+    bl_result.write("veindump")

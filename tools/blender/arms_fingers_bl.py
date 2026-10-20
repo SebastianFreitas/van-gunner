@@ -9,15 +9,12 @@ and ring are wrecked instead (D19, D20): no landing, then a joint bend about the
 Each move is its own function `main` calls in order, so later moves can join the list.
 """
 import math
-import os
-import sys
 
 import bpy
 import numpy as np
 from mathutils.bvhtree import BVHTree
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+from arm_names import VG_FING_FMT, VG_THUMB_FMT, RIG, SKIN, FINGERS_PART, WEBS
 import arms_step_bl as S  # noqa: E402
 from arms_frame_bl import HandFrame  # noqa: E402
 
@@ -41,9 +38,9 @@ class Finger:
     """One finger's frame: u, bone lengths, joint positions along u, its tip pole."""
 
     def __init__(self, fr: HandFrame, name: str, parts: dict):
-        b = "DEF-f_%s.0%d"
+        b = VG_FING_FMT
         h = [np.array(fr.head(b % (name, i))) for i in (1, 2, 3)]
-        rig = bpy.data.objects["rig"]
+        rig = bpy.data.objects[RIG]
         tail = np.array(rig.matrix_world @ rig.data.bones[b % (name, 3) + "." + fr.side].tail_local)
         self.name = name
         self.head = h
@@ -254,7 +251,7 @@ def main(args) -> None:
     lines = []
     for side in "LR":
         fr = HandFrame(side)
-        parts = {k: S.Part("%s_%s" % (side, k)) for k in ("skin", "fingers", "webs")}
+        parts = {k: S.Part(side + p) for k, p in (("skin", SKIN), ("fingers", FINGERS_PART), ("webs", WEBS))}
         for p in parts.values():
             assert p.ob.matrix_world.is_identity
         fingers = [Finger(fr, n, parts) for n in NAMES]
@@ -271,7 +268,7 @@ def main(args) -> None:
         for key, part in parts.items():
             d = part.grouped(pos[key] - part.co)
             n = part.write(part.co + d)
-            tw = part.wt(*["DEF-thumb.0%d.%s" % (i, side) for i in (1, 2, 3)]) > 0.5
+            tw = part.wt(*[(VG_THUMB_FMT + ".%s") % (i, side) for i in (1, 2, 3)]) > 0.5
             lines.append("%s_%s moved %d, max |move| %.2f mm, thumb-weighted max %.2f mm" % (
                 side, key, n, 1000 * float(np.linalg.norm(d, axis=1).max()),
                 1000 * float(np.linalg.norm(d[tw], axis=1).max()) if tw.any() else 0.0))

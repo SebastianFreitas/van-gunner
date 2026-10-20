@@ -9,18 +9,19 @@ cluster, when the glb carries them in its second UV set), orbit_<side>_<k>.png a
 import json
 import math
 import os
-import sys
 
 import bmesh
 import bpy
 from mathutils import Matrix, Vector
-from mathutils.kdtree import KDTree
+
+from arm_names import VG_HAND, VG_MIDDLE1, SKIN, FINGERS_PART
+import bl_result  # noqa: E402
+from arms_huntmesh import MERGE, face_elems, find_coincident, id_tree, ring_info  # noqa: E402
 
 SLIVER_ANGLE = 3.0
 SLIVER_RATIO = 15.0
 SPIKE_K = 0.6
 CREASE_DEG = 75.0
-MERGE = 1e-6
 CLOSEUPS = 8
 RES = 800
 KINDS = ["inside_out", "inside_out_all", "sliver", "spike", "crease", "hole",
@@ -59,69 +60,13 @@ class Frame:
         self.bones = {n: convert(p) for n, p in heads.items()}
 
     def slab(self, side, p):
-        h = self.bones["DEF-hand." + side]
-        m = self.bones["DEF-f_middle.01." + side]
+        h = self.bones[VG_HAND + "." + side]
+        m = self.bones[VG_MIDDLE1 + "." + side]
         span = (m - h).length
         return (p - h).dot((m - h).normalized()) / span
 
     def nearest(self, p):
         return min(self.bones, key=lambda n: (self.bones[n] - p).length_squared)
-
-
-def face_elems(bm, faces):
-    return [(f.calc_center_median(), f.normal.copy()) for f in faces]
-
-
-def find_coincident(bm):
-    groups = {}
-    for f in bm.faces:
-        key = tuple(sorted((round(v.co.x / MERGE), round(v.co.y / MERGE), round(v.co.z / MERGE))
-                           for v in f.verts))
-        groups.setdefault(key, []).append(f)
-    flagged = []
-    mult = []
-    for fs in groups.values():
-        if len(fs) > 1:
-            flagged += fs
-            mult += [len(fs)] * len(fs)
-    return flagged, mult
-
-
-def ring_info(v):
-    """(height off the plane fitted to the ring, mean ring edge) or None."""
-    if v.is_boundary or not v.is_manifold or len(v.link_faces) < 3:
-        return None
-    pts = []
-    for lp in v.link_loops:
-        if len(lp.face.verts) != 3:
-            return None
-        pts.append((lp.link_loop_next.vert.co, lp.link_loop_next.link_loop_next.vert.co))
-    c = sum((a for a, _ in pts), Vector()) / len(pts)
-    n = Vector()
-    edge = 0.0
-    for a, b in pts:
-        n += (a - c).cross(b - c)
-        edge += (a - b).length
-    edge /= len(pts)
-    if n.length < 1e-12 or edge < 1e-12:
-        return None
-    return abs((v.co - c).dot(n.normalized())), edge, n.normalized()
-
-
-def id_tree(ob):
-    """KDTree of the raw world positions holding each vertex's baked id (UV2.x), or None."""
-    me = ob.data
-    if len(me.uv_layers) < 2:
-        return None
-    uv = me.uv_layers[1].data
-    ids = {}
-    for lp in me.loops:
-        ids.setdefault(lp.vertex_index, set()).add(int(round(uv[lp.index].uv.x)))
-    tree = KDTree(len(me.vertices))
-    for v in me.vertices:
-        tree.insert(ob.matrix_world @ v.co, v.index)
-    tree.balance()
-    return tree, ids
 
 
 def analyse(ob, side, frame):
@@ -256,7 +201,7 @@ def analyse(ob, side, frame):
             nrm = sum((e.link_faces[0].normal for e in es), Vector()).normalized()
             loops.append(dict(count=len(es), per=per, pos=cen, normal=nrm,
                               ids=ids_of([v for e in es for v in e.verts])))
-        if ob.name.endswith("_skin"):
+        if ob.name.endswith(SKIN):
             low = min(range(len(loops)), key=lambda i: frame.slab(side, loops[i]["pos"]))
             expected = {low}
         else:
@@ -273,7 +218,7 @@ def analyse(ob, side, frame):
 def is_root_loop(ob, side, loop, frame):
     """A finger tube's open root: a full ring of edges (the tubes have 12 sides); the
     2-edge loops on `_fingers` are real holes."""
-    return ob.name.endswith("_fingers") and loop["count"] >= 8
+    return ob.name.endswith(FINGERS_PART) and loop["count"] >= 8
 
 
 def setup_render():
@@ -318,7 +263,7 @@ def shoot(sc, cam, cam_d, path, target, view, scale, up=None):
 
 
 def main() -> None:
-    glb, out = sys.argv[sys.argv.index("--") + 1:][:2]
+    glb, out = bl_result.args()[:2]
     os.makedirs(out, exist_ok=True)
     with open(os.path.splitext(glb)[0] + ".bones.json") as fh:
         raw = json.load(fh)
@@ -352,7 +297,7 @@ def main() -> None:
     for ob in sorted(meshes, key=lambda o: o.name):
         if "_claw_" not in ob.name:
             continue
-        fob = [o for o in meshes if o.name[0] == ob.name[0] and o.name.endswith("_fingers")]
+        fob = [o for o in meshes if o.name[0] == ob.name[0] and o.name.endswith(FINGERS_PART)]
         if not fob:  # the one-skin hands have no separate fingers object
             continue
         mw = ob.matrix_world
@@ -371,15 +316,15 @@ def main() -> None:
 
     sc, cam, cam_d = setup_render()
     for ob in meshes:
-        ob.color = (0.70, 0.62, 0.50, 1) if ob.name[2:].startswith("skin") else (0.55, 0.62, 0.50, 1)
+        ob.color = (0.70, 0.62, 0.50, 1) if ob.name[1:] == SKIN else (0.55, 0.62, 0.50, 1)
     for ob in meshes:
         ob.hide_render = False
     # orbit: 12 views per hand, azimuth every 30 degrees, elevation alternating 20 and 50
     for side, fr in frames.items():
         for ob in meshes:
             ob.hide_render = ob.name[0] != side
-        h = fr.bones["DEF-hand." + side]
-        m = fr.bones["DEF-f_middle.01." + side]
+        h = fr.bones[VG_HAND + "." + side]
+        m = fr.bones[VG_MIDDLE1 + "." + side]
         span = (m - h).length
         centre = h + (m - h) * 0.55
         for k in range(12):
@@ -397,7 +342,7 @@ def main() -> None:
             for ob in meshes:
                 ob.hide_render = ob.name[0] != c["side"]
             fr = frames[c["side"]]
-            span = (fr.bones["DEF-f_middle.01." + c["side"]] - fr.bones["DEF-hand." + c["side"]]).length
+            span = (fr.bones[VG_MIDDLE1 + "." + c["side"]] - fr.bones[VG_HAND + "." + c["side"]]).length
             scale = max(c["r"] * 3, span * 0.08)
             n = c["normal"] if c["normal"].length > 0.5 else Vector((0, 0, 1))
             d0 = -n.normalized()
@@ -411,6 +356,7 @@ def main() -> None:
                       os.path.join(out, "%s_%s_%d_%d.png" % (kind, c["obj"], c["n"], a)),
                       c["pos"], view, scale)
     print("HUNT", out, len(found))
+    bl_result.write("hunt", clusters=len(found))
 
 
 if __name__ == "__main__":

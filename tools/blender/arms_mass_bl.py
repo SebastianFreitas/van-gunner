@@ -8,19 +8,15 @@ Args: `wrist` (f = 1 to s 1/8, f1 at 3/16: the wrist_step fallback), `t7=<m>` (d
 Per side, up to two fallback rounds (f_k += (T_k - measured)/(W_k - l), a shallower root raises
 that flank's l_side by its shaft), then one fresh run at T7 .119; the outcome is printed.
 """
-import os
-import sys
 
 import bpy
 import numpy as np
 from mathutils.bvhtree import BVHTree
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+from arm_names import FINGERS, VG_HAND, VG_PALM, VG_FING_FMT, VG_FING_ROOT, VG_THUMB_FMT, SKIN, FINGERS_PART, RIG
 import arms_step_bl as S  # noqa: E402
 from arms_frame_bl import shape_frame  # noqa: E402
 
-FING = ("index", "middle", "ring", "pinky")
 L_SIDE = {"index": .0526, "pinky": .0918}
 SHAFT = {"index": .0274, "middle": .0333, "ring": .0270, "pinky": .0239}
 ROOT_SIDE = {"index": "index", "middle": "index", "ring": "pinky", "pinky": "pinky"}
@@ -48,13 +44,13 @@ def p95(lats, areas):
 class Hand:
     def __init__(self, side, parts):
         self.side = side
-        self.sk, self.fg = parts[side + "_skin"], parts[side + "_fingers"]
+        self.sk, self.fg = parts[side + SKIN], parts[side + FINGERS_PART]
         self.fr = shape_frame(side)
         sk = self.sk
-        self.tw = sk.wt(*["DEF-thumb.0%d.%s" % (i, side) for i in (1, 2, 3)])
-        self.fw = sk.wt(*["DEF-f_%s.0%d.%s" % (f, i, side) for f in FING for i in (1, 2, 3)])
+        self.tw = sk.wt(*[(VG_THUMB_FMT + ".%s") % (i, side) for i in (1, 2, 3)])
+        self.fw = sk.wt(*[(VG_FING_FMT + ".%s") % (f, i, side) for f in FINGERS for i in (1, 2, 3)])
         wsum = sum(sk.w.values())
-        hand = sk.wt("DEF-hand." + side, *[n for n in sk.w if n.startswith("DEF-palm")])
+        hand = sk.wt(VG_HAND + "." + side, *[n for n in sk.w if n.startswith(VG_PALM)])
         self.share = (wsum > 0) & (hand >= 0.30 * wsum)
 
     def coords(self, co):
@@ -78,12 +74,12 @@ class Hand:
         sk = self.sk
         bvh = BVHTree.FromPolygons([tuple(v) for v in co], [tuple(t) for t in sk.tri])
         res = {}
-        for f in FING:
-            bone = bpy.data.objects["rig"].data.bones["DEF-f_%s.01.%s" % (f, self.side)]
+        for f in FINGERS:
+            bone = bpy.data.objects[RIG].data.bones[(VG_FING_ROOT + ".%s") % (f, self.side)]
             h = np.array(bone.head_local)
             a = np.array(bone.tail_local - bone.head_local)
             a /= np.linalg.norm(a)
-            idx = np.nonzero(self.fg.w["DEF-f_%s.01.%s" % (f, self.side)] > 0.5)[0]
+            idx = np.nonzero(self.fg.w[(VG_FING_ROOT + ".%s") % (f, self.side)] > 0.5)[0]
             t = (self.fg.co[idx] - h) @ a
             ring = idx[t <= t.min() + 1e-4]
             best = 9.0
@@ -158,7 +154,7 @@ def edit_hand(h, lines, args):
         lines.append("  W %s %s (research R %s)" % (n, fmt(W0[n]), fmt(W_REF[n])))
     lines.append("  pinky W7 %.4f beside the phase-1 proof's %.3f" % (W0["pinky"][7], PROOF_W7))
     s_, lat = h.coords(np.array([np.array(r) for r in h.fr.roots]))
-    for i, n in enumerate(FING):
+    for i, n in enumerate(FINGERS):
         lines.append("  root .01 %s s %.4f lat %.4f (research %.3f / %.4f)"
                      % (n, s_[i], lat[i], *ROOTS_REF[n]))
         if abs(s_[i] - ROOTS_REF[n][0]) > 0.002 or abs(lat[i] - ROOTS_REF[n][1]) > 0.002:
@@ -174,7 +170,7 @@ def edit_hand(h, lines, args):
     for rnd in range(4):
         new, f, T = h.apply(W0, prm)
         Wa, ra = h.measure(new), h.root_depths(new)
-        bad_roots = [n for n in FING if ra[n] < min(r0[n], 0.0005) - 1e-9]
+        bad_roots = [n for n in FINGERS if ra[n] < min(r0[n], 0.0005) - 1e-9]
         why, jump = gates(Wa)
         lines.append("  round %d t7 %.3f: f pinky %s | f index8 %.4f" % (rnd, prm["t7"], fmt(f["pinky"]), f["index"][8]))
         lines.append("    W after pinky %s index %s%s" % (fmt(Wa["pinky"]), fmt(Wa["index"]),
@@ -217,7 +213,7 @@ def crush_and_shard(parts, lines) -> None:
 
 def main(args) -> None:
     S.prepare("mass")
-    parts = {p: S.Part(p) for p in S.PARTS if p.endswith(("skin", "fingers"))}
+    parts = {p: S.Part(p) for p in S.PARTS if p.endswith((SKIN, FINGERS_PART))}
     lines = []
     for side in "LR":
         edit_hand(Hand(side, parts), lines, args)

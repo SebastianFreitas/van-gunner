@@ -4,20 +4,16 @@ Mirrors ArmSkinFolds.apply (tendon from the hand head toward each `.01` head). T
 helpers are wrap-aware: chart v is 0.035 atan2, so differences reduce modulo WRAP.
 """
 import math
-import os
-import sys
 
 import bpy
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+from arm_names import FINGERS, VG_HAND, VG_FING_ROOT, SKIN, RIG
 from mathutils import Vector  # noqa: E402
 from mathutils.bvhtree import BVHTree  # noqa: E402
 from arms_frame_bl import chart, hand_frame  # noqa: E402
 
 WRAP = 2 * math.pi * 0.035
-FING = ("index", "middle", "ring", "pinky")
 TENDON_START = 0.15
 TENDON_HALF = 0.42
 
@@ -146,17 +142,17 @@ def centre(sk: Skin, pts, rs=None) -> tuple:
 
 def cords(side: str, sk: Skin = None) -> list:
     """Per finger: (name, three chart points, (r at t 0, .5, 1), (A, B) world segment)."""
-    sk = sk or Skin(bpy.data.objects[side + "_skin"])
-    rig = bpy.data.objects["rig"]
+    sk = sk or Skin(bpy.data.objects[side + SKIN])
+    rig = bpy.data.objects[RIG]
     rw = rig.matrix_world
     bones = rig.data.bones
-    H = np.array(rw @ bones["DEF-hand." + side].head_local)
+    H = np.array(rw @ bones[VG_HAND + "." + side].head_local)
     up = np.array((0.0, 0.0, 1.0))
     dors = np.array(hand_frame(side).dors)
     cand = np.nonzero(sk.dorsal(up))[0]
     out = []
-    for f in FING:
-        b = bones["DEF-f_%s.01.%s" % (f, side)]
+    for f in FINGERS:
+        b = bones[(VG_FING_ROOT + ".%s") % (f, side)]
         head = np.array(rw @ b.head_local)
         tail = np.array(rw @ b.tail_local)
         A = H + (head - H) * TENDON_START
@@ -165,7 +161,7 @@ def cords(side: str, sk: Skin = None) -> list:
             p = A + (head - A) * t
             ids.append(int(cand[np.argmin(np.linalg.norm(sk.pos[cand] - p, axis=1))]))
         cpts = [sk.project(A + (head - A) * t, dors, cand) for t in (0.0, 0.5, 1.0)]
-        w = sk.weights("DEF-f_%s.01.%s" % (f, side))
+        w = sk.weights((VG_FING_ROOT + ".%s") % (f, side))
         ax = tail - head
         L = np.linalg.norm(ax)
         ax /= L

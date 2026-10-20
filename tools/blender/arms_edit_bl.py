@@ -9,6 +9,7 @@ import re
 
 import bpy
 from mathutils import Vector, kdtree
+from arm_names import VG_HAND, VG_PALM, VG_PALM1, VG_FOREARM, VG_THUMB1, VG_INDEX1, VG_MIDDLE1, VG_PINKY1, RIG
 
 # One table of edit numbers per step (phase 4: wrist, seam, width).
 EDITS: dict = {
@@ -23,11 +24,11 @@ EDITS: dict = {
     "width": {"on": False, "f": (1.0, 0.998, 0.99, 0.997, 0.913, 0.887, 0.948, 1.0, 1.0)},
 }
 
-_FOREARM_END = re.compile(r"^DEF-forearm.*\.001$")
+_FOREARM_END = re.compile("^" + VG_FOREARM + r".*\.001$")
 
 
 def _movable(name: str) -> bool:
-    return name.startswith("DEF-hand") or name.startswith("DEF-palm") or bool(_FOREARM_END.match(name))
+    return name.startswith(VG_HAND) or name.startswith(VG_PALM) or bool(_FOREARM_END.match(name))
 
 
 def _weights(ob) -> list:
@@ -59,11 +60,11 @@ def _frame(rig, side: str) -> dict:
 
     def head(b):
         return rw @ bones[b + "." + side].head_local
-    h = head("DEF-hand")
-    m = head("DEF-f_middle.01")
+    h = head(VG_HAND)
+    m = head(VG_MIDDLE1)
     length = (m - h).length
     axis = (m - h).normalized()
-    lat = head("DEF-f_index.01") - head("DEF-f_pinky.01")
+    lat = head(VG_INDEX1) - head(VG_PINKY1)
     lat = (lat - axis * lat.dot(axis)).normalized()
     up = Vector((0, 0, 1))
     dors = (up - axis * up.dot(axis)).normalized()
@@ -86,7 +87,7 @@ def _wrist_mirror(arm_l, arm_r, rig, cfg: dict) -> None:
     for i, p in enumerate(pr):
         kd.insert(p, i)
     kd.balance()
-    key = ("DEF-thumb.01", "DEF-palm.01")
+    key = (VG_THUMB1, VG_PALM1)
 
     def has(w: dict, side: str) -> bool:
         return any(k + "." + side in w for k in key)
@@ -116,8 +117,8 @@ def _limit_norm(w: dict, n: int = 4) -> dict:
 
 def _seam_smooth(ob, rig, side: str, cfg: dict) -> None:
     me = ob.data
-    head = rig.matrix_world @ rig.data.bones["DEF-hand." + side].head_local
-    fore = [b for b in rig.data.bones if b.name.startswith("DEF-forearm") and b.name.endswith(".001")
+    head = rig.matrix_world @ rig.data.bones[VG_HAND + "." + side].head_local
+    fore = [b for b in rig.data.bones if b.name.startswith(VG_FOREARM) and b.name.endswith(".001")
             and ("." + side + ".") in b.name + "."]
     flen = fore[0].length
     print("EDIT forearm bone", fore[0].name, flen)
@@ -189,7 +190,7 @@ def _width(ob, rig, side: str, cfg: dict) -> None:
 
 def apply(arm_l, arm_r):
     """Apply EDITS to the freshly rebuilt ArmL and ArmR objects."""
-    rig = bpy.data.objects["rig"]
+    rig = bpy.data.objects[RIG]
     cfg = EDITS["wrist_mirror"]
     if cfg["on"]:
         _wrist_mirror(arm_l, arm_r, rig, cfg)

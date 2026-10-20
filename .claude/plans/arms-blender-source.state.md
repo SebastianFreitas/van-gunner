@@ -37,7 +37,7 @@ none
 
 ## Blocker
 
-Parked by the owner (D61, 2026-10-17): review the game vs Blender first. The game's procedural steps (`ArmBulk`, `ArmRefine`, vein relief, ...) reshape the hand after load, so a Blender edit lands only about half. Restart only when the owner says the review is done.
+Parked by the owner (D61, 2026-10-17): review the game vs Blender first. The game's procedural steps (`ArmBulk`, `ArmRefine`, vein relief, ...) reshaped the hand after load, so a Blender edit landed only about half; they are removed (tag `archive/arms-procedural-build`), so a Blender edit now lands as made. Restart only when the owner says the review is done.
 
 ## Saved specs (send these to the implementer first)
 

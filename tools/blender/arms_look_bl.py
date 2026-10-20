@@ -13,13 +13,11 @@ import sys
 import bpy
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+from arm_names import PARTS, FINGERS, VG_FING_ROOT, VG_FING_TIP, RIG
+import bl_result  # noqa: E402
 from arms_frame_bl import hand_frame  # noqa: E402
 from arms_hunt_bl import setup_render, shoot  # noqa: E402
 
-PARTS = tuple(s + "_" + p for s in "LR" for p in ("skin", "fingers", "webs"))
-FINGERS = ("index", "middle", "ring", "pinky")
 HALF = 1024
 S_LO, S_HI = -0.2, 2.2
 GREY = (0.62, 0.62, 0.62, 1)
@@ -27,7 +25,7 @@ GREY = (0.62, 0.62, 0.62, 1)
 
 def prepare(sc, step):
     """Rest pose, one grey solid colour with cavity; returns the archive objects (or None)."""
-    bpy.data.objects["rig"].data.pose_position = "REST"
+    bpy.data.objects[RIG].data.pose_position = "REST"
     arch = bpy.data.collections["archive_"]
     olds = {}
     if step:
@@ -110,10 +108,10 @@ def main(args) -> None:
             take(sc, cam, cam_d, os.path.join(out, fn), olds, centre, view, scale, fr.axis)
             lines.append("%s %s view, s %.1f..%.1f" % (fn, name, S_LO, S_HI))
         for f in FINGERS:
-            rig = bpy.data.objects["rig"]
-            bone = rig.data.bones["DEF-f_%s.03.%s" % (f, side)]
+            rig = bpy.data.objects[RIG]
+            bone = rig.data.bones[(VG_FING_TIP + ".%s") % (f, side)]
             pts = (("tip", rig.matrix_world @ bone.tail_local),
-                   ("knuckle", fr.head("DEF-f_%s.01" % f)))
+                   ("knuckle", fr.head(VG_FING_ROOT % f)))
             for kind, p in pts:
                 fn = "%s_%s_%s.png" % (side, kind, f)
                 take(sc, cam, cam_d, os.path.join(out, fn), olds, p, -fr.dors,
@@ -122,7 +120,8 @@ def main(args) -> None:
     with open(os.path.join(out, "look.txt"), "w") as fh:
         fh.write("\n".join(lines) + "\n")
     print("LOOK", out, len(lines))
+    bl_result.write("look", lines=len(lines))
 
 
 if __name__ == "__main__":
-    main(sys.argv[sys.argv.index("--") + 1:])
+    main(bl_result.args())
