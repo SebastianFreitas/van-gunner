@@ -10,6 +10,7 @@ from mathutils import Matrix, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+from arms_frame_bl import hand_frame  # noqa: E402
 BLEND = os.path.join(HERE, "arms.blend")
 GLB_OUT = os.path.abspath(os.path.join(HERE, "..", "..", "assets", "models", "arms", "arms.glb"))
 MESHES = ("ArmL", "ArmR")
@@ -149,19 +150,8 @@ def do_prove(out_glb: str, out_json: str) -> None:
     stored CUSTOM2.w ids (not Blender indices) and the offset in glb axes.
     """
     import json
-    rig = bpy.data.objects["rig"]
-    rw = rig.matrix_world
-
-    def head(b):
-        return rw @ rig.data.bones[b].head_local
-    H = head("DEF-hand.R")
-    M = head("DEF-f_middle.01.R")
-    span = (M - H).length
-    axis = (M - H).normalized()
-    up = Vector((0, 0, 1))
-    dors = (up - axis * up.dot(axis)).normalized()
-    lat = head("DEF-f_index.01.R") - head("DEF-f_pinky.01.R")
-    lat = (lat - axis * lat.dot(axis)).normalized()
+    fr = hand_frame("R")
+    H, span, axis, dors, lat = fr.H, fr.span, fr.axis, fr.dors, fr.lat
     ob = bpy.data.objects["R_skin"]
     pts = [ob.matrix_world @ v.co for v in ob.data.vertices]
     # Back of the hand: the slab 0.3..0.5 of the way to the middle knuckle, on the dorsal side.
@@ -287,4 +277,5 @@ def main() -> None:
         raise SystemExit("unknown mode " + mode)
 
 
-main()
+if __name__ == "__main__":
+    main()

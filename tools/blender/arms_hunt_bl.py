@@ -2,7 +2,8 @@
 
 Runs as `blender -b --factory-startup --python arms_hunt_bl.py -- <glb> <dir>`. Needs the
 `<glb minus .glb>.bones.json` the `arms export` console command writes beside the glb.
-Writes <dir>/hunt.txt (one line per cluster), orbit_<side>_<k>.png and close-ups
+Writes <dir>/hunt.txt (one line per cluster), <dir>/clusters.txt (the baked vertex ids of each
+cluster, when the glb carries them in its second UV set), orbit_<side>_<k>.png and close-ups
 <kind>_<object>_<n>_<a>.png for the 8 worst clusters of each kind.
 """
 import json
@@ -13,6 +14,7 @@ import sys
 import bmesh
 import bpy
 from mathutils import Matrix, Vector
+from mathutils.kdtree import KDTree
 
 SLIVER_ANGLE = 3.0
 SLIVER_RATIO = 15.0
@@ -106,6 +108,22 @@ def ring_info(v):
     return abs((v.co - c).dot(n.normalized())), edge, n.normalized()
 
 
+def id_tree(ob):
+    """KDTree of the raw world positions holding each vertex's baked id (UV2.x), or None."""
+    me = ob.data
+    if len(me.uv_layers) < 2:
+        return None
+    uv = me.uv_layers[1].data
+    ids = {}
+    for lp in me.loops:
+        ids.setdefault(lp.vertex_index, set()).add(int(round(uv[lp.index].uv.x)))
+    tree = KDTree(len(me.vertices))
+    for v in me.vertices:
+        tree.insert(ob.matrix_world @ v.co, v.index)
+    tree.balance()
+    return tree, ids
+
+
 def analyse(ob, side, frame):
     """List of cluster dicts for one mesh object."""
     bm = bmesh.new()
@@ -113,8 +131,20 @@ def analyse(ob, side, frame):
     bm.transform(ob.matrix_world)
     out = []
     is_claw = "_claw_" in ob.name
+    idt = id_tree(ob)
 
-    def add(kind, elems, groups, worst_of, bad_of):
+    def ids_of(verts):
+        """Every raw vertex id within the merge distance of these vertices, so a merged
+        vertex keeps each id it absorbed (the raw positions are in the tree, not the bmesh)."""
+        if idt is None:
+            return None
+        found = set()
+        for v in verts:
+            for _, i, _ in idt[0].find_range(v.co, 2 * MERGE):
+                found |= idt[1][i]
+        return sorted(found)
+
+    def add(kind, elems, groups, worst_of, bad_of, verts_of=None):
         """elems: (pos, normal, value); a group becomes one cluster at its worst element."""
         for g in groups:
             w = max(g, key=lambda i: bad_of(elems[i]))
@@ -122,7 +152,8 @@ def analyse(ob, side, frame):
             r = max((elems[i][0] - pos).length for i in g)
             out.append(dict(kind=kind, obj=ob.name, side=side, pos=pos, normal=nrm, r=r,
                             count=len(g), worst=worst_of(elems[w], g, elems),
-                            bad=bad_of(elems[w]) if kind != "coincident" else len(g)))
+                            bad=bad_of(elems[w]) if kind != "coincident" else len(g),
+                            ids=ids_of([v for i in g for v in verts_of(i)]) if verts_of else None))
 
     # coincident, on the raw mesh before duplicate vertices are merged
     flagged, mult = find_coincident(bm)
@@ -131,7 +162,8 @@ def analyse(ob, side, frame):
         keyed = [[(round(v.co.x / MERGE), round(v.co.y / MERGE), round(v.co.z / MERGE))
                   for v in f.verts] for f in flagged]
         add("coincident", el, clusters(len(el), lambda i: keyed[i]),
-            lambda e, g, els: "faces%d" % e[2], lambda e: e[2])
+            lambda e, g, els: "faces%d" % e[2], lambda e: e[2],
+            lambda i: flagged[i].verts)
 
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=MERGE)
     bm.verts.ensure_lookup_table()
@@ -160,7 +192,8 @@ def analyse(ob, side, frame):
         el = [(f.calc_center_median(), f.normal.copy(), f.calc_area()) for f in flipped]
         add("inside_out", el,
             clusters(len(el), lambda i: [v.index for v in flipped[i].verts]),
-            lambda e, g, els: "area%.5f" % sum(els[i][2] for i in g), lambda e: e[2])
+            lambda e, g, els: "area%.5f" % sum(els[i][2] for i in g), lambda e: e[2],
+            lambda i: flipped[i].verts)
 
     # sliver
     sl = []
@@ -181,7 +214,8 @@ def analyse(ob, side, frame):
         add("sliver", el, clusters(len(sl), lambda i: [v.index for v in sl[i][0].verts]),
             lambda e, g, els: "ang%.2f/ratio%.1f" % (min(els[i][2][0] for i in g),
                                                        min(max(els[i][2][1] for i in g), 9999)),
-            lambda e: max(SLIVER_ANGLE / (e[2][0] + 1e-3), e[2][1] / SLIVER_RATIO))
+            lambda e: max(SLIVER_ANGLE / (e[2][0] + 1e-3), e[2][1] / SLIVER_RATIO),
+            lambda i: sl[i][0].verts)
 
     # spike
     sp = []
@@ -192,7 +226,8 @@ def analyse(ob, side, frame):
     if sp:
         el = [(v.co.copy(), n, ratio) for v, ratio, n in sp]
         add("spike", el, clusters(len(sp), lambda i: [e.index for e in sp[i][0].link_edges]),
-            lambda e, g, els: "h%.2f" % max(els[i][2] for i in g), lambda e: e[2])
+            lambda e, g, els: "h%.2f" % max(els[i][2] for i in g), lambda e: e[2],
+            lambda i: [sp[i][0]])
 
     # crease (skin objects, not claws)
     if not is_claw:
@@ -206,7 +241,8 @@ def analyse(ob, side, frame):
             el = [((e.verts[0].co + e.verts[1].co) / 2, e.link_faces[0].normal.copy(), d)
                   for e, d in cr]
             add("crease", el, clusters(len(cr), lambda i: [v.index for v in cr[i][0].verts]),
-                lambda e, g, els: "%.1fdeg" % max(els[i][2] for i in g), lambda e: e[2])
+                lambda e, g, els: "%.1fdeg" % max(els[i][2] for i in g), lambda e: e[2],
+            lambda i: cr[i][0].verts)
 
     # holes: boundary loops
     be = [e for e in bm.edges if e.is_boundary]
@@ -218,7 +254,8 @@ def analyse(ob, side, frame):
             per = sum(e.calc_length() for e in es)
             cen = sum(((e.verts[0].co + e.verts[1].co) / 2 for e in es), Vector()) / len(es)
             nrm = sum((e.link_faces[0].normal for e in es), Vector()).normalized()
-            loops.append(dict(count=len(es), per=per, pos=cen, normal=nrm))
+            loops.append(dict(count=len(es), per=per, pos=cen, normal=nrm,
+                              ids=ids_of([v for e in es for v in e.verts])))
         if ob.name.endswith("_skin"):
             low = min(range(len(loops)), key=lambda i: frame.slab(side, loops[i]["pos"]))
             expected = {low}
@@ -227,7 +264,8 @@ def analyse(ob, side, frame):
         for i, l in enumerate(loops):
             out.append(dict(kind="hole_expected" if i in expected else "hole", obj=ob.name,
                             side=side, pos=l["pos"], normal=l["normal"], r=l["per"] / 6.28,
-                            count=l["count"], worst="perim%.4f" % l["per"], bad=l["per"]))
+                            count=l["count"], worst="perim%.4f" % l["per"], bad=l["per"],
+                            ids=l["ids"]))
     bm.free()
     return out
 
@@ -257,11 +295,13 @@ def setup_render():
     return sc, cam, cam_d
 
 
-def shoot(sc, cam, cam_d, path, target, view, scale):
-    """Orthographic shot looking along `view` at `target`; only geometry within
-    0.6 scale in front of the target is kept so occluders do not hide it."""
+def shoot(sc, cam, cam_d, path, target, view, scale, up=None):
+    """Orthographic shot looking along `view` at `target` (`up` is the image's up, default
+    world Z); only geometry within 0.6 scale in front of the target is kept so occluders
+    do not hide it."""
     d = view.normalized()
-    up = Vector((0, 0, 1))
+    if up is None:
+        up = Vector((0, 0, 1))
     if abs(d.dot(up)) > 0.98:
         up = Vector((0, 1, 0))
     z = -d
@@ -313,12 +353,21 @@ def main() -> None:
         if "_claw_" not in ob.name:
             continue
         fob = [o for o in meshes if o.name[0] == ob.name[0] and o.name.endswith("_fingers")]
+        if not fob:  # the one-skin hands have no separate fingers object
+            continue
         mw = ob.matrix_world
         cen = sum((mw @ v.co for v in ob.data.vertices), Vector()) / len(ob.data.vertices)
         gap = min((fob[0].matrix_world @ v.co - cen).length for v in fob[0].data.vertices)
         lines.append("claw_gap %s %s %.4f" % (ob.name, os.path.basename(glb)[:-4], gap))
     with open(os.path.join(out, "hunt.txt"), "w") as fh:
         fh.write("\n".join(lines) + "\n")
+    with_ids = [c for c in found if c.get("ids")]
+    if with_ids:
+        with open(os.path.join(out, "clusters.txt"), "w") as fh:
+            for c in with_ids:
+                fh.write("%s %s %s s=%.2f count=%d ids=%s\n" % (
+                    c["kind"], c["obj"], c["bone"], c["s"], c["count"],
+                    ",".join(str(i) for i in c["ids"])))
 
     sc, cam, cam_d = setup_render()
     for ob in meshes:
@@ -364,4 +413,5 @@ def main() -> None:
     print("HUNT", out, len(found))
 
 
-main()
+if __name__ == "__main__":
+    main()

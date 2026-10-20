@@ -82,10 +82,8 @@ func _parts(sk: Skeleton3D, side: String) -> Array:
 		var mi := n as MeshInstance3D
 		if mi != null:
 			var nm := String(mi.name)
-			if nm == "Arm" + side:
-				out.append([side + "_skin", mi, base])
-			elif nm == "Skin_fingers":
-				out.append([side + "_fingers", mi, base])
+			if nm == side + "_skin" or nm == side + "_fingers" or nm == side + "_webs":
+				out.append([nm, mi, base])
 			elif nm.begins_with("Limb_tail"):
 				out.append([side + "_tail", mi, base])
 		var att := n as BoneAttachment3D
@@ -139,6 +137,18 @@ func _bake(mi: MeshInstance3D, rest_place: Transform3D, rest: bool) -> ArrayMesh
 		if not wn.is_empty():
 			arrays[Mesh.ARRAY_NORMAL] = wn
 		arrays[Mesh.ARRAY_INDEX] = idx
+		# The baked vertex id (CUSTOM2.w) rides in UV2.x so the hunt can map clusters back.
+		if a[Mesh.ARRAY_CUSTOM2] != null:
+			var c2: PackedFloat32Array = a[Mesh.ARRAY_CUSTOM2]
+			var uv2 := PackedVector2Array()
+			uv2.resize(v.size())
+			for i in v.size():
+				uv2[i] = Vector2(roundf(c2[i * 4 + 3]), 0.0)
+			arrays[Mesh.ARRAY_TEX_UV2] = uv2
+			# The glb writer drops UV2 when there is no UV, and the hunt reads the second layer.
+			var uv0 := PackedVector2Array()
+			uv0.resize(v.size())
+			arrays[Mesh.ARRAY_TEX_UV] = uv0
 		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	return out
 

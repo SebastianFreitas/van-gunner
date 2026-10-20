@@ -10,7 +10,14 @@ compressed and exports the six parts to assets/models/arms/arms.glb. `prove [<di
 the right hand's back-of-hand slab 4 mm outward in memory, exports a scratch glb + json to <dir>
 (default the temp dir), runs the game-side measure through tools/probe.py and writes
 .claude/specs/reports/prove.md; arms.blend and arms.glb are not touched. `preview <dir>` writes
-back.png, palm.png and side.png (cc0 right hand left, current ArmR right). `hunt <glb> <dir>`
+back.png, palm.png and side.png (cc0 right hand left, current ArmR right). `look <dir> [--before <step>]`
+renders both hands at rest (back, palm, side, plus 4x fingertip and knuckle close-ups, 2048x1024; left
+half the archive_ `<step>_*` copies, right half the live parts) and writes look.txt; it never saves
+arms.blend. `step <name> [args]` runs the scripted edit `arms_<name>_bl.py` (e.g. `step mass`; archive_ copies
+`<name>_<part>` first, a re-run restores them, then build). `proof <dir>` (temporary, phase 6 deletes it) renders a crude in-memory preview
+of plan phases 2-4 (left live, right dialled) like `look`. `veinpaths <dir>` runs research 04's vein gates (Set v2) on the real mesh chart and
+writes <dir>/paths.txt (fails, exempt fails with skin vertex ids); it never saves arms.blend. `relief <dir>` writes <dir>/relief.txt (vein crest per hand and path, finger cord gates; read-only). `veindump <dir>`
+writes the mesh chart tables <dir>/mesh_R.json and mesh_L.json for research 04's offline mesh_table.py. `hunt <glb> <dir>`
 (a glb from the `arms export` console command, with its .bones.json beside it) writes hunt.txt,
 one line per defect cluster, plus orbit and close-up renders; it does not need arms.blend. Blender is
 C:/Program Files/Blender Foundation/Blender 5.2/blender.exe unless the BLENDER env var
@@ -90,6 +97,21 @@ def main(argv: list[str]) -> int:
     if cmd == "hunt" and len(rest) == 2:
         return run(None, str(pathlib.Path(rest[0]).resolve()), str(pathlib.Path(rest[1]).resolve()),
                    script="arms_hunt_bl.py")
+    if cmd == "look" and rest:
+        step = rest[rest.index("--before") + 1:][:1] if "--before" in rest else []
+        return run(BLEND, str(pathlib.Path(rest[0]).resolve()), *step, script="arms_look_bl.py")
+    if cmd == "proof" and rest:
+        return run(BLEND, str(pathlib.Path(rest[0]).resolve()), script="arms_proof_bl.py")
+    if cmd == "veinpaths" and rest:
+        return run(BLEND, str(pathlib.Path(rest[0]).resolve()), script="arms_veinpaths_bl.py")
+    if cmd == "relief" and rest:
+        base = ["--baseline", str(pathlib.Path(rest[rest.index("--baseline") + 1]).resolve())] \
+            if "--baseline" in rest else []
+        return run(BLEND, str(pathlib.Path(rest[0]).resolve()), *base, script="arms_relief_bl.py")
+    if cmd == "veindump" and rest:
+        return run(BLEND, str(pathlib.Path(rest[0]).resolve()), script="arms_veindump_bl.py")
+    if cmd == "step" and rest:
+        return run(BLEND, *rest, script="arms_step_bl.py")
     if cmd == "prove":
         return prove(pathlib.Path(rest[0]).resolve() if rest else None)
     print(__doc__)

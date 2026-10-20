@@ -29,6 +29,9 @@ const SECTORS := 12
 @export var tip_half_h := PackedFloat32Array()
 ## Direction the pad faces, in mesh space (DOWN, or toward the index for the thumb).
 @export var pad := Vector3.DOWN
+## Degrees the claw frame is turned about the lateral axis (positive: the tip bends palmward), for a
+## tip the weld's wreck rotated away from the unmoved `.03` bone frame.
+@export var tip_tilt := 0.0
 
 @export_group("Mesh indices")
 ## First vertex of each tip ring (the ring is SECTORS consecutive vertices).
@@ -78,6 +81,12 @@ static func resolve(info: ArmFingerInfo, arrays: Array, frame: Transform3D,
 	var inv := frame.basis.inverse()
 	var lat_n := (inv * lat).normalized()
 	var dor_n := (inv * dor).normalized()
+	var up_n := Vector3.UP
+	if info.tip_tilt != 0.0:
+		var c := cos(deg_to_rad(info.tip_tilt))
+		var sn := sin(deg_to_rad(info.tip_tilt))
+		up_n = Vector3.UP * c - dor_n * sn
+		dor_n = dor_n * c + Vector3.UP * sn
 	var rel := verts[info.pole if ids.is_empty() else ids[info.pole]] - frame.origin
 	var tip_len := rel.dot(y) / 1.06
 	var tip_rings: Array = []
@@ -88,11 +97,11 @@ static func resolve(info: ArmFingerInfo, arrays: Array, frame: Transform3D,
 			mean += verts[vi if ids.is_empty() else ids[vi]]
 		mean /= float(SECTORS)
 		var v := inv * (mean + frame.basis * info.tip_skew[i] - frame.origin)
-		tip_rings.append({&"t": info.tip_t[i], &"centre": Vector3(lat_n.dot(v), v.y, dor_n.dot(v)),
+		tip_rings.append({&"t": info.tip_t[i], &"centre": Vector3(lat_n.dot(v), up_n.dot(v), dor_n.dot(v)),
 				&"half_w": info.tip_half_w[i], &"half_h": info.tip_half_h[i]})
 	var out := {
 		&"tip_rings": tip_rings, &"tip_len": tip_len, &"bed_r": info.bed_r,
-		&"dorsal": dor_n, &"lateral": lat_n, &"crook": info.crook,
+		&"dorsal": dor_n, &"lateral": lat_n, &"along": up_n, &"crook": info.crook,
 		&"tip_off": lat.dot(rel), &"knots": info.knots, &"rings": info.rings,
 		&"shaft": info.shaft, &"length": info.length, &"r2": info.r2, &"r3": info.r3,
 		&"k2": info.k2, &"k3": info.k3, &"vert_base": info.vert_base, &"emerge": info.emerge,
