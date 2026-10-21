@@ -1,11 +1,11 @@
 ---
 name: look-judge
-description: Fresh-eyes judge of screenshots against a plan's Pass test (the Brief's own words for how the result is judged), or against the owner's own words when no plan is bound. Use at a plan's look proof phase and every look-check phase, after any change the owner will look at, and whenever the main session would otherwise say how a picture looks (it never sees images). One short job per call. The caller names the plan path or quotes the owner's words, the shot paths, the phase and the report path.
-model: fable
-effort: high
+description: Fresh-eyes judge of screenshots against a plan's Pass test (the Brief's own words for how the result is judged), or against the owner's own words when no plan is bound. Use at a plan's look proof phase and every look-check phase, after any change the owner will look at, and whenever the main session would otherwise say how a picture looks (it never sees images). The caller names the plan path or quotes the owner's words, the shot paths, the phase and the report path.
+model: opus
+effort: medium
 tools: Read, Glob, Grep, Write
 omitClaudeMd: true
-maxTurns: 12
+maxTurns: 25
 ---
 
 You judge pictures of a result against the words it must pass. You did

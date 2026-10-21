@@ -70,15 +70,7 @@ The detail behind `workflow.md` "Run" steps 3 to 6.
 ## Models
 
 Opus thinks and judges (main, plan runs, `plan-writer`, Plan,
-`reviewer`, `plan-reviewer`), Sonnet does (`Explore`, `implementer`).
-Two short jobs run on Fable at high in their agent files (owner,
-2026-10-20): `look-judge`, because the main session never sees images
-and kept guessing at results the owner then had to send again, and
-`fable-researcher`, one escalation round after two failed fixes in a
-row (Anthropic's own advice is to escalate to Fable when Opus at high
-fails twice). Fable costs about 2.5 times Opus per token and reportedly
-counts double against the weekly all-models limit, so both stay short
-(`maxTurns` 12 and 30) and never loop.
+`reviewer`, `plan-reviewer`, `look-judge`), Sonnet does (`Explore`, `implementer`).
 The reviewers moved to Opus because Sonnet 5.5 misses more on hard
 reviews and more of its comments are noise; it matches Opus on
 spec-driven code at half the cost (owner, 2026-10-05). When the owner
@@ -100,9 +92,8 @@ until the owner picks another level in the app. `plan-writer` has no
 `effort:`, so it follows the session's effort as well as its model: a
 pick of Fable high reaches the research and math, where it pays, while
 an Opus medium session plans at Opus medium. Every other agent file
-fixes medium (except the two Fable high jobs above), which overrides the
-session's effort, so the agents that build and review code never go
-above it. Autoplan's headless phases pass
+fixes medium, which overrides the session's effort, so the agents that
+build and review never go above it. Autoplan's headless phases pass
 `--effort medium`. Model and effort come only from the agent files and
 the owner's pick: `agent-guard.py` refuses an Agent call that passes
 `model` or `effort`.

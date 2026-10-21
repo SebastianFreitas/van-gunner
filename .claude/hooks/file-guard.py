@@ -23,12 +23,11 @@ repo is allowed.
   skill, "at most 80 lines"), and nothing enforced it (one ran to 28 KB and
   every fresh window paid for it). Detail goes in the plan or state file,
   a spec or a report file the handoff names. Main session and subagents.
-- A Write or Edit from a reviewer, plan-reviewer, look-judge or fable-researcher subagent
+- A Write or Edit from a reviewer, plan-reviewer or look-judge subagent
   (agent_type) outside .claude/specs/reports/: they got Write for their
   report file only, and nothing but prompt text kept them out of source
   (review 2026-10-05). A file outside any repo (scratchpad) stays allowed.
-  A look-judge or fable-researcher may Read images anywhere: pictures are
-  part of its job.
+  A look-judge may Read images anywhere: judging pictures is its job.
 - A Bash or PowerShell write to .claude/handoff.md: it skipped the cap
   above; write the handoff with Write or Edit. Main session and subagents.
 - Bash and PowerShell writes to a source or generated file (redirects, tee,
@@ -81,11 +80,11 @@ MAX_READ_BYTES = 50 * 1024 * 1024
 HANDOFF_REL = ".claude/handoff.md"
 HANDOFF_MAX_LINES = 80
 HANDOFF_MAX_BYTES = 6 * 1024
-REPORT_ONLY_AGENTS = {"reviewer", "plan-reviewer", "look-judge", "fable-researcher"}
+REPORT_ONLY_AGENTS = {"reviewer", "plan-reviewer", "look-judge"}
 # Agents whose job is reading pictures: images are allowed to them anywhere,
 # .godot/ shots included (phase 11 of van-interior-salvage copied shots to
 # %TEMP% only to get past the binary rule, 2026-10-07).
-IMAGE_READERS = {"look-judge", "fable-researcher"}
+IMAGE_READERS = {"look-judge"}
 MAIN_NO_READ = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tga", ".exr", ".hdr"}
 REPORTS_REL = ".claude/specs/reports/"
 

@@ -183,9 +183,8 @@ anything else prepared again) on the same branch, with the same report.
   implementer reads them.
 - A plan, state file or handoff: grep the heading, never re-read the
   whole file.
-- Models and effort (Opus judges, Sonnet does, `look-judge` and
-  `fable-researcher` are Fable high, a Fable session makes only the main
-  session and inheriting agents Fable, plan runs on Opus
+- Models and effort (Opus judges, Sonnet does, a Fable session makes
+  only the main session and inheriting agents Fable, plan runs on Opus
   medium, no Haiku; medium is the base and only the owner picks higher,
   which reaches the main session and plan-writer; never pass `model` or
   `effort` on an Agent call): playbook "Models".
@@ -200,8 +199,7 @@ when it passes it, and once per new prompt while it stays there. Lines:
 a prepared run's window, a plan run's supervisor and headless plan
 sessions 175k (the runner kills headless ones at 200k); every other app
 window 120k; Explore, Plan, general-purpose and claude-code-guide 100k,
-plan-writer 120k, fable-researcher 100k, implementer 60k, reviewer,
-plan-reviewer and look-judge 80k. A
+plan-writer 120k, implementer 60k, reviewer, plan-reviewer and look-judge 80k. A
 subagent at 1.25 times its line is denied further tools: the prompt was
 too wide; next time name file, function and range, or split. Every
 subagent runs in the foreground (playbook Delegation).
@@ -234,17 +232,11 @@ subagent runs in the foreground (playbook Delegation).
 - **The main session is blind to pictures.** It never says how a result
   looks from an implementer's description or its own guess: every look
   question (after a visual change, or when the owner asks how something
-  looks) goes to a fresh `look-judge` (Fable high, one short job), with
+  looks) goes to a fresh `look-judge` (Opus medium, its agent file), with
   the shot paths and the owner's words or the plan's Pass test. Its
   verdict is what the owner hears, with the shots sent by SendUserFile.
   A picture the owner attached in chat is the one exception: that one
   the main session sees.
-- **Two failed fixes in a row, one Fable round.** When two fixes in a
-  row did not solve the same problem (the owner said so, or the
-  look-judge failed it twice), call `fable-researcher` once with the
-  problem in the owner's words and both attempts, then build its first
-  approach as a normal spec. Once per stuck problem, never in a loop:
-  if that fails too, stop and ask the owner.
 - A new file, moved function or new export gets its MAP.md row fixed in
   the same commit (branches: see your mode file). Rows hold purpose and
   exports, no line counts, no line over 300 characters (Grep prints
