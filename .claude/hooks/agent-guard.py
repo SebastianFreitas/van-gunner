@@ -50,7 +50,7 @@ def main():
         return
     # Headless autoplan sessions (AUTOPLAN=1) have no background agents, so
     # their Agent tool has no run_in_background field: a missing key is foreground.
-    if os.environ.get("AUTOPLAN") == "1" and "run_in_background" not in ti:
+    if "run_in_background" not in ti:
         return
     print(json.dumps({"hookSpecificOutput": {
         "hookEventName": "PreToolUse",
