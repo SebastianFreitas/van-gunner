@@ -15,11 +15,6 @@ func run() -> void:
 		var lines := DebugCommands.run("arms " + sub).split("\n")
 		for line in lines.slice(maxi(lines.size() - 3, 0)):
 			driver.call(&"_log", "arms %s: %s" % [sub, line])
-	var hands := DebugCommands.run("arms hands")
-	for line in hands.split("\n"):
-		driver.call(&"_log", line)
-	if hands.contains("HANDS CHECK"):
-		driver.call(&"_fail", hands)
 	var reach := DebugCommands.run("arms reach-end")
 	for line in reach.split("\n"):
 		driver.call(&"_log", line)

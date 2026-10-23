@@ -190,9 +190,7 @@ const CLAW_CURVE := 22.0
 ## Fixed for the same reason. Girth is about three times the witch's gaunt shafts (0.68-0.80):
 ## the index shaft is over a quarter of its length. HAND_K scales the hand and the gun grip.
 const GIRTH := 2.10
-## The pose scale `ArmRig.scale_hand` puts on DEF-hand (palm, thumb and fingers inherit it, the
-## forearm does not).
-const HAND_K := 1.47
+const HAND_K := ArmBulk.HAND_SCALE
 ## The shape and pose streams (muscle lumps, the shoulder offset, each finger's sideways
 ## crook) are fixed too, at the seed the posture and the claws were tuned under. Any other
 ## value turns the hand and swings the fingertips, a posture change the owner forbids.
@@ -280,10 +278,11 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	ArmRig.scale_hand(model_r, ".R", HAND_K)
 	if SHOW_GUN:
 		_turn_thumb(rig, sk_r, right_thumb_turn)
-	var fingers_r: Dictionary = model_r.get_meta(&"fingers", {})
+	var fingers_r := ArmFingers.build(model_r, ".R", GIRTH, rng_r, skin_r)
+	model_r.set_meta(&"fingers", fingers_r)
 	ArmRig.add_claws(model_r, ".R", fingers_r, CLAW_K, CLAW_CURVE, claw)
-	ArmLimbTail.build(model_r, ".R", rng_for(seed_value, &"arm_tail_r"), skin_r)
 	_skin_model(model_r, skin_r)
+	ArmLimbTail.build(model_r, ".R", rng_for(seed_value, &"arm_tail_r"), skin_r)
 
 	match dress_style:
 		&"rags":
@@ -323,10 +322,11 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 	ArmRig.stretch_tips(model_l, ".L", TIP_K)
 	ArmRig.stretch_thumb(model_l, ".L", THUMB_STRETCH)
 	ArmRig.scale_hand(model_l, ".L", HAND_K)
-	var fingers_l: Dictionary = model_l.get_meta(&"fingers", {})
+	var fingers_l := ArmFingers.build(model_l, ".L", GIRTH, rng_l, skin_l)
+	model_l.set_meta(&"fingers", fingers_l)
 	ArmRig.add_claws(model_l, ".L", fingers_l, CLAW_K, CLAW_CURVE, claw)
-	ArmLimbTail.build(model_l, ".L", rng_for(seed_value, &"arm_tail_l"), skin_l)
 	_skin_model(model_l, skin_l)
+	ArmLimbTail.build(model_l, ".L", rng_for(seed_value, &"arm_tail_l"), skin_l)
 	match dress_style:
 		&"rags":
 			ArmDress.left(model_l, rng_for(seed_value, &"arm_dress_l"))
@@ -348,8 +348,7 @@ static func build(rig: Node3D, seed_value: int, van_name: String) -> Dictionary:
 static func _skin_model(model: Node3D, skin: Material) -> void:
 	for c in ArmRig.skeleton(model).get_children():
 		if c is MeshInstance3D:
-			for s in (c as MeshInstance3D).get_surface_override_material_count():
-				(c as MeshInstance3D).set_surface_override_material(s, skin)
+			(c as MeshInstance3D).material_override = skin
 
 
 static func _jitter(rng: RandomNumberGenerator) -> Vector3:

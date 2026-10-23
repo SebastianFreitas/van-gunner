@@ -25,6 +25,8 @@ VIEW_NAMES = ["front", "side", "left", "top", "elbow", "player"]
 ORBIT_VIEWS: dict[str, str] = {
     "back_left": "-20 75 0.2 left",
     "back_right": "150 12 0.11 right 0.01 -0.01 0.02",
+    "back_left_wide": "0 80 0.25 left -0.04 0 0",
+    "palm_left": "0 -80 0.25 left -0.04 0 0",
     "forearm_left": "-60 55 0.22 left -0.06 -0.03 0",
     "forearm_right": "165 45 0.18 right 0.05 -0.02 0.2",
     "side_left": "-90 15 1.0 left 0 0 0.25",

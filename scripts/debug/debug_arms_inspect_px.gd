@@ -39,7 +39,7 @@ func run(vm: Node, t: float) -> String:
 	var angle := 0.0
 	var width := 0.0
 	for c in sk.get_children():
-		var mat: ShaderMaterial = (c as MeshInstance3D).get_surface_override_material(0) as ShaderMaterial \
+		var mat: ShaderMaterial = (c as MeshInstance3D).material_override as ShaderMaterial \
 				if c is MeshInstance3D else null
 		if mat != null and mat.get_shader_parameter(&"tat_radius") != null:
 			radius = float(mat.get_shader_parameter(&"tat_radius"))

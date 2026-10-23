@@ -36,8 +36,8 @@ static func skin() -> ShaderMaterial:
 	var mat := surface(base, Color(0.13, 0.17, 0.14), Color(0.08, 0.08, 0.06), 60.0, 6.0, 0.0,
 			0.45, 0.88, 0.0, HAND_SKIN_OFFSET)
 	mat.set_shader_parameter(&"vein_strength", 1.0)
-	mat.set_shader_parameter(&"vein_shade", 1.8)
-	mat.set_shader_parameter(&"vein_under", 1.8)
+	mat.set_shader_parameter(&"vein_shade", 0.5)
+	mat.set_shader_parameter(&"vein_under", 0.6)
 	# Measured palm bone length 0.125 rest units, so a finger is about 0.11: sag_scale 36 gives
 	# about 4 big folds per finger, wrinkle_scale 280 the fine ones (older, creased skin).
 	mat.set_shader_parameter(&"skin_bump", 1.0)

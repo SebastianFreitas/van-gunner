@@ -39,6 +39,10 @@ func _measure(model: Node3D, side: String) -> String:
 	var total := 0.0
 	var count := 0
 	var open_edges := 0
+	var split_rest := 0.0
+	var split_pose := 0.0
+	var diff_w := 0.0
+	var groups := 0
 	var rad := PackedFloat32Array()
 	rad.resize(12 * 12)
 	for s in mi.mesh.get_surface_count():
@@ -84,11 +88,17 @@ func _measure(model: Node3D, side: String) -> String:
 				var slab := int((lv.y + 0.05) / 0.01)
 				var bin := int((atan2(lv.z, lv.x) + PI) / (TAU / 12.0)) % 12
 				rad[slab * 12 + bin] = maxf(rad[slab * 12 + bin], Vector2(lv.x, lv.z).length())
+		var spread := _spread(side, s, verts, bones, weights, per, posed, centre)
+		split_rest = maxf(split_rest, spread.x)
+		split_pose = maxf(split_pose, spread.y)
+		diff_w = maxf(diff_w, spread.z)
+		groups += int(spread.w)
 		for key: Vector2i in uses:
 			if uses[key] == 1:
 				open_edges += 1
-	return "seam %s: longest edge %.4f m, mean %.4f m, open edges %d (within %.2f m of wrist)" % [
-			side, longest, total / maxf(count, 1.0), open_edges, NEAR] + _grid(rad)
+	return "seam %s: longest edge %.4f m, mean %.4f m, open edges %d (within %.2f m of wrist)\n  duplicate-position groups %d: largest split rest %.5f m, posed %.5f m, weight diff %.3f" % [
+			side, longest, total / maxf(count, 1.0), open_edges, NEAR, groups, split_rest,
+			split_pose, diff_w] + _grid(rad)
 
 
 ## Rows by hand-local y slab (0.01 m, from -0.05), 12 angle bins each: max radius in mm.
@@ -100,3 +110,33 @@ func _grid(rad: PackedFloat32Array) -> String:
 			out += " %3d" % int(rad[r * 12 + b] * 1000.0)
 	return out
 
+
+## Vertices that share a position in the refined source mesh (before any reshape pass) must end at
+## one position. Returns x the largest rest split, y the largest posed split near the wrist, z the
+## largest bone weight difference in a group, w the group count.
+func _spread(side: String, surf: int, verts: PackedVector3Array, bones: PackedInt32Array,
+		weights: PackedFloat32Array, per: int, posed: PackedVector3Array, centre: Vector3) -> Vector4:
+	var raw := ArmRig.SCENE.instantiate() as Node3D
+	var src := raw.find_child("Arm" + side, true, false) as MeshInstance3D
+	var arrays := ArmRefine.refine(src.mesh.surface_get_arrays(surf))
+	var base: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	raw.free()
+	var first := {}
+	var out := Vector4.ZERO
+	for i in base.size():
+		var at := Vector3i((base[i] * 100000.0).round())
+		if not first.has(at):
+			first[at] = i
+			continue
+		var j: int = first[at]
+		out.w += 1.0
+		out.x = maxf(out.x, verts[i].distance_to(verts[j]))
+		if posed[i].distance_to(centre) < NEAR:
+			out.y = maxf(out.y, posed[i].distance_to(posed[j]))
+		var dw := 0.0
+		for k in per:
+			dw += absf(weights[i * per + k] - weights[j * per + k])
+			if bones[i * per + k] != bones[j * per + k]:
+				dw += 1.0
+		out.z = maxf(out.z, dw)
+	return out

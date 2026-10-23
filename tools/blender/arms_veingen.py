@@ -1,9 +1,10 @@
 """Seeded organic vein generator: writes resources/arms/vein_set_<side>_next.tres (pure Python).
 
 Veins are grown in the hand frame of arms_veingates (X = s * SPAN metres along the hand, Y = lat, the
-thumb side +) and mapped to the skin chart with its fit. Per side: a dorsal arch across the
-metacarpals, tributaries to the knuckle gaps (some fork), three forearm veins (cephalic, median,
-basilic) with cross-links, a few side twigs and one faint palm vein. Spline-smoothed meander,
+thumb side +) and mapped to the skin chart with its fit. Per side: two forearm veins (cephalic, basilic)
+running lengthwise, each fed by a tributary from a knuckle gap (some fork), plus one free-ended tributary
+from the middle-ring gap, all within about 28 degrees of the limb axis (nothing runs across), and no palm
+vein. Spline-smoothed meander,
 uneven spacing, radius taper and noise, free ends at every tip. Same seed gives the same bytes.
 """
 import math
@@ -11,7 +12,6 @@ import pathlib
 import random
 
 from arms_veingates import HEADS, SPAN, blocking, chart, check
-from arms_veinsplice import PALM
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SEEDS = {"R": 23, "L": 11}
@@ -19,11 +19,9 @@ FADE_LEN = 0.012  # ArmVeinSet.FADE_LEN
 VEIN_MAX = 512  # ArmMaterials.VEIN_MAX
 MAX_TURN = 30.0  # degrees per segment in the chart
 R_MIN, R_MAX = 0.0006, 0.0025
-MED_ARCH_Y = (-.014, -.010)  # lat of the median vein's start on the arch (the middle-ring gap)
 MED_END_Y = (-.045, -.035)  # lat of its far end, ulnar of the pinky cord
-FORK_ANG = (10, 20)  # degrees: fork twigs stay inside the gap between cords
-SIDE_ANG = (50, 75)  # degrees: forearm side twigs leave their parent steeply
-SIDE_LEN = (.025, .045)
+FORK_ANG = (6, 12)  # degrees: fork twigs fan either side of 0.4 of the cord fan, inside the gap
+TRIB_TAN = math.tan(math.radians(28))  # tributaries run within 28 degrees of the hand axis
 
 
 def smooth(t):
@@ -122,97 +120,49 @@ def build(side, seed):
         P.append(dict(n=n, pts=pts, r=radii(pts, r0, r1, rng), free=free, joins=joins, first=first, link=link))
         return pts
 
-    # Dorsal arch, radial end first: bows distally, its ends run along the hand axis.
-    ts = [k / 12 for k in range(13)]
-    top = rng.uniform(.56, .62)
-    ctrl = [((.44 + (top - .44) * math.sin(math.pi * t) ** .9 + rng.uniform(-.006, .006) * (0 < t < 1)) * SPAN,
-             .070 - t * .160 + rng.uniform(-.0015, .0015) * (0 < t < 1)) for t in ts]
-    arch = add("arch", spline(ctrl, rng, .0055), .0017, .0014, 0)
-    # Tributaries to the knuckle gaps (and the thumb web), each from a fork point F to the arch.
-    gaps = [(.082, .60), (.021, .76), (-.0196, .78), (-.057, .72)]  # centres between the finger cords
-    forks = rng.sample(range(4), rng.choice((2, 3)))
-    attach_used = []
+    # Two forearm veins (ceph, bas) run nearly parallel from the back of the hand toward the elbow; X goes
+    # negative toward the elbow. Each is fed by a tributary from a knuckle gap (thumb web, pinky), which
+    # meets it at a shallow angle; a third, free-ended tributary drains the middle-ring gap. The cords
+    # converge toward the wrist, so nothing is run down between them. There is no vein across the hand.
+    xs_end = [-rng.uniform(1.25, 1.5) * SPAN for _ in range(2)]
+    ys_end = [rng.uniform(.035, .06), rng.uniform(-.085, -.065)]
+    gaps = [(.082, .60), (-.0196, .78), (-.057, .72)]  # centres between the finger cords
+    forks = rng.sample(range(3), rng.choice((1, 2)))
+    fa = {}
     for i, (gl, gs) in enumerate(gaps):
+        nm = ("ceph", None, "bas")[i]
         F = ((gs + rng.uniform(-.02, .02)) * SPAN, gl + rng.uniform(-.002, .002))
-        j = nearest(arch, y=F[1] * .52 / gs + rng.uniform(-.002, .002))  # runs down the gap between cords
-        while j in attach_used or j + 1 in attach_used or j - 1 in attach_used:
-            j = min(len(arch) - 2, max(1, j + rng.choice((-2, 2))))
-        attach_used.append(j)
-        A = arch[j]
+        ax = rng.uniform(.36, .42) * SPAN if nm else rng.uniform(.50, .56) * SPAN
+        reach = TRIB_TAN * (F[0] - ax)  # the tributary stays within 28 degrees of the hand axis
+        # the end sits on the line from the cords' origin through F, so it stays in the gap between cords
+        A = (ax, F[1] - max(-reach, min(reach, F[1] * (1 - ax / F[0]) + rng.uniform(-.001, .001))))
         mid = [(F[0] + (A[0] - F[0]) * f + rng.uniform(-.001, .001), F[1] + (A[1] - F[1]) * f + rng.uniform(-.001, .001))
                for f in (.35, .68)]
-        tpts = add("trib%d" % i, spline([F] + mid + [A], rng, .007), .0010, .0013, 0, joins=("arch", j))
+        add("trib%d" % i, spline([F] + mid + [A], rng, .007), .0017, .0020, 0 if nm else 2, joins=(nm, 0) if nm else None)
+        if nm:
+            k = len(fa)
+            fa[nm] = add(nm, meander_run(A[0], A[1], xs_end[k], ys_end[k], rng, amp=.7), (.0022, .0021)[k],
+                         (.0018, .0017)[k], 2)
         if i in forks:
             for sgn in (1, -1):
-                ang = math.atan2(gl, gs * SPAN) + math.radians(rng.uniform(*FORK_ANG)) * sgn  # fanned like the cords
+                ang = math.atan2(gl, gs * SPAN) * .4 + math.radians(rng.uniform(*FORK_ANG)) * sgn  # fanned near the hand axis
                 ln = rng.uniform(.02, .03)
                 d = (math.cos(ang), math.sin(ang))
                 tip = (F[0] + d[0] * ln, F[1] + d[1] * ln)
                 tw = trim_discs(spline([F, (F[0] + d[0] * ln * .5, F[1] + d[1] * ln * .5 + rng.uniform(-.002, .002)), tip], rng, .008))
                 if len(tw) >= 3:
-                    add("twig%d%s" % (i, "ab"[sgn < 0]), tw[::-1], .0007, .0009, 1, joins=("trib%d" % i, 0))
+                    add("twig%d%s" % (i, "ab"[sgn < 0]), tw[::-1], .0011, .0013, 1, joins=("trib%d" % i, 0))
         else:
             dx = rng.uniform(.012, .022)
-            tip = (F[0] + dx, F[1] + dx * gl / (gs * SPAN) + rng.uniform(-.003, .003))
+            tip = (F[0] + dx, F[1] + dx * math.tan(math.radians(rng.uniform(-12, 12))))
             tw = trim_discs(spline([F, ((F[0] + tip[0]) / 2, (F[1] + tip[1]) / 2), tip], rng, .008))
             if len(tw) >= 3:
-                add("tip%d" % i, tw[::-1], .0007, .0010, 1, joins=("trib%d" % i, 0))
-    # Forearm veins drain the arch; X goes negative toward the elbow.
-    mj = nearest(arch, y=rng.uniform(*MED_ARCH_Y))
-    xs_end = [-rng.uniform(1.25, 1.5) * SPAN for _ in range(3)]
-    fa = {}
-    fa["ceph"] = add("ceph", meander_run(arch[0][0], arch[0][1], xs_end[0], rng.uniform(.035, .06), rng), .0022, .0018, 2, first=("arch", 0))
-    # The median vein leaves its gap and crosses the ring and pinky cords once each, steeply (G5).
-    A = arch[mj]
-    dive = [A, (A[0] - .02, A[1] - .022 + rng.uniform(-.002, .002)), (A[0] - .045, A[1] - .045 + rng.uniform(-.002, .002)),
-            (A[0] - .08, A[1] - .056 + rng.uniform(-.002, .002))]
-    head = spline(dive, rng, .011)
-    tail = meander_run(head[-1][0], head[-1][1], xs_end[1], rng.uniform(*MED_END_Y), rng)
-    fa["med"] = add("med", head + tail[1:], .0017, .0014, 2, first=("arch", mj))
-    fa["bas"] = add("bas", meander_run(arch[-1][0], arch[-1][1], xs_end[2], rng.uniform(-.085, -.065), rng), .0021, .0017, 2, first=("arch", len(arch) - 1))
-    # Cross-links between neighbouring forearm veins (one or two) and side twigs.
-    def link(name, na, nb, a, b, xa, xb):
-        ia, ib = nearest(a, x=xa), nearest(b, x=xb)
-        pa, pb = a[ia], b[ib]
-        d = (pb[0] - pa[0], pb[1] - pa[1])
-        nrm = (-d[1], d[0])
-        ln = math.hypot(*nrm) or 1
-        s1, s2 = rng.uniform(.0005, .001), rng.uniform(.0005, .001)
-        c = [pa, (pa[0] + d[0] * .33 + nrm[0] / ln * s1, pa[1] + d[1] * .33 + nrm[1] / ln * s1),
-             (pa[0] + d[0] * .67 - nrm[0] / ln * s2, pa[1] + d[1] * .67 - nrm[1] / ln * s2), pb]
-        add(name, spline(c, rng, .012), .0010, .0010, 0, joins=(nb, ib), first=(na, ia), link=True)
-    link("x1", "ceph", "med", fa["ceph"], fa["med"], -rng.uniform(.5, .7) * SPAN, -rng.uniform(.8, 1.0) * SPAN)
-    xm = -rng.uniform(.5, .9) * SPAN
-    link("x2", "med", "bas", fa["med"], fa["bas"], xm, xm + rng.uniform(-.1, .1) * SPAN)
-    for k, nm in enumerate(rng.sample(["ceph", "med", "bas", "ceph", "bas"], 4)):
-        par = fa[nm]
-        j = rng.randrange(6, len(par) - 5)
-        ang = math.radians(rng.uniform(*SIDE_ANG))
-        sgn = {"ceph": 1, "bas": -1}.get(nm, 1)  # outward, away from the neighbour vein
-        ln = rng.uniform(*SIDE_LEN)
-        tip = (par[j][0] + ln * math.cos(ang), par[j][1] + sgn * ln * math.sin(ang))
-        mid = (par[j][0] + ln * .5 * math.cos(ang), par[j][1] + sgn * ln * .5 * math.sin(ang) + rng.uniform(-.003, .003))
-        add("side%d" % k, spline([par[j], mid, tip], rng, .009)[::-1], .0007, .0010, 1, joins=(nm, j))
-    # Network cross-connections between neighbouring tributaries.
-    ids = [p for p in P if p["n"].startswith("trib")]
-    for a, b in zip(ids, ids[1:]):
-        if rng.random() < .55:
-            ja, jb = nearest(a["pts"], x=(.74 + rng.uniform(-.02, .02)) * SPAN), nearest(b["pts"], x=(.74 + rng.uniform(-.02, .02)) * SPAN)
-            pa, pb = a["pts"][ja], b["pts"][jb]
-            add("net%d" % len(P), spline([pa, ((pa[0] + pb[0]) / 2 + rng.uniform(-.003, .003), (pa[1] + pb[1]) / 2 + rng.uniform(-.003, .003)), pb], rng, .008), .0008, .0008, 0, joins=(b["n"], jb), first=(a["n"], ja), link=True)
+                add("tip%d" % i, tw[::-1], .0011, .0014, 1, joins=("trib%d" % i, 0))
     for p in P:  # a fork stem nothing grows from ends free
         if p["n"].startswith("trib") and not any(o is not p and p["pts"][0] in o["pts"] for o in P):
             p["free"] |= 1
-    # The faint palm veins come first: the readers (arms_veins_bl, arms_relief_bl) skip the first
-    # len(PALM[side]) paths of a _next set as the baked palm paths, so write exactly that many.
-    # Palm side is right -v, left +v.
-    sg = -1 if side == "R" else 1
+    # No palm paths: the baked palm veins showed as a beaded cord along the forearm underside.
     out = []
-    for k in range(len(PALM[side])):
-        pp = meander_run(1.10, sg * (.055 + .02 * (k - 1)), .90 + .02 * k, sg * (rng.uniform(.045, .06) + .02 * (k - 1)),
-                         rng, joined_start=False, amp=.5)
-        pp = [(round(x, 4), round(y, 4)) for x, y in pp]
-        out.append(dict(n="palm%d" % k, free=3, pts=[(x, y, r) for (x, y), r in zip(pp, radii(pp, .0010, .0008, rng))]))
     # Mapped to the chart; hand keeps the (s, lat, r) points arms_veingates.check reads.
     for p in P:
         out.append(dict(n=p["n"], free=p["free"], joins=p["joins"], first=p["first"], link=p["link"],

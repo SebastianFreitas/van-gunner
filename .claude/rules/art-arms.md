@@ -23,7 +23,7 @@ paths:
 
 # Art style: the first-person arms (mesh and skin)
 
-The hand's shape lives in `tools/blender/arms.blend` (baked parts, loaded as is). The game only adds channels (`ArmChannels`), material, claws, the limb tail and pose. The procedural build (inflate gain loop, refine, weld/weight smoothing, wrist ramp, hand dome, knuckles, muscle, vein relief, finger build/web/join/profile) and the `arms bake` / `arms join` consoles and finger info capture were removed in spec 4; the pre-removal code is at git tag `archive/arms-procedural-build`. The `arms seam` duplicate-position report went with the refine step.
+The game builds the hands at load from `arms.glb` (ArmBulk, arm_fingers, arm_knuckles, arm_muscle, arm_vein_relief and the other `scripts/player/arms/` helpers; the 10-14 model). The Blender pipeline in `tools/blender/` is parked (not what the game loads) and the Blender hands are archived as git tag `archive/hands-blender-2026-10-23`; the lines below that say "baked in `arms.blend`" or name `ArmChannels` or the Editing section describe that parked build. The procedural build (inflate gain loop, refine, weld/weight smoothing, wrist ramp, hand dome, knuckles, muscle, vein relief, finger build/web/join/profile) and the `arms bake` / `arms join` consoles and finger info capture were removed in spec 4; the pre-removal code is at git tag `archive/arms-procedural-build`. The `arms seam` duplicate-position report went with the refine step.
 
 The general 3D rules are in `art-3d.md`; motion, grip, dressing and
 inspect are in `art-arms-pose.md`.

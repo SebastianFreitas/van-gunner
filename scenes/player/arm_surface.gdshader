@@ -229,8 +229,9 @@ void fragment() {
 		float out_d = vf.y;
 		float groove = smoothstep(0.0, 0.0008, out_d) * (1.0 - smoothstep(0.0008, VEIN_GROOVE, out_d));
 		groove *= vmask * vein_strength * smoothstep(0.75, 2.5, VEIN_GROOVE / max(vf.z, 1e-6));
-		col *= 1.0 - 0.1 * vein_shade * groove;
-		col = mix(col, col * vec3(0.48, 0.72, 0.82), 0.55 * vein_under * smoothstep(0.0, 0.5, vn));
+		float on_hand = 1.0 + 2.0 * smoothstep(1.15, 1.19, vein_data.x); // back of hand reads 3x the forearm
+		col *= 1.0 - 0.1 * vein_shade * groove * on_hand;
+		col = mix(col, col * vec3(0.80, 0.86, 0.92), min(0.5 * vein_under * on_hand, 0.9) * smoothstep(0.0, 0.5, vn));
 		col = mix(col, col * vec3(0.92, 1.0, 1.04) * 1.12, vn * vn * 0.05);
 	}
 	// Saggy skin: tilt the normal by the fold height's gradient, darken and roughen the hollows.
@@ -296,9 +297,9 @@ void fragment() {
 		col *= 1.0 + (rib - 0.5) * 0.25 * rib_fade;
 	}
 
-	float rough = clamp(roughness_value - 0.04 * (grain - 0.5) - 0.25 * vn
+	float rough = clamp(roughness_value - 0.04 * (grain - 0.5) - 0.02 * vn
 			+ 0.05 * skin_bump * fold_dark + blight_rough, 0.60, 0.95);
-	float spec = specular_value + 0.2 * vn;
+	float spec = specular_value + 0.02 * vn;
 	float metal = metallic_value;
 	if (wear_on > 0.0) {
 		wear_apply(obj_pos + wear_origin, w, col, rough, spec, metal);
