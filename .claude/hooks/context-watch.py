@@ -15,6 +15,8 @@ The line depends on the window:
   or `carry on running plan`, or a Bash/PowerShell call that launches
   `py ... autoplan.py <name>`; remembered for the window the same way):
   RUN_LIMIT, because it reports every phase of a plan in one window;
+- a raw-mode window (raw-mode.py): RUN_LIMIT, because it does all its own
+  reading and writing;
 - any other app window (a prepare, a quick fix, a plan interview):
   LIMIT, lower, because what grows there is the
   model's own output (specs, thinking), and two prepare windows went
@@ -51,6 +53,9 @@ import json
 import os
 import re
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from guard_config import raw_mode  # noqa: E402
 
 LIMIT = 120_000       # app windows that are not a prepared run
 RUN_LIMIT = 175_000   # a prepared run's window, or a plan run's supervisor
@@ -198,13 +203,19 @@ def tier_of(used, limit, soft):
 
 
 def main_line(d, state):
-    """(limit, kind) for this app window; kind is "run", "supervisor" or ""."""
+    """(limit, kind) for this app window; kind is "run", "supervisor", "raw"
+    or ""."""
     env = os.environ.get("AUTOPLAN_LINE")
     if env:
         try:
             return int(env), ""
         except ValueError:
             pass
+    if raw_mode(d.get("transcript_path")):
+        if state["main"].get("run") != "raw":
+            state["main"]["run"] = "raw"
+            state["main"]["tier"] = 0
+        return RUN_LIMIT, "raw"
     kind = state["main"].get("run")
     if kind:
         return RUN_LIMIT, ("supervisor" if kind == "supervisor" else "run")
@@ -234,6 +245,18 @@ def main_line(d, state):
 
 def main_message(used, limit, tier, kind):
     pct = used * 100 // limit
+    if kind == "raw":
+        if tier == 2:
+            return (f"CONTEXT WATCH: {used:,} tokens in context, past this "
+                    f"raw window's line of {limit:,}. Finish only the current "
+                    "step, verify, commit, write .claude/handoff.md (handoff "
+                    "skill) and end with a go prompt that starts `raw:` "
+                    "instead of `go:`, so the next window stays raw.")
+        if tier == 1:
+            return (f"CONTEXT WATCH: {used:,} tokens in context ({pct}% of "
+                    f"the line of {limit:,}). Prefer finishing over starting "
+                    "new work; grep and read small ranges only.")
+        return None
     if tier == 2:
         if kind == "supervisor":
             return (f"CONTEXT WATCH: {used:,} tokens in context, past the "

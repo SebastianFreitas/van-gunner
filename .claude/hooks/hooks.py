@@ -39,7 +39,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # so a refused call is never measured as if it ran.
 TABLE = {
     "SessionStart": [(None, "session-start.py")],
-    "UserPromptSubmit": [(None, "go-check.py"), (None, "context-watch.py")],
+    "UserPromptSubmit": [(None, "go-check.py"), (None, "raw-mode.py"),
+                         (None, "context-watch.py")],
     "PreToolUse": [
         ("Bash|PowerShell", "git-guard.py"),
         ("Bash|PowerShell", "review-guard.py"),

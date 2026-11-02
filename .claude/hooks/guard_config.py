@@ -1,7 +1,8 @@
 """The project's .claude/project/file-guard.json, shared by the hooks that
 read it (file-guard, session-start, git-guard, review-guard). Not a hook
 itself: hooks.py never runs it. Keys are documented in file-guard.py;
-this file only loads them and matches globs.
+this file only loads them and matches globs. It also holds the raw-mode
+flag check (raw-mode.py sets the flag).
 
 Globs are fnmatch (case-sensitive) on the forward-slash root-relative
 path, where `*` also crosses `/`.
@@ -11,6 +12,21 @@ import json
 import os
 
 CONFIG_PATH = ".claude/project/file-guard.json"
+
+
+def raw_flag(transcript_path: str) -> str:
+    """Path of this window's raw-mode flag. A new transcript (/clear, a new
+    chat) has no flag, so raw mode ends with the window."""
+    p = os.path.normpath(transcript_path)
+    if os.path.basename(os.path.dirname(p)) == "subagents":
+        p = os.path.dirname(os.path.dirname(p))
+    else:
+        p = os.path.splitext(p)[0]
+    return os.path.join(p, "raw-mode")
+
+
+def raw_mode(transcript_path: str | None) -> bool:
+    return bool(transcript_path) and os.path.exists(raw_flag(transcript_path))
 
 
 def load_config(root: str) -> dict:

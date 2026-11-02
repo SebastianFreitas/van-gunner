@@ -24,17 +24,35 @@ Under AUTOPLAN=1 a call with no run_in_background key passes too: the
 headless CLI's Agent tool has no such field and runs every call in the
 foreground (street-setbacks phase 1, 2026-10-05).
 
+A raw-mode window (raw-mode.py) does every step of the work in its own
+context, so only the checkers that judge finished work may run.
+
 Never fails the hook: any error allows the call (exit 0).
 """
 import json
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from guard_config import raw_mode  # noqa: E402
+
+RAW_ALLOWED = {"reviewer", "look-judge"}
+
 
 def main():
     d = json.load(sys.stdin)
     ti = d.get("tool_input") or {}
     who = ti.get("subagent_type") or "subagent"
+    if (who.split(":")[-1] not in RAW_ALLOWED and not d.get("agent_id")
+            and raw_mode(d.get("transcript_path"))):
+        print(json.dumps({"hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": (
+                f"Agent guard: this window is in raw mode, no {who}. Do this "
+                "step yourself; only the reviewer and look-judge run, on "
+                "finished work (workflow.md \"Raw mode\").")}}))
+        return
     pinned = [k for k in ("model", "effort") if ti.get(k)]
     if pinned:
         print(json.dumps({"hookSpecificOutput": {

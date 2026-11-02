@@ -165,6 +165,27 @@ detail: playbook "Run".
 Changes in the owner's reply are sorted the same way (quick fix here,
 anything else prepared again) on the same branch, with the same report.
 
+## Raw mode
+
+For hard problems: a prompt that starts `raw:` (or is just `raw`) puts
+this window in raw mode until `/clear` or a new chat (`raw-mode.py`;
+owner, 2026-11-02: *"our context has all steps done to solve the asked
+task"*). Every step of the task happens in this window's own context: it
+reads, thinks, edits source and runs verify itself, with no specs and no
+prepare-clear-run. "Coordinator" and "Main session role" do not apply,
+and `agent-guard.py` refuses `Explore`, `Plan`, `implementer` and every
+other helper that would do a step.
+
+Checks on finished work do not change. `reviewer` still runs where Run
+step 5 says and `review-guard.py` still refuses the commit without it:
+it reads a spec, so save the owner's words and what done means as
+`.claude/specs/raw.md`, name that and the changed paths, and fix a gap
+here. `look-judge` still judges every look. All other hooks and rules
+hold.
+The window's line is 175k; past it, hand off with a go prompt that
+starts `raw:` instead of `go:`, so the next window stays raw. The report
+keeps its five parts.
+
 ## Main session role
 
 - Do not edit source files yourself (Write, Edit, or Bash that writes),

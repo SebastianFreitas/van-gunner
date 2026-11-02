@@ -37,6 +37,8 @@ repo is allowed.
   regex, not a shell parser; subagents may write source. Heredoc bodies are
   not scanned (python open() targets are); a target with an unresolved $,
   only digits or /dev/null is skipped.
+- A raw-mode window (raw-mode.py) has no implementer, so its main session
+  may write source. Everything else here holds.
 
 The project tunes this through an optional .claude/project/file-guard.json
 (read once per call; missing or bad JSON means no config):
@@ -61,7 +63,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from guard_config import load_config, matches_any, source_rule  # noqa: E402
+from guard_config import load_config, matches_any, raw_mode, source_rule  # noqa: E402
 
 BINARY_SUFFIXES = {
     ".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tga", ".exr", ".hdr",
@@ -332,6 +334,8 @@ def bash_violation(d: dict, tool_input: dict) -> None:
         if why is not None:
             deny(f"{rel} is {why}.")
             return
+        if raw_mode(d.get("transcript_path")):
+            continue
         suffixes, source_files = source_rule(cfg)
         if ext(path) in suffixes or rel in source_files:
             deny(f"Main session: {rel} is a source file; a shell write (sed -i, "
@@ -442,7 +446,7 @@ def main() -> None:
             deny(reason)
         return
 
-    if d.get("agent_id"):
+    if d.get("agent_id") or raw_mode(d.get("transcript_path")):
         return
     suffixes, source_files = source_rule(cfg)
     if ext(path) not in suffixes and rel not in source_files:
